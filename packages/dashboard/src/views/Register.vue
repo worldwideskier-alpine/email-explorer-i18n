@@ -1,10 +1,10 @@
 <template>
 	<div v-if="!isRegistrationEnabled()" class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
 		<div class="max-w-md w-full text-center">
-			<h2 class="text-2xl font-bold text-gray-900 mb-4">Registration Disabled</h2>
-			<p class="text-gray-600 mb-6">Registration is currently disabled. Please contact an administrator.</p>
+			<h2 class="text-2xl font-bold text-gray-900 mb-4">{{ t("register.disabledTitle") }}</h2>
+			<p class="text-gray-600 mb-6">{{ t("register.disabledMessage") }}</p>
 			<router-link to="/login" class="text-indigo-600 hover:text-indigo-500 font-medium">
-				Return to login
+				{{ t("register.returnToLogin") }}
 			</router-link>
 		</div>
 	</div>
@@ -12,15 +12,15 @@
 		<div class="max-w-md w-full space-y-8">
 			<div>
 				<h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-					Create your account
+					{{ t("register.title") }}
 				</h2>
 				<p class="mt-2 text-center text-sm text-gray-600">
-					Or
+					{{ t("register.signInPrompt") }}
 					<router-link
 						to="/login"
 						class="font-medium text-indigo-600 hover:text-indigo-500"
 					>
-						sign in to your account
+						{{ t("register.signInLink") }}
 					</router-link>
 				</p>
 			</div>
@@ -33,18 +33,18 @@
 				</div>
 				<div class="rounded-md shadow-sm -space-y-px">
 					<div>
-						<label for="email" class="sr-only">Email address</label>
+						<label for="email" class="sr-only">{{ t("common.emailAddress") }}</label>
 						<input
 							id="email"
 							v-model="email"
 							type="email"
 							required
 							class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-							placeholder="Email address"
+							:placeholder="t('register.emailPlaceholder')"
 						/>
 					</div>
 					<div>
-						<label for="password" class="sr-only">Password</label>
+						<label for="password" class="sr-only">{{ t("common.password") }}</label>
 						<input
 							id="password"
 							v-model="password"
@@ -52,18 +52,18 @@
 							required
 							minlength="8"
 							class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-							placeholder="Password (min 8 characters)"
+							:placeholder="t('register.passwordPlaceholder')"
 						/>
 					</div>
 					<div>
-						<label for="confirm-password" class="sr-only">Confirm Password</label>
+						<label for="confirm-password" class="sr-only">{{ t("common.confirmPassword") }}</label>
 						<input
 							id="confirm-password"
 							v-model="confirmPassword"
 							type="password"
 							required
 							class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-							placeholder="Confirm password"
+							:placeholder="t('register.confirmPasswordPlaceholder')"
 						/>
 					</div>
 				</div>
@@ -74,10 +74,10 @@
 						:disabled="authStore.loading || password !== confirmPassword"
 						class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
 					>
-						{{ authStore.loading ? "Creating account..." : "Create account" }}
+						{{ authStore.loading ? t("register.creatingAccount") : t("register.createAccount") }}
 					</button>
 					<p v-if="password && confirmPassword && password !== confirmPassword" class="mt-2 text-sm text-red-600">
-						Passwords do not match
+						{{ t("common.passwordsDoNotMatch") }}
 					</p>
 				</div>
 			</form>
@@ -87,12 +87,14 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useAppSettings } from "@/composables/useAppSettings";
 import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { t } = useI18n();
 const { isRegistrationEnabled } = useAppSettings();
 
 const email = ref("");
@@ -107,7 +109,7 @@ async function handleRegister() {
 
 	try {
 		await authStore.register(email.value, password.value);
-		successMessage.value = "Account created! Redirecting...";
+		successMessage.value = t("register.accountCreated");
 		setTimeout(() => {
 			router.push("/");
 		}, 1000);

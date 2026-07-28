@@ -4,21 +4,21 @@
 		<div class="mb-8 flex items-center justify-between">
 			<div>
 				<h1 class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-					Admin Panel
+					{{ t("admin.title") }}
 				</h1>
-				<p class="text-gray-600 dark:text-gray-400">Manage users and mailbox access</p>
+				<p class="text-gray-600 dark:text-gray-400">{{ t("admin.subtitle") }}</p>
 			</div>
 			<router-link
 				to="/"
 				class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors"
 			>
-				← Back to Home
+				{{ t("admin.backToHome") }}
 			</router-link>
 		</div>
 
 		<!-- Register New User Section -->
 		<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-gray-200 dark:border-gray-700">
-			<h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Register New User</h2>
+			<h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">{{ t("admin.registerUser.title") }}</h2>
 			<form @submit.prevent="handleRegisterUser" class="space-y-4">
 				<div v-if="registerError" class="rounded-md bg-red-50 p-4">
 					<p class="text-sm text-red-800">{{ registerError }}</p>
@@ -29,7 +29,7 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
 						<label for="new-email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-							Email Address
+							{{ t("admin.registerUser.emailLabel") }}
 						</label>
 						<input
 							id="new-email"
@@ -42,7 +42,7 @@
 					</div>
 					<div>
 						<label for="new-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-							Password
+							{{ t("admin.registerUser.passwordLabel") }}
 						</label>
 						<input
 							id="new-password"
@@ -51,7 +51,7 @@
 							required
 							minlength="8"
 							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-							placeholder="Min 8 characters"
+							:placeholder="t('admin.registerUser.passwordPlaceholder')"
 						/>
 					</div>
 				</div>
@@ -60,7 +60,7 @@
 					:disabled="registerLoading"
 					class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
 				>
-					{{ registerLoading ? "Creating..." : "Create User" }}
+					{{ registerLoading ? t("admin.registerUser.creating") : t("admin.registerUser.submit") }}
 				</button>
 			</form>
 		</div>
@@ -68,32 +68,32 @@
 		<!-- Users List -->
 		<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-gray-200 dark:border-gray-700">
 			<div class="flex items-center justify-between mb-4">
-				<h2 class="text-xl font-bold text-gray-900 dark:text-white">Users</h2>
+				<h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ t("admin.users.title") }}</h2>
 				<button
 					@click="loadUsers"
 					:disabled="usersLoading"
 					class="px-3 py-1 text-sm text-indigo-600 hover:text-indigo-800 disabled:opacity-50"
 				>
-					{{ usersLoading ? "Loading..." : "Refresh" }}
+					{{ usersLoading ? t("admin.users.loading") : t("admin.users.refresh") }}
 				</button>
 			</div>
 
 			<div v-if="usersLoading && users.length === 0" class="text-center py-8 text-gray-500">
-				Loading users...
+				{{ t("admin.users.loadingUsers") }}
 			</div>
 
 			<div v-else-if="users.length === 0" class="text-center py-8 text-gray-500">
-				No users found
+				{{ t("admin.users.empty") }}
 			</div>
 
 			<div v-else class="overflow-x-auto">
 				<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
 					<thead>
 						<tr>
-							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
-							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Role</th>
-							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Created</th>
-							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
+							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ t("admin.users.columnEmail") }}</th>
+							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ t("admin.users.columnRole") }}</th>
+							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ t("admin.users.columnCreated") }}</th>
+							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ t("admin.users.columnActions") }}</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -101,10 +101,10 @@
 							<td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ user.email }}</td>
 							<td class="px-4 py-3 text-sm">
 								<span v-if="user.isAdmin" class="px-2 py-1 text-xs font-semibold text-indigo-800 bg-indigo-100 rounded-full">
-									Admin
+									{{ t("admin.users.roleAdmin") }}
 								</span>
 								<span v-else class="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded-full">
-									User
+									{{ t("admin.users.roleUser") }}
 								</span>
 							</td>
 							<td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
@@ -115,7 +115,7 @@
 									@click="openAccessModal(user)"
 									class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
 								>
-									Manage Access
+									{{ t("admin.users.manageAccess") }}
 								</button>
 							</td>
 						</tr>
@@ -134,7 +134,7 @@
 				<div class="p-6 border-b border-gray-200 dark:border-gray-700">
 					<div class="flex items-center justify-between">
 						<h3 class="text-xl font-bold text-gray-900 dark:text-white">
-							Manage Access for {{ selectedUser.email }}
+							{{ t("admin.accessModal.titlePrefix", { email: selectedUser.email }) }}
 						</h3>
 						<button
 							@click="closeAccessModal"
@@ -150,7 +150,7 @@
 				<div class="p-6">
 					<!-- Grant Access Form -->
 					<div class="mb-6">
-						<h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Grant Mailbox Access</h4>
+						<h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t("admin.accessModal.grantTitle") }}</h4>
 						<form @submit.prevent="handleGrantAccess" class="space-y-4">
 							<div v-if="accessError" class="rounded-md bg-red-50 p-4">
 								<p class="text-sm text-red-800">{{ accessError }}</p>
@@ -161,7 +161,7 @@
 							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 								<div>
 									<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-										Mailbox ID
+										{{ t("admin.accessModal.mailboxIdLabel") }}
 									</label>
 									<input
 										v-model="accessForm.mailboxId"
@@ -173,17 +173,17 @@
 								</div>
 								<div>
 									<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-										Role
+										{{ t("admin.accessModal.roleLabel") }}
 									</label>
 									<select
 										v-model="accessForm.role"
 										required
 										class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 									>
-										<option value="owner">Owner</option>
-										<option value="admin">Admin</option>
-										<option value="write">Write</option>
-										<option value="read">Read</option>
+										<option value="owner">{{ t("admin.accessModal.roleOwner") }}</option>
+										<option value="admin">{{ t("admin.accessModal.roleAdmin") }}</option>
+										<option value="write">{{ t("admin.accessModal.roleWrite") }}</option>
+										<option value="read">{{ t("admin.accessModal.roleRead") }}</option>
 									</select>
 								</div>
 							</div>
@@ -193,7 +193,7 @@
 									:disabled="accessLoading"
 									class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
 								>
-									{{ accessLoading ? "Granting..." : "Grant Access" }}
+									{{ accessLoading ? t("admin.accessModal.granting") : t("admin.accessModal.grantAccess") }}
 								</button>
 								<button
 									type="button"
@@ -201,7 +201,7 @@
 									:disabled="accessLoading || !accessForm.mailboxId"
 									class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
 								>
-									{{ accessLoading ? "Revoking..." : "Revoke Access" }}
+									{{ accessLoading ? t("admin.accessModal.revoking") : t("admin.accessModal.revokeAccess") }}
 								</button>
 							</div>
 						</form>
@@ -209,12 +209,12 @@
 
 					<!-- Role Descriptions -->
 					<div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-						<h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">Role Descriptions:</h4>
+						<h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">{{ t("admin.accessModal.roleDescriptionsTitle") }}</h4>
 						<ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-							<li><strong>Owner:</strong> Full control of the mailbox</li>
-							<li><strong>Admin:</strong> Can manage settings and users</li>
-							<li><strong>Write:</strong> Can send and manage emails</li>
-							<li><strong>Read:</strong> Can only view emails</li>
+							<li><strong>{{ t("admin.accessModal.roleOwner") }}:</strong> {{ t("admin.accessModal.roleOwnerDesc") }}</li>
+							<li><strong>{{ t("admin.accessModal.roleAdmin") }}:</strong> {{ t("admin.accessModal.roleAdminDesc") }}</li>
+							<li><strong>{{ t("admin.accessModal.roleWrite") }}:</strong> {{ t("admin.accessModal.roleWriteDesc") }}</li>
+							<li><strong>{{ t("admin.accessModal.roleRead") }}:</strong> {{ t("admin.accessModal.roleReadDesc") }}</li>
 						</ul>
 					</div>
 				</div>
@@ -225,6 +225,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import api from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
@@ -239,6 +240,7 @@ interface User {
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { t } = useI18n();
 
 // Check if user is admin
 if (!authStore.isAdmin) {
@@ -273,13 +275,15 @@ async function handleRegisterUser() {
 
 	try {
 		await api.adminRegisterUser(newUser.value.email, newUser.value.password);
-		registerSuccess.value = `User ${newUser.value.email} created successfully!`;
+		registerSuccess.value = t("admin.registerUser.successMessage", {
+			email: newUser.value.email,
+		});
 		newUser.value = { email: "", password: "" };
 		// Reload users list
 		await loadUsers();
 	} catch (error: any) {
 		registerError.value =
-			error.response?.data?.error || "Failed to create user";
+			error.response?.data?.error || t("admin.registerUser.failedToCreate");
 	} finally {
 		registerLoading.value = false;
 	}
@@ -324,10 +328,11 @@ async function handleGrantAccess() {
 			accessForm.value.mailboxId,
 			accessForm.value.role,
 		);
-		accessSuccess.value = `Access granted successfully!`;
+		accessSuccess.value = t("admin.accessModal.grantSuccess");
 		accessForm.value.mailboxId = "";
 	} catch (error: any) {
-		accessError.value = error.response?.data?.error || "Failed to grant access";
+		accessError.value =
+			error.response?.data?.error || t("admin.accessModal.failedToGrant");
 	} finally {
 		accessLoading.value = false;
 	}
@@ -338,7 +343,10 @@ async function handleRevokeAccess() {
 
 	if (
 		!confirm(
-			`Revoke access to ${accessForm.value.mailboxId} for ${selectedUser.value.email}?`,
+			t("admin.accessModal.revokeConfirm", {
+				mailboxId: accessForm.value.mailboxId,
+				email: selectedUser.value.email,
+			}),
 		)
 	) {
 		return;
@@ -353,11 +361,11 @@ async function handleRevokeAccess() {
 			selectedUser.value.id,
 			accessForm.value.mailboxId,
 		);
-		accessSuccess.value = `Access revoked successfully!`;
+		accessSuccess.value = t("admin.accessModal.revokeSuccess");
 		accessForm.value.mailboxId = "";
 	} catch (error: any) {
 		accessError.value =
-			error.response?.data?.error || "Failed to revoke access";
+			error.response?.data?.error || t("admin.accessModal.failedToRevoke");
 	} finally {
 		accessLoading.value = false;
 	}
