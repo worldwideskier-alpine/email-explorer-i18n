@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import api from "@/services/api";
+import { translateApiError } from "@/utils/apiError";
 
 export interface User {
 	id: string;
@@ -52,7 +53,7 @@ export const useAuthStore = defineStore("auth", () => {
 			await login(email, password);
 			return response.data;
 		} catch (err: any) {
-			error.value = err.response?.data?.error || "Registration failed";
+			error.value = translateApiError(err.response?.data?.error, "Registration failed");
 			throw err;
 		} finally {
 			loading.value = false;
@@ -71,7 +72,7 @@ export const useAuthStore = defineStore("auth", () => {
 			api.setAuthToken(response.data.id);
 			return response.data;
 		} catch (err: any) {
-			error.value = err.response?.data?.error || "Login failed";
+			error.value = translateApiError(err.response?.data?.error, "Login failed");
 			throw err;
 		} finally {
 			loading.value = false;

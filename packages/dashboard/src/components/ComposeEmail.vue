@@ -24,7 +24,7 @@
           <span class="block sm:inline">{{ error }}</span>
         </div>
         <div class="mb-5">
-          <label for="to" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">To</label>
+          <label for="to" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.to") }}</label>
           <input 
             type="email" 
             id="to" 
@@ -35,18 +35,18 @@
           />
         </div>
         <div class="mb-5">
-          <label for="subject" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Subject</label>
-          <input 
-            type="text" 
-            id="subject" 
-            v-model="subject" 
-            class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 transition-all duration-200" 
-            placeholder="Email subject"
-            required 
+          <label for="subject" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.subject") }}</label>
+          <input
+            type="text"
+            id="subject"
+            v-model="subject"
+            class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 transition-all duration-200"
+            :placeholder="t('compose.subjectPlaceholder')"
+            required
           />
         </div>
         <div class="mb-6">
-          <label for="body" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Message</label>
+          <label for="body" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.message") }}</label>
           <RichTextEditor v-model="body" />
         </div>
         <div class="flex justify-end gap-3">
@@ -55,7 +55,7 @@
             @click="closeModal" 
             class="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold transition-all duration-200"
           >
-            Cancel
+            {{ t("compose.cancel") }}
           </button>
           <button 
             type="submit" 
@@ -69,7 +69,7 @@
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            {{ isLoading ? 'Sending...' : 'Send Message' }}
+            {{ isLoading ? t('compose.sending') : t('compose.send') }}
           </button>
         </div>
       </form>
@@ -80,6 +80,7 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useToast } from "@/composables/useToast";
 import api from "@/services/api";
@@ -95,6 +96,7 @@ const mailboxStore = useMailboxStore();
 const { currentMailbox } = storeToRefs(mailboxStore);
 const route = useRoute();
 const { success: showSuccessToast, error: showErrorToast } = useToast();
+const { t } = useI18n();
 
 const to = ref("");
 const subject = ref("");
@@ -105,13 +107,13 @@ const isLoading = ref(false);
 const modalTitle = computed(() => {
 	switch (composeOptions.value.mode) {
 		case "reply":
-			return "Reply";
+			return t("compose.modalTitle.reply");
 		case "reply-all":
-			return "Reply All";
+			return t("compose.modalTitle.replyAll");
 		case "forward":
-			return "Forward";
+			return t("compose.modalTitle.forward");
 		default:
-			return "New Message";
+			return t("compose.modalTitle.new");
 	}
 });
 
@@ -155,7 +157,7 @@ watch(isComposeModalOpen, (isOpen) => {
 			subject.value = original.subject.startsWith("Re: ")
 				? original.subject
 				: `Re: ${original.subject}`;
-			body.value = `<br>${sigBlock}<br><blockquote style="border-left: 2px solid #ccc; margin: 0; padding-left: 1em; color: #666;">On ${original.date}, ${original.sender} wrote:<br><br>${original.body}</blockquote>`;
+			body.value = `<br>${sigBlock}<br><blockquote style="border-left: 2px solid #ccc; margin: 0; padding-left: 1em; color: #666;">${t("compose.replyQuotePrefix", { date: original.date, sender: original.sender })}<br><br>${original.body}</blockquote>`;
 		} else if (options.mode === "reply-all" && original) {
 			// For reply all, include both sender and original recipient
 			const recipients = new Set([original.sender]);
@@ -169,17 +171,17 @@ watch(isComposeModalOpen, (isOpen) => {
 			subject.value = original.subject.startsWith("Re: ")
 				? original.subject
 				: `Re: ${original.subject}`;
-			body.value = `<br>${sigBlock}<br><blockquote style="border-left: 2px solid #ccc; margin: 0; padding-left: 1em; color: #666;">On ${original.date}, ${original.sender} wrote:<br><br>${original.body}</blockquote>`;
+			body.value = `<br>${sigBlock}<br><blockquote style="border-left: 2px solid #ccc; margin: 0; padding-left: 1em; color: #666;">${t("compose.replyQuotePrefix", { date: original.date, sender: original.sender })}<br><br>${original.body}</blockquote>`;
 		} else if (options.mode === "forward" && original) {
 			to.value = "";
 			subject.value = original.subject.startsWith("Fwd: ")
 				? original.subject
 				: `Fwd: ${original.subject}`;
 			body.value = `<br>${sigBlock}<br><div style="border: 1px solid #ddd; padding: 1em; background-color: #f9f9f9; margin: 1em 0;">
-<strong>Forwarded message:</strong><br>
-<strong>From:</strong> ${original.sender}<br>
-<strong>Date:</strong> ${original.date}<br>
-<strong>Subject:</strong> ${original.subject}<br><br>
+<strong>${t("compose.forwardedMessage")}</strong><br>
+<strong>${t("compose.forwardFrom")}</strong> ${original.sender}<br>
+<strong>${t("compose.forwardDate")}</strong> ${original.date}<br>
+<strong>${t("compose.forwardSubject")}</strong> ${original.subject}<br><br>
 ${original.body}
 </div>`;
 		} else {
@@ -217,7 +219,7 @@ const htmlToPlainText = (html: string): string => {
 const send = async () => {
 	error.value = null;
 	if (!currentMailbox.value) {
-		error.value = "No mailbox selected.";
+		error.value = t("compose.noMailboxSelected");
 		return;
 	}
 	isLoading.value = true;
@@ -240,14 +242,14 @@ const send = async () => {
 			if (originalEmailId) {
 				await api.replyToEmail(mailboxId, originalEmailId, emailData);
 			} else {
-				throw new Error("Original email not found");
+				throw new Error(t("compose.originalEmailNotFound"));
 			}
 		} else if (composeOptions.value.mode === "forward") {
 			const originalEmailId = composeOptions.value.originalEmail?.id;
 			if (originalEmailId) {
 				await api.forwardEmail(mailboxId, originalEmailId, emailData);
 			} else {
-				throw new Error("Original email not found");
+				throw new Error(t("compose.originalEmailNotFound"));
 			}
 		} else {
 			await emailStore.sendEmail(mailboxId, emailData);
@@ -257,10 +259,10 @@ const send = async () => {
 		subject.value = "";
 		body.value = "";
 		closeModal();
-		showSuccessToast("Email sent successfully!");
+		showSuccessToast(t("compose.emailSentSuccess"));
 	} catch (e: any) {
 		const errorMessage =
-			e.response?.data?.error || "An unexpected error occurred.";
+			e.response?.data?.error || t("compose.unexpectedError");
 		error.value = errorMessage;
 		showErrorToast(errorMessage);
 	} finally {

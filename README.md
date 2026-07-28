@@ -13,6 +13,18 @@
 > 本リポジトリは [G4brym/email-explorer](https://github.com/G4brym/email-explorer)（MIT License）を元にした日本語ローカライズ・フォークです。
 > オリジナルの著作権表示・ライセンス条項は `LICENSE` ファイルにそのまま保持しています。UIの日本語化は本フォークで追加した変更です。
 
+## 日本語化について
+
+- ダッシュボード（`packages/dashboard`）は [vue-i18n](https://vue-i18n.intlify.dev/) を導入し、日本語をデフォルト言語としています。画面右上のヘッダーから「日本語 / English」を切り替え可能です。
+- 翻訳文字列は `packages/dashboard/src/locales/ja.json`（日本語）と `en.json`（英語）に集約されています。追加の文言を翻訳する場合はこの2ファイルに同じキーを追加してください。
+- ログイン・登録・パスワード再設定・受信トレイ・メール詳細・作成/返信/転送・管理パネルなど、UI全体を日本語化済みです。
+- パスワード再設定メール本文（`packages/worker/src/index.ts`）も日本語化しています。
+- Worker側のAPIエラーレスポンス（`{"error": "..."}`）自体は開発者向けの安定した識別子として英語のまま残し、フロントエンド側（`packages/dashboard/src/utils/apiError.ts`）で既知のエラーメッセージを日本語表示にマッピングしています。未知のエラーはそのまま（英語で）表示されます。
+
+## Cloudflareへのデプロイについて
+
+このリポジトリのコードはデプロイ可能な状態ですが、実際に Cloudflare 上へ `wrangler deploy` を実行するには、ご自身の Cloudflare アカウントと API トークンが必要です。認証情報を安全に管理するため、デプロイはご自身の環境から実行してください。手順はオリジナルプロジェクトの [Getting Started](#getting-started) を参照してください。
+
 <p align="center">
     <a href="https://github.com/G4brym/email-explorer/commits/main" target="_blank">
       <img src="https://img.shields.io/github/commit-activity/m/G4brym/email-explorer?label=Commits&style=social" alt="Email Explorer Commits">

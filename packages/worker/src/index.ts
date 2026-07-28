@@ -1349,14 +1349,14 @@ class PostForgotPassword extends OpenAPIRoute {
 		const mimeMessage = buildMimeMessage({
 			from: c.env.config.accountRecovery.fromEmail,
 			to: email,
-			subject: "Password Reset Request",
+			subject: "パスワード再設定のご案内",
 			html: `<!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<style>
-		body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+		body { font-family: "Hiragino Sans", "Yu Gothic", Arial, sans-serif; line-height: 1.6; color: #333; }
 		.container { max-width: 600px; margin: 0 auto; padding: 20px; }
 		.header { background-color: #4F46E5; color: white; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
 		.content { background-color: #f9f9f9; padding: 20px; border-radius: 5px; }
@@ -1367,31 +1367,31 @@ class PostForgotPassword extends OpenAPIRoute {
 <body>
 	<div class="container">
 		<div class="header">
-			<h2 style="margin: 0;">Password Reset Request</h2>
+			<h2 style="margin: 0;">パスワード再設定のご案内</h2>
 		</div>
 		<div class="content">
-			<p>We received a request to reset your password. Click the button below to proceed:</p>
-			<a href="${resetLink}" class="button">Reset Password</a>
-			<p>Or copy and paste this link in your browser:</p>
+			<p>パスワード再設定のリクエストを受け付けました。下記のボタンをクリックして手続きを進めてください。</p>
+			<a href="${resetLink}" class="button">パスワードを再設定する</a>
+			<p>またはこちらのリンクをブラウザにコピー＆ペーストしてください:</p>
 			<p><a href="${resetLink}" style="color: #4F46E5; word-break: break-all;">${resetLink}</a></p>
-			<p style="color: #666; font-size: 14px;">This link will expire in 1 hour.</p>
-			<p style="color: #666; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
+			<p style="color: #666; font-size: 14px;">このリンクの有効期限は1時間です。</p>
+			<p style="color: #666; font-size: 14px;">心当たりがない場合は、このメールを無視していただいて問題ありません。</p>
 		</div>
 		<div class="footer">
-			<p>Email Explorer - Password Reset</p>
+			<p>Email Explorer - パスワード再設定</p>
 		</div>
 	</div>
 </body>
 </html>`,
-			text: `Password Reset Request
+			text: `パスワード再設定のご案内
 
-We received a request to reset your password. Click the link below to proceed:
+パスワード再設定のリクエストを受け付けました。下記のリンクから手続きを進めてください。
 
 ${resetLink}
 
-This link will expire in 1 hour.
+このリンクの有効期限は1時間です。
 
-If you didn't request this, you can safely ignore this email.`,
+心当たりがない場合は、このメールを無視していただいて問題ありません。`,
 		});
 
 		const emailMessage = new EmailMessage(
