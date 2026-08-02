@@ -1,0 +1,45 @@
+name: IMAP List Folders (Lolipop)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mailbox_address:
+        description: "確認するメールアドレス"
+        required: true
+        type: choice
+        options:
+          - info@beautifulsnow.co.jp
+          - uota@beautifulsnow.co.jp
+
+jobs:
+  list-folders:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/imap-migration
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+
+      - name: List folders for info@beautifulsnow.co.jp
+        if: inputs.mailbox_address == 'info@beautifulsnow.co.jp'
+        run: npm run list-folders
+        env:
+          LOLIPOP_IMAP_HOST: ${{ vars.LOLIPOP_IMAP_HOST || 'imap.lolipop.jp' }}
+          LOLIPOP_IMAP_PORT: ${{ vars.LOLIPOP_IMAP_PORT || '993' }}
+          LOLIPOP_IMAP_SECURE: "true"
+          LOLIPOP_IMAP_USER: info@beautifulsnow.co.jp
+          LOLIPOP_IMAP_PASSWORD: ${{ secrets.LOLIPOP_PASSWORD_INFO }}
+
+      - name: List folders for uota@beautifulsnow.co.jp
+        if: inputs.mailbox_address == 'uota@beautifulsnow.co.jp'
+        run: npm run list-folders
+        env:
+          LOLIPOP_IMAP_HOST: ${{ vars.LOLIPOP_IMAP_HOST || 'imap.lolipop.jp' }}
+          LOLIPOP_IMAP_PORT: ${{ vars.LOLIPOP_IMAP_PORT || '993' }}
+          LOLIPOP_IMAP_SECURE: "true"
+          LOLIPOP_IMAP_USER: uota@beautifulsnow.co.jp
+          LOLIPOP_IMAP_PASSWORD: ${{ secrets.LOLIPOP_PASSWORD_UOTA }}
