@@ -6,6 +6,7 @@
 	"scripts": {
 		"migrate": "node migrate.mjs",
 		"list-folders": "node list-folders.mjs",
+		"list-target-folders": "node list-target-folders.mjs",
 		"dedupe": "node dedupe.mjs"
 	},
 	"dependencies": {

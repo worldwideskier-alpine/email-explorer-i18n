@@ -1,0 +1,31 @@
+name: List Target Folders (email-explorer-ja)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mailbox_address:
+        description: "確認するメールアドレス"
+        required: true
+        type: choice
+        options:
+          - info@beautifulsnow.co.jp
+          - uota@beautifulsnow.co.jp
+
+jobs:
+  list-target-folders:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/imap-migration
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run list-target-folders
+        env:
+          TARGET_API_BASE_URL: https://email-explorer-ja.worldwideskier.workers.dev
+          TARGET_MAILBOX_ID: ${{ inputs.mailbox_address }}
+          TARGET_ADMIN_EMAIL: ${{ secrets.TARGET_ADMIN_EMAIL }}
+          TARGET_ADMIN_PASSWORD: ${{ secrets.TARGET_ADMIN_PASSWORD }}
