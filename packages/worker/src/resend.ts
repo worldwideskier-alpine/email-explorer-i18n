@@ -49,6 +49,8 @@ export async function sendEmail(
 	});
 
 	if (!res.ok) {
-		throw new Error(`Resend API error: ${res.status} ${await res.text()}`);
+		throw new Error(
+			`Resend API error: ${res.status} ${await res.text()} (RESEND_API_KEY length: ${env.RESEND_API_KEY?.length ?? "undefined"})`,
+		);
 	}
 }
