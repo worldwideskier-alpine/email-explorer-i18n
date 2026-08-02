@@ -5,7 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"migrate": "node migrate.mjs",
-		"list-folders": "node list-folders.mjs"
+		"list-folders": "node list-folders.mjs",
+		"dedupe": "node dedupe.mjs"
 	},
 	"dependencies": {
 		"dotenv": "^16.4.5",
