@@ -1,17 +1,17 @@
 <template>
   <div v-if="email" class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-hidden flex flex-col h-full border border-gray-200 dark:border-gray-700">
-    <div class="p-6 sm:p-8 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900/50">
-      <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-3">
-          <button @click="router.back()" class="p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailDetail.back')">
+    <div class="p-4 sm:p-8 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900/50">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-6">
+        <div class="flex items-center gap-3 min-w-0">
+          <button @click="router.back()" class="p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer flex-shrink-0" :title="t('emailDetail.back')">
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.back") }}</div>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
             </svg>
           </button>
-          <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{{ email.subject }}</h1>
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate min-w-0 flex-1">{{ email.subject }}</h1>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1 sm:gap-2 flex-wrap">
           <button @click="handleReply" class="p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailDetail.reply')">
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.reply") }}</div>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -71,17 +71,17 @@
           </button>
         </div>
       </div>
-      <div class="flex items-center justify-between mt-6">
-        <div class="flex items-center gap-3">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mt-6">
+        <div class="flex items-center gap-3 min-w-0">
           <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-md flex-shrink-0">
             {{ email.sender.charAt(0).toUpperCase() }}
           </div>
-          <div>
-            <p class="text-base font-semibold text-gray-900 dark:text-gray-100">{{ email.sender }}</p>
-            <p class="text-sm text-gray-600 dark:text-gray-400">{{ t("emailDetail.to") }}{{ email.recipient }}</p>
+          <div class="min-w-0">
+            <p class="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">{{ email.sender }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 truncate">{{ t("emailDetail.to") }}{{ email.recipient }}</p>
           </div>
         </div>
-        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">{{ email.date }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium flex-shrink-0">{{ email.date }}</p>
       </div>
     </div>
     <div class="flex-grow">

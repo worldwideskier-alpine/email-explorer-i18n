@@ -1,7 +1,24 @@
 <template>
-  <aside class="w-72 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-6 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-    <button 
-      @click="openComposeModal" 
+  <div
+    v-if="isSidebarOpen"
+    @click="uiStore.closeSidebar()"
+    class="fixed inset-0 bg-black/50 z-30 md:hidden"
+  ></div>
+  <aside
+    class="w-72 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-6 border-r border-gray-200 dark:border-gray-700 flex flex-col fixed inset-y-0 left-0 z-40 transition-transform duration-300 md:static md:translate-x-0 md:z-auto"
+    :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+  >
+    <button
+      @click="uiStore.closeSidebar()"
+      class="md:hidden self-end mb-4 p-2 -mr-2 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200"
+      :title="t('sidebar.toggleMenu')"
+    >
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+    <button
+      @click="openComposeModal"
       class="w-full mb-8 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform hover:scale-105 transition-all duration-200 font-semibold flex items-center justify-center gap-2"
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,7 +123,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { computed, onMounted } from "vue";
+import { computed, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useFolderStore } from "@/stores/folders";
@@ -116,7 +133,14 @@ const { t } = useI18n();
 const folderStore = useFolderStore();
 const { folders } = storeToRefs(folderStore);
 const uiStore = useUIStore();
+const { isSidebarOpen } = storeToRefs(uiStore);
 const route = useRoute();
+
+// Close the mobile drawer whenever the user navigates to a folder/page.
+watch(
+	() => route.fullPath,
+	() => uiStore.closeSidebar(),
+);
 
 const defaultFolderIds = ["archive", "inbox", "sent", "spam", "trash", "draft"];
 const customFolders = computed(() => {
