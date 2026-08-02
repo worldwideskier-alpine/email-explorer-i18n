@@ -4,7 +4,8 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"migrate": "node migrate.mjs"
+		"migrate": "node migrate.mjs",
+		"list-folders": "node list-folders.mjs"
 	},
 	"dependencies": {
 		"dotenv": "^16.4.5",
