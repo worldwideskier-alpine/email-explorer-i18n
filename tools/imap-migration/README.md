@@ -1,7 +1,7 @@
 # IMAP Migration Tool
 
 `beautifulsnow.co.jp` のように、既存のIMAPメールサーバー（例: ロリポップ！レンタルサーバー）から
-[email-explorer-ja](../../README.md) へ過去メールを取り込むための、ローカル実行用の移行スクリプトです。
+[email-explorer-ja](../../README.md) へ過去メールを取り込むための移行スクリプトです。
 
 ## 想定している移行手順
 
@@ -10,7 +10,34 @@
 3. コピーが完了・確認できたら、**Cloudflareダッシュボードで `beautifulsnow.co.jp` のEmail Routingを有効化**し、MXをCloudflare側へ切替（この時点から新着メールは email-explorer-ja に届く）。
 4. 切替直前にロリポップへ届いた分の取りこぼしがないよう、`LOLIPOP_IMAP_SINCE` を使って**差分同期を1回追加実行**する。
 
-## 使い方
+## 使い方 ① GitHub Actionsで実行（推奨・ローカルインストール不要）
+
+ローカルにNode.jsを入れたくない場合は、GitHub Actions上で実行できます。認証情報はGitHubの
+Secretsに保存されるため、チャットやローカルファイルに書き出す必要もありません。
+
+**事前準備（初回のみ）:** リポジトリの Settings → Secrets and variables → Actions で、以下の
+Secretsを登録してください。
+
+| Secret名 | 値 |
+|---|---|
+| `LOLIPOP_PASSWORD_INFO` | `info@beautifulsnow.co.jp` のIMAPパスワード |
+| `LOLIPOP_PASSWORD_UOTA` | `uota@beautifulsnow.co.jp` のIMAPパスワード |
+| `TARGET_ADMIN_EMAIL` | email-explorer-ja側の管理者アカウントのメールアドレス |
+| `TARGET_ADMIN_PASSWORD` | 同、パスワード |
+
+IMAPホスト名がロリポップの標準（`imap.lolipop.jp:993`）と異なる場合は、Secretsの隣にある
+「Variables」タブで `LOLIPOP_IMAP_HOST` / `LOLIPOP_IMAP_PORT` を追加で設定してください。
+
+**実行方法:**
+
+1. GitHubのリポジトリページ →「Actions」タブ
+2. 左側の一覧から「IMAP Migration (Lolipop -> email-explorer-ja)」を選択
+3. 右側の「Run workflow」ボタンをクリック
+4. `mailbox_address` で対象のメールアドレスを選択、`dry_run` は最初は `true` のまま「Run workflow」
+5. 実行後に表示されるログで、取得件数・件名を確認
+6. 問題なければ、もう一度「Run workflow」を実行し、今度は `dry_run` を `false` にして実データを投入
+
+## 使い方 ② ローカル環境で実行
 
 ```bash
 cd tools/imap-migration
