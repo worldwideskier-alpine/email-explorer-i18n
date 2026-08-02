@@ -25,6 +25,12 @@
 
 このリポジトリのコードはデプロイ可能な状態ですが、実際に Cloudflare 上へ `wrangler deploy` を実行するには、ご自身の Cloudflare アカウントと API トークンが必要です。認証情報を安全に管理するため、デプロイはご自身の環境から実行してください。手順はオリジナルプロジェクトの [Getting Started](#getting-started) を参照してください。
 
+## 既存メールサーバーからの移行（IMAPインポート）
+
+ドメインのMXをCloudflare Email Routingに切り替える前に、既存のIMAPメールサーバー（例: ロリポップ！レンタルサーバー）から
+過去メールをこのアプリへコピーしたい場合は、[`tools/imap-migration`](tools/imap-migration/README.md) の移行スクリプトを使用してください。
+移行先には `POST /api/v1/admin/mailboxes/:mailboxId/import`（管理者専用・送信は行わずメールを保存するAPI）を利用します。
+
 <p align="center">
     <a href="https://github.com/G4brym/email-explorer/commits/main" target="_blank">
       <img src="https://img.shields.io/github/commit-activity/m/G4brym/email-explorer?label=Commits&style=social" alt="Email Explorer Commits">
