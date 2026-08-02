@@ -38,23 +38,85 @@ const config = {
 };
 
 // Maps common IMAP folder names to email-explorer-ja's fixed default folder
-// ids. Anything unrecognized falls back to "inbox" so nothing gets lost.
-const FOLDER_MAP = {
-	inbox: "inbox",
+// ids -- these already exist in every mailbox, so messages go straight in
+// without creating a new folder.
+const STANDARD_FOLDER_MAP = {
 	sent: "sent",
 	"sent items": "sent",
 	"sent messages": "sent",
+	送信済み: "sent",
 	trash: "trash",
 	"deleted items": "trash",
 	"deleted messages": "trash",
+	ゴミ箱: "trash",
 	archive: "archive",
+	archives: "archive",
 	spam: "spam",
 	junk: "spam",
 	"junk e-mail": "spam",
 };
 
-function mapFolder(imapFolderName) {
-	return FOLDER_MAP[imapFolderName.trim().toLowerCase()] || "inbox";
+// Strips the IMAP root segment ("INBOX" / "INBOX.") so nested paths like
+// "INBOX.不動産賃貸.修繕" become "不動産賃貸.修繕". Returns "" for the
+// root INBOX itself.
+function relativeFolderName(imapPath) {
+	return imapPath.replace(/^INBOX[./]?/i, "");
+}
+
+const customFolderCache = new Map();
+
+// email-explorer-ja doesn't support nested folders, so any remaining path
+// separators are flattened into a single folder name (e.g.
+// "不動産賃貸.修繕" -> "不動産賃貸_修繕").
+async function resolveTargetFolder(cookie, imapPath) {
+	const rel = relativeFolderName(imapPath);
+	if (!rel) return "inbox";
+
+	const standard = STANDARD_FOLDER_MAP[rel.toLowerCase()];
+	if (standard) return standard;
+
+	const customName = rel.replace(/[./]/g, "_");
+	return ensureCustomFolder(cookie, customName);
+}
+
+async function ensureCustomFolder(cookie, name) {
+	if (customFolderCache.has(name)) return customFolderCache.get(name);
+
+	if (config.dryRun) {
+		// Don't create anything in dry-run mode -- just report the name that
+		// would be used.
+		customFolderCache.set(name, `(new folder) ${name}`);
+		return customFolderCache.get(name);
+	}
+
+	const foldersUrl = `${config.targetBaseUrl}/api/v1/mailboxes/${encodeURIComponent(config.targetMailboxId)}/folders`;
+
+	const createRes = await fetch(foldersUrl, {
+		method: "POST",
+		headers: { "Content-Type": "application/json", Cookie: cookie },
+		body: JSON.stringify({ name }),
+	});
+
+	if (createRes.status === 201) {
+		const folder = await createRes.json();
+		console.log(`  (created folder "${name}" -> id "${folder.id}")`);
+		customFolderCache.set(name, folder.id);
+		return folder.id;
+	}
+
+	if (createRes.status === 409) {
+		const listRes = await fetch(foldersUrl, { headers: { Cookie: cookie } });
+		const folders = await listRes.json();
+		const existing = folders.find((f) => f.name === name);
+		if (existing) {
+			customFolderCache.set(name, existing.id);
+			return existing.id;
+		}
+	}
+
+	throw new Error(
+		`Could not create or find target folder "${name}": ${createRes.status} ${await createRes.text()}`,
+	);
 }
 
 async function login() {
@@ -150,7 +212,7 @@ async function main() {
 
 	try {
 		for (const imapFolder of config.imapFolders) {
-			const targetFolder = mapFolder(imapFolder);
+			const targetFolder = await resolveTargetFolder(cookie, imapFolder);
 			console.log(`\n=== Folder: ${imapFolder} -> ${targetFolder} ===`);
 
 			const lock = await client.getMailboxLock(imapFolder);
