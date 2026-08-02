@@ -1,8 +1,7 @@
-import { EmailMessage } from "cloudflare:email";
 import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
-import { buildMimeMessage } from "../mime-builder";
+import { sendEmail } from "../resend";
 import type { Env, Session } from "../types";
 
 type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
@@ -104,28 +103,21 @@ export class PostReplyEmail extends OpenAPIRoute {
 		// Normalize 'to' to string
 		const toStr = Array.isArray(to) ? to[0] : to;
 
-		// Build MIME message
-		const mimeMessage = buildMimeMessage({
-			from,
-			to,
-			subject,
-			text,
-			html,
-			attachments: attachments?.map((att) => ({
-				filename: att.filename,
-				content: att.content,
-				type: att.type,
-				disposition: att.disposition,
-				contentId: att.contentId,
-			})),
-			inReplyTo: in_reply_to,
-			references: references,
-		});
-
-		const message = new EmailMessage(from, toStr, mimeMessage);
-
 		try {
-			await c.env.SEND_EMAIL.send(message);
+			await sendEmail(c.env, {
+				from,
+				to,
+				subject,
+				text,
+				html,
+				attachments: attachments?.map((att) => ({
+					filename: att.filename,
+					content: att.content,
+					type: att.type,
+				})),
+				inReplyTo: in_reply_to,
+				references: references,
+			});
 		} catch (e) {
 			return c.json({ error: (e as Error).message }, 500);
 		}
@@ -223,26 +215,19 @@ export class PostForwardEmail extends OpenAPIRoute {
 		// Forwarded emails don't have threading headers
 		const toStr = Array.isArray(to) ? to[0] : to;
 
-		// Build MIME message
-		const mimeMessage = buildMimeMessage({
-			from,
-			to,
-			subject,
-			text,
-			html,
-			attachments: attachments?.map((att) => ({
-				filename: att.filename,
-				content: att.content,
-				type: att.type,
-				disposition: att.disposition,
-				contentId: att.contentId,
-			})),
-		});
-
-		const message = new EmailMessage(from, toStr, mimeMessage);
-
 		try {
-			await c.env.SEND_EMAIL.send(message);
+			await sendEmail(c.env, {
+				from,
+				to,
+				subject,
+				text,
+				html,
+				attachments: attachments?.map((att) => ({
+					filename: att.filename,
+					content: att.content,
+					type: att.type,
+				})),
+			});
 		} catch (e) {
 			return c.json({ error: (e as Error).message }, 500);
 		}

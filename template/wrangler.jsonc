@@ -25,11 +25,6 @@
 			"bucket_name": "email-explorer"
 		}
 	],
-	"send_email": [
-		{
-			"name": "SEND_EMAIL"
-		}
-	],
 	"durable_objects": {
 		"bindings": [
 			{

@@ -48,3 +48,8 @@ jobs:
         run: npx wrangler r2 bucket create email-explorer-ja || true
       - name: Deploy Worker
         run: pnpm run deploy-dev-worker
+      - name: Set RESEND_API_KEY secret
+        working-directory: packages/worker/dev
+        run: echo "$RESEND_API_KEY" | npx wrangler secret put RESEND_API_KEY
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}

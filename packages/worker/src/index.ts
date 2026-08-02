@@ -1,11 +1,10 @@
-import { EmailMessage } from "cloudflare:email";
 import { contentJson, fromHono, OpenAPIRoute } from "chanfana";
 import { type Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import PostalMime from "postal-mime";
 import { z } from "zod";
 import { ingestEmailIntoMailbox } from "./email-ingest";
-import { buildMimeMessage } from "./mime-builder";
+import { sendEmail } from "./resend";
 import {
 	GetMe,
 	GetUsers,
@@ -534,31 +533,23 @@ class PostEmail extends OpenAPIRoute {
 			return c.json({ error: "Not found" }, 404);
 		}
 
-		// Normalize 'to' to string (EmailMessage expects string)
 		const toStr = Array.isArray(to) ? to[0] : to;
 
-		// Build MIME message using Workers-compatible builder
-		const mimeMessage = buildMimeMessage({
-			from,
-			to,
-			subject,
-			text,
-			html,
-			attachments: attachments?.map((att) => ({
-				filename: att.filename,
-				content: att.content,
-				type: att.type,
-				disposition: att.disposition,
-				contentId: att.contentId,
-			})),
-			inReplyTo: in_reply_to,
-			references: references,
-		});
-
-		const message = new EmailMessage(from, toStr, mimeMessage);
-
 		try {
-			await c.env.SEND_EMAIL.send(message);
+			await sendEmail(c.env, {
+				from,
+				to,
+				subject,
+				text,
+				html,
+				attachments: attachments?.map((att) => ({
+					filename: att.filename,
+					content: att.content,
+					type: att.type,
+				})),
+				inReplyTo: in_reply_to,
+				references: references,
+			});
 		} catch (e) {
 			return c.json({ error: (e as Error).message }, 500);
 		}
@@ -1355,11 +1346,13 @@ class PostForgotPassword extends OpenAPIRoute {
 
 		// Send recovery email
 		const resetLink = `${new URL(c.req.url).origin}/reset-password?token=${token}`;
-		const mimeMessage = buildMimeMessage({
-			from: c.env.config.accountRecovery.fromEmail,
-			to: email,
-			subject: "パスワード再設定のご案内",
-			html: `<!DOCTYPE html>
+
+		try {
+			await sendEmail(c.env, {
+				from: c.env.config.accountRecovery.fromEmail,
+				to: email,
+				subject: "パスワード再設定のご案内",
+				html: `<!DOCTYPE html>
 <html lang="ja">
 <head>
 	<meta charset="UTF-8">
@@ -1392,7 +1385,7 @@ class PostForgotPassword extends OpenAPIRoute {
 	</div>
 </body>
 </html>`,
-			text: `パスワード再設定のご案内
+				text: `パスワード再設定のご案内
 
 パスワード再設定のリクエストを受け付けました。下記のリンクから手続きを進めてください。
 
@@ -1401,16 +1394,7 @@ ${resetLink}
 このリンクの有効期限は1時間です。
 
 心当たりがない場合は、このメールを無視していただいて問題ありません。`,
-		});
-
-		const emailMessage = new EmailMessage(
-			c.env.config.accountRecovery.fromEmail,
-			email,
-			mimeMessage,
-		);
-
-		try {
-			await c.env.SEND_EMAIL.send(emailMessage);
+			});
 		} catch (e) {
 			console.error("Failed to send recovery email:", e);
 			return c.json({ error: "Failed to send recovery email" }, 500);

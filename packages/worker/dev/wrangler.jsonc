@@ -27,11 +27,6 @@
 //			"remote": true
 		}
 	],
-	"send_email": [
-		{
-			"name": "SEND_EMAIL"
-		}
-	],
 	"durable_objects": {
 		"bindings": [
 			{
