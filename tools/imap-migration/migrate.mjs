@@ -155,11 +155,14 @@ async function main() {
 
 			const lock = await client.getMailboxLock(imapFolder);
 			try {
-				const searchCriteria = config.imapSince
+				// imapflow's fetch() range must be a sequence string, UID array, or
+				// search object -- "1:*" is the IMAP sequence range meaning "all
+				// messages in the mailbox".
+				const range = config.imapSince
 					? { since: new Date(config.imapSince) }
-					: true; // true = ALL messages
+					: "1:*";
 
-				for await (const message of client.fetch(searchCriteria, {
+				for await (const message of client.fetch(range, {
 					source: true,
 					internalDate: true,
 					flags: true,
