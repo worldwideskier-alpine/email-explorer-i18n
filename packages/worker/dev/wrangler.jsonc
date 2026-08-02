@@ -6,7 +6,7 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"compatibility_date": "2025-11-28",
 	"main": "index.ts",
-	"name": "email-explorer",
+	"name": "email-explorer-ja",
 	"upload_source_maps": true,
 	"observability": {
 		"enabled": true
@@ -22,8 +22,8 @@
 	"r2_buckets": [
 		{
 			"binding": "BUCKET",
-			"bucket_name": "email-explorer",
-			"preview_bucket_name": "email-explorer",
+			"bucket_name": "email-explorer-ja",
+			"preview_bucket_name": "email-explorer-ja",
 //			"remote": true
 		}
 	],
