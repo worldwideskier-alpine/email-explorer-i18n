@@ -213,7 +213,10 @@ const handleCreateMailbox = async () => {
 		closeCreateMailboxModal();
 		await mailboxStore.fetchMailboxes();
 	} catch (e: any) {
-		const errorMessage = translateApiError(e.response?.data?.error, "Failed to create mailbox");
+		const errorMessage = translateApiError(
+			e.response?.data?.error,
+			"Failed to create mailbox",
+		);
 		createError.value = errorMessage;
 		showErrorToast(errorMessage);
 	} finally {
