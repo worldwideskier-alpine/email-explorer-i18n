@@ -77,7 +77,9 @@ export class PostImportEmail extends OpenAPIRoute {
 
 		let rawEmail: Uint8Array;
 		try {
-			rawEmail = Uint8Array.from(atob(rawEmailBase64), (ch) => ch.charCodeAt(0));
+			rawEmail = Uint8Array.from(atob(rawEmailBase64), (ch) =>
+				ch.charCodeAt(0),
+			);
 		} catch {
 			return c.json({ error: "rawEmailBase64 is not valid base64" }, 400);
 		}
@@ -85,11 +87,17 @@ export class PostImportEmail extends OpenAPIRoute {
 		const parser = new PostalMime();
 		const parsedEmail = await parser.parse(rawEmail);
 
-		const id = await ingestEmailIntoMailbox(c.env, mailboxId, folder, parsedEmail, {
-			date,
-			read,
-			starred,
-		});
+		const id = await ingestEmailIntoMailbox(
+			c.env,
+			mailboxId,
+			folder,
+			parsedEmail,
+			{
+				date,
+				read,
+				starred,
+			},
+		);
 
 		return c.json({ id, status: "imported" }, 201);
 	}
