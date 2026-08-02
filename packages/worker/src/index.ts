@@ -4,6 +4,7 @@ import { type Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import PostalMime from "postal-mime";
 import { z } from "zod";
+import { ingestEmailIntoMailbox } from "./email-ingest";
 import { buildMimeMessage } from "./mime-builder";
 import {
 	GetMe,
@@ -16,6 +17,7 @@ import {
 	PostRevokeAccess,
 	PutUser,
 } from "./routes/auth";
+import { PostImportEmail } from "./routes/import";
 import { PostForwardEmail, PostReplyEmail } from "./routes/reply-forward";
 import type { EmailExplorerOptions, Env, Session } from "./types";
 
@@ -1616,6 +1618,7 @@ openapi.get("/api/v1/auth/admin/users", GetUsers);
 openapi.put("/api/v1/auth/admin/users/:userId", PutUser);
 openapi.post("/api/v1/auth/admin/grant-access", PostGrantAccess);
 openapi.post("/api/v1/auth/admin/revoke-access", PostRevokeAccess);
+openapi.post("/api/v1/admin/mailboxes/:mailboxId/import", PostImportEmail);
 
 // Settings endpoints
 openapi.get("/api/v1/settings", GetAppSettings);
@@ -1685,66 +1688,7 @@ async function receiveEmail(
 	}
 
 	const mailboxId = parsedEmail.to[0].address;
-	const messageId = crypto.randomUUID();
-
-	const key = `mailboxes/${mailboxId}.json`;
-	const obj = await env.BUCKET.head(key);
-	if (!obj) {
-		await env.BUCKET.put(key, JSON.stringify({}));
-	}
-
-	const ns = env.MAILBOX;
-	const id = ns.idFromName(mailboxId);
-	const stub = ns.get(id);
-
-	const attachmentData = [];
-	if (parsedEmail.attachments) {
-		for (const att of parsedEmail.attachments) {
-			const attachmentId = crypto.randomUUID();
-			const key = `attachments/${messageId}/${attachmentId}/${att.filename}`;
-			await env.BUCKET.put(key, att.content);
-			attachmentData.push({
-				id: attachmentId,
-				email_id: messageId,
-				filename: att.filename || "untitled",
-				mimetype: att.mimeType,
-				size:
-					typeof att.content === "string"
-						? att.content.length
-						: att.content.byteLength,
-				content_id: att.contentId || null,
-				disposition: att.disposition,
-			});
-		}
-	}
-
-	// Parse threading headers from incoming email
-	// Strip angle brackets from message IDs since postal-mime returns raw RFC 2822
-	// values (e.g. "<msg@example.com>") but we store bare IDs to match outgoing emails
-	const stripBrackets = (s: string) => s.replace(/^</, "").replace(/>$/, "");
-	const inReplyTo = parsedEmail.inReplyTo
-		? stripBrackets(parsedEmail.inReplyTo)
-		: null;
-	const emailReferences = parsedEmail.references
-		? parsedEmail.references.split(/\s+/).filter(Boolean).map(stripBrackets)
-		: [];
-
-	await stub.createEmail(
-		"inbox",
-		{
-			id: messageId,
-			subject: parsedEmail.subject || "",
-			sender: parsedEmail.from?.address || "",
-			recipient: parsedEmail.to[0].address,
-			date: new Date().toISOString(),
-			body: parsedEmail.html || parsedEmail.text || "",
-			in_reply_to: inReplyTo,
-			email_references:
-				emailReferences.length > 0 ? JSON.stringify(emailReferences) : null,
-			thread_id: emailReferences[0] || inReplyTo || messageId,
-		},
-		attachmentData,
-	);
+	await ingestEmailIntoMailbox(env, mailboxId, "inbox", parsedEmail);
 }
 
 const defaultOptions: EmailExplorerOptions = {
