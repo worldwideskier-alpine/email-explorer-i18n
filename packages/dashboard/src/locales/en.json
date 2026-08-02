@@ -85,6 +85,7 @@
 		"mailboxCreated": "Mailbox created successfully!"
 	},
 	"sidebar": {
+		"toggleMenu": "Toggle menu",
 		"compose": "Compose",
 		"inbox": "Inbox",
 		"sent": "Sent",

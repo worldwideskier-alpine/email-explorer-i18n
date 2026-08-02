@@ -14,6 +14,7 @@ export const useUIStore = defineStore("ui", {
 			mode: "new" as ComposeMode,
 			originalEmail: null,
 		} as ComposeOptions,
+		isSidebarOpen: false,
 	}),
 	actions: {
 		openComposeModal(options?: ComposeOptions) {
@@ -23,6 +24,12 @@ export const useUIStore = defineStore("ui", {
 		closeComposeModal() {
 			this.isComposeModalOpen = false;
 			this.composeOptions = { mode: "new", originalEmail: null };
+		},
+		toggleSidebar() {
+			this.isSidebarOpen = !this.isSidebarOpen;
+		},
+		closeSidebar() {
+			this.isSidebarOpen = false;
 		},
 	},
 });

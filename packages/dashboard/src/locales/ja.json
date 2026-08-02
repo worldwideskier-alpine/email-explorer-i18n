@@ -85,6 +85,7 @@
 		"mailboxCreated": "メールボックスを作成しました！"
 	},
 	"sidebar": {
+		"toggleMenu": "メニューを開閉",
 		"compose": "作成",
 		"inbox": "受信トレイ",
 		"sent": "送信済み",

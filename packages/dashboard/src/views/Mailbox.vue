@@ -1,9 +1,9 @@
 <template>
   <div class="flex h-screen bg-gray-100 dark:bg-gray-900">
     <Sidebar />
-    <div class="flex-1 flex flex-col">
+    <div class="flex-1 flex flex-col min-w-0">
       <Header />
-      <main class="flex-1 overflow-y-auto p-4">
+      <main class="flex-1 overflow-y-auto p-4 min-w-0">
         <router-view />
       </main>
     </div>
