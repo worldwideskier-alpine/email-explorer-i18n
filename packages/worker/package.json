@@ -48,6 +48,7 @@
 		"url": "https://github.com/G4brym/email-explorer/issues"
 	},
 	"dependencies": {
+		"@pushforge/builder": "^2.0.5",
 		"chanfana": "2.8.3",
 		"hono": "4.10.7",
 		"postal-mime": "^2.6.1",

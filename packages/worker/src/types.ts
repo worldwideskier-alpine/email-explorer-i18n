@@ -28,5 +28,7 @@ export type Env = {
 	MAILBOX: DurableObjectNamespace<import("./durableObject/index").MailboxDO>;
 	BUCKET: R2Bucket;
 	RESEND_API_KEY: string;
+	VAPID_PUBLIC_KEY: string;
+	VAPID_PRIVATE_KEY: string;
 	config?: EmailExplorerOptions;
 };

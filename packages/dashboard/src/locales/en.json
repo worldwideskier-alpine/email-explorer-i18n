@@ -132,7 +132,10 @@
 		"email": "Email",
 		"signatureTitle": "Email Signature",
 		"signatureDescription": "Add a signature that will be appended to your outgoing emails.",
-		"save": "Save"
+		"save": "Save",
+		"pushTitle": "Push Notifications",
+		"pushDescription": "Get notified on this device when new mail arrives (across all mailboxes).",
+		"pushError": "Failed to update push notification settings"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Invalid credentials",

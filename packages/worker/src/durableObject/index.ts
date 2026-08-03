@@ -396,6 +396,95 @@ export class MailboxDO extends DurableObject<Env> {
 		);
 	}
 
+	// Push operation: get ids of every user who should be notified for a
+	// mailbox -- admins (implicit access to everything) plus anyone granted
+	// explicit access via user_mailboxes.
+	async getUserIdsForMailbox(mailboxId: string): Promise<string[]> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const admins = this.#qb
+			.select("users")
+			.fields(["id"])
+			.where("is_admin = 1")
+			.execute();
+
+		const granted = this.#qb
+			.select("user_mailboxes")
+			.fields(["user_id"])
+			.where("mailbox_id = ?", mailboxId)
+			.execute();
+
+		const ids = new Set<string>();
+		for (const row of admins.results ?? []) ids.add(String(row.id));
+		for (const row of granted.results ?? []) ids.add(String(row.user_id));
+		return Array.from(ids);
+	}
+
+	// Push operation: save a subscription for a user (upsert by endpoint)
+	async savePushSubscription(
+		userId: string,
+		endpoint: string,
+		keys: { p256dh: string; auth: string },
+	): Promise<void> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		this.#qb
+			.delete({
+				tableName: "push_subscriptions",
+				where: { conditions: "endpoint = ?", params: [endpoint] },
+			})
+			.execute();
+
+		this.#qb
+			.insert({
+				tableName: "push_subscriptions",
+				data: {
+					id: crypto.randomUUID(),
+					user_id: userId,
+					endpoint,
+					p256dh: keys.p256dh,
+					auth: keys.auth,
+					created_at: Date.now(),
+				},
+			})
+			.execute();
+	}
+
+	// Push operation: remove a subscription by endpoint
+	async removePushSubscription(endpoint: string): Promise<void> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		this.#qb
+			.delete({
+				tableName: "push_subscriptions",
+				where: { conditions: "endpoint = ?", params: [endpoint] },
+			})
+			.execute();
+	}
+
+	// Push operation: get subscriptions for a set of users
+	async getPushSubscriptionsForUsers(
+		userIds: string[],
+	): Promise<Array<{ endpoint: string; p256dh: string; auth: string }>> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+		if (userIds.length === 0) return [];
+
+		const placeholders = userIds.map(() => "?").join(", ");
+		const result = this.#qb
+			.select("push_subscriptions")
+			.fields(["endpoint", "p256dh", "auth"])
+			.where(`user_id IN (${placeholders})`, userIds)
+			.execute();
+
+		return (
+			result.results?.map((row) => ({
+				endpoint: String(row.endpoint),
+				p256dh: String(row.p256dh),
+				auth: String(row.auth),
+			})) ?? []
+		);
+	}
+
 	async getEmails(options: GetEmailsOptions = {}) {
 		const {
 			folder,

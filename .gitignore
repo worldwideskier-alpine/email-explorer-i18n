@@ -140,6 +140,8 @@ vite.config.ts.timestamp-*
 
 .idea
 .wrangler
+.dev.vars
+.dev.vars.*
 packages/worker/dashboard
 packages/worker/README.md
 packages/worker/LICENSE

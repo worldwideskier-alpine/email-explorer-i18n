@@ -17,6 +17,11 @@ import {
 	PutUser,
 } from "./routes/auth";
 import { PostImportEmail } from "./routes/import";
+import {
+	GetVapidPublicKey,
+	PostPushSubscribe,
+	PostPushUnsubscribe,
+} from "./routes/push";
 import { PostForwardEmail, PostReplyEmail } from "./routes/reply-forward";
 import type { EmailExplorerOptions, Env, Session } from "./types";
 
@@ -1611,6 +1616,11 @@ openapi.post("/api/v1/auth/admin/grant-access", PostGrantAccess);
 openapi.post("/api/v1/auth/admin/revoke-access", PostRevokeAccess);
 openapi.post("/api/v1/admin/mailboxes/:mailboxId/import", PostImportEmail);
 
+// Push notification endpoints
+openapi.get("/api/v1/push/vapid-public-key", GetVapidPublicKey);
+openapi.post("/api/v1/push/subscribe", PostPushSubscribe);
+openapi.post("/api/v1/push/unsubscribe", PostPushUnsubscribe);
+
 // Settings endpoints
 openapi.get("/api/v1/settings", GetAppSettings);
 
@@ -1679,7 +1689,9 @@ async function receiveEmail(
 	}
 
 	const mailboxId = parsedEmail.to[0].address;
-	await ingestEmailIntoMailbox(env, mailboxId, "inbox", parsedEmail);
+	await ingestEmailIntoMailbox(env, mailboxId, "inbox", parsedEmail, {
+		notify: true,
+	});
 }
 
 const defaultOptions: EmailExplorerOptions = {
