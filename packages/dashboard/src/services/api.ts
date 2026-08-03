@@ -141,4 +141,11 @@ export default {
 		}),
 	adminRevokeAccess: (userId: string, mailboxId: string) =>
 		apiClient.post("/api/v1/auth/admin/revoke-access", { userId, mailboxId }),
+
+	// Push notifications
+	getVapidPublicKey: () => apiClient.get("/api/v1/push/vapid-public-key"),
+	subscribePush: (subscription: PushSubscriptionJSON) =>
+		apiClient.post("/api/v1/push/subscribe", subscription),
+	unsubscribePush: (endpoint: string) =>
+		apiClient.post("/api/v1/push/unsubscribe", { endpoint }),
 };

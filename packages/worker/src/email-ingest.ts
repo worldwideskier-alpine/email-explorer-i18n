@@ -1,4 +1,5 @@
 import type PostalMime from "postal-mime";
+import { notifyMailboxSubscribers } from "./push-notify";
 import type { Env } from "./types";
 
 /**
@@ -13,7 +14,12 @@ export async function ingestEmailIntoMailbox(
 	mailboxId: string,
 	folder: string,
 	parsedEmail: Awaited<ReturnType<PostalMime["parse"]>>,
-	overrides: { date?: string; read?: boolean; starred?: boolean } = {},
+	overrides: {
+		date?: string;
+		read?: boolean;
+		starred?: boolean;
+		notify?: boolean;
+	} = {},
 ) {
 	const messageId = crypto.randomUUID();
 
@@ -79,6 +85,14 @@ export async function ingestEmailIntoMailbox(
 		await stub.updateEmail(messageId, {
 			read: overrides.read,
 			starred: overrides.starred,
+		});
+	}
+
+	if (overrides.notify) {
+		await notifyMailboxSubscribers(env, mailboxId, {
+			title: parsedEmail.from?.address || mailboxId,
+			body: parsedEmail.subject || "",
+			url: `/mailbox/${mailboxId}/emails/inbox`,
 		});
 	}
 

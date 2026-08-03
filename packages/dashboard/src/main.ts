@@ -13,3 +13,11 @@ app.use(router);
 app.use(i18n);
 
 app.mount("#app");
+
+if ("serviceWorker" in navigator) {
+	window.addEventListener("load", () => {
+		navigator.serviceWorker.register("/sw.js").catch((e) => {
+			console.error("Service worker registration failed:", e);
+		});
+	});
+}

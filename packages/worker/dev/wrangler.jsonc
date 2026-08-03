@@ -12,6 +12,9 @@
 		"enabled": true
 	},
 	"compatibility_flags": ["nodejs_compat", "enable_email_sending_queuing"],
+	"vars": {
+		"VAPID_PUBLIC_KEY": "BGU5ROPsWyFfKmU6wSP0Zff_Ilp1k6DLi-AgwA45rUgFYPqDy-BGTDuSOysCtpteFr0IqwaRMvjP5AJGy_P0g5U"
+	},
 	"assets": {
 		"directory": "node_modules/email-explorer/dashboard",
 		"binding": "ASSETS",

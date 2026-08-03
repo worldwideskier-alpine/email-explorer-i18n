@@ -114,6 +114,9 @@ importers:
 
   packages/worker:
     dependencies:
+      '@pushforge/builder':
+        specifier: ^2.0.5
+        version: 2.0.5
       chanfana:
         specifier: 2.8.3
         version: 2.8.3
@@ -1233,6 +1236,11 @@ packages:
 
   '@poppinss/exception@1.2.2':
     resolution: {integrity: sha512-m7bpKCD4QMlFCjA/nKTs23fuvoVFoA83brRKmObCUNmi/9tVu8Ve3w4YQAnJu4q3Tjf5fr685HYIC/IA2zHRSg==}
+
+  '@pushforge/builder@2.0.5':
+    resolution: {integrity: sha512-9Q6lBFWUMKUL5vBknwAt+nlS7eWCrNuf1lCMAhC1Iypn8gtYJ0rdVHAnsGFMxPKhbtgkgpU3r6UVduDTQ8jgzw==}
+    engines: {node: '>=20.0.0'}
+    hasBin: true
 
   '@remirror/core-constants@3.0.0':
     resolution: {integrity: sha512-42aWfPrimMfDKDi4YegyS7x+/0tlzaqwPQCULLanv3DMIlu96KTJR0fM5isWX2UViOqlGnX6YFgqWepcX+XMNg==}
@@ -4485,6 +4493,8 @@ snapshots:
       supports-color: 10.2.2
 
   '@poppinss/exception@1.2.2': {}
+
+  '@pushforge/builder@2.0.5': {}
 
   '@remirror/core-constants@3.0.0': {}
 

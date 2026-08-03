@@ -53,3 +53,8 @@ jobs:
         run: printf '%s' "$RESEND_API_KEY" | npx wrangler secret put RESEND_API_KEY
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      - name: Set VAPID_PRIVATE_KEY secret
+        working-directory: packages/worker/dev
+        run: printf '%s' "$VAPID_PRIVATE_KEY" | npx wrangler secret put VAPID_PRIVATE_KEY
+        env:
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}

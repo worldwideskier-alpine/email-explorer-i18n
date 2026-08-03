@@ -33,6 +33,21 @@
           <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">{{ t("settings.save") }}</button>
         </div>
       </form>
+
+      <!-- Push Notifications Section (device-wide, not per-mailbox) -->
+      <div v-if="pushSupported" class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <h2 class="text-lg font-medium text-gray-900 dark:text-white">{{ t("settings.pushTitle") }}</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("settings.pushDescription") }}</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" :checked="pushEnabled" :disabled="pushLoading" @change="togglePush" class="sr-only peer" />
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-indigo-600 peer-disabled:opacity-50"></div>
+          </label>
+        </div>
+        <p v-if="pushError" class="text-sm text-red-600 dark:text-red-400">{{ pushError }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -43,6 +58,12 @@ import { onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import RichTextEditor from "@/components/RichTextEditor.vue";
+import {
+	getExistingSubscription,
+	isPushSupported,
+	subscribeToPush,
+	unsubscribeFromPush,
+} from "@/services/push";
 import { useMailboxStore } from "@/stores/mailboxes";
 
 const { t } = useI18n();
@@ -52,6 +73,35 @@ const route = useRoute();
 
 const signatureEnabled = ref(false);
 const signatureHtml = ref("");
+
+const pushSupported = isPushSupported();
+const pushEnabled = ref(false);
+const pushLoading = ref(false);
+const pushError = ref("");
+
+onMounted(async () => {
+	if (!pushSupported) return;
+	const subscription = await getExistingSubscription();
+	pushEnabled.value = !!subscription;
+});
+
+const togglePush = async () => {
+	pushError.value = "";
+	pushLoading.value = true;
+	try {
+		if (pushEnabled.value) {
+			await unsubscribeFromPush();
+			pushEnabled.value = false;
+		} else {
+			await subscribeToPush();
+			pushEnabled.value = true;
+		}
+	} catch (e: any) {
+		pushError.value = e.message || t("settings.pushError");
+	} finally {
+		pushLoading.value = false;
+	}
+};
 
 // Initialize signature state when mailbox loads
 watch(

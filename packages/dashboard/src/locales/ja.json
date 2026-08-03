@@ -132,7 +132,10 @@
 		"email": "メールアドレス",
 		"signatureTitle": "メール署名",
 		"signatureDescription": "送信するメールに追加される署名を設定します。",
-		"save": "保存"
+		"save": "保存",
+		"pushTitle": "プッシュ通知",
+		"pushDescription": "この端末に新着メールの通知を送ります（すべてのメールボックス共通）。",
+		"pushError": "プッシュ通知の設定に失敗しました"
 	},
 	"apiErrors": {
 		"Invalid credentials": "メールアドレスまたはパスワードが正しくありません",
