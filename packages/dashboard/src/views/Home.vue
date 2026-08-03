@@ -1,13 +1,13 @@
 <template>
   <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
-    <div class="mb-8 flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent mb-2">{{ t("home.pageTitle") }}</h1>
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="min-w-0">
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 bg-clip-text text-transparent mb-2">{{ t("home.pageTitle") }}</h1>
         <p class="text-gray-600 dark:text-gray-400">{{ t("home.pageSubtitle") }}</p>
       </div>
-      <div class="flex items-center gap-4">
-        <div class="text-right">
-          <p class="text-sm text-gray-600 dark:text-gray-400">{{ authStore.currentUser?.email }}</p>
+      <div class="flex flex-wrap items-center gap-2 sm:gap-4">
+        <div class="text-right mr-2">
+          <p class="text-sm text-gray-600 dark:text-gray-400 break-all">{{ authStore.currentUser?.email }}</p>
           <p v-if="authStore.isAdmin" class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">{{ t("home.admin") }}</p>
         </div>
         <button
