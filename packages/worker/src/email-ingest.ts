@@ -1,4 +1,5 @@
 import type PostalMime from "postal-mime";
+import { plainTextToHtml } from "./plain-text-to-html";
 import { notifyMailboxSubscribers } from "./push-notify";
 import type { Env } from "./types";
 
@@ -72,7 +73,9 @@ export async function ingestEmailIntoMailbox(
 			sender: parsedEmail.from?.address || "",
 			recipient: parsedEmail.to?.[0]?.address || mailboxId,
 			date: overrides.date || new Date().toISOString(),
-			body: parsedEmail.html || parsedEmail.text || "",
+			body:
+				parsedEmail.html ||
+				(parsedEmail.text ? plainTextToHtml(parsedEmail.text) : ""),
 			in_reply_to: inReplyTo,
 			email_references:
 				emailReferences.length > 0 ? JSON.stringify(emailReferences) : null,

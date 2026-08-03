@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import PostalMime from "postal-mime";
 import { z } from "zod";
 import { ingestEmailIntoMailbox } from "./email-ingest";
+import { plainTextToHtml } from "./plain-text-to-html";
 import { sendEmail } from "./resend";
 import {
 	GetMe,
@@ -592,7 +593,7 @@ class PostEmail extends OpenAPIRoute {
 				sender: from,
 				recipient: toStr,
 				date: new Date().toISOString(),
-				body: html || text || "",
+				body: html || (text ? plainTextToHtml(text) : ""),
 				in_reply_to: in_reply_to || null,
 				email_references: references ? JSON.stringify(references) : null,
 				thread_id: thread_id || in_reply_to || messageId,
