@@ -1,6 +1,7 @@
 import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
+import { plainTextToHtml } from "../plain-text-to-html";
 import { sendEmail } from "../resend";
 import type { Env, Session } from "../types";
 
@@ -151,7 +152,7 @@ export class PostReplyEmail extends OpenAPIRoute {
 				sender: from,
 				recipient: toStr,
 				date: new Date().toISOString(),
-				body: html || text || "",
+				body: html || (text ? plainTextToHtml(text) : ""),
 				in_reply_to: in_reply_to,
 				email_references: JSON.stringify(references),
 				thread_id: thread_id,
@@ -261,7 +262,7 @@ export class PostForwardEmail extends OpenAPIRoute {
 				sender: from,
 				recipient: toStr,
 				date: new Date().toISOString(),
-				body: html || text || "",
+				body: html || (text ? plainTextToHtml(text) : ""),
 				in_reply_to: null,
 				email_references: null,
 				thread_id: messageId,
