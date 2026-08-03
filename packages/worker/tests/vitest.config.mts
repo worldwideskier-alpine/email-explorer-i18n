@@ -20,6 +20,19 @@ export default defineWorkersConfig({
 							return {};
 						},
 					},
+					// Reply/forward routes call the real Resend API over fetch();
+					// stub it out so integration tests don't need network access
+					// or a real API key.
+					outboundService: (request) => {
+						const url = new URL(request.url);
+						if (url.hostname === "api.resend.com") {
+							return new Response(JSON.stringify({ id: "mock-resend-id" }), {
+								status: 200,
+								headers: { "content-type": "application/json" },
+							});
+						}
+						return fetch(request);
+					},
 				},
 			},
 		},
