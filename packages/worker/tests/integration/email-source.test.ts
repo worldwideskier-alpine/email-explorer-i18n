@@ -1,4 +1,4 @@
-import { env, createExecutionContext } from "cloudflare:test";
+import { env, createExecutionContext, SELF } from "cloudflare:test";
 import { describe, expect, it, beforeEach } from "vitest";
 import { authenticatedFetch, mailboxId, testAuthBeforeAll } from "./utils";
 
@@ -106,5 +106,77 @@ describe("Original message source", () => {
 			`http://local.test/api/v1/mailboxes/${mailboxId}/emails/nonexistent-id/source`,
 		);
 		expect(sourceResponse.status).toBe(404);
+	});
+
+	describe("Backfilling source onto an already-imported email (PUT .../source)", () => {
+		it("attaches raw source to an existing email that had none", async () => {
+			await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", { method: "POST" });
+
+			const rawEmail = buildRawEmail(
+				{
+					From: "sender@example.com",
+					To: mailboxId,
+					Subject: "Backfill target",
+					"Content-Type": "text/plain",
+					"Authentication-Results": "mx.example.com; spf=pass; dkim=pass; dmarc=pass",
+				},
+				"Original body",
+			);
+			await simulateReceiveEmail(rawEmail);
+
+			const listResponse = await authenticatedFetch(
+				`http://local.test/api/v1/mailboxes/${mailboxId}/emails?folder=inbox`,
+			);
+			const emails = await listResponse.json<any[]>();
+			const received = emails.find((e: any) => e.subject === "Backfill target");
+			expect(received).toBeDefined();
+
+			// Confirm no source yet (real inbound path always writes one, so
+			// this specifically checks the pre-backfill baseline via a plain
+			// import-without-raw simulation isn't needed -- overwriting is fine).
+			const putResponse = await authenticatedFetch(
+				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${received.id}/source`,
+				{
+					method: "PUT",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ rawEmailBase64: btoa("X-Backfilled: true\r\n\r\nBackfilled body") }),
+				},
+			);
+			expect(putResponse.status).toBe(204);
+
+			const sourceResponse = await authenticatedFetch(
+				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${received.id}/source`,
+			);
+			expect(sourceResponse.status).toBe(200);
+			const sourceText = await sourceResponse.text();
+			expect(sourceText).toContain("X-Backfilled: true");
+			expect(sourceText).toContain("Backfilled body");
+		});
+
+		it("returns 404 when the target email does not exist", async () => {
+			await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", { method: "POST" });
+
+			const putResponse = await authenticatedFetch(
+				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/nonexistent-id/source`,
+				{
+					method: "PUT",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ rawEmailBase64: btoa("body") }),
+				},
+			);
+			expect(putResponse.status).toBe(404);
+		});
+
+		it("requires authentication", async () => {
+			const res = await SELF.fetch(
+				"http://local.test/api/v1/mailboxes/some-mailbox/emails/some-id/source",
+				{
+					method: "PUT",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ rawEmailBase64: btoa("body") }),
+				},
+			);
+			expect(res.status).toBe(401);
+		});
 	});
 });

@@ -7,10 +7,12 @@
 		"migrate": "node migrate.mjs",
 		"list-folders": "node list-folders.mjs",
 		"list-target-folders": "node list-target-folders.mjs",
-		"dedupe": "node dedupe.mjs"
+		"dedupe": "node dedupe.mjs",
+		"backfill-source": "node backfill-source.mjs"
 	},
 	"dependencies": {
 		"dotenv": "^16.4.5",
-		"imapflow": "^1.0.171"
+		"imapflow": "^1.0.171",
+		"postal-mime": "^2.6.1"
 	}
 }
