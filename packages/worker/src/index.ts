@@ -732,6 +732,7 @@ class DeleteEmail extends OpenAPIRoute {
 			);
 			await c.env.BUCKET.delete(keys);
 		}
+		await c.env.BUCKET.delete(`raw/${id}.eml`);
 
 		return c.body(null, 204);
 	}
@@ -1240,6 +1241,53 @@ class GetAttachment extends OpenAPIRoute {
 	}
 }
 
+class GetEmailSource extends OpenAPIRoute {
+	schema = {
+		summary: "Get the raw original message source (headers included)",
+		operationId: "getEmailSource",
+		tags: ["Emails"],
+		request: {
+			params: z.object({
+				mailboxId: z.string(),
+				emailId: z.string(),
+			}),
+		},
+		responses: {
+			"200": {
+				description: "Raw email source",
+				content: {
+					"text/plain": {
+						schema: z.string(),
+					},
+				},
+			},
+			"404": { description: "Not found", ...contentJson(ErrorResponseSchema) },
+		},
+	};
+
+	async handle(c: AppContext) {
+		const data = await this.getValidatedData<typeof this.schema>();
+		const { mailboxId, emailId } = data.params ?? {};
+
+		const key = `mailboxes/${mailboxId}.json`;
+		const obj = await c.env.BUCKET.head(key);
+		if (!obj) {
+			return c.json({ error: "Not found" }, 404);
+		}
+
+		const rawObj = await c.env.BUCKET.get(`raw/${emailId}.eml`);
+		if (!rawObj) {
+			return c.json({ error: "Original source not available" }, 404);
+		}
+
+		const headers = new Headers();
+		headers.set("Content-Type", "text/plain; charset=utf-8");
+		headers.set("Content-Disposition", `inline; filename="${emailId}.eml"`);
+
+		return new Response(rawObj.body, { headers });
+	}
+}
+
 class CreateDummyMailbox extends OpenAPIRoute {
 	schema = {
 		summary: "Create a dummy mailbox for debugging",
@@ -1657,6 +1705,10 @@ openapi.get(
 	"/api/v1/mailboxes/:mailboxId/emails/:emailId/attachments/:attachmentId",
 	GetAttachment,
 );
+openapi.get(
+	"/api/v1/mailboxes/:mailboxId/emails/:emailId/source",
+	GetEmailSource,
+);
 
 async function streamToArrayBuffer(stream: ReadableStream, streamSize: number) {
 	const result = new Uint8Array(streamSize);
@@ -1694,6 +1746,7 @@ async function receiveEmail(
 	const folder = classifyByAuthResults(parsedEmail.headers);
 	await ingestEmailIntoMailbox(env, mailboxId, folder, parsedEmail, {
 		notify: true,
+		rawEmail,
 	});
 }
 
