@@ -91,11 +91,11 @@ export async function ingestEmailIntoMailbox(
 		});
 	}
 
-	if (overrides.notify) {
+	if (overrides.notify && folder !== "spam") {
 		await notifyMailboxSubscribers(env, mailboxId, {
 			title: parsedEmail.from?.address || mailboxId,
 			body: parsedEmail.subject || "",
-			url: `/mailbox/${mailboxId}/emails/inbox`,
+			url: `/mailbox/${mailboxId}/emails/${folder}`,
 		});
 	}
 

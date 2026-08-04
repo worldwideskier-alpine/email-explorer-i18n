@@ -24,6 +24,7 @@ import {
 	PostPushUnsubscribe,
 } from "./routes/push";
 import { PostForwardEmail, PostReplyEmail } from "./routes/reply-forward";
+import { classifyByAuthResults } from "./spam-filter";
 import type { EmailExplorerOptions, Env, Session } from "./types";
 
 type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
@@ -1690,7 +1691,8 @@ async function receiveEmail(
 	}
 
 	const mailboxId = parsedEmail.to[0].address;
-	await ingestEmailIntoMailbox(env, mailboxId, "inbox", parsedEmail, {
+	const folder = classifyByAuthResults(parsedEmail.headers);
+	await ingestEmailIntoMailbox(env, mailboxId, folder, parsedEmail, {
 		notify: true,
 	});
 }

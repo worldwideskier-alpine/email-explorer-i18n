@@ -96,6 +96,7 @@ const defaultFolderNameKeys: Record<string, string> = {
 	sent: "sidebar.sent",
 	draft: "sidebar.draft",
 	archive: "sidebar.archive",
+	spam: "sidebar.spam",
 	trash: "sidebar.trash",
 };
 
