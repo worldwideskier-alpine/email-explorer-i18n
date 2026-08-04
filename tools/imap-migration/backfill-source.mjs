@@ -184,7 +184,11 @@ async function main() {
 			: "Running in LIVE mode. Raw sources will be attached / missing messages imported.",
 	);
 
-	const cookie = config.dryRun ? null : await login();
+	// Unlike migrate.mjs, dry-run here still needs a real session: the whole
+	// point of this script is comparing against what's already in the
+	// target mailbox, so folder/email lookups (all read-only GETs) happen
+	// regardless of DRY_RUN. Only the actual PUT/POST writes are gated on it.
+	const cookie = await login();
 
 	const client = new ImapFlow({
 		host: config.imapHost,
@@ -204,12 +208,10 @@ async function main() {
 	try {
 		for (const imapFolder of config.imapFolders) {
 			const targetFolderName = resolveTargetFolderName(imapFolder);
-			const targetFolderId = config.dryRun
-				? targetFolderName
-				: await resolveFolderId(cookie, targetFolderName);
+			const targetFolderId = await resolveFolderId(cookie, targetFolderName);
 			console.log(`\n=== Folder: ${imapFolder} -> ${targetFolderName} (${targetFolderId}) ===`);
 
-			const existing = config.dryRun ? [] : await fetchAllEmails(cookie, targetFolderId);
+			const existing = await fetchAllEmails(cookie, targetFolderId);
 			const byFingerprint = new Map();
 			for (const email of existing) {
 				const key = fingerprint(email.subject, email.sender, email.recipient, email.date);
