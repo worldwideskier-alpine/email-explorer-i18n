@@ -96,6 +96,7 @@ export class PostImportEmail extends OpenAPIRoute {
 				date,
 				read,
 				starred,
+				rawEmail,
 			},
 		);
 

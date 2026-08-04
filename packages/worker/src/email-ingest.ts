@@ -20,6 +20,7 @@ export async function ingestEmailIntoMailbox(
 		read?: boolean;
 		starred?: boolean;
 		notify?: boolean;
+		rawEmail?: ArrayBuffer | Uint8Array;
 	} = {},
 ) {
 	const messageId = crypto.randomUUID();
@@ -28,6 +29,10 @@ export async function ingestEmailIntoMailbox(
 	const obj = await env.BUCKET.head(key);
 	if (!obj) {
 		await env.BUCKET.put(key, JSON.stringify({}));
+	}
+
+	if (overrides.rawEmail) {
+		await env.BUCKET.put(`raw/${messageId}.eml`, overrides.rawEmail);
 	}
 
 	const ns = env.MAILBOX;
