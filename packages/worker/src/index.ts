@@ -1288,6 +1288,84 @@ class GetEmailSource extends OpenAPIRoute {
 	}
 }
 
+const PutEmailSourceRequestSchema = z.object({
+	rawEmailBase64: z.string(),
+});
+
+class PutEmailSource extends OpenAPIRoute {
+	schema = {
+		summary:
+			"Attach the raw original message source to an already-imported email (admin only, backfill)",
+		operationId: "putEmailSource",
+		tags: ["Admin"],
+		request: {
+			params: z.object({
+				mailboxId: z.string(),
+				emailId: z.string(),
+			}),
+			body: contentJson(PutEmailSourceRequestSchema),
+		},
+		responses: {
+			"204": { description: "Source stored" },
+			"400": {
+				description: "Bad request",
+				...contentJson(ErrorResponseSchema),
+			},
+			"401": {
+				description: "Unauthorized",
+				...contentJson(ErrorResponseSchema),
+			},
+			"403": {
+				description: "Forbidden - Admin privileges required",
+				...contentJson(ErrorResponseSchema),
+			},
+			"404": { description: "Not found", ...contentJson(ErrorResponseSchema) },
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = c.get("session");
+		if (!session) {
+			return c.json({ error: "Unauthorized" }, 401);
+		}
+		if (!session.isAdmin) {
+			return c.json({ error: "Admin privileges required" }, 403);
+		}
+
+		const data = await this.getValidatedData<typeof this.schema>();
+		const { mailboxId, emailId } = data.params ?? {};
+		const { rawEmailBase64 } = data.body;
+
+		const key = `mailboxes/${mailboxId}.json`;
+		const obj = await c.env.BUCKET.head(key);
+		if (!obj) {
+			return c.json({ error: "Not found" }, 404);
+		}
+
+		const ns = c.env.MAILBOX;
+		const doId = ns.idFromName(mailboxId);
+		const stub = ns.get(doId);
+
+		const email = await stub.getEmail(emailId);
+		if (!email) {
+			return c.json({ error: "Email not found" }, 404);
+		}
+
+		let rawEmail: Uint8Array;
+		try {
+			rawEmail = Uint8Array.from(atob(rawEmailBase64), (ch) =>
+				ch.charCodeAt(0),
+			);
+		} catch {
+			return c.json({ error: "rawEmailBase64 is not valid base64" }, 400);
+		}
+
+		await c.env.BUCKET.put(`raw/${emailId}.eml`, rawEmail);
+
+		return c.body(null, 204);
+	}
+}
+
 class CreateDummyMailbox extends OpenAPIRoute {
 	schema = {
 		summary: "Create a dummy mailbox for debugging",
@@ -1708,6 +1786,10 @@ openapi.get(
 openapi.get(
 	"/api/v1/mailboxes/:mailboxId/emails/:emailId/source",
 	GetEmailSource,
+);
+openapi.put(
+	"/api/v1/mailboxes/:mailboxId/emails/:emailId/source",
+	PutEmailSource,
 );
 
 async function streamToArrayBuffer(stream: ReadableStream, streamSize: number) {
