@@ -77,8 +77,20 @@
           </router-link>
         </li>
         <li>
-          <router-link 
-            :to="{ name: 'EmailList', params: { mailboxId: route.params.mailboxId, folder: 'trash' } }" 
+          <router-link
+            :to="{ name: 'EmailList', params: { mailboxId: route.params.mailboxId, folder: 'spam' } }"
+            class="flex items-center gap-3 py-3 px-4 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group"
+            active-class="bg-gradient-to-r from-indigo-100 to-purple-50 dark:from-indigo-900/30 dark:to-purple-900/30 text-indigo-700 dark:text-indigo-300 font-semibold shadow-sm"
+          >
+            <svg class="w-5 h-5 text-gray-500 dark:text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>{{ t("sidebar.spam") }}</span>
+          </router-link>
+        </li>
+        <li>
+          <router-link
+            :to="{ name: 'EmailList', params: { mailboxId: route.params.mailboxId, folder: 'trash' } }"
             class="flex items-center gap-3 py-3 px-4 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-gray-700/50 transition-all duration-200 group"
             active-class="bg-gradient-to-r from-red-100 to-orange-50 dark:from-red-900/30 dark:to-orange-900/30 text-red-700 dark:text-red-300 font-semibold shadow-sm"
           >

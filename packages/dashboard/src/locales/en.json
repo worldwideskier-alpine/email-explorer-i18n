@@ -91,6 +91,7 @@
 		"sent": "Sent",
 		"draft": "Draft",
 		"archive": "Archive",
+		"spam": "Spam",
 		"trash": "Trash",
 		"customFolders": "Custom Folders",
 		"createFolderTitle": "Create new folder",

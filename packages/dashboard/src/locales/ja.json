@@ -91,6 +91,7 @@
 		"sent": "送信済み",
 		"draft": "下書き",
 		"archive": "アーカイブ",
+		"spam": "迷惑メール",
 		"trash": "ゴミ箱",
 		"customFolders": "カスタムフォルダ",
 		"createFolderTitle": "新しいフォルダを作成",
