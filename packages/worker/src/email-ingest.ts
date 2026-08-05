@@ -100,7 +100,7 @@ export async function ingestEmailIntoMailbox(
 		await notifyMailboxSubscribers(env, mailboxId, {
 			title: parsedEmail.from?.address || mailboxId,
 			body: parsedEmail.subject || "",
-			url: `/mailbox/${mailboxId}/emails/${folder}`,
+			url: `/mailbox/${mailboxId}/email/${messageId}?fromFolder=${folder}`,
 		});
 	}
 
