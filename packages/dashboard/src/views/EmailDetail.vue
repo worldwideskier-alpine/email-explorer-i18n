@@ -63,10 +63,8 @@
               </button>
             </div>
           </div>
-          <a
-            :href="sourceUrl"
-            target="_blank"
-            rel="noopener noreferrer"
+          <router-link
+            :to="{ name: 'EmailSource', params: { id: email.id } }"
             class="p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer"
             :title="t('emailDetail.viewSource')"
           >
@@ -74,7 +72,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16M6 8l-4 4 4 4M18 8l4 4-4 4" />
             </svg>
-          </a>
+          </router-link>
           <button @click="handleDelete" class="p-2.5 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailList.delete')">
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailList.delete") }}</div>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -199,12 +197,6 @@ const getAttachmentUrl = (attachmentId: string) => {
 	const emailId = route.params.id as string;
 	return `/api/v1/mailboxes/${mailboxId}/emails/${emailId}/attachments/${attachmentId}`;
 };
-
-const sourceUrl = computed(() => {
-	const mailboxId = route.params.mailboxId as string;
-	const emailId = route.params.id as string;
-	return `/api/v1/mailboxes/${mailboxId}/emails/${emailId}/source`;
-});
 
 const formatBytes = (bytes: number, decimals = 2) => {
 	if (bytes === 0) return "0 Bytes";

@@ -119,6 +119,8 @@
 		"attachments": "Attachments",
 		"download": "Download",
 		"viewSource": "View original message",
+		"viewSourceLoading": "Loading...",
+		"viewSourceFailed": "Failed to load the original message source.",
 		"to": "To: "
 	},
 	"searchResults": {

@@ -119,6 +119,8 @@
 		"attachments": "Anhänge",
 		"download": "Herunterladen",
 		"viewSource": "Original anzeigen",
+		"viewSourceLoading": "Wird geladen...",
+		"viewSourceFailed": "Die ursprüngliche Nachrichtenquelle konnte nicht geladen werden.",
 		"to": "An: "
 	},
 	"searchResults": {
