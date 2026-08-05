@@ -44,5 +44,16 @@ export const useEmailStore = defineStore("emails", {
 			await api.moveEmail(mailboxId, id, folderId);
 			this.emails = this.emails.filter((email) => email.id !== id);
 		},
+		async deleteOrTrashEmail(
+			mailboxId: string,
+			id: string,
+			currentFolderId: string,
+		) {
+			if (currentFolderId === "trash") {
+				await this.deleteEmail(mailboxId, id);
+			} else {
+				await this.moveEmail(mailboxId, id, "trash");
+			}
+		},
 	},
 });

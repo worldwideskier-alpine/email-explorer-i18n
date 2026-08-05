@@ -107,7 +107,8 @@
 		"delete": "Delete",
 		"emptyTitle": "This folder is empty",
 		"emptyMessage": "No emails found in this folder.",
-		"confirmDelete": "Are you sure you want to delete this email?"
+		"confirmDelete": "Are you sure you want to delete this email?",
+		"confirmPermanentDelete": "This will permanently delete this email. This action cannot be undone. Are you sure?"
 	},
 	"emailDetail": {
 		"back": "Back",
