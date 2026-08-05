@@ -256,13 +256,20 @@ const handleMove = (folderId: string) => {
 };
 
 const handleDelete = () => {
-	if (email.value && confirm(t("emailList.confirmDelete"))) {
-		emailStore.deleteEmail(route.params.mailboxId as string, email.value.id);
-		router.push({
-			name: "EmailList",
-			params: { mailboxId: route.params.mailboxId, folder: "inbox" },
-		});
+	if (!email.value) return;
+	const mailboxId = route.params.mailboxId as string;
+	const fromFolder = (route.query.fromFolder as string) || "inbox";
+	const isPermanent = fromFolder === "trash";
+
+	if (isPermanent && !confirm(t("emailList.confirmPermanentDelete"))) {
+		return;
 	}
+
+	emailStore.deleteOrTrashEmail(mailboxId, email.value.id, fromFolder);
+	router.push({
+		name: "EmailList",
+		params: { mailboxId: route.params.mailboxId, folder: fromFolder },
+	});
 };
 
 const handleReply = () => {

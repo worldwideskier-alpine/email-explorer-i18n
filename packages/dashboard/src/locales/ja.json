@@ -107,7 +107,8 @@
 		"delete": "削除",
 		"emptyTitle": "このフォルダは空です",
 		"emptyMessage": "このフォルダにメールはありません。",
-		"confirmDelete": "このメールを削除してもよろしいですか？"
+		"confirmDelete": "このメールを削除してもよろしいですか？",
+		"confirmPermanentDelete": "このメールを完全に削除します。この操作は元に戻せません。よろしいですか？"
 	},
 	"emailDetail": {
 		"back": "戻る",

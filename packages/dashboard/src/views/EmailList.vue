@@ -159,8 +159,13 @@ const toggleStarStatus = (email: Email) => {
 };
 
 const handleDelete = (emailId: string) => {
-	if (confirm(t("emailList.confirmDelete"))) {
-		emailStore.deleteEmail(route.params.mailboxId as string, emailId);
+	const mailboxId = route.params.mailboxId as string;
+	if (folderId.value === "trash") {
+		if (confirm(t("emailList.confirmPermanentDelete"))) {
+			emailStore.deleteOrTrashEmail(mailboxId, emailId, folderId.value);
+		}
+	} else {
+		emailStore.deleteOrTrashEmail(mailboxId, emailId, folderId.value);
 	}
 };
 </script>

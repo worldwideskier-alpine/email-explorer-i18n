@@ -107,7 +107,8 @@
 		"delete": "Löschen",
 		"emptyTitle": "Dieser Ordner ist leer",
 		"emptyMessage": "In diesem Ordner wurden keine E-Mails gefunden.",
-		"confirmDelete": "Möchten Sie diese E-Mail wirklich löschen?"
+		"confirmDelete": "Möchten Sie diese E-Mail wirklich löschen?",
+		"confirmPermanentDelete": "Diese E-Mail wird endgültig gelöscht. Dieser Vorgang kann nicht rückgängig gemacht werden. Sind Sie sicher?"
 	},
 	"emailDetail": {
 		"back": "Zurück",
