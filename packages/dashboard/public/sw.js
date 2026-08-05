@@ -1,3 +1,11 @@
+self.addEventListener("install", () => {
+	self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+	event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener("push", (event) => {
 	let data = { title: "Email Explorer", body: "", url: "/" };
 	try {
@@ -25,7 +33,10 @@ self.addEventListener("notificationclick", (event) => {
 			.matchAll({ type: "window", includeUncontrolled: true })
 			.then((clientList) => {
 				for (const client of clientList) {
-					if (client.url.endsWith(url) && "focus" in client) {
+					if ("focus" in client) {
+						if ("navigate" in client) {
+							client.navigate(url);
+						}
 						return client.focus();
 					}
 				}
