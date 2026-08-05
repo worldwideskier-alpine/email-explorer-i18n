@@ -119,6 +119,8 @@
 		"attachments": "添付ファイル",
 		"download": "ダウンロード",
 		"viewSource": "元のメッセージを表示",
+		"viewSourceLoading": "読み込み中...",
+		"viewSourceFailed": "元のメッセージソースを読み込めませんでした。",
 		"to": "宛先: "
 	},
 	"searchResults": {

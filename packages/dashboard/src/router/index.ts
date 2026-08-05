@@ -4,6 +4,7 @@ import Admin from "@/views/Admin.vue";
 import Contacts from "@/views/Contacts.vue";
 import EmailDetail from "@/views/EmailDetail.vue";
 import EmailList from "@/views/EmailList.vue";
+import EmailSource from "@/views/EmailSource.vue";
 import ForgotPassword from "@/views/ForgotPassword.vue";
 import Home from "@/views/Home.vue";
 import Login from "@/views/Login.vue";
@@ -76,6 +77,12 @@ const router = createRouter({
 					name: "EmailDetail",
 					component: EmailDetail,
 					meta: { title: "Email" },
+				},
+				{
+					path: "email/:id/source",
+					name: "EmailSource",
+					component: EmailSource,
+					meta: { title: "Email Source" },
 				},
 				{
 					path: "contacts",

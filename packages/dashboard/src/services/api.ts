@@ -81,6 +81,10 @@ export default {
 		apiClient.post(`/api/v1/mailboxes/${mailboxId}/emails`, email),
 	getEmail: (mailboxId: string, id: string) =>
 		apiClient.get(`/api/v1/mailboxes/${mailboxId}/emails/${id}`),
+	getEmailSource: (mailboxId: string, id: string) =>
+		apiClient.get(`/api/v1/mailboxes/${mailboxId}/emails/${id}/source`, {
+			responseType: "text",
+		}),
 	updateEmail: (mailboxId: string, id: string, data: any) =>
 		apiClient.put(`/api/v1/mailboxes/${mailboxId}/emails/${id}`, data),
 	deleteEmail: (mailboxId: string, id: string) =>
