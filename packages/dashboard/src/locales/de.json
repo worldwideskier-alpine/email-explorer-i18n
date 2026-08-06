@@ -140,7 +140,17 @@
 		"save": "Speichern",
 		"pushTitle": "Push-Benachrichtigungen",
 		"pushDescription": "Erhalten Sie auf diesem Gerät eine Benachrichtigung bei neuer Post (über alle Postfächer hinweg).",
-		"pushError": "Push-Benachrichtigungseinstellungen konnten nicht aktualisiert werden"
+		"pushError": "Push-Benachrichtigungseinstellungen konnten nicht aktualisiert werden",
+		"spamFilterTitle": "Spam-Erkennung (Claude API – in Vorbereitung)",
+		"spamFilterDescription": "Zusätzlich zum SPF/DKIM/DMARC-Erstfilter können Sie hier einen API-Schlüssel für einen geplanten, aber noch nicht implementierten Claude-basierten Zweitfilter speichern. Dieser Schlüssel wird noch nicht zur Filterung verwendet.",
+		"spamFilterApiKeyLabel": "Claude API-Schlüssel",
+		"spamFilterApiKeyConfigured": "Konfiguriert",
+		"spamFilterApiKeyNotConfigured": "Nicht konfiguriert",
+		"spamFilterApiKeyPlaceholderConfigured": "Nur ausfüllen, um den Schlüssel zu ändern",
+		"spamFilterApiKeyPlaceholderEmpty": "sk-ant-...",
+		"spamFilterRemove": "API-Schlüssel entfernen",
+		"spamFilterConfirmRemove": "Möchten Sie den gespeicherten API-Schlüssel wirklich entfernen?",
+		"spamFilterSaved": "API-Schlüssel gespeichert."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ungültige Anmeldedaten",
