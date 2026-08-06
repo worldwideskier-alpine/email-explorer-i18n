@@ -3,8 +3,10 @@ import { type Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import PostalMime from "postal-mime";
 import { z } from "zod";
+import { classifyWithClaude } from "./claude-spam-filter";
 import { ingestEmailIntoMailbox } from "./email-ingest";
 import {
+	getClaudeApiKey,
 	mergeMailboxSettings,
 	redactMailboxSettings,
 } from "./mailbox-settings";
@@ -1834,7 +1836,25 @@ async function receiveEmail(
 	}
 
 	const mailboxId = parsedEmail.to[0].address;
-	const folder = classifyByAuthResults(parsedEmail.headers);
+	let folder = classifyByAuthResults(parsedEmail.headers);
+
+	// Second-stage check: only for mail that already passed SPF/DKIM/DMARC
+	// (mail that failed it is spam regardless), and only when the mailbox
+	// owner has opted in by configuring a Claude API key. No key -> skip
+	// entirely, no API call made.
+	if (folder === "inbox") {
+		const claudeApiKey = await getClaudeApiKey(env, mailboxId);
+		if (claudeApiKey) {
+			folder = await classifyWithClaude({
+				apiKey: claudeApiKey,
+				subject: parsedEmail.subject || "",
+				from: parsedEmail.from?.address || "",
+				text: parsedEmail.text,
+				html: parsedEmail.html,
+			});
+		}
+	}
+
 	await ingestEmailIntoMailbox(env, mailboxId, folder, parsedEmail, {
 		notify: true,
 		rawEmail,

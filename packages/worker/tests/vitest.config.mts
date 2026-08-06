@@ -23,13 +23,30 @@ export default defineWorkersConfig({
 					// Reply/forward routes call the real Resend API over fetch();
 					// stub it out so integration tests don't need network access
 					// or a real API key.
-					outboundService: (request) => {
+					outboundService: async (request) => {
 						const url = new URL(request.url);
 						if (url.hostname === "api.resend.com") {
 							return new Response(JSON.stringify({ id: "mock-resend-id" }), {
 								status: 200,
 								headers: { "content-type": "application/json" },
 							});
+						}
+						// The Claude spam classifier calls the real Anthropic API over
+						// fetch(); stub it too. Tests steer the verdict by including a
+						// marker string in the email body/subject, which ends up in the
+						// request's message content.
+						if (url.hostname === "api.anthropic.com") {
+							const body = await request.clone().text();
+							if (body.includes("TRIGGER_CLAUDE_ERROR")) {
+								return new Response("mock error", { status: 500 });
+							}
+							const verdict = body.includes("TRIGGER_CLAUDE_SPAM")
+								? "SPAM"
+								: "NOT_SPAM";
+							return new Response(
+								JSON.stringify({ content: [{ type: "text", text: verdict }] }),
+								{ status: 200, headers: { "content-type": "application/json" } },
+							);
 						}
 						return fetch(request);
 					},
