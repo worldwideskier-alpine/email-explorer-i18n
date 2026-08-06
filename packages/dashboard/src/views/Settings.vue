@@ -5,11 +5,11 @@
       <form @submit.prevent="updateSettings" class="space-y-6">
         <div>
           <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("settings.name") }}</label>
-          <input type="text" id="name" v-model="mailbox.name" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-3" />
+          <input type="text" id="name" v-model="mailbox.name" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-3" />
         </div>
         <div>
           <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("settings.email") }}</label>
-          <input type="email" id="email" v-model="mailbox.email" class="mt-1 block w-full bg-gray-200 dark:bg-gray-600 border-gray-300 dark:border-gray-500 rounded-md shadow-sm sm:text-sm p-3" disabled />
+          <input type="email" id="email" v-model="mailbox.email" class="mt-1 block w-full bg-gray-200 dark:bg-gray-600 border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-300 rounded-md shadow-sm sm:text-sm p-3" disabled />
         </div>
 
         <!-- Signature Section -->
@@ -70,7 +70,7 @@
             v-model="claudeApiKeyInput"
             autocomplete="off"
             :placeholder="claudeApiKeyConfigured ? t('settings.spamFilterApiKeyPlaceholderConfigured') : t('settings.spamFilterApiKeyPlaceholderEmpty')"
-            class="flex-grow bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-3"
+            class="flex-grow bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-3"
           />
           <button
             type="submit"
