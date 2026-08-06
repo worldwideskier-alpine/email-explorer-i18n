@@ -85,3 +85,63 @@ describe("Mailbox settings: Claude API key redaction", () => {
 		expect(putBody.settings.spamFilter.claudeApiKeyConfigured).toBe(false);
 	});
 });
+
+describe("Mailbox settings: display name (fromName)", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", { method: "POST" });
+	});
+
+	it("GetMailbox returns the stored fromName as the display name", async () => {
+		// CreateDummyMailbox seeds fromName: "Test User" -- see debug route.
+		const res = await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`);
+		const body = await res.json<any>();
+		expect(body.name).toBe("Test User");
+	});
+
+	it("GetMailboxes lists the stored fromName as the display name", async () => {
+		const res = await authenticatedFetch("http://local.test/api/v1/mailboxes");
+		const body = await res.json<any[]>();
+		const mailbox = body.find((m) => m.id === mailboxId);
+		expect(mailbox?.name).toBe("Test User");
+	});
+
+	it("PutMailbox persists a new name and it survives a subsequent GET", async () => {
+		const getResponse = await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`);
+		const { settings } = await getResponse.json<any>();
+
+		const putResponse = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}`,
+			{
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ settings: { ...settings, fromName: "New Name" } }),
+			},
+		);
+		const putBody = await putResponse.json<any>();
+		expect(putBody.name).toBe("New Name");
+
+		const res = await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`);
+		const body = await res.json<any>();
+		expect(body.name).toBe("New Name");
+
+		const listRes = await authenticatedFetch("http://local.test/api/v1/mailboxes");
+		const listBody = await listRes.json<any[]>();
+		expect(listBody.find((m) => m.id === mailboxId)?.name).toBe("New Name");
+	});
+
+	it("falls back to the mailbox id when fromName is empty", async () => {
+		const getResponse = await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`);
+		const { settings } = await getResponse.json<any>();
+
+		await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ settings: { ...settings, fromName: "" } }),
+		});
+
+		const res = await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`);
+		const body = await res.json<any>();
+		expect(body.name).toBe(mailboxId);
+	});
+});

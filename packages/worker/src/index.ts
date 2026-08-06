@@ -223,14 +223,20 @@ class GetMailboxes extends OpenAPIRoute {
 		const list = await c.env.BUCKET.list({
 			prefix: "mailboxes/",
 		});
-		const allMailboxes = list.objects.map((obj) => {
-			const id = obj.key.replace("mailboxes/", "").replace(".json", "");
-			return {
-				id,
-				name: id,
-				email: id,
-			};
-		});
+		const allMailboxes = await Promise.all(
+			list.objects.map(async (obj) => {
+				const id = obj.key.replace("mailboxes/", "").replace(".json", "");
+				const settingsObj = await c.env.BUCKET.get(obj.key);
+				const settings = settingsObj
+					? await settingsObj.json<{ fromName?: string }>()
+					: null;
+				return {
+					id,
+					name: settings?.fromName || id,
+					email: id,
+				};
+			}),
+		);
 
 		// If no session (auth disabled) or user is admin, return all mailboxes
 		if (!session || session.isAdmin) {
@@ -274,10 +280,10 @@ class GetMailbox extends OpenAPIRoute {
 		if (!obj) {
 			return c.json({ error: "Not found" }, 404);
 		}
-		const settings = await obj.json();
+		const settings = await obj.json<{ fromName?: string }>();
 		const response = {
 			id: mailboxId,
-			name: mailboxId,
+			name: settings?.fromName || mailboxId,
 			email: mailboxId,
 			settings: redactMailboxSettings(settings),
 		};
@@ -325,7 +331,7 @@ class PutMailbox extends OpenAPIRoute {
 
 		const response = {
 			id: mailboxId,
-			name: mailboxId,
+			name: mergedSettings?.fromName || mailboxId,
 			email: mailboxId,
 			settings: redactMailboxSettings(mergedSettings),
 		};

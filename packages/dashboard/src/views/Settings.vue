@@ -5,7 +5,7 @@
       <form @submit.prevent="updateSettings" class="space-y-6">
         <div>
           <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("settings.name") }}</label>
-          <input type="text" id="name" v-model="mailbox.name" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-3" />
+          <input type="text" id="name" v-model="nameInput" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-3" />
         </div>
         <div>
           <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("settings.email") }}</label>
@@ -114,6 +114,7 @@ const mailboxStore = useMailboxStore();
 const { currentMailbox: mailbox } = storeToRefs(mailboxStore);
 const route = useRoute();
 
+const nameInput = ref("");
 const signatureEnabled = ref(false);
 const signatureHtml = ref("");
 
@@ -159,6 +160,17 @@ watch(
 	{ immediate: true },
 );
 
+// Initialize the display name from settings.fromName -- the actual persisted
+// field (see mergeMailboxSettings server-side); mailbox.name is just a
+// read-only projection of it, so editing it directly wouldn't persist.
+watch(
+	mailbox,
+	(m) => {
+		nameInput.value = m?.settings?.fromName || m?.name || "";
+	},
+	{ immediate: true },
+);
+
 const claudeApiKeyInput = ref("");
 const claudeApiKeyConfigured = ref(false);
 const spamFilterLoading = ref(false);
@@ -187,6 +199,7 @@ const updateSettings = () => {
 	if (mailbox.value) {
 		const settings = {
 			...mailbox.value.settings,
+			fromName: nameInput.value.trim(),
 			signature: {
 				enabled: signatureEnabled.value,
 				text: stripHtml(signatureHtml.value),
