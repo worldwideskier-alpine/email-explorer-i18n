@@ -30,7 +30,10 @@ import {
 	PostPushUnsubscribe,
 } from "./routes/push";
 import { PostForwardEmail, PostReplyEmail } from "./routes/reply-forward";
-import { classifyByAuthResults } from "./spam-filter";
+import {
+	classifyByAuthResults,
+	isTrustedSelfDomainSender,
+} from "./spam-filter";
 import type { EmailExplorerOptions, Env, Session } from "./types";
 
 type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
@@ -1847,8 +1850,19 @@ async function receiveEmail(
 	// Second-stage check: only for mail that already passed SPF/DKIM/DMARC
 	// (mail that failed it is spam regardless), and only when the mailbox
 	// owner has opted in by configuring a Claude API key. No key -> skip
-	// entirely, no API call made.
-	if (folder === "inbox") {
+	// entirely, no API call made. Also skipped for DMARC-aligned mail sent
+	// from the mailbox's own domain (e.g. the business's own transactional
+	// systems) -- see isTrustedSelfDomainSender for why this is narrow and
+	// doesn't weaken detection of confirmation-link-style phishing from
+	// other domains.
+	if (
+		folder === "inbox" &&
+		!isTrustedSelfDomainSender(
+			parsedEmail.headers,
+			parsedEmail.from?.address,
+			mailboxId,
+		)
+	) {
 		const claudeApiKey = await getClaudeApiKey(env, mailboxId);
 		if (claudeApiKey) {
 			folder = await classifyWithClaude({

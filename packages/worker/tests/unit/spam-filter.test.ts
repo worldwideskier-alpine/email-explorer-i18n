@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { classifyByAuthResults } from "../../src/spam-filter";
+import {
+	classifyByAuthResults,
+	isTrustedSelfDomainSender,
+} from "../../src/spam-filter";
 
 const header = (value: string) => [
 	{ key: "authentication-results", originalKey: "Authentication-Results", value },
@@ -56,5 +59,69 @@ describe("classifyByAuthResults", () => {
 		expect(
 			classifyByAuthResults(header("mx.example.com; spf=FAIL; dkim=FAIL")),
 		).toBe("spam");
+	});
+});
+
+describe("isTrustedSelfDomainSender", () => {
+	it("is true for a DMARC-aligned sender on the mailbox's own domain", () => {
+		expect(
+			isTrustedSelfDomainSender(
+				header(
+					"mx.example.com; spf=pass smtp.mailfrom=example.net; dkim=pass header.i=@example.net; dmarc=pass header.from=example.net",
+				),
+				"noreply@example.net",
+				"user@example.net",
+			),
+		).toBe(true);
+	});
+
+	it("is case-insensitive on the domain comparison", () => {
+		expect(
+			isTrustedSelfDomainSender(
+				header("mx.example.com; dmarc=pass header.from=Example.net"),
+				"noreply@Example.NET",
+				"user@example.net",
+			),
+		).toBe(true);
+	});
+
+	it("is false when the sender domain differs, even with dmarc=pass", () => {
+		expect(
+			isTrustedSelfDomainSender(
+				header("mx.example.com; dmarc=pass header.from=other.com"),
+				"noreply@other.com",
+				"user@example.net",
+			),
+		).toBe(false);
+	});
+
+	it("is false when the domain matches but dmarc did not pass (e.g. missing/none)", () => {
+		expect(
+			isTrustedSelfDomainSender(
+				header("mx.example.com; spf=pass; dkim=pass"),
+				"noreply@example.net",
+				"user@example.net",
+			),
+		).toBe(false);
+	});
+
+	it("is false when there is no Authentication-Results header at all", () => {
+		expect(
+			isTrustedSelfDomainSender(
+				[],
+				"noreply@example.net",
+				"user@example.net",
+			),
+		).toBe(false);
+	});
+
+	it("is false when the From address is missing", () => {
+		expect(
+			isTrustedSelfDomainSender(
+				header("mx.example.com; dmarc=pass header.from=example.net"),
+				undefined,
+				"user@example.net",
+			),
+		).toBe(false);
 	});
 });

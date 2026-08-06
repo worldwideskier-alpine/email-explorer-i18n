@@ -29,3 +29,39 @@ export function classifyByAuthResults(headers: Header[]): "inbox" | "spam" {
 
 	return "inbox";
 }
+
+function extractDomain(address: string): string {
+	return address.slice(address.lastIndexOf("@") + 1).toLowerCase();
+}
+
+/**
+ * True only when the mail is a same-domain, DMARC-aligned message: the
+ * From address shares the mailbox's own domain, and DMARC explicitly
+ * *passed* (not merely "didn't fail"). DMARC pass proves SPF or DKIM is
+ * aligned with the From domain, i.e. the message was genuinely sent through
+ * that domain's own authorized mail infrastructure -- not just a spoofed
+ * From header on a domain with no enforced DMARC policy.
+ *
+ * This is intentionally narrow: it exists only to exempt the business's own
+ * transactional mail (e.g. verification emails sent from its own systems to
+ * its own mailboxes) from the Claude content check, not to weaken detection
+ * of confirmation-link-style phishing from any other domain -- that pattern
+ * (payment/points/delivery "confirmation" links) is one of the most common
+ * real spam patterns and must keep being evaluated normally.
+ */
+export function isTrustedSelfDomainSender(
+	headers: Header[],
+	fromAddress: string | undefined,
+	mailboxId: string,
+): boolean {
+	if (!fromAddress) return false;
+
+	const authResults = headers
+		.filter((h) => h.key === "authentication-results")
+		.map((h) => h.value)
+		.join(" ");
+	const dmarc = /\bdmarc=(\w+)/i.exec(authResults)?.[1]?.toLowerCase();
+	if (dmarc !== "pass") return false;
+
+	return extractDomain(fromAddress) === extractDomain(mailboxId);
+}
