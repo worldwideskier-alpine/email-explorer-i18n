@@ -1,8 +1,10 @@
-// The Claude API key used for the (future) second-stage spam classifier is
-// a secret, unlike the rest of the mailbox settings blob -- it must never be
-// echoed back to the browser once saved, and saving unrelated settings (e.g.
-// the signature) must never silently wipe it out. These two helpers keep
-// that behavior in one place instead of scattered across the mailbox routes.
+// The Claude API key used for the second-stage spam classifier is a secret,
+// unlike the rest of the mailbox settings blob -- it must never be echoed
+// back to the browser once saved, and saving unrelated settings (e.g. the
+// signature) must never silently wipe it out. These helpers keep that
+// behavior in one place instead of scattered across the mailbox routes.
+
+import type { Env } from "./types";
 
 type MailboxSettings = Record<string, any>;
 
@@ -50,4 +52,19 @@ export function mergeMailboxSettings(
 	}
 
 	return merged;
+}
+
+/**
+ * Reads the raw Claude API key for a mailbox straight from R2 (not through
+ * GetMailbox, which redacts it). Used only server-side, by the second-stage
+ * spam classifier at ingest time.
+ */
+export async function getClaudeApiKey(
+	env: Pick<Env, "BUCKET">,
+	mailboxId: string,
+): Promise<string | undefined> {
+	const obj = await env.BUCKET.get(`mailboxes/${mailboxId}.json`);
+	if (!obj) return undefined;
+	const settings = await obj.json<MailboxSettings>();
+	return settings?.spamFilter?.claudeApiKey || undefined;
 }
