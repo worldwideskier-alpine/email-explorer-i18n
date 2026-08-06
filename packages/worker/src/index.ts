@@ -4,6 +4,10 @@ import { cors } from "hono/cors";
 import PostalMime from "postal-mime";
 import { z } from "zod";
 import { ingestEmailIntoMailbox } from "./email-ingest";
+import {
+	mergeMailboxSettings,
+	redactMailboxSettings,
+} from "./mailbox-settings";
 import { plainTextToHtml } from "./plain-text-to-html";
 import { sendEmail } from "./resend";
 import {
@@ -273,7 +277,7 @@ class GetMailbox extends OpenAPIRoute {
 			id: mailboxId,
 			name: mailboxId,
 			email: mailboxId,
-			settings: settings,
+			settings: redactMailboxSettings(settings),
 		};
 		return c.json(response);
 	}
@@ -302,21 +306,26 @@ class PutMailbox extends OpenAPIRoute {
 	async handle(c: AppContext) {
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { mailboxId } = data.params;
-		const { settings } = data.body;
+		const { settings: incomingSettings } = data.body;
 		const key = `mailboxes/${mailboxId}.json`;
 
-		const obj = await c.env.BUCKET.head(key);
-		if (!obj) {
+		const existingObj = await c.env.BUCKET.get(key);
+		if (!existingObj) {
 			return c.json({ error: "Not found" }, 404);
 		}
+		const existingSettings = await existingObj.json();
 
-		await c.env.BUCKET.put(key, JSON.stringify(settings));
+		const mergedSettings = mergeMailboxSettings(
+			existingSettings,
+			incomingSettings,
+		);
+		await c.env.BUCKET.put(key, JSON.stringify(mergedSettings));
 
 		const response = {
 			id: mailboxId,
 			name: mailboxId,
 			email: mailboxId,
-			settings: settings,
+			settings: redactMailboxSettings(mergedSettings),
 		};
 		return c.json(response);
 	}
@@ -426,7 +435,7 @@ class PostMailbox extends OpenAPIRoute {
 			id: email,
 			email: email,
 			name: name,
-			settings: finalSettings,
+			settings: redactMailboxSettings(finalSettings),
 		};
 
 		return c.json(response, 201);

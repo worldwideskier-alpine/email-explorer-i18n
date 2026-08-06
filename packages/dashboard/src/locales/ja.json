@@ -140,7 +140,17 @@
 		"save": "保存",
 		"pushTitle": "プッシュ通知",
 		"pushDescription": "この端末に新着メールの通知を送ります（すべてのメールボックス共通）。",
-		"pushError": "プッシュ通知の設定に失敗しました"
+		"pushError": "プッシュ通知の設定に失敗しました",
+		"spamFilterTitle": "迷惑メール判定（Claude API・準備中）",
+		"spamFilterDescription": "SPF/DKIM/DMARCによる一次判定に加え、今後実装予定のClaudeによる二次判定で使用するAPIキーをここに保存できます。現時点ではこのキーはまだ判定処理には使用されていません。",
+		"spamFilterApiKeyLabel": "Claude APIキー",
+		"spamFilterApiKeyConfigured": "設定済み",
+		"spamFilterApiKeyNotConfigured": "未設定",
+		"spamFilterApiKeyPlaceholderConfigured": "変更する場合のみ入力してください",
+		"spamFilterApiKeyPlaceholderEmpty": "sk-ant-...",
+		"spamFilterRemove": "APIキーを削除",
+		"spamFilterConfirmRemove": "保存済みのAPIキーを削除してもよろしいですか？",
+		"spamFilterSaved": "APIキーを保存しました。"
 	},
 	"apiErrors": {
 		"Invalid credentials": "メールアドレスまたはパスワードが正しくありません",

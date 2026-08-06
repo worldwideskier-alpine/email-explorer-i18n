@@ -140,7 +140,17 @@
 		"save": "Save",
 		"pushTitle": "Push Notifications",
 		"pushDescription": "Get notified on this device when new mail arrives (across all mailboxes).",
-		"pushError": "Failed to update push notification settings"
+		"pushError": "Failed to update push notification settings",
+		"spamFilterTitle": "Spam Detection (Claude API — coming soon)",
+		"spamFilterDescription": "In addition to the SPF/DKIM/DMARC first-pass filter, you can save an API key here for a Claude-based second-pass filter that's planned but not yet implemented. This key is not used for filtering yet.",
+		"spamFilterApiKeyLabel": "Claude API Key",
+		"spamFilterApiKeyConfigured": "Configured",
+		"spamFilterApiKeyNotConfigured": "Not configured",
+		"spamFilterApiKeyPlaceholderConfigured": "Enter a new value to change it",
+		"spamFilterApiKeyPlaceholderEmpty": "sk-ant-...",
+		"spamFilterRemove": "Remove API Key",
+		"spamFilterConfirmRemove": "Are you sure you want to remove the saved API key?",
+		"spamFilterSaved": "API key saved."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Invalid credentials",
