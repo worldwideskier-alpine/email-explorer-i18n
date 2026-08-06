@@ -142,6 +142,52 @@ describe("Claude second-stage spam classification", () => {
 		expect(await folderOf("Stage 1 already failed")).toBe("spam");
 	});
 
+	it("skips Claude for a DMARC-aligned sender on the mailbox's own domain, even if Claude would say SPAM", async () => {
+		await setClaudeApiKey("sk-ant-test-key");
+
+		// mailboxId is test@example.com (see utils.ts) -- From shares that
+		// domain and DMARC is aligned, so this should never reach Claude even
+		// though the stub would return SPAM for the TRIGGER_CLAUDE_SPAM marker.
+		const rawEmail = buildRawEmail(
+			{
+				From: "noreply@example.com",
+				To: mailboxId,
+				Subject: "Self-domain transactional mail TRIGGER_CLAUDE_SPAM",
+				"Content-Type": "text/plain",
+				"Authentication-Results":
+					"mx.example.com; spf=pass smtp.mailfrom=example.com; dkim=pass header.i=@example.com; dmarc=pass header.from=example.com",
+			},
+			"Hello",
+		);
+
+		await simulateReceiveEmail(rawEmail);
+
+		expect(
+			await folderOf("Self-domain transactional mail TRIGGER_CLAUDE_SPAM"),
+		).toBe("inbox");
+	});
+
+	it("still calls Claude for a different domain, even if DMARC passes there too", async () => {
+		await setClaudeApiKey("sk-ant-test-key");
+
+		const rawEmail = buildRawEmail(
+			{
+				From: "sender@legit.com",
+				To: mailboxId,
+				Subject: "Different domain TRIGGER_CLAUDE_SPAM",
+				"Content-Type": "text/plain",
+				"Authentication-Results": PASSING_AUTH_RESULTS,
+			},
+			"Hello",
+		);
+
+		await simulateReceiveEmail(rawEmail);
+
+		expect(await folderOf("Different domain TRIGGER_CLAUDE_SPAM")).toBe(
+			"spam",
+		);
+	});
+
 	it("fails open to inbox when the Claude API call errors", async () => {
 		await setClaudeApiKey("sk-ant-test-key");
 
