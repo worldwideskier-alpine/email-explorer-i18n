@@ -7,7 +7,9 @@ import { classifyWithClaude } from "./claude-spam-filter";
 import { ingestEmailIntoMailbox } from "./email-ingest";
 import {
 	getClaudeApiKey,
+	getSenderVerdictOverride,
 	mergeMailboxSettings,
+	recordSenderVerdict,
 	redactMailboxSettings,
 } from "./mailbox-settings";
 import { plainTextToHtml } from "./plain-text-to-html";
@@ -152,6 +154,10 @@ const UpdateEmailStatusRequestSchema = z.object({
 
 const MoveEmailRequestSchema = z.object({
 	folderId: z.string(),
+});
+
+const SpamVerdictRequestSchema = z.object({
+	verdict: z.enum(["spam", "not-spam"]),
 });
 
 const SuccessResponseSchema = z.object({
@@ -803,6 +809,50 @@ class PostMoveEmail extends OpenAPIRoute {
 		if (!success) {
 			return c.json({ error: "Folder not found" }, 400);
 		}
+
+		return c.json({ status: "moved" });
+	}
+}
+
+class PostEmailSpamVerdict extends OpenAPIRoute {
+	schema = {
+		summary:
+			"Mark an email's sender as spam or not-spam, and move the email accordingly",
+		operationId: "setEmailSpamVerdict",
+		tags: ["Emails"],
+		request: {
+			params: z.object({
+				mailboxId: z.string(),
+				id: z.string(),
+			}),
+			body: contentJson(SpamVerdictRequestSchema),
+		},
+		responses: {
+			"200": {
+				description: "Verdict recorded and email moved",
+				...contentJson(SuccessResponseSchema),
+			},
+			"404": { description: "Not found", ...contentJson(ErrorResponseSchema) },
+		},
+	};
+
+	async handle(c: AppContext) {
+		const data = await this.getValidatedData<typeof this.schema>();
+		const { mailboxId, id } = data.params;
+		const { verdict } = data.body;
+
+		const ns = c.env.MAILBOX;
+		const doId = ns.idFromName(mailboxId);
+		const stub = ns.get(doId);
+
+		const email = (await stub.getEmail(id)) as any;
+		if (!email) {
+			return c.json({ error: "Email not found" }, 404);
+		}
+
+		const senderVerdict = verdict === "spam" ? "spam" : "inbox";
+		await recordSenderVerdict(c.env, mailboxId, email.sender, senderVerdict);
+		await stub.moveEmail(id, senderVerdict);
 
 		return c.json({ status: "moved" });
 	}
@@ -1785,6 +1835,10 @@ openapi.get("/api/v1/mailboxes/:mailboxId/emails/:id", GetEmail);
 openapi.put("/api/v1/mailboxes/:mailboxId/emails/:id", PutEmail);
 openapi.delete("/api/v1/mailboxes/:mailboxId/emails/:id", DeleteEmail);
 openapi.post("/api/v1/mailboxes/:mailboxId/emails/:id/move", PostMoveEmail);
+openapi.post(
+	"/api/v1/mailboxes/:mailboxId/emails/:id/spam-verdict",
+	PostEmailSpamVerdict,
+);
 openapi.post("/api/v1/mailboxes/:mailboxId/emails/:id/reply", PostReplyEmail);
 openapi.post(
 	"/api/v1/mailboxes/:mailboxId/emails/:id/forward",
@@ -1845,7 +1899,19 @@ async function receiveEmail(
 	}
 
 	const mailboxId = parsedEmail.to[0].address;
-	let folder = classifyByAuthResults(parsedEmail.headers);
+
+	// Highest precedence: the user has explicitly marked this exact sender
+	// as spam or not-spam before (see PostEmailSpamVerdict). That's a
+	// stronger signal than any automated check, so it short-circuits
+	// everything below -- no auth check, no Claude call.
+	const senderOverride = await getSenderVerdictOverride(
+		env,
+		mailboxId,
+		parsedEmail.from?.address,
+	);
+
+	let folder: "inbox" | "spam" =
+		senderOverride ?? classifyByAuthResults(parsedEmail.headers);
 
 	// Second-stage check: only for mail that already passed SPF/DKIM/DMARC
 	// (mail that failed it is spam regardless), and only when the mailbox
@@ -1856,6 +1922,7 @@ async function receiveEmail(
 	// doesn't weaken detection of confirmation-link-style phishing from
 	// other domains.
 	if (
+		!senderOverride &&
 		folder === "inbox" &&
 		!isTrustedSelfDomainSender(
 			parsedEmail.headers,

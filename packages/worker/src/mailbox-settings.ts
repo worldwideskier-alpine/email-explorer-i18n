@@ -68,3 +68,69 @@ export async function getClaudeApiKey(
 	const settings = await obj.json<MailboxSettings>();
 	return settings?.spamFilter?.claudeApiKey || undefined;
 }
+
+export type SenderVerdict = "spam" | "inbox";
+
+/**
+ * Per-mailbox sender allow/block list, built from the user explicitly
+ * marking an email as spam or not-spam. Deterministic and free (no API
+ * call): once a sender has been corrected once, every future message from
+ * that exact address is routed straight to the corrected folder, skipping
+ * the SPF/DKIM/DMARC check and the Claude second-stage classifier entirely.
+ */
+function normalizeAddress(address: string): string {
+	return address.trim().toLowerCase();
+}
+
+/**
+ * Looks up whether the given sender address has an explicit user-set
+ * verdict for this mailbox. Returns undefined when there's no override,
+ * meaning the normal classification pipeline should run as usual.
+ */
+export async function getSenderVerdictOverride(
+	env: Pick<Env, "BUCKET">,
+	mailboxId: string,
+	fromAddress: string | undefined,
+): Promise<SenderVerdict | undefined> {
+	if (!fromAddress) return undefined;
+
+	const obj = await env.BUCKET.get(`mailboxes/${mailboxId}.json`);
+	if (!obj) return undefined;
+	const settings = await obj.json<MailboxSettings>();
+	const rules = settings?.senderRules;
+	if (!rules) return undefined;
+
+	const normalized = normalizeAddress(fromAddress);
+	if ((rules.block || []).includes(normalized)) return "spam";
+	if ((rules.allow || []).includes(normalized)) return "inbox";
+	return undefined;
+}
+
+/**
+ * Records the user's explicit spam/not-spam correction for a sender
+ * address: adds it to the matching list and removes it from the opposite
+ * one, so a corrected sender can never be in both. Read-modify-write on the
+ * mailbox's settings object in R2.
+ */
+export async function recordSenderVerdict(
+	env: Pick<Env, "BUCKET">,
+	mailboxId: string,
+	fromAddress: string,
+	verdict: SenderVerdict,
+): Promise<MailboxSettings> {
+	const key = `mailboxes/${mailboxId}.json`;
+	const obj = await env.BUCKET.get(key);
+	const settings: MailboxSettings = obj ? await obj.json() : {};
+
+	const normalized = normalizeAddress(fromAddress);
+	const existingAllow: string[] = settings.senderRules?.allow || [];
+	const existingBlock: string[] = settings.senderRules?.block || [];
+
+	const allow = existingAllow.filter((a) => a !== normalized);
+	const block = existingBlock.filter((a) => a !== normalized);
+	(verdict === "inbox" ? allow : block).push(normalized);
+
+	const updated = { ...settings, senderRules: { allow, block } };
+	await env.BUCKET.put(key, JSON.stringify(updated));
+	return updated;
+}
