@@ -1,7 +1,7 @@
 <template>
   <div v-if="isComposeModalOpen" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all">
-      <div class="flex justify-between items-center bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all flex flex-col">
+      <div class="flex justify-between items-center bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5 flex-shrink-0">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -16,49 +16,51 @@
           </svg>
         </button>
       </div>
-      <form @submit.prevent="send" class="p-6">
-        <div v-if="error" class="bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-start gap-3" role="alert">
-          <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-          </svg>
-          <span class="block sm:inline">{{ error }}</span>
+      <form @submit.prevent="send" class="flex flex-col flex-1 min-h-0">
+        <div class="p-6 overflow-y-auto flex-1 min-h-0">
+          <div v-if="error" class="bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-start gap-3" role="alert">
+            <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+            <span class="block sm:inline">{{ error }}</span>
+          </div>
+          <div class="mb-5">
+            <label for="to" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.to") }}</label>
+            <input
+              type="email"
+              id="to"
+              v-model="to"
+              class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 transition-all duration-200"
+              placeholder="recipient@example.com"
+              required
+            />
+          </div>
+          <div class="mb-5">
+            <label for="subject" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.subject") }}</label>
+            <input
+              type="text"
+              id="subject"
+              v-model="subject"
+              class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 transition-all duration-200"
+              :placeholder="t('compose.subjectPlaceholder')"
+              required
+            />
+          </div>
+          <div>
+            <label for="body" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.message") }}</label>
+            <RichTextEditor v-model="body" />
+          </div>
         </div>
-        <div class="mb-5">
-          <label for="to" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.to") }}</label>
-          <input 
-            type="email" 
-            id="to" 
-            v-model="to" 
-            class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 transition-all duration-200" 
-            placeholder="recipient@example.com"
-            required 
-          />
-        </div>
-        <div class="mb-5">
-          <label for="subject" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.subject") }}</label>
-          <input
-            type="text"
-            id="subject"
-            v-model="subject"
-            class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 transition-all duration-200"
-            :placeholder="t('compose.subjectPlaceholder')"
-            required
-          />
-        </div>
-        <div class="mb-6">
-          <label for="body" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.message") }}</label>
-          <RichTextEditor v-model="body" />
-        </div>
-        <div class="flex justify-end gap-3">
-          <button 
-            type="button" 
-            @click="closeModal" 
+        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <button
+            type="button"
+            @click="closeModal"
             class="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold transition-all duration-200"
           >
             {{ t("compose.cancel") }}
           </button>
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             :disabled="isLoading"
             class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
