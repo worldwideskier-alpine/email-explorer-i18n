@@ -13,6 +13,11 @@ import { computed, ref } from "vue";
 
 const props = defineProps<{
 	body: string;
+	// When true (spam-folder emails), links are never made clickable --
+	// bare URLs are left as plain text and any real <a> tags from the
+	// sender have their href stripped, since a spam/phishing message is
+	// exactly the content where an accidental click is most dangerous.
+	disableLinks?: boolean;
 }>();
 
 const iframe = ref<HTMLIFrameElement | null>(null);
@@ -105,6 +110,24 @@ function linkifyPlainUrls(doc: Document) {
 	}
 }
 
+/**
+ * Strips every real `<a>` tag's href (and target) so it can't navigate
+ * anywhere by any means -- left-click, middle-click, or "open in new tab"
+ * from the context menu, none of which a JS click handler alone can stop.
+ * The link text stays visible, just inert and visually de-emphasized.
+ */
+function neutralizeLinks(doc: Document) {
+	if (!doc.body) return;
+	for (const anchor of doc.body.querySelectorAll("a")) {
+		anchor.removeAttribute("href");
+		anchor.removeAttribute("target");
+		anchor.style.color = "inherit";
+		anchor.style.textDecoration = "none";
+		anchor.style.cursor = "text";
+		anchor.title = "";
+	}
+}
+
 // The iframe has no allow-scripts, so links in the email body default to
 // navigating the iframe itself rather than the top-level page. Force them
 // to open in a new tab instead, since many login/tracking links refuse to
@@ -112,6 +135,11 @@ function linkifyPlainUrls(doc: Document) {
 const onLoad = () => {
 	const doc = iframe.value?.contentDocument;
 	if (!doc) return;
+
+	if (props.disableLinks) {
+		neutralizeLinks(doc);
+		return;
+	}
 
 	linkifyPlainUrls(doc);
 
