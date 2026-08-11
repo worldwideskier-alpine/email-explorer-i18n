@@ -117,7 +117,7 @@
       </div>
     </div>
     <div class="flex-grow">
-      <EmailIframe :body="emailBodyWithInlineImages" />
+      <EmailIframe :body="emailBodyWithInlineImages" :disable-links="fromFolder === 'spam'" />
     </div>
     <div v-if="email.attachments && email.attachments.length > 0" class="p-6 sm:p-8 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-900/30">
       <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
