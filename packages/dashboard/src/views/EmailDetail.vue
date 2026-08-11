@@ -73,6 +73,28 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16M6 8l-4 4 4 4M18 8l4 4-4 4" />
             </svg>
           </router-link>
+          <button
+            v-if="fromFolder === 'spam'"
+            @click="handleMarkNotSpam"
+            class="p-2.5 text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 rounded-xl hover:bg-green-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer"
+            :title="t('emailDetail.markNotSpam')"
+          >
+            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.markNotSpam") }}</div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </button>
+          <button
+            v-else
+            @click="handleMarkSpam"
+            class="p-2.5 text-gray-500 hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400 rounded-xl hover:bg-orange-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer"
+            :title="t('emailDetail.markSpam')"
+          >
+            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.markSpam") }}</div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+            </svg>
+          </button>
           <button @click="handleDelete" class="p-2.5 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailList.delete')">
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailList.delete") }}</div>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -245,6 +267,30 @@ const handleMove = (folderId: string) => {
 		isMoveMenuOpen.value = false;
 		router.back();
 	}
+};
+
+const fromFolder = computed(
+	() => (route.query.fromFolder as string) || "inbox",
+);
+
+const handleMarkSpam = async () => {
+	if (!email.value) return;
+	const mailboxId = route.params.mailboxId as string;
+	await emailStore.setEmailSpamVerdict(mailboxId, email.value.id, "spam");
+	router.push({
+		name: "EmailList",
+		params: { mailboxId, folder: fromFolder.value },
+	});
+};
+
+const handleMarkNotSpam = async () => {
+	if (!email.value) return;
+	const mailboxId = route.params.mailboxId as string;
+	await emailStore.setEmailSpamVerdict(mailboxId, email.value.id, "not-spam");
+	router.push({
+		name: "EmailList",
+		params: { mailboxId, folder: fromFolder.value },
+	});
 };
 
 const handleDelete = () => {

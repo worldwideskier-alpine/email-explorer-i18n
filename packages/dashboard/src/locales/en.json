@@ -121,7 +121,9 @@
 		"viewSource": "View original message",
 		"viewSourceLoading": "Loading...",
 		"viewSourceFailed": "Failed to load the original message source.",
-		"to": "To: "
+		"to": "To: ",
+		"markSpam": "Mark as spam",
+		"markNotSpam": "Not spam"
 	},
 	"searchResults": {
 		"title": "Search Results",

@@ -93,6 +93,14 @@ export default {
 		apiClient.post(`/api/v1/mailboxes/${mailboxId}/emails/${id}/move`, {
 			folderId,
 		}),
+	setEmailSpamVerdict: (
+		mailboxId: string,
+		id: string,
+		verdict: "spam" | "not-spam",
+	) =>
+		apiClient.post(`/api/v1/mailboxes/${mailboxId}/emails/${id}/spam-verdict`, {
+			verdict,
+		}),
 	getAttachment: (mailboxId: string, emailId: string, attachmentId: string) =>
 		apiClient.get(
 			`/api/v1/mailboxes/${mailboxId}/emails/${emailId}/attachments/${attachmentId}`,

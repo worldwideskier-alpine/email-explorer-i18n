@@ -55,5 +55,13 @@ export const useEmailStore = defineStore("emails", {
 				await this.moveEmail(mailboxId, id, "trash");
 			}
 		},
+		async setEmailSpamVerdict(
+			mailboxId: string,
+			id: string,
+			verdict: "spam" | "not-spam",
+		) {
+			await api.setEmailSpamVerdict(mailboxId, id, verdict);
+			this.emails = this.emails.filter((email) => email.id !== id);
+		},
 	},
 });

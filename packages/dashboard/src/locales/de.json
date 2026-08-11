@@ -121,7 +121,9 @@
 		"viewSource": "Original anzeigen",
 		"viewSourceLoading": "Wird geladen...",
 		"viewSourceFailed": "Die ursprüngliche Nachrichtenquelle konnte nicht geladen werden.",
-		"to": "An: "
+		"to": "An: ",
+		"markSpam": "Als Spam markieren",
+		"markNotSpam": "Kein Spam"
 	},
 	"searchResults": {
 		"title": "Suchergebnisse",
