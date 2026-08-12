@@ -1,7 +1,7 @@
 <template>
   <div class="rich-text-editor border border-gray-300 dark:border-gray-600 rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-900/50">
     <!-- Toolbar -->
-    <div v-if="editor" class="toolbar bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 p-2 flex flex-wrap gap-1">
+    <div v-if="editor" class="toolbar bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 p-2 flex flex-wrap gap-1 flex-shrink-0">
       <!-- Text Formatting -->
       <div class="flex gap-1 border-r border-gray-300 dark:border-gray-600 pr-2">
         <button
@@ -318,15 +318,15 @@
     </div>
 
     <!-- Editor Content or Source Code -->
-    <div v-if="showSourceCode" class="p-4">
+    <div v-if="showSourceCode" class="p-4 flex-1 flex flex-col min-h-0">
       <textarea
         v-model="sourceCode"
         @input="updateFromSource"
-        class="w-full h-64 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg p-3 font-mono text-sm"
+        class="w-full flex-1 min-h-[300px] resize-none bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg p-3 font-mono text-sm"
         :placeholder="t('richTextEditor.sourceCodePlaceholder')"
       />
     </div>
-    <editor-content v-else :editor="editor" class="prose prose-sm max-w-none p-4 text-gray-900 dark:text-gray-100" />
+    <editor-content v-else :editor="editor" class="prose prose-sm max-w-none p-4 text-gray-900 dark:text-gray-100 flex-1 min-h-0 overflow-y-auto" />
   </div>
 </template>
 
@@ -412,7 +412,7 @@ const editor = useEditor({
 	content: props.modelValue,
 	editorProps: {
 		attributes: {
-			class: "prose prose-sm max-w-none focus:outline-none min-h-[200px]",
+			class: "prose prose-sm max-w-none focus:outline-none min-h-full",
 		},
 	},
 	onUpdate: ({ editor }) => {
@@ -544,7 +544,7 @@ onBeforeUnmount(() => {
 /* TipTap Editor Styles */
 :deep(.ProseMirror) {
   outline: none;
-  min-height: 200px;
+  min-height: 100%;
   color: rgb(17 24 39);
 }
 
