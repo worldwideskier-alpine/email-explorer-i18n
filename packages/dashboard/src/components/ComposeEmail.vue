@@ -17,14 +17,14 @@
         </button>
       </div>
       <form @submit.prevent="send" class="flex flex-col flex-1 min-h-0">
-        <div class="p-6 overflow-y-auto flex-1 min-h-0">
-          <div v-if="error" class="bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-start gap-3" role="alert">
+        <div class="p-6 overflow-y-auto flex-1 min-h-0 flex flex-col">
+          <div v-if="error" class="bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-start gap-3 flex-shrink-0" role="alert">
             <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
             </svg>
             <span class="block sm:inline">{{ error }}</span>
           </div>
-          <div class="mb-5">
+          <div class="mb-5 flex-shrink-0">
             <label for="to" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.to") }}</label>
             <input
               type="email"
@@ -35,7 +35,7 @@
               required
             />
           </div>
-          <div class="mb-5">
+          <div class="mb-5 flex-shrink-0">
             <label for="subject" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.subject") }}</label>
             <input
               type="text"
@@ -46,20 +46,19 @@
               required
             />
           </div>
-          <div>
-            <div class="flex items-center justify-between mb-2">
+          <div class="flex-1 flex flex-col min-h-0">
+            <div class="flex items-center justify-between mb-2 flex-shrink-0">
               <label for="body" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ t("compose.message") }}</label>
               <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
                 <input type="checkbox" v-model="isPlainText" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500" />
                 {{ t("compose.plainTextMode") }}
               </label>
             </div>
-            <RichTextEditor v-if="!isPlainText" v-model="body" />
+            <RichTextEditor v-if="!isPlainText" v-model="body" class="flex-1 flex flex-col min-h-0" />
             <textarea
               v-else
               v-model="plainBody"
-              rows="10"
-              class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 font-mono text-sm transition-all duration-200"
+              class="flex-1 min-h-[300px] resize-none block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 font-mono text-sm transition-all duration-200"
             ></textarea>
           </div>
         </div>
