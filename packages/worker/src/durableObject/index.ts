@@ -596,6 +596,35 @@ export class MailboxDO extends DurableObject<Env> {
 		return this.getEmail(id);
 	}
 
+	async updateDraftContent(
+		id: string,
+		{
+			subject,
+			sender,
+			recipient,
+			body,
+		}: { subject: string; sender: string; recipient: string; body: string },
+	) {
+		this.#qb
+			.update({
+				tableName: "emails",
+				data: {
+					subject,
+					sender,
+					recipient,
+					body,
+					date: new Date().toISOString(),
+				},
+				where: {
+					conditions: "id = ? AND folder_id = 'draft'",
+					params: [id],
+				},
+			})
+			.execute();
+
+		return this.getEmail(id);
+	}
+
 	async deleteEmail(id: string) {
 		const attachments = this.#qb
 			.select("attachments")

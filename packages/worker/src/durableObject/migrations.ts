@@ -59,6 +59,12 @@ export const mailboxMigrations: Migration[] = [
             CREATE INDEX idx_emails_in_reply_to ON emails(in_reply_to);
         `,
 	},
+	{
+		name: "3_add_draft_folder",
+		sql: `
+            INSERT INTO folders (id, name, is_deletable) VALUES ('draft', 'Draft', 0);
+        `,
+	},
 ];
 
 export const authMigrations: Migration[] = [

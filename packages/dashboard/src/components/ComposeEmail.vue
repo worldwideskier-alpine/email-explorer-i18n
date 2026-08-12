@@ -1,6 +1,6 @@
 <template>
   <div v-if="isComposeModalOpen" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all flex flex-col">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl h-[85vh] text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all flex flex-col">
       <div class="flex justify-between items-center bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5 flex-shrink-0">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
@@ -47,11 +47,31 @@
             />
           </div>
           <div>
-            <label for="body" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.message") }}</label>
-            <RichTextEditor v-model="body" />
+            <div class="flex items-center justify-between mb-2">
+              <label for="body" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ t("compose.message") }}</label>
+              <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+                <input type="checkbox" v-model="isPlainText" class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500" />
+                {{ t("compose.plainTextMode") }}
+              </label>
+            </div>
+            <RichTextEditor v-if="!isPlainText" v-model="body" />
+            <textarea
+              v-else
+              v-model="plainBody"
+              rows="10"
+              class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 font-mono text-sm transition-all duration-200"
+            ></textarea>
           </div>
         </div>
         <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <button
+            type="button"
+            @click="saveDraft"
+            :disabled="isSavingDraft || isLoading"
+            class="px-6 py-3 bg-gray-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 font-semibold transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {{ isSavingDraft ? t('compose.savingDraft') : t('compose.saveDraft') }}
+          </button>
           <button
             type="button"
             @click="closeModal"
@@ -103,8 +123,12 @@ const { t } = useI18n();
 const to = ref("");
 const subject = ref("");
 const body = ref("");
+const plainBody = ref("");
+const isPlainText = ref(false);
+const draftId = ref<string | null>(null);
 const error = ref<string | null>(null);
 const isLoading = ref(false);
+const isSavingDraft = ref(false);
 
 const modalTitle = computed(() => {
 	switch (composeOptions.value.mode) {
@@ -114,6 +138,8 @@ const modalTitle = computed(() => {
 			return t("compose.modalTitle.replyAll");
 		case "forward":
 			return t("compose.modalTitle.forward");
+		case "draft":
+			return t("compose.modalTitle.draft");
 		default:
 			return t("compose.modalTitle.new");
 	}
@@ -132,6 +158,9 @@ const closeModal = () => {
 	to.value = "";
 	subject.value = "";
 	body.value = "";
+	plainBody.value = "";
+	isPlainText.value = false;
+	draftId.value = null;
 	uiStore.closeComposeModal();
 };
 
@@ -154,7 +183,16 @@ watch(isComposeModalOpen, (isOpen) => {
 		const original = options.originalEmail;
 		const sigBlock = getSignatureBlock();
 
-		if (options.mode === "reply" && original) {
+		isPlainText.value = false;
+		plainBody.value = "";
+		draftId.value = null;
+
+		if (options.mode === "draft" && original) {
+			to.value = original.recipient || "";
+			subject.value = original.subject || "";
+			body.value = original.body || "";
+			draftId.value = original.id;
+		} else if (options.mode === "reply" && original) {
 			to.value = original.sender;
 			subject.value = original.subject.startsWith("Re: ")
 				? original.subject
@@ -218,6 +256,57 @@ const htmlToPlainText = (html: string): string => {
 	return (div.textContent || div.innerText || "").trim();
 };
 
+// Helper to convert plain text to simple HTML (escaped, newlines as <br>)
+const plainTextToSimpleHtml = (text: string): string => {
+	const escapeHtml = (s: string) =>
+		s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+	return escapeHtml(text).replace(/\n/g, "<br>");
+};
+
+// Keep the HTML and plain-text bodies roughly in sync when the user
+// switches modes, so content isn't lost when toggling back and forth.
+watch(isPlainText, (usePlainText) => {
+	if (usePlainText) {
+		plainBody.value = htmlToPlainText(body.value);
+	} else {
+		body.value = plainTextToSimpleHtml(plainBody.value);
+	}
+});
+
+const saveDraft = async () => {
+	error.value = null;
+	if (!currentMailbox.value) {
+		error.value = t("compose.noMailboxSelected");
+		return;
+	}
+	isSavingDraft.value = true;
+	try {
+		const mailboxId = route.params.mailboxId as string;
+		const draftData = {
+			to: to.value,
+			from: currentMailbox.value.email,
+			subject: subject.value,
+			html: isPlainText.value ? plainBody.value : body.value,
+		};
+
+		if (draftId.value) {
+			await api.updateDraft(mailboxId, draftId.value, draftData);
+		} else {
+			const response = await api.saveDraft(mailboxId, draftData);
+			draftId.value = response.data.id;
+		}
+
+		showSuccessToast(t("compose.draftSaved"));
+	} catch (e: any) {
+		const errorMessage =
+			e.response?.data?.error || t("compose.unexpectedError");
+		error.value = errorMessage;
+		showErrorToast(errorMessage);
+	} finally {
+		isSavingDraft.value = false;
+	}
+};
+
 const send = async () => {
 	error.value = null;
 	if (!currentMailbox.value) {
@@ -227,13 +316,20 @@ const send = async () => {
 	isLoading.value = true;
 	try {
 		const mailboxId = route.params.mailboxId as string;
-		const emailData = {
-			to: to.value,
-			from: currentMailbox.value.email,
-			subject: subject.value,
-			html: body.value,
-			text: htmlToPlainText(body.value),
-		};
+		const emailData = isPlainText.value
+			? {
+					to: to.value,
+					from: currentMailbox.value.email,
+					subject: subject.value,
+					text: plainBody.value,
+				}
+			: {
+					to: to.value,
+					from: currentMailbox.value.email,
+					subject: subject.value,
+					html: body.value,
+					text: htmlToPlainText(body.value),
+				};
 
 		// Use appropriate API endpoint based on mode
 		if (
@@ -255,6 +351,10 @@ const send = async () => {
 			}
 		} else {
 			await emailStore.sendEmail(mailboxId, emailData);
+		}
+
+		if (draftId.value) {
+			await api.deleteEmail(mailboxId, draftId.value);
 		}
 
 		to.value = "";

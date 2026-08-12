@@ -223,7 +223,8 @@
 			"reply": "Reply",
 			"replyAll": "Reply All",
 			"forward": "Forward",
-			"new": "New Message"
+			"new": "New Message",
+			"draft": "Edit Draft"
 		},
 		"to": "To",
 		"subject": "Subject",
@@ -232,6 +233,10 @@
 		"cancel": "Cancel",
 		"sending": "Sending...",
 		"send": "Send Message",
+		"saveDraft": "Save Draft",
+		"savingDraft": "Saving...",
+		"draftSaved": "Draft saved",
+		"plainTextMode": "Send as plain text",
 		"noMailboxSelected": "No mailbox selected.",
 		"originalEmailNotFound": "Original email not found",
 		"emailSentSuccess": "Email sent successfully!",

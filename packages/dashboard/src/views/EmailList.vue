@@ -19,7 +19,11 @@
     </div>
     <ul v-if="emails.length > 0" class="divide-y divide-gray-100 dark:divide-gray-700/50">
       <li v-for="email in emails" :key="email.id" class="group relative transition-all duration-200" :class="{ 'bg-indigo-50/30 dark:bg-indigo-900/10': !email.read, 'hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/30 dark:hover:from-indigo-900/10 dark:hover:to-purple-900/10': true }">
-        <router-link :to="{ name: 'EmailDetail', params: { id: email.id }, query: { fromFolder: folderId } }" class="block px-6 py-4">
+        <router-link
+          :to="{ name: 'EmailDetail', params: { id: email.id }, query: { fromFolder: folderId } }"
+          class="block px-6 py-4"
+          @click="handleRowClick($event, email)"
+        >
           <div class="flex items-start justify-between gap-4">
             <div class="flex-grow overflow-hidden min-w-0">
               <div class="flex items-center gap-2 mb-1">
@@ -76,8 +80,10 @@ import { storeToRefs } from "pinia";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
+import api from "@/services/api";
 import { useEmailStore } from "@/stores/emails";
 import { useFolderStore } from "@/stores/folders";
+import { useUIStore } from "@/stores/ui";
 import type { Email } from "@/types";
 
 const { t } = useI18n();
@@ -85,6 +91,7 @@ const emailStore = useEmailStore();
 const { emails, isRefreshing } = storeToRefs(emailStore);
 const folderStore = useFolderStore();
 const { folders } = storeToRefs(folderStore);
+const uiStore = useUIStore();
 const route = useRoute();
 
 let refreshInterval: ReturnType<typeof setInterval> | null = null;
@@ -156,6 +163,16 @@ const toggleStarStatus = (email: Email) => {
 	emailStore.updateEmail(route.params.mailboxId as string, email.id, {
 		starred: !email.starred,
 	});
+};
+
+const handleRowClick = async (event: MouseEvent, email: Email) => {
+	if (folderId.value !== "draft") {
+		return;
+	}
+	event.preventDefault();
+	const mailboxId = route.params.mailboxId as string;
+	const response = await api.getEmail(mailboxId, email.id);
+	uiStore.openComposeModal({ mode: "draft", originalEmail: response.data });
 };
 
 const handleDelete = (emailId: string) => {
