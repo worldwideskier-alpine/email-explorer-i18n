@@ -116,6 +116,10 @@ export default {
 			`/api/v1/mailboxes/${mailboxId}/emails/${emailId}/forward`,
 			email,
 		),
+	saveDraft: (mailboxId: string, draft: any) =>
+		apiClient.post(`/api/v1/mailboxes/${mailboxId}/drafts`, draft),
+	updateDraft: (mailboxId: string, id: string, draft: any) =>
+		apiClient.put(`/api/v1/mailboxes/${mailboxId}/drafts/${id}`, draft),
 
 	// Folders
 	listFolders: (mailboxId: string) =>

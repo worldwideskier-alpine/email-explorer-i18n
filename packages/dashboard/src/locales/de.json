@@ -223,7 +223,8 @@
 			"reply": "Antworten",
 			"replyAll": "Allen antworten",
 			"forward": "Weiterleiten",
-			"new": "Neue Nachricht"
+			"new": "Neue Nachricht",
+			"draft": "Entwurf bearbeiten"
 		},
 		"to": "An",
 		"subject": "Betreff",
@@ -232,6 +233,10 @@
 		"cancel": "Abbrechen",
 		"sending": "Wird gesendet...",
 		"send": "Nachricht senden",
+		"saveDraft": "Entwurf speichern",
+		"savingDraft": "Wird gespeichert...",
+		"draftSaved": "Entwurf gespeichert",
+		"plainTextMode": "Als Nur-Text senden",
 		"noMailboxSelected": "Kein Postfach ausgewählt.",
 		"originalEmailNotFound": "Ursprüngliche E-Mail nicht gefunden",
 		"emailSentSuccess": "E-Mail erfolgreich gesendet!",

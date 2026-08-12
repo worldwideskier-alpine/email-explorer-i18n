@@ -25,6 +25,7 @@ import {
 	PostRevokeAccess,
 	PutUser,
 } from "./routes/auth";
+import { PostDraftEmail, PutDraftEmail } from "./routes/drafts";
 import { PostImportEmail } from "./routes/import";
 import {
 	GetVapidPublicKey,
@@ -1844,6 +1845,8 @@ openapi.post(
 	"/api/v1/mailboxes/:mailboxId/emails/:id/forward",
 	PostForwardEmail,
 );
+openapi.post("/api/v1/mailboxes/:mailboxId/drafts", PostDraftEmail);
+openapi.put("/api/v1/mailboxes/:mailboxId/drafts/:id", PutDraftEmail);
 openapi.get("/api/v1/mailboxes/:mailboxId/folders", GetFolders);
 openapi.post("/api/v1/mailboxes/:mailboxId/folders", PostFolder);
 openapi.put("/api/v1/mailboxes/:mailboxId/folders/:id", PutFolder);
