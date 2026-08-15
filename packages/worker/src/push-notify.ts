@@ -58,3 +58,23 @@ export async function notifyMailboxSubscribers(
 		}),
 	);
 }
+
+/**
+ * Tells every device subscribed to the given mailbox to close any
+ * notification carrying the given tag (an email id), without showing a
+ * new one. Used to clear a phone's notification once the email has been
+ * read elsewhere, e.g. on a PC.
+ */
+export async function dismissMailboxNotifications(
+	env: Env,
+	mailboxId: string,
+	tag: string,
+): Promise<void> {
+	await notifyMailboxSubscribers(env, mailboxId, {
+		type: "dismiss",
+		tag,
+		title: "",
+		body: "",
+		url: "",
+	});
+}
