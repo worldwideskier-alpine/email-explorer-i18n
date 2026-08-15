@@ -1,5 +1,10 @@
-import { describe, expect, it, beforeEach } from "vitest";
-import { authenticatedFetch, createMailbox, mailboxId, testAuthBeforeAll } from "./utils";
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+	authenticatedFetch,
+	createMailbox,
+	mailboxId,
+	testAuthBeforeAll,
+} from "./utils";
 
 describe("Draft Emails Integration Tests", () => {
 	beforeEach(async () => {
@@ -97,7 +102,12 @@ describe("Draft Emails Integration Tests", () => {
 			{
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ from: mailboxId, to: "a@example.com", subject: "x", html: "x" }),
+				body: JSON.stringify({
+					from: mailboxId,
+					to: "a@example.com",
+					subject: "x",
+					html: "x",
+				}),
 			},
 		);
 
@@ -125,7 +135,12 @@ describe("Draft Emails Integration Tests", () => {
 			{
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ from: mailboxId, to: "a@example.com", subject: "x", html: "x" }),
+				body: JSON.stringify({
+					from: mailboxId,
+					to: "a@example.com",
+					subject: "x",
+					html: "x",
+				}),
 			},
 		);
 
@@ -138,7 +153,12 @@ describe("Draft Emails Integration Tests", () => {
 			{
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ from: mailboxId, to: "a@example.com", subject: "x", html: "x" }),
+				body: JSON.stringify({
+					from: mailboxId,
+					to: "a@example.com",
+					subject: "x",
+					html: "x",
+				}),
 			},
 		);
 		const { id: draftId } = await createResponse.json<any>();

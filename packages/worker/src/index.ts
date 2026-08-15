@@ -13,6 +13,7 @@ import {
 	redactMailboxSettings,
 } from "./mailbox-settings";
 import { plainTextToHtml } from "./plain-text-to-html";
+import { dismissMailboxNotifications } from "./push-notify";
 import { sendEmail } from "./resend";
 import {
 	GetMe,
@@ -714,6 +715,10 @@ class PutEmail extends OpenAPIRoute {
 
 		if (!email) {
 			return c.json({ error: "Email not found" }, 404);
+		}
+
+		if (read === true) {
+			await dismissMailboxNotifications(c.env, mailboxId, id);
 		}
 
 		return c.json(email);

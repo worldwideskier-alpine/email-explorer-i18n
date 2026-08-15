@@ -35,6 +35,13 @@ export default defineWorkersConfig({
 						// fetch(); stub it too. Tests steer the verdict by including a
 						// marker string in the email body/subject, which ends up in the
 						// request's message content.
+						// Web Push sends to whatever endpoint host the browser's push
+						// service gave the subscription. Tests simulate an expired
+						// subscription so the cleanup side-effect (row removal) is
+						// observable without needing to decrypt the push payload.
+						if (url.hostname === "push.example.test") {
+							return new Response(null, { status: 410 });
+						}
 						if (url.hostname === "api.anthropic.com") {
 							const body = await request.clone().text();
 							if (body.includes("TRIGGER_CLAUDE_ERROR")) {
@@ -45,7 +52,10 @@ export default defineWorkersConfig({
 								: "NOT_SPAM";
 							return new Response(
 								JSON.stringify({ content: [{ type: "text", text: verdict }] }),
-								{ status: 200, headers: { "content-type": "application/json" } },
+								{
+									status: 200,
+									headers: { "content-type": "application/json" },
+								},
 							);
 						}
 						return fetch(request);

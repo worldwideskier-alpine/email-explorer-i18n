@@ -101,6 +101,7 @@ export async function ingestEmailIntoMailbox(
 			title: parsedEmail.from?.address || mailboxId,
 			body: parsedEmail.subject || "",
 			url: `/mailbox/${mailboxId}/email/${messageId}?fromFolder=${folder}`,
+			tag: messageId,
 		});
 	}
 

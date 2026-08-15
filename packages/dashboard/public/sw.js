@@ -14,11 +14,27 @@ self.addEventListener("push", (event) => {
 		// ignore malformed payloads
 	}
 
+	// Sent when the email is read on another device: close the matching
+	// notification here instead of showing a new one.
+	if (data.type === "dismiss" && data.tag) {
+		event.waitUntil(
+			self.registration
+				.getNotifications({ tag: data.tag })
+				.then((notifications) => {
+					for (const notification of notifications) {
+						notification.close();
+					}
+				}),
+		);
+		return;
+	}
+
 	event.waitUntil(
 		self.registration.showNotification(data.title, {
 			body: data.body,
 			icon: "/icon-192.png",
 			badge: "/icon-192.png",
+			tag: data.tag,
 			data: { url: data.url },
 		}),
 	);
