@@ -59,6 +59,17 @@ export async function notifyMailboxSubscribers(
 	);
 }
 
+/**
+ * Path the notification opens. Must stay in sync with the dashboard's
+ * router: the inbox list lives at `/mailbox/:mailboxId/emails/:folder`, so
+ * dropping the `emails/` segment lands on the catch-all 404 route instead.
+ * The mailbox id is an email address, so it needs encoding to match the
+ * form the dashboard itself produces (e.g. `uota%40example.com`).
+ */
+export function mailboxInboxPath(mailboxId: string): string {
+	return `/mailbox/${encodeURIComponent(mailboxId)}/emails/inbox`;
+}
+
 async function getMailboxLabel(env: Env, mailboxId: string): Promise<string> {
 	const obj = await env.BUCKET.get(`mailboxes/${mailboxId}.json`);
 	if (!obj) return mailboxId;
@@ -103,7 +114,7 @@ export async function syncMailboxNotification(
 	await notifyMailboxSubscribers(env, mailboxId, {
 		title: `[${mailboxLabel}] 未読${summary.count}件`,
 		body: `${summary.latestSender}: ${summary.latestSubject}`,
-		url: `/mailbox/${mailboxId}/inbox`,
+		url: mailboxInboxPath(mailboxId),
 		tag: mailboxId,
 		renotify: options.alert ? "true" : "false",
 	});
