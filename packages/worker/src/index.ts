@@ -13,7 +13,7 @@ import {
 	redactMailboxSettings,
 } from "./mailbox-settings";
 import { plainTextToHtml } from "./plain-text-to-html";
-import { dismissMailboxNotifications } from "./push-notify";
+import { syncMailboxNotification } from "./push-notify";
 import { sendEmail } from "./resend";
 import {
 	GetMe,
@@ -718,7 +718,7 @@ class PutEmail extends OpenAPIRoute {
 		}
 
 		if (read === true) {
-			await dismissMailboxNotifications(c.env, mailboxId, id);
+			await syncMailboxNotification(c.env, mailboxId, { alert: false });
 		}
 
 		return c.json(email);

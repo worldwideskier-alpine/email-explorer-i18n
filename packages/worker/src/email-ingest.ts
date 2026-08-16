@@ -1,6 +1,6 @@
 import type PostalMime from "postal-mime";
 import { plainTextToHtml } from "./plain-text-to-html";
-import { notifyMailboxSubscribers } from "./push-notify";
+import { syncMailboxNotification } from "./push-notify";
 import type { Env } from "./types";
 
 /**
@@ -26,12 +26,9 @@ export async function ingestEmailIntoMailbox(
 	const messageId = crypto.randomUUID();
 
 	const key = `mailboxes/${mailboxId}.json`;
-	const settingsObj = await env.BUCKET.get(key);
-	let mailboxSettings: { fromName?: string } = {};
-	if (!settingsObj) {
+	const obj = await env.BUCKET.head(key);
+	if (!obj) {
 		await env.BUCKET.put(key, JSON.stringify({}));
-	} else {
-		mailboxSettings = await settingsObj.json<{ fromName?: string }>();
 	}
 
 	if (overrides.rawEmail) {
@@ -100,13 +97,7 @@ export async function ingestEmailIntoMailbox(
 	}
 
 	if (overrides.notify && folder !== "spam") {
-		const mailboxLabel = mailboxSettings.fromName || mailboxId;
-		await notifyMailboxSubscribers(env, mailboxId, {
-			title: `[${mailboxLabel}] ${parsedEmail.from?.address || mailboxId}`,
-			body: parsedEmail.subject || "",
-			url: `/mailbox/${mailboxId}/email/${messageId}?fromFolder=${folder}`,
-			tag: messageId,
-		});
+		await syncMailboxNotification(env, mailboxId, { alert: true });
 	}
 
 	return messageId;

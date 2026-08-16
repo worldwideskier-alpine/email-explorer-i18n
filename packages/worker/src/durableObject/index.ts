@@ -541,6 +541,41 @@ export class MailboxDO extends DurableObject<Env> {
 		);
 	}
 
+	/**
+	 * Summary used to build a single, per-mailbox aggregate push notification
+	 * (rather than one notification per incoming email): how many unread
+	 * inbox emails there are right now, plus the most recent one so the
+	 * notification can show a preview.
+	 */
+	async getUnreadInboxSummary(): Promise<{
+		count: number;
+		latestSender: string;
+		latestSubject: string;
+	} | null> {
+		const countResult = this.#qb
+			.select("emails")
+			.fields(["COUNT(*) as count"])
+			.where("folder_id = 'inbox' AND read = 0")
+			.one();
+		const count = Number(countResult.results?.count ?? 0);
+
+		if (count === 0) return null;
+
+		const latest = this.#qb
+			.select("emails")
+			.fields(["sender", "subject"])
+			.where("folder_id = 'inbox' AND read = 0")
+			.orderBy("date DESC")
+			.limit(1)
+			.one();
+
+		return {
+			count,
+			latestSender: String(latest.results?.sender ?? ""),
+			latestSubject: String(latest.results?.subject ?? ""),
+		};
+	}
+
 	async getEmail(id: string) {
 		const email = this.#qb
 			.select("emails")
