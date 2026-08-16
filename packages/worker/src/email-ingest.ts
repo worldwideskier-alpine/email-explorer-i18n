@@ -26,9 +26,12 @@ export async function ingestEmailIntoMailbox(
 	const messageId = crypto.randomUUID();
 
 	const key = `mailboxes/${mailboxId}.json`;
-	const obj = await env.BUCKET.head(key);
-	if (!obj) {
+	const settingsObj = await env.BUCKET.get(key);
+	let mailboxSettings: { fromName?: string } = {};
+	if (!settingsObj) {
 		await env.BUCKET.put(key, JSON.stringify({}));
+	} else {
+		mailboxSettings = await settingsObj.json<{ fromName?: string }>();
 	}
 
 	if (overrides.rawEmail) {
@@ -97,8 +100,9 @@ export async function ingestEmailIntoMailbox(
 	}
 
 	if (overrides.notify && folder !== "spam") {
+		const mailboxLabel = mailboxSettings.fromName || mailboxId;
 		await notifyMailboxSubscribers(env, mailboxId, {
-			title: parsedEmail.from?.address || mailboxId,
+			title: `[${mailboxLabel}] ${parsedEmail.from?.address || mailboxId}`,
 			body: parsedEmail.subject || "",
 			url: `/mailbox/${mailboxId}/email/${messageId}?fromFolder=${folder}`,
 			tag: messageId,
