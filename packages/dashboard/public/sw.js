@@ -35,6 +35,10 @@ self.addEventListener("push", (event) => {
 			icon: "/icon-192.png",
 			badge: "/icon-192.png",
 			tag: data.tag,
+			// One notification per mailbox (tag = mailboxId): a same-tag push
+			// normally updates it silently, so force a fresh alert (sound/
+			// vibration) only when the payload says new mail actually arrived.
+			renotify: data.renotify === "true",
 			data: { url: data.url },
 		}),
 	);

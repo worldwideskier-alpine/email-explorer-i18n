@@ -59,22 +59,52 @@ export async function notifyMailboxSubscribers(
 	);
 }
 
+async function getMailboxLabel(env: Env, mailboxId: string): Promise<string> {
+	const obj = await env.BUCKET.get(`mailboxes/${mailboxId}.json`);
+	if (!obj) return mailboxId;
+	const settings = await obj.json<{ fromName?: string }>();
+	return settings?.fromName || mailboxId;
+}
+
 /**
- * Tells every device subscribed to the given mailbox to close any
- * notification carrying the given tag (an email id), without showing a
- * new one. Used to clear a phone's notification once the email has been
- * read elsewhere, e.g. on a PC.
+ * Recomputes the mailbox's current unread-inbox count and updates (or
+ * closes) that mailbox's single aggregate push notification to match,
+ * instead of showing one notification per email. Every device gets one
+ * notification per mailbox, tagged with the mailbox id, so unread mail
+ * from different mailboxes never mixes together in the notification list.
+ *
+ * Call with alert:true when new mail just arrived (the phone should
+ * actually buzz/alert), and alert:false when an email was simply marked
+ * read (the count should update silently, or the notification should
+ * disappear once nothing is left unread).
  */
-export async function dismissMailboxNotifications(
+export async function syncMailboxNotification(
 	env: Env,
 	mailboxId: string,
-	tag: string,
+	options: { alert: boolean },
 ): Promise<void> {
+	const ns = env.MAILBOX;
+	const stub = ns.get(ns.idFromName(mailboxId));
+	const summary = await stub.getUnreadInboxSummary();
+
+	if (!summary) {
+		await notifyMailboxSubscribers(env, mailboxId, {
+			type: "dismiss",
+			tag: mailboxId,
+			title: "",
+			body: "",
+			url: "",
+		});
+		return;
+	}
+
+	const mailboxLabel = await getMailboxLabel(env, mailboxId);
+
 	await notifyMailboxSubscribers(env, mailboxId, {
-		type: "dismiss",
-		tag,
-		title: "",
-		body: "",
-		url: "",
+		title: `[${mailboxLabel}] 未読${summary.count}件`,
+		body: `${summary.latestSender}: ${summary.latestSubject}`,
+		url: `/mailbox/${mailboxId}/inbox`,
+		tag: mailboxId,
+		renotify: options.alert ? "true" : "false",
 	});
 }
