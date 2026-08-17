@@ -545,10 +545,11 @@ export class MailboxDO extends DurableObject<Env> {
 	 * Summary used to build a single, per-mailbox aggregate push notification
 	 * (rather than one notification per incoming email): how many unread
 	 * inbox emails there are right now, plus the most recent one so the
-	 * notification can show a preview.
+	 * notification can show a preview and link straight to its body.
 	 */
 	async getUnreadInboxSummary(): Promise<{
 		count: number;
+		latestId: string;
 		latestSender: string;
 		latestSubject: string;
 	} | null> {
@@ -563,7 +564,7 @@ export class MailboxDO extends DurableObject<Env> {
 
 		const latest = this.#qb
 			.select("emails")
-			.fields(["sender", "subject"])
+			.fields(["id", "sender", "subject"])
 			.where("folder_id = 'inbox' AND read = 0")
 			.orderBy("date DESC")
 			.limit(1)
@@ -571,6 +572,7 @@ export class MailboxDO extends DurableObject<Env> {
 
 		return {
 			count,
+			latestId: String(latest.results?.id ?? ""),
 			latestSender: String(latest.results?.sender ?? ""),
 			latestSubject: String(latest.results?.subject ?? ""),
 		};
