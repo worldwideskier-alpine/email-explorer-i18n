@@ -67,6 +67,7 @@ describe("Unread inbox summary (per-mailbox aggregate notification data)", () =>
 		const summary = await getSummary();
 		expect(summary).toEqual({
 			count: 2,
+			latestId: id2,
 			latestSender: "b@example.com",
 			latestSubject: "Second email",
 		});

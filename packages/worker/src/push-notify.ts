@@ -70,6 +70,17 @@ export function mailboxInboxPath(mailboxId: string): string {
 	return `/mailbox/${encodeURIComponent(mailboxId)}/emails/inbox`;
 }
 
+/**
+ * Deep link to a single email's body (`email/:id` under `/mailbox/:mailboxId`
+ * in the dashboard router). `fromFolder` is what EmailDetail uses for its
+ * back/move/spam actions, matching how the in-app list links to a message.
+ */
+export function mailboxEmailPath(mailboxId: string, emailId: string): string {
+	return `/mailbox/${encodeURIComponent(mailboxId)}/email/${encodeURIComponent(
+		emailId,
+	)}?fromFolder=inbox`;
+}
+
 async function getMailboxLabel(env: Env, mailboxId: string): Promise<string> {
 	const obj = await env.BUCKET.get(`mailboxes/${mailboxId}.json`);
 	if (!obj) return mailboxId;
@@ -114,7 +125,13 @@ export async function syncMailboxNotification(
 	await notifyMailboxSubscribers(env, mailboxId, {
 		title: `[${mailboxLabel}] 未読${summary.count}件`,
 		body: `${summary.latestSender}: ${summary.latestSubject}`,
-		url: mailboxInboxPath(mailboxId),
+		// Tapping opens the newest unread message directly. Reading it marks
+		// it read, which re-runs this sync with a count one lower -- so the
+		// notification keeps standing as a decrementing unread counter until
+		// it hits zero and the dismiss branch above closes it.
+		url: summary.latestId
+			? mailboxEmailPath(mailboxId, summary.latestId)
+			: mailboxInboxPath(mailboxId),
 		tag: mailboxId,
 		renotify: options.alert ? "true" : "false",
 	});
