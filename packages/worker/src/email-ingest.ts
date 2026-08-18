@@ -1,6 +1,6 @@
 import type PostalMime from "postal-mime";
 import { plainTextToHtml } from "./plain-text-to-html";
-import { syncMailboxNotification } from "./push-notify";
+import { notifyNewEmail } from "./push-notify";
 import type { Env } from "./types";
 
 /**
@@ -97,7 +97,11 @@ export async function ingestEmailIntoMailbox(
 	}
 
 	if (overrides.notify && folder !== "spam") {
-		await syncMailboxNotification(env, mailboxId, { alert: true });
+		await notifyNewEmail(env, mailboxId, {
+			id: messageId,
+			sender: parsedEmail.from?.address || "",
+			subject: parsedEmail.subject || "",
+		});
 	}
 
 	return messageId;

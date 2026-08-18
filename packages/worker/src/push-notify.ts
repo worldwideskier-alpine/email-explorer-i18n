@@ -60,20 +60,11 @@ export async function notifyMailboxSubscribers(
 }
 
 /**
- * Path the notification opens. Must stay in sync with the dashboard's
- * router: the inbox list lives at `/mailbox/:mailboxId/emails/:folder`, so
- * dropping the `emails/` segment lands on the catch-all 404 route instead.
- * The mailbox id is an email address, so it needs encoding to match the
- * form the dashboard itself produces (e.g. `uota%40example.com`).
- */
-export function mailboxInboxPath(mailboxId: string): string {
-	return `/mailbox/${encodeURIComponent(mailboxId)}/emails/inbox`;
-}
-
-/**
  * Deep link to a single email's body (`email/:id` under `/mailbox/:mailboxId`
  * in the dashboard router). `fromFolder` is what EmailDetail uses for its
  * back/move/spam actions, matching how the in-app list links to a message.
+ * The mailbox id is an email address, so it needs encoding to match the form
+ * the dashboard itself produces (e.g. `uota%40example.com`).
  */
 export function mailboxEmailPath(mailboxId: string, emailId: string): string {
 	return `/mailbox/${encodeURIComponent(mailboxId)}/email/${encodeURIComponent(
@@ -89,50 +80,59 @@ async function getMailboxLabel(env: Env, mailboxId: string): Promise<string> {
 }
 
 /**
- * Recomputes the mailbox's current unread-inbox count and updates (or
- * closes) that mailbox's single aggregate push notification to match,
- * instead of showing one notification per email. Every device gets one
- * notification per mailbox, tagged with the mailbox id, so unread mail
- * from different mailboxes never mixes together in the notification list.
+ * Announces one newly arrived email as its own notification, tagged with the
+ * email id. One notification per message (rather than a single per-mailbox
+ * counter) is what lets Android stack them the way Gmail's do: a collapsed
+ * row with a count badge that expands into the individual messages, each
+ * opening its own mail and dismissable on its own.
  *
- * Call with alert:true when new mail just arrived (the phone should
- * actually buzz/alert), and alert:false when an email was simply marked
- * read (the count should update silently, or the notification should
- * disappear once nothing is left unread).
+ * The mailbox's display name leads the title because the stack's header is
+ * the site name, which is the same for every mailbox and so can't tell
+ * info@ apart from uota@ on its own.
  */
-export async function syncMailboxNotification(
+export function buildNewEmailPayload(
+	mailboxId: string,
+	mailboxLabel: string,
+	email: { id: string; sender: string; subject: string },
+): { title: string; body: string; url: string; tag: string } {
+	return {
+		title: `[${mailboxLabel}] ${email.sender || mailboxId}`,
+		body: email.subject,
+		url: mailboxEmailPath(mailboxId, email.id),
+		// Unique per message: a shared tag would make each new mail replace
+		// the previous notification instead of stacking beside it.
+		tag: email.id,
+	};
+}
+
+export async function notifyNewEmail(
 	env: Env,
 	mailboxId: string,
-	options: { alert: boolean },
+	email: { id: string; sender: string; subject: string },
 ): Promise<void> {
-	const ns = env.MAILBOX;
-	const stub = ns.get(ns.idFromName(mailboxId));
-	const summary = await stub.getUnreadInboxSummary();
-
-	if (!summary) {
-		await notifyMailboxSubscribers(env, mailboxId, {
-			type: "dismiss",
-			tag: mailboxId,
-			title: "",
-			body: "",
-			url: "",
-		});
-		return;
-	}
-
 	const mailboxLabel = await getMailboxLabel(env, mailboxId);
+	await notifyMailboxSubscribers(
+		env,
+		mailboxId,
+		buildNewEmailPayload(mailboxId, mailboxLabel, email),
+	);
+}
 
+/**
+ * Closes the notification for one specific email on every subscribed device
+ * without showing anything new -- used when the message gets marked read
+ * somewhere else, e.g. opened on a PC while the phone still shows it.
+ */
+export async function dismissEmailNotification(
+	env: Env,
+	mailboxId: string,
+	emailId: string,
+): Promise<void> {
 	await notifyMailboxSubscribers(env, mailboxId, {
-		title: `[${mailboxLabel}] 未読${summary.count}件`,
-		body: `${summary.latestSender}: ${summary.latestSubject}`,
-		// Tapping opens the newest unread message directly. Reading it marks
-		// it read, which re-runs this sync with a count one lower -- so the
-		// notification keeps standing as a decrementing unread counter until
-		// it hits zero and the dismiss branch above closes it.
-		url: summary.latestId
-			? mailboxEmailPath(mailboxId, summary.latestId)
-			: mailboxInboxPath(mailboxId),
-		tag: mailboxId,
-		renotify: options.alert ? "true" : "false",
+		type: "dismiss",
+		tag: emailId,
+		title: "",
+		body: "",
+		url: "",
 	});
 }

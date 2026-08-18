@@ -1,27 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mailboxEmailPath, mailboxInboxPath } from "../../src/push-notify";
-
-// The dashboard router (packages/dashboard/src/router/index.ts) defines the
-// inbox list as `/mailbox/:mailboxId/emails/:folder`, with a catch-all
-// NotFound route swallowing everything else. A notification pointing at a
-// path that doesn't match a real route silently 404s when tapped, so pin
-// the exact shape here.
-describe("mailboxInboxPath", () => {
-	it("includes the emails/ segment the EmailList route requires", () => {
-		expect(mailboxInboxPath("uota@beautifulsnow.co.jp")).toBe(
-			"/mailbox/uota%40beautifulsnow.co.jp/emails/inbox",
-		);
-	});
-
-	it("percent-encodes the @ in the mailbox address", () => {
-		expect(mailboxInboxPath("info@beautifulsnow.co.jp")).toContain("%40");
-		expect(mailboxInboxPath("info@beautifulsnow.co.jp")).not.toContain("@");
-	});
-
-	it("produces a path that starts at the site root", () => {
-		expect(mailboxInboxPath("a@b.com").startsWith("/mailbox/")).toBe(true);
-	});
-});
+import { buildNewEmailPayload, mailboxEmailPath } from "../../src/push-notify";
 
 // The notification tapped on the phone opens this path, which must match the
 // router's `email/:id` child route (singular "email", no "s") and carry the
@@ -41,5 +19,43 @@ describe("mailboxEmailPath", () => {
 
 	it("percent-encodes the mailbox address", () => {
 		expect(mailboxEmailPath("info@beautifulsnow.co.jp", "x")).toContain("%40");
+	});
+});
+
+// Gmail-style stacking depends entirely on each message getting its own
+// notification tag: Android replaces a same-tag notification in place, so a
+// shared tag would collapse every new mail into one row.
+describe("buildNewEmailPayload", () => {
+	const mk = (id: string, sender: string, subject: string) =>
+		buildNewEmailPayload("uota@beautifulsnow.co.jp", "UOTA Yuji", {
+			id,
+			sender,
+			subject,
+		});
+
+	it("tags each notification with its own email id", () => {
+		expect(mk("id-1", "a@x.com", "s1").tag).toBe("id-1");
+		expect(mk("id-2", "b@x.com", "s2").tag).toBe("id-2");
+	});
+
+	it("leads the title with the mailbox label so mailboxes stay tellable apart", () => {
+		expect(
+			mk("id-1", "Dorothee@team-asia.co.jp", "8月お支払金額のお知らせ"),
+		).toMatchObject({
+			title: "[UOTA Yuji] Dorothee@team-asia.co.jp",
+			body: "8月お支払金額のお知らせ",
+		});
+	});
+
+	it("links each notification to its own message", () => {
+		expect(mk("id-1", "a@x.com", "s1").url).toBe(
+			"/mailbox/uota%40beautifulsnow.co.jp/email/id-1?fromFolder=inbox",
+		);
+	});
+
+	it("falls back to the mailbox id when the sender is missing", () => {
+		expect(mk("id-1", "", "s1").title).toBe(
+			"[UOTA Yuji] uota@beautifulsnow.co.jp",
+		);
 	});
 });
