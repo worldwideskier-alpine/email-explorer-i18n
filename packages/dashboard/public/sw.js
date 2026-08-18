@@ -34,11 +34,10 @@ self.addEventListener("push", (event) => {
 			body: data.body,
 			icon: "/icon-192.png",
 			badge: "/icon-192.png",
+			// One notification per email (tag = email id) so Android stacks
+			// them like Gmail's: a collapsed row with a count that expands
+			// into the individual messages, each opening its own mail.
 			tag: data.tag,
-			// One notification per mailbox (tag = mailboxId): a same-tag push
-			// normally updates it silently, so force a fresh alert (sound/
-			// vibration) only when the payload says new mail actually arrived.
-			renotify: data.renotify === "true",
 			data: { url: data.url },
 		}),
 	);
