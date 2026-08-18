@@ -54,7 +54,7 @@ jobs:
 
       - name: Create Release Pull Request or Publish
         id: changesets
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
           publish: ${{ steps.check.outputs.published == 'false' && 'npm publish ./packages/worker --provenance --access public' || 'echo Already published, skipping' }}
           version: node scripts/changeset-version.cjs
