@@ -860,6 +860,15 @@ class PostEmailSpamVerdict extends OpenAPIRoute {
 		await recordSenderVerdict(c.env, mailboxId, email.sender, senderVerdict);
 		await stub.moveEmail(id, senderVerdict);
 
+		if (verdict === "spam") {
+			// Filing mail as spam is the user dealing with it, so treat it like
+			// opening it: drop it out of the unread count and clear the
+			// notification still sitting on their phone. Moving the other way
+			// (not-spam) deliberately leaves it unread so it gets noticed.
+			await stub.updateEmail(id, { read: true });
+			await dismissEmailNotification(c.env, mailboxId, id);
+		}
+
 		return c.json({ status: "moved" });
 	}
 }
