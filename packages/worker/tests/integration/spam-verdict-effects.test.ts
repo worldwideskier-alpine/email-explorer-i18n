@@ -100,14 +100,14 @@ describe("Marking an email as spam", () => {
 		expect((await listFolder("inbox")).some((e) => e.id === id)).toBe(false);
 	});
 
-	it("marks it read so it stops counting as unread", async () => {
+	it("leaves it unread -- only the notification goes away", async () => {
 		const id = crypto.randomUUID();
 		await insertUnreadInboxEmail(id);
 		expect((await getEmail(id)).read).toBe(false);
 
 		await setVerdict(id, "spam");
 
-		expect((await getEmail(id)).read).toBe(true);
+		expect((await getEmail(id)).read).toBe(false);
 	});
 
 	it("clears the notification still showing on the phone", async () => {
@@ -123,16 +123,70 @@ describe("Marking an email as spam", () => {
 		expect(await subscriptionCount()).toBe(0);
 	});
 
-	it("leaves mail rescued from spam unread so it still gets noticed", async () => {
+	it("brings mail rescued from spam back to the inbox, still unread", async () => {
 		const id = crypto.randomUUID();
 		await insertUnreadInboxEmail(id);
 		await setVerdict(id, "spam");
-		expect((await getEmail(id)).read).toBe(true);
 
 		await setVerdict(id, "not-spam");
 
 		expect((await listFolder("inbox")).some((e) => e.id === id)).toBe(true);
-		// not-spam must not silently re-mark it read
-		expect((await getEmail(id)).read).toBe(true);
+		expect((await getEmail(id)).read).toBe(false);
+	});
+});
+
+const moveTo = (id: string, folderId: string) =>
+	authenticatedFetch(
+		`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${id}/move`,
+		{
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ folderId }),
+		},
+	);
+
+describe("Deleting an email", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createMailbox();
+	});
+
+	it("clears the notification when binned, leaving it unread in the trash", async () => {
+		const id = crypto.randomUUID();
+		await insertUnreadInboxEmail(id);
+		await subscribe();
+		expect(await subscriptionCount()).toBe(1);
+
+		expect((await moveTo(id, "trash")).status).toBe(200);
+
+		expect(await subscriptionCount()).toBe(0);
+		expect((await getEmail(id)).read).toBe(false);
+		expect((await listFolder("trash")).some((e) => e.id === id)).toBe(true);
+	});
+
+	it("clears the notification when deleted for good", async () => {
+		const id = crypto.randomUUID();
+		await insertUnreadInboxEmail(id);
+		await subscribe();
+		expect(await subscriptionCount()).toBe(1);
+
+		const res = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${id}`,
+			{ method: "DELETE" },
+		);
+		expect(res.status).toBe(204);
+
+		expect(await subscriptionCount()).toBe(0);
+	});
+
+	it("leaves the notification alone when merely filing to another folder", async () => {
+		const id = crypto.randomUUID();
+		await insertUnreadInboxEmail(id);
+		await subscribe();
+
+		expect((await moveTo(id, "archive")).status).toBe(200);
+
+		// No dismiss push was sent, so the subscription is untouched
+		expect(await subscriptionCount()).toBe(1);
 	});
 });

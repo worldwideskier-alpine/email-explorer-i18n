@@ -766,6 +766,10 @@ class DeleteEmail extends OpenAPIRoute {
 		}
 		await c.env.BUCKET.delete(`raw/${id}.eml`);
 
+		// The message is gone for good, so a notification pointing at it would
+		// only lead nowhere. Clear it from every device.
+		await dismissEmailNotification(c.env, mailboxId, id);
+
 		return c.body(null, 204);
 	}
 }
@@ -816,6 +820,13 @@ class PostMoveEmail extends OpenAPIRoute {
 			return c.json({ error: "Folder not found" }, 400);
 		}
 
+		// Binning or filing something as spam means the user has dealt with it,
+		// so the notification should go even though the mail stays unread.
+		// Other destinations (archive, custom folders) are left alone for now.
+		if (folderId === "trash" || folderId === "spam") {
+			await dismissEmailNotification(c.env, mailboxId, id);
+		}
+
 		return c.json({ status: "moved" });
 	}
 }
@@ -861,11 +872,9 @@ class PostEmailSpamVerdict extends OpenAPIRoute {
 		await stub.moveEmail(id, senderVerdict);
 
 		if (verdict === "spam") {
-			// Filing mail as spam is the user dealing with it, so treat it like
-			// opening it: drop it out of the unread count and clear the
-			// notification still sitting on their phone. Moving the other way
-			// (not-spam) deliberately leaves it unread so it gets noticed.
-			await stub.updateEmail(id, { read: true });
+			// The mail has been dealt with, so drop the notification still
+			// sitting on the phone. Read state is deliberately left alone: it
+			// stays unread in the spam folder.
 			await dismissEmailNotification(c.env, mailboxId, id);
 		}
 
