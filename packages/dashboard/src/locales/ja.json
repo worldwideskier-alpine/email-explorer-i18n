@@ -105,6 +105,8 @@
 		"markUnread": "未読にする",
 		"markRead": "既読にする",
 		"delete": "削除",
+		"markSpam": "迷惑メール",
+		"markNotSpam": "迷惑メールではない",
 		"emptyTitle": "このフォルダは空です",
 		"emptyMessage": "このフォルダにメールはありません。",
 		"confirmDelete": "このメールを削除してもよろしいですか？",

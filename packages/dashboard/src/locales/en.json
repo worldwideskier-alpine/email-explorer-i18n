@@ -105,6 +105,8 @@
 		"markUnread": "Mark as unread",
 		"markRead": "Mark as read",
 		"delete": "Delete",
+		"markSpam": "Mark as spam",
+		"markNotSpam": "Not spam",
 		"emptyTitle": "This folder is empty",
 		"emptyMessage": "No emails found in this folder.",
 		"confirmDelete": "Are you sure you want to delete this email?",

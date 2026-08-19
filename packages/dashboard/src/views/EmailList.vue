@@ -52,6 +52,22 @@
                     <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                   </svg>
                 </button>
+                <button
+                  v-if="folderId !== 'draft'"
+                  @click.prevent="handleSpamVerdict(email)"
+                  class="p-2 rounded-lg transition-all duration-200"
+                  :class="isSpamFolder
+                    ? 'text-gray-400 hover:text-green-600 dark:text-gray-500 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-gray-700/50'
+                    : 'text-gray-400 hover:text-orange-600 dark:text-gray-500 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-gray-700/50'"
+                  :title="isSpamFolder ? t('emailList.markNotSpam') : t('emailList.markSpam')"
+                >
+                  <svg v-if="isSpamFolder" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                </button>
                 <button @click.prevent="handleDelete(email.id)" class="p-2 text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-gray-700/50 transition-all duration-200" :title="t('emailList.delete')">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" />
@@ -163,6 +179,19 @@ const toggleStarStatus = (email: Email) => {
 	emailStore.updateEmail(route.params.mailboxId as string, email.id, {
 		starred: !email.starred,
 	});
+};
+
+const isSpamFolder = computed(() => folderId.value === "spam");
+
+// In the spam folder the button means "this isn't spam" and sends the message
+// back to the inbox; everywhere else it files the message as spam. Either way
+// the sender is remembered, so future mail from them is routed the same way.
+const handleSpamVerdict = (email: Email) => {
+	emailStore.setEmailSpamVerdict(
+		route.params.mailboxId as string,
+		email.id,
+		isSpamFolder.value ? "not-spam" : "spam",
+	);
 };
 
 const handleRowClick = async (event: MouseEvent, email: Email) => {
