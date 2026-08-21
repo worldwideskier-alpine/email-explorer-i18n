@@ -100,6 +100,7 @@
 	"emailList": {
 		"refreshing": "Wird aktualisiert...",
 		"refreshEmails": "E-Mails aktualisieren",
+		"loadingMore": "Weitere werden geladen...",
 		"unstar": "Markierung entfernen",
 		"star": "Markieren",
 		"markUnread": "Als ungelesen markieren",
