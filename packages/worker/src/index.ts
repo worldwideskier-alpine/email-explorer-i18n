@@ -5,6 +5,7 @@ import PostalMime from "postal-mime";
 import { z } from "zod";
 import { classifyWithClaude } from "./claude-spam-filter";
 import { ingestEmailIntoMailbox } from "./email-ingest";
+import { buildPasswordResetEmail, MAIL_LOCALES } from "./mail-templates";
 import {
 	getClaudeApiKey,
 	getSenderVerdictOverride,
@@ -74,6 +75,10 @@ const ErrorResponseSchema = z.object({
 
 const ForgotPasswordRequestSchema = z.object({
 	email: z.string().email(),
+	// Which language to write the recovery mail in. The dashboard sends the
+	// locale it is currently displaying; anything else falls back (see
+	// resolveMailLocale).
+	locale: z.enum(MAIL_LOCALES).optional(),
 });
 
 const ResetPasswordRequestSchema = z.object({
@@ -1540,7 +1545,7 @@ class PostForgotPassword extends OpenAPIRoute {
 		}
 
 		const data = await this.getValidatedData<typeof this.schema>();
-		const { email } = data.body;
+		const { email, locale } = data.body;
 
 		const ns = c.env.MAILBOX;
 		const authId = ns.idFromName("AUTH");
@@ -1574,53 +1579,15 @@ class PostForgotPassword extends OpenAPIRoute {
 		// Send recovery email
 		const resetLink = `${new URL(c.req.url).origin}/reset-password?token=${token}`;
 
+		const message = buildPasswordResetEmail(locale, resetLink);
+
 		try {
 			await sendEmail(c.env, {
 				from: c.env.config.accountRecovery.fromEmail,
 				to: email,
-				subject: "パスワード再設定のご案内",
-				html: `<!DOCTYPE html>
-<html lang="ja">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<style>
-		body { font-family: "Hiragino Sans", "Yu Gothic", Arial, sans-serif; line-height: 1.6; color: #333; }
-		.container { max-width: 600px; margin: 0 auto; padding: 20px; }
-		.header { background-color: #4F46E5; color: white; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
-		.content { background-color: #f9f9f9; padding: 20px; border-radius: 5px; }
-		.button { display: inline-block; padding: 12px 30px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
-		.footer { margin-top: 20px; font-size: 12px; color: #666; }
-	</style>
-</head>
-<body>
-	<div class="container">
-		<div class="header">
-			<h2 style="margin: 0;">パスワード再設定のご案内</h2>
-		</div>
-		<div class="content">
-			<p>パスワード再設定のリクエストを受け付けました。下記のボタンをクリックして手続きを進めてください。</p>
-			<a href="${resetLink}" class="button">パスワードを再設定する</a>
-			<p>またはこちらのリンクをブラウザにコピー＆ペーストしてください:</p>
-			<p><a href="${resetLink}" style="color: #4F46E5; word-break: break-all;">${resetLink}</a></p>
-			<p style="color: #666; font-size: 14px;">このリンクの有効期限は1時間です。</p>
-			<p style="color: #666; font-size: 14px;">心当たりがない場合は、このメールを無視していただいて問題ありません。</p>
-		</div>
-		<div class="footer">
-			<p>Email Explorer - パスワード再設定</p>
-		</div>
-	</div>
-</body>
-</html>`,
-				text: `パスワード再設定のご案内
-
-パスワード再設定のリクエストを受け付けました。下記のリンクから手続きを進めてください。
-
-${resetLink}
-
-このリンクの有効期限は1時間です。
-
-心当たりがない場合は、このメールを無視していただいて問題ありません。`,
+				subject: message.subject,
+				html: message.html,
+				text: message.text,
 			});
 		} catch (e) {
 			console.error("Failed to send recovery email:", e);

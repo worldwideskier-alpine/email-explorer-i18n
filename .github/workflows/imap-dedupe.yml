@@ -1,4 +1,4 @@
-name: Dedupe Mailbox Folder (email-explorer-ja)
+name: Dedupe Mailbox Folder (email-explorer-i18n)
 
 on:
   workflow_dispatch:

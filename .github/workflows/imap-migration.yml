@@ -1,4 +1,4 @@
-name: IMAP Migration (Lolipop -> email-explorer-ja)
+name: IMAP Migration (Lolipop -> email-explorer-i18n)
 
 on:
   workflow_dispatch:

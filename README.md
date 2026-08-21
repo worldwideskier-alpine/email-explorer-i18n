@@ -1,7 +1,7 @@
 <div align="center">
   <a href="#">
     <h1 style="font-size: 4rem;">📧</h1>
-    <h1>Email Explorer (日本語化フォーク)</h1>
+    <h1>Email Explorer (多言語対応フォーク)</h1>
   </a>
 </div>
 
@@ -10,20 +10,26 @@
 </p>
 
 > **このリポジトリについて**
-> 本リポジトリは [G4brym/email-explorer](https://github.com/G4brym/email-explorer)（MIT License）を元にした日本語ローカライズ・フォークです。
-> オリジナルの著作権表示・ライセンス条項は `LICENSE` ファイルにそのまま保持しています。UIの日本語化は本フォークで追加した変更です。
+> 本リポジトリは [G4brym/email-explorer](https://github.com/G4brym/email-explorer)（MIT License）を元にした多言語対応（i18n）フォークです。
+> オリジナルの著作権表示・ライセンス条項は `LICENSE` ファイルにそのまま保持しています。多言語化は本フォークで追加した変更です。
 
-## 日本語化について
+## 多言語対応について
 
-- ダッシュボード（`packages/dashboard`）は [vue-i18n](https://vue-i18n.intlify.dev/) を導入し、日本語をデフォルト言語としています。画面右上のヘッダーから「日本語 / English」を切り替え可能です。
-- 翻訳文字列は `packages/dashboard/src/locales/ja.json`（日本語）と `en.json`（英語）に集約されています。追加の文言を翻訳する場合はこの2ファイルに同じキーを追加してください。
-- ログイン・登録・パスワード再設定・受信トレイ・メール詳細・作成/返信/転送・管理パネルなど、UI全体を日本語化済みです。
-- パスワード再設定メール本文（`packages/worker/src/index.ts`）も日本語化しています。
-- Worker側のAPIエラーレスポンス（`{"error": "..."}`）自体は開発者向けの安定した識別子として英語のまま残し、フロントエンド側（`packages/dashboard/src/utils/apiError.ts`）で既知のエラーメッセージを日本語表示にマッピングしています。未知のエラーはそのまま（英語で）表示されます。
+対応言語は **日本語 / English / Deutsch** の3言語です。日本語を既定とし、画面右上のヘッダーからいつでも切り替えられます（選択はブラウザに保存されます）。
+
+- ダッシュボード（`packages/dashboard`）は [vue-i18n](https://vue-i18n.intlify.dev/) を使用しています。翻訳文字列は `packages/dashboard/src/locales/` 配下の `ja.json` / `en.json` / `de.json` に集約されているので、文言を追加する場合は3ファイルに同じキーを追加してください。未翻訳のキーは英語にフォールバックします。
+- ログイン・登録・パスワード再設定・受信トレイ・メール詳細・作成/返信/転送・管理パネルなど、UI全体が対象です。
+- Worker が送信するパスワード再設定メール（`packages/worker/src/mail-templates.ts`）も3言語対応です。文面はリクエスト時のUI表示言語で送信され、言語の指定がない場合は日本語になります。
+- Worker側のAPIエラーレスポンス（`{"error": "..."}`）自体は開発者向けの安定した識別子として英語のまま残し、フロントエンド側（`packages/dashboard/src/utils/apiError.ts`）で既知のエラーメッセージを翻訳表示にマッピングしています。未知のエラーはそのまま（英語で）表示されます。
 
 ## Cloudflareへのデプロイについて
 
 このリポジトリのコードはデプロイ可能な状態ですが、実際に Cloudflare 上へ `wrangler deploy` を実行するには、ご自身の Cloudflare アカウントと API トークンが必要です。認証情報を安全に管理するため、デプロイはご自身の環境から実行してください。手順はオリジナルプロジェクトの [Getting Started](#getting-started) を参照してください。
+
+> **Cloudflare側のリソース名について**
+> Worker名・R2バケット名・公開URL（`email-explorer-ja.<subdomain>.workers.dev`）は、リポジトリ名とは別に `email-explorer-ja` のままです。
+> Worker名を変更すると別のWorkerとして作成され、Durable Objectに保存されている全メールが引き継がれないため、意図的に据え置いています。
+> 公開URLを変えたい場合は、Worker名の変更ではなくカスタムドメインの割り当てを使用してください。
 
 ## 既存メールサーバーからの移行（IMAPインポート）
 
