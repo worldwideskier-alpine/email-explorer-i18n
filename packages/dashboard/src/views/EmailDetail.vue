@@ -119,7 +119,7 @@
     <div class="flex-grow">
       <EmailIframe :body="emailBodyWithInlineImages" :disable-links="fromFolder === 'spam'" />
     </div>
-    <div v-if="email.attachments && email.attachments.length > 0" class="p-6 sm:p-8 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-900/30">
+    <div v-if="visibleAttachments.length > 0" class="p-6 sm:p-8 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-900/30">
       <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
@@ -127,7 +127,7 @@
         {{ t("emailDetail.attachments") }}
       </h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        <div v-for="attachment in email.attachments" :key="attachment.id" class="group bg-white dark:bg-gray-800 rounded-xl p-4 flex items-center justify-between border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-400 hover:shadow-lg transition-all duration-200">
+        <div v-for="attachment in visibleAttachments" :key="attachment.id" class="group bg-white dark:bg-gray-800 rounded-xl p-4 flex items-center justify-between border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-400 hover:shadow-lg transition-all duration-200">
           <div class="w-0 flex-grow mr-4 min-w-0">
             <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ attachment.filename }}</p>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ formatBytes(attachment.size) }}</p>
@@ -189,30 +189,58 @@ const moveToFolders = computed(() => {
 	return folders.value.filter((folder) => folder.id !== fromFolder);
 });
 
-const emailBodyWithInlineImages = computed(() => {
+/**
+ * Rewrites the body's `cid:` references into attachment URLs and records
+ * which attachments were consumed that way.
+ *
+ * An inline disposition alone doesn't mean the image is visible: senders
+ * (Outlook especially) mark every signature and layout image "inline" even
+ * when the HTML never references it. Only an attachment whose cid was
+ * actually substituted into the body counts as displayed, so anything the
+ * reader can't already see stays listed under the attachments.
+ *
+ * Substitution uses split/join rather than a RegExp because a content id may
+ * contain regex metacharacters, and because the "did anything change?" test
+ * is then exactly the substitution itself.
+ */
+const renderedBody = computed<{ html: string; inlineIds: Set<string> }>(() => {
+	const inlineIds = new Set<string>();
+
 	if (!email.value || !email.value.body) {
-		return "";
+		return { html: "", inlineIds };
 	}
 
-	let body = email.value.body;
-	const mailboxId = route.params.mailboxId as string;
-	const emailId = route.params.id as string;
+	let html = email.value.body;
 
-	if (email.value.attachments && email.value.attachments.length > 0) {
-		for (const attachment of email.value.attachments) {
-			if (attachment.disposition === "inline" && attachment.content_id) {
-				const url = getAttachmentUrl(attachment.id);
-				const cid = attachment.content_id.startsWith("<")
-					? attachment.content_id.slice(1, -1)
-					: attachment.content_id;
-				const regex = new RegExp(`cid:${cid}`, "g");
-				body = body.replace(regex, url);
-			}
+	for (const attachment of email.value.attachments ?? []) {
+		if (attachment.disposition !== "inline" || !attachment.content_id) {
+			continue;
+		}
+
+		const cid = attachment.content_id.startsWith("<")
+			? attachment.content_id.slice(1, -1)
+			: attachment.content_id;
+		const substituted = html
+			.split(`cid:${cid}`)
+			.join(getAttachmentUrl(attachment.id));
+
+		if (substituted !== html) {
+			html = substituted;
+			inlineIds.add(attachment.id);
 		}
 	}
 
-	return body;
+	return { html, inlineIds };
 });
+
+const emailBodyWithInlineImages = computed(() => renderedBody.value.html);
+
+/** Attachments worth offering as downloads: everything not already on screen. */
+const visibleAttachments = computed(() =>
+	(email.value?.attachments ?? []).filter(
+		(attachment) => !renderedBody.value.inlineIds.has(attachment.id),
+	),
+);
 
 const getAttachmentUrl = (attachmentId: string) => {
 	const mailboxId = route.params.mailboxId as string;
