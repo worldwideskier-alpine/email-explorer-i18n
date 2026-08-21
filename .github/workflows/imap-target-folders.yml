@@ -1,4 +1,4 @@
-name: List Target Folders (email-explorer-ja)
+name: List Target Folders (email-explorer-i18n)
 
 on:
   workflow_dispatch:

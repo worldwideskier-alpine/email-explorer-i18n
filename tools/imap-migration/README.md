@@ -1,13 +1,13 @@
 # IMAP Migration Tool
 
 `beautifulsnow.co.jp` のように、既存のIMAPメールサーバー（例: ロリポップ！レンタルサーバー）から
-[email-explorer-ja](../../README.md) へ過去メールを取り込むための移行スクリプトです。
+[email-explorer-i18n](../../README.md) へ過去メールを取り込むための移行スクリプトです。
 
 ## 想定している移行手順
 
-1. **email-explorer-ja を先にデプロイ**し、移行先の管理者アカウントを作成しておく。
+1. **email-explorer-i18n を先にデプロイ**し、移行先の管理者アカウントを作成しておく。
 2. **このスクリプトで既存メールをコピー**する（ロリポップ側のMXはまだ変更しない。既存メール受信には影響なし）。
-3. コピーが完了・確認できたら、**Cloudflareダッシュボードで `beautifulsnow.co.jp` のEmail Routingを有効化**し、MXをCloudflare側へ切替（この時点から新着メールは email-explorer-ja に届く）。
+3. コピーが完了・確認できたら、**Cloudflareダッシュボードで `beautifulsnow.co.jp` のEmail Routingを有効化**し、MXをCloudflare側へ切替（この時点から新着メールは email-explorer-i18n に届く）。
 4. 切替直前にロリポップへ届いた分の取りこぼしがないよう、`LOLIPOP_IMAP_SINCE` を使って**差分同期を1回追加実行**する。
 
 ## 使い方 ① GitHub Actionsで実行（推奨・ローカルインストール不要）
@@ -22,7 +22,7 @@ Secretsを登録してください。
 |---|---|
 | `LOLIPOP_PASSWORD_INFO` | `info@beautifulsnow.co.jp` のIMAPパスワード |
 | `LOLIPOP_PASSWORD_UOTA` | `uota@beautifulsnow.co.jp` のIMAPパスワード |
-| `TARGET_ADMIN_EMAIL` | email-explorer-ja側の管理者アカウントのメールアドレス |
+| `TARGET_ADMIN_EMAIL` | email-explorer-i18n側の管理者アカウントのメールアドレス |
 | `TARGET_ADMIN_PASSWORD` | 同、パスワード |
 
 IMAPホスト名がロリポップの標準（`imap.lolipop.jp:993`）と異なる場合は、Secretsの隣にある
@@ -31,7 +31,7 @@ IMAPホスト名がロリポップの標準（`imap.lolipop.jp:993`）と異な�
 **実行方法:**
 
 1. GitHubのリポジトリページ →「Actions」タブ
-2. 左側の一覧から「IMAP Migration (Lolipop -> email-explorer-ja)」を選択
+2. 左側の一覧から「IMAP Migration (Lolipop -> email-explorer-i18n)」を選択
 3. 右側の「Run workflow」ボタンをクリック
 4. `mailbox_address` で対象のメールアドレスを選択、`dry_run` は最初は `true` のまま「Run workflow」
 5. 実行後に表示されるログで、取得件数・件名を確認
@@ -58,7 +58,7 @@ npm run migrate
 ## 注意事項
 
 - `.env` はコミットしないでください（`.gitignore` で除外済みです）。
-- このスクリプトは email-explorer-ja 側の管理者セッションを使い、`POST /api/v1/admin/mailboxes/:mailboxId/import`
+- このスクリプトは email-explorer-i18n 側の管理者セッションを使い、`POST /api/v1/admin/mailboxes/:mailboxId/import`
   （送信は行わず、指定フォルダにそのままメールを保存する管理者専用API）を呼び出します。
 - 何度でも再実行可能ですが、**重複インポート防止機能はありません**。`imap_folders` に
   **既に移行済みのフォルダを再度含めない**よう注意してください。再実行する場合は
@@ -69,7 +69,7 @@ npm run migrate
 ## 誤って二重に取り込んでしまった場合（重複削除）
 
 `imap_folders` に移行済みのフォルダを重複して指定してしまった等で同じメールが2件ずつ入って
-しまった場合、「**Dedupe Mailbox Folder (email-explorer-ja)**」ワークフローで重複を検出・削除できます。
+しまった場合、「**Dedupe Mailbox Folder (email-explorer-i18n)**」ワークフローで重複を検出・削除できます。
 
 - `mailbox_address` / `folder`（`inbox` や、カスタムフォルダのID）を指定
 - `apply: false` で実行すると、削除せずに重複件数のレポートのみ表示します
@@ -81,7 +81,7 @@ npm run migrate
 ## 移行済みメールに元データ（ヘッダー含む生ソース）を後付けする
 
 過去に移行したメールは、元のMIMEデータ（ヘッダー含む）を保存していない場合があります。
-「**IMAP Backfill Source (Lolipop -> email-explorer-ja)**」ワークフローで、ロリポップ側に
+「**IMAP Backfill Source (Lolipop -> email-explorer-i18n)**」ワークフローで、ロリポップ側に
 残っている元データをフォルダごとに再取得し、既存メールに紐付けできます（重複は作成しません）。
 
 - ロリポップから1通ずつ取得し、件名・送信元・宛先・日時が完全一致する既存メールが見つかれば、

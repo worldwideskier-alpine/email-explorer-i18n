@@ -70,7 +70,7 @@ import { useToast } from "@/composables/useToast";
 import api from "@/services/api";
 
 const router = useRouter();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const { success, error: showError } = useToast();
 
 const email = ref("");
@@ -83,7 +83,7 @@ async function handleForgotPassword() {
 	isLoading.value = true;
 
 	try {
-		await api.forgotPassword(email.value);
+		await api.forgotPassword(email.value, locale.value);
 		successMessage.value = t("forgotPassword.linkSent", { email: email.value });
 		success(t("forgotPassword.linkSentToast"));
 	} catch (e: any) {

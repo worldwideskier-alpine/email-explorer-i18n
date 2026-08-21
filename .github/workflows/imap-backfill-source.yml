@@ -1,4 +1,4 @@
-name: IMAP Backfill Source (Lolipop -> email-explorer-ja)
+name: IMAP Backfill Source (Lolipop -> email-explorer-i18n)
 
 on:
   workflow_dispatch:

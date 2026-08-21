@@ -50,8 +50,10 @@ export default {
 		apiClient.post("/api/v1/auth/login", { email, password }),
 	logout: () => apiClient.post("/api/v1/auth/logout"),
 	getCurrentUser: () => apiClient.get("/api/v1/auth/me"),
-	forgotPassword: (email: string) =>
-		apiClient.post("/api/v1/auth/forgot-password", { email }),
+	// The locale travels with the request because the recovery mail is written
+	// server-side: it should arrive in the language the user is reading.
+	forgotPassword: (email: string, locale: string) =>
+		apiClient.post("/api/v1/auth/forgot-password", { email, locale }),
 	resetPassword: (token: string, newPassword: string) =>
 		apiClient.post("/api/v1/auth/reset-password", { token, newPassword }),
 
