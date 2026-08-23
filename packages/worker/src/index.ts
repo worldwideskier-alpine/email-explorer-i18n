@@ -1875,23 +1875,39 @@ async function streamToArrayBuffer(stream: ReadableStream, streamSize: number) {
 }
 
 async function receiveEmail(
-	event: { raw: ReadableStream; rawSize: number },
+	event: {
+		raw: ReadableStream;
+		rawSize: number;
+		to?: string;
+		setReject?: (reason: string) => void;
+	},
 	env: Env,
 	_ctx: ExecutionContext,
 ) {
+	// Which mailbox this belongs to is decided by the envelope recipient --
+	// the address Cloudflare Email Routing actually delivered to -- and never
+	// by the "To:" header. The header is written by the sender and routinely
+	// names somebody else (Bcc, mailing lists, forwarded mail), so trusting it
+	// filed our mail under addresses that were never ours.
+	const mailboxId = event.to?.trim().toLowerCase();
+	if (!mailboxId) {
+		throw new Error("received email with no envelope recipient");
+	}
+
+	// Deliver only into a mailbox that already exists. Creating one on arrival
+	// meant any address could become a mailbox nobody watches: no push
+	// notification, no unread badge, and the message effectively lost.
+	const mailboxExists = await env.BUCKET.head(`mailboxes/${mailboxId}.json`);
+	if (!mailboxExists) {
+		const reason = `No mailbox exists for ${mailboxId}`;
+		console.error(`Rejected incoming email: ${reason}`);
+		event.setReject?.(reason);
+		return;
+	}
+
 	const rawEmail = await streamToArrayBuffer(event.raw, event.rawSize);
 	const parser = new PostalMime();
 	const parsedEmail = await parser.parse(rawEmail);
-
-	if (
-		!parsedEmail.to ||
-		parsedEmail.to.length === 0 ||
-		!parsedEmail.to[0].address
-	) {
-		throw new Error("received email with empty to");
-	}
-
-	const mailboxId = parsedEmail.to[0].address;
 
 	// Highest precedence: the user has explicitly marked this exact sender
 	// as spam or not-spam before (see PostEmailSpamVerdict). That's a
@@ -1960,7 +1976,12 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 
 	return {
 		async email(
-			event: { raw: ReadableStream; rawSize: number },
+			event: {
+				raw: ReadableStream;
+				rawSize: number;
+				to?: string;
+				setReject?: (reason: string) => void;
+			},
 			env: Env,
 			context: ExecutionContext,
 		) {

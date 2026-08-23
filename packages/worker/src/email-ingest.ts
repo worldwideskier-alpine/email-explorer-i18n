@@ -25,6 +25,10 @@ export async function ingestEmailIntoMailbox(
 ) {
 	const messageId = crypto.randomUUID();
 
+	// Creating the mailbox here is for the admin import path, which may be
+	// seeding a mailbox that has no settings object yet. Inbound mail must not
+	// rely on it: receiveEmail checks the mailbox exists first and rejects the
+	// message otherwise, so a stray address can never become a mailbox.
 	const key = `mailboxes/${mailboxId}.json`;
 	const obj = await env.BUCKET.head(key);
 	if (!obj) {

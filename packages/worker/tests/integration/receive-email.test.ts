@@ -13,7 +13,10 @@ function buildRawEmail(headers: Record<string, string>, body: string): string {
 }
 
 // Simulate receiving an email by calling the worker's email handler
-async function simulateReceiveEmail(rawEmailStr: string) {
+async function simulateReceiveEmail(
+	rawEmailStr: string,
+	envelopeTo: string = mailboxId,
+) {
 	const worker = await import("../../dev/index");
 	const rawBytes = new TextEncoder().encode(rawEmailStr);
 	const stream = new ReadableStream({
@@ -23,8 +26,10 @@ async function simulateReceiveEmail(rawEmailStr: string) {
 		},
 	});
 
+	// The envelope recipient is what the worker files mail by; the "To:"
+	// header inside rawEmailStr is deliberately allowed to say anything else.
 	await worker.default.email(
-		{ raw: stream, rawSize: rawBytes.length },
+		{ raw: stream, rawSize: rawBytes.length, to: envelopeTo },
 		env,
 		createExecutionContext(),
 	);
