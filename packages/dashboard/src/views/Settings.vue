@@ -91,6 +91,62 @@
         </form>
         <p v-if="spamFilterMessage" class="text-sm text-green-600 dark:text-green-400 mt-2">{{ spamFilterMessage }}</p>
       </div>
+
+      <!-- Danger zone: deletion lock and mailbox deletion -->
+      <div class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
+        <h2 class="text-lg font-medium text-red-700 dark:text-red-400 mb-4">{{ t("settings.dangerZoneTitle") }}</h2>
+
+        <div class="flex items-center justify-between mb-4">
+          <div class="pr-4">
+            <h3 class="text-base font-medium text-gray-900 dark:text-white">{{ t("settings.deletionLockTitle") }}</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("settings.deletionLockDescription") }}</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+            <input type="checkbox" :checked="deletionLocked" :disabled="lockLoading" @change="toggleDeletionLock" class="sr-only peer" />
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-indigo-600 peer-disabled:opacity-50"></div>
+          </label>
+        </div>
+
+        <div class="rounded-md border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10 p-4">
+          <h3 class="text-base font-medium text-gray-900 dark:text-white">{{ t("settings.deleteMailboxTitle") }}</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ t("settings.deleteMailboxDescription") }}</p>
+
+          <p v-if="deletionLocked" class="text-sm text-gray-600 dark:text-gray-400 mt-3 flex items-center gap-1.5">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            {{ t("settings.deleteMailboxLockedHint") }}
+          </p>
+
+          <div v-else class="mt-3 space-y-3">
+            <label class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <input type="checkbox" v-model="purgeEmails" class="mt-1 rounded border-gray-300 text-red-600 focus:ring-red-500" />
+              <span>{{ t("settings.deleteMailboxPurgeLabel") }}</span>
+            </label>
+            <div>
+              <label class="block text-sm text-gray-700 dark:text-gray-300 mb-1">
+                {{ t("settings.deleteMailboxConfirmLabel", { email: mailbox.email }) }}
+              </label>
+              <input
+                type="text"
+                v-model="deleteConfirmInput"
+                autocomplete="off"
+                :placeholder="mailbox.email"
+                class="block w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm p-3"
+              />
+            </div>
+            <button
+              type="button"
+              @click="deleteMailbox"
+              :disabled="deleteConfirmInput.trim() !== mailbox.email || deleteLoading"
+              class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ deleteLoading ? t("settings.deleteMailboxDeleting") : t("settings.deleteMailboxButton") }}
+            </button>
+          </div>
+          <p v-if="deleteError" class="text-sm text-red-600 dark:text-red-400 mt-2">{{ deleteError }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -99,7 +155,7 @@
 import { storeToRefs } from "pinia";
 import { onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import RichTextEditor from "@/components/RichTextEditor.vue";
 import {
 	getExistingSubscription,
@@ -113,6 +169,7 @@ const { t } = useI18n();
 const mailboxStore = useMailboxStore();
 const { currentMailbox: mailbox } = storeToRefs(mailboxStore);
 const route = useRoute();
+const router = useRouter();
 
 const nameInput = ref("");
 const signatureEnabled = ref(false);
@@ -230,6 +287,71 @@ const saveApiKey = async () => {
 		spamFilterMessage.value = t("settings.spamFilterSaved");
 	} finally {
 		spamFilterLoading.value = false;
+	}
+};
+
+// Deletion lock. An absent flag means locked -- the server decides the same
+// way (isDeletionLocked), so a mailbox saved before this setting existed is
+// protected rather than silently deletable.
+const deletionLocked = ref(true);
+const lockLoading = ref(false);
+const purgeEmails = ref(false);
+const deleteConfirmInput = ref("");
+const deleteLoading = ref(false);
+const deleteError = ref("");
+
+watch(
+	mailbox,
+	(m) => {
+		deletionLocked.value = m?.settings?.deletionLocked !== false;
+	},
+	{ immediate: true },
+);
+
+const toggleDeletionLock = async () => {
+	if (!mailbox.value) return;
+	const next = !deletionLocked.value;
+	if (!next && !confirm(t("settings.deletionLockConfirmUnlock"))) return;
+
+	lockLoading.value = true;
+	deleteError.value = "";
+	try {
+		await mailboxStore.updateMailbox(route.params.mailboxId as string, {
+			...mailbox.value.settings,
+			deletionLocked: next,
+		});
+		deletionLocked.value = next;
+	} finally {
+		lockLoading.value = false;
+	}
+};
+
+const deleteMailbox = async () => {
+	if (!mailbox.value) return;
+	if (deleteConfirmInput.value.trim() !== mailbox.value.email) return;
+	if (
+		!confirm(
+			purgeEmails.value
+				? t("settings.deleteMailboxConfirmPurge")
+				: t("settings.deleteMailboxConfirm"),
+		)
+	) {
+		return;
+	}
+
+	deleteLoading.value = true;
+	deleteError.value = "";
+	try {
+		await mailboxStore.deleteMailbox(
+			route.params.mailboxId as string,
+			purgeEmails.value,
+		);
+		router.push({ name: "Home" });
+	} catch (e: any) {
+		deleteError.value =
+			e.response?.data?.error || t("settings.deleteMailboxFailed");
+	} finally {
+		deleteLoading.value = false;
 	}
 };
 

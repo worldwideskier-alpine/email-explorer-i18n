@@ -73,8 +73,12 @@ export default {
 		apiClient.get(`/api/v1/mailboxes/${mailboxId}`),
 	updateMailbox: (mailboxId: string, settings: any) =>
 		apiClient.put(`/api/v1/mailboxes/${mailboxId}`, { settings }),
-	deleteMailbox: (mailboxId: string) =>
-		apiClient.delete(`/api/v1/mailboxes/${mailboxId}`),
+	// purge also destroys the stored mail; without it the mailbox is only
+	// unlisted and its messages survive.
+	deleteMailbox: (mailboxId: string, purge = false) =>
+		apiClient.delete(`/api/v1/mailboxes/${mailboxId}`, {
+			params: purge ? { purge: "true" } : undefined,
+		}),
 
 	// Emails
 	listEmails: (mailboxId: string, params: any) =>

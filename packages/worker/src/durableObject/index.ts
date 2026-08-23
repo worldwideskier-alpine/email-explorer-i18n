@@ -645,6 +645,52 @@ export class MailboxDO extends DurableObject<Env> {
 		return attachments.results || [];
 	}
 
+	/**
+	 * Every email id held by this mailbox. Purging a mailbox has to collect
+	 * these *before* the storage is wiped: the R2 keys for raw messages and
+	 * attachments are named after the email id alone, with no mailbox in the
+	 * path, so once the database is gone there is nothing left to look them
+	 * up by and they would sit in the bucket forever.
+	 */
+	async listAllEmailIds(): Promise<string[]> {
+		const result = this.#qb
+			.select<{ id: string }>("emails")
+			.fields(["id"])
+			.execute();
+		return result.results?.map((row) => String(row.id)) ?? [];
+	}
+
+	/**
+	 * Wipes this mailbox's Durable Object -- emails, folders, contacts,
+	 * attachment records. deleteAll() drops the SQLite tables themselves, not
+	 * just their rows.
+	 *
+	 * The empty schema is then recreated. Migrations normally run in the
+	 * constructor, but this instance is already live and would keep serving
+	 * "no such table" to anything that touched the mailbox before it happened
+	 * to be evicted. Re-applying leaves it exactly as a cold start would.
+	 */
+	async destroyMailbox(): Promise<void> {
+		if (this.#isAuthDO) throw new Error("Refusing to destroy the auth DO");
+		await this.ctx.storage.deleteAll();
+		this.#qb.migrations({ migrations: mailboxMigrations }).apply();
+	}
+
+	// Auth operation: drop every user's access to a mailbox that is going away.
+	async revokeAllMailboxAccess(mailboxId: string): Promise<void> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		this.#qb
+			.delete({
+				tableName: "user_mailboxes",
+				where: {
+					conditions: "mailbox_id = ?",
+					params: [mailboxId],
+				},
+			})
+			.execute();
+	}
+
 	async getAttachment(id: string) {
 		const result = this.#qb
 			.select<AttachmentData>("attachments")

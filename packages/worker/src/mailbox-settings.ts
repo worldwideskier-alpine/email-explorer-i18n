@@ -51,7 +51,27 @@ export function mergeMailboxSettings(
 		merged.spamFilter = { ...incomingSpamFilter, claudeApiKey };
 	}
 
+	// Saving the signature (or anything else) must never quietly unlock a
+	// mailbox: the lock only changes when the client says so explicitly.
+	merged.deletionLocked = isDeletionLocked(
+		Object.hasOwn(incoming, "deletionLocked") ? incoming : existing,
+	);
+
 	return merged;
+}
+
+/**
+ * Whether a mailbox is protected from deletion.
+ *
+ * Locked is the default, including for mailboxes stored before this setting
+ * existed: an absent flag has to mean "protected", because the alternative
+ * is that every mailbox silently starts out deletable and the protection is
+ * only there for whoever remembers to switch it on.
+ */
+export function isDeletionLocked(
+	settings: MailboxSettings | null | undefined,
+): boolean {
+	return settings?.deletionLocked !== false;
 }
 
 /**
