@@ -1,0 +1,64 @@
+name: Cloudflare Email Routing status (read-only)
+
+# Reports how Cloudflare Email Routing is configured for the domain: whether
+# routing is on, whether a catch-all rule exists, and which addresses are
+# routed to this Worker. Read-only -- it never changes any setting.
+on:
+  workflow_dispatch:
+    inputs:
+      zone:
+        description: Domain to inspect
+        required: true
+        default: beautifulsnow.co.jp
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query Email Routing configuration
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ZONE: ${{ inputs.zone }}
+        run: |
+          set -uo pipefail
+
+          api() {
+            curl -sS -H "Authorization: Bearer $CF_API_TOKEN" \
+              "https://api.cloudflare.com/client/v4/$1"
+          }
+
+          echo "=== zone lookup: $ZONE ==="
+          zones=$(api "zones?name=$ZONE")
+          echo "$zones" | jq '{success, errors}'
+          zone_id=$(echo "$zones" | jq -r '.result[0].id // empty')
+          if [ -z "$zone_id" ]; then
+            echo "Could not resolve a zone id -- the API token may not cover this zone."
+            exit 1
+          fi
+          echo "zone id resolved: ${zone_id:0:6}..."
+
+          echo
+          echo "=== Email Routing enabled? ==="
+          api "zones/$zone_id/email/routing" \
+            | jq '{success, errors, enabled: .result.enabled, status: .result.status, name: .result.name}'
+
+          echo
+          echo "=== Catch-all rule ==="
+          api "zones/$zone_id/email/routing/rules/catch_all" \
+            | jq '{success, errors, enabled: .result.enabled,
+                   matchers: .result.matchers, actions: .result.actions}'
+
+          echo
+          echo "=== Individual routing rules ==="
+          api "zones/$zone_id/email/routing/rules?per_page=50" \
+            | jq '{success, errors,
+                   rules: [.result[]? | {name, enabled,
+                                         matchers: [.matchers[]? | {type, field, value}],
+                                         actions:  [.actions[]?  | {type, value}]}]}'
+
+          echo
+          echo "=== Destination addresses (where forwarding rules can point) ==="
+          account_id="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+          api "accounts/$account_id/email/routing/addresses?per_page=50" \
+            | jq '{success, errors,
+                   addresses: [.result[]? | {email, verified}]}'
