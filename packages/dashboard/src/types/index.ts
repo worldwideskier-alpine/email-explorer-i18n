@@ -11,6 +11,8 @@ export interface SpamFilterSettings {
 
 export interface MailboxSettings {
 	fromName?: string;
+	/** Absent means locked, matching the server's isDeletionLocked. */
+	deletionLocked?: boolean;
 	forwarding?: { enabled: boolean; email: string };
 	signature?: SignatureSettings;
 	autoReply?: { enabled: boolean; subject: string; message: string };

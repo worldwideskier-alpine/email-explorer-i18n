@@ -155,7 +155,21 @@
 		"spamFilterApiKeyPlaceholderEmpty": "sk-ant-...",
 		"spamFilterRemove": "API-Schlüssel entfernen",
 		"spamFilterConfirmRemove": "Möchten Sie den gespeicherten API-Schlüssel wirklich entfernen?",
-		"spamFilterSaved": "API-Schlüssel gespeichert."
+		"spamFilterSaved": "API-Schlüssel gespeichert.",
+		"dangerZoneTitle": "Gefahrenbereich",
+		"deletionLockTitle": "Löschsperre",
+		"deletionLockDescription": "Solange sie aktiv ist, kann dieses Postfach nicht gelöscht werden. Für genutzte Postfächer aktiviert lassen.",
+		"deletionLockConfirmUnlock": "Löschsperre aufheben? Danach kann das Postfach gelöscht werden.",
+		"deleteMailboxTitle": "Dieses Postfach löschen",
+		"deleteMailboxDescription": "Entfernt das Postfach aus der Liste. Die gespeicherten E-Mails bleiben standardmäßig erhalten und kehren zurück, wenn dieselbe Adresse neu angelegt wird.",
+		"deleteMailboxLockedHint": "Die Löschsperre ist aktiv. Heben Sie sie oben auf, um zu löschen.",
+		"deleteMailboxPurgeLabel": "Auch die gespeicherten E-Mails vernichten (alle Nachrichten, Anhänge und Ordner werden gelöscht; nicht widerrufbar)",
+		"deleteMailboxConfirmLabel": "Geben Sie zur Bestätigung {email} ein",
+		"deleteMailboxButton": "Dieses Postfach löschen",
+		"deleteMailboxDeleting": "Wird gelöscht...",
+		"deleteMailboxConfirm": "Dieses Postfach aus der Liste entfernen?",
+		"deleteMailboxConfirmPurge": "Dieses Postfach und alle darin gespeicherten Nachrichten und Anhänge endgültig löschen? Das kann nicht rückgängig gemacht werden.",
+		"deleteMailboxFailed": "Das Postfach konnte nicht gelöscht werden."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ungültige Anmeldedaten",

@@ -20,9 +20,10 @@ export const useMailboxStore = defineStore("mailboxes", {
 			const response = await api.updateMailbox(id, settings);
 			this.currentMailbox = response.data;
 		},
-		async deleteMailbox(id: string) {
-			await api.deleteMailbox(id);
+		async deleteMailbox(id: string, purge = false) {
+			await api.deleteMailbox(id, purge);
 			this.mailboxes = this.mailboxes.filter((mailbox) => mailbox.id !== id);
+			if (this.currentMailbox?.id === id) this.currentMailbox = null;
 		},
 	},
 });

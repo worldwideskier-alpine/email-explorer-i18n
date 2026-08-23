@@ -9,6 +9,7 @@ import { buildPasswordResetEmail, MAIL_LOCALES } from "./mail-templates";
 import {
 	getClaudeApiKey,
 	getSenderVerdictOverride,
+	isDeletionLocked,
 	mergeMailboxSettings,
 	recordSenderVerdict,
 	redactMailboxSettings,
@@ -355,6 +356,54 @@ class PutMailbox extends OpenAPIRoute {
 	}
 }
 
+/** R2 delete accepts up to 1000 keys per call. */
+const R2_DELETE_BATCH = 1000;
+
+async function deleteKeysInBatches(
+	bucket: R2Bucket,
+	keys: string[],
+): Promise<void> {
+	for (let i = 0; i < keys.length; i += R2_DELETE_BATCH) {
+		await bucket.delete(keys.slice(i, i + R2_DELETE_BATCH));
+	}
+}
+
+/**
+ * Removes every R2 object belonging to the given emails: the stored raw
+ * message and any attachments.
+ *
+ * Attachment keys are `attachments/{emailId}/{attachmentId}/{filename}`, so
+ * they're found by scanning the prefix once and keeping the ones whose email
+ * id belongs to this mailbox -- listing per email instead would burn one
+ * subrequest per message.
+ */
+async function deleteEmailObjects(
+	bucket: R2Bucket,
+	emailIds: string[],
+): Promise<{ rawDeleted: number; attachmentsDeleted: number }> {
+	const ids = new Set(emailIds);
+
+	const rawKeys = emailIds.map((id) => `raw/${id}.eml`);
+	await deleteKeysInBatches(bucket, rawKeys);
+
+	const attachmentKeys: string[] = [];
+	let cursor: string | undefined;
+	do {
+		const listed = await bucket.list({ prefix: "attachments/", cursor });
+		for (const obj of listed.objects) {
+			const emailId = obj.key.split("/")[1];
+			if (emailId && ids.has(emailId)) attachmentKeys.push(obj.key);
+		}
+		cursor = listed.truncated ? listed.cursor : undefined;
+	} while (cursor);
+	await deleteKeysInBatches(bucket, attachmentKeys);
+
+	return {
+		rawDeleted: rawKeys.length,
+		attachmentsDeleted: attachmentKeys.length,
+	};
+}
+
 class DeleteMailbox extends OpenAPIRoute {
 	schema = {
 		summary: "Delete a mailbox",
@@ -364,26 +413,55 @@ class DeleteMailbox extends OpenAPIRoute {
 			params: z.object({
 				mailboxId: z.string(),
 			}),
+			query: z.object({
+				// Opt-in: also destroy the stored mail. Without it the mailbox
+				// is only unlisted, exactly as before, and the messages stay
+				// recoverable by recreating the mailbox.
+				purge: z.enum(["true", "false"]).optional(),
+			}),
 		},
 		responses: {
 			"204": { description: "Deleted successfully" },
 			"404": { description: "Not found", ...contentJson(ErrorResponseSchema) },
+			"423": {
+				description: "Mailbox is protected from deletion",
+				...contentJson(ErrorResponseSchema),
+			},
 		},
 	};
 
 	async handle(c: AppContext) {
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { mailboxId } = data.params;
+		const purge = data.query?.purge === "true";
 		const key = `mailboxes/${mailboxId}.json`;
 
-		const obj = await c.env.BUCKET.head(key);
+		const obj = await c.env.BUCKET.get(key);
 		if (!obj) {
 			return c.json({ error: "Not found" }, 404);
 		}
 
+		const settings = await obj.json<Record<string, any>>();
+		if (isDeletionLocked(settings)) {
+			return c.json({ error: "Mailbox is protected from deletion" }, 423);
+		}
+
+		if (purge) {
+			const ns = c.env.MAILBOX;
+			const stub = ns.get(ns.idFromName(mailboxId));
+
+			// Collect the ids first: destroying the DO takes the only record
+			// of which R2 objects belonged to this mailbox with it.
+			const emailIds = await stub.listAllEmailIds();
+			await deleteEmailObjects(c.env.BUCKET, emailIds);
+			await stub.destroyMailbox();
+
+			const authStub = ns.get(ns.idFromName("AUTH"));
+			await authStub.revokeAllMailboxAccess(mailboxId);
+		}
+
 		await c.env.BUCKET.delete(key);
 
-		// TODO: delete durable object
 		return c.body(null, 204);
 	}
 }
@@ -427,6 +505,9 @@ class PostMailbox extends OpenAPIRoute {
 		// Default settings
 		const defaultSettings = {
 			fromName: name,
+			// New mailboxes start protected; deleting one is a deliberate
+			// two-step (unlock, then delete). See isDeletionLocked.
+			deletionLocked: true,
 			forwarding: {
 				enabled: false,
 				email: "",

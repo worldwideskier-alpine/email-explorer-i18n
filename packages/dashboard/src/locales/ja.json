@@ -155,7 +155,21 @@
 		"spamFilterApiKeyPlaceholderEmpty": "sk-ant-...",
 		"spamFilterRemove": "APIキーを削除",
 		"spamFilterConfirmRemove": "保存済みのAPIキーを削除してもよろしいですか？",
-		"spamFilterSaved": "APIキーを保存しました。"
+		"spamFilterSaved": "APIキーを保存しました。",
+		"dangerZoneTitle": "危険な操作",
+		"deletionLockTitle": "削除ロック",
+		"deletionLockDescription": "オンの間は、このメールボックスを削除できません。運用中のメールボックスは、オンのままにしてください。",
+		"deletionLockConfirmUnlock": "削除ロックを解除します。解除するとこのメールボックスを削除できるようになります。よろしいですか？",
+		"deleteMailboxTitle": "メールボックスの削除",
+		"deleteMailboxDescription": "一覧からこのメールボックスを削除します。既定ではメール本体は残るため、同じアドレスで作り直せば元に戻せます。",
+		"deleteMailboxLockedHint": "削除ロックがオンのため削除できません。削除するには、先に上のロックを解除してください。",
+		"deleteMailboxPurgeLabel": "メール本体も完全に削除する（受信メール・添付ファイル・フォルダをすべて消去します。取り消せません）",
+		"deleteMailboxConfirmLabel": "確認のため {email} と入力してください",
+		"deleteMailboxButton": "このメールボックスを削除",
+		"deleteMailboxDeleting": "削除中...",
+		"deleteMailboxConfirm": "このメールボックスを一覧から削除します。よろしいですか？",
+		"deleteMailboxConfirmPurge": "このメールボックスと、保存されているメール・添付ファイルをすべて完全に削除します。取り消しはできません。本当によろしいですか？",
+		"deleteMailboxFailed": "メールボックスの削除に失敗しました。"
 	},
 	"apiErrors": {
 		"Invalid credentials": "メールアドレスまたはパスワードが正しくありません",

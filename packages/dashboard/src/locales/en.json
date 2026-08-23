@@ -155,7 +155,21 @@
 		"spamFilterApiKeyPlaceholderEmpty": "sk-ant-...",
 		"spamFilterRemove": "Remove API Key",
 		"spamFilterConfirmRemove": "Are you sure you want to remove the saved API key?",
-		"spamFilterSaved": "API key saved."
+		"spamFilterSaved": "API key saved.",
+		"dangerZoneTitle": "Danger zone",
+		"deletionLockTitle": "Deletion lock",
+		"deletionLockDescription": "While this is on, the mailbox cannot be deleted. Leave it on for mailboxes you actually use.",
+		"deletionLockConfirmUnlock": "Turn off the deletion lock? The mailbox becomes deletable once it is off.",
+		"deleteMailboxTitle": "Delete this mailbox",
+		"deleteMailboxDescription": "Removes the mailbox from the list. By default the stored mail is kept, so recreating the same address brings it back.",
+		"deleteMailboxLockedHint": "The deletion lock is on. Turn it off above before deleting.",
+		"deleteMailboxPurgeLabel": "Also destroy the stored mail (every message, attachment and folder is erased; this cannot be undone)",
+		"deleteMailboxConfirmLabel": "Type {email} to confirm",
+		"deleteMailboxButton": "Delete this mailbox",
+		"deleteMailboxDeleting": "Deleting...",
+		"deleteMailboxConfirm": "Remove this mailbox from the list?",
+		"deleteMailboxConfirmPurge": "Permanently delete this mailbox and every message and attachment stored in it? This cannot be undone.",
+		"deleteMailboxFailed": "Could not delete the mailbox."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Invalid credentials",
