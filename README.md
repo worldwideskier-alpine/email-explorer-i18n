@@ -31,6 +31,18 @@
 > Worker名を変更すると別のWorkerとして作成され、Durable Objectに保存されている全メールが引き継がれないため、意図的に据え置いています。
 > 公開URLを変えたい場合は、Worker名の変更ではなくカスタムドメインの割り当てを使用してください。
 
+### CI／デプロイの実行タイミング
+
+GitHub Actions の消費分数を抑えるため、`main` への push で走るワークフローは **Deploy to Cloudflare の1つだけ**です。
+
+| ワークフロー | 実行タイミング | 内容 |
+|---|---|---|
+| **Deploy to Cloudflare** | `main` への push（`docs/**`・`README.md`・`LICENSE`・`.editorconfig` のみの変更を除く）、Pull Request、手動 | lint → build → テスト → デプロイ |
+| **Build** | Pull Request のみ | lint → build → テスト → npmパッケージの生成 |
+| **Release** | 手動のみ | 上流のnpmリリース自動化。本フォークでは使用していない |
+
+`main` へ push すれば、そのままCloudflareへデプロイされます。ドキュメントだけの変更ではデプロイは走りません（デプロイしたい場合は Actions から Deploy to Cloudflare を手動実行してください）。
+
 ## 既存メールサーバーからの移行（IMAPインポート）
 
 ドメインのMXをCloudflare Email Routingに切り替える前に、既存のIMAPメールサーバー（例: ロリポップ！レンタルサーバー）から

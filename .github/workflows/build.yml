@@ -1,20 +1,21 @@
 name: Build
 
+# Pull requests only. On a push to main this ran lint, build and the worker
+# tests against the same commit the Deploy workflow was already checking, so
+# every commit was examined twice and billed twice. Deploy carries the tests
+# now, and it is the run that has to pass before anything ships.
 on:
-  push:
-    paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'LICENSE'
-      - '.editorconfig'
-    branches:
-      - main
   pull_request:
     paths-ignore:
       - 'docs/**'
       - 'README.md'
       - 'LICENSE'
       - '.editorconfig'
+
+# A superseded pull-request run is of no interest to anyone.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
