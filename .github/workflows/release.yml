@@ -1,8 +1,13 @@
 name: Release
 
+# Manual only. This is the upstream project's npm release automation, which
+# this fork does not use: it publishes the `email-explorer` package, while the
+# fork ships by deploying to Cloudflare. Every push to main spent a full
+# lint/build/test only to reach "Release v1.1.0 already exists, skipping" --
+# the last release it genuinely created was v1.1.0 on 2026-07-28. Left
+# runnable by hand in case the fork ever does cut a release.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch: {}
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 

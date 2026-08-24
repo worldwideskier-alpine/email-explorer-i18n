@@ -1,11 +1,27 @@
 name: Deploy to Cloudflare
 
+# This is the only workflow that runs on a push to main. It carries the full
+# check set (lint, build, worker tests) because it is the last gate before
+# production -- Build now runs on pull requests only, so nothing else checks
+# the commit that is about to be deployed.
 on:
   push:
     branches: [main]
+    # A commit that only touches these can't change what gets deployed.
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'LICENSE'
+      - '.editorconfig'
   pull_request:
     branches: [main]
   workflow_dispatch: {}
+
+# Serialize deploys to the same ref. Deliberately never cancel one in flight:
+# a half-applied deploy can leave the Worker and its assets out of step.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build-and-check:
@@ -22,6 +38,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run lint
       - run: pnpm run build
+      - run: pnpm test
 
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
