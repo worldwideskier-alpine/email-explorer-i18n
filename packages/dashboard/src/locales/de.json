@@ -126,7 +126,10 @@
 		"viewSourceFailed": "Die ursprüngliche Nachrichtenquelle konnte nicht geladen werden.",
 		"to": "An: ",
 		"markSpam": "Als Spam markieren",
-		"markNotSpam": "Kein Spam"
+		"markNotSpam": "Kein Spam",
+		"notFoundTitle": "Diese Nachricht kann nicht angezeigt werden",
+		"notFoundMessage": "Sie wurde möglicherweise gelöscht oder verschoben. Prüfen Sie die Liste auf den aktuellen Stand.",
+		"notFoundBackToList": "Zurück zur Liste"
 	},
 	"searchResults": {
 		"title": "Suchergebnisse",

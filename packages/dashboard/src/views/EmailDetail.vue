@@ -142,6 +142,28 @@
       </div>
     </div>
   </div>
+
+  <div v-else-if="isLoading" class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl border border-gray-200 dark:border-gray-700 p-16 flex items-center justify-center">
+    <svg class="w-6 h-6 animate-spin text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  </div>
+
+  <!-- Reached by opening a message that has since been deleted, typically via
+       the browser's back button. -->
+  <div v-else class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl border border-gray-200 dark:border-gray-700 p-16 text-center">
+    <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+      <svg class="w-10 h-10 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+      </svg>
+    </div>
+    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">{{ t("emailDetail.notFoundTitle") }}</h2>
+    <p class="text-gray-600 dark:text-gray-400 mb-6">{{ t("emailDetail.notFoundMessage") }}</p>
+    <button @click="goToList" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">
+      {{ t("emailDetail.notFoundBackToList") }}
+    </button>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -257,11 +279,32 @@ const formatBytes = (bytes: number, decimals = 2) => {
 	return `${Number.parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 };
 
+const isLoading = ref(true);
+
+/**
+ * Leaves this message behind without adding a history entry, so the browser's
+ * back button can't return to a message that was just filed away or deleted.
+ */
+const goToList = () => {
+	router.replace({
+		name: "EmailList",
+		params: { mailboxId: route.params.mailboxId, folder: fromFolder.value },
+	});
+};
+
 onMounted(async () => {
 	const mailboxId = route.params.mailboxId as string;
 	const emailId = route.params.id as string;
 
-	await emailStore.fetchEmail(mailboxId, emailId);
+	isLoading.value = true;
+	try {
+		await emailStore.fetchEmail(mailboxId, emailId);
+	} catch {
+		// Deleted since it was last opened: fetchEmail has already cleared the
+		// previous message, so the not-found panel takes over.
+	} finally {
+		isLoading.value = false;
+	}
 	folderStore.fetchFolders(mailboxId);
 
 	if (email.value && !email.value.read) {
@@ -293,7 +336,7 @@ const handleMove = (folderId: string) => {
 			folderId,
 		);
 		isMoveMenuOpen.value = false;
-		router.back();
+		goToList();
 	}
 };
 
@@ -305,20 +348,14 @@ const handleMarkSpam = async () => {
 	if (!email.value) return;
 	const mailboxId = route.params.mailboxId as string;
 	await emailStore.setEmailSpamVerdict(mailboxId, email.value.id, "spam");
-	router.push({
-		name: "EmailList",
-		params: { mailboxId, folder: fromFolder.value },
-	});
+	goToList();
 };
 
 const handleMarkNotSpam = async () => {
 	if (!email.value) return;
 	const mailboxId = route.params.mailboxId as string;
 	await emailStore.setEmailSpamVerdict(mailboxId, email.value.id, "not-spam");
-	router.push({
-		name: "EmailList",
-		params: { mailboxId, folder: fromFolder.value },
-	});
+	goToList();
 };
 
 const handleDelete = () => {
@@ -332,10 +369,7 @@ const handleDelete = () => {
 	}
 
 	emailStore.deleteOrTrashEmail(mailboxId, email.value.id, fromFolder);
-	router.push({
-		name: "EmailList",
-		params: { mailboxId: route.params.mailboxId, folder: fromFolder },
-	});
+	goToList();
 };
 
 const handleReply = () => {

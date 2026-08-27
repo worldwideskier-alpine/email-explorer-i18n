@@ -126,7 +126,10 @@
 		"viewSourceFailed": "元のメッセージソースを読み込めませんでした。",
 		"to": "宛先: ",
 		"markSpam": "迷惑メール",
-		"markNotSpam": "迷惑メールではない"
+		"markNotSpam": "迷惑メールではない",
+		"notFoundTitle": "このメールは表示できません",
+		"notFoundMessage": "削除されたか、移動された可能性があります。一覧から最新の状態をご確認ください。",
+		"notFoundBackToList": "一覧に戻る"
 	},
 	"searchResults": {
 		"title": "検索結果",
