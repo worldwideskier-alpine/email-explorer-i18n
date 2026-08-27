@@ -61,6 +61,11 @@ export const useEmailStore = defineStore("emails", {
 			}
 		},
 		async fetchEmail(mailboxId: string, id: string) {
+			// Drop whatever was on screen before the request, not after it
+			// succeeds. Otherwise a message that no longer exists (deleted, or
+			// opened again through the browser's back button) leaves the
+			// previously read email rendered, looking like stale cache.
+			this.currentEmail = null;
 			const response = await api.getEmail(mailboxId, id);
 			this.currentEmail = response.data;
 		},

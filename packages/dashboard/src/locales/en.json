@@ -126,7 +126,10 @@
 		"viewSourceFailed": "Failed to load the original message source.",
 		"to": "To: ",
 		"markSpam": "Mark as spam",
-		"markNotSpam": "Not spam"
+		"markNotSpam": "Not spam",
+		"notFoundTitle": "This message can't be shown",
+		"notFoundMessage": "It may have been deleted or moved. Check the list for the current state.",
+		"notFoundBackToList": "Back to the list"
 	},
 	"searchResults": {
 		"title": "Search Results",
