@@ -132,12 +132,16 @@
             <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ attachment.filename }}</p>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ formatBytes(attachment.size) }}</p>
           </div>
-          <a :href="getAttachmentUrl(attachment.id)" target="_blank" class="flex-shrink-0 p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailDetail.download')">
+          <button type="button" @click="downloadAttachment(attachment)" :disabled="downloadingId === attachment.id" class="flex-shrink-0 p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer disabled:opacity-50" :title="t('emailDetail.download')">
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.download") }}</div>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <svg v-if="downloadingId === attachment.id" class="h-5 w-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -172,6 +176,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import EmailIframe from "@/components/EmailIframe.vue";
+import api from "@/services/api";
 import { useEmailStore } from "@/stores/emails";
 import { useFolderStore } from "@/stores/folders";
 import { useUIStore } from "@/stores/ui";
@@ -263,6 +268,46 @@ const visibleAttachments = computed(() =>
 		(attachment) => !renderedBody.value.inlineIds.has(attachment.id),
 	),
 );
+
+const downloadingId = ref<string | null>(null);
+
+/**
+ * Downloads through the authenticated API client rather than by following a
+ * link. A link opens a new browsing context that sends neither the bearer
+ * token nor -- from the installed PWA -- the session cookie, so the file came
+ * back as {"error":"Unauthorized"}. The response is handed to the browser as
+ * an object URL so it still arrives as a normal file download.
+ */
+const downloadAttachment = async (attachment: {
+	id: string;
+	filename: string;
+}) => {
+	if (downloadingId.value) return;
+	downloadingId.value = attachment.id;
+	try {
+		const response = await api.downloadAttachment(
+			route.params.mailboxId as string,
+			route.params.id as string,
+			attachment.id,
+		);
+		const url = URL.createObjectURL(response.data as Blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = attachment.filename || "attachment";
+		document.body.appendChild(link);
+		link.click();
+		// Revoked on a later tick: releasing the object URL in the same one
+		// can cut the download off before the browser has taken the data.
+		setTimeout(() => {
+			link.remove();
+			URL.revokeObjectURL(url);
+		}, 1000);
+	} catch {
+		alert(t("emailDetail.downloadFailed"));
+	} finally {
+		downloadingId.value = null;
+	}
+};
 
 const getAttachmentUrl = (attachmentId: string) => {
 	const mailboxId = route.params.mailboxId as string;

@@ -129,7 +129,8 @@
 		"markNotSpam": "Not spam",
 		"notFoundTitle": "This message can't be shown",
 		"notFoundMessage": "It may have been deleted or moved. Check the list for the current state.",
-		"notFoundBackToList": "Back to the list"
+		"notFoundBackToList": "Back to the list",
+		"downloadFailed": "The attachment could not be downloaded."
 	},
 	"searchResults": {
 		"title": "Search Results",

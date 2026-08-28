@@ -91,6 +91,15 @@ export default {
 		apiClient.get(`/api/v1/mailboxes/${mailboxId}/emails/${id}/source`, {
 			responseType: "text",
 		}),
+	// Fetched through this client, not linked to directly: a plain link opens
+	// a new browsing context that carries neither the Authorization header nor
+	// (from the installed PWA) the session cookie, and the download comes back
+	// as {"error":"Unauthorized"}.
+	downloadAttachment: (mailboxId: string, id: string, attachmentId: string) =>
+		apiClient.get(
+			`/api/v1/mailboxes/${mailboxId}/emails/${id}/attachments/${attachmentId}`,
+			{ responseType: "blob" },
+		),
 	updateEmail: (mailboxId: string, id: string, data: any) =>
 		apiClient.put(`/api/v1/mailboxes/${mailboxId}/emails/${id}`, data),
 	deleteEmail: (mailboxId: string, id: string) =>

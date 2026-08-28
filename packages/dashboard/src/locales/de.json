@@ -129,7 +129,8 @@
 		"markNotSpam": "Kein Spam",
 		"notFoundTitle": "Diese Nachricht kann nicht angezeigt werden",
 		"notFoundMessage": "Sie wurde möglicherweise gelöscht oder verschoben. Prüfen Sie die Liste auf den aktuellen Stand.",
-		"notFoundBackToList": "Zurück zur Liste"
+		"notFoundBackToList": "Zurück zur Liste",
+		"downloadFailed": "Der Anhang konnte nicht heruntergeladen werden."
 	},
 	"searchResults": {
 		"title": "Suchergebnisse",
