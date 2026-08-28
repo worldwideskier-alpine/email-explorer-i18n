@@ -25,8 +25,8 @@ const ErrorResponseSchema = z.object({
 });
 
 /**
- * Admin-only endpoint used by the IMAP migration script (tools/imap-migration)
- * to insert a historical message into a mailbox without sending it. Reuses
+ * Admin-only endpoint for inserting a historical message into a mailbox
+ * without sending it -- the receiving side of an IMAP import. Reuses
  * the same postal-mime parsing and ingestion path as real inbound mail
  * (see email-ingest.ts), so imported messages behave identically to mail
  * that arrived via Cloudflare Email Routing.

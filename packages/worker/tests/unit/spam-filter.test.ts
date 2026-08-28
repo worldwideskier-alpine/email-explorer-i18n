@@ -67,10 +67,10 @@ describe("isTrustedSelfDomainSender", () => {
 		expect(
 			isTrustedSelfDomainSender(
 				header(
-					"mx.example.com; spf=pass smtp.mailfrom=example.net; dkim=pass header.i=@example.net; dmarc=pass header.from=example.net",
+					"mx.example.com; spf=pass smtp.mailfrom=mailbox.example; dkim=pass header.i=@mailbox.example; dmarc=pass header.from=mailbox.example",
 				),
-				"noreply@example.net",
-				"user@example.net",
+				"noreply@mailbox.example",
+				"owner@mailbox.example",
 			),
 		).toBe(true);
 	});
@@ -78,9 +78,9 @@ describe("isTrustedSelfDomainSender", () => {
 	it("is case-insensitive on the domain comparison", () => {
 		expect(
 			isTrustedSelfDomainSender(
-				header("mx.example.com; dmarc=pass header.from=Example.net"),
-				"noreply@Example.NET",
-				"user@example.net",
+				header("mx.example.com; dmarc=pass header.from=Mailbox.example"),
+				"noreply@MailBox.EXAMPLE",
+				"owner@mailbox.example",
 			),
 		).toBe(true);
 	});
@@ -90,7 +90,7 @@ describe("isTrustedSelfDomainSender", () => {
 			isTrustedSelfDomainSender(
 				header("mx.example.com; dmarc=pass header.from=other.com"),
 				"noreply@other.com",
-				"user@example.net",
+				"owner@mailbox.example",
 			),
 		).toBe(false);
 	});
@@ -99,8 +99,8 @@ describe("isTrustedSelfDomainSender", () => {
 		expect(
 			isTrustedSelfDomainSender(
 				header("mx.example.com; spf=pass; dkim=pass"),
-				"noreply@example.net",
-				"user@example.net",
+				"noreply@mailbox.example",
+				"owner@mailbox.example",
 			),
 		).toBe(false);
 	});
@@ -109,8 +109,8 @@ describe("isTrustedSelfDomainSender", () => {
 		expect(
 			isTrustedSelfDomainSender(
 				[],
-				"noreply@example.net",
-				"user@example.net",
+				"noreply@mailbox.example",
+				"owner@mailbox.example",
 			),
 		).toBe(false);
 	});
@@ -118,9 +118,9 @@ describe("isTrustedSelfDomainSender", () => {
 	it("is false when the From address is missing", () => {
 		expect(
 			isTrustedSelfDomainSender(
-				header("mx.example.com; dmarc=pass header.from=example.net"),
+				header("mx.example.com; dmarc=pass header.from=mailbox.example"),
 				undefined,
-				"user@example.net",
+				"owner@mailbox.example",
 			),
 		).toBe(false);
 	});

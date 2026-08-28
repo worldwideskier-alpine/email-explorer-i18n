@@ -6,8 +6,8 @@ import { buildNewEmailPayload, mailboxEmailPath } from "../../src/push-notify";
 // fromFolder query EmailDetail reads for its back/move actions.
 describe("mailboxEmailPath", () => {
 	it("builds the EmailDetail route for a specific message", () => {
-		expect(mailboxEmailPath("user@example.net", "abc-123")).toBe(
-			"/mailbox/user%40example.net/email/abc-123?fromFolder=inbox",
+		expect(mailboxEmailPath("owner@mailbox.example", "abc-123")).toBe(
+			"/mailbox/owner%40mailbox.example/email/abc-123?fromFolder=inbox",
 		);
 	});
 
@@ -18,7 +18,7 @@ describe("mailboxEmailPath", () => {
 	});
 
 	it("percent-encodes the mailbox address", () => {
-		expect(mailboxEmailPath("info@example.net", "x")).toContain("%40");
+		expect(mailboxEmailPath("info@mailbox.example", "x")).toContain("%40");
 	});
 });
 
@@ -27,7 +27,7 @@ describe("mailboxEmailPath", () => {
 // shared tag would collapse every new mail into one row.
 describe("buildNewEmailPayload", () => {
 	const mk = (id: string, sender: string, subject: string) =>
-		buildNewEmailPayload("user@example.net", "Example User", {
+		buildNewEmailPayload("owner@mailbox.example", "Mailbox Owner", {
 			id,
 			sender,
 			subject,
@@ -40,22 +40,22 @@ describe("buildNewEmailPayload", () => {
 
 	it("leads the title with the mailbox label so mailboxes stay tellable apart", () => {
 		expect(
-			mk("id-1", "Dorothee@team-asia.co.jp", "8月お支払金額のお知らせ"),
+			mk("id-1", "billing@vendor.example", "請求書のご案内"),
 		).toMatchObject({
-			title: "[Example User] Dorothee@team-asia.co.jp",
-			body: "8月お支払金額のお知らせ",
+			title: "[Mailbox Owner] billing@vendor.example",
+			body: "請求書のご案内",
 		});
 	});
 
 	it("links each notification to its own message", () => {
 		expect(mk("id-1", "a@x.com", "s1").url).toBe(
-			"/mailbox/user%40example.net/email/id-1?fromFolder=inbox",
+			"/mailbox/owner%40mailbox.example/email/id-1?fromFolder=inbox",
 		);
 	});
 
 	it("falls back to the mailbox id when the sender is missing", () => {
 		expect(mk("id-1", "", "s1").title).toBe(
-			"[Example User] user@example.net",
+			"[Mailbox Owner] owner@mailbox.example",
 		);
 	});
 });

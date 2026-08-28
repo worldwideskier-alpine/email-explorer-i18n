@@ -30,5 +30,11 @@ export type Env = {
 	RESEND_API_KEY: string;
 	VAPID_PUBLIC_KEY: string;
 	VAPID_PRIVATE_KEY: string;
+	/**
+	 * Optional `mailto:`/`https:` contact for whoever operates this
+	 * deployment, sent to push services as the VAPID `sub` claim. Falls back
+	 * to the notified mailbox's own address when unset.
+	 */
+	VAPID_ADMIN_CONTACT?: string;
 	config?: EmailExplorerOptions;
 };
