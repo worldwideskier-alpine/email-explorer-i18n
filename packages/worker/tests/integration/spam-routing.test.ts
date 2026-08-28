@@ -1,6 +1,11 @@
 import { env, createExecutionContext } from "cloudflare:test";
 import { describe, expect, it, beforeEach } from "vitest";
-import { authenticatedFetch, mailboxId, testAuthBeforeAll } from "./utils";
+import {
+	authenticatedFetch,
+	createDummyMailbox,
+	mailboxId,
+	testAuthBeforeAll,
+} from "./utils";
 
 function buildRawEmail(headers: Record<string, string>, body: string): string {
 	let raw = "";
@@ -47,7 +52,7 @@ async function folderOf(subject: string): Promise<string | undefined> {
 describe("Inbound spam routing (SPF/DKIM/DMARC)", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
-		await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", { method: "POST" });
+		await createDummyMailbox();
 	});
 
 	it("keeps a fully-authenticated email in the inbox", async () => {

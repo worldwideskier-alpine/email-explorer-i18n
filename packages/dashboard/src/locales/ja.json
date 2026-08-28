@@ -37,8 +37,8 @@
 		"sending": "送信中...",
 		"sendResetLink": "リセットリンクを送信",
 		"backToLogin": "ログインに戻る",
-		"linkSent": "パスワードリセットリンクを {email} 宛に送信しました。メールをご確認ください。",
-		"linkSentToast": "リセットリンクを送信しました。メールをご確認ください。",
+		"linkSent": "{email} に登録済みのアカウントがある場合、パスワードリセットリンクを送信しました。メールをご確認ください。",
+		"linkSentToast": "登録済みのアカウントがある場合、リセットリンクを送信しました。",
 		"failedToSend": "リセットリンクの送信に失敗しました。もう一度お試しください。"
 	},
 	"resetPassword": {
@@ -184,7 +184,9 @@
 		"Login failed": "ログインに失敗しました",
 		"Unauthorized": "認証が必要です",
 		"Mailbox already exists": "このメールボックスは既に存在します",
-		"Failed to create mailbox": "メールボックスの作成に失敗しました"
+		"Failed to create mailbox": "メールボックスの作成に失敗しました",
+		"Too many failed attempts": "ログインの失敗が続いたため、一時的にロックされています。しばらく時間をおいてからお試しください。",
+		"Too many requests": "リクエストが多すぎます。しばらく時間をおいてからお試しください。"
 	},
 	"admin": {
 		"title": "管理パネル",

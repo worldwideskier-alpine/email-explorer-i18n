@@ -37,8 +37,8 @@
 		"sending": "Wird gesendet...",
 		"sendResetLink": "Link zum Zurücksetzen senden",
 		"backToLogin": "Zurück zur Anmeldung",
-		"linkSent": "Link zum Zurücksetzen des Passworts wurde an {email} gesendet. Bitte prüfen Sie Ihre E-Mails.",
-		"linkSentToast": "Link gesendet! Bitte prüfen Sie Ihre E-Mails.",
+		"linkSent": "Falls für {email} ein Konto besteht, wurde ein Link zum Zurücksetzen des Passworts gesendet. Bitte prüfen Sie Ihre E-Mails.",
+		"linkSentToast": "Falls für diese Adresse ein Konto besteht, ist ein Link unterwegs.",
 		"failedToSend": "Der Link konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
 	},
 	"resetPassword": {
@@ -184,7 +184,9 @@
 		"Login failed": "Anmeldung fehlgeschlagen",
 		"Unauthorized": "Nicht autorisiert",
 		"Mailbox already exists": "Postfach existiert bereits",
-		"Failed to create mailbox": "Postfach konnte nicht erstellt werden"
+		"Failed to create mailbox": "Postfach konnte nicht erstellt werden",
+		"Too many failed attempts": "Zu viele fehlgeschlagene Anmeldeversuche. Diese Adresse ist kurzzeitig gesperrt; bitte versuchen Sie es später erneut.",
+		"Too many requests": "Zu viele Anfragen. Bitte versuchen Sie es später erneut."
 	},
 	"admin": {
 		"title": "Admin-Panel",

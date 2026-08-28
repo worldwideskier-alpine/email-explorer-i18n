@@ -1,6 +1,11 @@
 import { env, createExecutionContext } from "cloudflare:test";
 import { describe, expect, it, beforeEach } from "vitest";
-import { authenticatedFetch, mailboxId, testAuthBeforeAll } from "./utils";
+import {
+	authenticatedFetch,
+	createDummyMailbox,
+	mailboxId,
+	testAuthBeforeAll,
+} from "./utils";
 
 // Build a raw RFC 2822 email string for testing
 function buildRawEmail(headers: Record<string, string>, body: string): string {
@@ -38,7 +43,7 @@ async function simulateReceiveEmail(
 describe("Incoming Email Threading Tests", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
-		await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", { method: "POST" });
+		await createDummyMailbox();
 	});
 
 	describe("Threading Header Preservation", () => {

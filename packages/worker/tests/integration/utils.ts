@@ -35,3 +35,27 @@ export const authenticatedFetch = (url: string, options: RequestInit = {}) => {
         },
     });
 };
+
+/**
+ * Creates the mailbox these tests share, through the same endpoint a real
+ * user would. This used to be a POST to /api/v1/debug/create-mailbox -- a
+ * test fixture that was registered on the production router. The fixture
+ * lives here now instead.
+ */
+export async function createDummyMailbox() {
+    const response = await authenticatedFetch("http://local.test/api/v1/mailboxes", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            email: mailboxId,
+            name: "Test User",
+            settings: {
+                signature: {enabled: true, text: "Sent from my awesome email client"},
+            },
+        }),
+    });
+    // 409 means an earlier call in the same test already created it.
+    if (response.status !== 201 && response.status !== 409) {
+        throw new Error(`could not create the test mailbox: HTTP ${response.status}`);
+    }
+}

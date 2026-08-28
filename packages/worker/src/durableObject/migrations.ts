@@ -115,4 +115,17 @@ export const authMigrations: Migration[] = [
             CREATE INDEX idx_push_subscriptions_user_id ON push_subscriptions(user_id);
         `,
 	},
+	{
+		name: "3_add_auth_throttle",
+		sql: `
+            CREATE TABLE auth_throttle (
+                bucket TEXT PRIMARY KEY,
+                failures INTEGER NOT NULL,
+                window_started_at INTEGER NOT NULL,
+                locked_until INTEGER
+            );
+
+            CREATE INDEX idx_auth_throttle_window ON auth_throttle(window_started_at);
+        `,
+	},
 ];

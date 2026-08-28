@@ -37,8 +37,8 @@
 		"sending": "Sending...",
 		"sendResetLink": "Send reset link",
 		"backToLogin": "Back to login",
-		"linkSent": "Password reset link sent to {email}. Please check your email.",
-		"linkSentToast": "Reset link sent! Check your email.",
+		"linkSent": "If an account exists for {email}, a password reset link has been sent. Please check your email.",
+		"linkSentToast": "If that address has an account, a reset link is on its way.",
 		"failedToSend": "Failed to send reset link. Please try again."
 	},
 	"resetPassword": {
@@ -184,7 +184,9 @@
 		"Login failed": "Login failed",
 		"Unauthorized": "Unauthorized",
 		"Mailbox already exists": "Mailbox already exists",
-		"Failed to create mailbox": "Failed to create mailbox"
+		"Failed to create mailbox": "Failed to create mailbox",
+		"Too many failed attempts": "Too many failed sign-in attempts. This address is locked for a short while; please try again later.",
+		"Too many requests": "Too many requests. Please try again later."
 	},
 	"admin": {
 		"title": "Admin Panel",
