@@ -1,6 +1,11 @@
 import { env, createExecutionContext } from "cloudflare:test";
 import { describe, expect, it, beforeEach } from "vitest";
-import { authenticatedFetch, mailboxId, testAuthBeforeAll } from "./utils";
+import {
+	authenticatedFetch,
+	createDummyMailbox,
+	mailboxId,
+	testAuthBeforeAll,
+} from "./utils";
 
 const PASSING_AUTH_RESULTS =
 	"mx.example.com; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
@@ -60,7 +65,7 @@ async function setClaudeApiKey(apiKey: string) {
 describe("Claude second-stage spam classification", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
-		await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", { method: "POST" });
+		await createDummyMailbox();
 	});
 
 	it("skips Claude entirely when no API key is configured, even if it would say SPAM", async () => {

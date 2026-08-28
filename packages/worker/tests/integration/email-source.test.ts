@@ -1,6 +1,11 @@
 import { env, createExecutionContext, SELF } from "cloudflare:test";
 import { describe, expect, it, beforeEach } from "vitest";
-import { authenticatedFetch, mailboxId, testAuthBeforeAll } from "./utils";
+import {
+	authenticatedFetch,
+	createDummyMailbox,
+	mailboxId,
+	testAuthBeforeAll,
+} from "./utils";
 
 function buildRawEmail(headers: Record<string, string>, body: string): string {
 	let raw = "";
@@ -73,7 +78,7 @@ describe("Original message source", () => {
 	});
 
 	it("returns the raw source for a real inbound email", async () => {
-		await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", { method: "POST" });
+		await createDummyMailbox();
 
 		const rawEmail = buildRawEmail(
 			{
@@ -105,7 +110,7 @@ describe("Original message source", () => {
 	});
 
 	it("returns 404 when no raw source was stored (e.g. a locally composed reply)", async () => {
-		await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", { method: "POST" });
+		await createDummyMailbox();
 
 		const sourceResponse = await authenticatedFetch(
 			`http://local.test/api/v1/mailboxes/${mailboxId}/emails/nonexistent-id/source`,
@@ -115,7 +120,7 @@ describe("Original message source", () => {
 
 	describe("Backfilling source onto an already-imported email (PUT .../source)", () => {
 		it("attaches raw source to an existing email that had none", async () => {
-			await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", { method: "POST" });
+			await createDummyMailbox();
 
 			const rawEmail = buildRawEmail(
 				{
@@ -159,7 +164,7 @@ describe("Original message source", () => {
 		});
 
 		it("returns 404 when the target email does not exist", async () => {
-			await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", { method: "POST" });
+			await createDummyMailbox();
 
 			const putResponse = await authenticatedFetch(
 				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/nonexistent-id/source`,

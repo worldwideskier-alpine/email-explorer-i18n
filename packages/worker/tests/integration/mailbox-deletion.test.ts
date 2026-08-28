@@ -1,6 +1,12 @@
 import { env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
-import { authenticatedFetch, mailboxId, testAuthBeforeAll } from "./utils";
+import {
+	authenticatedFetch,
+	createDummyMailbox,
+	createMailbox,
+	mailboxId,
+	testAuthBeforeAll,
+} from "./utils";
 
 const settingsKey = (id: string) => `mailboxes/${id}.json`;
 
@@ -67,15 +73,18 @@ async function countKeys(prefix: string): Promise<number> {
 describe("Mailbox deletion lock", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
-		await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", {
-			method: "POST",
-		});
+		await createDummyMailbox();
 	});
 
 	// The protection has to hold for a mailbox saved before the setting
 	// existed, otherwise every mailbox in an upgraded deployment starts out
 	// unprotected -- exactly the case the lock is meant to cover.
 	it("treats a mailbox with no explicit setting as locked", async () => {
+		// Written straight to the bucket rather than through the create
+		// endpoint, which stamps deletionLocked on every new mailbox. The
+		// shape under test is the one already sitting in R2 from before the
+		// setting existed.
+		await createMailbox({ fromName: "Test User" });
 		const settings = await readSettings(mailboxId);
 		expect(settings.deletionLocked).toBeUndefined();
 
@@ -151,9 +160,7 @@ describe("Mailbox deletion lock", () => {
 describe("Mailbox deletion: what survives", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
-		await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", {
-			method: "POST",
-		});
+		await createDummyMailbox();
 	});
 
 	it("leaves the stored mail intact on a plain delete", async () => {

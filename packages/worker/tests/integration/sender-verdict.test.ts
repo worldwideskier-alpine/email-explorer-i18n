@@ -1,6 +1,11 @@
 import { env, createExecutionContext } from "cloudflare:test";
 import { describe, expect, it, beforeEach } from "vitest";
-import { authenticatedFetch, mailboxId, testAuthBeforeAll } from "./utils";
+import {
+	authenticatedFetch,
+	createDummyMailbox,
+	mailboxId,
+	testAuthBeforeAll,
+} from "./utils";
 
 const PASSING_AUTH_RESULTS =
 	"mx.example.com; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
@@ -55,7 +60,7 @@ async function findEmail(
 describe("Sender-based spam verdict override", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
-		await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", { method: "POST" });
+		await createDummyMailbox();
 	});
 
 	it("moves an email to spam and remembers the sender when marked spam", async () => {

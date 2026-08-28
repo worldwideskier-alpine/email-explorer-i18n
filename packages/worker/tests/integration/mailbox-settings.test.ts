@@ -1,10 +1,15 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { authenticatedFetch, mailboxId, testAuthBeforeAll } from "./utils";
+import {
+	authenticatedFetch,
+	createDummyMailbox,
+	mailboxId,
+	testAuthBeforeAll,
+} from "./utils";
 
 describe("Mailbox settings: Claude API key redaction", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
-		await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", { method: "POST" });
+		await createDummyMailbox();
 	});
 
 	it("never returns the raw key, only whether one is configured", async () => {
@@ -89,7 +94,7 @@ describe("Mailbox settings: Claude API key redaction", () => {
 describe("Mailbox settings: display name (fromName)", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
-		await authenticatedFetch("http://local.test/api/v1/debug/create-mailbox", { method: "POST" });
+		await createDummyMailbox();
 	});
 
 	it("GetMailbox returns the stored fromName as the display name", async () => {

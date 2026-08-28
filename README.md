@@ -405,7 +405,17 @@ Please report any issues on our [GitHub Issues](https://github.com/G4brym/email-
 Email Explorer takes security seriously:
 
 **🔐 Authentication Security**
-- Passwords hashed with Web Crypto API (SHA-256)
+- Passwords hashed with PBKDF2-SHA256, 100,000 iterations, per-user salt.
+  Accounts created before this used an unsalted single-round SHA-256; those
+  hashes are still accepted and are rewritten in place on the owner's next
+  successful sign-in, so nobody has to reset a password.
+- Sign-in is rate limited per address and per IP. The counters live in the
+  auth Durable Object, so they hold across colos rather than resetting with
+  every isolate.
+- Password reset is rate limited the same way and answers identically whether
+  or not the address has an account, so it can't be used to find out which
+  addresses are worth attacking.
+- The OpenAPI schema and docs (`/openapi.json`, `/docs`) require a session
 - HttpOnly, Secure, SameSite cookies prevent XSS/CSRF
 - 30-day session expiry for automatic logout
 - Session tokens use cryptographic randomness

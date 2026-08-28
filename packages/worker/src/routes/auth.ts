@@ -1,6 +1,12 @@
 import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
+import {
+	clientIp,
+	loginThrottleRules,
+	retryAfterSeconds,
+	throttleKeys,
+} from "../throttle";
 import type { Env, Session } from "../types";
 
 type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
@@ -160,6 +166,10 @@ export class PostLogin extends OpenAPIRoute {
 				description: "Unauthorized",
 				...contentJson(ErrorResponseSchema),
 			},
+			"429": {
+				description: "Too many failed attempts",
+				...contentJson(ErrorResponseSchema),
+			},
 		},
 	};
 
@@ -168,11 +178,24 @@ export class PostLogin extends OpenAPIRoute {
 		const { email, password } = data.body;
 
 		const authDO = getAuthDO(c.env);
+		const rules = loginThrottleRules(email, clientIp(c.req.raw));
+
+		const retryAfterMs = await authDO.throttleRetryAfter(throttleKeys(rules));
+		if (retryAfterMs > 0) {
+			c.header("Retry-After", String(retryAfterSeconds(retryAfterMs)));
+			return c.json({ error: "Too many failed attempts" }, 429);
+		}
+
 		const session = await authDO.login(email, password);
 
 		if (!session) {
+			await authDO.throttleRecord(rules);
 			return c.json({ error: "Invalid credentials" }, 401);
 		}
+
+		// Knowing the password clears the slate, so a user who mistyped a few
+		// times and then got it right is not left sitting on a near-lockout.
+		await authDO.throttleReset(throttleKeys(rules));
 
 		// Set cookie
 		const cookie = `session=${session.id}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${30 * 24 * 60 * 60}`;

@@ -1,5 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import { DOQB } from "workers-qb";
+import { hashPassword, verifyPassword } from "../password";
+import type { ThrottleRule } from "../throttle";
 import type { Env, Session, User } from "../types";
 import { authMigrations, mailboxMigrations } from "./migrations";
 
@@ -93,21 +95,6 @@ export class MailboxDO extends DurableObject<Env> {
 		}
 	}
 
-	// Auth helper: hash password using Web Crypto API
-	async #hashPassword(password: string): Promise<string> {
-		const encoder = new TextEncoder();
-		const data = encoder.encode(password);
-		const hash = await crypto.subtle.digest("SHA-256", data);
-		const hashArray = Array.from(new Uint8Array(hash));
-		return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-	}
-
-	// Auth helper: verify password
-	async #verifyPassword(password: string, hash: string): Promise<boolean> {
-		const passwordHash = await this.#hashPassword(password);
-		return passwordHash === hash;
-	}
-
 	// Auth helper: generate session token
 	#generateToken(): string {
 		return crypto.randomUUID();
@@ -140,7 +127,7 @@ export class MailboxDO extends DurableObject<Env> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
 		const userId = crypto.randomUUID();
-		const passwordHash = await this.#hashPassword(password);
+		const passwordHash = await hashPassword(password);
 		const now = Date.now();
 
 		this.#qb
@@ -179,17 +166,34 @@ export class MailboxDO extends DurableObject<Env> {
 		if (!result.results) return null;
 
 		const user = result.results;
-		const isValid = await this.#verifyPassword(
+		const { valid, needsRehash } = await verifyPassword(
 			password,
 			String(user.password_hash),
 		);
 
-		if (!isValid) return null;
+		if (!valid) return null;
 
 		// Create session (30 days expiry)
 		const sessionId = this.#generateToken();
 		const now = Date.now();
 		const expiresAt = now + 30 * 24 * 60 * 60 * 1000;
+
+		// A correct password is the only moment the plaintext is available, so
+		// it is also the only moment an account still on the old unsalted
+		// SHA-256 can be moved onto PBKDF2. Doing it here means every account
+		// upgrades on its own next login, with nobody asked to reset anything.
+		if (needsRehash) {
+			this.#qb
+				.update({
+					tableName: "users",
+					data: {
+						password_hash: await hashPassword(password),
+						updated_at: now,
+					},
+					where: { conditions: "id = ?", params: [String(user.id)] },
+				})
+				.execute();
+		}
 
 		this.#qb
 			.insert({
@@ -276,6 +280,102 @@ export class MailboxDO extends DurableObject<Env> {
 		return true;
 	}
 
+	/**
+	 * Auth operation: how long the caller must wait, in milliseconds, before
+	 * any of these keys will accept another attempt. 0 means go ahead.
+	 *
+	 * Checked before doing the work, so a locked-out attacker doesn't even
+	 * get a password verification (~17ms of CPU) out of each request.
+	 */
+	async throttleRetryAfter(keys: string[]): Promise<number> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+		if (keys.length === 0) return 0;
+
+		const now = Date.now();
+		let longest = 0;
+		for (const key of keys) {
+			const row = this.#qb
+				.select("auth_throttle")
+				.fields(["locked_until"])
+				.where("bucket = ?", key)
+				.one().results;
+			const lockedUntil = Number(row?.locked_until ?? 0);
+			if (lockedUntil > now) longest = Math.max(longest, lockedUntil - now);
+		}
+		return longest;
+	}
+
+	/**
+	 * Auth operation: count one attempt against each rule, locking any key
+	 * that crosses its limit.
+	 *
+	 * The window is a fixed one that restarts once it lapses, not a sliding
+	 * one. That is deliberately the cheaper approximation: a sliding window
+	 * needs a row per attempt, and the worst case here -- an attacker landing
+	 * attempts either side of a window boundary -- buys them one extra batch,
+	 * not an unbounded rate.
+	 */
+	async throttleRecord(rules: ThrottleRule[]): Promise<void> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const now = Date.now();
+		for (const rule of rules) {
+			const row = this.#qb
+				.select("auth_throttle")
+				.fields(["failures", "window_started_at", "locked_until"])
+				.where("bucket = ?", rule.key)
+				.one().results;
+
+			const windowLapsed =
+				!row || now - Number(row.window_started_at) >= rule.windowMs;
+			const failures = windowLapsed ? 1 : Number(row.failures) + 1;
+			const windowStartedAt = windowLapsed
+				? now
+				: Number(row.window_started_at);
+			const lockedUntil =
+				failures >= rule.limit
+					? now + rule.lockMs
+					: (row?.locked_until ?? null);
+
+			this.ctx.storage.sql.exec(
+				`INSERT INTO auth_throttle (bucket, failures, window_started_at, locked_until)
+                 VALUES (?, ?, ?, ?)
+                 ON CONFLICT(bucket) DO UPDATE SET
+                     failures = excluded.failures,
+                     window_started_at = excluded.window_started_at,
+                     locked_until = excluded.locked_until`,
+				rule.key,
+				failures,
+				windowStartedAt,
+				lockedUntil,
+			);
+		}
+
+		// Buckets are created per address and per IP, so without this the table
+		// would grow for the lifetime of the mailbox. Anything whose window and
+		// lock have both lapsed carries no information.
+		this.ctx.storage.sql.exec(
+			`DELETE FROM auth_throttle
+             WHERE window_started_at < ? AND (locked_until IS NULL OR locked_until < ?)`,
+			now - 24 * 60 * 60 * 1000,
+			now,
+		);
+	}
+
+	/** Auth operation: forget the failures counted against these keys. */
+	async throttleReset(keys: string[]): Promise<void> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		for (const key of keys) {
+			this.#qb
+				.delete({
+					tableName: "auth_throttle",
+					where: { conditions: "bucket = ?", params: [key] },
+				})
+				.execute();
+		}
+	}
+
 	// Auth operation: get all users (admin only)
 	async getUsers(): Promise<User[]> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
@@ -324,7 +424,7 @@ export class MailboxDO extends DurableObject<Env> {
 	async updateUserPassword(userId: string, newPassword: string): Promise<void> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
-		const hashedPassword = await this.#hashPassword(newPassword);
+		const hashedPassword = await hashPassword(newPassword);
 
 		this.#qb
 			.update({

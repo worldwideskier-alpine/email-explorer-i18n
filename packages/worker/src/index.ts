@@ -40,6 +40,12 @@ import {
 	classifyByAuthResults,
 	isTrustedSelfDomainSender,
 } from "./spam-filter";
+import {
+	clientIp,
+	passwordResetThrottleRules,
+	retryAfterSeconds,
+	throttleKeys,
+} from "./throttle";
 import type { EmailExplorerOptions, Env, Session } from "./types";
 
 type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
@@ -1546,52 +1552,6 @@ class PutEmailSource extends OpenAPIRoute {
 	}
 }
 
-class CreateDummyMailbox extends OpenAPIRoute {
-	schema = {
-		summary: "Create a dummy mailbox for debugging",
-		operationId: "createDummyMailbox",
-		tags: ["Debug"],
-		responses: {
-			"200": {
-				description: "Dummy mailbox created",
-				...contentJson(z.object({ status: z.string() })),
-			},
-		},
-	};
-
-	async handle(c: AppContext) {
-		const mailboxId = "test@example.com";
-		const key = `mailboxes/${mailboxId}.json`;
-		const settings = {
-			fromName: "Test User",
-			forwarding: {
-				enabled: false,
-				email: "",
-			},
-			signature: {
-				enabled: true,
-				text: "Sent from my awesome email client",
-			},
-			autoReply: {
-				enabled: false,
-				subject: "",
-				message: "",
-			},
-		};
-
-		await c.env.BUCKET.put(key, JSON.stringify(settings));
-
-		const ns = c.env.MAILBOX;
-		const id = ns.idFromName(mailboxId);
-		const stub = ns.get(id);
-
-		// This will trigger the first run of the durable object
-		await stub.getFolders();
-
-		return c.json({ status: "ok" });
-	}
-}
-
 class PostForgotPassword extends OpenAPIRoute {
 	schema = {
 		summary: "Request password reset email",
@@ -1609,8 +1569,8 @@ class PostForgotPassword extends OpenAPIRoute {
 				description: "Bad request",
 				...contentJson(ErrorResponseSchema),
 			},
-			"404": {
-				description: "User not found",
+			"429": {
+				description: "Too many requests",
 				...contentJson(ErrorResponseSchema),
 			},
 			"503": {
@@ -1632,9 +1592,23 @@ class PostForgotPassword extends OpenAPIRoute {
 		const authId = ns.idFromName("AUTH");
 		const authStub = ns.get(authId);
 
+		const rules = passwordResetThrottleRules(email, clientIp(c.req.raw));
+		const retryAfterMs = await authStub.throttleRetryAfter(throttleKeys(rules));
+		if (retryAfterMs > 0) {
+			c.header("Retry-After", String(retryAfterSeconds(retryAfterMs)));
+			return c.json({ error: "Too many requests" }, 429);
+		}
+		// Counted before the lookup, so the limit applies to addresses that
+		// exist and addresses that don't alike -- otherwise the rate at which
+		// requests are accepted would itself answer "does this account exist".
+		await authStub.throttleRecord(rules);
+
 		const user = await authStub.getUserByEmail(email);
 		if (!user) {
-			return c.json({ error: "User not found" }, 404);
+			// Deliberately the same response an existing address gets. Telling
+			// the caller which addresses have accounts hands an attacker the
+			// list of names worth guessing passwords for.
+			return c.json({ status: "Password reset email sent" });
 		}
 
 		// Generate reset token (valid for 1 hour)
@@ -1671,8 +1645,11 @@ class PostForgotPassword extends OpenAPIRoute {
 				text: message.text,
 			});
 		} catch (e) {
+			// Also indistinguishable from the unknown-address case: a send only
+			// ever fails for an address that does exist, so surfacing the
+			// failure would re-open the enumeration this route just closed.
+			// The operator still sees it in the Worker's logs.
 			console.error("Failed to send recovery email:", e);
-			return c.json({ error: "Failed to send recovery email" }, 500);
 		}
 
 		return c.json({ status: "Password reset email sent" });
@@ -1844,18 +1821,26 @@ async function validateSession(
 	}
 }
 
+/**
+ * The endpoints that may be reached without a session.
+ *
+ * Matched exactly, never by prefix: a prefix match makes every future path
+ * that happens to start with one of these strings public too, which is the
+ * kind of hole nobody notices until it is being used. The API docs are not
+ * here on purpose -- they enumerate every route and its schema, and there is
+ * no reason for that to be readable by someone who cannot log in.
+ */
+const PUBLIC_ROUTES = new Set([
+	"/api/v1/auth/register",
+	"/api/v1/auth/login",
+	"/api/v1/auth/forgot-password",
+	"/api/v1/auth/reset-password",
+	"/api/v1/settings",
+]);
+
 // Helper function to check if route is public
 function isPublicRoute(pathname: string): boolean {
-	const publicRoutes = [
-		"/api/v1/auth/register",
-		"/api/v1/auth/login",
-		"/api/v1/auth/forgot-password",
-		"/api/v1/auth/reset-password",
-		"/api/v1/settings",
-		"/api/docs",
-		"/api/openapi.json",
-	];
-	return publicRoutes.some((route) => pathname.startsWith(route));
+	return PUBLIC_ROUTES.has(pathname);
 }
 
 // Helper function to check if route requires session (auth routes)
@@ -1895,7 +1880,6 @@ openapi.post("/api/v1/push/unsubscribe", PostPushUnsubscribe);
 openapi.get("/api/v1/settings", GetAppSettings);
 
 // Existing endpoints
-openapi.post("/api/v1/debug/create-mailbox", CreateDummyMailbox);
 openapi.get("/api/v1/mailboxes", GetMailboxes);
 openapi.post("/api/v1/mailboxes", PostMailbox);
 openapi.get("/api/v1/mailboxes/:mailboxId", GetMailbox);

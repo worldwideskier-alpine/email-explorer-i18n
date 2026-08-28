@@ -1,6 +1,11 @@
 import { createExecutionContext, env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
-import { authenticatedFetch, mailboxId, testAuthBeforeAll } from "./utils";
+import {
+	authenticatedFetch,
+	createDummyMailbox,
+	mailboxId,
+	testAuthBeforeAll,
+} from "./utils";
 
 const PASSING_AUTH =
 	"mx.test; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
@@ -58,10 +63,7 @@ async function subjectsIn(folder: string, id = mailboxId): Promise<string[]> {
 describe("Incoming mail is filed by the envelope recipient", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
-		await authenticatedFetch(
-			"http://local.test/api/v1/debug/create-mailbox",
-			{ method: "POST" },
-		);
+		await createDummyMailbox();
 	});
 
 	it("delivers to the envelope recipient even when the To: header names someone else", async () => {
