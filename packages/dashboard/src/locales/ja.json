@@ -129,7 +129,8 @@
 		"markNotSpam": "迷惑メールではない",
 		"notFoundTitle": "このメールは表示できません",
 		"notFoundMessage": "削除されたか、移動された可能性があります。一覧から最新の状態をご確認ください。",
-		"notFoundBackToList": "一覧に戻る"
+		"notFoundBackToList": "一覧に戻る",
+		"downloadFailed": "添付ファイルをダウンロードできませんでした。"
 	},
 	"searchResults": {
 		"title": "検索結果",
