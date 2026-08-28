@@ -7,9 +7,11 @@ on:
   workflow_dispatch:
     inputs:
       zone:
+        # Deliberately no default. This file is checked into a public
+        # repository, and which domain the deployment serves is not
+        # something to publish in it.
         description: Domain to inspect
         required: true
-        default: beautifulsnow.co.jp
 
 jobs:
   inspect:

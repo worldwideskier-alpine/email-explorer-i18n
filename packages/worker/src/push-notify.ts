@@ -31,6 +31,13 @@ export async function notifyMailboxSubscribers(
 
 	const privateJWK = JSON.parse(env.VAPID_PRIVATE_KEY);
 
+	// RFC 8292 wants a way for a push service to reach whoever runs this
+	// application server. That is deployment-specific, so it comes from a var
+	// rather than being baked into the package. The mailbox's own address is
+	// a sound fallback: on a self-hosted deployment, the person reading this
+	// mailbox is the operator.
+	const adminContact = env.VAPID_ADMIN_CONTACT?.trim() || `mailto:${mailboxId}`;
+
 	await Promise.all(
 		subscriptions.map(async (sub) => {
 			try {
@@ -42,7 +49,7 @@ export async function notifyMailboxSubscribers(
 					},
 					message: {
 						payload,
-						adminContact: "mailto:info@beautifulsnow.co.jp",
+						adminContact,
 						options: { ttl: 3600, urgency: "high" },
 					},
 				});
@@ -64,7 +71,7 @@ export async function notifyMailboxSubscribers(
  * in the dashboard router). `fromFolder` is what EmailDetail uses for its
  * back/move/spam actions, matching how the in-app list links to a message.
  * The mailbox id is an email address, so it needs encoding to match the form
- * the dashboard itself produces (e.g. `uota%40example.com`).
+ * the dashboard itself produces (e.g. `owner%40example.com`).
  */
 export function mailboxEmailPath(mailboxId: string, emailId: string): string {
 	return `/mailbox/${encodeURIComponent(mailboxId)}/email/${encodeURIComponent(
@@ -87,8 +94,8 @@ async function getMailboxLabel(env: Env, mailboxId: string): Promise<string> {
  * opening its own mail and dismissable on its own.
  *
  * The mailbox's display name leads the title because the stack's header is
- * the site name, which is the same for every mailbox and so can't tell
- * info@ apart from uota@ on its own.
+ * the site name, which is the same for every mailbox and so can't tell one
+ * mailbox's notifications from another's on its own.
  */
 export function buildNewEmailPayload(
 	mailboxId: string,

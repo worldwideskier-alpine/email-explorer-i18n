@@ -67,10 +67,10 @@ describe("isTrustedSelfDomainSender", () => {
 		expect(
 			isTrustedSelfDomainSender(
 				header(
-					"mx.example.com; spf=pass smtp.mailfrom=beautifulsnow.co.jp; dkim=pass header.i=@beautifulsnow.co.jp; dmarc=pass header.from=beautifulsnow.co.jp",
+					"mx.example.com; spf=pass smtp.mailfrom=mailbox.example; dkim=pass header.i=@mailbox.example; dmarc=pass header.from=mailbox.example",
 				),
-				"noreply@beautifulsnow.co.jp",
-				"uota@beautifulsnow.co.jp",
+				"noreply@mailbox.example",
+				"owner@mailbox.example",
 			),
 		).toBe(true);
 	});
@@ -78,9 +78,9 @@ describe("isTrustedSelfDomainSender", () => {
 	it("is case-insensitive on the domain comparison", () => {
 		expect(
 			isTrustedSelfDomainSender(
-				header("mx.example.com; dmarc=pass header.from=Beautifulsnow.co.jp"),
-				"noreply@BeautifulSnow.CO.JP",
-				"uota@beautifulsnow.co.jp",
+				header("mx.example.com; dmarc=pass header.from=Mailbox.example"),
+				"noreply@MailBox.EXAMPLE",
+				"owner@mailbox.example",
 			),
 		).toBe(true);
 	});
@@ -90,7 +90,7 @@ describe("isTrustedSelfDomainSender", () => {
 			isTrustedSelfDomainSender(
 				header("mx.example.com; dmarc=pass header.from=other.com"),
 				"noreply@other.com",
-				"uota@beautifulsnow.co.jp",
+				"owner@mailbox.example",
 			),
 		).toBe(false);
 	});
@@ -99,8 +99,8 @@ describe("isTrustedSelfDomainSender", () => {
 		expect(
 			isTrustedSelfDomainSender(
 				header("mx.example.com; spf=pass; dkim=pass"),
-				"noreply@beautifulsnow.co.jp",
-				"uota@beautifulsnow.co.jp",
+				"noreply@mailbox.example",
+				"owner@mailbox.example",
 			),
 		).toBe(false);
 	});
@@ -109,8 +109,8 @@ describe("isTrustedSelfDomainSender", () => {
 		expect(
 			isTrustedSelfDomainSender(
 				[],
-				"noreply@beautifulsnow.co.jp",
-				"uota@beautifulsnow.co.jp",
+				"noreply@mailbox.example",
+				"owner@mailbox.example",
 			),
 		).toBe(false);
 	});
@@ -118,9 +118,9 @@ describe("isTrustedSelfDomainSender", () => {
 	it("is false when the From address is missing", () => {
 		expect(
 			isTrustedSelfDomainSender(
-				header("mx.example.com; dmarc=pass header.from=beautifulsnow.co.jp"),
+				header("mx.example.com; dmarc=pass header.from=mailbox.example"),
 				undefined,
-				"uota@beautifulsnow.co.jp",
+				"owner@mailbox.example",
 			),
 		).toBe(false);
 	});

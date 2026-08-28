@@ -6,8 +6,8 @@ import { buildNewEmailPayload, mailboxEmailPath } from "../../src/push-notify";
 // fromFolder query EmailDetail reads for its back/move actions.
 describe("mailboxEmailPath", () => {
 	it("builds the EmailDetail route for a specific message", () => {
-		expect(mailboxEmailPath("uota@beautifulsnow.co.jp", "abc-123")).toBe(
-			"/mailbox/uota%40beautifulsnow.co.jp/email/abc-123?fromFolder=inbox",
+		expect(mailboxEmailPath("owner@mailbox.example", "abc-123")).toBe(
+			"/mailbox/owner%40mailbox.example/email/abc-123?fromFolder=inbox",
 		);
 	});
 
@@ -18,7 +18,7 @@ describe("mailboxEmailPath", () => {
 	});
 
 	it("percent-encodes the mailbox address", () => {
-		expect(mailboxEmailPath("info@beautifulsnow.co.jp", "x")).toContain("%40");
+		expect(mailboxEmailPath("info@mailbox.example", "x")).toContain("%40");
 	});
 });
 
@@ -27,7 +27,7 @@ describe("mailboxEmailPath", () => {
 // shared tag would collapse every new mail into one row.
 describe("buildNewEmailPayload", () => {
 	const mk = (id: string, sender: string, subject: string) =>
-		buildNewEmailPayload("uota@beautifulsnow.co.jp", "UOTA Yuji", {
+		buildNewEmailPayload("owner@mailbox.example", "Mailbox Owner", {
 			id,
 			sender,
 			subject,
@@ -40,22 +40,22 @@ describe("buildNewEmailPayload", () => {
 
 	it("leads the title with the mailbox label so mailboxes stay tellable apart", () => {
 		expect(
-			mk("id-1", "Dorothee@team-asia.co.jp", "8月お支払金額のお知らせ"),
+			mk("id-1", "billing@vendor.example", "請求書のご案内"),
 		).toMatchObject({
-			title: "[UOTA Yuji] Dorothee@team-asia.co.jp",
-			body: "8月お支払金額のお知らせ",
+			title: "[Mailbox Owner] billing@vendor.example",
+			body: "請求書のご案内",
 		});
 	});
 
 	it("links each notification to its own message", () => {
 		expect(mk("id-1", "a@x.com", "s1").url).toBe(
-			"/mailbox/uota%40beautifulsnow.co.jp/email/id-1?fromFolder=inbox",
+			"/mailbox/owner%40mailbox.example/email/id-1?fromFolder=inbox",
 		);
 	});
 
 	it("falls back to the mailbox id when the sender is missing", () => {
 		expect(mk("id-1", "", "s1").title).toBe(
-			"[UOTA Yuji] uota@beautifulsnow.co.jp",
+			"[Mailbox Owner] owner@mailbox.example",
 		);
 	});
 });

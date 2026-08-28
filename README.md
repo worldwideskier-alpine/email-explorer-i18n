@@ -45,9 +45,11 @@ GitHub Actions の消費分数を抑えるため、`main` への push で走る�
 
 ## 既存メールサーバーからの移行（IMAPインポート）
 
-ドメインのMXをCloudflare Email Routingに切り替える前に、既存のIMAPメールサーバー（例: ロリポップ！レンタルサーバー）から
-過去メールをこのアプリへコピーしたい場合は、[`tools/imap-migration`](tools/imap-migration/README.md) の移行スクリプトを使用してください。
-移行先には `POST /api/v1/admin/mailboxes/:mailboxId/import`（管理者専用・送信は行わずメールを保存するAPI）を利用します。
+過去メールの取り込みには `POST /api/v1/admin/mailboxes/:mailboxId/import`（管理者専用・送信は行わずメールを保存するAPI）が使えます。
+
+かつて `tools/imap-migration/` に置いていたIMAP移行スクリプトと、それを実行するGitHub Actionsワークフローは削除しました。
+移行が完了して不要になったこと、そして移行元ホスト・移行先URL・対象メールアドレスといった運用先固有の情報を
+公開リポジトリに残す理由がないためです。必要になった場合はコミット `44dbb99` 時点の履歴から取り出せます。
 
 <p align="center">
     <a href="https://github.com/G4brym/email-explorer/commits/main" target="_blank">
