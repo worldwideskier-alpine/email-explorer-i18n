@@ -1,15 +1,23 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    # One entry per package.json in the workspace. A path that is not a
-    # directory holding a manifest is skipped without any error, which is how
-    # "/pnpm-lock.yaml" and a "/packages/github-action" that does not exist
-    # went unnoticed -- and why packages/dashboard was never watched.
-    directories:
-      - "/"
-      - "/packages/dashboard"
-      - "/packages/worker"
-      - "/packages/worker/dev"
+    # The workspace root only. This is a pnpm workspace with a single
+    # pnpm-lock.yaml at the root, and Dependabot resolves every member from
+    # there -- the hono bump for packages/worker and the axios bump for
+    # packages/dashboard both arrived from this one entry.
+    #
+    # Listing the member directories as well looks more thorough and is in
+    # fact broken: run against "/packages/worker", Dependabot edits that
+    # package.json but finds no lockfile beside it, so the root lockfile is
+    # left behind and every such pull request fails at
+    # "pnpm install --frozen-lockfile" with
+    #
+    #   specifiers in the lockfile don't match specifiers in package.json
+    #
+    # A rebase cannot fix it, because the next run reproduces it. Every pull
+    # request titled "... in /packages/worker ..." failed this way, while the
+    # ones from the root merged cleanly.
+    directory: "/"
     schedule:
       interval: "weekly"
     # Only minor and patch updates are grouped. A major that isn't in any
