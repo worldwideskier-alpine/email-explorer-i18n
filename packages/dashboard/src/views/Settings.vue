@@ -92,6 +92,20 @@
         <p v-if="spamFilterMessage" class="text-sm text-green-600 dark:text-green-400 mt-2">{{ spamFilterMessage }}</p>
       </div>
 
+      <!-- Backup: the only way to get the mail out of this system -->
+      <div class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{{ t("settings.exportTitle") }}</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ t("settings.exportNote") }}</p>
+        <button
+          type="button"
+          @click="exportMailbox"
+          :disabled="exporting"
+          class="px-4 py-2 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded-lg font-medium hover:opacity-90 disabled:opacity-60"
+        >
+          {{ exporting ? t("settings.exporting") : t("settings.exportSubmit") }}
+        </button>
+      </div>
+
       <!-- Danger zone: deletion lock and mailbox deletion -->
       <div class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
         <h2 class="text-lg font-medium text-red-700 dark:text-red-400 mb-4">{{ t("settings.dangerZoneTitle") }}</h2>
@@ -157,6 +171,7 @@ import { onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import RichTextEditor from "@/components/RichTextEditor.vue";
+import api from "@/services/api";
 import {
 	getExistingSubscription,
 	isPushSupported,
@@ -164,6 +179,7 @@ import {
 	unsubscribeFromPush,
 } from "@/services/push";
 import { useMailboxStore } from "@/stores/mailboxes";
+import { htmlToPlainText } from "@/utils/htmlToPlainText";
 
 const { t } = useI18n();
 const mailboxStore = useMailboxStore();
@@ -246,11 +262,45 @@ onMounted(() => {
 	mailboxStore.fetchMailbox(route.params.mailboxId as string);
 });
 
-const stripHtml = (html: string): string => {
-	const div = document.createElement("div");
-	div.innerHTML = html;
-	return div.textContent || div.innerText || "";
-};
+// Was `div.innerHTML = html` on a detached div. Even out of the document an
+// <img src=x onerror=...> can fire, which made a signature able to run script
+// in whoever opened these settings. DOMParser's document has no browsing
+// context, so nothing in the markup runs or loads.
+const exporting = ref(false);
+
+/**
+ * Fetched through the API client and handed over as a blob: the endpoint
+ * needs the session, which a plain link would not carry. That does mean the
+ * archive passes through browser memory, which is the practical ceiling on
+ * how large a mailbox this can export in one go.
+ */
+async function exportMailbox() {
+	if (exporting.value) return;
+	exporting.value = true;
+	try {
+		const mailboxId = route.params.mailboxId as string;
+		const response = await api.exportMailbox(mailboxId);
+		const url = URL.createObjectURL(response.data as Blob);
+		const link = document.createElement("a");
+		link.href = url;
+		const stamp = new Date().toISOString().slice(0, 10);
+		link.download = `${mailboxId}-${stamp}.mbox`;
+		document.body.appendChild(link);
+		link.click();
+		// Revoked on a later tick: releasing it in the same one can cut the
+		// download off before the browser has taken the data.
+		setTimeout(() => {
+			link.remove();
+			URL.revokeObjectURL(url);
+		}, 1000);
+	} catch {
+		window.alert(t("settings.exportFailed"));
+	} finally {
+		exporting.value = false;
+	}
+}
+
+const stripHtml = (html: string): string => htmlToPlainText(html);
 
 const updateSettings = () => {
 	if (mailbox.value) {

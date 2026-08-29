@@ -174,7 +174,12 @@
 		"deleteMailboxDeleting": "削除中...",
 		"deleteMailboxConfirm": "このメールボックスを一覧から削除します。よろしいですか？",
 		"deleteMailboxConfirmPurge": "このメールボックスと、保存されているメール・添付ファイルをすべて完全に削除します。取り消しはできません。本当によろしいですか？",
-		"deleteMailboxFailed": "メールボックスの削除に失敗しました。"
+		"deleteMailboxFailed": "メールボックスの削除に失敗しました。",
+		"exportTitle": "メールのバックアップ",
+		"exportNote": "このメールボックスの全メールを mbox 形式で書き出します。Thunderbird などで読み込めます。受信したメールは元のデータそのまま、送信したメールは添付ファイルを含めて再構成して書き出します。",
+		"exportSubmit": "mbox形式で書き出す",
+		"exporting": "書き出し中...",
+		"exportFailed": "書き出しに失敗しました。"
 	},
 	"apiErrors": {
 		"Invalid credentials": "メールアドレスまたはパスワードが正しくありません",

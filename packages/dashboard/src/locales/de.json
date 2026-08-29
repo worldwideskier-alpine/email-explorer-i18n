@@ -174,7 +174,12 @@
 		"deleteMailboxDeleting": "Wird gelöscht...",
 		"deleteMailboxConfirm": "Dieses Postfach aus der Liste entfernen?",
 		"deleteMailboxConfirmPurge": "Dieses Postfach und alle darin gespeicherten Nachrichten und Anhänge endgültig löschen? Das kann nicht rückgängig gemacht werden.",
-		"deleteMailboxFailed": "Das Postfach konnte nicht gelöscht werden."
+		"deleteMailboxFailed": "Das Postfach konnte nicht gelöscht werden.",
+		"exportTitle": "E-Mails sichern",
+		"exportNote": "Lädt alle Nachrichten dieses Postfachs als mbox-Archiv herunter, das Thunderbird und die meisten anderen Programme importieren können. Empfangene Mail wird unverändert geschrieben; hier verfasste Mail wird samt Anhängen neu aufgebaut.",
+		"exportSubmit": "Als mbox herunterladen",
+		"exporting": "Wird vorbereitet...",
+		"exportFailed": "Der Export ist fehlgeschlagen."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ungültige Anmeldedaten",

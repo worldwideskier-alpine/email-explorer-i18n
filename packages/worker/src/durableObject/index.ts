@@ -881,6 +881,18 @@ export class MailboxDO extends DurableObject<Env> {
 	}
 
 	/**
+	 * Ids only, oldest first -- the export streams one message at a time and
+	 * fetches each body as it goes, so that a mailbox of any size costs one
+	 * message worth of memory rather than all of them at once.
+	 */
+	async listEmailIdsByDate(): Promise<string[]> {
+		const rows = this.ctx.storage.sql
+			.exec("SELECT id FROM emails ORDER BY date ASC")
+			.toArray();
+		return rows.map((row) => String(row.id));
+	}
+
+	/**
 	 * Wipes this mailbox's Durable Object -- emails, folders, contacts,
 	 * attachment records. deleteAll() drops the SQLite tables themselves, not
 	 * just their rows.

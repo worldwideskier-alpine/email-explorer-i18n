@@ -14,6 +14,7 @@ import {
 	recordSenderVerdict,
 	redactMailboxSettings,
 } from "./mailbox-settings";
+import { renderMboxEntry } from "./mbox";
 import { plainTextToHtml } from "./plain-text-to-html";
 import { dismissEmailNotification } from "./push-notify";
 import { sendEmail } from "./resend";
@@ -1477,6 +1478,68 @@ class GetEmailSource extends OpenAPIRoute {
 	}
 }
 
+class GetMailboxExport extends OpenAPIRoute {
+	schema = {
+		summary: "Download the whole mailbox as an mbox file",
+		operationId: "exportMailbox",
+		tags: ["Mailboxes"],
+		request: {
+			params: z.object({ mailboxId: z.string() }),
+		},
+		responses: {
+			"200": {
+				description: "mbox archive",
+				content: {
+					"application/mbox": { schema: z.string() },
+				},
+			},
+			"404": {
+				description: "Mailbox not found",
+				...contentJson(ErrorResponseSchema),
+			},
+		},
+	};
+
+	async handle(c: AppContext) {
+		const data = await this.getValidatedData<typeof this.schema>();
+		const { mailboxId } = data.params ?? {};
+
+		if (!(await c.env.BUCKET.head(`mailboxes/${mailboxId}.json`))) {
+			return c.json({ error: "Not found" }, 404);
+		}
+
+		const stub = c.env.MAILBOX.get(c.env.MAILBOX.idFromName(mailboxId));
+		const ids = await stub.listEmailIdsByDate();
+
+		// Streamed one message at a time rather than assembled first: a
+		// mailbox can be far larger than a Worker may hold in memory, and the
+		// download starts immediately instead of after the last message.
+		const encoder = new TextEncoder();
+		let index = 0;
+		const body = new ReadableStream({
+			async pull(controller) {
+				if (index >= ids.length) {
+					controller.close();
+					return;
+				}
+				const email = await stub.getEmail(ids[index++]);
+				if (!email) return;
+				controller.enqueue(
+					encoder.encode(await renderMboxEntry(c.env, email as never)),
+				);
+			},
+		});
+
+		const stamp = new Date().toISOString().slice(0, 10);
+		return new Response(body, {
+			headers: {
+				"Content-Type": "application/mbox; charset=utf-8",
+				"Content-Disposition": `attachment; filename="${mailboxId}-${stamp}.mbox"`,
+			},
+		});
+	}
+}
+
 const PutEmailSourceRequestSchema = z.object({
 	rawEmailBase64: z.string(),
 });
@@ -1895,6 +1958,7 @@ openapi.post("/api/v1/mailboxes", PostMailbox);
 openapi.get("/api/v1/mailboxes/:mailboxId", GetMailbox);
 openapi.put("/api/v1/mailboxes/:mailboxId", PutMailbox);
 openapi.delete("/api/v1/mailboxes/:mailboxId", DeleteMailbox);
+openapi.get("/api/v1/mailboxes/:mailboxId/export", GetMailboxExport);
 openapi.get("/api/v1/mailboxes/:mailboxId/emails", GetEmails);
 openapi.post("/api/v1/mailboxes/:mailboxId/emails", PostEmail);
 openapi.get("/api/v1/mailboxes/:mailboxId/emails/:id", GetEmail);

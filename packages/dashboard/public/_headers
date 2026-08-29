@@ -1,0 +1,27 @@
+# Security headers for the dashboard's static assets. Cloudflare Workers
+# Assets reads this file the way Pages does; the Worker itself never serves
+# index.html (run_worker_first only routes /api/*, /docs and /openapi.json to
+# it), so this is the only place a header can be attached to the page.
+/*
+  # script-src 'self' is the one that matters: no inline script, no eval, and
+  # nothing from another origin can run, which is what an injected payload
+  # would need.
+  #
+  # 'unsafe-inline' is unavoidable for styles. The email body is rendered in
+  # an iframe built with srcdoc, and a srcdoc frame inherits this policy --
+  # real mail is full of inline style attributes, and blocking them would
+  # leave every message looking broken. With scripts blocked, an inline style
+  # is not a way in.
+  #
+  # img-src is wide open for the same reason: mail loads images from
+  # wherever the sender put them. That is a privacy cost (a tracking pixel
+  # tells the sender the message was opened), not a way to run code.
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self' data:; media-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  # Belt and braces with frame-ancestors, for anything that predates CSP.
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  # Referrers are for our own origin only: a path here can name a mailbox.
+  Referrer-Policy: same-origin
+  # None of these are used, and saying so stops a compromised page from
+  # asking for them.
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
