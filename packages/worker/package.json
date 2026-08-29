@@ -54,7 +54,7 @@
 		"zod": "^3.25.76"
 	},
 	"devDependencies": {
-		"@cloudflare/vitest-pool-workers": "^0.10.11",
+		"@cloudflare/vitest-pool-workers": "^0.22.0",
 		"@cloudflare/workers-types": "^4.20251128.0",
 		"@types/node": "24.10.1",
 		"tsup": "^8.5.1",
