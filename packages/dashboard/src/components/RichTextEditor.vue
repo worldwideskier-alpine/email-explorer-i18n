@@ -335,6 +335,7 @@ import { Color } from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
+import { TableKit } from "@tiptap/extension-table";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
@@ -407,6 +408,34 @@ const editor = useEditor({
 		Color,
 		Highlight.configure({
 			multicolor: true,
+		}),
+		// Without this, a table in the message being replied to is dropped and
+		// the reply carries its cells as loose text -- an invoice or a quote
+		// comes back to the sender unreadable.
+		//
+		// The borders are inline styles rather than a stylesheet because the
+		// result is sent as an email, and mail clients strip <style>. Column
+		// resizing is off: it is a composing convenience that costs handle
+		// markup in the message, and what matters here is quoting a table back
+		// intact.
+		TableKit.configure({
+			table: {
+				resizable: false,
+				HTMLAttributes: {
+					style: "border-collapse: collapse; margin: 8px 0;",
+				},
+			},
+			tableCell: {
+				HTMLAttributes: {
+					style: "border: 1px solid #ccc; padding: 4px 8px;",
+				},
+			},
+			tableHeader: {
+				HTMLAttributes: {
+					style:
+						"border: 1px solid #ccc; padding: 4px 8px; background: #f3f4f6; font-weight: 600;",
+				},
+			},
 		}),
 	],
 	content: props.modelValue,
