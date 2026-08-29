@@ -109,6 +109,14 @@ export default {
 			params: purge ? { purge: "true" } : undefined,
 		}),
 
+	// The whole mailbox as an mbox archive. Fetched as a blob through this
+	// client because the endpoint needs the session; see exportMailbox in
+	// Settings.vue for why that caps the practical size.
+	exportMailbox: (mailboxId: string) =>
+		apiClient.get(`/api/v1/mailboxes/${mailboxId}/export`, {
+			responseType: "blob",
+		}),
+
 	// Emails
 	listEmails: (mailboxId: string, params: any) =>
 		apiClient.get(`/api/v1/mailboxes/${mailboxId}/emails`, { params }),

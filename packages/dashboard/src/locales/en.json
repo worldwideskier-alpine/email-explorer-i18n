@@ -174,7 +174,12 @@
 		"deleteMailboxDeleting": "Deleting...",
 		"deleteMailboxConfirm": "Remove this mailbox from the list?",
 		"deleteMailboxConfirmPurge": "Permanently delete this mailbox and every message and attachment stored in it? This cannot be undone.",
-		"deleteMailboxFailed": "Could not delete the mailbox."
+		"deleteMailboxFailed": "Could not delete the mailbox.",
+		"exportTitle": "Back up your mail",
+		"exportNote": "Downloads every message in this mailbox as an mbox archive, which Thunderbird and most other clients can import. Received mail is written out exactly as it arrived; mail composed here is rebuilt, attachments included.",
+		"exportSubmit": "Download as mbox",
+		"exporting": "Preparing...",
+		"exportFailed": "The export failed."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Invalid credentials",
