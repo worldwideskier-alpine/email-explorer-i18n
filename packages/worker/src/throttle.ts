@@ -88,6 +88,33 @@ export function passwordResetThrottleRules(
 	];
 }
 
+/**
+ * Two things are being limited here. Guessing the current password from a
+ * stolen session -- the change-password and change-email routes both ask for
+ * it, and both sit behind a session, so this is the fallback if one leaks.
+ * And using a logged-in account to send confirmation mail at whatever address
+ * the caller names.
+ */
+export function accountChangeThrottleRules(
+	userId: string,
+	ip: string,
+): ThrottleRule[] {
+	return [
+		{
+			key: `account:user:${userId}`,
+			limit: 10,
+			windowMs: HOUR,
+			lockMs: HOUR,
+		},
+		{
+			key: `account:ip:${ip}`,
+			limit: 20,
+			windowMs: HOUR,
+			lockMs: HOUR,
+		},
+	];
+}
+
 export function throttleKeys(rules: ThrottleRule[]): string[] {
 	return rules.map((rule) => rule.key);
 }

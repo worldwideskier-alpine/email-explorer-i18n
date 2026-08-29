@@ -1,7 +1,10 @@
 import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
+import { buildEmailChangeEmail, MAIL_LOCALES } from "../mail-templates";
+import { sendEmail } from "../resend";
 import {
+	accountChangeThrottleRules,
 	clientIp,
 	loginThrottleRules,
 	retryAfterSeconds,
@@ -59,6 +62,22 @@ const RevokeAccessRequestSchema = z.object({
 
 const UpdateUserRequestSchema = z.object({
 	isAdmin: z.boolean().optional(),
+});
+
+const ChangePasswordRequestSchema = z.object({
+	currentPassword: z.string(),
+	newPassword: z.string().min(8),
+});
+
+const ChangeEmailRequestSchema = z.object({
+	currentPassword: z.string(),
+	newEmail: z.string().email(),
+	// Which language to write the confirmation mail in; see MAIL_LOCALES.
+	locale: z.enum(MAIL_LOCALES).optional(),
+});
+
+const ConfirmEmailChangeRequestSchema = z.object({
+	token: z.string(),
 });
 
 // Helper function to get auth DO
@@ -202,6 +221,240 @@ export class PostLogin extends OpenAPIRoute {
 		c.header("Set-Cookie", cookie);
 
 		return c.json(session);
+	}
+}
+
+export class PostChangePassword extends OpenAPIRoute {
+	schema = {
+		summary: "Change your own password",
+		operationId: "changePassword",
+		tags: ["Auth"],
+		request: {
+			body: contentJson(ChangePasswordRequestSchema),
+		},
+		responses: {
+			"200": {
+				description: "Password changed",
+				...contentJson(SuccessResponseSchema),
+			},
+			"401": {
+				description: "Not signed in",
+				...contentJson(ErrorResponseSchema),
+			},
+			"403": {
+				description: "The current password is wrong",
+				...contentJson(ErrorResponseSchema),
+			},
+			"429": {
+				description: "Too many attempts",
+				...contentJson(ErrorResponseSchema),
+			},
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = c.get("session");
+		if (!session) {
+			return c.json({ error: "Unauthorized" }, 401);
+		}
+
+		const data = await this.getValidatedData<typeof this.schema>();
+		const { currentPassword, newPassword } = data.body;
+
+		const authDO = getAuthDO(c.env);
+		const rules = accountChangeThrottleRules(
+			session.userId,
+			clientIp(c.req.raw),
+		);
+		const retryAfterMs = await authDO.throttleRetryAfter(throttleKeys(rules));
+		if (retryAfterMs > 0) {
+			c.header("Retry-After", String(retryAfterSeconds(retryAfterMs)));
+			return c.json({ error: "Too many attempts" }, 429);
+		}
+
+		// The current session is kept so the user is not signed out of the tab
+		// they are using; every other one is dropped inside changePassword.
+		const changed = await authDO.changePassword(
+			session.userId,
+			currentPassword,
+			newPassword,
+			session.id,
+		);
+		if (!changed) {
+			await authDO.throttleRecord(rules);
+			// 403, not 401: the session is fine, the password in the body is
+			// not. A 401 would have the dashboard sign the user out for a typo.
+			return c.json({ error: "Current password is incorrect" }, 403);
+		}
+
+		await authDO.throttleReset(throttleKeys(rules));
+		return c.json({ status: "Password changed" });
+	}
+}
+
+export class PostChangeEmail extends OpenAPIRoute {
+	schema = {
+		summary: "Request a change of your sign-in address",
+		operationId: "changeEmail",
+		tags: ["Auth"],
+		request: {
+			body: contentJson(ChangeEmailRequestSchema),
+		},
+		responses: {
+			"200": {
+				description: "Confirmation email sent to the new address",
+				...contentJson(SuccessResponseSchema),
+			},
+			"401": {
+				description: "Not signed in",
+				...contentJson(ErrorResponseSchema),
+			},
+			"403": {
+				description: "The current password is wrong",
+				...contentJson(ErrorResponseSchema),
+			},
+			"409": {
+				description: "That address already belongs to an account",
+				...contentJson(ErrorResponseSchema),
+			},
+			"429": {
+				description: "Too many attempts",
+				...contentJson(ErrorResponseSchema),
+			},
+			"503": {
+				description: "Account recovery (outbound mail) is not enabled",
+				...contentJson(ErrorResponseSchema),
+			},
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = c.get("session");
+		if (!session) {
+			return c.json({ error: "Unauthorized" }, 401);
+		}
+		// The confirmation link is the whole mechanism, and it goes out over
+		// the same sender the recovery mail uses. Without that configured
+		// there is no way to prove the new address is reachable.
+		if (!c.env.config?.accountRecovery) {
+			return c.json({ error: "Account recovery is not enabled" }, 503);
+		}
+
+		const data = await this.getValidatedData<typeof this.schema>();
+		const { currentPassword, newEmail, locale } = data.body;
+
+		const authDO = getAuthDO(c.env);
+		const rules = accountChangeThrottleRules(
+			session.userId,
+			clientIp(c.req.raw),
+		);
+		const retryAfterMs = await authDO.throttleRetryAfter(throttleKeys(rules));
+		if (retryAfterMs > 0) {
+			c.header("Retry-After", String(retryAfterSeconds(retryAfterMs)));
+			return c.json({ error: "Too many attempts" }, 429);
+		}
+		await authDO.throttleRecord(rules);
+
+		if (!(await authDO.verifyUserPassword(session.userId, currentPassword))) {
+			return c.json({ error: "Current password is incorrect" }, 403);
+		}
+
+		const address = newEmail.trim().toLowerCase();
+		if (await authDO.getUserByEmail(address)) {
+			return c.json({ error: "Email already registered" }, 409);
+		}
+
+		// Nothing is changed yet. The address only becomes the sign-in address
+		// once someone reading it follows the link, which is what proves it is
+		// reachable -- the point of the whole exercise being that the address
+		// must still work when the password has been forgotten.
+		const token = crypto.randomUUID();
+		const expiresAt = Date.now() + 3600000; // 1 hour
+		await c.env.BUCKET.put(
+			`email-change-tokens/${token}.json`,
+			JSON.stringify({ userId: session.userId, newEmail: address, expiresAt }),
+			{ customMetadata: { expiresAt: expiresAt.toString() } },
+		);
+
+		const link = `${new URL(c.req.url).origin}/confirm-email-change?token=${token}`;
+		const message = buildEmailChangeEmail(locale, link);
+		try {
+			await sendEmail(c.env, {
+				from: c.env.config.accountRecovery.fromEmail,
+				to: address,
+				subject: message.subject,
+				html: message.html,
+				text: message.text,
+			});
+		} catch (e) {
+			console.error("Failed to send address-change confirmation:", e);
+			return c.json({ error: "Failed to send confirmation email" }, 500);
+		}
+
+		await authDO.throttleReset(throttleKeys(rules));
+		return c.json({ status: "Confirmation email sent" });
+	}
+}
+
+export class PostConfirmEmailChange extends OpenAPIRoute {
+	schema = {
+		summary: "Confirm a change of sign-in address",
+		operationId: "confirmEmailChange",
+		tags: ["Auth"],
+		request: {
+			body: contentJson(ConfirmEmailChangeRequestSchema),
+		},
+		responses: {
+			"200": {
+				description: "Sign-in address changed",
+				...contentJson(SuccessResponseSchema),
+			},
+			"401": {
+				description: "Invalid or expired token",
+				...contentJson(ErrorResponseSchema),
+			},
+			"409": {
+				description: "That address already belongs to an account",
+				...contentJson(ErrorResponseSchema),
+			},
+		},
+	};
+
+	// Deliberately reachable without a session: the link is opened by whoever
+	// can read the new address, who may well be on a device that has never
+	// signed in. The token is the credential, and it took the current
+	// password to have one issued.
+	async handle(c: AppContext) {
+		const data = await this.getValidatedData<typeof this.schema>();
+		const { token } = data.body;
+
+		const key = `email-change-tokens/${token}.json`;
+		const stored = await c.env.BUCKET.get(key);
+		if (!stored) {
+			return c.json({ error: "Invalid or expired token" }, 401);
+		}
+
+		const pending = await stored.json<{
+			userId: string;
+			newEmail: string;
+			expiresAt: number;
+		}>();
+		if (pending.expiresAt < Date.now()) {
+			await c.env.BUCKET.delete(key);
+			return c.json({ error: "Invalid or expired token" }, 401);
+		}
+
+		const authDO = getAuthDO(c.env);
+		const applied = await authDO.updateUserEmail(
+			pending.userId,
+			pending.newEmail,
+		);
+		await c.env.BUCKET.delete(key);
+
+		if (!applied) {
+			return c.json({ error: "Email already registered" }, 409);
+		}
+		return c.json({ status: "Sign-in address changed" });
 	}
 }
 
@@ -392,7 +645,22 @@ export class PutUser extends OpenAPIRoute {
 			return c.json({ error: "Admin privileges required" }, 403);
 		}
 
-		// TODO: Implement user update logic in MailboxDO
+		const data = await this.getValidatedData<typeof this.schema>();
+		const { isAdmin } = data.body;
+		if (isAdmin === undefined) {
+			return c.json({ status: "updated" });
+		}
+
+		const userId = c.req.param("userId");
+		const authDO = getAuthDO(c.env);
+		const result = await authDO.setUserAdmin(userId, isAdmin);
+
+		if (result === "not-found") {
+			return c.json({ error: "User not found" }, 404);
+		}
+		if (result === "last-admin") {
+			return c.json({ error: "Cannot remove the last administrator" }, 409);
+		}
 		return c.json({ status: "updated" });
 	}
 }

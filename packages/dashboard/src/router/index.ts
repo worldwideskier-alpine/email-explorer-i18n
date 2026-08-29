@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import Account from "@/views/Account.vue";
 import Admin from "@/views/Admin.vue";
+import ConfirmEmailChange from "@/views/ConfirmEmailChange.vue";
 import Contacts from "@/views/Contacts.vue";
 import EmailDetail from "@/views/EmailDetail.vue";
 import EmailList from "@/views/EmailList.vue";
@@ -41,6 +43,20 @@ const router = createRouter({
 			name: "ResetPassword",
 			component: ResetPassword,
 			meta: { title: "Reset Password", public: true },
+		},
+		{
+			// Opened from the link in the confirmation mail, which may well be
+			// read on a device that has never signed in.
+			path: "/confirm-email-change",
+			name: "ConfirmEmailChange",
+			component: ConfirmEmailChange,
+			meta: { title: "Confirm Email Change", public: true },
+		},
+		{
+			path: "/account",
+			name: "Account",
+			component: Account,
+			meta: { title: "Account", requiresAuth: true },
 		},
 		{
 			path: "/",

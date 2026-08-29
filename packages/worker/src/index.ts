@@ -21,6 +21,9 @@ import {
 	GetMe,
 	GetUsers,
 	PostAdminRegister,
+	PostChangeEmail,
+	PostChangePassword,
+	PostConfirmEmailChange,
 	PostGrantAccess,
 	PostLogin,
 	PostLogout,
@@ -1835,6 +1838,10 @@ const PUBLIC_ROUTES = new Set([
 	"/api/v1/auth/login",
 	"/api/v1/auth/forgot-password",
 	"/api/v1/auth/reset-password",
+	// Reached from a link in the confirmation mail, possibly on a device that
+	// has never signed in. The token is the credential, and issuing one
+	// already required the session and the current password.
+	"/api/v1/auth/confirm-email-change",
 	"/api/v1/settings",
 ]);
 
@@ -1864,6 +1871,9 @@ openapi.post("/api/v1/auth/logout", PostLogout);
 openapi.get("/api/v1/auth/me", GetMe);
 openapi.post("/api/v1/auth/forgot-password", PostForgotPassword);
 openapi.post("/api/v1/auth/reset-password", PostResetPassword);
+openapi.post("/api/v1/auth/change-password", PostChangePassword);
+openapi.post("/api/v1/auth/change-email", PostChangeEmail);
+openapi.post("/api/v1/auth/confirm-email-change", PostConfirmEmailChange);
 openapi.post("/api/v1/auth/admin/register", PostAdminRegister);
 openapi.get("/api/v1/auth/admin/users", GetUsers);
 openapi.put("/api/v1/auth/admin/users/:userId", PutUser);

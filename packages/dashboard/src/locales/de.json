@@ -82,7 +82,8 @@
 		"creating": "Wird erstellt...",
 		"createMailbox": "Postfach erstellen",
 		"fillAllFields": "Bitte füllen Sie alle Felder aus",
-		"mailboxCreated": "Postfach erfolgreich erstellt!"
+		"mailboxCreated": "Postfach erfolgreich erstellt!",
+		"account": "Konto"
 	},
 	"sidebar": {
 		"toggleMenu": "Menü umschalten",
@@ -186,7 +187,14 @@
 		"Mailbox already exists": "Postfach existiert bereits",
 		"Failed to create mailbox": "Postfach konnte nicht erstellt werden",
 		"Too many failed attempts": "Zu viele fehlgeschlagene Anmeldeversuche. Diese Adresse ist kurzzeitig gesperrt; bitte versuchen Sie es später erneut.",
-		"Too many requests": "Zu viele Anfragen. Bitte versuchen Sie es später erneut."
+		"Too many requests": "Zu viele Anfragen. Bitte versuchen Sie es später erneut.",
+		"Current password is incorrect": "Das aktuelle Passwort ist falsch",
+		"Cannot remove the last administrator": "Der letzte Administrator kann nicht entfernt werden",
+		"Invalid or expired token": "Dieser Link ist ungültig oder abgelaufen",
+		"Too many attempts": "Zu viele Versuche. Bitte versuchen Sie es später erneut.",
+		"Failed to send confirmation email": "Die Bestätigungsmail konnte nicht gesendet werden",
+		"Account recovery is not enabled": "Der E-Mail-Versand ist nicht konfiguriert, daher nicht verfügbar",
+		"User not found": "Benutzer nicht gefunden"
 	},
 	"admin": {
 		"title": "Admin-Panel",
@@ -214,7 +222,12 @@
 			"columnActions": "Aktionen",
 			"roleAdmin": "Administrator",
 			"roleUser": "Benutzer",
-			"manageAccess": "Zugriff verwalten"
+			"manageAccess": "Zugriff verwalten",
+			"grantAdmin": "Zum Administrator machen",
+			"revokeAdmin": "Administrator entziehen",
+			"confirmGrantAdmin": "{email} zum Administrator machen?",
+			"confirmRevokeAdmin": "{email} die Administratorrechte entziehen?",
+			"adminChangeFailed": "Die Rechte konnten nicht geändert werden."
 		},
 		"accessModal": {
 			"titlePrefix": "Zugriff verwalten für {email}",
@@ -297,5 +310,41 @@
 		"toggleSourceCode": "Quellcode umschalten",
 		"sourceCodePlaceholder": "HTML-Quellcode...",
 		"urlPrompt": "URL"
+	},
+	"account": {
+		"title": "Konto",
+		"subtitle": "Verwalten Sie Ihre Anmeldedaten.",
+		"backToHome": "Zurück zur Startseite",
+		"signInAddress": "Anmeldeadresse",
+		"isAdmin": "Administrator",
+		"currentPassword": "Aktuelles Passwort",
+		"saving": "Wird gespeichert...",
+		"changePassword": {
+			"title": "Passwort ändern",
+			"note": "Nach der Änderung werden alle anderen angemeldeten Browser abgemeldet.",
+			"newPassword": "Neues Passwort (mindestens 8 Zeichen)",
+			"confirmPassword": "Neues Passwort (Wiederholung)",
+			"submit": "Passwort ändern",
+			"done": "Passwort geändert.",
+			"mismatch": "Die neuen Passwörter stimmen nicht überein.",
+			"failed": "Das Passwort konnte nicht geändert werden."
+		},
+		"changeEmail": {
+			"title": "Anmeldeadresse ändern",
+			"note": "An die neue Adresse wird eine Bestätigungsmail gesendet; bis Sie den Link öffnen, ändert sich nichts. Die Mail zum Zurücksetzen des Passworts geht an diese Adresse — eine Adresse außerhalb dieses Systems ist daher sicherer.",
+			"newEmail": "Neue E-Mail-Adresse",
+			"submit": "Bestätigungsmail senden",
+			"sent": "Eine Bestätigungsmail wurde an {email} gesendet. Öffnen Sie den Link darin, um die Änderung abzuschließen.",
+			"failed": "Die Bestätigungsmail konnte nicht gesendet werden."
+		}
+	},
+	"confirmEmailChange": {
+		"title": "Änderung der E-Mail-Adresse",
+		"working": "Wird bestätigt...",
+		"done": "Ihre Anmeldeadresse wurde geändert.",
+		"doneNote": "Verwenden Sie bei der nächsten Anmeldung die neue Adresse.",
+		"toLogin": "Zur Anmeldung",
+		"missingToken": "Dieser Link ist ungültig.",
+		"failed": "Die Änderung konnte nicht abgeschlossen werden."
 	}
 }

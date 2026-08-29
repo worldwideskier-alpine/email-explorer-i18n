@@ -24,7 +24,7 @@ export function resolveMailLocale(locale: string | undefined): MailLocale {
 		: DEFAULT_MAIL_LOCALE;
 }
 
-interface PasswordResetStrings {
+interface LinkEmailStrings {
 	subject: string;
 	heading: string;
 	intro: string;
@@ -36,7 +36,7 @@ interface PasswordResetStrings {
 	fontStack: string;
 }
 
-const PASSWORD_RESET: Record<MailLocale, PasswordResetStrings> = {
+const PASSWORD_RESET: Record<MailLocale, LinkEmailStrings> = {
 	ja: {
 		subject: "パスワード再設定のご案内",
 		heading: "パスワード再設定のご案内",
@@ -77,13 +77,54 @@ const PASSWORD_RESET: Record<MailLocale, PasswordResetStrings> = {
 	},
 };
 
-export function buildPasswordResetEmail(
-	locale: string | undefined,
-	resetLink: string,
-): { subject: string; html: string; text: string } {
-	const lang = resolveMailLocale(locale);
-	const s = PASSWORD_RESET[lang];
+const EMAIL_CHANGE: Record<MailLocale, LinkEmailStrings> = {
+	ja: {
+		subject: "メールアドレス変更の確認",
+		heading: "メールアドレス変更の確認",
+		intro:
+			"ログイン用メールアドレスをこのアドレスに変更するリクエストを受け付けました。下記のボタンをクリックすると変更が確定します。",
+		button: "このアドレスに変更する",
+		copyPrompt: "またはこちらのリンクをブラウザにコピー＆ペーストしてください:",
+		expiry: "このリンクの有効期限は1時間です。",
+		ignore:
+			"心当たりがない場合は、このメールを無視していただいて問題ありません。変更は行われません。",
+		footer: "Email Explorer - メールアドレス変更",
+		fontStack: '"Hiragino Sans", "Yu Gothic", Arial, sans-serif',
+	},
+	en: {
+		subject: "Confirm your new email address",
+		heading: "Confirm your new email address",
+		intro:
+			"We received a request to move your sign-in address to this one. Click the button below to confirm the change.",
+		button: "Confirm this address",
+		copyPrompt: "Or copy and paste this link into your browser:",
+		expiry: "This link expires in one hour.",
+		ignore:
+			"If you did not request this, you can ignore this email. Nothing will change.",
+		footer: "Email Explorer - Email address change",
+		fontStack: "Arial, Helvetica, sans-serif",
+	},
+	de: {
+		subject: "Neue E-Mail-Adresse bestätigen",
+		heading: "Neue E-Mail-Adresse bestätigen",
+		intro:
+			"Es wurde angefragt, Ihre Anmeldeadresse auf diese Adresse zu ändern. Klicken Sie auf die Schaltfläche unten, um die Änderung zu bestätigen.",
+		button: "Diese Adresse bestätigen",
+		copyPrompt:
+			"Oder kopieren Sie diesen Link und fügen Sie ihn in Ihren Browser ein:",
+		expiry: "Dieser Link ist eine Stunde lang gültig.",
+		ignore:
+			"Falls Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren. Es wird nichts geändert.",
+		footer: "Email Explorer - Änderung der E-Mail-Adresse",
+		fontStack: "Arial, Helvetica, sans-serif",
+	},
+};
 
+function buildLinkEmail(
+	lang: MailLocale,
+	s: LinkEmailStrings,
+	link: string,
+): { subject: string; html: string; text: string } {
 	return {
 		subject: s.subject,
 		html: `<!DOCTYPE html>
@@ -107,9 +148,9 @@ export function buildPasswordResetEmail(
 		</div>
 		<div class="content">
 			<p>${s.intro}</p>
-			<a href="${resetLink}" class="button">${s.button}</a>
+			<a href="${link}" class="button">${s.button}</a>
 			<p>${s.copyPrompt}</p>
-			<p><a href="${resetLink}" style="color: #4F46E5; word-break: break-all;">${resetLink}</a></p>
+			<p><a href="${link}" style="color: #4F46E5; word-break: break-all;">${link}</a></p>
 			<p style="color: #666; font-size: 14px;">${s.expiry}</p>
 			<p style="color: #666; font-size: 14px;">${s.ignore}</p>
 		</div>
@@ -123,10 +164,26 @@ export function buildPasswordResetEmail(
 
 ${s.intro}
 
-${resetLink}
+${link}
 
 ${s.expiry}
 
 ${s.ignore}`,
 	};
+}
+
+export function buildPasswordResetEmail(
+	locale: string | undefined,
+	resetLink: string,
+): { subject: string; html: string; text: string } {
+	const lang = resolveMailLocale(locale);
+	return buildLinkEmail(lang, PASSWORD_RESET[lang], resetLink);
+}
+
+export function buildEmailChangeEmail(
+	locale: string | undefined,
+	confirmLink: string,
+): { subject: string; html: string; text: string } {
+	const lang = resolveMailLocale(locale);
+	return buildLinkEmail(lang, EMAIL_CHANGE[lang], confirmLink);
 }

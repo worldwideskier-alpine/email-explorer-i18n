@@ -111,12 +111,21 @@
 								{{ formatDate(user.createdAt) }}
 							</td>
 							<td class="px-4 py-3 text-sm">
-								<button
-									@click="openAccessModal(user)"
-									class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
-								>
-									{{ t("admin.users.manageAccess") }}
-								</button>
+								<div class="flex flex-wrap gap-4">
+									<button
+										@click="openAccessModal(user)"
+										class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+									>
+										{{ t("admin.users.manageAccess") }}
+									</button>
+									<button
+										@click="toggleAdmin(user)"
+										:disabled="adminTogglePending === user.id"
+										class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 disabled:opacity-50"
+									>
+										{{ user.isAdmin ? t("admin.users.revokeAdmin") : t("admin.users.grantAdmin") }}
+									</button>
+								</div>
 							</td>
 						</tr>
 					</tbody>
@@ -229,6 +238,7 @@ import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import api from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
+import { translateApiError } from "@/utils/apiError";
 
 interface User {
 	id: string;
@@ -256,6 +266,7 @@ const registerSuccess = ref("");
 // Users List State
 const users = ref<User[]>([]);
 const usersLoading = ref(false);
+const adminTogglePending = ref<string | null>(null);
 
 // Access Management State
 const selectedUser = ref<User | null>(null);
@@ -298,6 +309,41 @@ async function loadUsers() {
 		console.error("Failed to load users:", error);
 	} finally {
 		usersLoading.value = false;
+	}
+}
+
+/**
+ * A second administrator is what makes losing one account survivable: rights
+ * can only be granted by an administrator, so with one there is no way back
+ * in. The Worker refuses to remove the last one.
+ */
+async function toggleAdmin(user: User) {
+	const grant = !user.isAdmin;
+	if (
+		!window.confirm(
+			t(
+				grant
+					? "admin.users.confirmGrantAdmin"
+					: "admin.users.confirmRevokeAdmin",
+				{ email: user.email },
+			),
+		)
+	) {
+		return;
+	}
+	adminTogglePending.value = user.id;
+	try {
+		await api.adminSetUserAdmin(user.id, grant);
+		await loadUsers();
+	} catch (e: any) {
+		window.alert(
+			translateApiError(
+				e.response?.data?.error,
+				t("admin.users.adminChangeFailed"),
+			),
+		);
+	} finally {
+		adminTogglePending.value = null;
 	}
 }
 

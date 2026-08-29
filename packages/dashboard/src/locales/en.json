@@ -82,7 +82,8 @@
 		"creating": "Creating...",
 		"createMailbox": "Create Mailbox",
 		"fillAllFields": "Please fill in all fields",
-		"mailboxCreated": "Mailbox created successfully!"
+		"mailboxCreated": "Mailbox created successfully!",
+		"account": "Account"
 	},
 	"sidebar": {
 		"toggleMenu": "Toggle menu",
@@ -186,7 +187,14 @@
 		"Mailbox already exists": "Mailbox already exists",
 		"Failed to create mailbox": "Failed to create mailbox",
 		"Too many failed attempts": "Too many failed sign-in attempts. This address is locked for a short while; please try again later.",
-		"Too many requests": "Too many requests. Please try again later."
+		"Too many requests": "Too many requests. Please try again later.",
+		"Current password is incorrect": "Current password is incorrect",
+		"Cannot remove the last administrator": "Cannot remove the last administrator",
+		"Invalid or expired token": "That link is invalid or has expired",
+		"Too many attempts": "Too many attempts. Please try again later.",
+		"Failed to send confirmation email": "Could not send the confirmation email",
+		"Account recovery is not enabled": "Outbound mail is not configured, so this is unavailable",
+		"User not found": "User not found"
 	},
 	"admin": {
 		"title": "Admin Panel",
@@ -214,7 +222,12 @@
 			"columnActions": "Actions",
 			"roleAdmin": "Admin",
 			"roleUser": "User",
-			"manageAccess": "Manage Access"
+			"manageAccess": "Manage Access",
+			"grantAdmin": "Make administrator",
+			"revokeAdmin": "Remove administrator",
+			"confirmGrantAdmin": "Make {email} an administrator?",
+			"confirmRevokeAdmin": "Remove administrator rights from {email}?",
+			"adminChangeFailed": "Could not change the rights."
 		},
 		"accessModal": {
 			"titlePrefix": "Manage Access for {email}",
@@ -297,5 +310,41 @@
 		"toggleSourceCode": "Toggle Source Code",
 		"sourceCodePlaceholder": "HTML source code...",
 		"urlPrompt": "URL"
+	},
+	"account": {
+		"title": "Account",
+		"subtitle": "Manage the credentials you sign in with.",
+		"backToHome": "Back to home",
+		"signInAddress": "Sign-in address",
+		"isAdmin": "Administrator",
+		"currentPassword": "Current password",
+		"saving": "Saving...",
+		"changePassword": {
+			"title": "Change password",
+			"note": "Changing it signs out every other browser you are signed in on.",
+			"newPassword": "New password (8 characters or more)",
+			"confirmPassword": "New password (again)",
+			"submit": "Change password",
+			"done": "Password changed.",
+			"mismatch": "The new passwords do not match.",
+			"failed": "Could not change the password."
+		},
+		"changeEmail": {
+			"title": "Change sign-in address",
+			"note": "A confirmation email goes to the new address; nothing changes until you open the link. Password reset mail is sent to this address, so an address you can read outside this system is the safer choice.",
+			"newEmail": "New email address",
+			"submit": "Send confirmation email",
+			"sent": "A confirmation email was sent to {email}. Open the link in it to complete the change.",
+			"failed": "Could not send the confirmation email."
+		}
+	},
+	"confirmEmailChange": {
+		"title": "Change of email address",
+		"working": "Confirming...",
+		"done": "Your sign-in address has been changed.",
+		"doneNote": "Use the new address the next time you sign in.",
+		"toLogin": "Go to sign in",
+		"missingToken": "That link is not valid.",
+		"failed": "Could not complete the change."
 	}
 }
