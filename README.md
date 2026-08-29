@@ -295,8 +295,7 @@ Comprehensive user guides are available for all features:
   - [Reply & Forward Guide](docs/features/reply-forward.md) - Email responses and threading
 
 For developers:
-- **[ROADMAP.md](ROADMAP.md)** - Project roadmap and planned features
-- **[AGENTS.md](AGENTS.md)** - Technical architecture and development guide
+- **[AGENTS.md](AGENTS.md)** - Architecture, layout and development guide
 
 ## Architecture
 
@@ -381,20 +380,19 @@ pnpm --filter email-explorer test --watch
 
 ## Roadmap & Future Enhancements
 
-Planned features for future releases:
+Not implemented yet, roughly in the order they would be useful:
 
+- [ ] Attaching files when composing — the send API accepts attachments, but
+      the composer has no way to pick one
+- [ ] Drafts saved automatically rather than only on "save draft"
+- [ ] A threaded conversation view — messages already carry their threading
+      headers, the list just doesn't group by them
 - [ ] Email templates for quick responses
 - [ ] Two-factor authentication (2FA)
-- [ ] Email drafts auto-save
-- [ ] Conversation threading view
-- [ ] Emoji picker in composer
-- [ ] Table support in rich text editor
-- [ ] Image uploads and inline images
-- [x] Email signatures (basic — single signature per mailbox)
 - [ ] Keyboard shortcuts
-- [ ] Mobile app (React Native)
+- [ ] Emoji picker and tables in the rich-text editor
+- [ ] Uploading an image into a message body (inserting one by URL works)
 
-See [ROADMAP.md](ROADMAP.md) for detailed planning and progress.
 
 ## Known Limitations
 
