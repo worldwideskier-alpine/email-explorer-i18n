@@ -13,7 +13,7 @@
 		"deploy-dev-worker": "pnpm run --filter email-explorer-dev-worker deploy"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.3.0",
+		"@biomejs/biome": "2.5.10",
 		"wrangler": "^4.127.1"
 	}
 }
