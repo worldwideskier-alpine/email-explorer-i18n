@@ -1,5 +1,3 @@
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
@@ -16,9 +14,19 @@ import { describe, expect, it } from "vitest";
  * Computed colours can't be checked here (jsdom doesn't run Tailwind), so this
  * asserts the source-level invariant instead: every form control a person
  * types into declares an unprefixed text colour.
+ *
+ * The sources come from import.meta.glob rather than node:fs. Everything under
+ * src/ is type-checked by tsconfig.app.json, which extends @vue/tsconfig's DOM
+ * config and so has no Node types; reading files directly only compiled here
+ * because a dependency happened to leak @types/node into scope.
  */
 
-const VIEWS = join(__dirname);
+const views = import.meta.glob("./*.vue", {
+	query: "?raw",
+	import: "default",
+	eager: true,
+}) as Record<string, string>;
+
 const CONTROL = /<(input|select|textarea)\b[^>]*?>/gs;
 const CLASS = /class="([^"]*)"/s;
 const LIGHT_TEXT_COLOUR =
@@ -33,9 +41,7 @@ interface Control {
 function controlsMissingLightColour(): Control[] {
 	const missing: Control[] = [];
 
-	for (const file of readdirSync(VIEWS).filter((f) => f.endsWith(".vue"))) {
-		const source = readFileSync(join(VIEWS, file), "utf8");
-
+	for (const [path, source] of Object.entries(views)) {
 		for (const match of source.matchAll(CONTROL)) {
 			const tag = match[0];
 			const classes = (CLASS.exec(tag)?.[1] ?? "").split(/\s+/);
@@ -46,7 +52,7 @@ function controlsMissingLightColour(): Control[] {
 			if (classes.some((c) => LIGHT_TEXT_COLOUR.test(c))) continue;
 
 			missing.push({
-				file,
+				file: path.replace("./", ""),
 				line: source.slice(0, match.index).split("\n").length,
 				tag: match[1],
 			});
@@ -66,14 +72,11 @@ describe("form controls stay readable in light mode", () => {
 	});
 
 	// Guards the check itself: without it, the assertion above could pass
-	// because the scan finds nothing rather than because the views are correct.
+	// because the scan found nothing rather than because the views are correct.
 	it("actually inspects the views", () => {
-		const files = readdirSync(VIEWS).filter((f) => f.endsWith(".vue"));
-		expect(files).toContain("Admin.vue");
+		expect(Object.keys(views)).toContain("./Admin.vue");
 
-		const controls = readFileSync(join(VIEWS, "Admin.vue"), "utf8").match(
-			CONTROL,
-		);
+		const controls = views["./Admin.vue"].match(CONTROL);
 		expect(controls?.length).toBeGreaterThan(3);
 	});
 });
