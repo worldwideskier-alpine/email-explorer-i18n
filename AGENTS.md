@@ -1,89 +1,91 @@
 # Agents
 
-This document outlines the key aspects of the `email-explorer` project to facilitate understanding and future development.
+Orientation for anyone — human or agent — working in this repository.
 
-## Project Overview
+## What this is
 
-`email-explorer` is a full-stack email client built on Cloudflare Workers. It provides a web-based dashboard for managing emails, including sending, receiving, and organizing them into folders. The backend is a Hono-based API that interacts with Cloudflare's email routing, R2 for storage, and Durable Objects for managing individual mailboxes.
+A multilingual (Japanese / English / German) fork of
+[G4brym/email-explorer](https://github.com/G4brym/email-explorer), a
+self-hosted email client that runs entirely on Cloudflare. It receives mail
+through Cloudflare Email Routing, stores it in Durable Objects and R2, and
+serves a Vue dashboard from the same Worker.
 
-## Core Technologies
+The fork ships by deploying to Cloudflare, not by publishing to npm. Upstream
+owns the `email-explorer` package name, so there is no release automation
+here.
 
-- **Backend:**
-    - **Framework:** Hono - A lightweight, fast web framework for Cloudflare Workers.
-    - **Language:** TypeScript
-    - **API Specification:** OpenAPI (Swagger) - The API is defined in `openapi.json`.
-    - **Database:** Cloudflare D1 (via `workers-qb`) - Used for storing email metadata, folders, and contacts within Durable Objects.
-    - **Storage:** Cloudflare R2 - Used for storing mailbox settings and email attachments.
-    - **Email Sending:** Cloudflare Email Routing - Used for both sending and receiving emails.
-- **Frontend:**
-    - **Framework:** Vue.js 3 - A progressive JavaScript framework for building user interfaces.
-    - **Language:** TypeScript
-    - **Build Tool:** Vite - A fast build tool for modern web development.
-    - **Styling:** Tailwind CSS - A utility-first CSS framework.
-    - **State Management:** Pinia - A modern state management library for Vue.js.
-    - **Routing:** Vue Router - The official router for Vue.js.
-- **Testing:**
-    - **Framework:** Vitest - A fast unit testing framework.
-    - **Integration Tests:** Cloudflare's `vitest-pool-workers` for integration testing against a real Cloudflare environment.
+## Layout
 
-## Project Structure
+A pnpm workspace. There is no source at the repository root.
 
-The project is a monorepo with two main parts: the backend worker and the frontend dashboard.
+```
+packages/worker/       The Worker: Hono + chanfana API, MailboxDO, mail ingestion
+  src/index.ts         Route table, the fetch/email entry points, the auth gate
+  src/durableObject/   MailboxDO -- one instance per mailbox, plus the AUTH singleton
+  src/routes/          Handlers split out of index.ts (auth, push, drafts, ...)
+  src/password.ts      PBKDF2 hashing and verification
+  src/throttle.ts      Rate-limit policy for login and password reset
+  tests/               Vitest on @cloudflare/vitest-pool-workers
+  dev/                 THIS deployment: wrangler.jsonc and EmailExplorer() options
+packages/dashboard/    The Vue 3 SPA, built into the Worker's assets
+  src/locales/         ja / en / de message catalogues
+  src/**/*.test.ts     Vitest on jsdom
+template/              Upstream's "deploy your own" starter
+docs/features/         User-facing guides, linked from the README
+```
 
-- **`/` (Root):**
-    - `wrangler.jsonc`: The configuration file for the Cloudflare Worker. It defines the worker's name, entry point, compatibility flags, and bindings to other Cloudflare services like R2, D1, and Durable Objects.
-    - `package.json`: Defines the project's dependencies and scripts for the backend.
-    - `tsconfig.json`: The TypeScript configuration for the backend.
-    - `src/`: The source code for the Cloudflare Worker.
-        - `index.ts`: The main entry point for the worker. It sets up the Hono router and defines the API endpoints.
-        - `durableObject/`: Contains the implementation of the `MailboxDO` Durable Object.
-            - `index.ts`: The `MailboxDO` class, which manages all data and operations for a single mailbox.
-            - `migrations.ts`: The database schema and migrations for the D1 database used by the Durable Object.
-    - `tests/`: Contains the integration tests for the API endpoints.
-- **`/dashboard`:**
-    - `package.json`: Defines the dependencies and scripts for the frontend dashboard.
-    - `vite.config.ts`: The configuration for the Vite build tool.
-    - `src/`: The source code for the Vue.js application.
-        - `main.ts`: The entry point for the Vue application.
-        - `App.vue`: The root Vue component.
-        - `router/`: The Vue Router configuration.
-        - `stores/`: The Pinia stores for managing application state.
-        - `views/`: The different pages of the application.
-        - `components/`: Reusable Vue components.
-        - `services/`: The API client for communicating with the backend.
+`packages/worker` is the reusable package and carries no deployment-specific
+values. `packages/worker/dev` is this deployment, and does.
 
-## Key Concepts
+## Key concepts
 
-- **Mailbox Durable Object (`MailboxDO`):** This is the core of the backend. Each mailbox is represented by a `MailboxDO` instance, which is responsible for storing and managing all the data for that mailbox, including emails, folders, and contacts. This ensures that all data for a given mailbox is co-located and can be accessed efficiently.
-- **Email Routing:** Cloudflare's Email Routing is used to receive incoming emails and forward them to the worker. The `email` function in `src/index.ts` is the entry point for handling incoming emails.
-- **API:** The backend exposes a RESTful API for the frontend to interact with. The API is defined using OpenAPI in `openapi.json` and implemented using Hono in `src/index.ts`.
-- **Frontend:** The frontend is a single-page application (SPA) built with Vue.js. It uses Pinia for state management and Vue Router for routing. The UI is built with Tailwind CSS.
+- **MailboxDO.** One Durable Object per mailbox, holding that mailbox's
+  emails, folders and contacts in SQLite (through `workers-qb`) so everything
+  for one mailbox is co-located. A separate singleton, addressed by the name
+  `AUTH`, holds users, sessions, mailbox grants, push subscriptions and the
+  rate-limit counters. Which of the two an instance is decides which set of
+  migrations it applies — see the constructor.
+- **Inbound mail.** The `email()` handler files a message by its *envelope*
+  recipient (`event.to`), never by the `To:` header, and rejects anything
+  addressed to a mailbox that does not exist. Trusting the header let anyone
+  create a mailbox by sending mail to one.
+- **The auth gate.** `fetch()` validates the session before Hono routes
+  anything. `PUBLIC_ROUTES` is the exact-match allowlist of what may be
+  reached without one — exact, because a prefix match silently makes every
+  future path starting with a public one public too. Static assets never
+  reach the Worker at all: `run_worker_first` in wrangler.jsonc sends only
+  `/api/*`, `/docs` and `/openapi.json` here.
+- **API schema.** Generated at runtime by chanfana from the route classes.
+  There is no checked-in `openapi.json`, and `/openapi.json` needs a session.
+- **Sending.** Outbound mail goes through Resend, not Email Routing.
 
-## Getting Started
+## Working here
 
-1.  **Install dependencies:**
-    ```bash
-    npm install
-    cd dashboard && npm install
-    ```
-2.  **Run the development server:**
-    ```bash
-    npm run dev
-    ```
-    This will start the Cloudflare Worker in development mode and the Vite development server for the frontend.
-3.  **Deploy the worker:**
-    ```bash
-    npm run deploy
-    ```
-    This will deploy the worker to Cloudflare.
+```bash
+pnpm install
+pnpm lint     # biome; it autofixes, then fails if it had to
+pnpm test     # both suites -- what CI runs
+pnpm build    # dashboard, then worker (includes vue-tsc)
+```
 
-## Next Steps
+To try a change against a real runtime, build first, then run the deployment
+worker locally:
 
-- **Implement Authentication:** The application currently has no authentication. This is a critical next step to secure user data.
-- **Improve UI/UX:** The current UI is functional but could be improved with better styling and user experience.
-- **Add more features:** There are many features that could be added, such as:
-    - Email threading
-    - Rich text editing for composing emails
-    - Support for multiple email accounts
-    - Advanced search capabilities
-    - Keyboard shortcuts
+```bash
+rm -rf packages/worker/dashboard && pnpm build
+cd packages/worker/dev && npx wrangler dev
+```
+
+The `rm -rf` matters: the build copies the dashboard with
+`cp -R ../dashboard/dist/ dashboard/`, which nests into `dashboard/dist/`
+when the directory already exists, leaving the old assets in place.
+
+## Conventions
+
+- Every push to `main` deploys. One workflow does it (`deploy.yml`), and it
+  runs lint, build and both test suites first.
+- Comments explain why, not what. A sentence about the constraint that forced
+  the code beats a restatement of the code.
+- Keep business identifiers out of `packages/worker/src`,
+  `packages/dashboard` and the tests — this repository is public.
+  Deployment-specific values belong in `packages/worker/dev`.

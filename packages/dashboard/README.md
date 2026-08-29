@@ -1,33 +1,38 @@
-# dashboard
+# email-explorer-dashboard
 
-This template should help get you started developing with Vue 3 in Vite.
+The Vue 3 single-page app that Email Explorer serves. It is not deployed on
+its own: `pnpm build` at the repository root builds it, and the worker's build
+step copies `dist/` into `packages/worker/dashboard`, which the Worker then
+serves as static assets.
 
-## Recommended IDE Setup
+## Layout
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-npm install
+```
+src/views/         One component per route (mailbox, email detail, settings, login, ...)
+src/components/    Shared pieces -- the composer, the rich-text editor, dialogs
+src/stores/        Pinia stores; emails.ts holds the list/pagination logic
+src/services/      api.ts, the single axios client (bearer token + session cookie)
+src/utils/         Logic with no UI, unit tested -- e.g. htmlToPlainText.ts
+src/locales/       ja / en / de message catalogues; every string lives here
+public/            PWA manifest, icons and the service worker
 ```
 
-### Compile and Hot-Reload for Development
+## Commands
+
+Run these from the repository root unless you are only touching the dashboard.
 
 ```sh
-npm run dev
+pnpm test-dashboard   # vitest on jsdom
+pnpm build-dashboard  # vue-tsc, then vite build
 ```
 
-### Type-Check, Compile and Minify for Production
+Inside this package, `pnpm dev` starts Vite on its own for quick UI work.
+It has no backend, so anything that calls the API will fail; to exercise the
+real thing, build and run the Worker (see the repository root's AGENTS.md).
 
-```sh
-npm run build
-```
+## Adding a string
+
+Never write user-visible text inline. Add the key to all three files in
+`src/locales/` and use `t("...")`. The build does not check for missing keys,
+so a key added to only `ja.json` will silently fall back to the key name for
+English and German readers.

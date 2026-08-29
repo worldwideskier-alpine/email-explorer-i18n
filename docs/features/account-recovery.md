@@ -86,7 +86,7 @@ export default EmailExplorer({
 
 2. **Email Sent**
    - Reset link with token is sent to user's email
-   - Link is valid for 24 hours
+   - Link is valid for 1 hour
    - User receives email from configured `fromEmail` address
 
 3. **User Resets Password**
@@ -102,14 +102,19 @@ export default EmailExplorer({
 
 **Token Generation:**
 - Cryptographically secure random tokens
-- Stored in R2 with 24-hour expiration
+- Stored in R2 with 1-hour expiration
 - One-time use only
 
 **Security Measures:**
 - Tokens are single-use
-- Tokens expire after 24 hours
-- Password hashed with Web Crypto API (SHA-256)
+- Tokens expire after 1 hour
+- Password hashed with PBKDF2-SHA256 (100,000 iterations, per-user salt)
 - HTTPS required for all communications
+- The response is identical whether or not the address has an account, so this
+  endpoint cannot be used to find out which addresses are worth attacking. A
+  send that fails is logged rather than reported back, for the same reason.
+- Requests are rate limited per address and per IP, so the rate at which they
+  are accepted does not answer that question either
 
 **Email Format:**
 - Plain text and HTML versions
@@ -135,7 +140,7 @@ export default EmailExplorer({
 4. **Check Your Email**
    - Look for email from `noreply@yourdomain.com`
    - Check spam folder if not in inbox
-   - Link is valid for 24 hours
+   - Link is valid for 1 hour
 
 5. **Reset Your Password**
    - Click the reset link in the email
@@ -192,7 +197,7 @@ export default EmailExplorer({
 ### Token Security
 
 - **Single Use:** Each token can only be used once
-- **Time Limited:** Tokens expire after 24 hours
+- **Time Limited:** Tokens expire after 1 hour
 - **Cryptographically Secure:** Generated with Web Crypto API
 - **Stored Securely:** Tokens stored in R2 with encryption
 
@@ -220,7 +225,7 @@ export default EmailExplorer({
 **Problem:** Reset link doesn't work
 
 **Solutions:**
-1. Token expires after 24 hours - request a new one
+1. Token expires after 1 hour - request a new one
 2. Each token can only be used once
 3. Check that you're using the correct link
 4. Try requesting a new reset link
@@ -242,7 +247,7 @@ export default EmailExplorer({
 
 **Solutions:**
 1. Password must be at least 8 characters
-2. Ensure token hasn't expired (24 hours)
+2. Ensure token hasn't expired (1 hour)
 3. Try requesting a new reset link
 4. Contact administrator if issue persists
 
