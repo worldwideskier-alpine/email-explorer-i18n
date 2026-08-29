@@ -12,11 +12,19 @@ updates:
       - "/packages/worker/dev"
     schedule:
       interval: "weekly"
+    # Only minor and patch updates are grouped. A major that isn't in any
+    # group arrives as its own pull request instead, which is the point: a
+    # merge to main deploys straight to production, and a breaking bump of
+    # postal-mime or zod is not something to wave through alongside a routine
+    # patch. Majors are deliberately not ignored -- upstream is active, and a
+    # security fix sometimes lands only in a new major.
     groups:
       prod-deps:
         dependency-type: "production"
+        update-types: ["minor", "patch"]
       dev-deps:
         dependency-type: "development"
+        update-types: ["minor", "patch"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
