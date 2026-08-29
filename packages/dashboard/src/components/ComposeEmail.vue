@@ -108,6 +108,10 @@ import api from "@/services/api";
 import { useEmailStore } from "@/stores/emails";
 import { useMailboxStore } from "@/stores/mailboxes";
 import { useUIStore } from "@/stores/ui";
+import {
+	htmlToPlainText,
+	plainTextToSimpleHtml,
+} from "@/utils/htmlToPlainText";
 import RichTextEditor from "./RichTextEditor.vue";
 
 const uiStore = useUIStore();
@@ -124,6 +128,10 @@ const subject = ref("");
 const body = ref("");
 const plainBody = ref("");
 const isPlainText = ref(false);
+// What the HTML body was when plain-text mode was switched on, and the text
+// we produced from it, so an untouched round trip can be undone exactly.
+const htmlBeforePlainText = ref<string | null>(null);
+const generatedPlainText = ref<string | null>(null);
 const draftId = ref<string | null>(null);
 const error = ref<string | null>(null);
 const isLoading = ref(false);
@@ -159,6 +167,8 @@ const closeModal = () => {
 	body.value = "";
 	plainBody.value = "";
 	isPlainText.value = false;
+	htmlBeforePlainText.value = null;
+	generatedPlainText.value = null;
 	draftId.value = null;
 	uiStore.closeComposeModal();
 };
@@ -231,45 +241,32 @@ ${original.body}
 	}
 });
 
-// Helper to strip HTML tags
-const stripHtml = (html: string) => {
-	const div = document.createElement("div");
-	div.innerHTML = html;
-	return div.textContent || div.innerText || "";
-};
-
-// Helper to convert HTML to plain text with better formatting
-const htmlToPlainText = (html: string): string => {
-	const div = document.createElement("div");
-	div.innerHTML = html;
-
-	// Replace <br> and <p> tags with newlines
-	let text = html
-		.replace(/<br\s*\/?>/gi, "\n")
-		.replace(/<\/p>/gi, "\n\n")
-		.replace(/<p[^>]*>/gi, "")
-		.replace(/<div[^>]*>/gi, "")
-		.replace(/<\/div>/gi, "\n");
-
-	div.innerHTML = text;
-	return (div.textContent || div.innerText || "").trim();
-};
-
-// Helper to convert plain text to simple HTML (escaped, newlines as <br>)
-const plainTextToSimpleHtml = (text: string): string => {
-	const escapeHtml = (s: string) =>
-		s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-	return escapeHtml(text).replace(/\n/g, "<br>");
-};
-
-// Keep the HTML and plain-text bodies roughly in sync when the user
-// switches modes, so content isn't lost when toggling back and forth.
 watch(isPlainText, (usePlainText) => {
 	if (usePlainText) {
-		plainBody.value = htmlToPlainText(body.value);
+		htmlBeforePlainText.value = body.value;
+		const text = htmlToPlainText(body.value);
+		// The conversion trims leading blank lines, which is right for the
+		// text/plain part of a finished message but wrong here: on a reply the
+		// quote would then start on line one, with nowhere to write above it.
+		plainBody.value = text.startsWith(">") ? `\n\n${text}` : text;
+		generatedPlainText.value = plainBody.value;
+		return;
+	}
+
+	// Going back the other way is lossy: formatting, the quote's blockquote
+	// and the signature block are all gone once the body is plain text. If
+	// the text is still exactly what we generated, the user only looked at
+	// it, so hand back the original HTML rather than a flattened copy.
+	if (
+		htmlBeforePlainText.value !== null &&
+		plainBody.value === generatedPlainText.value
+	) {
+		body.value = htmlBeforePlainText.value;
 	} else {
 		body.value = plainTextToSimpleHtml(plainBody.value);
 	}
+	htmlBeforePlainText.value = null;
+	generatedPlainText.value = null;
 });
 
 const saveDraft = async () => {
