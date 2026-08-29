@@ -705,6 +705,27 @@ export class MailboxDO extends DurableObject<Env> {
 		);
 	}
 
+	/**
+	 * A folder can be given either way round -- "inbox" is the row's id and
+	 * "Inbox" its display name -- so it has to be looked up rather than compared
+	 * to folder_id directly. Returns undefined when no such folder exists.
+	 *
+	 * This runs as its own query instead of being handed to where() as a
+	 * subquery: workers-qb only accepts an async SelectBuilder as a parameter,
+	 * and a Durable Object's builder is the synchronous one, so the subquery
+	 * form stopped type-checking at workers-qb 1.15. Splitting it costs nothing
+	 * here -- it is a lookup on a five-row table in the same SQLite instance.
+	 */
+	#resolveFolderId(folder: string): string | undefined {
+		const resolved = this.#qb
+			.select<{ id: string }>("folders")
+			.fields(["id"])
+			.where("name = ? OR id = ?", [folder, folder])
+			.limit(1)
+			.execute();
+		return resolved.results?.[0]?.id;
+	}
+
 	async getEmails(options: GetEmailsOptions = {}) {
 		const {
 			folder,
@@ -735,14 +756,9 @@ export class MailboxDO extends DurableObject<Env> {
 				"thread_id",
 			]);
 
-		if (folder) {
-			const folderIdSubquery = this.#qb
-				.select("folders")
-				.fields(["id"])
-				.where("name = ? OR id = ?", [folder, folder])
-				.limit(1);
-			query = query.where("folder_id = ?", folderIdSubquery);
-		}
+		const folderId = folder ? this.#resolveFolderId(folder) : undefined;
+		if (folder && !folderId) return [];
+		if (folderId) query = query.where("folder_id = ?", folderId);
 
 		const offset = (page - 1) * limit;
 		query = query
@@ -1099,14 +1115,11 @@ export class MailboxDO extends DurableObject<Env> {
 				"thread_id",
 			]);
 
-		if (folder) {
-			const folderIdSubquery = this.#qb
-				.select("folders")
-				.fields(["id"])
-				.where("name = ? OR id = ?", [folder, folder])
-				.limit(1);
-			qb = qb.where("folder_id = ?", folderIdSubquery);
-		}
+		const folderId = folder ? this.#resolveFolderId(folder) : undefined;
+		// An unknown folder matches nothing. The subquery form this replaced
+		// reached the same place by comparing folder_id against NULL.
+		if (folder && !folderId) return [];
+		if (folderId) qb = qb.where("folder_id = ?", folderId);
 
 		if (from) {
 			qb = qb.where("sender LIKE ?", `%${from}%`);
