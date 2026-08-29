@@ -41,7 +41,7 @@
 		"@vue/tsconfig": "^0.7.0",
 		"autoprefixer": "^10.4.21",
 		"jsdom": "^30.0.1",
-		"npm-run-all2": "^8.0.4",
+		"npm-run-all2": "^9.0.3",
 		"postcss": "^8.5.23",
 		"tailwindcss": "^4.1.13",
 		"typescript": "~5.8.0",
