@@ -346,27 +346,36 @@ Email Explorer is built with modern web technologies:
 
 ## Testing
 
-Email Explorer includes comprehensive integration tests:
+Two suites, both run by CI before a deploy:
+
+- **Worker** — Vitest on `@cloudflare/vitest-pool-workers`, so tests run in
+  the same runtime as production, against real Durable Object and R2 bindings.
+- **Dashboard** — Vitest on jsdom, for logic that needs a DOM but no server
+  (e.g. the HTML-to-plain-text conversion behind the composer's plain-text
+  mode and the `text/plain` part of every outgoing message).
 
 ```bash
-# Run all tests
-pnpm --filter email-explorer test
+# Both suites -- what CI runs
+pnpm test
 
-# Run specific test suite
+# One suite at a time
+pnpm test-worker
+pnpm test-dashboard
+
+# A single worker test file, or watch mode while developing
 pnpm --filter email-explorer test auth
-pnpm --filter email-explorer test endpoints
-
-# Watch mode for development
 pnpm --filter email-explorer test --watch
 ```
 
 **Test Coverage:**
 - ✅ Authentication flows (registration, login, sessions)
+- ✅ Password hashing, sign-in rate limiting, account-enumeration defences
 - ✅ Admin operations (user management, access control)
 - ✅ Email operations (send, receive, folders)
 - ✅ Search and filtering
 - ✅ Contacts and attachments
 - ✅ Security validations
+- ✅ HTML-to-plain-text conversion (quoting, stylesheet stripping, tables)
 
 ## Roadmap & Future Enhancements
 
