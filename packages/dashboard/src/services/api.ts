@@ -24,11 +24,27 @@ apiClient.interceptors.request.use(
 	(error) => Promise.reject(error),
 );
 
-// Response interceptor to handle 401
+/**
+ * Endpoints where a 401 says something about the request rather than about
+ * the session: a token in the body that has expired, or credentials being
+ * checked. Signing the user out over one of those would throw away the very
+ * screen that is supposed to show them what went wrong.
+ */
+const OWN_401_HANDLING = [
+	"/api/v1/auth/login",
+	"/api/v1/auth/reset-password",
+	"/api/v1/auth/confirm-email-change",
+];
+
+// Response interceptor: a 401 anywhere else means the session is gone.
 apiClient.interceptors.response.use(
 	(response) => response,
 	async (error) => {
-		if (error.response?.status === 401) {
+		const url: string = error.config?.url ?? "";
+		const handledByCaller = OWN_401_HANDLING.some((path) =>
+			url.startsWith(path),
+		);
+		if (error.response?.status === 401 && !handledByCaller) {
 			// Clear auth and redirect to login
 			localStorage.removeItem("session");
 			if (window.location.pathname !== "/login") {
@@ -56,6 +72,19 @@ export default {
 		apiClient.post("/api/v1/auth/forgot-password", { email, locale }),
 	resetPassword: (token: string, newPassword: string) =>
 		apiClient.post("/api/v1/auth/reset-password", { token, newPassword }),
+	changePassword: (currentPassword: string, newPassword: string) =>
+		apiClient.post("/api/v1/auth/change-password", {
+			currentPassword,
+			newPassword,
+		}),
+	changeEmail: (currentPassword: string, newEmail: string, locale: string) =>
+		apiClient.post("/api/v1/auth/change-email", {
+			currentPassword,
+			newEmail,
+			locale,
+		}),
+	confirmEmailChange: (token: string) =>
+		apiClient.post("/api/v1/auth/confirm-email-change", { token }),
 
 	// Set/clear auth token manually
 	setAuthToken: (token: string) => {
@@ -164,6 +193,8 @@ export default {
 	adminRegisterUser: (email: string, password: string) =>
 		apiClient.post("/api/v1/auth/admin/register", { email, password }),
 	adminListUsers: () => apiClient.get("/api/v1/auth/admin/users"),
+	adminSetUserAdmin: (userId: string, isAdmin: boolean) =>
+		apiClient.put(`/api/v1/auth/admin/users/${userId}`, { isAdmin }),
 	adminGrantAccess: (userId: string, mailboxId: string, role: string) =>
 		apiClient.post("/api/v1/auth/admin/grant-access", {
 			userId,

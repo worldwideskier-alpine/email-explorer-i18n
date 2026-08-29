@@ -82,7 +82,8 @@
 		"creating": "作成中...",
 		"createMailbox": "メールボックスを作成",
 		"fillAllFields": "すべての項目を入力してください",
-		"mailboxCreated": "メールボックスを作成しました！"
+		"mailboxCreated": "メールボックスを作成しました！",
+		"account": "アカウント"
 	},
 	"sidebar": {
 		"toggleMenu": "メニューを開閉",
@@ -186,7 +187,14 @@
 		"Mailbox already exists": "このメールボックスは既に存在します",
 		"Failed to create mailbox": "メールボックスの作成に失敗しました",
 		"Too many failed attempts": "ログインの失敗が続いたため、一時的にロックされています。しばらく時間をおいてからお試しください。",
-		"Too many requests": "リクエストが多すぎます。しばらく時間をおいてからお試しください。"
+		"Too many requests": "リクエストが多すぎます。しばらく時間をおいてからお試しください。",
+		"Current password is incorrect": "現在のパスワードが正しくありません",
+		"Cannot remove the last administrator": "管理者が1人だけのため、解除できません",
+		"Invalid or expired token": "リンクが無効か、有効期限が切れています",
+		"Too many attempts": "試行回数が多すぎます。しばらく時間をおいてからお試しください。",
+		"Failed to send confirmation email": "確認メールを送信できませんでした",
+		"Account recovery is not enabled": "メール送信が設定されていないため、この操作は行えません",
+		"User not found": "ユーザーが見つかりません"
 	},
 	"admin": {
 		"title": "管理パネル",
@@ -214,7 +222,12 @@
 			"columnActions": "操作",
 			"roleAdmin": "管理者",
 			"roleUser": "ユーザー",
-			"manageAccess": "アクセスを管理"
+			"manageAccess": "アクセスを管理",
+			"grantAdmin": "管理者にする",
+			"revokeAdmin": "管理者を解除",
+			"confirmGrantAdmin": "{email} を管理者にしますか。",
+			"confirmRevokeAdmin": "{email} の管理者権限を解除しますか。",
+			"adminChangeFailed": "権限を変更できませんでした。"
 		},
 		"accessModal": {
 			"titlePrefix": "{email} のアクセスを管理",
@@ -297,5 +310,41 @@
 		"toggleSourceCode": "ソースコード表示切替",
 		"sourceCodePlaceholder": "HTMLソースコード...",
 		"urlPrompt": "URL"
+	},
+	"account": {
+		"title": "アカウント設定",
+		"subtitle": "ログイン用の資格情報を管理します。",
+		"backToHome": "ホームに戻る",
+		"signInAddress": "ログイン用メールアドレス",
+		"isAdmin": "管理者",
+		"currentPassword": "現在のパスワード",
+		"saving": "保存中...",
+		"changePassword": {
+			"title": "パスワードの変更",
+			"note": "変更すると、このブラウザ以外のログイン状態はすべて解除されます。",
+			"newPassword": "新しいパスワード（8文字以上）",
+			"confirmPassword": "新しいパスワード（確認）",
+			"submit": "パスワードを変更する",
+			"done": "パスワードを変更しました。",
+			"mismatch": "新しいパスワードが一致しません。",
+			"failed": "パスワードを変更できませんでした。"
+		},
+		"changeEmail": {
+			"title": "ログイン用メールアドレスの変更",
+			"note": "新しいアドレス宛に確認メールを送ります。リンクを開くまで変更は行われません。パスワードを忘れた際の再設定メールはこのアドレスに届くため、このシステム外で受信できるアドレスを推奨します。",
+			"newEmail": "新しいメールアドレス",
+			"submit": "確認メールを送る",
+			"sent": "{email} 宛に確認メールを送りました。メール内のリンクを開くと変更が確定します。",
+			"failed": "確認メールを送れませんでした。"
+		}
+	},
+	"confirmEmailChange": {
+		"title": "メールアドレスの変更",
+		"working": "確認しています...",
+		"done": "ログイン用メールアドレスを変更しました。",
+		"doneNote": "次回からは新しいアドレスでログインしてください。",
+		"toLogin": "ログイン画面へ",
+		"missingToken": "リンクが正しくありません。",
+		"failed": "変更を確定できませんでした。"
 	}
 }

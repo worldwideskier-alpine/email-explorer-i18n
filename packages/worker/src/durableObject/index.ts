@@ -441,6 +441,126 @@ export class MailboxDO extends DurableObject<Env> {
 			.execute();
 	}
 
+	/**
+	 * Auth operation: change a password, having proved the current one.
+	 *
+	 * Every other session belonging to the user is dropped. If the reason for
+	 * changing the password is that somebody else knows it, leaving the
+	 * session they are already holding alive would defeat the change.
+	 */
+	async changePassword(
+		userId: string,
+		currentPassword: string,
+		newPassword: string,
+		keepSessionId: string,
+	): Promise<boolean> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const row = this.#qb
+			.select("users")
+			.fields(["password_hash"])
+			.where("id = ?", userId)
+			.one().results;
+		if (!row) return false;
+
+		const { valid } = await verifyPassword(
+			currentPassword,
+			String(row.password_hash),
+		);
+		if (!valid) return false;
+
+		this.#qb
+			.update({
+				tableName: "users",
+				data: {
+					password_hash: await hashPassword(newPassword),
+					updated_at: Date.now(),
+				},
+				where: { conditions: "id = ?", params: [userId] },
+			})
+			.execute();
+
+		this.ctx.storage.sql.exec(
+			"DELETE FROM sessions WHERE user_id = ? AND id != ?",
+			userId,
+			keepSessionId,
+		);
+		return true;
+	}
+
+	/** Auth operation: check a user's password without issuing a session. */
+	async verifyUserPassword(userId: string, password: string): Promise<boolean> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const row = this.#qb
+			.select("users")
+			.fields(["password_hash"])
+			.where("id = ?", userId)
+			.one().results;
+		if (!row) return false;
+		return (await verifyPassword(password, String(row.password_hash))).valid;
+	}
+
+	/**
+	 * Auth operation: move an account to a different address.
+	 *
+	 * Returns false when the address already belongs to another account --
+	 * `email` is UNIQUE, and the caller needs to say so rather than fail.
+	 */
+	async updateUserEmail(userId: string, newEmail: string): Promise<boolean> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		try {
+			this.ctx.storage.sql.exec(
+				"UPDATE users SET email = ?, updated_at = ? WHERE id = ?",
+				newEmail,
+				Date.now(),
+				userId,
+			);
+		} catch (e) {
+			if (String(e).includes("UNIQUE")) return false;
+			throw e;
+		}
+		return true;
+	}
+
+	/**
+	 * Auth operation: grant or withdraw administrator rights.
+	 *
+	 * Refuses to remove the last administrator. Without that check a single
+	 * mis-click leaves nobody able to administer the deployment, and there is
+	 * no way back in: rights can only be granted by an administrator.
+	 */
+	async setUserAdmin(
+		userId: string,
+		isAdmin: boolean,
+	): Promise<"ok" | "not-found" | "last-admin"> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const user = this.#qb
+			.select("users")
+			.fields(["is_admin"])
+			.where("id = ?", userId)
+			.one().results;
+		if (!user) return "not-found";
+
+		if (!isAdmin && user.is_admin === 1) {
+			const admins = this.ctx.storage.sql
+				.exec("SELECT COUNT(*) AS count FROM users WHERE is_admin = 1")
+				.toArray();
+			if (Number(admins[0]?.count ?? 0) <= 1) return "last-admin";
+		}
+
+		this.#qb
+			.update({
+				tableName: "users",
+				data: { is_admin: isAdmin ? 1 : 0, updated_at: Date.now() },
+				where: { conditions: "id = ?", params: [userId] },
+			})
+			.execute();
+		return "ok";
+	}
+
 	// Auth operation: grant mailbox access
 	async grantMailboxAccess(
 		userId: string,

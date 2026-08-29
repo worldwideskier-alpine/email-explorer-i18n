@@ -20,6 +20,12 @@
           {{ t("home.newMailbox") }}
         </button>
         <router-link
+          to="/account"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors"
+        >
+          {{ t("home.account") }}
+        </router-link>
+        <router-link
           v-if="authStore.isAdmin"
           to="/admin"
           class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
