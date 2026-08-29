@@ -36,7 +36,7 @@
 							v-model="newUser.email"
 							type="email"
 							required
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 							placeholder="user@example.com"
 						/>
 					</div>
@@ -50,7 +50,7 @@
 							type="password"
 							required
 							minlength="8"
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 							:placeholder="t('admin.registerUser.passwordPlaceholder')"
 						/>
 					</div>
@@ -176,7 +176,7 @@
 										v-model="accessForm.mailboxId"
 										type="text"
 										required
-										class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+										class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 										placeholder="user@example.com"
 									/>
 								</div>
@@ -187,7 +187,7 @@
 									<select
 										v-model="accessForm.role"
 										required
-										class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+										class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 									>
 										<option value="owner">{{ t("admin.accessModal.roleOwner") }}</option>
 										<option value="admin">{{ t("admin.accessModal.roleAdmin") }}</option>
