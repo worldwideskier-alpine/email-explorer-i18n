@@ -182,12 +182,18 @@ The first registered user becomes an administrator with additional privileges:
 
 ### What We Do to Protect Your Account
 
-1. **Password Hashing**: Passwords are never stored in plain text
-2. **Secure Sessions**: Session tokens use cryptographic randomness
-3. **HTTPS Only**: All communications are encrypted
-4. **Cookie Security**: HttpOnly, Secure, and SameSite flags enabled
-5. **Session Expiry**: Automatic logout after 30 days
-6. **No Password Exposure**: Passwords never appear in API responses
+1. **Password Hashing**: Passwords are never stored in plain text. They are
+   hashed with PBKDF2-SHA256 at 100,000 iterations, with a salt unique to
+   each account, so two people who happen to pick the same password do not
+   end up with the same hash.
+2. **Rate Limiting**: Repeated failed sign-ins lock an address for a while.
+   Attempts are counted per address and per IP, so a password cannot be
+   guessed at speed from one machine or from many.
+3. **Secure Sessions**: Session tokens use cryptographic randomness
+4. **HTTPS Only**: All communications are encrypted
+5. **Cookie Security**: HttpOnly, Secure, and SameSite flags enabled
+6. **Session Expiry**: Automatic logout after 30 days
+7. **No Password Exposure**: Passwords never appear in API responses
 
 ### What You Should Do
 

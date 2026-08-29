@@ -1,11 +1,15 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
+    # One entry per package.json in the workspace. A path that is not a
+    # directory holding a manifest is skipped without any error, which is how
+    # "/pnpm-lock.yaml" and a "/packages/github-action" that does not exist
+    # went unnoticed -- and why packages/dashboard was never watched.
     directories:
-      - "/pnpm-lock.yaml"
+      - "/"
+      - "/packages/dashboard"
       - "/packages/worker"
       - "/packages/worker/dev"
-      - "/packages/github-action"
     schedule:
       interval: "weekly"
     groups:

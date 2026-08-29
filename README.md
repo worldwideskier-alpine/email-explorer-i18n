@@ -38,8 +38,10 @@ GitHub Actions の消費分数を抑えるため、`main` への push で走る�
 | ワークフロー | 実行タイミング | 内容 |
 |---|---|---|
 | **Deploy to Cloudflare** | `main` への push（`docs/**`・`README.md`・`LICENSE`・`.editorconfig` のみの変更を除く）、Pull Request、手動 | lint → build → テスト → デプロイ |
-| **Build** | Pull Request のみ | lint → build → テスト → npmパッケージの生成 |
-| **Release** | 手動のみ | 上流のnpmリリース自動化。本フォークでは使用していない |
+| **Build** | Pull Request のみ | lint → build → テスト |
+| **Cloudflare Email Routing status** | 手動のみ | Email Routing の設定を読み出すだけ（変更は行わない） |
+
+上流のnpmリリース自動化（Release / Changeset Check）は削除しました。本フォークはCloudflareへのデプロイで配布しており、`email-explorer` のnpmパッケージ名は上流のものだからです。
 
 `main` へ push すれば、そのままCloudflareへデプロイされます。ドキュメントだけの変更ではデプロイは走りません（デプロイしたい場合は Actions から Deploy to Cloudflare を手動実行してください）。
 

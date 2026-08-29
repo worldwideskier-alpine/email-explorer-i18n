@@ -34,12 +34,5 @@ jobs:
         run: pnpm lint
       - name: Build everything
         run: pnpm build
-      - name: Run Worker Tests
-        run: cd packages/worker && pnpm test
-      - name: Package artifact
-        run: pnpm package
-      - name: Archive package
-        uses: actions/upload-artifact@v7
-        with:
-          name: email-explorer-npm-package
-          path: packages/worker/email-explorer-*
+      - name: Run tests
+        run: pnpm test
