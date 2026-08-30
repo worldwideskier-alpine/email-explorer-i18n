@@ -306,7 +306,7 @@ const signatureHtml = ref("");
 const pushSupported = isPushSupported();
 const pushEnabled = ref(false);
 const pushLoading = ref(false);
-const pushError = ref("");
+const pushError = useLocalizedMessage();
 
 onMounted(async () => {
 	if (!pushSupported) return;
@@ -326,7 +326,8 @@ const togglePush = async () => {
 			pushEnabled.value = true;
 		}
 	} catch (e: any) {
-		pushError.value = e.message || t("settings.pushError");
+		const fromBrowser = e.message;
+		pushError.value = () => fromBrowser || t("settings.pushError");
 	} finally {
 		pushLoading.value = false;
 	}
@@ -645,7 +646,7 @@ const lockLoading = ref(false);
 const purgeEmails = ref(false);
 const deleteConfirmInput = ref("");
 const deleteLoading = ref(false);
-const deleteError = ref("");
+const deleteError = useLocalizedMessage();
 
 watch(
 	mailbox,
@@ -695,8 +696,8 @@ const deleteMailbox = async () => {
 		);
 		router.push({ name: "Home" });
 	} catch (e: any) {
-		deleteError.value =
-			e.response?.data?.error || t("settings.deleteMailboxFailed");
+		const fromApi = e.response?.data?.error;
+		deleteError.value = () => fromApi || t("settings.deleteMailboxFailed");
 	} finally {
 		deleteLoading.value = false;
 	}

@@ -41,11 +41,27 @@ const sources: Record<string, string> = {
 };
 
 /**
- * `x.value = t(...)` and `x.value = translateApiError(...)`, across a line
- * break, but not `x.value = () => t(...)`, which is the shape being asked for.
+ * Any `x.value = ...` whose right-hand side calls a translator.
+ *
+ * Deliberately not anchored to the call sitting right after the `=`: the
+ * first version of this test was, and it missed
+ * `pushError.value = e.message || t("settings.pushError")` -- a message that
+ * falls back to a translation is frozen exactly like one that is nothing but
+ * a translation. The whole assignment is read, up to its semicolon.
+ *
+ * `=>` anywhere in the assignment exempts it: that is a producer, which is
+ * the shape being asked for.
  */
-const STORED_TRANSLATION =
-	/\.value\s*=\s*(?:t|translateApiError|i18n\.global\.t)\s*\(/g;
+const ASSIGNMENT = /\.value\s*=(?![=>])\s*[^;]*;/g;
+const TRANSLATOR = /\b(?:t|translateApiError|i18n\.global\.t)\s*\(/;
+
+/**
+ * Comments are stripped before scanning, so a doc comment that shows the
+ * shape it is warning about does not report itself.
+ */
+function withoutComments(source: string): string {
+	return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+}
 
 describe("stored messages", () => {
 	it("has sources to check", () => {
@@ -56,11 +72,14 @@ describe("stored messages", () => {
 	it("never writes a translated string into a ref", () => {
 		const offenders: string[] = [];
 
-		for (const [path, source] of Object.entries(sources)) {
-			for (const match of source.matchAll(STORED_TRANSLATION)) {
-				const upTo = source.slice(0, match.index ?? 0);
-				const line = upTo.split("\n").length;
-				offenders.push(`${path}:${line} ${match[0]}`);
+		for (const [path, raw] of Object.entries(sources)) {
+			const source = withoutComments(raw);
+			for (const match of source.matchAll(ASSIGNMENT)) {
+				const assignment = match[0];
+				if (assignment.includes("=>")) continue;
+				if (!TRANSLATOR.test(assignment)) continue;
+				const line = source.slice(0, match.index ?? 0).split("\n").length;
+				offenders.push(`${path}:${line} ${assignment.replace(/\s+/g, " ")}`);
 			}
 		}
 
