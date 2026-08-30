@@ -100,13 +100,15 @@ describe("the language switcher is reachable from every page", () => {
 		expect(flagged.sort()).toEqual(viewsWithSwitcher);
 	});
 
-	it("keeps a single implementation of the select", () => {
-		const withSelect = Object.entries({ ...views, ...components })
-			.filter(([, source]) => source.includes('<option value="ja">'))
+	it("keeps a single implementation of the picker", () => {
+		// The options are built from the registry now, so the marker is the
+		// component that reads it rather than a hard-coded <option>.
+		const builders = Object.entries({ ...views, ...components })
+			.filter(([, source]) => source.includes("localesByRegion"))
 			.map(([path]) => basename(path))
 			.sort();
 
-		expect(withSelect).toEqual(["LanguageSwitcher.vue"]);
+		expect(builders).toEqual(["LanguageSwitcher.vue"]);
 	});
 
 	it("does not float into the corner Toast occupies", () => {

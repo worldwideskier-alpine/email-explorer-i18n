@@ -61,7 +61,13 @@
 		"searchPlaceholder": "Search emails...",
 		"mailboxes": "Mailboxes",
 		"settings": "Settings",
-		"language": "Language"
+		"language": "Language",
+		"regions": {
+			"eastAsia": "East Asia",
+			"europe": "Europe",
+			"southAsia": "South Asia",
+			"southeastAsia": "Southeast Asia"
+		}
 	},
 	"home": {
 		"pageTitle": "Mailboxes",
