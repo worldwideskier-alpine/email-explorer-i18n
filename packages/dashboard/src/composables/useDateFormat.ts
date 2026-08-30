@@ -63,24 +63,23 @@ export function useDateFormat() {
 	const { locale } = useI18n();
 
 	/**
-	 * For a list, where the column is narrow and the year is usually now:
-	 * today shows the time, anything older shows the date. That is what mail
-	 * clients do, and it is what makes a column of dates scannable.
+	 * For a list: the date and the time, both, in their shortest local forms.
+	 *
+	 * This first showed the time for today and only the date for anything
+	 * older, which is the convention most mail clients follow. That was a
+	 * mistake here: the column it replaced carried a full timestamp, so the
+	 * convention quietly took away the time of every message older than today
+	 * and made it something you had to open a message to see. A list is where
+	 * you compare messages, and "which of these two arrived first" is a
+	 * question the list should answer.
 	 */
 	const formatListDate = (value: string | number | null | undefined) => {
 		const date = parse(value);
 		if (!date) return String(value ?? "");
-
-		const now = new Date();
-		const sameDay =
-			date.getFullYear() === now.getFullYear() &&
-			date.getMonth() === now.getMonth() &&
-			date.getDate() === now.getDate();
-
-		return formatter(
-			locale.value,
-			sameDay ? { timeStyle: "short" } : { dateStyle: "short" },
-		).format(date);
+		return formatter(locale.value, {
+			dateStyle: "short",
+			timeStyle: "short",
+		}).format(date);
 	};
 
 	/** For a single message, where there is room to be unambiguous. */
