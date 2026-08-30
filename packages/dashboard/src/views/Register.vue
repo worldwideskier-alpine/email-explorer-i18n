@@ -90,6 +90,7 @@ import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useAppSettings } from "@/composables/useAppSettings";
+import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
@@ -100,7 +101,7 @@ const { isRegistrationEnabled } = useAppSettings();
 const email = ref("");
 const password = ref("");
 const confirmPassword = ref("");
-const successMessage = ref("");
+const successMessage = useLocalizedMessage();
 
 async function handleRegister() {
 	if (password.value !== confirmPassword.value) {
@@ -109,7 +110,7 @@ async function handleRegister() {
 
 	try {
 		await authStore.register(email.value, password.value);
-		successMessage.value = t("register.accountCreated");
+		successMessage.value = () => t("register.accountCreated");
 		setTimeout(() => {
 			router.push("/");
 		}, 1000);

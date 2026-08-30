@@ -140,6 +140,7 @@ import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
+import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import { useToast } from "@/composables/useToast";
 import api from "@/services/api";
 import { useEmailStore } from "@/stores/emails";
@@ -176,7 +177,7 @@ const isPlainText = ref(false);
 const htmlBeforePlainText = ref<string | null>(null);
 const generatedPlainText = ref<string | null>(null);
 const draftId = ref<string | null>(null);
-const error = ref<string | null>(null);
+const error = useLocalizedMessage();
 const isLoading = ref(false);
 const isSavingDraft = ref(false);
 
@@ -331,7 +332,7 @@ watch(isPlainText, (usePlainText) => {
 const saveDraft = async () => {
 	error.value = null;
 	if (!currentMailbox.value) {
-		error.value = t("compose.noMailboxSelected");
+		error.value = () => t("compose.noMailboxSelected");
 		return;
 	}
 	isSavingDraft.value = true;
@@ -357,10 +358,10 @@ const saveDraft = async () => {
 
 		showSuccessToast(t("compose.draftSaved"));
 	} catch (e: any) {
-		const errorMessage =
-			e.response?.data?.error || t("compose.unexpectedError");
+		const fromApi = e.response?.data?.error;
+		const errorMessage = () => fromApi || t("compose.unexpectedError");
 		error.value = errorMessage;
-		showErrorToast(errorMessage);
+		showErrorToast(errorMessage());
 	} finally {
 		isSavingDraft.value = false;
 	}
@@ -369,7 +370,7 @@ const saveDraft = async () => {
 const send = async () => {
 	error.value = null;
 	if (!currentMailbox.value) {
-		error.value = t("compose.noMailboxSelected");
+		error.value = () => t("compose.noMailboxSelected");
 		return;
 	}
 	isLoading.value = true;
@@ -429,10 +430,10 @@ const send = async () => {
 		closeModal();
 		showSuccessToast(t("compose.emailSentSuccess"));
 	} catch (e: any) {
-		const errorMessage =
-			e.response?.data?.error || t("compose.unexpectedError");
+		const fromApi = e.response?.data?.error;
+		const errorMessage = () => fromApi || t("compose.unexpectedError");
 		error.value = errorMessage;
-		showErrorToast(errorMessage);
+		showErrorToast(errorMessage());
 	} finally {
 		isLoading.value = false;
 	}

@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
+import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 import { translateApiError } from "@/utils/apiError";
 
@@ -20,7 +21,7 @@ export interface Session {
 export const useAuthStore = defineStore("auth", () => {
 	const session = ref<Session | null>(null);
 	const loading = ref(false);
-	const error = ref<string | null>(null);
+	const error = useLocalizedMessage();
 
 	const isAuthenticated = computed(() => session.value !== null);
 	const isAdmin = computed(() => session.value?.isAdmin ?? false);
@@ -53,10 +54,8 @@ export const useAuthStore = defineStore("auth", () => {
 			await login(email, password);
 			return response.data;
 		} catch (err: any) {
-			error.value = translateApiError(
-				err.response?.data?.error,
-				"Registration failed",
-			);
+			const fromApi = err.response?.data?.error;
+			error.value = () => translateApiError(fromApi, "Registration failed");
 			throw err;
 		} finally {
 			loading.value = false;
@@ -75,10 +74,8 @@ export const useAuthStore = defineStore("auth", () => {
 			api.setAuthToken(response.data.id);
 			return response.data;
 		} catch (err: any) {
-			error.value = translateApiError(
-				err.response?.data?.error,
-				"Login failed",
-			);
+			const fromApi = err.response?.data?.error;
+			error.value = () => translateApiError(fromApi, "Login failed");
 			throw err;
 		} finally {
 			loading.value = false;

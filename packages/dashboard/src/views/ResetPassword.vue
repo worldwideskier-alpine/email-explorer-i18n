@@ -76,6 +76,7 @@
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
+import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import { useToast } from "@/composables/useToast";
 import api from "@/services/api";
 
@@ -87,26 +88,26 @@ const { success, error: showError } = useToast();
 const password = ref("");
 const confirmPassword = ref("");
 const isLoading = ref(false);
-const error = ref<string | null>(null);
-const successMessage = ref<string | null>(null);
+const error = useLocalizedMessage();
+const successMessage = useLocalizedMessage();
 
 const token = ref<string | null>(null);
 
 onMounted(() => {
 	token.value = route.query.token as string;
 	if (!token.value) {
-		error.value = t("resetPassword.invalidLink");
+		error.value = () => t("resetPassword.invalidLink");
 	}
 });
 
 async function handleResetPassword() {
 	if (!token.value) {
-		error.value = t("resetPassword.invalidLink");
+		error.value = () => t("resetPassword.invalidLink");
 		return;
 	}
 
 	if (password.value !== confirmPassword.value) {
-		error.value = t("common.passwordsDoNotMatch");
+		error.value = () => t("common.passwordsDoNotMatch");
 		return;
 	}
 
@@ -115,16 +116,16 @@ async function handleResetPassword() {
 
 	try {
 		await api.resetPassword(token.value, password.value);
-		successMessage.value = t("resetPassword.success");
+		successMessage.value = () => t("resetPassword.success");
 		success(t("resetPassword.success"), 5000);
 		setTimeout(() => {
 			router.push("/login");
 		}, 5000);
 	} catch (e: any) {
-		const errorMessage =
-			e.response?.data?.error || t("resetPassword.failedToReset");
+		const fromApi = e.response?.data?.error;
+		const errorMessage = () => fromApi || t("resetPassword.failedToReset");
 		error.value = errorMessage;
-		showError(errorMessage);
+		showError(errorMessage());
 	} finally {
 		isLoading.value = false;
 	}

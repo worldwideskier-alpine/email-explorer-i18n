@@ -66,6 +66,7 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import { useToast } from "@/composables/useToast";
 import api from "@/services/api";
 
@@ -75,8 +76,8 @@ const { success, error: showError } = useToast();
 
 const email = ref("");
 const isLoading = ref(false);
-const error = ref<string | null>(null);
-const successMessage = ref<string | null>(null);
+const error = useLocalizedMessage();
+const successMessage = useLocalizedMessage();
 
 async function handleForgotPassword() {
 	error.value = null;
@@ -84,13 +85,15 @@ async function handleForgotPassword() {
 
 	try {
 		await api.forgotPassword(email.value, locale.value);
-		successMessage.value = t("forgotPassword.linkSent", { email: email.value });
+		const sentTo = email.value;
+		successMessage.value = () =>
+			t("forgotPassword.linkSent", { email: sentTo });
 		success(t("forgotPassword.linkSentToast"));
 	} catch (e: any) {
-		const errorMessage =
-			e.response?.data?.error || t("forgotPassword.failedToSend");
+		const fromApi = e.response?.data?.error;
+		const errorMessage = () => fromApi || t("forgotPassword.failedToSend");
 		error.value = errorMessage;
-		showError(errorMessage);
+		showError(errorMessage());
 	} finally {
 		isLoading.value = false;
 	}

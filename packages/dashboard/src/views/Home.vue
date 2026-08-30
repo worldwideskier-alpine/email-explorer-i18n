@@ -169,6 +169,7 @@ import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
+import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import { useToast } from "@/composables/useToast";
 import api from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
@@ -186,7 +187,7 @@ const isCreateModalOpen = ref(false);
 const newMailboxEmail = ref("");
 const newMailboxName = ref("");
 const isCreatingMailbox = ref(false);
-const createError = ref<string | null>(null);
+const createError = useLocalizedMessage();
 
 onMounted(() => {
 	mailboxStore.fetchMailboxes();
@@ -210,7 +211,7 @@ const handleCreateMailbox = async () => {
 	createError.value = null;
 
 	if (!newMailboxEmail.value || !newMailboxName.value) {
-		createError.value = t("home.fillAllFields");
+		createError.value = () => t("home.fillAllFields");
 		return;
 	}
 
@@ -221,12 +222,11 @@ const handleCreateMailbox = async () => {
 		closeCreateMailboxModal();
 		await mailboxStore.fetchMailboxes();
 	} catch (e: any) {
-		const errorMessage = translateApiError(
-			e.response?.data?.error,
-			"Failed to create mailbox",
-		);
+		const fromApi = e.response?.data?.error;
+		const errorMessage = () =>
+			translateApiError(fromApi, "Failed to create mailbox");
 		createError.value = errorMessage;
-		showErrorToast(errorMessage);
+		showErrorToast(errorMessage());
 	} finally {
 		isCreatingMailbox.value = false;
 	}
