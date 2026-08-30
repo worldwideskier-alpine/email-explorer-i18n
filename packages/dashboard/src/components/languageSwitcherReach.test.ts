@@ -110,15 +110,50 @@ describe("the language switcher is reachable from every page", () => {
 	});
 
 	it("does not float into the corner Toast occupies", () => {
-		// Toast is `fixed top-4 right-4`; a toast would cover a control placed
-		// there -- silently, and only while a toast is up. Matched on the class
-		// binding rather than anywhere in the file, so naming the clash in a
-		// comment does not read as committing it.
-		expect(components["./Toast.vue"]).toContain("top-4 right-4");
-		const floatingClass = components["./LanguageSwitcher.vue"].match(
-			/floating \? '([^']+)'/,
-		);
-		expect(floatingClass?.[1]).toBeDefined();
-		expect(floatingClass?.[1]).not.toContain("right-");
+		// A toast covers whatever is under it, silently, and only while it is
+		// up. The two are read from their own class strings rather than by
+		// searching the whole file, so naming the clash in a comment does not
+		// read as committing it.
+		const corner = (classes: string) => ({
+			vertical: /\btop-\d/.test(classes)
+				? "top"
+				: /\bbottom-\d/.test(classes)
+					? "bottom"
+					: "?",
+			horizontal: /\bright-\d/.test(classes)
+				? "right"
+				: /\bleft-\d/.test(classes)
+					? "left"
+					: "?",
+		});
+
+		const toastClasses = /<div class="(fixed [^"]+)"/.exec(
+			components["./Toast.vue"],
+		)?.[1];
+		const floatingClasses = /floating \? '([^']+)'/.exec(
+			components["./LanguageSwitcher.vue"],
+		)?.[1];
+		expect(toastClasses).toBeDefined();
+		expect(floatingClasses).toBeDefined();
+
+		const toast = corner(toastClasses as string);
+		const switcher = corner(floatingClasses as string);
+		expect(toast.vertical).not.toBe("?");
+		expect(switcher.vertical).not.toBe("?");
+		expect([toast.vertical, toast.horizontal]).not.toEqual([
+			switcher.vertical,
+			switcher.horizontal,
+		]);
+	});
+
+	it("floats on the same side as the copies that sit in an action row", () => {
+		// The complaint that prompted this: the floating one pinned itself top
+		// left while every in-row copy sat at the right of its row, so the same
+		// control appeared in opposite corners depending on the page.
+		const floatingClasses = /floating \? '([^']+)'/.exec(
+			components["./LanguageSwitcher.vue"],
+		)?.[1] as string;
+		expect(floatingClasses).toContain("right-");
+		expect(floatingClasses).not.toContain("left-");
 	});
 });

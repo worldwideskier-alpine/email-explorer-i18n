@@ -23,7 +23,7 @@
         class="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-xl text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
       />
     </div>
-    <div class="flex items-center gap-1 sm:gap-2 ml-1 sm:ml-6 flex-shrink-0">
+    <div class="flex items-center gap-1 sm:gap-2 ml-auto pl-1 sm:pl-6 flex-shrink-0">
       <router-link
         to="/"
         class="flex items-center gap-2 px-2 sm:px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 font-medium"
