@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Havonta",
 		"autoBackupKeep": "Megőrzendő másolatok",
 		"autoBackupKeepNote": "A darabszám növelhető, de nem csökkenthető (jelenleg nem kevesebb, mint {keep}). A csökkentés a következő futáskor törölné a régebbi mentéseket. Ehhez Cloudflare-hozzáférés kell.",
-		"autoBackupWindowNote": "Ezen a képernyőn nincs mód mentést törölni. Csak a megadott darabszám feletti régiek tűnnek el. Ha a postafiókot kiürítik és eltelik gyakoriság szorozva darabszám, a mentések is üresek lesznek.",
+		"autoBackupWindowNote": "Ezen a képernyőn nincs mód biztonsági mentés törlésére. Csak a beállított számon felüli régi archívumok tűnnek el, ezen felül pedig az elmúlt 12 hónap mindegyikének legújabb archívuma mindig megmarad. Még ha a levelezést meg is semmisítik, körülbelül egy év marad arra, hogy ez feltűnjön és visszaállítható legyen.",
 		"autoBackupSaved": "Mentve.",
 		"autoBackupNeverRun": "Még nem futott.",
 		"autoBackupLastOk": "Utolsó futás {at}: sikeres ({messages} levél)",

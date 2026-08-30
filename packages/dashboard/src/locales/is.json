@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Mánaðarlega",
 		"autoBackupKeep": "Fjöldi afrita",
 		"autoBackupKeepNote": "Fjöldann má hækka en ekki lækka (núna ekki undir {keep}). Lækkun myndi eyða eldri afritum í næstu keyrslu. Til þess þarf aðgang að Cloudflare.",
-		"autoBackupWindowNote": "Hér er engin leið til að eyða afriti. Aðeins þau umfram valinn fjölda hverfa. Sé pósthólfið tæmt og líði tíðni sinnum fjöldi verða afritin einnig tóm.",
+		"autoBackupWindowNote": "Á þessum skjá er engin leið til að eyða afriti. Aðeins gömlu safnskrárnar umfram þann fjölda sem þú stillir hverfa, og að auki er nýjasta safnskrá hvers síðustu 12 mánaða alltaf varðveitt. Jafnvel þótt póstinum sé eytt er um það bil ár til að taka eftir því og endurheimta hann.",
 		"autoBackupSaved": "Vistað.",
 		"autoBackupNeverRun": "Hefur ekki keyrt enn.",
 		"autoBackupLastOk": "Síðasta keyrsla {at}: tókst ({messages} skeyti)",

@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Monthly",
 		"autoBackupKeep": "Copies to keep",
 		"autoBackupKeepNote": "The number of copies can be raised but not lowered (currently no lower than {keep}). Lowering it would be a delete button with a delay, since the next run would drop the older archives. Lowering it needs Cloudflare access.",
-		"autoBackupWindowNote": "Nothing on this screen deletes a backup. The only archives that go are the ones past the count you set. Note that emptying the mailbox and waiting for frequency times copies will fill the archives with empty ones.",
+		"autoBackupWindowNote": "Nothing on this screen deletes a backup. The only archives that go are the ones past the count you set, and separately the newest archive of each of the last 12 months is always kept. If the mail is destroyed, that leaves about a year to notice and put it back.",
 		"autoBackupSaved": "Saved.",
 		"autoBackupNeverRun": "It has not run yet.",
 		"autoBackupLastOk": "Last run {at}: succeeded ({messages} messages)",

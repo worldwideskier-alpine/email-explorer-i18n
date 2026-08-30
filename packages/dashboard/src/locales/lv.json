@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Katru mēnesi",
 		"autoBackupKeep": "Glabājamo kopiju skaits",
 		"autoBackupKeepNote": "Skaitu var palielināt, bet ne samazināt (tagad ne mazāk par {keep}). Samazinot, nākamajā reizē tiktu dzēstas vecākās kopijas. Tam nepieciešama Cloudflare piekļuve.",
-		"autoBackupWindowNote": "Šeit nav veida, kā dzēst kopiju. Tiek noņemtas tikai tās, kas pārsniedz noteikto skaitu. Ja pastkasti iztukšo un paiet biežums reiz skaits, arī kopijas kļūst tukšas.",
+		"autoBackupWindowNote": "Šajā ekrānā nav veida, kā dzēst dublējumu. Pazūd tikai vecie arhīvi virs iestatītā skaita, turklāt jaunākais arhīvs no katra pēdējo 12 mēnešu mēneša vienmēr tiek saglabāts. Pat ja pasts tiek iznīcināts, paliek aptuveni gads, lai to pamanītu un atjaunotu.",
 		"autoBackupSaved": "Saglabāts.",
 		"autoBackupNeverRun": "Vēl nav darbojies.",
 		"autoBackupLastOk": "Pēdējoreiz {at}: veiksmīgi ({messages} vēstules)",

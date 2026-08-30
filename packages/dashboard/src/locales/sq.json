@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Çdo muaj",
 		"autoBackupKeep": "Numri i kopjeve",
 		"autoBackupKeepNote": "Numri mund të rritet por jo të ulet (tani jo më pak se {keep}). Ulja do të fshinte kopjet e vjetra në ekzekutimin tjetër. Për këtë duhet qasje në Cloudflare.",
-		"autoBackupWindowNote": "Këtu nuk ka mënyrë për të fshirë një kopje. Hiqen vetëm ato përtej numrit të caktuar. Nëse kutia zbrazet dhe kalon shpeshtësia herë numri, edhe kopjet mbeten bosh.",
+		"autoBackupWindowNote": "Në këtë ekran nuk ka asnjë mënyrë për të fshirë një kopje rezervë. Zhduken vetëm arkivat e vjetra përtej numrit që keni caktuar, dhe përveç kësaj arkivi më i ri i secilit prej 12 muajve të fundit ruhet gjithmonë. Edhe nëse posta shkatërrohet, mbetet rreth një vit për ta vënë re dhe për ta rikthyer.",
 		"autoBackupSaved": "U ruajt.",
 		"autoBackupNeverRun": "Nuk është ekzekutuar ende.",
 		"autoBackupLastOk": "Herën e fundit {at}: me sukses ({messages} mesazhe)",

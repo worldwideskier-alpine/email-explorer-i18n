@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Mensalmente",
 		"autoBackupKeep": "Número de cópias",
 		"autoBackupKeepNote": "O número pode ser aumentado mas não reduzido (agora não menos de {keep}). Reduzi-lo apagaria as cópias antigas na próxima execução. Para isso é preciso acesso ao Cloudflare.",
-		"autoBackupWindowNote": "Nada neste ecrã apaga uma cópia. Só saem as que ultrapassam o número definido. Esvaziar a caixa e esperar frequência vezes número enche as cópias de vazias.",
+		"autoBackupWindowNote": "Neste ecrã não existe qualquer forma de apagar uma cópia de segurança. Apenas desaparecem os arquivos antigos acima do número definido e, além disso, o arquivo mais recente de cada um dos últimos 12 meses é sempre mantido. Mesmo que o correio seja destruído, resta cerca de um ano para dar por isso e o repor.",
 		"autoBackupSaved": "Guardado.",
 		"autoBackupNeverRun": "Ainda não foi executado.",
 		"autoBackupLastOk": "Última execução {at}: com êxito ({messages} mensagens)",

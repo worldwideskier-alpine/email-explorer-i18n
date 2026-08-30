@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Vsak mesec",
 		"autoBackupKeep": "Število kopij",
 		"autoBackupKeepNote": "Število je mogoče povečati, ne pa zmanjšati (zdaj ne manj kot {keep}). Zmanjšanje bi ob naslednjem zagonu izbrisalo starejše kopije. Za to je potreben dostop do Cloudflare.",
-		"autoBackupWindowNote": "Tu ni načina za brisanje kopije. Odstranijo se samo tiste nad določenim številom. Če se nabiralnik izprazni in mine pogostost krat število, postanejo prazne tudi kopije.",
+		"autoBackupWindowNote": "Na tem zaslonu ni načina za brisanje varnostne kopije. Izginejo samo stari arhivi nad nastavljenim številom, poleg tega pa se najnovejši arhiv vsakega od zadnjih 12 mesecev vedno ohrani. Tudi če je pošta uničena, ostane približno leto dni, da se to opazi in obnovi.",
 		"autoBackupSaved": "Shranjeno.",
 		"autoBackupNeverRun": "Še ni bilo izvedeno.",
 		"autoBackupLastOk": "Zadnjič {at}: uspešno ({messages} sporočil)",

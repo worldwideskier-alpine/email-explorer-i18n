@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Aylıq",
 		"autoBackupKeep": "Saxlanacaq nüsxə sayı",
 		"autoBackupKeepNote": "Nüsxə sayını artırmaq olar, azaltmaq olmaz (hazırkı aşağı hədd {keep}). Azaltmaq növbəti işə salmada köhnə nüsxələri silərdi. Azaltmaq üçün Cloudflare girişi lazımdır.",
-		"autoBackupWindowNote": "Bu ekranda ehtiyat nüsxəni silmək yolu yoxdur. Yalnız təyin etdiyiniz sayı aşan köhnələr silinir. Poçt qutusu boşaldılıb tezlik vurulsun sayı qədər vaxt keçsə, nüsxələr də boşalır.",
+		"autoBackupWindowNote": "Bu ekranda ehtiyat nüsxəni silmək üçün heç bir vasitə yoxdur. Yalnız təyin etdiyiniz saydan artıq olan köhnə arxivlər silinir, bundan əlavə son 12 ayın hər birinin ən yeni nüsxəsi həmişə saxlanılır. Poçt məhv edilsə belə, bunu görüb geri qaytarmaq üçün təxminən bir il vaxt qalır.",
 		"autoBackupSaved": "Saxlanıldı.",
 		"autoBackupNeverRun": "Hələ işə salınmayıb.",
 		"autoBackupLastOk": "Son işə salma {at}: uğurlu ({messages} məktub)",

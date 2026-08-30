@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Buwanan",
 		"autoBackupKeep": "Ilang kopya ang itatago",
 		"autoBackupKeepNote": "Puwedeng taasan ang bilang pero hindi ibaba (ngayon ay hindi bababa sa {keep}). Ang pagbaba ay magbubura ng lumang backup sa susunod na takbo. Kailangan nito ng Cloudflare access.",
-		"autoBackupWindowNote": "Walang paraan dito para magbura ng backup. Ang naaalis lang ay ang lampas sa itinakdang bilang. Pero kung mabura ang lahat ng mail at lumipas ang dalas beses bilang, mapupuno rin ng walang laman ang mga backup.",
+		"autoBackupWindowNote": "Sa screen na ito ay walang paraan upang magbura ng backup. Ang mga lumang arkibo lamang na lampas sa bilang na itinakda mo ang nawawala, at bukod doon ay palaging iniingatan ang pinakabagong arkibo ng bawat isa sa huling 12 buwan. Kahit sirain ang mga mensahe, mayroon pa ring humigit-kumulang isang taon upang mapansin ito at maibalik ang mga ito.",
 		"autoBackupSaved": "Na-save.",
 		"autoBackupNeverRun": "Hindi pa tumatakbo.",
 		"autoBackupLastOk": "Huling takbo {at}: matagumpay ({messages} mensahe)",

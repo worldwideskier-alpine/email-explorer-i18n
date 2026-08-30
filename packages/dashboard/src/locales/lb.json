@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "All Mount",
 		"autoBackupKeep": "Zuel vun de Kopien",
 		"autoBackupKeepNote": "D'Zuel kann eropgesat ginn, awer net erof (elo net ënner {keep}). Erofsetzen géif beim nächste Laf eeler Sécherunge läschen. Dofir brauch een Cloudflare-Zougang.",
-		"autoBackupWindowNote": "Op dësem Ecran gëtt et kee Wee, eng Sécherung ze läschen. Et ginn nëmmen déi iwwer der agestallter Zuel ewechgeholl. Gëtt d'Postkëscht eidel gemaach an d'Frequenz mol d'Zuel vergeet, ginn och d'Sécherungen eidel.",
+		"autoBackupWindowNote": "Op dësem Écran gëtt et kee Wee fir e Backup ze läschen. Et verschwannen nëmmen déi al Archiven iwwer déi agestallten Zuel, an doriwwer eraus bleift dat neitst Archiv vun all deene leschte 12 Méint ëmmer erhalen. Och wann d'Post zerstéiert gëtt, bleift ongeféier ee Joer fir et ze mierken an se zréckzehuelen.",
 		"autoBackupSaved": "Gespäichert.",
 		"autoBackupNeverRun": "Nach net gelaf.",
 		"autoBackupLastOk": "Leschte Laf {at}: gelongen ({messages} Messagen)",

@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Lunar",
 		"autoBackupKeep": "Număr de copii",
 		"autoBackupKeepNote": "Numărul poate fi mărit, dar nu micșorat (acum nu mai puțin de {keep}). Micșorarea ar șterge copiile vechi la următoarea rulare. Pentru asta e nevoie de acces la Cloudflare.",
-		"autoBackupWindowNote": "Aici nu există nicio modalitate de a șterge o copie. Se elimină doar cele peste numărul stabilit. Dacă se golește cutia și trece frecvență ori număr, și copiile devin goale.",
+		"autoBackupWindowNote": "Pe acest ecran nu există nicio modalitate de a șterge o copie de rezervă. Dispar doar arhivele vechi peste numărul stabilit, iar în plus cea mai recentă arhivă din fiecare dintre ultimele 12 luni este păstrată întotdeauna. Chiar dacă poșta este distrusă, rămâne aproximativ un an pentru a observa și a o restaura.",
 		"autoBackupSaved": "Salvat.",
 		"autoBackupNeverRun": "Nu a rulat încă.",
 		"autoBackupLastOk": "Ultima rulare {at}: reușită ({messages} mesaje)",

@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Cada mes",
 		"autoBackupKeep": "Còpies a conservar",
 		"autoBackupKeepNote": "El nombre es pot augmentar però no reduir (ara no menys de {keep}). Reduir-lo esborraria còpies antigues a la propera execució. Per reduir-lo cal accés a Cloudflare.",
-		"autoBackupWindowNote": "Aquí no hi ha cap manera d'esborrar una còpia. Només s'esborren les que superen el nombre fixat. Si es buida la bústia i passa freqüència per còpies, les còpies també queden buides.",
+		"autoBackupWindowNote": "En aquesta pantalla no hi ha cap manera d'esborrar una còpia de seguretat. Només desapareixen els arxius antics que superen el nombre fixat i, a més, sempre es conserva l'arxiu més recent de cadascun dels darrers 12 mesos. Encara que el correu es destrueixi, queda aproximadament un any per adonar-se'n i restaurar-lo.",
 		"autoBackupSaved": "Desat.",
 		"autoBackupNeverRun": "Encara no s'ha executat.",
 		"autoBackupLastOk": "Darrera execució {at}: correcta ({messages} missatges)",

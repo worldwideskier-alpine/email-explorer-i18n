@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Monatlich",
 		"autoBackupKeep": "Anzahl der Kopien",
 		"autoBackupKeepNote": "Die Anzahl lässt sich erhöhen, aber nicht verringern (derzeit nicht unter {keep}). Ein Verringern würde beim nächsten Lauf ältere Sicherungen löschen. Dafür ist Cloudflare-Zugang nötig.",
-		"autoBackupWindowNote": "Auf diesem Bildschirm gibt es keine Möglichkeit, eine Sicherung zu löschen. Entfernt werden nur die über der eingestellten Anzahl. Wird das Postfach geleert und vergeht Häufigkeit mal Anzahl, sind auch die Sicherungen leer.",
+		"autoBackupWindowNote": "Auf diesem Bildschirm gibt es keine Möglichkeit, eine Sicherung zu löschen. Es verschwinden nur die alten Archive über der eingestellten Anzahl, und davon unabhängig bleibt das neueste Archiv jedes der letzten 12 Monate immer erhalten. Selbst wenn die Post vernichtet wird, bleibt etwa ein Jahr, um es zu bemerken und sie zurückzuholen.",
 		"autoBackupSaved": "Gespeichert.",
 		"autoBackupNeverRun": "Bisher nicht gelaufen.",
 		"autoBackupLastOk": "Letzter Lauf {at}: erfolgreich ({messages} Nachrichten)",

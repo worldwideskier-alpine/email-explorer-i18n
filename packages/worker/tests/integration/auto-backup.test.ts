@@ -139,6 +139,60 @@ describe("The scheduled backup pass", () => {
 		expect(settings.lastResult.removed).toBe(1);
 	});
 
+	/**
+	 * The monthly tier, against a real bucket: the mail is destroyed and the
+	 * daily backups keep running until the count has turned over several times.
+	 * Under rotation by count alone every copy of the mail would be gone.
+	 */
+	it("still holds a readable archive after the mail is destroyed and the count turns over", async () => {
+		await importEmail("the only copy of this");
+		await setBackup({ enabled: true, frequency: "daily", keep: 2 });
+
+		// June: the mail is there.
+		for (const day of ["01", "02", "03"]) {
+			await runScheduledBackups(
+				env as never,
+				new Date(`2026-06-${day}T18:00:00.000Z`),
+			);
+		}
+
+		// Someone with a session empties the mailbox.
+		await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ settings: { deletionLocked: false } }),
+		});
+		const purge = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}?purge=true`,
+			{ method: "DELETE" },
+		);
+		expect(purge.status).toBe(204);
+		await createDummyMailbox();
+		await setBackup({ enabled: true, frequency: "daily", keep: 2 });
+
+		// July: the backups keep running on an empty mailbox, well past `keep`.
+		for (const day of ["01", "02", "03", "04", "05"]) {
+			await runScheduledBackups(
+				env as never,
+				new Date(`2026-07-${day}T18:00:00.000Z`),
+			);
+		}
+
+		const stored = await listBackups(env as never, mailboxId);
+		const contents = await Promise.all(
+			stored.map(async (backup) => {
+				const object = await bucket().get(
+					`backups/${encodeURIComponent(mailboxId)}/${backup.name}`,
+				);
+				return await (object as R2ObjectBody).text();
+			}),
+		);
+
+		expect(contents.some((text) => text.includes("the only copy of this"))).toBe(
+			true,
+		);
+	});
+
 	it("writes an archive for an empty mailbox rather than nothing at all", async () => {
 		await setBackup({ enabled: true, frequency: "daily", keep: 2 });
 		expect((await runScheduledBackups(env as never, new Date())).ran).toBe(1);

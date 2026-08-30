@@ -33,7 +33,7 @@
               <p class="text-base text-gray-800 dark:text-gray-300 truncate" :class="{'font-semibold': !email.read, 'font-normal': email.read}">{{ email.subject }}</p>
             </div>
             <div class="flex-shrink-0 flex items-center gap-2">
-              <p class="text-xs text-gray-500 dark:text-gray-400 hidden sm:block sm:group-hover:hidden whitespace-nowrap">{{ email.date }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 hidden sm:block sm:group-hover:hidden whitespace-nowrap">{{ formatListDate(email.date) }}</p>
               <div class="flex sm:hidden sm:group-hover:flex items-center gap-1">
                 <button @click.prevent="toggleStarStatus(email)" class="p-2 text-gray-400 hover:text-yellow-500 dark:text-gray-500 dark:hover:text-yellow-400 rounded-lg hover:bg-yellow-50 dark:hover:bg-gray-700/50 transition-all duration-200" :class="{'text-yellow-500 dark:text-yellow-400': email.starred}" :title="email.starred ? t('emailList.unstar') : t('emailList.star')">
                   <svg v-if="email.starred" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -104,6 +104,7 @@ import { storeToRefs } from "pinia";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
+import { useDateFormat } from "@/composables/useDateFormat";
 import api from "@/services/api";
 import { useEmailStore } from "@/stores/emails";
 import { useFolderStore } from "@/stores/folders";
@@ -111,6 +112,7 @@ import { useUIStore } from "@/stores/ui";
 import type { Email } from "@/types";
 
 const { t } = useI18n();
+const { formatListDate } = useDateFormat();
 const emailStore = useEmailStore();
 const { emails, isRefreshing, hasMore } = storeToRefs(emailStore);
 const folderStore = useFolderStore();

@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Her ay",
 		"autoBackupKeep": "Saklanacak kopya sayısı",
 		"autoBackupKeepNote": "Sayı artırılabilir ama azaltılamaz (şu anda {keep} altına inemez). Azaltmak bir sonraki çalışmada eski yedekleri silerdi. Bunun için Cloudflare erişimi gerekir.",
-		"autoBackupWindowNote": "Bu ekranda yedek silmenin yolu yok. Yalnızca belirlediğiniz sayıyı aşan eskiler kaldırılır. Posta kutusu boşaltılıp sıklık çarpı sayı kadar süre geçerse yedekler de boşalır.",
+		"autoBackupWindowNote": "Bu ekranda bir yedeği silmenin hiçbir yolu yoktur. Yalnızca belirlediğiniz sayının ötesindeki eski arşivler kaybolur, ayrıca son 12 ayın her birinin en yeni arşivi her zaman saklanır. Posta yok edilse bile, bunu fark edip geri getirmek için yaklaşık bir yıl kalır.",
 		"autoBackupSaved": "Kaydedildi.",
 		"autoBackupNeverRun": "Henüz çalışmadı.",
 		"autoBackupLastOk": "Son çalışma {at}: başarılı ({messages} ileti)",

@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Maandelijks",
 		"autoBackupKeep": "Aantal kopieën",
 		"autoBackupKeepNote": "Het aantal kan omhoog maar niet omlaag (nu niet lager dan {keep}). Verlagen zou bij de volgende run oudere back-ups wissen. Daarvoor is toegang tot Cloudflare nodig.",
-		"autoBackupWindowNote": "Niets op dit scherm verwijdert een back-up. Alleen kopieën boven het ingestelde aantal gaan weg. Als de postbus wordt geleegd en frequentie maal aantal verstrijkt, worden de back-ups ook leeg.",
+		"autoBackupWindowNote": "Op dit scherm is er geen manier om een back-up te verwijderen. Alleen de oude archieven boven het ingestelde aantal verdwijnen, en daarnaast blijft het nieuwste archief van elk van de laatste 12 maanden altijd bewaard. Zelfs als de post wordt vernietigd, blijft er ongeveer een jaar om het op te merken en terug te zetten.",
 		"autoBackupSaved": "Opgeslagen.",
 		"autoBackupNeverRun": "Nog niet uitgevoerd.",
 		"autoBackupLastOk": "Laatste run {at}: gelukt ({messages} berichten)",

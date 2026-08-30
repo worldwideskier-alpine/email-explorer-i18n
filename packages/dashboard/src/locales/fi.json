@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Kuukausittain",
 		"autoBackupKeep": "Säilytettävät kopiot",
 		"autoBackupKeepNote": "Määrää voi nostaa mutta ei laskea (nyt ei alle {keep}). Laskeminen poistaisi vanhempia kopioita seuraavalla ajolla. Laskemiseen tarvitaan Cloudflare-oikeudet.",
-		"autoBackupWindowNote": "Täällä ei ole tapaa poistaa varmuuskopiota. Poistetaan vain ne, jotka ylittävät määrän. Jos postilaatikko tyhjennetään ja kuluu tiheys kertaa määrä, myös kopiot ovat tyhjiä.",
+		"autoBackupWindowNote": "Tällä näytöllä ei ole tapaa poistaa varmuuskopiota. Vain asetetun määrän ylittävät vanhat arkistot katoavat, ja sen lisäksi kunkin viimeisen 12 kuukauden uusin arkisto säilytetään aina. Vaikka posti tuhottaisiin, aikaa huomata se ja palauttaa on noin vuosi.",
 		"autoBackupSaved": "Tallennettu.",
 		"autoBackupNeverRun": "Ei ole vielä ajettu.",
 		"autoBackupLastOk": "Viimeksi {at}: onnistui ({messages} viestiä)",

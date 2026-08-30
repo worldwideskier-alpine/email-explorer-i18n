@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Iga kuu",
 		"autoBackupKeep": "Koopiate arv",
 		"autoBackupKeepNote": "Arvu saab suurendada, kuid mitte vähendada (praegu mitte alla {keep}). Vähendamine kustutaks järgmisel käivitusel vanemad koopiad. Selleks on vaja Cloudflare'i ligipääsu.",
-		"autoBackupWindowNote": "Siin ei ole võimalust varukoopiat kustutada. Eemaldatakse ainult need, mis ületavad määratud arvu. Kui postkast tühjendada ja mööduks sagedus korda arv, jäävad ka koopiad tühjaks.",
+		"autoBackupWindowNote": "Sellel ekraanil ei ole võimalust varukoopiat kustutada. Kaovad ainult vanad arhiivid üle määratud arvu ning lisaks säilitatakse alati iga viimase 12 kuu uusim arhiiv. Isegi kui post hävitatakse, jääb umbes aasta, et seda märgata ja taastada.",
 		"autoBackupSaved": "Salvestatud.",
 		"autoBackupNeverRun": "Pole veel käivitunud.",
 		"autoBackupLastOk": "Viimane {at}: õnnestus ({messages} kirja)",
