@@ -7,6 +7,11 @@ A short summary of this fork in each language it supports. These are not full tr
 ## 東アジア
 
 - [日本語](ja.md) (`ja`)
+- [한국어](ko.md) (`ko`)
+- [Монгол](mn.md) (`mn`)
+- [廣東話](yue.md) (`yue`)
+- [简体中文](zh-Hans.md) (`zh-Hans`)
+- [繁體中文](zh-Hant.md) (`zh-Hant`)
 
 ## ヨーロッパ
 
