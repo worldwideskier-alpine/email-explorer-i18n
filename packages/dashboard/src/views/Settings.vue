@@ -106,6 +106,84 @@
         </button>
       </div>
 
+      <!-- Automatic backup. There is no delete control here, and that is the
+           design: rotation is the only thing that removes an archive. -->
+      <div class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="pr-4">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-white">{{ t("settings.autoBackupTitle") }}</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("settings.autoBackupDescription") }}</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" v-model="autoBackupEnabled" :disabled="autoBackupSaving" class="sr-only peer" />
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-indigo-600 peer-disabled:opacity-50"></div>
+          </label>
+        </div>
+
+        <div v-if="autoBackupEnabled" class="mt-4 space-y-4">
+          <div class="flex flex-wrap gap-4">
+            <div>
+              <label for="backupFrequency" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("settings.autoBackupFrequency") }}</label>
+              <select
+                id="backupFrequency"
+                v-model="autoBackupFrequency"
+                class="mt-1 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
+              >
+                <option value="daily">{{ t("settings.autoBackupDaily") }}</option>
+                <option value="weekly">{{ t("settings.autoBackupWeekly") }}</option>
+                <option value="monthly">{{ t("settings.autoBackupMonthly") }}</option>
+              </select>
+            </div>
+            <div>
+              <label for="backupKeep" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("settings.autoBackupKeep") }}</label>
+              <input
+                id="backupKeep"
+                type="number"
+                v-model.number="autoBackupKeep"
+                :min="autoBackupKeepFloor"
+                max="365"
+                class="mt-1 w-28 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
+              />
+            </div>
+          </div>
+
+          <p class="text-sm text-amber-700 dark:text-amber-400">{{ t("settings.autoBackupKeepNote", { keep: autoBackupKeepFloor }) }}</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">{{ t("settings.autoBackupWindowNote") }}</p>
+
+          <button
+            type="button"
+            @click="saveAutoBackup"
+            :disabled="autoBackupSaving"
+            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {{ t("settings.save") }}
+          </button>
+          <p v-if="autoBackupMessage" class="text-sm text-green-600 dark:text-green-400">{{ autoBackupMessage }}</p>
+
+          <p class="text-sm" :class="autoBackupLastOk === false ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'">
+            {{ autoBackupLastLine }}
+          </p>
+
+          <div v-if="backups.length">
+            <h3 class="text-base font-medium text-gray-900 dark:text-white mb-2">{{ t("settings.autoBackupStored") }}</h3>
+            <ul class="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <li v-for="backup in backups" :key="backup.name" class="flex items-center justify-between gap-4 px-4 py-2">
+                <span class="text-sm text-gray-700 dark:text-gray-300 break-all">{{ backup.name }}</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ formatSize(backup.size) }}</span>
+                <button
+                  type="button"
+                  @click="downloadBackup(backup.name)"
+                  class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline whitespace-nowrap"
+                >
+                  {{ t("settings.autoBackupDownload") }}
+                </button>
+              </li>
+            </ul>
+          </div>
+          <p v-else class="text-sm text-gray-500 dark:text-gray-400">{{ t("settings.autoBackupNone") }}</p>
+        </div>
+      </div>
+
       <!-- Restore: the other half of the backup. Admin only, because the
            endpoint it posts to writes mail into the mailbox. -->
       <div v-if="isAdmin" class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
@@ -293,6 +371,7 @@ watch(
 
 onMounted(() => {
 	mailboxStore.fetchMailbox(route.params.mailboxId as string);
+	loadBackups();
 });
 
 // Was `div.innerHTML = html` on a detached div. Even out of the document an
@@ -330,6 +409,106 @@ async function exportMailbox() {
 		window.alert(t("settings.exportFailed"));
 	} finally {
 		exporting.value = false;
+	}
+}
+
+const autoBackupEnabled = ref(false);
+const autoBackupFrequency = ref<"daily" | "weekly" | "monthly">("daily");
+const autoBackupKeep = ref(7);
+/**
+ * The retention count may rise and never fall, because rotation is the only
+ * thing that deletes an archive and lowering the count would delete on the
+ * next run. The server enforces it; this is only so the field says so rather
+ * than silently discarding what was typed.
+ */
+const autoBackupKeepFloor = ref(1);
+const autoBackupSaving = ref(false);
+const autoBackupMessage = ref("");
+const autoBackupLastOk = ref<boolean | undefined>(undefined);
+const autoBackupLastLine = ref("");
+const backups = ref<{ name: string; at: string; size: number }[]>([]);
+
+watch(
+	mailbox,
+	(m) => {
+		const backup = m?.settings?.autoBackup;
+		autoBackupEnabled.value = !!backup?.enabled;
+		autoBackupFrequency.value = backup?.frequency ?? "daily";
+		autoBackupKeep.value = backup?.keep ?? 7;
+		autoBackupKeepFloor.value = backup?.keep ?? 1;
+
+		const last = backup?.lastResult;
+		autoBackupLastOk.value = last?.ok;
+		autoBackupLastLine.value = !last
+			? t("settings.autoBackupNeverRun")
+			: last.ok
+				? t("settings.autoBackupLastOk", {
+						at: new Date(last.at).toLocaleString(),
+						messages: last.messages ?? 0,
+					})
+				: t("settings.autoBackupLastFailed", {
+						at: new Date(last.at).toLocaleString(),
+						error: last.error ?? "",
+					});
+	},
+	{ immediate: true },
+);
+
+const formatSize = (bytes: number): string => {
+	if (bytes < 1024) return `${bytes} B`;
+	if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+async function loadBackups() {
+	try {
+		const response = await api.listBackups(route.params.mailboxId as string);
+		backups.value = response.data ?? [];
+	} catch {
+		backups.value = [];
+	}
+}
+
+async function saveAutoBackup() {
+	if (autoBackupSaving.value) return;
+	autoBackupSaving.value = true;
+	autoBackupMessage.value = "";
+	try {
+		const mailboxId = route.params.mailboxId as string;
+		await api.updateMailbox(mailboxId, {
+			...(mailbox.value?.settings ?? {}),
+			autoBackup: {
+				enabled: autoBackupEnabled.value,
+				frequency: autoBackupFrequency.value,
+				keep: autoBackupKeep.value,
+			},
+		});
+		await mailboxStore.fetchMailbox(mailboxId);
+		await loadBackups();
+		autoBackupMessage.value = t("settings.autoBackupSaved");
+	} catch {
+		autoBackupMessage.value = "";
+	} finally {
+		autoBackupSaving.value = false;
+	}
+}
+
+async function downloadBackup(name: string) {
+	try {
+		const mailboxId = route.params.mailboxId as string;
+		const response = await api.downloadBackup(mailboxId, name);
+		const url = URL.createObjectURL(response.data as Blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = `${mailboxId}-${name}`;
+		document.body.appendChild(link);
+		link.click();
+		setTimeout(() => {
+			link.remove();
+			URL.revokeObjectURL(url);
+		}, 1000);
+	} catch {
+		window.alert(t("settings.exportFailed"));
 	}
 }
 

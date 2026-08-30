@@ -17,6 +17,30 @@ export interface MailboxSettings {
 	signature?: SignatureSettings;
 	autoReply?: { enabled: boolean; subject: string; message: string };
 	spamFilter?: SpamFilterSettings;
+	autoBackup?: AutoBackupSettings;
+}
+
+/**
+ * `keep` may rise and never fall: rotation is the only thing that deletes an
+ * archive, so lowering it would delete on the next scheduled run. The server
+ * refuses a lower value; see mergeMailboxSettings.
+ *
+ * `lastRunAt` and `lastResult` are written by the scheduled run and ignored
+ * when they arrive from here, so a failing backup cannot be papered over.
+ */
+export interface AutoBackupSettings {
+	enabled?: boolean;
+	frequency?: "daily" | "weekly" | "monthly";
+	keep?: number;
+	lastRunAt?: string;
+	lastResult?: {
+		at: string;
+		ok: boolean;
+		messages?: number;
+		bytes?: number;
+		removed?: number;
+		error?: string;
+	};
 }
 
 export interface Mailbox {

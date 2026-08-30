@@ -68,3 +68,85 @@ describe("mergeMailboxSettings", () => {
 		expect(result.spamFilter).toBeUndefined();
 	});
 });
+
+/**
+ * The retention count is the one setting that can destroy data, because
+ * rotation is the only thing in the application that deletes a backup. If a
+ * session could lower it, an attacker holding an administrator's password
+ * could empty the archive on the next scheduled run -- which is the whole
+ * thing the feature is built to prevent.
+ */
+describe("mergeMailboxSettings: automatic backup", () => {
+	it("lets the retention count rise", () => {
+		const merged = mergeMailboxSettings(
+			{ autoBackup: { enabled: true, frequency: "daily", keep: 7 } },
+			{ autoBackup: { enabled: true, frequency: "daily", keep: 30 } },
+		);
+		expect(merged.autoBackup.keep).toBe(30);
+	});
+
+	it("refuses to let the retention count fall", () => {
+		const merged = mergeMailboxSettings(
+			{ autoBackup: { enabled: true, frequency: "daily", keep: 30 } },
+			{ autoBackup: { enabled: true, frequency: "daily", keep: 1 } },
+		);
+		expect(merged.autoBackup.keep).toBe(30);
+	});
+
+	it("keeps the count when a save does not mention backups at all", () => {
+		const merged = mergeMailboxSettings(
+			{ autoBackup: { enabled: true, frequency: "weekly", keep: 12 } },
+			{ fromName: "Someone" },
+		);
+		expect(merged.autoBackup).toMatchObject({
+			enabled: true,
+			frequency: "weekly",
+			keep: 12,
+		});
+	});
+
+	it("lets the frequency and the switch change freely, neither deletes", () => {
+		const merged = mergeMailboxSettings(
+			{ autoBackup: { enabled: true, frequency: "daily", keep: 5 } },
+			{ autoBackup: { enabled: false, frequency: "monthly", keep: 5 } },
+		);
+		expect(merged.autoBackup).toMatchObject({
+			enabled: false,
+			frequency: "monthly",
+			keep: 5,
+		});
+	});
+
+	// Otherwise a caller could write a healthy-looking history over a real one.
+	it("never takes the record of past runs from the client", () => {
+		const merged = mergeMailboxSettings(
+			{
+				autoBackup: {
+					enabled: true,
+					keep: 3,
+					lastRunAt: "2026-08-01T00:00:00.000Z",
+					lastResult: { at: "2026-08-01T00:00:00.000Z", ok: false, error: "x" },
+				},
+			},
+			{
+				autoBackup: {
+					enabled: true,
+					keep: 3,
+					lastRunAt: "2026-09-09T00:00:00.000Z",
+					lastResult: { at: "2026-09-09T00:00:00.000Z", ok: true },
+				},
+			},
+		);
+		expect(merged.autoBackup.lastRunAt).toBe("2026-08-01T00:00:00.000Z");
+		expect(merged.autoBackup.lastResult.ok).toBe(false);
+	});
+
+	it("clamps a count outside the allowed range", () => {
+		expect(
+			mergeMailboxSettings({}, { autoBackup: { keep: 99999 } }).autoBackup.keep,
+		).toBe(365);
+		expect(
+			mergeMailboxSettings({}, { autoBackup: { keep: 0 } }).autoBackup.keep,
+		).toBe(1);
+	});
+});
