@@ -6,7 +6,7 @@
         <p class="text-gray-600 dark:text-gray-400">{{ t("home.pageSubtitle") }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-2 sm:gap-4">
-        <div class="text-right mr-2">
+        <div class="text-right me-2">
           <p class="text-sm text-gray-600 dark:text-gray-400 break-all">{{ authStore.currentUser?.email }}</p>
           <p v-if="authStore.isAdmin" class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">{{ t("home.admin") }}</p>
         </div>
@@ -54,13 +54,13 @@
             <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
               {{ mailbox.name.charAt(0).toUpperCase() }}
             </div>
-            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transform group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transform group-hover:translate-x-1 rtl:-scale-x-100 rtl:group-hover:-translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </div>
           <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-300">{{ mailbox.name }}</h2>
           <p class="text-sm text-gray-600 dark:text-gray-400 flex items-center">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
             {{ mailbox.email }}
@@ -89,7 +89,7 @@
           class="inline-flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium transition-colors duration-200"
         >
           {{ t("home.viewDocs") }}
-          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 ms-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
         </a>

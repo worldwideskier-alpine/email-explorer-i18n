@@ -1,5 +1,5 @@
 <template>
-  <label :class="floating ? 'fixed top-4 right-4 z-40' : 'ml-1 sm:ml-2'">
+  <label :class="floating ? 'fixed top-4 end-4 z-40' : 'ms-1 sm:ms-2'">
     <span class="sr-only">{{ t("header.language") }}</span>
     <select
       :value="locale"

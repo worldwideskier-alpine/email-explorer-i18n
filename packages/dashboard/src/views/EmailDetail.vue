@@ -5,7 +5,7 @@
         <div class="flex items-center gap-3 min-w-0">
           <button @click="router.back()" class="p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer flex-shrink-0" :title="t('emailDetail.back')">
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.back") }}</div>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 rtl:-scale-x-100" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
             </svg>
           </button>
@@ -57,7 +57,7 @@
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>
             </button>
-            <div v-if="isMoveMenuOpen" class="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-10 border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div v-if="isMoveMenuOpen" class="absolute end-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-10 border border-gray-200 dark:border-gray-700 overflow-hidden">
               <button v-for="folder in moveToFolders" :key="folder.id" @click="handleMove(folder.id)" class="block w-full text-left px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 font-medium">
                 {{ folder.name }}
               </button>
@@ -132,7 +132,7 @@
       </h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <div v-for="attachment in visibleAttachments" :key="attachment.id" class="group bg-white dark:bg-gray-800 rounded-xl p-4 flex items-center justify-between border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-400 hover:shadow-lg transition-all duration-200">
-          <div class="w-0 flex-grow mr-4 min-w-0">
+          <div class="w-0 flex-grow me-4 min-w-0">
             <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ attachment.filename }}</p>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ formatBytes(attachment.size) }}</p>
           </div>

@@ -60,11 +60,11 @@ describe("resolveBrowserLocale", () => {
 		expect(resolveBrowserLocale(["zh-TW", "en"])).toBe("zh-Hant");
 		expect(resolveBrowserLocale(["ko-KR", "ja", "en"])).toBe("ko");
 		// A language this dashboard does not carry is skipped, not fatal.
-		expect(resolveBrowserLocale(["he-IL", "ar", "de-DE"])).toBe("de");
+		expect(resolveBrowserLocale(["sw-KE", "am", "de-DE"])).toBe("de");
 	});
 
 	it("gives up rather than guessing", () => {
-		expect(resolveBrowserLocale(["he", "ar", "fa"])).toBeNull();
+		expect(resolveBrowserLocale(["sw", "am", "zu"])).toBeNull();
 		expect(resolveBrowserLocale([])).toBeNull();
 		expect(resolveBrowserLocale(undefined)).toBeNull();
 		expect(resolveBrowserLocale([""])).toBeNull();

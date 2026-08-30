@@ -152,10 +152,19 @@ describe("the language switcher is reachable from every page", () => {
 		// The complaint that prompted this: the floating one pinned itself top
 		// left while every in-row copy sat at the right of its row, so the same
 		// control appeared in opposite corners depending on the page.
+		//
+		// "The same side" is now the end of the line rather than the right of
+		// the screen. This asserted `right-` while Urdu was the only language
+		// written right to left; with Arabic, Persian and Hebrew there too,
+		// pinning the physical side would put the floating copy at the start
+		// of the line for four languages while every in-row copy stayed at the
+		// end -- reintroducing exactly the inconsistency this test exists for.
 		const floatingClasses = /floating \? '([^']+)'/.exec(
 			components["./LanguageSwitcher.vue"],
 		)?.[1] as string;
-		expect(floatingClasses).toContain("right-");
-		expect(floatingClasses).not.toContain("left-");
+		expect(floatingClasses).toContain("end-");
+		expect(floatingClasses).not.toContain("start-");
+		// And not the physical properties, which do not follow `dir`.
+		expect(floatingClasses).not.toMatch(/\b(left|right)-/);
 	});
 });

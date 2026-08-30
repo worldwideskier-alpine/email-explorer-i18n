@@ -63,7 +63,7 @@ describe("the language the app opens in", () => {
 
 	// The deployment's own default, which is what a first visit got before.
 	it("falls back to Japanese when the browser asks for nothing it has", async () => {
-		expect(await openWith({ languages: ["he-IL", "ar"] })).toBe("ja");
+		expect(await openWith({ languages: ["sw-KE", "am"] })).toBe("ja");
 		expect(await openWith({ languages: [] })).toBe("ja");
 	});
 

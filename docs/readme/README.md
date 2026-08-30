@@ -58,6 +58,12 @@ A short summary of this fork in each language it supports. These are not full tr
 - [Türkçe](tr.md) (`tr`)
 - [Українська](uk.md) (`uk`)
 
+## 西アジア・中東
+
+- [العربية](ar.md) (`ar`)
+- [فارسی](fa.md) (`fa`)
+- [עברית](he.md) (`he`)
+
 ## 南アジア
 
 - [বাংলা](bn.md) (`bn`)

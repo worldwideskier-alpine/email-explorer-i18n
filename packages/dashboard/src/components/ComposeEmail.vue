@@ -117,7 +117,7 @@
               multiple
               :disabled="isLoading || isReadingAttachments"
               @change="onAttachmentsChosen"
-              class="block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-gray-800 dark:file:bg-gray-200 file:text-white dark:file:text-gray-900 file:font-medium file:cursor-pointer disabled:opacity-60"
+              class="block w-full text-sm text-gray-700 dark:text-gray-300 file:me-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-gray-800 dark:file:bg-gray-200 file:text-white dark:file:text-gray-900 file:font-medium file:cursor-pointer disabled:opacity-60"
             />
             <ul v-if="attachments.length" class="mt-3 divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
               <li v-for="att in attachments" :key="att.id" class="flex items-center justify-between gap-3 px-4 py-2">

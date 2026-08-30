@@ -110,7 +110,7 @@
            design: rotation is the only thing that removes an archive. -->
       <div class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
         <div class="flex items-center justify-between mb-2">
-          <div class="pr-4">
+          <div class="pe-4">
             <h2 class="text-lg font-medium text-gray-900 dark:text-white">{{ t("settings.autoBackupTitle") }}</h2>
             <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("settings.autoBackupDescription") }}</p>
           </div>
@@ -196,7 +196,7 @@
             accept=".mbox,message/rfc822,application/mbox,text/plain"
             :disabled="restoring"
             @change="onRestoreFileChosen"
-            class="text-sm text-gray-700 dark:text-gray-300 file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-gray-800 dark:file:bg-gray-200 file:text-white dark:file:text-gray-900 file:font-medium file:cursor-pointer disabled:opacity-60"
+            class="text-sm text-gray-700 dark:text-gray-300 file:me-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-gray-800 dark:file:bg-gray-200 file:text-white dark:file:text-gray-900 file:font-medium file:cursor-pointer disabled:opacity-60"
           />
           <button
             type="button"
@@ -219,7 +219,7 @@
         <h2 class="text-lg font-medium text-red-700 dark:text-red-400 mb-4">{{ t("settings.dangerZoneTitle") }}</h2>
 
         <div class="flex items-center justify-between mb-4">
-          <div class="pr-4">
+          <div class="pe-4">
             <h3 class="text-base font-medium text-gray-900 dark:text-white">{{ t("settings.deletionLockTitle") }}</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("settings.deletionLockDescription") }}</p>
           </div>

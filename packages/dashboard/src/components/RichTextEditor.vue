@@ -3,7 +3,7 @@
     <!-- Toolbar -->
     <div v-if="editor" class="toolbar bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 p-2 flex flex-wrap gap-1 flex-shrink-0">
       <!-- Text Formatting -->
-      <div class="flex gap-1 border-r border-gray-300 dark:border-gray-600 pr-2">
+      <div class="flex gap-1 border-e border-gray-300 dark:border-gray-600 pe-2">
         <button
           type="button"
           @click="editor.chain().focus().toggleBold().run()"
@@ -52,7 +52,7 @@
       </div>
 
       <!-- Headings -->
-      <div class="flex gap-1 border-r border-gray-300 dark:border-gray-600 pr-2">
+      <div class="flex gap-1 border-e border-gray-300 dark:border-gray-600 pe-2">
         <button
           type="button"
           @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
@@ -83,7 +83,7 @@
       </div>
 
       <!-- Lists -->
-      <div class="flex gap-1 border-r border-gray-300 dark:border-gray-600 pr-2">
+      <div class="flex gap-1 border-e border-gray-300 dark:border-gray-600 pe-2">
         <button
           type="button"
           @click="editor.chain().focus().toggleBulletList().run()"
@@ -109,7 +109,7 @@
       </div>
 
       <!-- Text Alignment -->
-      <div class="flex gap-1 border-r border-gray-300 dark:border-gray-600 pr-2">
+      <div class="flex gap-1 border-e border-gray-300 dark:border-gray-600 pe-2">
         <button
           type="button"
           @click="editor.chain().focus().setTextAlign('left').run()"
@@ -157,7 +157,7 @@
       </div>
 
       <!-- Blockquote & Code -->
-      <div class="flex gap-1 border-r border-gray-300 dark:border-gray-600 pr-2">
+      <div class="flex gap-1 border-e border-gray-300 dark:border-gray-600 pe-2">
         <button
           type="button"
           @click="editor.chain().focus().toggleBlockquote().run()"
@@ -194,7 +194,7 @@
       </div>
 
       <!-- Link & Horizontal Rule -->
-      <div class="flex gap-1 border-r border-gray-300 dark:border-gray-600 pr-2">
+      <div class="flex gap-1 border-e border-gray-300 dark:border-gray-600 pe-2">
         <button
           type="button"
           @click="setLink"
@@ -230,7 +230,7 @@
       </div>
 
       <!-- Text Color & Highlight -->
-      <div class="flex gap-1 border-r border-gray-300 dark:border-gray-600 pr-2">
+      <div class="flex gap-1 border-e border-gray-300 dark:border-gray-600 pe-2">
         <div class="relative">
           <button
             type="button"
@@ -242,7 +242,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
             </svg>
           </button>
-          <div v-if="showTextColorPicker" class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg z-10 grid grid-cols-5 gap-1">
+          <div v-if="showTextColorPicker" class="absolute top-full start-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg z-10 grid grid-cols-5 gap-1">
             <button
               v-for="color in textColors"
               :key="color"
@@ -265,7 +265,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
             </svg>
           </button>
-          <div v-if="showHighlightPicker" class="absolute top-full left-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg z-10 grid grid-cols-5 gap-1">
+          <div v-if="showHighlightPicker" class="absolute top-full start-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg z-10 grid grid-cols-5 gap-1">
             <button
               v-for="color in highlightColors"
               :key="color"

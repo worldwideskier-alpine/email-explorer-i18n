@@ -11,6 +11,19 @@
  * Switzerland, and Norwegian is carried as both written standards for the same
  * reason Chinese is carried as two, not because Norway is a special case.
  *
+ * West Asia is drawn as the national and official languages of the region's
+ * states that are *not* already in Europe above -- Council of Europe
+ * membership puts Armenia, Azerbaijan, Georgia, Turkey and Cyprus there, and
+ * moving them now would break the one line Europe is drawn on. What remains
+ * is Arabic, Hebrew and Persian. Persian is here rather than in South Asia
+ * because Iran belongs to this group by every reading except the UN's
+ * statistical one, and South Asia here is the subcontinent.
+ *
+ * Kurdish is the arguable omission: it is an official language of Iraq
+ * alongside Arabic, so the line above admits it. It is left out for now
+ * because it was not in what was agreed, not because the principle excludes
+ * it.
+ *
  * This list is what the picker offers, so an entry goes in with its catalogue
  * and not before: offering a language that falls straight back to English is
  * worse than not offering it. messages.test.ts holds the two together.
@@ -33,7 +46,12 @@
  * of them up front would dwarf everything else a first visit downloads.
  */
 
-export type Region = "eastAsia" | "europe" | "southAsia" | "southeastAsia";
+export type Region =
+	| "eastAsia"
+	| "europe"
+	| "westAsia"
+	| "southAsia"
+	| "southeastAsia";
 
 export interface LocaleEntry {
 	code: string;
@@ -94,6 +112,10 @@ export const LOCALES = [
 	{ code: "tr", label: "Türkçe", region: "europe" },
 	{ code: "uk", label: "Українська", region: "europe" },
 
+	{ code: "ar", label: "العربية", region: "westAsia", dir: "rtl" },
+	{ code: "fa", label: "فارسی", region: "westAsia", dir: "rtl" },
+	{ code: "he", label: "עברית", region: "westAsia", dir: "rtl" },
+
 	{ code: "bn", label: "বাংলা", region: "southAsia" },
 	{ code: "gu", label: "ગુજરાતી", region: "southAsia" },
 	{ code: "hi", label: "हिन्दी", region: "southAsia" },
@@ -124,6 +146,7 @@ export type Locale = (typeof LOCALES)[number]["code"];
 export const REGION_ORDER: Region[] = [
 	"eastAsia",
 	"europe",
+	"westAsia",
 	"southAsia",
 	"southeastAsia",
 ];
