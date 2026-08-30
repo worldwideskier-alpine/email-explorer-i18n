@@ -113,7 +113,7 @@ describe("buildPasswordResetEmail", () => {
 });
 
 describe("buildEmailChangeEmail", () => {
-	it("writes the three languages it has", () => {
+	it("writes the subject in the requested language", () => {
 		expect(buildEmailChangeEmail("ja", LINK).subject).toBe(
 			"メールアドレス変更の確認",
 		);
@@ -123,22 +123,53 @@ describe("buildEmailChangeEmail", () => {
 		expect(buildEmailChangeEmail("de", LINK).subject).toBe(
 			"Neue E-Mail-Adresse bestätigen",
 		);
+		expect(buildEmailChangeEmail("ru", LINK).subject).toBe(
+			"Подтвердите новый адрес",
+		);
+		expect(buildEmailChangeEmail("th", LINK).subject).toBe(
+			"ยืนยันอีเมลใหม่ของคุณ",
+		);
 	});
 
-	// This table covers fewer languages than the picker. A locale it does not
-	// have must read as Japanese -- never as an empty body or a crash.
-	it("falls back to Japanese for a locale it does not carry yet", () => {
-		for (const locale of MAIL_LOCALES) {
+	it("has its own wording for every locale the picker offers", () => {
+		const ja = buildEmailChangeEmail("ja", LINK);
+		const untranslated = MAIL_LOCALES.filter(
+			(locale) =>
+				locale !== "ja" && buildEmailChangeEmail(locale, LINK).subject === ja.subject,
+		);
+		expect(untranslated).toEqual([]);
+	});
+
+	it("carries the confirmation link in every language, in both bodies", () => {
+		for (const locale of [...MAIL_LOCALES, undefined]) {
 			const mail = buildEmailChangeEmail(locale, LINK);
 			expect(mail.subject).not.toBe("");
 			expect(mail.html).toContain(LINK);
 			expect(mail.text).toContain(LINK);
 		}
-		expect(buildEmailChangeEmail("ru", LINK).subject).toBe(
-			"メールアドレス変更の確認",
-		);
+	});
+
+	it("tags the HTML with the matching lang attribute", () => {
 		expect(buildEmailChangeEmail("ru", LINK).html).toContain(
+			'<html lang="ru" dir="ltr">',
+		);
+		expect(buildEmailChangeEmail("ur", LINK).html).toContain(
+			'<html lang="ur" dir="rtl">',
+		);
+		expect(buildEmailChangeEmail(undefined, LINK).html).toContain(
 			'<html lang="ja" dir="ltr">',
 		);
+	});
+
+	// The two mails say the same thing about copying the link and about the
+	// hour, so EMAIL_CHANGE takes those from PASSWORD_RESET rather than
+	// repeating them. This is the check that the sharing actually happened.
+	it("shares the copy prompt and expiry wording with the reset mail", () => {
+		for (const locale of MAIL_LOCALES) {
+			const reset = buildPasswordResetEmail(locale, LINK);
+			const change = buildEmailChangeEmail(locale, LINK);
+			const expiry = reset.text.split("\n\n")[3];
+			expect(change.text).toContain(expiry);
+		}
 	});
 });

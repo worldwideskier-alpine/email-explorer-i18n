@@ -72,9 +72,9 @@ const ChangePasswordRequestSchema = z.object({
 const ChangeEmailRequestSchema = z.object({
 	currentPassword: z.string(),
 	newEmail: z.string().email(),
-	// Which language to write the confirmation mail in; see MAIL_LOCALES. The
-	// confirmation wording itself is still ja/en/de, so most of these accept
-	// the request and send the Japanese text rather than refusing it.
+	// Which language to write the confirmation mail in; see MAIL_LOCALES. As
+	// with the reset mail, a code missing from that list is rejected here with
+	// a 400 rather than falling back, so the list has to match the picker.
 	locale: z.enum(MAIL_LOCALES).optional(),
 });
 
