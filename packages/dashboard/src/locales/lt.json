@@ -289,6 +289,22 @@
 			"revokeConfirm": "Atšaukti naudotojo {email} prieigą prie {mailboxId}?",
 			"failedToGrant": "Nepavyko suteikti prieigos",
 			"failedToRevoke": "Nepavyko atšaukti prieigos"
+		},
+		"resend": {
+			"title": "Siunčiamo pašto API raktas",
+			"description": "Siunčiamas paštas eina per Resend. Čia nustatytą raktą galima pakeisti be GitHub ir be naujo diegimo.",
+			"statusLabel": "Naudojamas raktas",
+			"sourceStored": "Nustatytas šiame ekrane",
+			"sourceEnvironment": "Iš diegimo",
+			"sourceNone": "Nenustatytas (siųsti negalima)",
+			"placeholder": "Įveskite naują raktą, kad pakeistumėte",
+			"submit": "Įrašyti",
+			"remove": "Pašalinti",
+			"confirmRemove": "Pašalinti įrašytą raktą? Jei liko diegimo raktas, bus naudojamas jis.",
+			"saved": "Įrašyta.",
+			"removed": "Pašalinta.",
+			"failed": "Nepavyko įrašyti.",
+			"storageNote": "Raktas laikomas R2, kur jį gali perskaityti kiekvienas, turintis Cloudflare paskyrą. Į šį ekraną jis niekada negrąžinamas."
 		}
 	},
 	"compose": {

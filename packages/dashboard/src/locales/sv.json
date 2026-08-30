@@ -289,6 +289,22 @@
 			"revokeConfirm": "Återkalla åtkomsten till {mailboxId} för {email}?",
 			"failedToGrant": "Åtkomsten kunde inte ges",
 			"failedToRevoke": "Åtkomsten kunde inte återkallas"
+		},
+		"resend": {
+			"title": "API-nyckel för utgående post",
+			"description": "Utgående post går via Resend. En nyckel som sätts här byts utan GitHub och utan ny driftsättning.",
+			"statusLabel": "Nyckel i bruk",
+			"sourceStored": "Satt på den här skärmen",
+			"sourceEnvironment": "Från driftsättningen",
+			"sourceNone": "Inte satt (det går inte att skicka)",
+			"placeholder": "Ange en ny nyckel för att ersätta den",
+			"submit": "Spara",
+			"remove": "Ta bort",
+			"confirmRemove": "Ta bort den sparade nyckeln? Finns det ännu en från driftsättningen tar den över.",
+			"saved": "Sparad.",
+			"removed": "Borttagen.",
+			"failed": "Det gick inte att spara.",
+			"storageNote": "Nyckeln lagras i R2, där alla med Cloudflare-kontot kan läsa den. Den skickas aldrig tillbaka till den här skärmen."
 		}
 	},
 	"compose": {

@@ -289,6 +289,22 @@
 			"revokeConfirm": "Oduzeti korisniku {email} pristup sandučiću {mailboxId}?",
 			"failedToGrant": "Pristup nije bilo moguće dodijeliti",
 			"failedToRevoke": "Pristup nije bilo moguće oduzeti"
+		},
+		"resend": {
+			"title": "API ključ za odlaznu poštu",
+			"description": "Odlazna pošta ide kroz Resend. Ključ postavljen ovdje mijenja se bez GitHuba i bez ponovnog postavljanja.",
+			"statusLabel": "Ključ u upotrebi",
+			"sourceStored": "Postavljen na ovom zaslonu",
+			"sourceEnvironment": "Iz postavke pri postavljanju",
+			"sourceNone": "Nije postavljen (slanje nije moguće)",
+			"placeholder": "Unesite novi ključ da ga zamijenite",
+			"submit": "Spremi",
+			"remove": "Ukloni",
+			"confirmRemove": "Ukloniti spremljeni ključ? Ako je ostao ključ iz postavljanja, koristit će se on.",
+			"saved": "Spremljeno.",
+			"removed": "Uklonjeno.",
+			"failed": "Spremanje nije uspjelo.",
+			"storageNote": "Ključ se sprema u R2, gdje ga može pročitati svatko tko ima Cloudflare račun. Nikada se ne vraća na ovaj zaslon."
 		}
 	},
 	"compose": {

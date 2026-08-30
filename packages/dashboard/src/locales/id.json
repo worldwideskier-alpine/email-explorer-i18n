@@ -289,6 +289,22 @@
 			"revokeConfirm": "Cabut akses {email} ke {mailboxId}?",
 			"failedToGrant": "Akses gagal diberikan",
 			"failedToRevoke": "Akses gagal dicabut"
+		},
+		"resend": {
+			"title": "Kunci API surat keluar",
+			"description": "Surat keluar melewati Resend. Kunci yang disetel di sini dapat diganti tanpa GitHub dan tanpa penerapan ulang.",
+			"statusLabel": "Kunci yang dipakai",
+			"sourceStored": "Disetel di layar ini",
+			"sourceEnvironment": "Dari penerapan",
+			"sourceNone": "Belum disetel (tidak bisa mengirim)",
+			"placeholder": "Masukkan kunci baru untuk menggantinya",
+			"submit": "Simpan",
+			"remove": "Hapus",
+			"confirmRemove": "Hapus kunci tersimpan? Jika masih ada kunci dari penerapan, kunci itu yang dipakai.",
+			"saved": "Tersimpan.",
+			"removed": "Dihapus.",
+			"failed": "Tidak dapat disimpan.",
+			"storageNote": "Kunci disimpan di R2, tempat siapa pun yang memegang akun Cloudflare dapat membacanya. Kunci tidak pernah dikembalikan ke layar ini."
 		}
 	},
 	"compose": {

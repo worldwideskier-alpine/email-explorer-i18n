@@ -231,6 +231,11 @@ export default {
 		apiClient.get(`/api/v1/mailboxes/${mailboxId}/search`, { params }),
 
 	// Admin
+	// The key is never returned by either of these; the response says only
+	// whether one is set and which of the two sources it came from.
+	adminGetResendSettings: () => apiClient.get("/api/v1/admin/settings/resend"),
+	adminSetResendApiKey: (apiKey: string) =>
+		apiClient.put("/api/v1/admin/settings/resend", { apiKey }),
 	adminRegisterUser: (email: string, password: string) =>
 		apiClient.post("/api/v1/auth/admin/register", { email, password }),
 	adminListUsers: () => apiClient.get("/api/v1/auth/admin/users"),

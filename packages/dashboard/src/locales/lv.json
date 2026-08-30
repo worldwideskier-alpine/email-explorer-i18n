@@ -289,6 +289,22 @@
 			"revokeConfirm": "Vai atsaukt lietotāja {email} piekļuvi pastkastei {mailboxId}?",
 			"failedToGrant": "Piekļuvi neizdevās piešķirt",
 			"failedToRevoke": "Piekļuvi neizdevās atsaukt"
+		},
+		"resend": {
+			"title": "Izejošā pasta API atslēga",
+			"description": "Izejošais pasts iet caur Resend. Šeit iestatītu atslēgu var nomainīt bez GitHub un bez atkārtotas izvietošanas.",
+			"statusLabel": "Lietotā atslēga",
+			"sourceStored": "Iestatīta šajā ekrānā",
+			"sourceEnvironment": "No izvietojuma",
+			"sourceNone": "Nav iestatīta (nosūtīt nevar)",
+			"placeholder": "Ievadiet jaunu atslēgu, lai to aizstātu",
+			"submit": "Saglabāt",
+			"remove": "Noņemt",
+			"confirmRemove": "Vai noņemt saglabāto atslēgu? Ja izvietojuma atslēga vēl ir, tiks lietota tā.",
+			"saved": "Saglabāta.",
+			"removed": "Noņemta.",
+			"failed": "Neizdevās saglabāt.",
+			"storageNote": "Atslēga tiek glabāta R2, kur to var izlasīt ikviens, kam ir Cloudflare konts. Šajā ekrānā tā nekad netiek atgriezta."
 		}
 	},
 	"compose": {

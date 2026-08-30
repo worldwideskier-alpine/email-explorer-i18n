@@ -289,6 +289,22 @@
 			"revokeConfirm": "Voleu revocar l'accés a {mailboxId} per a {email}?",
 			"failedToGrant": "No s'ha pogut concedir l'accés",
 			"failedToRevoke": "No s'ha pogut revocar l'accés"
+		},
+		"resend": {
+			"title": "Clau d'API del correu de sortida",
+			"description": "El correu de sortida passa per Resend. Definir la clau aquí permet canviar-la sense GitHub i sense tornar a desplegar.",
+			"statusLabel": "Clau en ús",
+			"sourceStored": "Definida en aquesta pantalla",
+			"sourceEnvironment": "Del desplegament",
+			"sourceNone": "Sense definir (no es pot enviar)",
+			"placeholder": "Introduïu una clau nova per substituir-la",
+			"submit": "Desa",
+			"remove": "Elimina",
+			"confirmRemove": "Voleu eliminar la clau desada? Si el desplegament encara en té una, s'usarà aquella.",
+			"saved": "Desada.",
+			"removed": "Eliminada.",
+			"failed": "No s'ha pogut desar.",
+			"storageNote": "La clau es desa a R2, on pot llegir-la qui tingui el compte de Cloudflare. Mai es retorna a aquesta pantalla."
 		}
 	},
 	"compose": {

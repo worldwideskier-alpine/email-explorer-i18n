@@ -289,6 +289,22 @@
 			"revokeConfirm": "Toegang tot {mailboxId} voor {email} intrekken?",
 			"failedToGrant": "De toegang kon niet worden verleend",
 			"failedToRevoke": "De toegang kon niet worden ingetrokken"
+		},
+		"resend": {
+			"title": "API-sleutel voor uitgaande post",
+			"description": "Uitgaande post loopt via Resend. Een hier ingestelde sleutel wissel je zonder GitHub en zonder opnieuw uitrollen.",
+			"statusLabel": "Sleutel in gebruik",
+			"sourceStored": "Ingesteld op dit scherm",
+			"sourceEnvironment": "Uit de uitrol",
+			"sourceNone": "Niet ingesteld (er kan niets verzonden worden)",
+			"placeholder": "Voer een nieuwe sleutel in om hem te vervangen",
+			"submit": "Opslaan",
+			"remove": "Verwijderen",
+			"confirmRemove": "De opgeslagen sleutel verwijderen? Is er nog een uit de uitrol, dan neemt die het over.",
+			"saved": "Opgeslagen.",
+			"removed": "Verwijderd.",
+			"failed": "Opslaan is niet gelukt.",
+			"storageNote": "De sleutel staat in R2, waar iedereen met het Cloudflare-account hem kan lezen. Hij wordt nooit naar dit scherm teruggestuurd."
 		}
 	},
 	"compose": {

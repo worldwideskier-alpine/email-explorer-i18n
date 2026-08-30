@@ -1,3 +1,4 @@
+import { getResendApiKey } from "./app-settings";
 import type { Env } from "./types";
 
 interface ResendAttachment {
@@ -29,10 +30,20 @@ export async function sendEmail(
 		headers.References = params.references.map((id) => `<${id}>`).join(" ");
 	}
 
+	// Resolved per send rather than captured once: an administrator can change
+	// the key on the admin screen, and the next message has to use the new one
+	// without a redeploy.
+	const apiKey = await getResendApiKey(env);
+	if (!apiKey) {
+		throw new Error(
+			"No Resend API key is configured. Set one on the admin screen.",
+		);
+	}
+
 	const res = await fetch("https://api.resend.com/emails", {
 		method: "POST",
 		headers: {
-			Authorization: `Bearer ${env.RESEND_API_KEY}`,
+			Authorization: `Bearer ${apiKey}`,
 			"Content-Type": "application/json",
 		},
 		body: JSON.stringify({

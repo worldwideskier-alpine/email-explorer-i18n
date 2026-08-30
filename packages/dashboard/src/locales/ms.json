@@ -289,6 +289,22 @@
 			"revokeConfirm": "Tarik balik akses {email} kepada {mailboxId}?",
 			"failedToGrant": "Akses gagal diberikan",
 			"failedToRevoke": "Akses gagal ditarik balik"
+		},
+		"resend": {
+			"title": "Kunci API mel keluar",
+			"description": "Mel keluar melalui Resend. Kunci yang ditetapkan di sini boleh ditukar tanpa GitHub dan tanpa penggunaan semula.",
+			"statusLabel": "Kunci yang digunakan",
+			"sourceStored": "Ditetapkan pada skrin ini",
+			"sourceEnvironment": "Daripada penggunaan",
+			"sourceNone": "Belum ditetapkan (tidak boleh menghantar)",
+			"placeholder": "Masukkan kunci baharu untuk menggantikannya",
+			"submit": "Simpan",
+			"remove": "Buang",
+			"confirmRemove": "Buang kunci tersimpan? Jika masih ada kunci daripada penggunaan, itu yang akan dipakai.",
+			"saved": "Disimpan.",
+			"removed": "Dibuang.",
+			"failed": "Tidak dapat disimpan.",
+			"storageNote": "Kunci disimpan dalam R2, di mana sesiapa yang memegang akaun Cloudflare boleh membacanya. Ia tidak pernah dikembalikan ke skrin ini."
 		}
 	},
 	"compose": {

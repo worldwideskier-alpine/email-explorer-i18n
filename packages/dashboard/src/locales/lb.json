@@ -289,6 +289,22 @@
 			"revokeConfirm": "Soll {email} den Zougrëff op {mailboxId} verléieren?",
 			"failedToGrant": "Den Zougrëff konnt net ginn ginn",
 			"failedToRevoke": "Den Zougrëff konnt net entzunn ginn"
+		},
+		"resend": {
+			"title": "API-Schlëssel fir erausginnende Post",
+			"description": "Erausginnende Post leeft iwwer Resend. E Schlëssel deen hei gesat gëtt, kann ouni GitHub an ouni nei Verëffentlechung gewiesselt ginn.",
+			"statusLabel": "Benotzte Schlëssel",
+			"sourceStored": "Op dësem Écran gesat",
+			"sourceEnvironment": "Aus der Verëffentlechung",
+			"sourceNone": "Net gesat (et kann näischt geschéckt ginn)",
+			"placeholder": "Gitt en neie Schlëssel an fir en z'ersetzen",
+			"submit": "Späicheren",
+			"remove": "Ewechhuelen",
+			"confirmRemove": "De gespäicherte Schlëssel ewechhuelen? Wann nach ee vun der Verëffentlechung do ass, iwwerhëlt deen.",
+			"saved": "Gespäichert.",
+			"removed": "Ewechgeholl.",
+			"failed": "Konnt net gespäichert ginn.",
+			"storageNote": "De Schlëssel gëtt an R2 gespäichert, wou en all Persoun mam Cloudflare-Kont liese kann. Op dësen Écran gëtt en ni zréckginn."
 		}
 	},
 	"compose": {

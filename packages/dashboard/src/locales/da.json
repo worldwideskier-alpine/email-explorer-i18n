@@ -289,6 +289,22 @@
 			"revokeConfirm": "Tilbagekalde adgangen til {mailboxId} for {email}?",
 			"failedToGrant": "Adgangen kunne ikke gives",
 			"failedToRevoke": "Adgangen kunne ikke tilbagekaldes"
+		},
+		"resend": {
+			"title": "API-nøgle til udgående post",
+			"description": "Udgående post går gennem Resend. En nøgle sat her kan udskiftes uden GitHub og uden ny udrulning.",
+			"statusLabel": "Nøgle i brug",
+			"sourceStored": "Sat på denne skærm",
+			"sourceEnvironment": "Fra udrulningen",
+			"sourceNone": "Ikke sat (der kan ikke sendes)",
+			"placeholder": "Indtast en ny nøgle for at erstatte den",
+			"submit": "Gem",
+			"remove": "Fjern",
+			"confirmRemove": "Fjern den gemte nøgle? Er der stadig en fra udrulningen, bruges den.",
+			"saved": "Gemt.",
+			"removed": "Fjernet.",
+			"failed": "Kunne ikke gemmes.",
+			"storageNote": "Nøglen gemmes i R2, hvor enhver med Cloudflare-kontoen kan læse den. Den returneres aldrig til denne skærm."
 		}
 	},
 	"compose": {

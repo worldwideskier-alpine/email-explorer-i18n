@@ -66,11 +66,11 @@ jobs:
         run: npx wrangler r2 bucket create email-explorer-ja || true
       - name: Deploy Worker
         run: pnpm run deploy-dev-worker
-      - name: Set RESEND_API_KEY secret
-        working-directory: packages/worker/dev
-        run: printf '%s' "$RESEND_API_KEY" | npx wrangler secret put RESEND_API_KEY
-        env:
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      # RESEND_API_KEY is no longer pushed from here. It is set on the admin
+      # screen instead, so rotating it does not mean editing a GitHub secret
+      # and redeploying. Any Worker secret of that name already on the
+      # deployment stays and is still used as a fallback, so removing this
+      # step does not interrupt outbound mail; see app-settings.ts.
       - name: Set VAPID_PRIVATE_KEY secret
         working-directory: packages/worker/dev
         run: printf '%s' "$VAPID_PRIVATE_KEY" | npx wrangler secret put VAPID_PRIVATE_KEY

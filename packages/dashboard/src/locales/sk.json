@@ -289,6 +289,22 @@
 			"revokeConfirm": "Odobrať používateľovi {email} prístup k schránke {mailboxId}?",
 			"failedToGrant": "Prístup sa nepodarilo udeliť",
 			"failedToRevoke": "Prístup sa nepodarilo odobrať"
+		},
+		"resend": {
+			"title": "Kľúč API pre odchádzajúcu poštu",
+			"description": "Odchádzajúca pošta ide cez Resend. Kľúč nastavený tu sa vymení bez GitHubu a bez nového nasadenia.",
+			"statusLabel": "Používaný kľúč",
+			"sourceStored": "Nastavený na tejto obrazovke",
+			"sourceEnvironment": "Z nasadenia",
+			"sourceNone": "Nenastavený (nedá sa odosielať)",
+			"placeholder": "Zadajte nový kľúč a nahradíte ho",
+			"submit": "Uložiť",
+			"remove": "Odstrániť",
+			"confirmRemove": "Odstrániť uložený kľúč? Ak zostal kľúč z nasadenia, použije sa ten.",
+			"saved": "Uložené.",
+			"removed": "Odstránené.",
+			"failed": "Uloženie sa nepodarilo.",
+			"storageNote": "Kľúč sa ukladá do R2, kde si ho môže prečítať ktokoľvek s účtom Cloudflare. Na túto obrazovku sa nikdy nevracia."
 		}
 	},
 	"compose": {

@@ -289,6 +289,22 @@
 			"revokeConfirm": "{email} üçün {mailboxId} girişi götürülsün?",
 			"failedToGrant": "Giriş verilə bilmədi",
 			"failedToRevoke": "Giriş götürülə bilmədi"
+		},
+		"resend": {
+			"title": "Göndərilən poçt API açarı",
+			"description": "Göndərilən poçt Resend üzərindən keçir. Açarı burada təyin etmək onu GitHub və yenidən yerləşdirmə olmadan dəyişməyə imkan verir.",
+			"statusLabel": "İstifadədəki açar",
+			"sourceStored": "Bu ekranda təyin edilib",
+			"sourceEnvironment": "Yerləşdirmə parametrindən",
+			"sourceNone": "Təyin edilməyib (göndərmək olmur)",
+			"placeholder": "Əvəz etmək üçün yeni açar daxil edin",
+			"submit": "Saxla",
+			"remove": "Sil",
+			"confirmRemove": "Saxlanmış açar silinsin? Yerləşdirmə açarı qalıbsa, o işə düşəcək.",
+			"saved": "Saxlanıldı.",
+			"removed": "Silindi.",
+			"failed": "Saxlamaq mümkün olmadı.",
+			"storageNote": "Açar R2-də saxlanılır və Cloudflare hesabı olan hər kəs onu oxuya bilər. Bu ekrana heç vaxt qaytarılmır."
 		}
 	},
 	"compose": {

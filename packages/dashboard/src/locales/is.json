@@ -289,6 +289,22 @@
 			"revokeConfirm": "Á að afturkalla aðgang {email} að {mailboxId}?",
 			"failedToGrant": "Ekki tókst að veita aðgang",
 			"failedToRevoke": "Ekki tókst að afturkalla aðgang"
+		},
+		"resend": {
+			"title": "API-lykill fyrir póst út",
+			"description": "Póstur út fer í gegnum Resend. Lykil sem settur er hér má skipta út án GitHub og án nýrrar uppsetningar.",
+			"statusLabel": "Lykill í notkun",
+			"sourceStored": "Settur á þessum skjá",
+			"sourceEnvironment": "Úr uppsetningunni",
+			"sourceNone": "Ekki settur (ekki hægt að senda)",
+			"placeholder": "Sláðu inn nýjan lykil til að skipta út",
+			"submit": "Vista",
+			"remove": "Fjarlægja",
+			"confirmRemove": "Fjarlægja vistaða lykilinn? Sé lykill úr uppsetningunni enn til staðar tekur hann við.",
+			"saved": "Vistað.",
+			"removed": "Fjarlægt.",
+			"failed": "Ekki tókst að vista.",
+			"storageNote": "Lykillinn er geymdur í R2, þar sem hver sá sem hefur Cloudflare-reikninginn getur lesið hann. Honum er aldrei skilað á þennan skjá."
 		}
 	},
 	"compose": {

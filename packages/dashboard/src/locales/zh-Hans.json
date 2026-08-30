@@ -289,6 +289,22 @@
 			"revokeConfirm": "要撤销 {email} 对 {mailboxId} 的访问权限吗？",
 			"failedToGrant": "无法授予访问权限",
 			"failedToRevoke": "无法撤销访问权限"
+		},
+		"resend": {
+			"title": "发件 API 密钥",
+			"description": "对外发件经由 Resend。在此设置密钥，无需 GitHub 也无需重新部署即可更换。",
+			"statusLabel": "当前密钥",
+			"sourceStored": "已在此界面设置",
+			"sourceEnvironment": "正在使用部署时的设置",
+			"sourceNone": "未设置（无法发件）",
+			"placeholder": "输入新密钥即可替换",
+			"submit": "保存",
+			"remove": "删除",
+			"confirmRemove": "删除已保存的密钥？如果部署端仍有密钥，将改用那个。",
+			"saved": "已保存。",
+			"removed": "已删除。",
+			"failed": "保存失败。",
+			"storageNote": "密钥保存在 R2 中，持有 Cloudflare 账户的人可以读取。不会返回到此界面。"
 		}
 	},
 	"compose": {

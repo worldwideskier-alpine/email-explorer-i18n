@@ -289,6 +289,22 @@
 			"revokeConfirm": "לבטל את הגישה של {email} אל {mailboxId}?",
 			"failedToGrant": "מתן הגישה נכשל",
 			"failedToRevoke": "ביטול הגישה נכשל"
+		},
+		"resend": {
+			"title": "מפתח הממשק לדואר יוצא",
+			"description": "דואר יוצא עובר דרך Resend. הגדרת המפתח כאן מאפשרת להחליף אותו בלי GitHub ובלי פריסה מחדש.",
+			"statusLabel": "המפתח שבשימוש",
+			"sourceStored": "הוגדר במסך הזה",
+			"sourceEnvironment": "מהגדרת הפריסה",
+			"sourceNone": "לא הוגדר (אי אפשר לשלוח)",
+			"placeholder": "הזינו מפתח חדש כדי להחליף",
+			"submit": "שמירה",
+			"remove": "הסרה",
+			"confirmRemove": "להסיר את המפתח השמור? אם נותר מפתח בפריסה, הוא ייכנס לתפקיד.",
+			"saved": "נשמר.",
+			"removed": "הוסר.",
+			"failed": "השמירה נכשלה.",
+			"storageNote": "המפתח נשמר ב-R2, שם כל מי שמחזיק בחשבון Cloudflare יכול לקרוא אותו. הוא לעולם לא מוחזר למסך הזה."
 		}
 	},
 	"compose": {

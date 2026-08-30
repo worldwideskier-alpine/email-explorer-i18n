@@ -289,6 +289,22 @@
 			"revokeConfirm": "Revoke access to {mailboxId} for {email}?",
 			"failedToGrant": "Failed to grant access",
 			"failedToRevoke": "Failed to revoke access"
+		},
+		"resend": {
+			"title": "Outbound mail API key",
+			"description": "Outbound mail goes through Resend. Setting the key here lets you rotate it without GitHub and without a redeploy.",
+			"statusLabel": "Key in use",
+			"sourceStored": "Set on this screen",
+			"sourceEnvironment": "From the deployment",
+			"sourceNone": "Not set (mail cannot be sent)",
+			"placeholder": "Enter a new key to replace it",
+			"submit": "Save",
+			"remove": "Remove",
+			"confirmRemove": "Remove the stored key? If the deployment still has one, that takes over.",
+			"saved": "Saved.",
+			"removed": "Removed.",
+			"failed": "Could not save it.",
+			"storageNote": "The key is stored in R2, where anyone holding the Cloudflare account can read it. It is never returned to this screen."
 		}
 	},
 	"compose": {

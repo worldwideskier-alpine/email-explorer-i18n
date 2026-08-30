@@ -289,6 +289,22 @@
 			"revokeConfirm": "Revocare l'accesso a {mailboxId} per {email}?",
 			"failedToGrant": "Concessione dell'accesso non riuscita",
 			"failedToRevoke": "Revoca dell'accesso non riuscita"
+		},
+		"resend": {
+			"title": "Chiave API della posta in uscita",
+			"description": "La posta in uscita passa da Resend. Una chiave impostata qui si sostituisce senza GitHub e senza un nuovo deploy.",
+			"statusLabel": "Chiave in uso",
+			"sourceStored": "Impostata da questa schermata",
+			"sourceEnvironment": "Dal deploy",
+			"sourceNone": "Non impostata (non si può inviare)",
+			"placeholder": "Inserisci una nuova chiave per sostituirla",
+			"submit": "Salva",
+			"remove": "Rimuovi",
+			"confirmRemove": "Rimuovere la chiave salvata? Se ne resta una dal deploy, subentra quella.",
+			"saved": "Salvata.",
+			"removed": "Rimossa.",
+			"failed": "Non è stato possibile salvarla.",
+			"storageNote": "La chiave è conservata in R2, dove può leggerla chiunque disponga dell'account Cloudflare. Non viene mai restituita a questa schermata."
 		}
 	},
 	"compose": {

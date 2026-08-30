@@ -289,6 +289,22 @@
 			"revokeConfirm": "Thu hồi quyền truy cập {mailboxId} của {email}?",
 			"failedToGrant": "Không cấp được quyền truy cập",
 			"failedToRevoke": "Không thu hồi được quyền truy cập"
+		},
+		"resend": {
+			"title": "Khóa API thư gửi đi",
+			"description": "Thư gửi đi đi qua Resend. Đặt khóa ở đây cho phép thay khóa mà không cần GitHub và không cần triển khai lại.",
+			"statusLabel": "Khóa đang dùng",
+			"sourceStored": "Đặt tại màn hình này",
+			"sourceEnvironment": "Từ bản triển khai",
+			"sourceNone": "Chưa đặt (không gửi được)",
+			"placeholder": "Nhập khóa mới để thay thế",
+			"submit": "Lưu",
+			"remove": "Xóa",
+			"confirmRemove": "Xóa khóa đã lưu? Nếu bản triển khai vẫn còn khóa, khóa đó sẽ được dùng.",
+			"saved": "Đã lưu.",
+			"removed": "Đã xóa.",
+			"failed": "Không lưu được.",
+			"storageNote": "Khóa được lưu trong R2, nơi bất kỳ ai có tài khoản Cloudflare đều đọc được. Khóa không bao giờ được trả về màn hình này."
 		}
 	},
 	"compose": {

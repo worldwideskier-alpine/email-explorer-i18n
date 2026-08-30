@@ -289,6 +289,22 @@
 			"revokeConfirm": "Naj uporabniku {email} odvzamem dostop do {mailboxId}?",
 			"failedToGrant": "Dostopa ni bilo mogoče dodeliti",
 			"failedToRevoke": "Dostopa ni bilo mogoče odvzeti"
+		},
+		"resend": {
+			"title": "Ključ API za odhodno pošto",
+			"description": "Odhodna pošta gre prek Resenda. Ključ, nastavljen tukaj, se zamenja brez GitHuba in brez ponovne postavitve.",
+			"statusLabel": "Uporabljeni ključ",
+			"sourceStored": "Nastavljen na tem zaslonu",
+			"sourceEnvironment": "Iz postavitve",
+			"sourceNone": "Ni nastavljen (pošiljanje ni mogoče)",
+			"placeholder": "Za zamenjavo vnesite nov ključ",
+			"submit": "Shrani",
+			"remove": "Odstrani",
+			"confirmRemove": "Odstranim shranjeni ključ? Če je ostal ključ iz postavitve, bo uporabljen ta.",
+			"saved": "Shranjeno.",
+			"removed": "Odstranjeno.",
+			"failed": "Shranjevanje ni uspelo.",
+			"storageNote": "Ključ je shranjen v R2, kjer ga lahko prebere vsak, ki ima račun Cloudflare. Na ta zaslon se nikoli ne vrne."
 		}
 	},
 	"compose": {

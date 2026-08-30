@@ -289,6 +289,22 @@
 			"revokeConfirm": "Tneħħi l-aċċess ta' {email} għal {mailboxId}?",
 			"failedToGrant": "L-aċċess ma setax jingħata",
 			"failedToRevoke": "L-aċċess ma setax jitneħħa"
+		},
+		"resend": {
+			"title": "Ċavetta API tal-posta ħierġa",
+			"description": "Il-posta ħierġa tgħaddi minn Resend. Ċavetta mqiegħda hawn tinbidel mingħajr GitHub u mingħajr tqegħid mill-ġdid.",
+			"statusLabel": "Iċ-ċavetta li qed tintuża",
+			"sourceStored": "Imqiegħda f'din l-iskrin",
+			"sourceEnvironment": "Mit-tqegħid",
+			"sourceNone": "Mhux imqiegħda (ma jistax jintbagħat)",
+			"placeholder": "Daħħal ċavetta ġdida biex tibdilha",
+			"submit": "Issejvja",
+			"remove": "Neħħi",
+			"confirmRemove": "Tneħħi ċ-ċavetta ssejvjata? Jekk għad hemm waħda mit-tqegħid, dik tieħu postha.",
+			"saved": "Issejvjata.",
+			"removed": "Imneħħija.",
+			"failed": "Ma setgħetx tiġi ssejvjata.",
+			"storageNote": "Iċ-ċavetta tinżamm f'R2, fejn kull min għandu l-kont ta' Cloudflare jista' jaqraha. Qatt ma tintbagħat lura f'din l-iskrin."
 		}
 	},
 	"compose": {

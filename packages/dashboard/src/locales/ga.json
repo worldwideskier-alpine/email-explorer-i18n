@@ -289,6 +289,22 @@
 			"revokeConfirm": "An bhfuil rochtain {email} ar {mailboxId} le cúlghairm?",
 			"failedToGrant": "Níorbh fhéidir an rochtain a dheonú",
 			"failedToRevoke": "Níorbh fhéidir an rochtain a chúlghairm"
+		},
+		"resend": {
+			"title": "Eochair API don phost amach",
+			"description": "Téann post amach trí Resend. Is féidir eochair a shocraítear anseo a mhalartú gan GitHub agus gan imscaradh nua.",
+			"statusLabel": "An eochair atá in úsáid",
+			"sourceStored": "Socraithe ar an scáileán seo",
+			"sourceEnvironment": "Ón imscaradh",
+			"sourceNone": "Gan socrú (ní féidir seoladh)",
+			"placeholder": "Cuir eochair nua isteach chun í a athsholáthar",
+			"submit": "Sábháil",
+			"remove": "Bain",
+			"confirmRemove": "An eochair shábháilte a bhaint? Má tá ceann fágtha ón imscaradh, glacfaidh sé sin an áit.",
+			"saved": "Sábháilte.",
+			"removed": "Bainte.",
+			"failed": "Níorbh fhéidir í a shábháil.",
+			"storageNote": "Stóráiltear an eochair in R2, áit ar féidir le duine ar bith a bhfuil an cuntas Cloudflare aige í a léamh. Ní chuirtear ar ais chuig an scáileán seo riamh í."
 		}
 	},
 	"compose": {
