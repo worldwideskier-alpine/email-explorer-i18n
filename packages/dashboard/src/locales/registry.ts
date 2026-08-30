@@ -69,6 +69,15 @@ export const LOCALES = [
 	{ code: "ta", label: "தமிழ்", region: "southAsia" },
 	{ code: "te", label: "తెలుగు", region: "southAsia" },
 	{ code: "ur", label: "اردو", region: "southAsia", dir: "rtl" },
+
+	{ code: "fil", label: "Filipino", region: "southeastAsia" },
+	{ code: "id", label: "Bahasa Indonesia", region: "southeastAsia" },
+	{ code: "km", label: "ខ្មែរ", region: "southeastAsia" },
+	{ code: "lo", label: "ລາວ", region: "southeastAsia" },
+	{ code: "ms", label: "Bahasa Melayu", region: "southeastAsia" },
+	{ code: "my", label: "မြန်မာ", region: "southeastAsia" },
+	{ code: "th", label: "ไทย", region: "southeastAsia" },
+	{ code: "vi", label: "Tiếng Việt", region: "southeastAsia" },
 ] as const satisfies readonly LocaleEntry[];
 
 export type Locale = (typeof LOCALES)[number]["code"];
