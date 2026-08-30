@@ -140,6 +140,68 @@ export function localeEntry(code: Locale): LocaleEntry {
 	return BY_CODE.get(code) as LocaleEntry;
 }
 
+/**
+ * Tags a browser sends that do not simply lowercase into a code here.
+ *
+ * Chinese is the substantive one: the browser reports a place (`zh-CN`,
+ * `zh-TW`) while this list carries a script, so the country has to be read as
+ * the script that country writes. Everything else is an older or alternate
+ * spelling still in circulation -- `no` for Norwegian before bokmål and
+ * nynorsk were distinguished, `tl` for what is now `fil`, and `in`, which is
+ * what Java called Indonesian and what some runtimes still emit.
+ */
+const ALIASES: Record<string, Locale> = {
+	zh: "zh-Hans",
+	"zh-cn": "zh-Hans",
+	"zh-sg": "zh-Hans",
+	"zh-my": "zh-Hans",
+	"zh-hans": "zh-Hans",
+	"zh-tw": "zh-Hant",
+	"zh-hk": "zh-Hant",
+	"zh-mo": "zh-Hant",
+	"zh-hant": "zh-Hant",
+	"zh-yue": "yue",
+	no: "nb",
+	tl: "fil",
+	in: "id",
+};
+
+const BY_LOWER_CODE = new Map<string, Locale>(
+	LOCALES.map((entry) => [entry.code.toLowerCase(), entry.code as Locale]),
+);
+
+/**
+ * The best language this dashboard can offer for what a browser asks for, or
+ * null when it can offer none of them.
+ *
+ * Used only when nobody has chosen a language yet. A stored choice always
+ * wins: picking a language is a decision, and a browser's header must not
+ * overrule one somebody made.
+ *
+ * `navigator.languages` is in preference order and carries regions
+ * (`ja-JP`, `pt-BR`), so each candidate is tried whole first -- that is what
+ * separates `zh-TW` from `zh-CN` -- then as its base language. Trying every
+ * step for one candidate before moving to the next matters: someone whose
+ * list is `["zh-TW", "en"]` must get Traditional Chinese, not English.
+ */
+export function resolveBrowserLocale(
+	candidates: readonly string[] | undefined,
+): Locale | null {
+	for (const candidate of candidates ?? []) {
+		if (typeof candidate !== "string") continue;
+		const tag = candidate.trim().toLowerCase();
+		if (!tag) continue;
+
+		const whole = BY_LOWER_CODE.get(tag) ?? ALIASES[tag];
+		if (whole) return whole;
+
+		const base = tag.split("-")[0];
+		const stripped = BY_LOWER_CODE.get(base) ?? ALIASES[base];
+		if (stripped) return stripped;
+	}
+	return null;
+}
+
 export function localesByRegion(): {
 	region: Region;
 	locales: LocaleEntry[];

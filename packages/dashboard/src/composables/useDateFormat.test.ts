@@ -83,16 +83,33 @@ describe("useDateFormat", () => {
 		view.unmount();
 	});
 
-	// A list column is narrow. Today is a time; anything else is a date.
-	it("shows a time for today and a date for anything older", () => {
-		const now = new Date();
-		const view = mount(({ formatListDate }) =>
-			[formatListDate(now.toISOString()), "|", formatListDate(OLD)].join(""),
-		);
-		const [today, older] = view.text().split("|");
+	/**
+	 * The list carries the time too, for every row and not just today's.
+	 *
+	 * This is the correction of a real regression: the first version followed
+	 * the mail-client convention of showing only a date for anything older
+	 * than today, which took away information the column had shown before.
+	 * "Which of these arrived first" has to be answerable from the list.
+	 */
+	it("carries both the date and the time, however old the message", () => {
+		const older = new Date(OLD);
+		const view = mount(({ formatListDate }) => formatListDate(OLD));
+		const text = view.text();
 
-		expect(today).not.toContain(String(now.getFullYear()));
-		expect(older).toContain(String(new Date(OLD).getFullYear()).slice(-2));
+		// The day is there...
+		expect(text).toContain(String(older.getDate()));
+		// ...and so is the minute, which is what was being lost.
+		expect(text).toMatch(/\d{1,2}:\d{2}/);
+		expect(text).toContain(String(older.getMinutes()).padStart(2, "0"));
+		view.unmount();
+	});
+
+	it("does the same for a message that arrived today", () => {
+		const view = mount(({ formatListDate }) =>
+			formatListDate(new Date().toISOString()),
+		);
+		expect(view.text()).toMatch(/\d{1,2}:\d{2}/);
+		expect(view.text()).toContain(String(new Date().getFullYear()).slice(-2));
 		view.unmount();
 	});
 

@@ -1,5 +1,10 @@
 import { createI18n } from "vue-i18n";
-import { isLocale, type Locale, localeEntry } from "@/locales/registry";
+import {
+	isLocale,
+	type Locale,
+	localeEntry,
+	resolveBrowserLocale,
+} from "@/locales/registry";
 
 export type { Locale };
 
@@ -16,6 +21,22 @@ const catalogues = import.meta.glob<{ default: Record<string, unknown> }>(
 	"./locales/*.json",
 );
 
+/**
+ * Which language to open in.
+ *
+ * A stored choice wins over everything: someone who picked a language has
+ * decided, and no header overrules that. Only when there is none -- a first
+ * visit, a cleared browser, a private window -- is the browser's own list
+ * read, because on a first visit the alternative is showing Japanese to
+ * someone who cannot read it, with a picker they have to find first.
+ *
+ * The detected language is deliberately not written to storage. Nobody has
+ * chosen anything yet, so there is nothing to remember, and leaving it unset
+ * means the page keeps following the browser until someone does choose.
+ *
+ * DEFAULT remains the answer when the browser asks for a language this
+ * dashboard does not carry.
+ */
 function getInitialLocale(): Locale {
 	// localStorage throws in some privacy modes, and a missing preference is
 	// not worth failing to start over.
@@ -23,9 +44,16 @@ function getInitialLocale(): Locale {
 		const stored = localStorage.getItem(STORAGE_KEY);
 		if (isLocale(stored)) return stored;
 	} catch {
-		/* fall through to the default */
+		/* fall through to what the browser asks for */
 	}
-	return DEFAULT;
+
+	const asked =
+		typeof navigator === "undefined"
+			? null
+			: resolveBrowserLocale(
+					navigator.languages ?? [navigator.language].filter(Boolean),
+				);
+	return asked ?? DEFAULT;
 }
 
 export const i18n = createI18n({
