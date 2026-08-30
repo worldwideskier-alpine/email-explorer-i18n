@@ -289,6 +289,22 @@
 			"revokeConfirm": "Révoquer l'accès à {mailboxId} pour {email} ?",
 			"failedToGrant": "Échec de l'attribution de l'accès",
 			"failedToRevoke": "Échec de la révocation de l'accès"
+		},
+		"resend": {
+			"title": "Clé d'API du courrier sortant",
+			"description": "Le courrier sortant passe par Resend. Une clé définie ici se remplace sans GitHub et sans nouveau déploiement.",
+			"statusLabel": "Clé utilisée",
+			"sourceStored": "Définie sur cet écran",
+			"sourceEnvironment": "Issue du déploiement",
+			"sourceNone": "Non définie (aucun envoi possible)",
+			"placeholder": "Saisissez une nouvelle clé pour la remplacer",
+			"submit": "Enregistrer",
+			"remove": "Supprimer",
+			"confirmRemove": "Supprimer la clé enregistrée ? S'il reste une clé de déploiement, c'est elle qui prendra le relais.",
+			"saved": "Enregistrée.",
+			"removed": "Supprimée.",
+			"failed": "Enregistrement impossible.",
+			"storageNote": "La clé est stockée dans R2, où toute personne disposant du compte Cloudflare peut la lire. Elle n'est jamais renvoyée à cet écran."
 		}
 	},
 	"compose": {

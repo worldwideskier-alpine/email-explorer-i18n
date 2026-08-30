@@ -289,6 +289,22 @@
 			"revokeConfirm": "Perutaanko käyttäjän {email} käyttöoikeus kohteeseen {mailboxId}?",
 			"failedToGrant": "Käyttöoikeutta ei voitu myöntää",
 			"failedToRevoke": "Käyttöoikeutta ei voitu perua"
+		},
+		"resend": {
+			"title": "Lähtevän postin API-avain",
+			"description": "Lähtevä posti kulkee Resendin kautta. Tässä asetettu avain vaihdetaan ilman GitHubia ja ilman uutta julkaisua.",
+			"statusLabel": "Käytössä oleva avain",
+			"sourceStored": "Asetettu tällä näytöllä",
+			"sourceEnvironment": "Julkaisun asetuksesta",
+			"sourceNone": "Ei asetettu (lähettäminen ei onnistu)",
+			"placeholder": "Korvaa syöttämällä uusi avain",
+			"submit": "Tallenna",
+			"remove": "Poista",
+			"confirmRemove": "Poistetaanko tallennettu avain? Jos julkaisun avain on yhä olemassa, se otetaan käyttöön.",
+			"saved": "Tallennettu.",
+			"removed": "Poistettu.",
+			"failed": "Tallentaminen ei onnistunut.",
+			"storageNote": "Avain tallennetaan R2:een, jossa sen voi lukea kuka tahansa Cloudflare-tilin haltija. Sitä ei koskaan palauteta tälle näytölle."
 		}
 	},
 	"compose": {

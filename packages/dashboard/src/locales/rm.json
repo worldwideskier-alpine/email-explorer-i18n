@@ -289,6 +289,22 @@
 			"revokeConfirm": "Retrair l'access a {mailboxId} per {email}?",
 			"failedToGrant": "L'access n'ha betg pudì vegnir concedì",
 			"failedToRevoke": "L'access n'ha betg pudì vegnir retratg"
+		},
+		"resend": {
+			"title": "Clav API per la posta che va ora",
+			"description": "La posta che va ora passa tras Resend. Ina clav fixada qua po vegnir barattada senza GitHub e senza nova publicaziun.",
+			"statusLabel": "Clav en diever",
+			"sourceStored": "Fixada sin quest visur",
+			"sourceEnvironment": "Da la publicaziun",
+			"sourceNone": "Betg fixada (i na po betg vegnir tramess)",
+			"placeholder": "Endatai ina nova clav per la remplazzar",
+			"submit": "Memorisar",
+			"remove": "Allontanar",
+			"confirmRemove": "Allontanar la clav memorisada? Sche la publicaziun ha anc ina, vegn quella duvrada.",
+			"saved": "Memorisà.",
+			"removed": "Allontanà.",
+			"failed": "Betg reussì da memorisar.",
+			"storageNote": "La clav vegn memorisada en R2, nua che mintgin cun il conto Cloudflare la po leger. Ella na vegn mai returnada a quest visur."
 		}
 	},
 	"compose": {

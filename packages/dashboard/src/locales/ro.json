@@ -289,6 +289,22 @@
 			"revokeConfirm": "Retrageți accesul lui {email} la {mailboxId}?",
 			"failedToGrant": "Accesul nu a putut fi acordat",
 			"failedToRevoke": "Accesul nu a putut fi retras"
+		},
+		"resend": {
+			"title": "Cheia API pentru poșta trimisă",
+			"description": "Poșta trimisă trece prin Resend. O cheie setată aici se schimbă fără GitHub și fără o nouă implementare.",
+			"statusLabel": "Cheia folosită",
+			"sourceStored": "Setată pe acest ecran",
+			"sourceEnvironment": "Din implementare",
+			"sourceNone": "Nesetată (nu se poate trimite)",
+			"placeholder": "Introduceți o cheie nouă pentru a o înlocui",
+			"submit": "Salvează",
+			"remove": "Elimină",
+			"confirmRemove": "Eliminați cheia salvată? Dacă a rămas una din implementare, aceea va prelua rolul.",
+			"saved": "Salvată.",
+			"removed": "Eliminată.",
+			"failed": "Nu s-a putut salva.",
+			"storageNote": "Cheia se păstrează în R2, unde o poate citi oricine are contul Cloudflare. Nu este niciodată returnată acestui ecran."
 		}
 	},
 	"compose": {

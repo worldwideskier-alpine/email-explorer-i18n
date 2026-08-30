@@ -289,6 +289,22 @@
 			"revokeConfirm": "要撤銷 {email} 對 {mailboxId} 的存取權限嗎？",
 			"failedToGrant": "無法授予存取權限",
 			"failedToRevoke": "無法撤銷存取權限"
+		},
+		"resend": {
+			"title": "寄件 API 金鑰",
+			"description": "對外寄件經由 Resend。在此設定金鑰，不需 GitHub 也不需重新部署即可更換。",
+			"statusLabel": "目前金鑰",
+			"sourceStored": "已在此畫面設定",
+			"sourceEnvironment": "正在使用部署時的設定",
+			"sourceNone": "未設定（無法寄件）",
+			"placeholder": "輸入新金鑰即可替換",
+			"submit": "儲存",
+			"remove": "刪除",
+			"confirmRemove": "刪除已儲存的金鑰？若部署端仍有金鑰，將改用該金鑰。",
+			"saved": "已儲存。",
+			"removed": "已刪除。",
+			"failed": "儲存失敗。",
+			"storageNote": "金鑰儲存在 R2 中，持有 Cloudflare 帳戶的人可以讀取。不會回傳至此畫面。"
 		}
 	},
 	"compose": {

@@ -289,6 +289,22 @@
 			"revokeConfirm": "Vil du fjerne tilgangen til {mailboxId} for {email}?",
 			"failedToGrant": "Tilgangen kunne ikkje gjevast",
 			"failedToRevoke": "Tilgangen kunne ikkje fjernast"
+		},
+		"resend": {
+			"title": "API-nøkkel for utgåande post",
+			"description": "Utgåande post går via Resend. Ein nøkkel sett her blir bytt utan GitHub og utan ny utrulling.",
+			"statusLabel": "Nøkkel i bruk",
+			"sourceStored": "Sett på denne skjermen",
+			"sourceEnvironment": "Frå utrullinga",
+			"sourceNone": "Ikkje sett (det kan ikkje sendast)",
+			"placeholder": "Skriv inn ein ny nøkkel for å byte han ut",
+			"submit": "Lagre",
+			"remove": "Fjern",
+			"confirmRemove": "Fjerne den lagra nøkkelen? Finst det framleis ein frå utrullinga, tek den over.",
+			"saved": "Lagra.",
+			"removed": "Fjerna.",
+			"failed": "Kunne ikkje lagrast.",
+			"storageNote": "Nøkkelen blir lagra i R2, der alle med Cloudflare-kontoen kan lese han. Han blir aldri returnert til denne skjermen."
 		}
 	},
 	"compose": {

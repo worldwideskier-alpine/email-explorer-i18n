@@ -289,6 +289,22 @@
 			"revokeConfirm": "{email}의 {mailboxId} 접근 권한을 회수할까요?",
 			"failedToGrant": "접근 권한을 주지 못했습니다",
 			"failedToRevoke": "접근 권한을 회수하지 못했습니다"
+		},
+		"resend": {
+			"title": "발송 메일 API 키",
+			"description": "외부 발송은 Resend를 거칩니다. 여기서 키를 설정하면 GitHub나 재배포 없이 교체할 수 있습니다.",
+			"statusLabel": "현재 키",
+			"sourceStored": "이 화면에서 설정됨",
+			"sourceEnvironment": "배포 설정 사용 중",
+			"sourceNone": "미설정 (발송 불가)",
+			"placeholder": "새 키를 입력하면 교체됩니다",
+			"submit": "저장",
+			"remove": "삭제",
+			"confirmRemove": "저장된 키를 삭제할까요? 배포 쪽 키가 남아 있으면 그쪽으로 돌아갑니다.",
+			"saved": "저장했습니다.",
+			"removed": "삭제했습니다.",
+			"failed": "저장하지 못했습니다.",
+			"storageNote": "키는 R2에 저장되며 Cloudflare 계정을 가진 사람은 읽을 수 있습니다. 화면에는 반환하지 않습니다."
 		}
 	},
 	"compose": {

@@ -3,6 +3,7 @@ import { type Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import PostalMime from "postal-mime";
 import { z } from "zod";
+import { getResendKeySource, setResendApiKey } from "./app-settings";
 import { backupKeyPrefix } from "./auto-backup";
 import { runScheduledBackups } from "./backup-run";
 import { listBackups } from "./backup-writer";
@@ -1907,6 +1908,95 @@ class PostResetPassword extends OpenAPIRoute {
 	}
 }
 
+/**
+ * The Resend API key, for administrators.
+ *
+ * The key is never returned -- only whether one is set and where it came
+ * from. That is all the screen needs in order to be useful, and it means a
+ * stolen session cannot be turned into a stolen key.
+ *
+ * Deliberately not part of GET /api/v1/settings: that route is public (see
+ * PUBLIC_ROUTES), and whether outbound mail is configured is not something to
+ * tell someone who cannot sign in.
+ */
+class GetResendSettings extends OpenAPIRoute {
+	schema = {
+		summary: "Whether an outbound mail API key is configured (admin only)",
+		operationId: "getResendSettings",
+		tags: ["Admin"],
+		responses: {
+			"200": {
+				description: "Key status, never the key",
+				...contentJson(
+					z.object({ source: z.enum(["stored", "environment", "none"]) }),
+				),
+			},
+			"401": {
+				description: "Unauthorized",
+				...contentJson(ErrorResponseSchema),
+			},
+			"403": {
+				description: "Forbidden - Admin privileges required",
+				...contentJson(ErrorResponseSchema),
+			},
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = c.get("session");
+		if (!session) {
+			return c.json({ error: "Unauthorized" }, 401);
+		}
+		if (!session.isAdmin) {
+			return c.json({ error: "Admin privileges required" }, 403);
+		}
+		return c.json({ source: await getResendKeySource(c.env) });
+	}
+}
+
+class PutResendSettings extends OpenAPIRoute {
+	schema = {
+		summary: "Set or clear the outbound mail API key (admin only)",
+		operationId: "putResendSettings",
+		tags: ["Admin"],
+		request: {
+			body: contentJson(z.object({ apiKey: z.string() })),
+		},
+		responses: {
+			"200": {
+				description: "Stored",
+				...contentJson(
+					z.object({ source: z.enum(["stored", "environment", "none"]) }),
+				),
+			},
+			"401": {
+				description: "Unauthorized",
+				...contentJson(ErrorResponseSchema),
+			},
+			"403": {
+				description: "Forbidden - Admin privileges required",
+				...contentJson(ErrorResponseSchema),
+			},
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = c.get("session");
+		if (!session) {
+			return c.json({ error: "Unauthorized" }, 401);
+		}
+		if (!session.isAdmin) {
+			return c.json({ error: "Admin privileges required" }, 403);
+		}
+
+		const data = await this.getValidatedData<typeof this.schema>();
+		// An empty string clears the stored key rather than storing an empty
+		// one, which would send `Bearer ` and fail every message.
+		await setResendApiKey(c.env, data.body.apiKey || null);
+		return c.json({ source: await getResendKeySource(c.env) });
+	}
+}
+
 class GetAppSettings extends OpenAPIRoute {
 	schema = {
 		summary: "Get application settings",
@@ -2063,6 +2153,8 @@ openapi.post("/api/v1/push/unsubscribe", PostPushUnsubscribe);
 
 // Settings endpoints
 openapi.get("/api/v1/settings", GetAppSettings);
+openapi.get("/api/v1/admin/settings/resend", GetResendSettings);
+openapi.put("/api/v1/admin/settings/resend", PutResendSettings);
 
 // Existing endpoints
 openapi.get("/api/v1/mailboxes", GetMailboxes);

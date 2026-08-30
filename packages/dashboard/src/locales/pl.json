@@ -289,6 +289,22 @@
 			"revokeConfirm": "Odebrać użytkownikowi {email} dostęp do {mailboxId}?",
 			"failedToGrant": "Nie udało się przyznać dostępu",
 			"failedToRevoke": "Nie udało się odebrać dostępu"
+		},
+		"resend": {
+			"title": "Klucz API poczty wychodzącej",
+			"description": "Poczta wychodząca idzie przez Resend. Klucz ustawiony tutaj wymienia się bez GitHuba i bez ponownego wdrożenia.",
+			"statusLabel": "Używany klucz",
+			"sourceStored": "Ustawiony na tym ekranie",
+			"sourceEnvironment": "Z wdrożenia",
+			"sourceNone": "Nieustawiony (nie można wysyłać)",
+			"placeholder": "Wpisz nowy klucz, aby go zastąpić",
+			"submit": "Zapisz",
+			"remove": "Usuń",
+			"confirmRemove": "Usunąć zapisany klucz? Jeśli został klucz z wdrożenia, przejmie jego rolę.",
+			"saved": "Zapisano.",
+			"removed": "Usunięto.",
+			"failed": "Nie udało się zapisać.",
+			"storageNote": "Klucz jest przechowywany w R2, gdzie może go odczytać każdy, kto ma konto Cloudflare. Nigdy nie wraca na ten ekran."
 		}
 	},
 	"compose": {

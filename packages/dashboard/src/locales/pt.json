@@ -289,6 +289,22 @@
 			"revokeConfirm": "Revogar o acesso a {mailboxId} para {email}?",
 			"failedToGrant": "Não foi possível conceder o acesso",
 			"failedToRevoke": "Não foi possível revogar o acesso"
+		},
+		"resend": {
+			"title": "Chave de API do correio de saída",
+			"description": "O correio de saída passa pelo Resend. Uma chave definida aqui troca-se sem GitHub e sem nova implantação.",
+			"statusLabel": "Chave em uso",
+			"sourceStored": "Definida neste ecrã",
+			"sourceEnvironment": "Da implantação",
+			"sourceNone": "Não definida (não é possível enviar)",
+			"placeholder": "Introduza uma nova chave para a substituir",
+			"submit": "Guardar",
+			"remove": "Remover",
+			"confirmRemove": "Remover a chave guardada? Se ainda houver uma da implantação, será essa a usada.",
+			"saved": "Guardada.",
+			"removed": "Removida.",
+			"failed": "Não foi possível guardar.",
+			"storageNote": "A chave é guardada no R2, onde qualquer pessoa com a conta Cloudflare a pode ler. Nunca é devolvida a este ecrã."
 		}
 	},
 	"compose": {

@@ -289,6 +289,22 @@
 			"revokeConfirm": "¿Revocar el acceso a {mailboxId} para {email}?",
 			"failedToGrant": "No se pudo conceder el acceso",
 			"failedToRevoke": "No se pudo revocar el acceso"
+		},
+		"resend": {
+			"title": "Clave de API del correo saliente",
+			"description": "El correo saliente pasa por Resend. Una clave definida aquí se puede cambiar sin GitHub y sin volver a desplegar.",
+			"statusLabel": "Clave en uso",
+			"sourceStored": "Definida en esta pantalla",
+			"sourceEnvironment": "Del despliegue",
+			"sourceNone": "Sin definir (no se puede enviar)",
+			"placeholder": "Introduzca una clave nueva para sustituirla",
+			"submit": "Guardar",
+			"remove": "Quitar",
+			"confirmRemove": "¿Quitar la clave guardada? Si el despliegue aún tiene una, se usará esa.",
+			"saved": "Guardada.",
+			"removed": "Quitada.",
+			"failed": "No se pudo guardar.",
+			"storageNote": "La clave se guarda en R2, donde puede leerla quien tenga la cuenta de Cloudflare. Nunca se devuelve a esta pantalla."
 		}
 	},
 	"compose": {

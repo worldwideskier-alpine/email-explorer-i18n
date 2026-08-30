@@ -289,6 +289,22 @@
 			"revokeConfirm": "{email} kullanıcısının {mailboxId} erişimi kaldırılsın mı?",
 			"failedToGrant": "Erişim verilemedi",
 			"failedToRevoke": "Erişim kaldırılamadı"
+		},
+		"resend": {
+			"title": "Giden posta API anahtarı",
+			"description": "Giden posta Resend üzerinden geçer. Burada belirlenen anahtar GitHub olmadan ve yeniden dağıtım olmadan değiştirilir.",
+			"statusLabel": "Kullanılan anahtar",
+			"sourceStored": "Bu ekranda belirlendi",
+			"sourceEnvironment": "Dağıtımdan",
+			"sourceNone": "Belirlenmedi (gönderilemiyor)",
+			"placeholder": "Değiştirmek için yeni anahtar girin",
+			"submit": "Kaydet",
+			"remove": "Kaldır",
+			"confirmRemove": "Kayıtlı anahtar kaldırılsın mı? Dağıtımdan bir anahtar kaldıysa onun yerine o geçer.",
+			"saved": "Kaydedildi.",
+			"removed": "Kaldırıldı.",
+			"failed": "Kaydedilemedi.",
+			"storageNote": "Anahtar R2'de saklanır ve Cloudflare hesabı olan herkes okuyabilir. Bu ekrana asla geri döndürülmez."
 		}
 	},
 	"compose": {

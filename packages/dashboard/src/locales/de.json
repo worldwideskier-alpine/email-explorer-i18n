@@ -289,6 +289,22 @@
 			"revokeConfirm": "Zugriff auf {mailboxId} für {email} entziehen?",
 			"failedToGrant": "Zugriff konnte nicht gewährt werden",
 			"failedToRevoke": "Zugriff konnte nicht entzogen werden"
+		},
+		"resend": {
+			"title": "API-Schlüssel für ausgehende Post",
+			"description": "Ausgehende Post läuft über Resend. Ein hier gesetzter Schlüssel lässt sich ohne GitHub und ohne erneute Bereitstellung wechseln.",
+			"statusLabel": "Verwendeter Schlüssel",
+			"sourceStored": "Auf diesem Bildschirm gesetzt",
+			"sourceEnvironment": "Aus der Bereitstellung",
+			"sourceNone": "Nicht gesetzt (es kann nichts gesendet werden)",
+			"placeholder": "Neuen Schlüssel eingeben, um ihn zu ersetzen",
+			"submit": "Speichern",
+			"remove": "Entfernen",
+			"confirmRemove": "Gespeicherten Schlüssel entfernen? Gibt es noch einen aus der Bereitstellung, übernimmt dieser.",
+			"saved": "Gespeichert.",
+			"removed": "Entfernt.",
+			"failed": "Speichern nicht möglich.",
+			"storageNote": "Der Schlüssel wird in R2 abgelegt, wo ihn jeder mit dem Cloudflare-Konto lesen kann. An diesen Bildschirm wird er nie zurückgegeben."
 		}
 	},
 	"compose": {

@@ -289,6 +289,22 @@
 			"revokeConfirm": "T'i hiqet {email} qasja në {mailboxId}?",
 			"failedToGrant": "Qasja nuk mundi të jepej",
 			"failedToRevoke": "Qasja nuk mundi të hiqej"
+		},
+		"resend": {
+			"title": "Çelësi API i postës dalëse",
+			"description": "Posta dalëse kalon përmes Resend. Një çelës i vendosur këtu ndërrohet pa GitHub dhe pa një vendosje të re.",
+			"statusLabel": "Çelësi në përdorim",
+			"sourceStored": "I vendosur në këtë ekran",
+			"sourceEnvironment": "Nga vendosja",
+			"sourceNone": "I pavendosur (nuk mund të dërgohet)",
+			"placeholder": "Vendosni një çelës të ri për ta zëvendësuar",
+			"submit": "Ruaj",
+			"remove": "Hiq",
+			"confirmRemove": "Të hiqet çelësi i ruajtur? Nëse ka mbetur një nga vendosja, ai do të marrë vendin.",
+			"saved": "U ruajt.",
+			"removed": "U hoq.",
+			"failed": "Nuk u ruajt dot.",
+			"storageNote": "Çelësi ruhet në R2, ku mund ta lexojë kushdo që ka llogarinë Cloudflare. Nuk kthehet kurrë në këtë ekran."
 		}
 	},
 	"compose": {

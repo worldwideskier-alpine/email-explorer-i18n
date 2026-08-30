@@ -289,6 +289,22 @@
 			"revokeConfirm": "Bawiin ang access ni {email} sa {mailboxId}?",
 			"failedToGrant": "Hindi naibigay ang access",
 			"failedToRevoke": "Hindi nabawi ang access"
+		},
+		"resend": {
+			"title": "API key ng papalabas na mensahe",
+			"description": "Dumadaan sa Resend ang papalabas na mensahe. Kapag dito itinakda ang key, mapapalitan ito nang walang GitHub at walang muling paglalagay.",
+			"statusLabel": "Key na ginagamit",
+			"sourceStored": "Itinakda sa screen na ito",
+			"sourceEnvironment": "Mula sa paglalagay",
+			"sourceNone": "Hindi nakatakda (hindi makapagpadala)",
+			"placeholder": "Maglagay ng bagong key upang palitan ito",
+			"submit": "I-save",
+			"remove": "Alisin",
+			"confirmRemove": "Alisin ang nakaimbak na key? Kung may natira mula sa paglalagay, iyon ang gagamitin.",
+			"saved": "Na-save.",
+			"removed": "Inalis.",
+			"failed": "Hindi ma-save.",
+			"storageNote": "Nakaimbak ang key sa R2, kung saan mababasa ito ng sinumang may hawak ng Cloudflare account. Hindi ito kailanman ibinabalik sa screen na ito."
 		}
 	},
 	"compose": {

@@ -289,6 +289,22 @@
 			"revokeConfirm": "Visszavonja a(z) {email} hozzáférését a(z) {mailboxId} postaládához?",
 			"failedToGrant": "A hozzáférést nem sikerült megadni",
 			"failedToRevoke": "A hozzáférést nem sikerült visszavonni"
+		},
+		"resend": {
+			"title": "Kimenő levelezés API-kulcsa",
+			"description": "A kimenő levél a Resenden megy át. Az itt beállított kulcs GitHub és újratelepítés nélkül cserélhető.",
+			"statusLabel": "Használt kulcs",
+			"sourceStored": "Ezen a képernyőn beállítva",
+			"sourceEnvironment": "A telepítésből",
+			"sourceNone": "Nincs beállítva (nem lehet küldeni)",
+			"placeholder": "Cseréhez adjon meg új kulcsot",
+			"submit": "Mentés",
+			"remove": "Eltávolítás",
+			"confirmRemove": "Eltávolítja a mentett kulcsot? Ha maradt telepítési kulcs, az lép a helyébe.",
+			"saved": "Mentve.",
+			"removed": "Eltávolítva.",
+			"failed": "A mentés nem sikerült.",
+			"storageNote": "A kulcs az R2-ben tárolódik, ahol bárki elolvashatja, akinek Cloudflare-fiókja van. Erre a képernyőre soha nem kerül vissza."
 		}
 	},
 	"compose": {

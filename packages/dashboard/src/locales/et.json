@@ -289,6 +289,22 @@
 			"revokeConfirm": "Kas võtta kasutajalt {email} ligipääs postkastile {mailboxId} ära?",
 			"failedToGrant": "Ligipääsu ei õnnestunud anda",
 			"failedToRevoke": "Ligipääsu ei õnnestunud ära võtta"
+		},
+		"resend": {
+			"title": "Väljuva posti API-võti",
+			"description": "Väljuv post läheb läbi Resendi. Siin määratud võtit saab vahetada ilma GitHubita ja ilma uue juurutuseta.",
+			"statusLabel": "Kasutuses olev võti",
+			"sourceStored": "Määratud sellel ekraanil",
+			"sourceEnvironment": "Juurutuse seadest",
+			"sourceNone": "Määramata (saata ei saa)",
+			"placeholder": "Asendamiseks sisestage uus võti",
+			"submit": "Salvesta",
+			"remove": "Eemalda",
+			"confirmRemove": "Kas eemaldada salvestatud võti? Kui juurutuse võti on alles, võetakse see kasutusele.",
+			"saved": "Salvestatud.",
+			"removed": "Eemaldatud.",
+			"failed": "Salvestamine ebaõnnestus.",
+			"storageNote": "Võti salvestatakse R2-e, kus seda saab lugeda igaüks, kellel on Cloudflare'i konto. Sellele ekraanile seda kunagi tagasi ei saadeta."
 		}
 	},
 	"compose": {

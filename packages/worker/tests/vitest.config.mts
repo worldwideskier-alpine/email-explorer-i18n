@@ -24,6 +24,13 @@ export default defineConfig({
 				bindings: {
 					VAPID_PRIVATE_KEY:
 						'{"kty":"EC","x":"8E1Zw4MOMOZ7rj054pNEfyPiDPFFa8fslXToOdkZ7T8","y":"a6S25MrJI_qeBANimu06z3PpRZ9qt4f7TV-vzugFLNo","crv":"P-256","d":"jttxgnEcVnL_dzqyTnUWQWViXHLM_owkiFnF5EHKung","alg":"ES256","key_ops":["sign"],"ext":true}',
+					// Sending now refuses to run with no key at all rather than
+					// putting "Bearer undefined" on the wire, which is what
+					// these tests used to do against the stub below. A
+					// placeholder keeps every send path testable;
+					// resend-settings.test.ts passes its own env objects to
+					// check which of the two sources wins.
+					RESEND_API_KEY: "re_placeholder_for_tests",
 				},
 				r2Persist: false,
 				compatibilityFlags: ["nodejs_compat", "nodejs_als"],

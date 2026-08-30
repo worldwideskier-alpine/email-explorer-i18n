@@ -289,6 +289,22 @@
 			"revokeConfirm": "{email} の {mailboxId} へのアクセスを取り消しますか？",
 			"failedToGrant": "アクセスの許可に失敗しました",
 			"failedToRevoke": "アクセスの取り消しに失敗しました"
+		},
+		"resend": {
+			"title": "送信メールのAPIキー",
+			"description": "外部への送信は Resend を通ります。ここで鍵を設定すれば、GitHub や再デプロイなしで交換できます。",
+			"statusLabel": "現在の鍵",
+			"sourceStored": "この画面で設定済み",
+			"sourceEnvironment": "デプロイ時の設定を使用中",
+			"sourceNone": "未設定（送信できません）",
+			"placeholder": "新しいキーを入力すると置き換わります",
+			"submit": "保存",
+			"remove": "削除",
+			"confirmRemove": "保存された鍵を削除しますか。デプロイ時の鍵が残っていればそちらに戻ります。",
+			"saved": "保存しました。",
+			"removed": "削除しました。",
+			"failed": "保存できませんでした。",
+			"storageNote": "鍵は R2 に保存されます。Cloudflare アカウントを持つ人は読み出せます。画面には返しません。"
 		}
 	},
 	"compose": {
