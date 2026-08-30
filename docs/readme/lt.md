@@ -4,6 +4,6 @@
 
 Ši saugykla yra daugiakalbė projekto G4brym/email-explorer (MIT licencija) atšaka.
 
-Sąsaja pateikiama 51 kalbomis. Savąją pasirinkite viršuje dešinėje; pasirinkimas įsimenamas naršyklėje.
+Sąsaja pateikiama 69 kalbomis. Savąją pasirinkite viršuje dešinėje; pasirinkimas įsimenamas naršyklėje.
 
 Visa dokumentacija (japonų kalba): [README](../../README.md)

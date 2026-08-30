@@ -9,8 +9,8 @@ const DEFAULT: Locale = "ja";
 
 /**
  * Catalogues are fetched when a language is first shown, not bundled into the
- * first load. There are 51 of them at roughly 16KB each; importing them all
- * would put about 800KB of translations nobody is reading into every visit.
+ * first load. There are 69 of them at roughly 20KB each; importing them all
+ * would put about 1.3MB of translations nobody is reading into every visit.
  */
 const catalogues = import.meta.glob<{ default: Record<string, unknown> }>(
 	"./locales/*.json",

@@ -15,7 +15,12 @@ A short summary of this fork in each language it supports. These are not full tr
 
 ## ヨーロッパ
 
+- [Azərbaycan dili](az.md) (`az`)
+- [Беларуская](be.md) (`be`)
 - [Български](bg.md) (`bg`)
+- [Bosanski](bs.md) (`bs`)
+- [Català](ca.md) (`ca`)
+- [Crnogorski](cnr.md) (`cnr`)
 - [Čeština](cs.md) (`cs`)
 - [Dansk](da.md) (`da`)
 - [Deutsch](de.md) (`de`)
@@ -28,17 +33,30 @@ A short summary of this fork in each language it supports. These are not full tr
 - [Gaeilge](ga.md) (`ga`)
 - [Hrvatski](hr.md) (`hr`)
 - [Magyar](hu.md) (`hu`)
+- [Հայերեն](hy.md) (`hy`)
+- [Íslenska](is.md) (`is`)
 - [Italiano](it.md) (`it`)
+- [ქართული](ka.md) (`ka`)
+- [Lëtzebuergesch](lb.md) (`lb`)
 - [Lietuvių](lt.md) (`lt`)
 - [Latviešu](lv.md) (`lv`)
+- [Македонски](mk.md) (`mk`)
 - [Malti](mt.md) (`mt`)
+- [Norsk bokmål](nb.md) (`nb`)
 - [Nederlands](nl.md) (`nl`)
+- [Norsk nynorsk](nn.md) (`nn`)
 - [Polski](pl.md) (`pl`)
 - [Português](pt.md) (`pt`)
+- [Rumantsch](rm.md) (`rm`)
 - [Română](ro.md) (`ro`)
+- [Русский](ru.md) (`ru`)
 - [Slovenčina](sk.md) (`sk`)
 - [Slovenščina](sl.md) (`sl`)
+- [Shqip](sq.md) (`sq`)
+- [Српски](sr.md) (`sr`)
 - [Svenska](sv.md) (`sv`)
+- [Türkçe](tr.md) (`tr`)
+- [Українська](uk.md) (`uk`)
 
 ## 南アジア
 
