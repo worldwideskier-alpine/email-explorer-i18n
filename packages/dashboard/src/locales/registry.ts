@@ -31,8 +31,30 @@ export interface LocaleEntry {
 export const LOCALES = [
 	{ code: "ja", label: "日本語", region: "eastAsia" },
 
+	{ code: "bg", label: "Български", region: "europe" },
+	{ code: "cs", label: "Čeština", region: "europe" },
+	{ code: "da", label: "Dansk", region: "europe" },
 	{ code: "de", label: "Deutsch", region: "europe" },
+	{ code: "el", label: "Ελληνικά", region: "europe" },
 	{ code: "en", label: "English", region: "europe" },
+	{ code: "es", label: "Español", region: "europe" },
+	{ code: "et", label: "Eesti", region: "europe" },
+	{ code: "fi", label: "Suomi", region: "europe" },
+	{ code: "fr", label: "Français", region: "europe" },
+	{ code: "ga", label: "Gaeilge", region: "europe" },
+	{ code: "hr", label: "Hrvatski", region: "europe" },
+	{ code: "hu", label: "Magyar", region: "europe" },
+	{ code: "it", label: "Italiano", region: "europe" },
+	{ code: "lt", label: "Lietuvių", region: "europe" },
+	{ code: "lv", label: "Latviešu", region: "europe" },
+	{ code: "mt", label: "Malti", region: "europe" },
+	{ code: "nl", label: "Nederlands", region: "europe" },
+	{ code: "pl", label: "Polski", region: "europe" },
+	{ code: "pt", label: "Português", region: "europe" },
+	{ code: "ro", label: "Română", region: "europe" },
+	{ code: "sk", label: "Slovenčina", region: "europe" },
+	{ code: "sl", label: "Slovenščina", region: "europe" },
+	{ code: "sv", label: "Svenska", region: "europe" },
 ] as const satisfies readonly LocaleEntry[];
 
 export type Locale = (typeof LOCALES)[number]["code"];
