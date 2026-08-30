@@ -12,6 +12,58 @@ import type { Header } from "postal-mime";
  * hides real mail, which is worse than an occasional spam message getting
  * through.
  */
+/**
+ * RFC 8601 gives each result its own `;`-separated section, and a relay may
+ * record the same method more than once. Reading a verdict with one regex
+ * over the whole header takes whichever happened to come first, which is not
+ * the same as taking the one that matters.
+ */
+function resultSections(authResults: string): string[] {
+	return authResults.split(";");
+}
+
+/**
+ * SPF as evaluated for the envelope sender.
+ *
+ * A relay checks SPF twice and reports both, the HELO name first:
+ *
+ *   spf=none (no SPF records found for postmaster@host.invalid) smtp.helo=host.invalid;
+ *   spf=softfail (domain of no-reply@example.com reports soft fail for 203.0.113.9) smtp.mailfrom=no-reply@example.com;
+ *
+ * Only the smtp.mailfrom result says anything about the sending domain.
+ * Taking the first match let the HELO verdict stand in for it, so a hard fail
+ * on the envelope sender was invisible whenever the HELO check reported
+ * anything else -- which is the usual case, since HELO names rarely carry SPF.
+ */
+function spfVerdict(authResults: string): string | undefined {
+	const withSpf = resultSections(authResults).filter((section) =>
+		/\bspf=/i.test(section),
+	);
+	const section =
+		withSpf.find((s) => /\bsmtp\.mailfrom=/i.test(s)) ?? withSpf[0];
+	return /\bspf=(\w+)/i.exec(section ?? "")?.[1]?.toLowerCase();
+}
+
+/**
+ * DKIM across every signature on the message.
+ *
+ * A message can carry several DKIM-Signature headers and the relay reports
+ * one result per signature. One verifying signature authenticates the
+ * message, so a pass anywhere is a pass -- reading the first result could
+ * call a properly signed message failed and, paired with an SPF failure,
+ * file real mail as spam. That is the outcome this module exists to avoid.
+ */
+function dkimVerdict(authResults: string): string | undefined {
+	const verdicts = resultSections(authResults)
+		.map((section) => /\bdkim=(\w+)/i.exec(section)?.[1]?.toLowerCase())
+		.filter((verdict): verdict is string => verdict !== undefined);
+
+	if (verdicts.length === 0) return undefined;
+	if (verdicts.includes("pass")) return "pass";
+	if (verdicts.includes("fail")) return "fail";
+	return verdicts[0];
+}
+
 export function classifyByAuthResults(headers: Header[]): "inbox" | "spam" {
 	const authResults = headers
 		.filter((h) => h.key === "authentication-results")
@@ -21,8 +73,8 @@ export function classifyByAuthResults(headers: Header[]): "inbox" | "spam" {
 	if (!authResults) return "inbox";
 
 	const dmarc = /\bdmarc=(\w+)/i.exec(authResults)?.[1]?.toLowerCase();
-	const spf = /\bspf=(\w+)/i.exec(authResults)?.[1]?.toLowerCase();
-	const dkim = /\bdkim=(\w+)/i.exec(authResults)?.[1]?.toLowerCase();
+	const spf = spfVerdict(authResults);
+	const dkim = dkimVerdict(authResults);
 
 	if (dmarc === "fail") return "spam";
 	if (spf === "fail" && dkim === "fail") return "spam";
