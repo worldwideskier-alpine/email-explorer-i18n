@@ -30,6 +30,8 @@ interface EmailData {
 	subject: string;
 	sender: string;
 	recipient: string;
+	cc?: string | null;
+	bcc?: string | null;
 	date: string;
 	body: string;
 	read?: boolean;
@@ -838,8 +840,17 @@ export class MailboxDO extends DurableObject<Env> {
 			subject,
 			sender,
 			recipient,
+			cc,
+			bcc,
 			body,
-		}: { subject: string; sender: string; recipient: string; body: string },
+		}: {
+			subject: string;
+			sender: string;
+			recipient: string;
+			cc: string | null;
+			bcc: string | null;
+			body: string;
+		},
 	) {
 		this.#qb
 			.update({
@@ -848,6 +859,8 @@ export class MailboxDO extends DurableObject<Env> {
 					subject,
 					sender,
 					recipient,
+					cc,
+					bcc,
 					body,
 					date: new Date().toISOString(),
 				},

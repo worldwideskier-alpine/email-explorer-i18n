@@ -1,6 +1,7 @@
 import type PostalMime from "postal-mime";
 import { plainTextToHtml } from "./plain-text-to-html";
 import { notifyNewEmail } from "./push-notify";
+import { formatAddressList } from "./recipients";
 import type { Env } from "./types";
 
 /**
@@ -80,7 +81,18 @@ export async function ingestEmailIntoMailbox(
 			id: messageId,
 			subject: parsedEmail.subject || "",
 			sender: parsedEmail.from?.address || "",
-			recipient: parsedEmail.to?.[0]?.address || mailboxId,
+			// The whole To: and Cc: lists, not just the first address, so
+			// "reply all" can reach everyone who saw the message. This does not
+			// decide which mailbox the message lands in -- that is the envelope
+			// recipient, settled before this is called -- it is only what gets
+			// shown and replied to.
+			recipient:
+				formatAddressList(
+					parsedEmail.to?.map((address) => address.address ?? ""),
+				) || mailboxId,
+			cc: formatAddressList(
+				parsedEmail.cc?.map((address) => address.address ?? ""),
+			),
 			date: overrides.date || new Date().toISOString(),
 			body:
 				parsedEmail.html ||

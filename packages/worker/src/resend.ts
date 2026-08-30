@@ -9,6 +9,8 @@ interface ResendAttachment {
 interface SendEmailParams {
 	from: string;
 	to: string | string[];
+	cc?: string | string[];
+	bcc?: string | string[];
 	subject: string;
 	html?: string;
 	text?: string;
@@ -36,6 +38,11 @@ export async function sendEmail(
 		body: JSON.stringify({
 			from: params.from,
 			to: params.to,
+			// Resend keeps bcc out of the delivered headers, so a blind copy
+			// stays blind. Both are omitted entirely when empty rather than
+			// sent as [], which the API rejects.
+			cc: params.cc?.length ? params.cc : undefined,
+			bcc: params.bcc?.length ? params.bcc : undefined,
 			subject: params.subject,
 			html: params.html,
 			text: params.text,

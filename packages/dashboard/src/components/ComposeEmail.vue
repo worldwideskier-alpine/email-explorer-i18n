@@ -25,15 +25,52 @@
             <span class="block sm:inline">{{ error }}</span>
           </div>
           <div class="mb-5 flex-shrink-0">
-            <label for="to" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.to") }}</label>
+            <div class="flex items-baseline justify-between mb-2">
+              <label for="to" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ t("compose.to") }}</label>
+              <button
+                v-if="!showCcBcc"
+                type="button"
+                @click="showCcBcc = true"
+                class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+              >{{ t("compose.addCcBcc") }}</button>
+            </div>
+            <!-- The placeholder stays a literal: vue-i18n reads "@" in a
+                 message as the start of a linked key, so an example address
+                 in the catalogue fails to compile and takes the whole dialog
+                 with it. An address example needs no translating anyway. -->
             <input
               type="email"
               id="to"
+              multiple
               v-model="to"
               class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 transition-all duration-200"
-              placeholder="recipient@example.com"
+              placeholder="recipient@example.com, another@example.com"
               required
             />
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{{ t("compose.recipientsHint") }}</p>
+          </div>
+          <div v-if="showCcBcc" class="mb-5 flex-shrink-0">
+            <label for="cc" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.cc") }}</label>
+            <input
+              type="email"
+              id="cc"
+              multiple
+              v-model="cc"
+              class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 transition-all duration-200"
+              placeholder="recipient@example.com, another@example.com"
+            />
+          </div>
+          <div v-if="showCcBcc" class="mb-5 flex-shrink-0">
+            <label for="bcc" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.bcc") }}</label>
+            <input
+              type="email"
+              id="bcc"
+              multiple
+              v-model="bcc"
+              class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 transition-all duration-200"
+              placeholder="recipient@example.com, another@example.com"
+            />
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{{ t("compose.bccHint") }}</p>
           </div>
           <div class="mb-5 flex-shrink-0">
             <label for="subject" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">{{ t("compose.subject") }}</label>
@@ -108,6 +145,7 @@ import api from "@/services/api";
 import { useEmailStore } from "@/stores/emails";
 import { useMailboxStore } from "@/stores/mailboxes";
 import { useUIStore } from "@/stores/ui";
+import { splitAddresses } from "@/utils/addresses";
 import {
 	htmlToPlainText,
 	plainTextToSimpleHtml,
@@ -124,6 +162,11 @@ const { success: showSuccessToast, error: showErrorToast } = useToast();
 const { t } = useI18n();
 
 const to = ref("");
+const cc = ref("");
+const bcc = ref("");
+// Cc and Bcc stay hidden until asked for, and stay open once a mode or a
+// draft has put something in them.
+const showCcBcc = ref(false);
 const subject = ref("");
 const body = ref("");
 const plainBody = ref("");
@@ -163,6 +206,9 @@ const formatQuotedText = (text: string) => {
 const closeModal = () => {
 	error.value = null;
 	to.value = "";
+	cc.value = "";
+	bcc.value = "";
+	showCcBcc.value = false;
 	subject.value = "";
 	body.value = "";
 	plainBody.value = "";
@@ -195,9 +241,17 @@ watch(isComposeModalOpen, (isOpen) => {
 		isPlainText.value = false;
 		plainBody.value = "";
 		draftId.value = null;
+		cc.value = "";
+		bcc.value = "";
+		showCcBcc.value = false;
 
 		if (options.mode === "draft" && original) {
 			to.value = original.recipient || "";
+			cc.value = original.cc || "";
+			bcc.value = original.bcc || "";
+			// A draft that has either of them must show both fields, or the
+			// addresses would be sent from a form that never displayed them.
+			showCcBcc.value = Boolean(cc.value || bcc.value);
 			subject.value = original.subject || "";
 			body.value = original.body || "";
 			draftId.value = original.id;
@@ -208,15 +262,20 @@ watch(isComposeModalOpen, (isOpen) => {
 				: `Re: ${original.subject}`;
 			body.value = `<br>${sigBlock}<br><blockquote style="border-left: 2px solid #ccc; margin: 0; padding-left: 1em; color: #666;">${t("compose.replyQuotePrefix", { date: original.date, sender: original.sender })}<br><br>${original.body}</blockquote>`;
 		} else if (options.mode === "reply-all" && original) {
-			// For reply all, include both sender and original recipient
-			const recipients = new Set([original.sender]);
-			if (
-				original.recipient &&
-				original.recipient !== currentMailbox.value?.email
-			) {
-				recipients.add(original.recipient);
-			}
-			to.value = Array.from(recipients).join(", ");
+			// Everyone who saw the original, minus this mailbox: the sender and
+			// the other To: addresses go to To, the original Cc: stays Cc. The
+			// stored fields are comma-separated lists, so a message with
+			// several recipients contributes several addresses here.
+			const self = currentMailbox.value?.email;
+			const isOther = (address: string) => address !== self;
+			const toList = [
+				original.sender,
+				...splitAddresses(original.recipient || ""),
+			].filter(isOther);
+			const ccList = splitAddresses(original.cc || "").filter(isOther);
+			to.value = Array.from(new Set(toList)).join(", ");
+			cc.value = Array.from(new Set(ccList)).join(", ");
+			showCcBcc.value = cc.value.length > 0;
 			subject.value = original.subject.startsWith("Re: ")
 				? original.subject
 				: `Re: ${original.subject}`;
@@ -278,8 +337,12 @@ const saveDraft = async () => {
 	isSavingDraft.value = true;
 	try {
 		const mailboxId = route.params.mailboxId as string;
+		// A draft keeps the raw text of each address field, unsplit, so a
+		// half-typed address survives a save.
 		const draftData = {
 			to: to.value,
+			cc: cc.value,
+			bcc: bcc.value,
 			from: currentMailbox.value.email,
 			subject: subject.value,
 			html: isPlainText.value ? plainBody.value : body.value,
@@ -312,15 +375,22 @@ const send = async () => {
 	isLoading.value = true;
 	try {
 		const mailboxId = route.params.mailboxId as string;
+		// The API takes address lists as arrays; the fields hold the
+		// comma-separated text the user typed.
+		const recipients = {
+			to: splitAddresses(to.value),
+			cc: splitAddresses(cc.value),
+			bcc: splitAddresses(bcc.value),
+		};
 		const emailData = isPlainText.value
 			? {
-					to: to.value,
+					...recipients,
 					from: currentMailbox.value.email,
 					subject: subject.value,
 					text: plainBody.value,
 				}
 			: {
-					to: to.value,
+					...recipients,
 					from: currentMailbox.value.email,
 					subject: subject.value,
 					html: body.value,

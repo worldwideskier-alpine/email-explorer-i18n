@@ -111,6 +111,10 @@
           <div class="min-w-0">
             <p class="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">{{ email.sender }}</p>
             <p class="text-sm text-gray-600 dark:text-gray-400 truncate">{{ t("emailDetail.to") }}{{ email.recipient }}</p>
+            <p v-if="email.cc" class="text-sm text-gray-600 dark:text-gray-400 truncate">{{ t("emailDetail.cc") }}{{ email.cc }}</p>
+            <!-- Only sent mail carries a bcc, and only its sender ever sees
+                 this view of it. Inbound mail has no bcc to show. -->
+            <p v-if="email.bcc" class="text-sm text-gray-600 dark:text-gray-400 truncate">{{ t("emailDetail.bcc") }}{{ email.bcc }}</p>
           </div>
         </div>
         <p class="text-sm text-gray-500 dark:text-gray-400 font-medium flex-shrink-0">{{ email.date }}</p>

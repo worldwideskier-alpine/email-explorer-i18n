@@ -5,8 +5,13 @@ import type { Env, Session } from "../types";
 
 type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
 
+// A draft holds whatever the user has typed so far, so the address fields
+// stay free text here rather than the validated lists the send API takes.
+// Half an address is a normal thing to have in a draft.
 const DraftEmailRequestSchema = z.object({
 	to: z.string().optional().default(""),
+	cc: z.string().optional().default(""),
+	bcc: z.string().optional().default(""),
 	from: z.string().email(),
 	subject: z.string().optional().default(""),
 	html: z.string().optional().default(""),
@@ -44,7 +49,7 @@ export class PostDraftEmail extends OpenAPIRoute {
 	async handle(c: AppContext) {
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { mailboxId } = data.params;
-		const { to, from, subject, html } = data.body;
+		const { to, cc, bcc, from, subject, html } = data.body;
 
 		const key = `mailboxes/${mailboxId}.json`;
 		const obj = await c.env.BUCKET.head(key);
@@ -65,6 +70,8 @@ export class PostDraftEmail extends OpenAPIRoute {
 				subject,
 				sender: from,
 				recipient: to,
+				cc: cc || null,
+				bcc: bcc || null,
 				date: new Date().toISOString(),
 				body: html,
 			},
@@ -99,7 +106,7 @@ export class PutDraftEmail extends OpenAPIRoute {
 	async handle(c: AppContext) {
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { mailboxId, id } = data.params;
-		const { to, from, subject, html } = data.body;
+		const { to, cc, bcc, from, subject, html } = data.body;
 
 		const key = `mailboxes/${mailboxId}.json`;
 		const obj = await c.env.BUCKET.head(key);
@@ -120,6 +127,8 @@ export class PutDraftEmail extends OpenAPIRoute {
 			subject,
 			sender: from,
 			recipient: to,
+			cc: cc || null,
+			bcc: bcc || null,
 			body: html,
 		});
 

@@ -2,6 +2,7 @@ import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
 import { plainTextToHtml } from "../plain-text-to-html";
+import { formatAddressList } from "../recipients";
 import { sendEmail } from "../resend";
 import type { Env, Session } from "../types";
 
@@ -9,7 +10,11 @@ type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
 
 const SendEmailRequestSchema = z
 	.object({
-		to: z.union([z.string().email(), z.array(z.string().email())]),
+		// At least one address: the array form would otherwise let an empty
+		// list through, which the single-string form never could.
+		to: z.union([z.string().email(), z.array(z.string().email()).min(1)]),
+		cc: z.union([z.string().email(), z.array(z.string().email())]).optional(),
+		bcc: z.union([z.string().email(), z.array(z.string().email())]).optional(),
 		from: z.string().email(),
 		subject: z.string(),
 		html: z.string().optional(),
@@ -73,7 +78,7 @@ export class PostReplyEmail extends OpenAPIRoute {
 	async handle(c: AppContext) {
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { mailboxId, id } = data.params;
-		const { to, from, subject, html, text, attachments } = data.body;
+		const { to, cc, bcc, from, subject, html, text, attachments } = data.body;
 
 		const key = `mailboxes/${mailboxId}.json`;
 		const obj = await c.env.BUCKET.head(key);
@@ -101,13 +106,12 @@ export class PostReplyEmail extends OpenAPIRoute {
 			: [originalEmail.id];
 		const thread_id = originalEmail.thread_id || originalEmail.id;
 
-		// Normalize 'to' to string
-		const toStr = Array.isArray(to) ? to[0] : to;
-
 		try {
 			await sendEmail(c.env, {
 				from,
 				to,
+				cc,
+				bcc,
 				subject,
 				text,
 				html,
@@ -150,7 +154,9 @@ export class PostReplyEmail extends OpenAPIRoute {
 				id: messageId,
 				subject,
 				sender: from,
-				recipient: toStr,
+				recipient: formatAddressList(to) ?? "",
+				cc: formatAddressList(cc),
+				bcc: formatAddressList(bcc),
 				date: new Date().toISOString(),
 				body: html || (text ? plainTextToHtml(text) : ""),
 				in_reply_to: in_reply_to,
@@ -195,7 +201,7 @@ export class PostForwardEmail extends OpenAPIRoute {
 	async handle(c: AppContext) {
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { mailboxId, id } = data.params;
-		const { to, from, subject, html, text, attachments } = data.body;
+		const { to, cc, bcc, from, subject, html, text, attachments } = data.body;
 
 		const key = `mailboxes/${mailboxId}.json`;
 		const obj = await c.env.BUCKET.head(key);
@@ -214,12 +220,13 @@ export class PostForwardEmail extends OpenAPIRoute {
 		}
 
 		// Forwarded emails don't have threading headers
-		const toStr = Array.isArray(to) ? to[0] : to;
 
 		try {
 			await sendEmail(c.env, {
 				from,
 				to,
+				cc,
+				bcc,
 				subject,
 				text,
 				html,
@@ -260,7 +267,9 @@ export class PostForwardEmail extends OpenAPIRoute {
 				id: messageId,
 				subject,
 				sender: from,
-				recipient: toStr,
+				recipient: formatAddressList(to) ?? "",
+				cc: formatAddressList(cc),
+				bcc: formatAddressList(bcc),
 				date: new Date().toISOString(),
 				body: html || (text ? plainTextToHtml(text) : ""),
 				in_reply_to: null,

@@ -65,6 +65,20 @@ export const mailboxMigrations: Migration[] = [
             INSERT INTO folders (id, name, is_deletable) VALUES ('draft', 'Draft', 0);
         `,
 	},
+	{
+		// recipient, cc and bcc all hold a comma-separated address list, the
+		// form the To:/Cc: headers already use. Existing rows carry a single
+		// address, which is a valid list of one, so nothing needs migrating.
+		//
+		// bcc is stored on sent mail so the sender can see whom they blind
+		// copied. It never reaches a recipient: Resend keeps it out of the
+		// headers, and inbound mail has no bcc to record.
+		name: "4_add_cc_bcc",
+		sql: `
+            ALTER TABLE emails ADD COLUMN cc TEXT;
+            ALTER TABLE emails ADD COLUMN bcc TEXT;
+        `,
+	},
 ];
 
 export const authMigrations: Migration[] = [

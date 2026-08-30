@@ -17,6 +17,7 @@ import {
 import { renderMboxEntry } from "./mbox";
 import { plainTextToHtml } from "./plain-text-to-html";
 import { dismissEmailNotification } from "./push-notify";
+import { formatAddressList } from "./recipients";
 import { sendEmail } from "./resend";
 import {
 	GetMe,
@@ -112,6 +113,8 @@ const EmailMetadataSchema = z.object({
 	subject: z.string(),
 	sender: z.string(),
 	recipient: z.string(),
+	cc: z.string().nullable().optional(),
+	bcc: z.string().nullable().optional(),
 	date: z.string(),
 	read: z.boolean(),
 	starred: z.boolean(),
@@ -136,7 +139,11 @@ const EmailSchema = EmailMetadataSchema.extend({
 
 const SendEmailRequestSchema = z
 	.object({
-		to: z.union([z.string().email(), z.array(z.string().email())]),
+		// At least one address: the array form would otherwise let an empty
+		// list through, which the single-string form never could.
+		to: z.union([z.string().email(), z.array(z.string().email()).min(1)]),
+		cc: z.union([z.string().email(), z.array(z.string().email())]).optional(),
+		bcc: z.union([z.string().email(), z.array(z.string().email())]).optional(),
 		from: z.string().email(),
 		subject: z.string(),
 		html: z.string().optional(),
@@ -648,6 +655,8 @@ class PostEmail extends OpenAPIRoute {
 		const { mailboxId } = data.params;
 		const {
 			to,
+			cc,
+			bcc,
 			from,
 			subject,
 			html,
@@ -664,12 +673,12 @@ class PostEmail extends OpenAPIRoute {
 			return c.json({ error: "Not found" }, 404);
 		}
 
-		const toStr = Array.isArray(to) ? to[0] : to;
-
 		try {
 			await sendEmail(c.env, {
 				from,
 				to,
+				cc,
+				bcc,
 				subject,
 				text,
 				html,
@@ -716,7 +725,9 @@ class PostEmail extends OpenAPIRoute {
 				id: messageId,
 				subject,
 				sender: from,
-				recipient: toStr,
+				recipient: formatAddressList(to) ?? "",
+				cc: formatAddressList(cc),
+				bcc: formatAddressList(bcc),
 				date: new Date().toISOString(),
 				body: html || (text ? plainTextToHtml(text) : ""),
 				in_reply_to: in_reply_to || null,

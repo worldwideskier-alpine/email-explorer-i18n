@@ -38,6 +38,14 @@ export default defineConfig({
 				outboundService: async (request) => {
 					const url = new URL(request.url);
 					if (url.hostname === "api.resend.com") {
+						const body = await request.clone().text();
+						// Nothing downstream keeps the request we sent to Resend --
+						// sendEmail discards the response on success -- so a test that
+						// needs to assert on the recipients puts this marker in the
+						// subject and reads them back out of the failure message.
+						if (body.includes("ECHO_RESEND_REQUEST")) {
+							return new Response(body, { status: 500 });
+						}
 						return new Response(JSON.stringify({ id: "mock-resend-id" }), {
 							status: 200,
 							headers: { "content-type": "application/json" },
