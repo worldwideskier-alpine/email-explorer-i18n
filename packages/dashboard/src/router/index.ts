@@ -56,25 +56,33 @@ const router = createRouter({
 			path: "/account",
 			name: "Account",
 			component: Account,
-			meta: { title: "Account", requiresAuth: true },
+			meta: { title: "Account", requiresAuth: true, hasLanguageSwitcher: true },
 		},
 		{
 			path: "/",
 			name: "Home",
 			component: Home,
-			meta: { title: "Home", requiresAuth: true },
+			meta: { title: "Home", requiresAuth: true, hasLanguageSwitcher: true },
 		},
 		{
 			path: "/admin",
 			name: "Admin",
 			component: Admin,
-			meta: { title: "Admin Panel", requiresAuth: true, requiresAdmin: true },
+			meta: {
+				title: "Admin Panel",
+				requiresAuth: true,
+				requiresAdmin: true,
+				hasLanguageSwitcher: true,
+			},
 		},
 		{
 			path: "/mailbox/:mailboxId",
 			name: "Mailbox",
 			component: Mailbox,
-			meta: { requiresAuth: true },
+			// This view has a row of actions of its own (its Header) and puts
+			// the language control in it. App.vue floats one on every route
+			// without this flag; leaving it off here would show two.
+			meta: { requiresAuth: true, hasLanguageSwitcher: true },
 			redirect: (to) => {
 				return {
 					name: "EmailList",

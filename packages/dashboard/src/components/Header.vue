@@ -44,18 +44,7 @@
         </svg>
         <span class="hidden md:inline">{{ t("header.settings") }}</span>
       </a>
-      <label class="ml-1 sm:ml-2">
-        <span class="sr-only">{{ t("header.language") }}</span>
-        <select
-          :value="locale"
-          @change="setLocale(($event.target as HTMLSelectElement).value as Locale)"
-          class="text-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="ja">日本語</option>
-          <option value="en">English</option>
-          <option value="de">Deutsch</option>
-        </select>
-      </label>
+      <LanguageSwitcher />
     </div>
   </header>
 </template>
@@ -64,11 +53,11 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import { type Locale, setLocale } from "@/i18n";
+import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 import { useSearchStore } from "@/stores/search";
 import { useUIStore } from "@/stores/ui";
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 const searchQuery = ref("");
 const searchStore = useSearchStore();
 const uiStore = useUIStore();
