@@ -2,7 +2,7 @@ import { createPinia } from "pinia";
 import { createApp } from "vue";
 
 import App from "./App.vue";
-import { i18n } from "./i18n";
+import { i18n, initLocale } from "./i18n";
 import router from "./router";
 import "./assets/main.css";
 
@@ -12,7 +12,11 @@ app.use(createPinia());
 app.use(router);
 app.use(i18n);
 
-app.mount("#app");
+// Catalogues are fetched rather than bundled, so the first one has to arrive
+// before the first paint. Mounting first would flash the untranslated keys.
+initLocale().then(() => {
+	app.mount("#app");
+});
 
 if ("serviceWorker" in navigator) {
 	window.addEventListener("load", () => {

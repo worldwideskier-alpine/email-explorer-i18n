@@ -61,7 +61,13 @@
 		"searchPlaceholder": "E-Mails durchsuchen...",
 		"mailboxes": "Postfächer",
 		"settings": "Einstellungen",
-		"language": "Sprache"
+		"language": "Sprache",
+		"regions": {
+			"eastAsia": "Ostasien",
+			"europe": "Europa",
+			"southAsia": "Südasien",
+			"southeastAsia": "Südostasien"
+		}
 	},
 	"home": {
 		"pageTitle": "Postfächer",

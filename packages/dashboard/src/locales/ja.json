@@ -61,7 +61,13 @@
 		"searchPlaceholder": "メールを検索...",
 		"mailboxes": "メールボックス",
 		"settings": "設定",
-		"language": "言語"
+		"language": "言語",
+		"regions": {
+			"eastAsia": "東アジア",
+			"europe": "ヨーロッパ",
+			"southAsia": "南アジア",
+			"southeastAsia": "東南アジア"
+		}
 	},
 	"home": {
 		"pageTitle": "メールボックス",

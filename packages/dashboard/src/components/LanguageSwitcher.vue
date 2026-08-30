@@ -3,12 +3,18 @@
     <span class="sr-only">{{ t("header.language") }}</span>
     <select
       :value="locale"
-      @change="setLocale(($event.target as HTMLSelectElement).value as Locale)"
-      class="text-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      @change="onChange"
+      class="text-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg px-2 py-2 max-w-[11rem] focus:outline-none focus:ring-2 focus:ring-indigo-500"
     >
-      <option value="ja">日本語</option>
-      <option value="en">English</option>
-      <option value="de">Deutsch</option>
+      <optgroup
+        v-for="group in groups"
+        :key="group.region"
+        :label="t(`header.regions.${group.region}`)"
+      >
+        <option v-for="entry in group.locales" :key="entry.code" :value="entry.code">
+          {{ entry.label }}
+        </option>
+      </optgroup>
     </select>
   </label>
 </template>
@@ -16,6 +22,7 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import { type Locale, setLocale } from "@/i18n";
+import { localesByRegion } from "@/locales/registry";
 
 /**
  * The one language control, in two placements. A page with a row of actions
@@ -32,8 +39,18 @@ import { type Locale, setLocale } from "@/i18n";
  * sign-in and password reset are exactly where someone who does not read the
  * default language arrives first, and the reset mail is sent in whatever
  * locale that page was showing.
+ *
+ * Grouped by region, each language named in itself. Forty-six entries in one
+ * flat list, named in a language the reader may not be able to read, is a
+ * list nobody can find their own language in.
  */
 defineProps<{ floating?: boolean }>();
 
 const { t, locale } = useI18n();
+const groups = localesByRegion();
+
+// Switching fetches the catalogue, so it lands a moment after the change.
+const onChange = (event: Event) => {
+	void setLocale((event.target as HTMLSelectElement).value as Locale);
+};
 </script>
