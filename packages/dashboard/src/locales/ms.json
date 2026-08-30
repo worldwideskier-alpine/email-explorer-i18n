@@ -65,6 +65,7 @@
 		"regions": {
 			"eastAsia": "Asia Timur",
 			"europe": "Eropah",
+			"westAsia": "Asia Barat dan Timur Tengah",
 			"southAsia": "Asia Selatan",
 			"southeastAsia": "Asia Tenggara"
 		}

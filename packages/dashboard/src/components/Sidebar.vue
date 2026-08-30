@@ -4,13 +4,18 @@
     @click="uiStore.closeSidebar()"
     class="fixed inset-0 bg-black/50 z-30 md:hidden"
   ></div>
+  <!-- The slide-away is confined to the narrow layout with max-md. On a wide
+       screen the aside is a static flex child and must not be transformed at
+       all: an unscoped `rtl:translate-x-full` outranked the `md:translate-x-0`
+       meant to cancel it, and the sidebar disappeared off the edge on every
+       right-to-left language at desktop width. -->
   <aside
-    class="w-72 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-6 border-r border-gray-200 dark:border-gray-700 flex flex-col fixed inset-y-0 left-0 z-40 transition-transform duration-300 md:static md:translate-x-0 md:z-auto"
-    :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+    class="w-72 bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-6 border-e border-gray-200 dark:border-gray-700 flex flex-col fixed inset-y-0 start-0 z-40 transition-transform duration-300 md:static md:z-auto"
+    :class="isSidebarOpen ? '' : 'max-md:-translate-x-full max-md:rtl:translate-x-full'"
   >
     <button
       @click="uiStore.closeSidebar()"
-      class="md:hidden self-end mb-4 p-2 -mr-2 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200"
+      class="md:hidden self-end mb-4 p-2 -me-2 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-lg hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200"
       :title="t('sidebar.toggleMenu')"
     >
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

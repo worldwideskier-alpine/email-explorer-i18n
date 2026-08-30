@@ -65,6 +65,7 @@
 		"regions": {
 			"eastAsia": "Itä-Aasia",
 			"europe": "Eurooppa",
+			"westAsia": "Länsi-Aasia ja Lähi-itä",
 			"southAsia": "Etelä-Aasia",
 			"southeastAsia": "Kaakkois-Aasia"
 		}

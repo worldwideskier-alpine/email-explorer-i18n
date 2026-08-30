@@ -65,6 +65,7 @@
 		"regions": {
 			"eastAsia": "Azja Wschodnia",
 			"europe": "Europa",
+			"westAsia": "Azja Zachodnia i Bliski Wschód",
 			"southAsia": "Azja Południowa",
 			"southeastAsia": "Azja Południowo-Wschodnia"
 		}

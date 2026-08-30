@@ -10,7 +10,7 @@
       </svg>
     </button>
     <div class="relative flex-1 min-w-0 max-w-xl">
-      <span class="absolute inset-y-0 left-0 flex items-center pl-4">
+      <span class="absolute inset-y-0 start-0 flex items-center ps-4">
         <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
@@ -20,10 +20,10 @@
         v-model="searchQuery"
         @keyup.enter="performSearch"
         :placeholder="t('header.searchPlaceholder')"
-        class="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-xl text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
+        class="w-full ps-12 pe-4 py-3 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-xl text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
       />
     </div>
-    <div class="flex items-center gap-1 sm:gap-2 ml-auto pl-1 sm:pl-6 flex-shrink-0">
+    <div class="flex items-center gap-1 sm:gap-2 ms-auto ps-1 sm:ps-6 flex-shrink-0">
       <router-link
         to="/"
         class="flex items-center gap-2 px-2 sm:px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 font-medium"

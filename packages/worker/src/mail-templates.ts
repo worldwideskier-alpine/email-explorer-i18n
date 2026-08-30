@@ -68,6 +68,10 @@ export const MAIL_LOCALES = [
 	"tr",
 	"uk",
 
+	"ar",
+	"fa",
+	"he",
+
 	"bn",
 	"gu",
 	"hi",
@@ -120,7 +124,12 @@ interface LinkEmailStrings {
 }
 
 /** Only for scripts written right to left, mirroring registry.ts. */
-const RTL_LOCALES: ReadonlySet<string> = new Set<MailLocale>(["ur"]);
+const RTL_LOCALES: ReadonlySet<string> = new Set<MailLocale>([
+	"ar",
+	"fa",
+	"he",
+	"ur",
+]);
 
 /**
  * Only the scripts where a Latin-first stack picks a bad face are named. Every
@@ -677,6 +686,38 @@ const PASSWORD_RESET: Record<MailLocale, LinkEmailStrings> = {
 		expiry: "Посилання дійсне одну годину.",
 		ignore: "Якщо ви цього не запитували, просто проігноруйте цей лист.",
 		footer: "Email Explorer - Скидання пароля",
+	},
+
+	ar: {
+		subject: "إعادة تعيين كلمة المرور",
+		heading: "إعادة تعيين كلمة المرور",
+		intro: "وصلنا طلب لإعادة تعيين كلمة مرورك. اضغط الزر أدناه للمتابعة.",
+		button: "إعادة تعيين كلمة المرور",
+		copyPrompt: "أو انسخ هذا الرابط والصقه في متصفحك:",
+		expiry: "تنتهي صلاحية هذا الرابط بعد ساعة.",
+		ignore: "إن لم تكن أنت من طلب ذلك، فتجاهل هذه الرسالة.",
+		footer: "Email Explorer - إعادة تعيين كلمة المرور",
+	},
+	fa: {
+		subject: "بازنشانی گذرواژه",
+		heading: "بازنشانی گذرواژه",
+		intro:
+			"درخواستی برای بازنشانی گذرواژهٔ شما دریافت کردیم. برای ادامه دکمهٔ زیر را بزنید.",
+		button: "بازنشانی گذرواژه",
+		copyPrompt: "یا این پیوند را در مرورگرتان بچسبانید:",
+		expiry: "این پیوند پس از یک ساعت منقضی می‌شود.",
+		ignore: "اگر شما این را نخواسته‌اید، می‌توانید این نامه را نادیده بگیرید.",
+		footer: "Email Explorer - بازنشانی گذرواژه",
+	},
+	he: {
+		subject: "איפוס הסיסמה",
+		heading: "איפוס הסיסמה",
+		intro: "קיבלנו בקשה לאפס את הסיסמה שלכם. לחצו על הכפתור למטה כדי להמשיך.",
+		button: "איפוס הסיסמה",
+		copyPrompt: "או העתיקו את הקישור הזה והדביקו אותו בדפדפן:",
+		expiry: "הקישור הזה יפוג בעוד שעה.",
+		ignore: "אם לא ביקשתם זאת, אפשר להתעלם מההודעה.",
+		footer: "Email Explorer - איפוס סיסמה",
 	},
 
 	bn: {
@@ -1388,6 +1429,35 @@ const EMAIL_CHANGE_TEXT: Record<MailLocale, EmailChangeStrings> = {
 		ignore:
 			"Якщо ви цього не запитували, проігноруйте лист. Нічого не зміниться.",
 		footer: "Email Explorer - Зміна адреси",
+	},
+
+	ar: {
+		subject: "تأكيد عنوان البريد الجديد",
+		heading: "تأكيد عنوان البريد الجديد",
+		intro:
+			"وصلنا طلب لتغيير عنوان تسجيل دخولك إلى هذا العنوان. اضغط الزر أدناه لتأكيد التغيير.",
+		button: "تأكيد هذا العنوان",
+		ignore: "إن لم تكن أنت من طلب ذلك، فتجاهل هذه الرسالة. لن يتغير شيء.",
+		footer: "Email Explorer - تغيير عنوان البريد",
+	},
+	fa: {
+		subject: "تأیید نشانی ایمیل تازه",
+		heading: "تأیید نشانی ایمیل تازه",
+		intro:
+			"درخواستی برای تغییر نشانی ورود شما به این نشانی دریافت کردیم. برای تأیید تغییر، دکمهٔ زیر را بزنید.",
+		button: "تأیید این نشانی",
+		ignore:
+			"اگر شما این را نخواسته‌اید، این نامه را نادیده بگیرید. چیزی تغییر نمی‌کند.",
+		footer: "Email Explorer - تغییر نشانی ایمیل",
+	},
+	he: {
+		subject: 'אישור כתובת הדוא"ל החדשה',
+		heading: 'אישור כתובת הדוא"ל החדשה',
+		intro:
+			"קיבלנו בקשה לשנות את כתובת ההתחברות שלכם לכתובת הזו. לחצו על הכפתור למטה כדי לאשר את השינוי.",
+		button: "אישור הכתובת",
+		ignore: "אם לא ביקשתם זאת, התעלמו מההודעה. שום דבר לא ישתנה.",
+		footer: 'Email Explorer - שינוי כתובת דוא"ל',
 	},
 
 	bn: {
