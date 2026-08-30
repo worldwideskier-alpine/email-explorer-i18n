@@ -322,7 +322,13 @@
 		"forwardedMessage": "Перасланы ліст:",
 		"forwardFrom": "Ад:",
 		"forwardDate": "Дата:",
-		"forwardSubject": "Тэма:"
+		"forwardSubject": "Тэма:",
+		"attachments": "Укладанні",
+		"removeAttachment": "Выдаліць",
+		"attachmentTotal": "{size} з {max}",
+		"attachmentTooLarge": "Агульны памер укладанняў перавышае мяжу {max}. Выдаліце некалькі файлаў.",
+		"attachmentDraftNote": "Захаваны чарнавік не захоўвае ўкладанні.",
+		"attachmentReadFailed": "Не ўдалося прачытаць файл."
 	},
 	"richTextEditor": {
 		"bold": "Тоўсты (Ctrl+B)",

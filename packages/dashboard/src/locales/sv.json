@@ -322,7 +322,13 @@
 		"forwardedMessage": "Vidarebefordrat meddelande:",
 		"forwardFrom": "Från:",
 		"forwardDate": "Datum:",
-		"forwardSubject": "Ämne:"
+		"forwardSubject": "Ämne:",
+		"attachments": "Bilagor",
+		"removeAttachment": "Ta bort",
+		"attachmentTotal": "{size} av {max}",
+		"attachmentTooLarge": "Bilagorna överskrider gränsen på {max}. Ta bort några filer.",
+		"attachmentDraftNote": "Ett sparat utkast behåller inte bilagor.",
+		"attachmentReadFailed": "Filen kunde inte läsas."
 	},
 	"richTextEditor": {
 		"bold": "Fet (Ctrl+B)",

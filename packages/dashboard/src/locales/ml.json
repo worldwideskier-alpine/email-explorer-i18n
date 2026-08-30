@@ -322,7 +322,13 @@
 		"forwardedMessage": "മുന്നോട്ട് അയച്ച സന്ദേശം:",
 		"forwardFrom": "അയച്ചത്:",
 		"forwardDate": "തീയതി:",
-		"forwardSubject": "വിഷയം:"
+		"forwardSubject": "വിഷയം:",
+		"attachments": "അറ്റാച്ച്മെന്റുകൾ",
+		"removeAttachment": "നീക്കുക",
+		"attachmentTotal": "{size} / പരമാവധി {max}",
+		"attachmentTooLarge": "അറ്റാച്ച്മെന്റുകളുടെ ആകെ വലുപ്പം {max} പരിധി കവിയുന്നു. ചില ഫയലുകൾ നീക്കുക.",
+		"attachmentDraftNote": "സേവ് ചെയ്ത ഡ്രാഫ്റ്റിൽ അറ്റാച്ച്മെന്റുകൾ നിലനിൽക്കില്ല.",
+		"attachmentReadFailed": "ഫയൽ വായിക്കാൻ കഴിഞ്ഞില്ല."
 	},
 	"richTextEditor": {
 		"bold": "കട്ടി (Ctrl+B)",

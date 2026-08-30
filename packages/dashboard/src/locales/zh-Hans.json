@@ -322,7 +322,13 @@
 		"forwardedMessage": "转发的邮件：",
 		"forwardFrom": "发件人：",
 		"forwardDate": "日期：",
-		"forwardSubject": "主题："
+		"forwardSubject": "主题：",
+		"attachments": "附件",
+		"removeAttachment": "删除",
+		"attachmentTotal": "{size} / 上限 {max}",
+		"attachmentTooLarge": "附件总大小超过 {max} 上限，请减少文件。",
+		"attachmentDraftNote": "草稿不会保存附件。",
+		"attachmentReadFailed": "无法读取该文件。"
 	},
 	"richTextEditor": {
 		"bold": "粗体 (Ctrl+B)",

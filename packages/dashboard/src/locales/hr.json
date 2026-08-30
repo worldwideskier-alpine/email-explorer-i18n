@@ -322,7 +322,13 @@
 		"forwardedMessage": "Proslijeđena poruka:",
 		"forwardFrom": "Šalje:",
 		"forwardDate": "Datum:",
-		"forwardSubject": "Predmet:"
+		"forwardSubject": "Predmet:",
+		"attachments": "Privici",
+		"removeAttachment": "Ukloni",
+		"attachmentTotal": "{size} od {max}",
+		"attachmentTooLarge": "Privici prelaze ograničenje od {max}. Uklonite neke datoteke.",
+		"attachmentDraftNote": "Spremljena skica ne čuva privitke.",
+		"attachmentReadFailed": "Datoteku nije bilo moguće pročitati."
 	},
 	"richTextEditor": {
 		"bold": "Podebljano (Ctrl+B)",

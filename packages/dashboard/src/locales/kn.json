@@ -322,7 +322,13 @@
 		"forwardedMessage": "ಮುಂದಕ್ಕೆ ಕಳುಹಿಸಿದ ಸಂದೇಶ:",
 		"forwardFrom": "ಇಂದ:",
 		"forwardDate": "ದಿನಾಂಕ:",
-		"forwardSubject": "ವಿಷಯ:"
+		"forwardSubject": "ವಿಷಯ:",
+		"attachments": "ಲಗತ್ತುಗಳು",
+		"removeAttachment": "ತೆಗೆದುಹಾಕಿ",
+		"attachmentTotal": "{size} / ಗರಿಷ್ಠ {max}",
+		"attachmentTooLarge": "ಲಗತ್ತುಗಳ ಒಟ್ಟು ಗಾತ್ರ {max} ಮಿತಿಯನ್ನು ಮೀರಿದೆ. ಕೆಲವು ಫೈಲ್‌ಗಳನ್ನು ತೆಗೆದುಹಾಕಿ.",
+		"attachmentDraftNote": "ಉಳಿಸಿದ ಕರಡಿನಲ್ಲಿ ಲಗತ್ತುಗಳು ಉಳಿಯುವುದಿಲ್ಲ.",
+		"attachmentReadFailed": "ಫೈಲ್ ಓದಲಾಗಲಿಲ್ಲ."
 	},
 	"richTextEditor": {
 		"bold": "ದಪ್ಪ (Ctrl+B)",

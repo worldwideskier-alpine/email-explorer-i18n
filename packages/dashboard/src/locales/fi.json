@@ -322,7 +322,13 @@
 		"forwardedMessage": "Välitetty viesti:",
 		"forwardFrom": "Lähettäjä:",
 		"forwardDate": "Päivämäärä:",
-		"forwardSubject": "Aihe:"
+		"forwardSubject": "Aihe:",
+		"attachments": "Liitteet",
+		"removeAttachment": "Poista",
+		"attachmentTotal": "{size} / {max}",
+		"attachmentTooLarge": "Liitteet ylittävät rajan {max}. Poista joitakin tiedostoja.",
+		"attachmentDraftNote": "Tallennettu luonnos ei säilytä liitteitä.",
+		"attachmentReadFailed": "Tiedostoa ei voitu lukea."
 	},
 	"richTextEditor": {
 		"bold": "Lihavointi (Ctrl+B)",

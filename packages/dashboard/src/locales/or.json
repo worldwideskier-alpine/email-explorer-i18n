@@ -322,7 +322,13 @@
 		"forwardedMessage": "ଆଗକୁ ପଠାଯାଇଥିବା ସନ୍ଦେଶ:",
 		"forwardFrom": "ଠାରୁ:",
 		"forwardDate": "ତାରିଖ:",
-		"forwardSubject": "ବିଷୟ:"
+		"forwardSubject": "ବିଷୟ:",
+		"attachments": "ସଂଲଗ୍ନଗୁଡ଼ିକ",
+		"removeAttachment": "ହଟାନ୍ତୁ",
+		"attachmentTotal": "{size} / ସର୍ବାଧିକ {max}",
+		"attachmentTooLarge": "ସଂଲଗ୍ନଗୁଡ଼ିକର ମୋଟ ଆକାର {max} ସୀମା ଅତିକ୍ରମ କରୁଛି। କିଛି ଫାଇଲ ହଟାନ୍ତୁ।",
+		"attachmentDraftNote": "ସଞ୍ଚିତ ଡ୍ରାଫ୍ଟରେ ସଂଲଗ୍ନ ରହେ ନାହିଁ।",
+		"attachmentReadFailed": "ଫାଇଲ ପଢ଼ାଯାଇ ପାରିଲା ନାହିଁ।"
 	},
 	"richTextEditor": {
 		"bold": "ମୋଟା (Ctrl+B)",

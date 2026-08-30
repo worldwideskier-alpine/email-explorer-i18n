@@ -322,7 +322,13 @@
 		"forwardedMessage": "Пересланное письмо:",
 		"forwardFrom": "От:",
 		"forwardDate": "Дата:",
-		"forwardSubject": "Тема:"
+		"forwardSubject": "Тема:",
+		"attachments": "Вложения",
+		"removeAttachment": "Удалить",
+		"attachmentTotal": "{size} из {max}",
+		"attachmentTooLarge": "Общий размер вложений превышает предел {max}. Удалите часть файлов.",
+		"attachmentDraftNote": "Сохранённый черновик не сохраняет вложения.",
+		"attachmentReadFailed": "Не удалось прочитать файл."
 	},
 	"richTextEditor": {
 		"bold": "Полужирный (Ctrl+B)",

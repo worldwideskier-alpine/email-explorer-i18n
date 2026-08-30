@@ -322,7 +322,13 @@
 		"forwardedMessage": "Posredovano sporočilo:",
 		"forwardFrom": "Od:",
 		"forwardDate": "Datum:",
-		"forwardSubject": "Zadeva:"
+		"forwardSubject": "Zadeva:",
+		"attachments": "Priloge",
+		"removeAttachment": "Odstrani",
+		"attachmentTotal": "{size} od {max}",
+		"attachmentTooLarge": "Priloge presegajo omejitev {max}. Odstranite nekaj datotek.",
+		"attachmentDraftNote": "Shranjen osnutek prilog ne ohrani.",
+		"attachmentReadFailed": "Datoteke ni bilo mogoče prebrati."
 	},
 	"richTextEditor": {
 		"bold": "Krepko (Ctrl+B)",

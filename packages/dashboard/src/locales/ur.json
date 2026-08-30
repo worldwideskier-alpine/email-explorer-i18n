@@ -322,7 +322,13 @@
 		"forwardedMessage": "آگے بھیجا گیا پیغام:",
 		"forwardFrom": "جانب سے:",
 		"forwardDate": "تاریخ:",
-		"forwardSubject": "موضوع:"
+		"forwardSubject": "موضوع:",
+		"attachments": "منسلکات",
+		"removeAttachment": "ہٹائیں",
+		"attachmentTotal": "{size} / زیادہ سے زیادہ {max}",
+		"attachmentTooLarge": "منسلکات کا مجموعی حجم {max} کی حد سے تجاوز کر گیا ہے۔ کچھ فائلیں ہٹائیں۔",
+		"attachmentDraftNote": "محفوظ کردہ مسودے میں منسلکات نہیں رہتے۔",
+		"attachmentReadFailed": "فائل پڑھی نہیں جا سکی۔"
 	},
 	"richTextEditor": {
 		"bold": "موٹا (Ctrl+B)",

@@ -322,7 +322,13 @@
 		"forwardedMessage": "Videresendt melding:",
 		"forwardFrom": "Fra:",
 		"forwardDate": "Dato:",
-		"forwardSubject": "Emne:"
+		"forwardSubject": "Emne:",
+		"attachments": "Vedlegg",
+		"removeAttachment": "Fjern",
+		"attachmentTotal": "{size} av {max}",
+		"attachmentTooLarge": "Vedleggene overstiger grensen på {max}. Fjern noen filer.",
+		"attachmentDraftNote": "Et lagret utkast beholder ikke vedlegg.",
+		"attachmentReadFailed": "Filen kunne ikke leses."
 	},
 	"richTextEditor": {
 		"bold": "Fet (Ctrl+B)",

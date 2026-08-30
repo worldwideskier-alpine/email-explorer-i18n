@@ -322,7 +322,13 @@
 		"forwardedMessage": "पुढे पाठवलेला संदेश:",
 		"forwardFrom": "कडून:",
 		"forwardDate": "दिनांक:",
-		"forwardSubject": "विषय:"
+		"forwardSubject": "विषय:",
+		"attachments": "जोडपत्रे",
+		"removeAttachment": "काढा",
+		"attachmentTotal": "{size} / कमाल {max}",
+		"attachmentTooLarge": "जोडपत्रांचा एकूण आकार {max} मर्यादेपेक्षा जास्त आहे. काही फाइल काढा.",
+		"attachmentDraftNote": "जतन केलेल्या मसुद्यात जोडपत्रे राहत नाहीत.",
+		"attachmentReadFailed": "फाइल वाचता आली नाही."
 	},
 	"richTextEditor": {
 		"bold": "ठळक (Ctrl+B)",

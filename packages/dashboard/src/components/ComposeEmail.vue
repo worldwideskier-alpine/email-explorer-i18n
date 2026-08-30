@@ -98,6 +98,50 @@
               class="flex-1 min-h-[300px] resize-none block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 font-mono text-sm transition-all duration-200"
             ></textarea>
           </div>
+
+          <!-- Attachments. The list is below the body rather than beside the
+               address fields because it grows, and pushing the message down
+               as files are added is less disruptive than reflowing the head
+               of the form. -->
+          <div class="mt-5 flex-shrink-0">
+            <div class="flex items-center justify-between gap-4 mb-2">
+              <label for="attachments" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ t("compose.attachments") }}</label>
+              <span class="text-xs" :class="attachmentsTooLarge ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-500 dark:text-gray-400'">
+                {{ t("compose.attachmentTotal", { size: formatBytes(attachmentBytes), max: formatBytes(MAX_TOTAL_ATTACHMENT_BYTES) }) }}
+              </span>
+            </div>
+            <input
+              ref="attachmentInput"
+              id="attachments"
+              type="file"
+              multiple
+              :disabled="isLoading || isReadingAttachments"
+              @change="onAttachmentsChosen"
+              class="block w-full text-sm text-gray-700 dark:text-gray-300 file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-gray-800 dark:file:bg-gray-200 file:text-white dark:file:text-gray-900 file:font-medium file:cursor-pointer disabled:opacity-60"
+            />
+            <ul v-if="attachments.length" class="mt-3 divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+              <li v-for="att in attachments" :key="att.id" class="flex items-center justify-between gap-3 px-4 py-2">
+                <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ att.filename }}</span>
+                <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ formatBytes(att.size) }}</span>
+                <button
+                  type="button"
+                  @click="removeAttachment(att.id)"
+                  :disabled="isLoading"
+                  class="text-sm text-red-600 dark:text-red-400 hover:underline whitespace-nowrap disabled:opacity-50"
+                >
+                  {{ t("compose.removeAttachment") }}
+                </button>
+              </li>
+            </ul>
+            <p v-if="attachmentsTooLarge" class="mt-2 text-sm text-red-600 dark:text-red-400">
+              {{ t("compose.attachmentTooLarge", { max: formatBytes(MAX_TOTAL_ATTACHMENT_BYTES) }) }}
+            </p>
+            <!-- Said before a draft is saved rather than after, because the
+                 loss is silent otherwise: the draft comes back without them. -->
+            <p v-else-if="attachments.length" class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              {{ t("compose.attachmentDraftNote") }}
+            </p>
+          </div>
         </div>
         <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
           <button
@@ -148,6 +192,13 @@ import { useMailboxStore } from "@/stores/mailboxes";
 import { useUIStore } from "@/stores/ui";
 import { splitAddresses } from "@/utils/addresses";
 import {
+	fileToAttachment,
+	formatBytes,
+	MAX_TOTAL_ATTACHMENT_BYTES,
+	type PendingAttachment,
+	totalAttachmentBytes,
+} from "@/utils/attachments";
+import {
 	htmlToPlainText,
 	plainTextToSimpleHtml,
 } from "@/utils/htmlToPlainText";
@@ -178,6 +229,50 @@ const htmlBeforePlainText = ref<string | null>(null);
 const generatedPlainText = ref<string | null>(null);
 const draftId = ref<string | null>(null);
 const error = useLocalizedMessage();
+
+const attachments = ref<PendingAttachment[]>([]);
+const attachmentInput = ref<HTMLInputElement | null>(null);
+const isReadingAttachments = ref(false);
+const attachmentBytes = computed(() => totalAttachmentBytes(attachments.value));
+const attachmentsTooLarge = computed(
+	() => attachmentBytes.value > MAX_TOTAL_ATTACHMENT_BYTES,
+);
+
+/**
+ * Files are read and encoded as they are picked, not at send time, so an
+ * unreadable file is reported while the dialog is still open rather than
+ * turning into a failed send.
+ *
+ * The input is cleared afterwards so that picking the same file again still
+ * fires a change event -- a browser does not re-fire for an unchanged value,
+ * and a person who removed a file by mistake would find they could not add it
+ * back.
+ */
+async function onAttachmentsChosen(event: Event) {
+	const input = event.target as HTMLInputElement;
+	const picked = Array.from(input.files ?? []);
+	if (!picked.length) return;
+
+	isReadingAttachments.value = true;
+	try {
+		const read = await Promise.all(picked.map(fileToAttachment));
+		attachments.value = [...attachments.value, ...read];
+	} catch {
+		error.value = () => t("compose.attachmentReadFailed");
+	} finally {
+		isReadingAttachments.value = false;
+		if (attachmentInput.value) attachmentInput.value.value = "";
+	}
+}
+
+function removeAttachment(id: string) {
+	attachments.value = attachments.value.filter((att) => att.id !== id);
+}
+
+function clearAttachments() {
+	attachments.value = [];
+	if (attachmentInput.value) attachmentInput.value.value = "";
+}
 const isLoading = ref(false);
 const isSavingDraft = ref(false);
 
@@ -245,6 +340,9 @@ watch(isComposeModalOpen, (isOpen) => {
 		cc.value = "";
 		bcc.value = "";
 		showCcBcc.value = false;
+		// Files picked for the last message must never ride along on the next
+		// one: an attachment sent to the wrong person cannot be recalled.
+		clearAttachments();
 
 		if (options.mode === "draft" && original) {
 			to.value = original.recipient || "";
@@ -373,6 +471,16 @@ const send = async () => {
 		error.value = () => t("compose.noMailboxSelected");
 		return;
 	}
+	// Refused here rather than sent and rejected: an oversized request would
+	// come back as an error from Resend or the Worker, by which time the
+	// whole encoded body has been uploaded for nothing.
+	if (attachmentsTooLarge.value) {
+		error.value = () =>
+			t("compose.attachmentTooLarge", {
+				max: formatBytes(MAX_TOTAL_ATTACHMENT_BYTES),
+			});
+		return;
+	}
 	isLoading.value = true;
 	try {
 		const mailboxId = route.params.mailboxId as string;
@@ -383,15 +491,29 @@ const send = async () => {
 			cc: splitAddresses(cc.value),
 			bcc: splitAddresses(bcc.value),
 		};
+		// Omitted entirely rather than sent as [], which the API rejects.
+		const attached = attachments.value.length
+			? {
+					attachments: attachments.value.map((att) => ({
+						content: att.content,
+						filename: att.filename,
+						type: att.type,
+						disposition: "attachment" as const,
+					})),
+				}
+			: {};
+
 		const emailData = isPlainText.value
 			? {
 					...recipients,
+					...attached,
 					from: currentMailbox.value.email,
 					subject: subject.value,
 					text: plainBody.value,
 				}
 			: {
 					...recipients,
+					...attached,
 					from: currentMailbox.value.email,
 					subject: subject.value,
 					html: body.value,
@@ -427,6 +549,7 @@ const send = async () => {
 		to.value = "";
 		subject.value = "";
 		body.value = "";
+		clearAttachments();
 		closeModal();
 		showSuccessToast(t("compose.emailSentSuccess"));
 	} catch (e: any) {

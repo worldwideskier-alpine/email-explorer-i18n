@@ -322,7 +322,13 @@
 		"forwardedMessage": "Přeposlaná zpráva:",
 		"forwardFrom": "Od:",
 		"forwardDate": "Datum:",
-		"forwardSubject": "Předmět:"
+		"forwardSubject": "Předmět:",
+		"attachments": "Přílohy",
+		"removeAttachment": "Odebrat",
+		"attachmentTotal": "{size} z {max}",
+		"attachmentTooLarge": "Přílohy přesahují limit {max}. Odeberte některé soubory.",
+		"attachmentDraftNote": "Uložený koncept přílohy neuchová.",
+		"attachmentReadFailed": "Soubor se nepodařilo přečíst."
 	},
 	"richTextEditor": {
 		"bold": "Tučné (Ctrl+B)",

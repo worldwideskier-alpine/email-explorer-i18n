@@ -322,7 +322,13 @@
 		"forwardedMessage": "Mensaje reenviado:",
 		"forwardFrom": "De:",
 		"forwardDate": "Fecha:",
-		"forwardSubject": "Asunto:"
+		"forwardSubject": "Asunto:",
+		"attachments": "Adjuntos",
+		"removeAttachment": "Quitar",
+		"attachmentTotal": "{size} de {max}",
+		"attachmentTooLarge": "Los adjuntos superan el límite de {max}. Quite algunos archivos.",
+		"attachmentDraftNote": "Un borrador guardado no conserva los adjuntos.",
+		"attachmentReadFailed": "No se pudo leer el archivo."
 	},
 	"richTextEditor": {
 		"bold": "Negrita (Ctrl+B)",

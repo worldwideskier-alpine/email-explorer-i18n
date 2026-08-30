@@ -322,7 +322,13 @@
 		"forwardedMessage": "Továbbított üzenet:",
 		"forwardFrom": "Feladó:",
 		"forwardDate": "Dátum:",
-		"forwardSubject": "Tárgy:"
+		"forwardSubject": "Tárgy:",
+		"attachments": "Mellékletek",
+		"removeAttachment": "Eltávolítás",
+		"attachmentTotal": "{size} / {max}",
+		"attachmentTooLarge": "A mellékletek meghaladják a(z) {max} korlátot. Távolítson el néhány fájlt.",
+		"attachmentDraftNote": "A mentett piszkozat nem őrzi meg a mellékleteket.",
+		"attachmentReadFailed": "A fájlt nem sikerült beolvasni."
 	},
 	"richTextEditor": {
 		"bold": "Félkövér (Ctrl+B)",

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { backupKeyPrefix } from "./auto-backup";
 import { runScheduledBackups } from "./backup-run";
 import { listBackups } from "./backup-writer";
+import { base64ToBytes } from "./base64";
 import { classifyWithClaude } from "./claude-spam-filter";
 import { ingestEmailIntoMailbox } from "./email-ingest";
 import { buildPasswordResetEmail, MAIL_LOCALES } from "./mail-templates";
@@ -693,7 +694,7 @@ class PostEmail extends OpenAPIRoute {
 			for (const att of attachments) {
 				const attachmentId = crypto.randomUUID();
 				const key = `attachments/${messageId}/${attachmentId}/${att.filename}`;
-				const decoded = atob(att.content);
+				const decoded = base64ToBytes(att.content);
 				await c.env.BUCKET.put(key, decoded);
 				attachmentData.push({
 					id: attachmentId,

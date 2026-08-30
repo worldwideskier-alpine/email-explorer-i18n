@@ -322,7 +322,13 @@
 		"forwardedMessage": "გადაგზავნილი წერილი:",
 		"forwardFrom": "ვისგან:",
 		"forwardDate": "თარიღი:",
-		"forwardSubject": "თემა:"
+		"forwardSubject": "თემა:",
+		"attachments": "დანართები",
+		"removeAttachment": "წაშლა",
+		"attachmentTotal": "{size} / {max}",
+		"attachmentTooLarge": "დანართების ჯამური ზომა აღემატება {max} ზღვარს. წაშალეთ ზოგიერთი ფაილი.",
+		"attachmentDraftNote": "შენახული მონახაზი დანართებს არ ინახავს.",
+		"attachmentReadFailed": "ფაილის წაკითხვა ვერ მოხერხდა."
 	},
 	"richTextEditor": {
 		"bold": "მუქი (Ctrl+B)",

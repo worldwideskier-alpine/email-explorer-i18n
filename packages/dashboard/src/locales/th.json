@@ -322,7 +322,13 @@
 		"forwardedMessage": "ข้อความที่ส่งต่อ:",
 		"forwardFrom": "จาก:",
 		"forwardDate": "วันที่:",
-		"forwardSubject": "หัวเรื่อง:"
+		"forwardSubject": "หัวเรื่อง:",
+		"attachments": "ไฟล์แนบ",
+		"removeAttachment": "ลบ",
+		"attachmentTotal": "{size} จาก {max}",
+		"attachmentTooLarge": "ขนาดรวมของไฟล์แนบเกินขีดจำกัด {max} กรุณาลบบางไฟล์",
+		"attachmentDraftNote": "ฉบับร่างที่บันทึกไว้จะไม่เก็บไฟล์แนบ",
+		"attachmentReadFailed": "อ่านไฟล์ไม่ได้"
 	},
 	"richTextEditor": {
 		"bold": "ตัวหนา (Ctrl+B)",

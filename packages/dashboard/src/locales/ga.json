@@ -322,7 +322,13 @@
 		"forwardedMessage": "Teachtaireacht curtha ar aghaidh:",
 		"forwardFrom": "Ó:",
 		"forwardDate": "Dáta:",
-		"forwardSubject": "Ábhar:"
+		"forwardSubject": "Ábhar:",
+		"attachments": "Ceangaltáin",
+		"removeAttachment": "Bain",
+		"attachmentTotal": "{size} as {max}",
+		"attachmentTooLarge": "Sáraíonn na ceangaltáin an teorainn {max}. Bain roinnt comhad.",
+		"attachmentDraftNote": "Ní choinníonn dréacht sábháilte ceangaltáin.",
+		"attachmentReadFailed": "Níorbh fhéidir an comhad a léamh."
 	},
 	"richTextEditor": {
 		"bold": "Trom (Ctrl+B)",

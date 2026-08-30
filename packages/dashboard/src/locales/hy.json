@@ -322,7 +322,13 @@
 		"forwardedMessage": "Վերահասցեավորված նամակ՝",
 		"forwardFrom": "Ումից՝",
 		"forwardDate": "Ամսաթիվ՝",
-		"forwardSubject": "Թեմա՝"
+		"forwardSubject": "Թեմա՝",
+		"attachments": "Կցորդներ",
+		"removeAttachment": "Հեռացնել",
+		"attachmentTotal": "{size} / {max}",
+		"attachmentTooLarge": "Կցորդների ընդհանուր ծավալը գերազանցում է {max} սահմանը. Հեռացրեք որոշ ֆայլեր.",
+		"attachmentDraftNote": "Պահված սևագիրը կցորդներ չի պահում.",
+		"attachmentReadFailed": "Ֆայլը հնարավոր չեղավ կարդալ."
 	},
 	"richTextEditor": {
 		"bold": "Թավ (Ctrl+B)",

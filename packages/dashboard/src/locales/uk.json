@@ -322,7 +322,13 @@
 		"forwardedMessage": "Пересланий лист:",
 		"forwardFrom": "Від:",
 		"forwardDate": "Дата:",
-		"forwardSubject": "Тема:"
+		"forwardSubject": "Тема:",
+		"attachments": "Вкладення",
+		"removeAttachment": "Видалити",
+		"attachmentTotal": "{size} з {max}",
+		"attachmentTooLarge": "Загальний розмір вкладень перевищує межу {max}. Видаліть частину файлів.",
+		"attachmentDraftNote": "Збережений чернетковий лист не зберігає вкладення.",
+		"attachmentReadFailed": "Не вдалося прочитати файл."
 	},
 	"richTextEditor": {
 		"bold": "Жирний (Ctrl+B)",

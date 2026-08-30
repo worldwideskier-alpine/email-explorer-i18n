@@ -322,7 +322,13 @@
 		"forwardedMessage": "अगाडि पठाइएको सन्देश:",
 		"forwardFrom": "बाट:",
 		"forwardDate": "मिति:",
-		"forwardSubject": "विषय:"
+		"forwardSubject": "विषय:",
+		"attachments": "संलग्नहरू",
+		"removeAttachment": "हटाउनुहोस्",
+		"attachmentTotal": "{size} / अधिकतम {max}",
+		"attachmentTooLarge": "संलग्नहरूको कुल आकार {max} सीमाभन्दा बढी छ। केही फाइल हटाउनुहोस्।",
+		"attachmentDraftNote": "सुरक्षित गरिएको मस्यौदामा संलग्नहरू रहँदैनन्।",
+		"attachmentReadFailed": "फाइल पढ्न सकिएन।"
 	},
 	"richTextEditor": {
 		"bold": "बाक्लो (Ctrl+B)",

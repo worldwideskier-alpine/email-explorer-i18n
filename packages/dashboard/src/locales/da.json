@@ -322,7 +322,13 @@
 		"forwardedMessage": "Videresendt besked:",
 		"forwardFrom": "Fra:",
 		"forwardDate": "Dato:",
-		"forwardSubject": "Emne:"
+		"forwardSubject": "Emne:",
+		"attachments": "Vedhæftede filer",
+		"removeAttachment": "Fjern",
+		"attachmentTotal": "{size} af {max}",
+		"attachmentTooLarge": "De vedhæftede filer overstiger grænsen på {max}. Fjern nogle filer.",
+		"attachmentDraftNote": "En gemt kladde bevarer ikke vedhæftede filer.",
+		"attachmentReadFailed": "Filen kunne ikke læses."
 	},
 	"richTextEditor": {
 		"bold": "Fed (Ctrl+B)",

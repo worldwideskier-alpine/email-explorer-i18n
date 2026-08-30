@@ -322,7 +322,13 @@
 		"forwardedMessage": "ຂໍ້ຄວາມທີ່ສົ່ງຕໍ່:",
 		"forwardFrom": "ຈາກ:",
 		"forwardDate": "ວັນທີ:",
-		"forwardSubject": "ຫົວຂໍ້:"
+		"forwardSubject": "ຫົວຂໍ້:",
+		"attachments": "ໄຟລ໌ແນບ",
+		"removeAttachment": "ລຶບ",
+		"attachmentTotal": "{size} / ສູງສຸດ {max}",
+		"attachmentTooLarge": "ຂະໜາດລວມຂອງໄຟລ໌ແນບເກີນຂີດຈຳກັດ {max}. ກະລຸນາລຶບບາງໄຟລ໌.",
+		"attachmentDraftNote": "ຮ່າງທີ່ບັນທຶກໄວ້ຈະບໍ່ເກັບໄຟລ໌ແນບ.",
+		"attachmentReadFailed": "ອ່ານໄຟລ໌ບໍ່ໄດ້."
 	},
 	"richTextEditor": {
 		"bold": "ຕົວໜາ (Ctrl+B)",

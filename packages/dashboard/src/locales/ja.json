@@ -322,7 +322,13 @@
 		"forwardedMessage": "転送されたメッセージ:",
 		"forwardFrom": "差出人:",
 		"forwardDate": "日付:",
-		"forwardSubject": "件名:"
+		"forwardSubject": "件名:",
+		"attachments": "添付ファイル",
+		"removeAttachment": "削除",
+		"attachmentTotal": "{size} / 上限 {max}",
+		"attachmentTooLarge": "添付の合計が上限（{max}）を超えています。ファイルを減らしてください。",
+		"attachmentDraftNote": "一時保存には添付ファイルは含まれません。",
+		"attachmentReadFailed": "ファイルを読み込めませんでした。"
 	},
 	"richTextEditor": {
 		"bold": "太字 (Ctrl+B)",

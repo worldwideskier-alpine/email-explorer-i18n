@@ -322,7 +322,13 @@
 		"forwardedMessage": "Messadi renvià:",
 		"forwardFrom": "Da:",
 		"forwardDate": "Data:",
-		"forwardSubject": "Object:"
+		"forwardSubject": "Object:",
+		"attachments": "Agiuntas",
+		"removeAttachment": "Allontanar",
+		"attachmentTotal": "{size} da {max}",
+		"attachmentTooLarge": "Las agiuntas surpassan la limita da {max}. Allontanai insaquants documents.",
+		"attachmentDraftNote": "Ina sbozza memorisada na tegna betg las agiuntas.",
+		"attachmentReadFailed": "Il document n'ha betg pudì vegnir legì."
 	},
 	"richTextEditor": {
 		"bold": "Grass (Ctrl+B)",

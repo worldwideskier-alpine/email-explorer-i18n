@@ -322,7 +322,13 @@
 		"forwardedMessage": "ফরওয়ার্ড করা বার্তা:",
 		"forwardFrom": "প্রেরক:",
 		"forwardDate": "তারিখ:",
-		"forwardSubject": "বিষয়:"
+		"forwardSubject": "বিষয়:",
+		"attachments": "সংযুক্তি",
+		"removeAttachment": "সরান",
+		"attachmentTotal": "{size} / সর্বোচ্চ {max}",
+		"attachmentTooLarge": "সংযুক্তির মোট আকার {max} সীমা ছাড়িয়ে গেছে। কিছু ফাইল সরান।",
+		"attachmentDraftNote": "সংরক্ষিত খসড়ায় সংযুক্তি থাকে না।",
+		"attachmentReadFailed": "ফাইলটি পড়া যায়নি।"
 	},
 	"richTextEditor": {
 		"bold": "মোটা (Ctrl+B)",

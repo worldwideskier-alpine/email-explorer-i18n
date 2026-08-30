@@ -322,7 +322,13 @@
 		"forwardedMessage": "Προωθημένο μήνυμα:",
 		"forwardFrom": "Από:",
 		"forwardDate": "Ημερομηνία:",
-		"forwardSubject": "Θέμα:"
+		"forwardSubject": "Θέμα:",
+		"attachments": "Συνημμένα",
+		"removeAttachment": "Αφαίρεση",
+		"attachmentTotal": "{size} από {max}",
+		"attachmentTooLarge": "Τα συνημμένα ξεπερνούν το όριο των {max}. Αφαιρέστε μερικά αρχεία.",
+		"attachmentDraftNote": "Ένα αποθηκευμένο πρόχειρο δεν κρατά συνημμένα.",
+		"attachmentReadFailed": "Δεν ήταν δυνατή η ανάγνωση του αρχείου."
 	},
 	"richTextEditor": {
 		"bold": "Έντονα (Ctrl+B)",

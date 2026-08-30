@@ -322,7 +322,13 @@
 		"forwardedMessage": "આગળ મોકલેલો સંદેશો:",
 		"forwardFrom": "તરફથી:",
 		"forwardDate": "તારીખ:",
-		"forwardSubject": "વિષય:"
+		"forwardSubject": "વિષય:",
+		"attachments": "જોડાણો",
+		"removeAttachment": "દૂર કરો",
+		"attachmentTotal": "{size} / મર્યાદા {max}",
+		"attachmentTooLarge": "જોડાણોનું કુલ કદ {max} મર્યાદા વટાવે છે. કેટલીક ફાઇલો દૂર કરો.",
+		"attachmentDraftNote": "સાચવેલા ડ્રાફ્ટમાં જોડાણો રહેતાં નથી.",
+		"attachmentReadFailed": "ફાઇલ વાંચી શકાઈ નથી."
 	},
 	"richTextEditor": {
 		"bold": "ઘાટું (Ctrl+B)",

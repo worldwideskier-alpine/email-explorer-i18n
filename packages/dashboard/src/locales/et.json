@@ -322,7 +322,13 @@
 		"forwardedMessage": "Edastatud sõnum:",
 		"forwardFrom": "Saatja:",
 		"forwardDate": "Kuupäev:",
-		"forwardSubject": "Teema:"
+		"forwardSubject": "Teema:",
+		"attachments": "Manused",
+		"removeAttachment": "Eemalda",
+		"attachmentTotal": "{size} / {max}",
+		"attachmentTooLarge": "Manuste kogumaht ületab piiri {max}. Eemaldage mõni fail.",
+		"attachmentDraftNote": "Salvestatud mustand manuseid ei säilita.",
+		"attachmentReadFailed": "Faili ei õnnestunud lugeda."
 	},
 	"richTextEditor": {
 		"bold": "Rasvane (Ctrl+B)",

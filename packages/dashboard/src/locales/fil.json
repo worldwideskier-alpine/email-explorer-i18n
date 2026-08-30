@@ -322,7 +322,13 @@
 		"forwardedMessage": "Ipinasang mensahe:",
 		"forwardFrom": "Mula kay:",
 		"forwardDate": "Petsa:",
-		"forwardSubject": "Paksa:"
+		"forwardSubject": "Paksa:",
+		"attachments": "Mga kalakip",
+		"removeAttachment": "Alisin",
+		"attachmentTotal": "{size} sa {max}",
+		"attachmentTooLarge": "Lumampas sa hangganang {max} ang kabuuan ng mga kalakip. Mag-alis ng ilang file.",
+		"attachmentDraftNote": "Hindi iniingatan ng naka-save na draft ang mga kalakip.",
+		"attachmentReadFailed": "Hindi nabasa ang file."
 	},
 	"richTextEditor": {
 		"bold": "Makapal (Ctrl+B)",

@@ -1,6 +1,7 @@
 import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
+import { base64ToBytes } from "../base64";
 import { plainTextToHtml } from "../plain-text-to-html";
 import { formatAddressList } from "../recipients";
 import { sendEmail } from "../resend";
@@ -134,7 +135,7 @@ export class PostReplyEmail extends OpenAPIRoute {
 			for (const att of attachments) {
 				const attachmentId = crypto.randomUUID();
 				const key = `attachments/${messageId}/${attachmentId}/${att.filename}`;
-				const decoded = atob(att.content);
+				const decoded = base64ToBytes(att.content);
 				await c.env.BUCKET.put(key, decoded);
 				attachmentData.push({
 					id: attachmentId,
@@ -247,7 +248,7 @@ export class PostForwardEmail extends OpenAPIRoute {
 			for (const att of attachments) {
 				const attachmentId = crypto.randomUUID();
 				const key = `attachments/${messageId}/${attachmentId}/${att.filename}`;
-				const decoded = atob(att.content);
+				const decoded = base64ToBytes(att.content);
 				await c.env.BUCKET.put(key, decoded);
 				attachmentData.push({
 					id: attachmentId,
