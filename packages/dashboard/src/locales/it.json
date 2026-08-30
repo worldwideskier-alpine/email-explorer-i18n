@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Ogni mese",
 		"autoBackupKeep": "Copie da conservare",
 		"autoBackupKeepNote": "Il numero si può aumentare ma non ridurre (ora non meno di {keep}). Ridurlo cancellerebbe le copie più vecchie alla prossima esecuzione. Serve l'accesso a Cloudflare.",
-		"autoBackupWindowNote": "Qui non c'è modo di cancellare un backup. Vengono rimosse solo le copie oltre il numero impostato. Svuotare la casella e attendere frequenza per copie riempie l'archivio di copie vuote.",
+		"autoBackupWindowNote": "In questa schermata non c'è alcun modo di eliminare un backup. Spariscono soltanto gli archivi vecchi oltre il numero impostato e, inoltre, l'archivio più recente di ciascuno degli ultimi 12 mesi viene sempre conservato. Anche se la posta viene distrutta, resta circa un anno per accorgersene e ripristinarla.",
 		"autoBackupSaved": "Salvato.",
 		"autoBackupNeverRun": "Non è ancora stato eseguito.",
 		"autoBackupLastOk": "Ultima esecuzione {at}: riuscita ({messages} messaggi)",

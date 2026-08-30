@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Kull xahar",
 		"autoBackupKeep": "Numru ta' kopji",
 		"autoBackupKeepNote": "In-numru jista' jogħla imma mhux jinżel (bħalissa mhux inqas minn {keep}). Li tniżżlu jħassar il-kopji l-antiki fil-ġirja li jmiss. Għal dan hemm bżonn aċċess għal Cloudflare.",
-		"autoBackupWindowNote": "Hawn m'hemm l-ebda mod biex tħassar backup. Jitneħħew biss dawk lil hinn min-numru mniżżel. Jekk il-kaxxa titbattal u jgħaddi frekwenza darbiet numru, il-kopji jimtlew bi vojt.",
+		"autoBackupWindowNote": "F'din l-iskrin m'hemm l-ebda mod kif titħassar kopja ta' sigurtà. Jisparixxu biss l-arkivji qodma lil hinn min-numru li tissettja, u barra minn hekk l-aktar arkivju riċenti ta' kull wieħed mill-aħħar 12-il xahar dejjem jinżamm. Anke jekk il-posta tinqered, jibqa' madwar sena biex wieħed jinduna u jerġa' jġibha lura.",
 		"autoBackupSaved": "Salvat.",
 		"autoBackupNeverRun": "Għadu ma ħadimx.",
 		"autoBackupLastOk": "L-aħħar {at}: irnexxa ({messages} messaġġi)",

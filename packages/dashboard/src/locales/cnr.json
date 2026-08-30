@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Mjesečno",
 		"autoBackupKeep": "Broj kopija",
 		"autoBackupKeepNote": "Broj se može povećati, ali ne smanjiti (trenutno ne manje od {keep}). Smanjenje bi obrisalo starije kopije pri sljedećem pokretanju. Za smanjenje je potreban Cloudflare pristup.",
-		"autoBackupWindowNote": "Ovđe nema načina da se kopija obriše. Brišu se samo one preko zadatog broja. Ako se sanduče isprazni i prođe učestalost puta broj, i kopije postaju prazne.",
+		"autoBackupWindowNote": "Na ovom ekranu nema načina da se obriše rezervna kopija. Nestaju samo stare arhive preko zadatog broja, a uz to se najnovija arhiva svakog od posljednjih 12 mjeseci uvijek čuva. Čak i ako se pošta uništi, ostaje oko godinu dana da se to primijeti i vrati.",
 		"autoBackupSaved": "Sačuvano.",
 		"autoBackupNeverRun": "Još nije pokrenuto.",
 		"autoBackupLastOk": "Zadnje {at}: uspješno ({messages} poruka)",

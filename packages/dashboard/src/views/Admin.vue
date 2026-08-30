@@ -240,6 +240,7 @@ import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
+import { useDateFormat } from "@/composables/useDateFormat";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
@@ -423,11 +424,5 @@ async function handleRevokeAccess() {
 	}
 }
 
-function formatDate(timestamp: number): string {
-	return new Date(timestamp).toLocaleDateString("en-US", {
-		year: "numeric",
-		month: "short",
-		day: "numeric",
-	});
-}
+const { formatDay: formatDate } = useDateFormat();
 </script>

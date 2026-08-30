@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Bulanan",
 		"autoBackupKeep": "Jumlah salinan",
 		"autoBackupKeepNote": "Jumlah dapat dinaikkan tetapi tidak diturunkan (kini tidak kurang dari {keep}). Menurunkannya akan menghapus cadangan lama pada jalan berikutnya. Untuk itu perlu akses Cloudflare.",
-		"autoBackupWindowNote": "Tidak ada cara di layar ini untuk menghapus cadangan. Hanya yang melebihi jumlah yang ditetapkan yang hilang. Namun jika surat dikosongkan dan berlalu frekuensi kali jumlah, cadangan pun menjadi kosong.",
+		"autoBackupWindowNote": "Di layar ini tidak ada cara untuk menghapus cadangan. Hanya arsip lama yang melebihi jumlah yang Anda tetapkan yang hilang, dan selain itu arsip terbaru dari masing-masing 12 bulan terakhir selalu disimpan. Sekalipun surat dimusnahkan, masih tersisa sekitar satu tahun untuk menyadarinya dan mengembalikannya.",
 		"autoBackupSaved": "Tersimpan.",
 		"autoBackupNeverRun": "Belum pernah berjalan.",
 		"autoBackupLastOk": "Terakhir {at}: berhasil ({messages} pesan)",

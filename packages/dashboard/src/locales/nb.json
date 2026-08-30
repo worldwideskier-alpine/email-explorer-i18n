@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Månedlig",
 		"autoBackupKeep": "Antall kopier",
 		"autoBackupKeepNote": "Antallet kan økes, men ikke senkes (nå ikke under {keep}). En senkning ville slette eldre kopier ved neste kjøring. Det krever tilgang til Cloudflare.",
-		"autoBackupWindowNote": "Ingenting her sletter en sikkerhetskopi. Bare de ut over det valgte antallet fjernes. Tømmes postkassen og det går hyppighet ganger antall, blir kopiene også tomme.",
+		"autoBackupWindowNote": "På denne skjermen finnes det ingen måte å slette en sikkerhetskopi på. Bare de gamle arkivene ut over antallet du har satt forsvinner, og i tillegg beholdes alltid det nyeste arkivet fra hver av de siste 12 månedene. Selv om posten ødelegges, er det omtrent et år til å oppdage det og hente den tilbake.",
 		"autoBackupSaved": "Lagret.",
 		"autoBackupNeverRun": "Har ikke kjørt ennå.",
 		"autoBackupLastOk": "Siste kjøring {at}: vellykket ({messages} meldinger)",

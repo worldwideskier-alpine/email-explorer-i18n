@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Setiap bulan",
 		"autoBackupKeep": "Bilangan salinan",
 		"autoBackupKeepNote": "Bilangan boleh dinaikkan tetapi tidak diturunkan (kini tidak kurang daripada {keep}). Menurunkannya akan memadam sandaran lama pada larian berikutnya. Ia memerlukan akses Cloudflare.",
-		"autoBackupWindowNote": "Tiada cara di skrin ini untuk memadam sandaran. Hanya yang melebihi bilangan ditetapkan akan hilang. Namun jika mel dikosongkan dan berlalu kekerapan darab bilangan, sandaran juga menjadi kosong.",
+		"autoBackupWindowNote": "Pada skrin ini tiada cara untuk memadam sandaran. Hanya arkib lama melebihi bilangan yang anda tetapkan sahaja yang hilang, dan selain itu arkib terbaharu bagi setiap satu daripada 12 bulan lepas sentiasa disimpan. Walaupun mel dimusnahkan, masih ada kira-kira satu tahun untuk menyedarinya dan mengembalikannya.",
 		"autoBackupSaved": "Disimpan.",
 		"autoBackupNeverRun": "Belum pernah dijalankan.",
 		"autoBackupLastOk": "Kali terakhir {at}: berjaya ({messages} mesej)",

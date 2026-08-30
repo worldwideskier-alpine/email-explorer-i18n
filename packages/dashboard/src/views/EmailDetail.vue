@@ -117,7 +117,7 @@
             <p v-if="email.bcc" class="text-sm text-gray-600 dark:text-gray-400 truncate">{{ t("emailDetail.bcc") }}{{ email.bcc }}</p>
           </div>
         </div>
-        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium flex-shrink-0">{{ email.date }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium flex-shrink-0">{{ formatFullDate(email.date) }}</p>
       </div>
     </div>
     <div class="flex-grow">
@@ -180,12 +180,14 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import EmailIframe from "@/components/EmailIframe.vue";
+import { useDateFormat } from "@/composables/useDateFormat";
 import api from "@/services/api";
 import { useEmailStore } from "@/stores/emails";
 import { useFolderStore } from "@/stores/folders";
 import { useUIStore } from "@/stores/ui";
 
 const { t } = useI18n();
+const { formatFullDate } = useDateFormat();
 const emailStore = useEmailStore();
 const { currentEmail: email } = storeToRefs(emailStore);
 const folderStore = useFolderStore();

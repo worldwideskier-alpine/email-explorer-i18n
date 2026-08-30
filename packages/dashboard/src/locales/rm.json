@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Mintga mais",
 		"autoBackupKeep": "Dumber da copias",
 		"autoBackupKeepNote": "Il dumber po vegnir augmentà ma betg reducì (ussa betg sut {keep}). Reducir stizzass las copias pli veglias al proxim decurs. Quai dovra access a Cloudflare.",
-		"autoBackupWindowNote": "Qua n'i dat nagin med da stizzar ina copia. Vegnan mo allontanadas quellas ultra dal dumber fixà. Sche la chascha vegn svidada ed i passa frequenza per dumber, vegnan er las copias vidas.",
+		"autoBackupWindowNote": "Sin quest visur na dat i nagin möd da stidar ina copia da segirezza. Mo ils vegls archivs sur il dumber fixà spariran, ed ultra quai vegn adina mantegnì l'archiv il pli nov da mintga in dals ultims 12 mais. Er sche la posta vegn destruida, resta strusch in onn per remartgar quai e per la reponer.",
 		"autoBackupSaved": "Memorisà.",
 		"autoBackupNeverRun": "Anc betg ì.",
 		"autoBackupLastOk": "Ultim decurs {at}: reussì ({messages} messadis)",

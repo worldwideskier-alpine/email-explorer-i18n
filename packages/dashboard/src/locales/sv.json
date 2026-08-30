@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Varje månad",
 		"autoBackupKeep": "Antal kopior",
 		"autoBackupKeepNote": "Antalet kan höjas men inte sänkas (nu inte under {keep}). En sänkning skulle radera äldre kopior vid nästa körning. Det kräver åtkomst till Cloudflare.",
-		"autoBackupWindowNote": "Ingenting här raderar en säkerhetskopia. Bara de utöver det valda antalet tas bort. Töms brevlådan och det går frekvens gånger antal blir kopiorna också tomma.",
+		"autoBackupWindowNote": "På den här skärmen finns det inget sätt att radera en säkerhetskopia. Bara de gamla arkiven utöver det antal du ställt in försvinner, och därutöver behålls alltid det nyaste arkivet från var och en av de senaste 12 månaderna. Även om posten förstörs finns det ungefär ett år att upptäcka det och återställa den.",
 		"autoBackupSaved": "Sparat.",
 		"autoBackupNeverRun": "Har inte körts än.",
 		"autoBackupLastOk": "Senaste körning {at}: lyckades ({messages} meddelanden)",

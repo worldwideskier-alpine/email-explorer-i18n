@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Cada mes",
 		"autoBackupKeep": "Copias a conservar",
 		"autoBackupKeepNote": "El número se puede aumentar pero no reducir (ahora no menos de {keep}). Reducirlo borraría copias antiguas en la siguiente ejecución. Para reducirlo hace falta acceso a Cloudflare.",
-		"autoBackupWindowNote": "Aquí no hay forma de borrar una copia. Solo se quitan las que superan el número fijado. Si se vacía el buzón y pasa frecuencia por copias, las copias también quedan vacías.",
+		"autoBackupWindowNote": "En esta pantalla no hay ninguna forma de borrar una copia de seguridad. Solo desaparecen los archivos antiguos que superan el número fijado y, además, siempre se conserva el archivo más reciente de cada uno de los últimos 12 meses. Aunque se destruya el correo, queda alrededor de un año para darse cuenta y restaurarlo.",
 		"autoBackupSaved": "Guardado.",
 		"autoBackupNeverRun": "Todavía no se ha ejecutado.",
 		"autoBackupLastOk": "Última ejecución {at}: correcta ({messages} mensajes)",

@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Månadleg",
 		"autoBackupKeep": "Tal på kopiar",
 		"autoBackupKeepNote": "Talet kan aukast, men ikkje senkast (no ikkje under {keep}). Ei senking ville slette eldre kopiar ved neste køyring. Det krev tilgang til Cloudflare.",
-		"autoBackupWindowNote": "Ingenting her slettar ein tryggingskopi. Berre dei ut over det valde talet blir fjerna. Blir postkassa tømd og det går kor ofte gonger tal, blir kopiane òg tomme.",
+		"autoBackupWindowNote": "På denne skjermen finst det ingen måte å slette ein tryggleikskopi på. Berre dei gamle arkiva ut over talet du har sett forsvinn, og i tillegg blir det nyaste arkivet frå kvar av dei siste 12 månadene alltid teke vare på. Sjølv om posten blir øydelagd, er det om lag eit år til å oppdage det og hente han tilbake.",
 		"autoBackupSaved": "Lagra.",
 		"autoBackupNeverRun": "Har ikkje køyrt enno.",
 		"autoBackupLastOk": "Siste køyring {at}: lukkast ({messages} meldingar)",

@@ -14,7 +14,7 @@
         <router-link :to="{ name: 'EmailDetail', params: { id: email.id } }" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-700">
           <div class="flex items-center justify-between">
             <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ email.sender }}</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400">{{ email.date }}</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatListDate(email.date) }}</p>
           </div>
           <p class="text-sm text-gray-800 dark:text-gray-300 mt-1">{{ email.subject }}</p>
         </router-link>
@@ -26,9 +26,11 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
+import { useDateFormat } from "@/composables/useDateFormat";
 import { useSearchStore } from "@/stores/search";
 
 const { t } = useI18n();
+const { formatListDate } = useDateFormat();
 const searchStore = useSearchStore();
 const { results, isLoading } = storeToRefs(searchStore);
 </script>

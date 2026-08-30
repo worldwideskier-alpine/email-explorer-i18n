@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "每月",
 		"autoBackupKeep": "保留數量",
 		"autoBackupKeepNote": "保留數量可以增加但不能減少（目前下限為 {keep}）。若可以減少，下次執行就會刪掉較舊的備份，等於延遲一次的刪除功能。要減少需要 Cloudflare 權限。",
-		"autoBackupWindowNote": "此畫面沒有刪除備份的手段。會消失的只有超過保留數量的舊備份。但若郵件被全部清空並經過「頻率 × 保留數量」的時間，備份也會被空的取代。",
+		"autoBackupWindowNote": "此畫面沒有刪除備份的方法。只有超出保存數量的舊檔案會被清除，此外最近12個月中每個月最新的一份始終保留。即使郵件被全部刪除，也還有大約一年的時間來發現並還原。",
 		"autoBackupSaved": "已儲存。",
 		"autoBackupNeverRun": "尚未執行過。",
 		"autoBackupLastOk": "上次執行 {at}：成功（{messages} 封）",

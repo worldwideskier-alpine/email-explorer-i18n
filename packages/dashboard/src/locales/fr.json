@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Chaque mois",
 		"autoBackupKeep": "Nombre de copies",
 		"autoBackupKeepNote": "Le nombre peut être augmenté mais pas réduit (actuellement pas moins de {keep}). Le réduire supprimerait les anciennes sauvegardes à la prochaine exécution. Cela demande un accès Cloudflare.",
-		"autoBackupWindowNote": "Rien ici ne supprime une sauvegarde. Seules celles au-delà du nombre choisi sont retirées. Vider la boîte et attendre fréquence fois nombre remplit les sauvegardes de copies vides.",
+		"autoBackupWindowNote": "Cet écran ne comporte aucun moyen de supprimer une sauvegarde. Seules disparaissent les archives anciennes au-delà du nombre fixé et, par ailleurs, l'archive la plus récente de chacun des 12 derniers mois est toujours conservée. Même si le courrier est détruit, il reste environ un an pour s'en apercevoir et le restaurer.",
 		"autoBackupSaved": "Enregistré.",
 		"autoBackupNeverRun": "Pas encore exécuté.",
 		"autoBackupLastOk": "Dernière exécution {at} : réussie ({messages} messages)",

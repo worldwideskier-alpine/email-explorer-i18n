@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Kas mėnesį",
 		"autoBackupKeep": "Saugomų kopijų skaičius",
 		"autoBackupKeepNote": "Skaičių galima didinti, bet ne mažinti (dabar ne mažiau kaip {keep}). Sumažinus, kitą kartą būtų ištrintos senesnės kopijos. Tam reikia Cloudflare prieigos.",
-		"autoBackupWindowNote": "Čia nėra būdo ištrinti kopiją. Šalinamos tik viršijančios nustatytą skaičių. Ištuštinus dėžutę ir praėjus dažnumas kartus skaičius, kopijos taip pat taps tuščios.",
+		"autoBackupWindowNote": "Šiame ekrane nėra būdo ištrinti atsarginę kopiją. Dingsta tik seni archyvai, viršijantys nustatytą skaičių, be to, naujausias kiekvieno iš pastarųjų 12 mėnesių archyvas visada išsaugomas. Net jei paštas sunaikinamas, lieka maždaug metai tai pastebėti ir atkurti.",
 		"autoBackupSaved": "Išsaugota.",
 		"autoBackupNeverRun": "Dar nevykdyta.",
 		"autoBackupLastOk": "Paskutinis {at}: sėkmingai ({messages} laiškų)",

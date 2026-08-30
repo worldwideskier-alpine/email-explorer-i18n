@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Měsíčně",
 		"autoBackupKeep": "Počet kopií",
 		"autoBackupKeepNote": "Počet lze zvýšit, ale ne snížit (nyní ne méně než {keep}). Snížení by při dalším běhu smazalo starší zálohy. Ke snížení je potřeba přístup do Cloudflare.",
-		"autoBackupWindowNote": "Zde není žádný způsob, jak zálohu smazat. Mažou se jen ty nad zadaným počtem. Vyprázdnění schránky a čekání po dobu četnost krát počet naplní zálohy prázdnými.",
+		"autoBackupWindowNote": "Na této obrazovce není žádný způsob, jak zálohu smazat. Mizí jen staré archivy nad nastavený počet a kromě toho se vždy uchová nejnovější archiv každého z posledních 12 měsíců. I když je pošta zničena, zbývá zhruba rok na to si toho všimnout a obnovit ji.",
 		"autoBackupSaved": "Uloženo.",
 		"autoBackupNeverRun": "Zatím neproběhlo.",
 		"autoBackupLastOk": "Poslední běh {at}: úspěch ({messages} zpráv)",

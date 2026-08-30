@@ -203,7 +203,7 @@
 		"autoBackupMonthly": "Go míosúil",
 		"autoBackupKeep": "Líon na gcóipeanna",
 		"autoBackupKeepNote": "Is féidir an líon a ardú ach ní a ísliú (faoi láthair níl níos lú ná {keep}). Scriosfadh ísliú na cúltacaí is sine ag an rith seo chugainn. Teastaíonn rochtain Cloudflare chuige.",
-		"autoBackupWindowNote": "Níl aon bhealach anseo cúltaca a scriosadh. Ní bhaintear ach na cinn thar an líon socraithe. Má fholmhaítear an bosca agus má théann minicíocht faoi líon thart, líontar na cúltacaí le cinn fholmha.",
+		"autoBackupWindowNote": "Níl aon bhealach ar an scáileán seo chun cúltaca a scriosadh. Ní imíonn ach na sean-chartlanna atá thar an líon a shocraigh tú, agus lena chois sin coinnítear an chartlann is nuaí de gach ceann den 12 mhí is déanaí i gcónaí. Fiú má scriostar an post, fanann timpeall bliain chun é a thabhairt faoi deara agus é a chur ar ais.",
 		"autoBackupSaved": "Sábháilte.",
 		"autoBackupNeverRun": "Níor rith sé fós.",
 		"autoBackupLastOk": "Rith deiridh {at}: d'éirigh leis ({messages} teachtaireacht)",

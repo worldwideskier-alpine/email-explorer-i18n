@@ -100,6 +100,78 @@ describe("keysToRotate", () => {
 		expect(keysToRotate(keys, 0)).toHaveLength(3);
 		expect(keysToRotate(keys, -5)).toHaveLength(3);
 	});
+
+	/**
+	 * The monthly tier, which is what stops "empty the mailbox and wait".
+	 */
+	const daily = (month: string, days: number) =>
+		Array.from(
+			{ length: days },
+			(_, i) =>
+				`backups/box/${month}-${String(i + 1).padStart(2, "0")}T00-00-00-000Z.mbox`,
+		);
+
+	it("keeps each recent month's newest even when the count is passed", () => {
+		const keys = [...daily("2026-06", 3), ...daily("2026-07", 3), ...daily("2026-08", 3)];
+		const survivors = keys.filter((k) => !keysToRotate(keys, 2).includes(k));
+
+		// Two by count (the newest two of August), plus June's and July's
+		// newest -- August's newest is already one of the two.
+		expect(survivors).toEqual([
+			"backups/box/2026-06-03T00-00-00-000Z.mbox",
+			"backups/box/2026-07-03T00-00-00-000Z.mbox",
+			"backups/box/2026-08-02T00-00-00-000Z.mbox",
+			"backups/box/2026-08-03T00-00-00-000Z.mbox",
+		]);
+	});
+
+	/**
+	 * The attack the tier is for, played out: the mailbox is emptied and the
+	 * daily backups keep running. Under the count alone every good archive is
+	 * gone in `keep` days. Here the month before the wipe still has one.
+	 */
+	it("still holds a pre-wipe archive a month after the mail was destroyed", () => {
+		const before = daily("2026-06", 30); // the mail was still there
+		const after = daily("2026-07", 30); // emptied on the 1st, still running
+		const keys = [...before, ...after];
+
+		const gone = new Set(keysToRotate(keys, 7));
+		const survivingFromBefore = before.filter((k) => !gone.has(k));
+
+		expect(survivingFromBefore).toEqual([
+			"backups/box/2026-06-30T00-00-00-000Z.mbox",
+		]);
+	});
+
+	it("lets go of a month once twelve newer ones have their own", () => {
+		// Fourteen months, one archive each, so the count tier holds only the
+		// newest and the monthly tier decides everything else.
+		const keys = Array.from({ length: 14 }, (_, i) => {
+			const month = String((i % 12) + 1).padStart(2, "0");
+			const year = 2025 + Math.floor(i / 12);
+			return `backups/box/${year}-${month}-01T00-00-00-000Z.mbox`;
+		}).sort();
+
+		const gone = keysToRotate(keys, 1);
+		expect(gone).toEqual([
+			"backups/box/2025-01-01T00-00-00-000Z.mbox",
+			"backups/box/2025-02-01T00-00-00-000Z.mbox",
+		]);
+	});
+
+	// An unrecognized key in a bucket of backups is not something to delete
+	// on a guess about what it might be. It does sort after every timestamped
+	// one and so also takes a slot in the count tier, which is harmless: this
+	// application never writes such a key, so one is evidence that something
+	// outside it did.
+	it("keeps a key whose timestamp it cannot read", () => {
+		const keys = ["backups/box/not-a-timestamp.mbox", ...daily("2026-08", 3)];
+		const gone = keysToRotate(keys, 1);
+
+		expect(gone).not.toContain("backups/box/not-a-timestamp.mbox");
+		// August's newest still survives on the monthly tier.
+		expect(gone).not.toContain("backups/box/2026-08-03T00-00-00-000Z.mbox");
+	});
 });
 
 describe("keys", () => {
