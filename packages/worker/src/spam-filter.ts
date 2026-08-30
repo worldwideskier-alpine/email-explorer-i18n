@@ -6,11 +6,25 @@ import type { Header } from "postal-mime";
  * header (RFC 8601) before the message reached this Worker. No network calls,
  * no cost, no added latency - just reading what was already verified.
  *
- * Deliberately conservative: anything short of a clear fail (missing header,
- * `none`/`neutral`/`softfail`/`temperror`/`permerror`, or only one of
- * spf/dkim failing) stays in the inbox. A false positive here silently
- * hides real mail, which is worse than an occasional spam message getting
- * through.
+ * A message is filed as spam when nothing authenticated it AND the From
+ * domain's own published policy says the sending host is not one of theirs.
+ * Both halves are needed: one verifying DKIM signature is enough to keep a
+ * message, however its SPF came out, because forwarding breaks SPF and leaves
+ * DKIM intact.
+ *
+ * `spf=softfail` counts. It does not mean "this domain does not authenticate
+ * its mail" -- that is `spf=none`, which is common among legitimate senders
+ * and is left alone here. Softfail means the domain publishes an SPF record
+ * and this host is not in it. A sender set up well enough to publish SPF,
+ * signing nothing with DKIM, and sending from an address its own record
+ * excludes, is misconfigured at best.
+ *
+ * The remaining verdicts are left alone deliberately: `none` (no record),
+ * `neutral` (a record that declines to assert), and `temperror`/`permerror`
+ * (the check itself did not complete) say nothing against the sender.
+ *
+ * The penalty is the spam folder, not rejection, so a wrong call here is
+ * recoverable -- but only by someone who looks in it.
  */
 /**
  * RFC 8601 gives each result its own `;`-separated section, and a relay may
@@ -77,7 +91,15 @@ export function classifyByAuthResults(headers: Header[]): "inbox" | "spam" {
 	const dkim = dkimVerdict(authResults);
 
 	if (dmarc === "fail") return "spam";
-	if (spf === "fail" && dkim === "fail") return "spam";
+
+	// An absent DKIM result is not an unknown: it means the message carried no
+	// signature, so DKIM authenticated nothing. Treating it as unknown used to
+	// let the worse case through -- a hard SPF failure with no signature at all
+	// stayed in the inbox, while the same failure with a signature that merely
+	// did not verify was filed as spam.
+	const authenticated = dkim === "pass" || dmarc === "pass";
+	const spfDisowned = spf === "fail" || spf === "softfail";
+	if (spfDisowned && !authenticated) return "spam";
 
 	return "inbox";
 }
