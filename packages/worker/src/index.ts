@@ -88,8 +88,10 @@ const ErrorResponseSchema = z.object({
 const ForgotPasswordRequestSchema = z.object({
 	email: z.string().email(),
 	// Which language to write the recovery mail in. The dashboard sends the
-	// locale it is currently displaying; anything else falls back (see
-	// resolveMailLocale).
+	// locale it is currently displaying, so MAIL_LOCALES has to cover every
+	// language the picker offers: a code missing from it is rejected here with
+	// a 400 and no mail is sent at all. Anything else -- an older cached page,
+	// a direct API call -- falls back (see resolveMailLocale).
 	locale: z.enum(MAIL_LOCALES).optional(),
 });
 

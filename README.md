@@ -43,7 +43,9 @@
 
 ### まだ69言語になっていないもの
 
-- **Worker が送信するメール**（`packages/worker/src/mail-templates.ts`：パスワード再設定・メールアドレス変更の確認）は **日本語 / English / Deutsch の3言語のみ**です。それ以外の言語を選んでいる場合、`resolveMailLocale` が既定の日本語にフォールバックします。UIの69言語とは別物なので注意してください。
+- **メールアドレス変更の確認メール**（`packages/worker/src/mail-templates.ts` の `EMAIL_CHANGE`）は **日本語 / English / Deutsch の3言語のみ**です。それ以外の言語を選んでいる場合、日本語の文面が届きます。パスワード再設定メール（`PASSWORD_RESET`）は69言語すべてに対応しています。
+
+  なお `MAIL_LOCALES` は**UIの69言語と同じ集合でなければなりません**。ダッシュボードは表示中のロケールをそのまま送り、Worker 側は `z.enum(MAIL_LOCALES)` で検証するため、リストから漏れたコードは日本語にフォールバックするのではなく **400 で弾かれ、メールが1通も送られません**。しかも画面には「アカウントがあればリンクを送りました」と出るので気づけません（実際に、UIを69言語に増やしたときこのリストが3言語のままで、66言語でパスワード再設定が死んでいました）。`packages/dashboard/src/locales/mailLocales.test.ts` が両者の集合一致を検査します。
 
 ## Cloudflareへのデプロイについて
 
