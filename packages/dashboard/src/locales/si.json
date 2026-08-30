@@ -322,7 +322,13 @@
 		"forwardedMessage": "ඉදිරියට යැවූ පණිවිඩය:",
 		"forwardFrom": "වෙතින්:",
 		"forwardDate": "දිනය:",
-		"forwardSubject": "විෂය:"
+		"forwardSubject": "විෂය:",
+		"attachments": "ඇමුණුම්",
+		"removeAttachment": "ඉවත් කරන්න",
+		"attachmentTotal": "{size} / උපරිම {max}",
+		"attachmentTooLarge": "ඇමුණුම්වල මුළු ප්‍රමාණය {max} සීමාව ඉක්මවා ඇත. සමහර ගොනු ඉවත් කරන්න.",
+		"attachmentDraftNote": "සුරකින ලද කෙටුම්පතේ ඇමුණුම් රැඳෙන්නේ නැත.",
+		"attachmentReadFailed": "ගොනුව කියවීමට නොහැකි විය."
 	},
 	"richTextEditor": {
 		"bold": "තද (Ctrl+B)",

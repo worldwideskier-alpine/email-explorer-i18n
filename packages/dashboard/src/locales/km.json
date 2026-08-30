@@ -322,7 +322,13 @@
 		"forwardedMessage": "សារដែលបញ្ជូនបន្ត៖",
 		"forwardFrom": "ពី៖",
 		"forwardDate": "កាលបរិច្ឆេទ៖",
-		"forwardSubject": "ប្រធានបទ៖"
+		"forwardSubject": "ប្រធានបទ៖",
+		"attachments": "ឯកសារភ្ជាប់",
+		"removeAttachment": "លុប",
+		"attachmentTotal": "{size} / អតិបរមា {max}",
+		"attachmentTooLarge": "ទំហំសរុបនៃឯកសារភ្ជាប់លើសដែនកំណត់ {max}។ សូមលុបឯកសារខ្លះ។",
+		"attachmentDraftNote": "សេចក្ដីព្រាងដែលបានរក្សាទុកមិនរក្សាឯកសារភ្ជាប់ទេ។",
+		"attachmentReadFailed": "មិនអាចអានឯកសារបានទេ។"
 	},
 	"richTextEditor": {
 		"bold": "ដិត (Ctrl+B)",

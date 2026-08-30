@@ -322,7 +322,13 @@
 		"forwardedMessage": "ముందుకు పంపిన సందేశం:",
 		"forwardFrom": "నుండి:",
 		"forwardDate": "తేదీ:",
-		"forwardSubject": "విషయం:"
+		"forwardSubject": "విషయం:",
+		"attachments": "జోడింపులు",
+		"removeAttachment": "తీసివేయి",
+		"attachmentTotal": "{size} / గరిష్ఠం {max}",
+		"attachmentTooLarge": "జోడింపుల మొత్తం పరిమాణం {max} పరిమితిని మించింది. కొన్ని ఫైళ్లను తీసివేయండి.",
+		"attachmentDraftNote": "సేవ్ చేసిన చిత్తుప్రతిలో జోడింపులు ఉండవు.",
+		"attachmentReadFailed": "ఫైల్‌ను చదవలేకపోయాము."
 	},
 	"richTextEditor": {
 		"bold": "మందం (Ctrl+B)",

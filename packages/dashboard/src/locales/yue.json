@@ -322,7 +322,13 @@
 		"forwardedMessage": "轉寄嘅信：",
 		"forwardFrom": "寄件人：",
 		"forwardDate": "日期：",
-		"forwardSubject": "主旨："
+		"forwardSubject": "主旨：",
+		"attachments": "附件",
+		"removeAttachment": "刪除",
+		"attachmentTotal": "{size} / 上限 {max}",
+		"attachmentTooLarge": "附件總大小超過 {max} 上限，請減少檔案。",
+		"attachmentDraftNote": "暫存草稿唔會保留附件。",
+		"attachmentReadFailed": "讀取唔到檔案。"
 	},
 	"richTextEditor": {
 		"bold": "粗體 (Ctrl+B)",

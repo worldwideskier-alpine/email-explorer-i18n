@@ -322,7 +322,13 @@
 		"forwardedMessage": "Messaġġ mgħoddi:",
 		"forwardFrom": "Mingħand:",
 		"forwardDate": "Data:",
-		"forwardSubject": "Suġġett:"
+		"forwardSubject": "Suġġett:",
+		"attachments": "Mehmużin",
+		"removeAttachment": "Neħħi",
+		"attachmentTotal": "{size} minn {max}",
+		"attachmentTooLarge": "Il-mehmużin jaqbżu l-limitu ta' {max}. Neħħi xi fajls.",
+		"attachmentDraftNote": "Abbozz salvat ma jżommx il-mehmużin.",
+		"attachmentReadFailed": "Il-fajl ma setax jinqara."
 	},
 	"richTextEditor": {
 		"bold": "Grassett (Ctrl+B)",

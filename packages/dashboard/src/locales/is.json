@@ -322,7 +322,13 @@
 		"forwardedMessage": "Áframsent skeyti:",
 		"forwardFrom": "Frá:",
 		"forwardDate": "Dagsetning:",
-		"forwardSubject": "Efni:"
+		"forwardSubject": "Efni:",
+		"attachments": "Viðhengi",
+		"removeAttachment": "Fjarlægja",
+		"attachmentTotal": "{size} af {max}",
+		"attachmentTooLarge": "Viðhengin fara yfir mörkin {max}. Fjarlægðu einhverjar skrár.",
+		"attachmentDraftNote": "Vistað uppkast heldur ekki viðhengjum.",
+		"attachmentReadFailed": "Ekki tókst að lesa skrána."
 	},
 	"richTextEditor": {
 		"bold": "Feitletrað (Ctrl+B)",

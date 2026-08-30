@@ -322,7 +322,13 @@
 		"forwardedMessage": "Forwarded message:",
 		"forwardFrom": "From:",
 		"forwardDate": "Date:",
-		"forwardSubject": "Subject:"
+		"forwardSubject": "Subject:",
+		"attachments": "Attachments",
+		"removeAttachment": "Remove",
+		"attachmentTotal": "{size} of {max}",
+		"attachmentTooLarge": "The attachments come to more than the {max} limit. Remove some files.",
+		"attachmentDraftNote": "A saved draft does not keep attachments.",
+		"attachmentReadFailed": "The file could not be read."
 	},
 	"richTextEditor": {
 		"bold": "Bold (Ctrl+B)",

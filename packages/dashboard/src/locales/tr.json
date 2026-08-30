@@ -322,7 +322,13 @@
 		"forwardedMessage": "İletilen ileti:",
 		"forwardFrom": "Kimden:",
 		"forwardDate": "Tarih:",
-		"forwardSubject": "Konu:"
+		"forwardSubject": "Konu:",
+		"attachments": "Ekler",
+		"removeAttachment": "Kaldır",
+		"attachmentTotal": "{size} / {max}",
+		"attachmentTooLarge": "Eklerin toplamı {max} sınırını aşıyor. Bazı dosyaları kaldırın.",
+		"attachmentDraftNote": "Kaydedilen taslak ekleri saklamaz.",
+		"attachmentReadFailed": "Dosya okunamadı."
 	},
 	"richTextEditor": {
 		"bold": "Kalın (Ctrl+B)",

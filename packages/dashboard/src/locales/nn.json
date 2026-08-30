@@ -322,7 +322,13 @@
 		"forwardedMessage": "Vidaresend melding:",
 		"forwardFrom": "Frå:",
 		"forwardDate": "Dato:",
-		"forwardSubject": "Emne:"
+		"forwardSubject": "Emne:",
+		"attachments": "Vedlegg",
+		"removeAttachment": "Fjern",
+		"attachmentTotal": "{size} av {max}",
+		"attachmentTooLarge": "Vedlegga overstig grensa på {max}. Fjern nokre filer.",
+		"attachmentDraftNote": "Eit lagra utkast tek ikkje vare på vedlegg.",
+		"attachmentReadFailed": "Fila kunne ikkje lesast."
 	},
 	"richTextEditor": {
 		"bold": "Feit (Ctrl+B)",

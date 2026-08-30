@@ -322,7 +322,13 @@
 		"forwardedMessage": "ਅੱਗੇ ਭੇਜਿਆ ਸੁਨੇਹਾ:",
 		"forwardFrom": "ਵੱਲੋਂ:",
 		"forwardDate": "ਮਿਤੀ:",
-		"forwardSubject": "ਵਿਸ਼ਾ:"
+		"forwardSubject": "ਵਿਸ਼ਾ:",
+		"attachments": "ਨੱਥੀਆਂ",
+		"removeAttachment": "ਹਟਾਓ",
+		"attachmentTotal": "{size} / ਵੱਧ ਤੋਂ ਵੱਧ {max}",
+		"attachmentTooLarge": "ਨੱਥੀਆਂ ਦਾ ਕੁੱਲ ਆਕਾਰ {max} ਸੀਮਾ ਤੋਂ ਵੱਧ ਹੈ। ਕੁਝ ਫਾਈਲਾਂ ਹਟਾਓ।",
+		"attachmentDraftNote": "ਸੰਭਾਲੇ ਖਰੜੇ ਵਿੱਚ ਨੱਥੀਆਂ ਨਹੀਂ ਰਹਿੰਦੀਆਂ।",
+		"attachmentReadFailed": "ਫਾਈਲ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕੀ।"
 	},
 	"richTextEditor": {
 		"bold": "ਗੂੜ੍ਹਾ (Ctrl+B)",

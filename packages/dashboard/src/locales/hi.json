@@ -322,7 +322,13 @@
 		"forwardedMessage": "अग्रेषित संदेश:",
 		"forwardFrom": "प्रेषक:",
 		"forwardDate": "दिनांक:",
-		"forwardSubject": "विषय:"
+		"forwardSubject": "विषय:",
+		"attachments": "अनुलग्नक",
+		"removeAttachment": "हटाएँ",
+		"attachmentTotal": "{size} / अधिकतम {max}",
+		"attachmentTooLarge": "अनुलग्नकों का कुल आकार {max} की सीमा से अधिक है। कुछ फ़ाइलें हटाएँ।",
+		"attachmentDraftNote": "सहेजे गए ड्राफ़्ट में अनुलग्नक नहीं रहते।",
+		"attachmentReadFailed": "फ़ाइल पढ़ी नहीं जा सकी।"
 	},
 	"richTextEditor": {
 		"bold": "मोटा (Ctrl+B)",

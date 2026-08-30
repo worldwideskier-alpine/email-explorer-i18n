@@ -322,7 +322,13 @@
 		"forwardedMessage": "Doorgestuurd bericht:",
 		"forwardFrom": "Van:",
 		"forwardDate": "Datum:",
-		"forwardSubject": "Onderwerp:"
+		"forwardSubject": "Onderwerp:",
+		"attachments": "Bijlagen",
+		"removeAttachment": "Verwijderen",
+		"attachmentTotal": "{size} van {max}",
+		"attachmentTooLarge": "De bijlagen overschrijden de limiet van {max}. Verwijder enkele bestanden.",
+		"attachmentDraftNote": "Een opgeslagen concept bewaart geen bijlagen.",
+		"attachmentReadFailed": "Het bestand kon niet worden gelezen."
 	},
 	"richTextEditor": {
 		"bold": "Vet (Ctrl+B)",

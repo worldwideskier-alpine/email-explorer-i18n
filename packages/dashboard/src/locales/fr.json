@@ -322,7 +322,13 @@
 		"forwardedMessage": "Message transféré :",
 		"forwardFrom": "De :",
 		"forwardDate": "Date :",
-		"forwardSubject": "Objet :"
+		"forwardSubject": "Objet :",
+		"attachments": "Pièces jointes",
+		"removeAttachment": "Supprimer",
+		"attachmentTotal": "{size} sur {max}",
+		"attachmentTooLarge": "Les pièces jointes dépassent la limite de {max}. Supprimez des fichiers.",
+		"attachmentDraftNote": "Un brouillon enregistré ne conserve pas les pièces jointes.",
+		"attachmentReadFailed": "Le fichier n'a pas pu être lu."
 	},
 	"richTextEditor": {
 		"bold": "Gras (Ctrl+B)",

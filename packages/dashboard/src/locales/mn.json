@@ -322,7 +322,13 @@
 		"forwardedMessage": "Дамжуулсан захидал:",
 		"forwardFrom": "Хэнээс:",
 		"forwardDate": "Огноо:",
-		"forwardSubject": "Гарчиг:"
+		"forwardSubject": "Гарчиг:",
+		"attachments": "Хавсралт",
+		"removeAttachment": "Устгах",
+		"attachmentTotal": "{size} / дээд тал нь {max}",
+		"attachmentTooLarge": "Хавсралтын нийт хэмжээ {max} хязгаараас хэтэрсэн байна. Файлаа цөөрүүлнэ үү.",
+		"attachmentDraftNote": "Ноорогт хавсралт хадгалагдахгүй.",
+		"attachmentReadFailed": "Файлыг уншиж чадсангүй."
 	},
 	"richTextEditor": {
 		"bold": "Тод (Ctrl+B)",

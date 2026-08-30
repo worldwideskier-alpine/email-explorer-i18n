@@ -322,7 +322,13 @@
 		"forwardedMessage": "Mesazh i përcjellë:",
 		"forwardFrom": "Nga:",
 		"forwardDate": "Data:",
-		"forwardSubject": "Subjekti:"
+		"forwardSubject": "Subjekti:",
+		"attachments": "Bashkëngjitje",
+		"removeAttachment": "Hiq",
+		"attachmentTotal": "{size} nga {max}",
+		"attachmentTooLarge": "Bashkëngjitjet e kalojnë kufirin prej {max}. Hiqni disa skedarë.",
+		"attachmentDraftNote": "Një skicë e ruajtur nuk i mban bashkëngjitjet.",
+		"attachmentReadFailed": "Skedari nuk mund të lexohej."
 	},
 	"richTextEditor": {
 		"bold": "Të trasha (Ctrl+B)",

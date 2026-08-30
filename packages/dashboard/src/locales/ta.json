@@ -322,7 +322,13 @@
 		"forwardedMessage": "முன்னனுப்பப்பட்ட செய்தி:",
 		"forwardFrom": "அனுப்புநர்:",
 		"forwardDate": "தேதி:",
-		"forwardSubject": "பொருள்:"
+		"forwardSubject": "பொருள்:",
+		"attachments": "இணைப்புகள்",
+		"removeAttachment": "நீக்கு",
+		"attachmentTotal": "{size} / அதிகபட்சம் {max}",
+		"attachmentTooLarge": "இணைப்புகளின் மொத்த அளவு {max} வரம்பை மீறுகிறது. சில கோப்புகளை நீக்கவும்.",
+		"attachmentDraftNote": "சேமித்த வரைவில் இணைப்புகள் இருக்காது.",
+		"attachmentReadFailed": "கோப்பைப் படிக்க முடியவில்லை."
 	},
 	"richTextEditor": {
 		"bold": "தடிமன் (Ctrl+B)",

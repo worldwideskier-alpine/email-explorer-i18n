@@ -322,7 +322,13 @@
 		"forwardedMessage": "Missatge reenviat:",
 		"forwardFrom": "De:",
 		"forwardDate": "Data:",
-		"forwardSubject": "Assumpte:"
+		"forwardSubject": "Assumpte:",
+		"attachments": "Adjuncions",
+		"removeAttachment": "Elimina",
+		"attachmentTotal": "{size} de {max}",
+		"attachmentTooLarge": "Les adjuncions superen el límit de {max}. Elimineu alguns fitxers.",
+		"attachmentDraftNote": "Un esborrany desat no conserva les adjuncions.",
+		"attachmentReadFailed": "No s'ha pogut llegir el fitxer."
 	},
 	"richTextEditor": {
 		"bold": "Negreta (Ctrl+B)",

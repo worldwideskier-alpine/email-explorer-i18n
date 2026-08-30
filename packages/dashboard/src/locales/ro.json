@@ -322,7 +322,13 @@
 		"forwardedMessage": "Mesaj redirecționat:",
 		"forwardFrom": "De la:",
 		"forwardDate": "Data:",
-		"forwardSubject": "Subiect:"
+		"forwardSubject": "Subiect:",
+		"attachments": "Atașamente",
+		"removeAttachment": "Elimină",
+		"attachmentTotal": "{size} din {max}",
+		"attachmentTooLarge": "Atașamentele depășesc limita de {max}. Eliminați câteva fișiere.",
+		"attachmentDraftNote": "O ciornă salvată nu păstrează atașamentele.",
+		"attachmentReadFailed": "Fișierul nu a putut fi citit."
 	},
 	"richTextEditor": {
 		"bold": "Aldin (Ctrl+B)",

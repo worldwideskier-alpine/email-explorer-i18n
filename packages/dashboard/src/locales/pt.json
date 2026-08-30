@@ -322,7 +322,13 @@
 		"forwardedMessage": "Mensagem reencaminhada:",
 		"forwardFrom": "De:",
 		"forwardDate": "Data:",
-		"forwardSubject": "Assunto:"
+		"forwardSubject": "Assunto:",
+		"attachments": "Anexos",
+		"removeAttachment": "Remover",
+		"attachmentTotal": "{size} de {max}",
+		"attachmentTooLarge": "Os anexos excedem o limite de {max}. Remova alguns ficheiros.",
+		"attachmentDraftNote": "Um rascunho guardado não conserva os anexos.",
+		"attachmentReadFailed": "Não foi possível ler o ficheiro."
 	},
 	"richTextEditor": {
 		"bold": "Negrito (Ctrl+B)",

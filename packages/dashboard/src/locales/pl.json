@@ -322,7 +322,13 @@
 		"forwardedMessage": "Wiadomość przekazana dalej:",
 		"forwardFrom": "Od:",
 		"forwardDate": "Data:",
-		"forwardSubject": "Temat:"
+		"forwardSubject": "Temat:",
+		"attachments": "Załączniki",
+		"removeAttachment": "Usuń",
+		"attachmentTotal": "{size} z {max}",
+		"attachmentTooLarge": "Załączniki przekraczają limit {max}. Usuń część plików.",
+		"attachmentDraftNote": "Zapisana wersja robocza nie zachowuje załączników.",
+		"attachmentReadFailed": "Nie udało się odczytać pliku."
 	},
 	"richTextEditor": {
 		"bold": "Pogrubienie (Ctrl+B)",

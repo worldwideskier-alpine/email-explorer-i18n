@@ -322,7 +322,13 @@
 		"forwardedMessage": "Pesan yang diteruskan:",
 		"forwardFrom": "Dari:",
 		"forwardDate": "Tanggal:",
-		"forwardSubject": "Subjek:"
+		"forwardSubject": "Subjek:",
+		"attachments": "Lampiran",
+		"removeAttachment": "Hapus",
+		"attachmentTotal": "{size} dari {max}",
+		"attachmentTooLarge": "Total lampiran melebihi batas {max}. Hapus sebagian berkas.",
+		"attachmentDraftNote": "Draf yang disimpan tidak menyimpan lampiran.",
+		"attachmentReadFailed": "Berkas tidak dapat dibaca."
 	},
 	"richTextEditor": {
 		"bold": "Tebal (Ctrl+B)",

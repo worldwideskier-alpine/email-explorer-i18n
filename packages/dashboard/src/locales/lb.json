@@ -322,7 +322,13 @@
 		"forwardedMessage": "Weidergeleete Message:",
 		"forwardFrom": "Vun:",
 		"forwardDate": "Datum:",
-		"forwardSubject": "Sujet:"
+		"forwardSubject": "Sujet:",
+		"attachments": "Unhäng",
+		"removeAttachment": "Ewechhuelen",
+		"attachmentTotal": "{size} vu(n) {max}",
+		"attachmentTooLarge": "D'Unhäng iwwerschreiden d'Limitt vu(n) {max}. Huelt e puer Fichieren ewech.",
+		"attachmentDraftNote": "E gespäicherten Entworf behält keng Unhäng.",
+		"attachmentReadFailed": "De Fichier konnt net gelies ginn."
 	},
 	"richTextEditor": {
 		"bold": "Fett (Ctrl+B)",

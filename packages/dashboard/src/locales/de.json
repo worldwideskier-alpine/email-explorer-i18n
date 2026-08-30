@@ -322,7 +322,13 @@
 		"forwardedMessage": "Weitergeleitete Nachricht:",
 		"forwardFrom": "Von:",
 		"forwardDate": "Datum:",
-		"forwardSubject": "Betreff:"
+		"forwardSubject": "Betreff:",
+		"attachments": "Anhänge",
+		"removeAttachment": "Entfernen",
+		"attachmentTotal": "{size} von {max}",
+		"attachmentTooLarge": "Die Anhänge überschreiten das Limit von {max}. Entfernen Sie einige Dateien.",
+		"attachmentDraftNote": "Ein gespeicherter Entwurf behält keine Anhänge.",
+		"attachmentReadFailed": "Die Datei konnte nicht gelesen werden."
 	},
 	"richTextEditor": {
 		"bold": "Fett (Strg+B)",

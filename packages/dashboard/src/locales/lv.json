@@ -322,7 +322,13 @@
 		"forwardedMessage": "Pārsūtītais ziņojums:",
 		"forwardFrom": "No:",
 		"forwardDate": "Datums:",
-		"forwardSubject": "Temats:"
+		"forwardSubject": "Temats:",
+		"attachments": "Pielikumi",
+		"removeAttachment": "Noņemt",
+		"attachmentTotal": "{size} no {max}",
+		"attachmentTooLarge": "Pielikumi pārsniedz {max} ierobežojumu. Noņemiet dažus failus.",
+		"attachmentDraftNote": "Saglabāts melnraksts pielikumus nesaglabā.",
+		"attachmentReadFailed": "Failu neizdevās nolasīt."
 	},
 	"richTextEditor": {
 		"bold": "Treknraksts (Ctrl+B)",

@@ -322,7 +322,13 @@
 		"forwardedMessage": "Проследена порака:",
 		"forwardFrom": "Од:",
 		"forwardDate": "Датум:",
-		"forwardSubject": "Наслов:"
+		"forwardSubject": "Наслов:",
+		"attachments": "Прилози",
+		"removeAttachment": "Отстрани",
+		"attachmentTotal": "{size} од {max}",
+		"attachmentTooLarge": "Прилозите го надминуваат ограничувањето од {max}. Отстранете некои датотеки.",
+		"attachmentDraftNote": "Зачуваната скица не ги чува прилозите.",
+		"attachmentReadFailed": "Датотеката не можеше да се прочита."
 	},
 	"richTextEditor": {
 		"bold": "Задебелено (Ctrl+B)",

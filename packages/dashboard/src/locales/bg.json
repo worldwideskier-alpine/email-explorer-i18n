@@ -322,7 +322,13 @@
 		"forwardedMessage": "Препратено съобщение:",
 		"forwardFrom": "От:",
 		"forwardDate": "Дата:",
-		"forwardSubject": "Тема:"
+		"forwardSubject": "Тема:",
+		"attachments": "Прикачени файлове",
+		"removeAttachment": "Премахни",
+		"attachmentTotal": "{size} от {max}",
+		"attachmentTooLarge": "Общият размер на прикачените файлове надхвърля границата {max}. Премахнете няколко файла.",
+		"attachmentDraftNote": "Запазената чернова не пази прикачените файлове.",
+		"attachmentReadFailed": "Файлът не можа да бъде прочетен."
 	},
 	"richTextEditor": {
 		"bold": "Получер (Ctrl+B)",

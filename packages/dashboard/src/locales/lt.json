@@ -322,7 +322,13 @@
 		"forwardedMessage": "Persiųstas laiškas:",
 		"forwardFrom": "Nuo:",
 		"forwardDate": "Data:",
-		"forwardSubject": "Tema:"
+		"forwardSubject": "Tema:",
+		"attachments": "Priedai",
+		"removeAttachment": "Pašalinti",
+		"attachmentTotal": "{size} iš {max}",
+		"attachmentTooLarge": "Priedai viršija {max} ribą. Pašalinkite keletą failų.",
+		"attachmentDraftNote": "Įrašytas juodraštis priedų neišsaugo.",
+		"attachmentReadFailed": "Failo nepavyko perskaityti."
 	},
 	"richTextEditor": {
 		"bold": "Pusjuodis (Ctrl+B)",

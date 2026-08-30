@@ -322,7 +322,13 @@
 		"forwardedMessage": "Yönləndirilmiş məktub:",
 		"forwardFrom": "Kimdən:",
 		"forwardDate": "Tarix:",
-		"forwardSubject": "Mövzu:"
+		"forwardSubject": "Mövzu:",
+		"attachments": "Qoşmalar",
+		"removeAttachment": "Sil",
+		"attachmentTotal": "{size} / limit {max}",
+		"attachmentTooLarge": "Qoşmaların ümumi həcmi {max} limitini aşır. Bəzi faylları silin.",
+		"attachmentDraftNote": "Saxlanmış qaralama qoşmaları saxlamır.",
+		"attachmentReadFailed": "Fayl oxuna bilmədi."
 	},
 	"richTextEditor": {
 		"bold": "Qalın (Ctrl+B)",

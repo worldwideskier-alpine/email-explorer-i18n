@@ -322,7 +322,13 @@
 		"forwardedMessage": "Thư được chuyển tiếp:",
 		"forwardFrom": "Từ:",
 		"forwardDate": "Ngày:",
-		"forwardSubject": "Tiêu đề:"
+		"forwardSubject": "Tiêu đề:",
+		"attachments": "Tệp đính kèm",
+		"removeAttachment": "Xóa",
+		"attachmentTotal": "{size} trên {max}",
+		"attachmentTooLarge": "Tổng dung lượng tệp đính kèm vượt quá giới hạn {max}. Hãy bớt một số tệp.",
+		"attachmentDraftNote": "Bản nháp đã lưu không giữ tệp đính kèm.",
+		"attachmentReadFailed": "Không đọc được tệp."
 	},
 	"richTextEditor": {
 		"bold": "Đậm (Ctrl+B)",

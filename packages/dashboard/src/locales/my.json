@@ -322,7 +322,13 @@
 		"forwardedMessage": "ဆက်ပို့သော စာ-",
 		"forwardFrom": "မှ-",
 		"forwardDate": "ရက်စွဲ-",
-		"forwardSubject": "ခေါင်းစဉ်-"
+		"forwardSubject": "ခေါင်းစဉ်-",
+		"attachments": "ပူးတွဲဖိုင်များ",
+		"removeAttachment": "ဖယ်ရှားရန်",
+		"attachmentTotal": "{size} / အများဆုံး {max}",
+		"attachmentTooLarge": "ပူးတွဲဖိုင်စုစုပေါင်းသည် {max} ကန့်သတ်ချက်ကို ကျော်လွန်နေသည်။ ဖိုင်အချို့ကို ဖယ်ရှားပါ။",
+		"attachmentDraftNote": "သိမ်းထားသော မူကြမ်းတွင် ပူးတွဲဖိုင်များ မကျန်ပါ။",
+		"attachmentReadFailed": "ဖိုင်ကို ဖတ်၍မရပါ။"
 	},
 	"richTextEditor": {
 		"bold": "စာလုံးထူ (Ctrl+B)",

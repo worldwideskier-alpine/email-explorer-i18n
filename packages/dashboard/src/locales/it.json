@@ -322,7 +322,13 @@
 		"forwardedMessage": "Messaggio inoltrato:",
 		"forwardFrom": "Da:",
 		"forwardDate": "Data:",
-		"forwardSubject": "Oggetto:"
+		"forwardSubject": "Oggetto:",
+		"attachments": "Allegati",
+		"removeAttachment": "Rimuovi",
+		"attachmentTotal": "{size} di {max}",
+		"attachmentTooLarge": "Gli allegati superano il limite di {max}. Rimuovi alcuni file.",
+		"attachmentDraftNote": "Una bozza salvata non conserva gli allegati.",
+		"attachmentReadFailed": "Non è stato possibile leggere il file."
 	},
 	"richTextEditor": {
 		"bold": "Grassetto (Ctrl+B)",
