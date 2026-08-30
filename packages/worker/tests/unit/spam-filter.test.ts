@@ -49,10 +49,19 @@ describe("classifyByAuthResults", () => {
 		).toBe("inbox");
 	});
 
-	it("routes to inbox for soft signals like softfail/neutral/temperror", () => {
-		expect(
-			classifyByAuthResults(header("mx.example.com; spf=softfail; dkim=neutral; dmarc=temperror")),
-		).toBe("inbox");
+	it("routes to inbox when SPF says nothing against the sender", () => {
+		// none = no record published, neutral = a record that declines to
+		// assert, temperror/permerror = the check did not complete. None of
+		// these is the domain disowning the sending host.
+		for (const verdict of ["none", "neutral", "temperror", "permerror"]) {
+			expect(
+				classifyByAuthResults(
+					header(
+						`mx.example.com; spf=${verdict} smtp.mailfrom=no-reply@example.com; dmarc=none`,
+					),
+				),
+			).toBe("inbox");
+		}
 	});
 
 	describe("picks the result that matters, not the first one printed", () => {
@@ -107,11 +116,12 @@ describe("classifyByAuthResults", () => {
 		});
 	});
 
-	describe("the softfail-plus-no-DKIM shape stays in the inbox", () => {
-		it("keeps a spoofed-looking message whose SPF only softfails", () => {
-			// Deliberate: softfail is not a fail, and hiding real mail is the
-			// worse error. Recorded so that changing it is a decision, not a
-			// side effect.
+	describe("nothing authenticated it and the domain disowns the host", () => {
+		it("files a softfail with no DKIM signature as spam", () => {
+			// The shape that arrived claiming to be a well-known brand: the
+			// domain publishes SPF, this host is not in it, and nothing was
+			// signed. Softfail is not "this domain does not authenticate" --
+			// that is spf=none, checked above and left in the inbox.
 			expect(
 				classifyByAuthResults(
 					header(
@@ -119,6 +129,49 @@ describe("classifyByAuthResults", () => {
 							"spf=none (no SPF records found for postmaster@host.invalid) smtp.helo=host.invalid; " +
 							"spf=softfail (domain of no-reply@example.com reports soft fail for 203.0.113.9) smtp.mailfrom=no-reply@example.com; " +
 							"arc=none",
+					),
+				),
+			).toBe("spam");
+		});
+
+		it("files a hard SPF fail with no DKIM signature as spam", () => {
+			// This used to reach the inbox: with no dkim= result at all the
+			// old rule compared "fail" against undefined and gave up. The same
+			// failure with a signature that did not verify was filed as spam,
+			// so the more suspicious message was the one that got through.
+			expect(
+				classifyByAuthResults(
+					header(
+						"mx.example.com; dmarc=none header.from=example.com; " +
+							"spf=fail smtp.mailfrom=no-reply@example.com",
+					),
+				),
+			).toBe("spam");
+		});
+
+		it("keeps a softfail whose DKIM signature verifies", () => {
+			// What forwarding looks like: the relaying host is not in the
+			// original domain's SPF, but the signature survived the trip. One
+			// verifying signature is enough to keep the message.
+			expect(
+				classifyByAuthResults(
+					header(
+						"mx.example.com; dmarc=none header.from=example.com; " +
+							"spf=softfail smtp.mailfrom=no-reply@example.com; " +
+							"dkim=pass header.i=@example.com",
+					),
+				),
+			).toBe("inbox");
+		});
+
+		it("keeps a sender that publishes no SPF record and signs nothing", () => {
+			// The small-sender shape -- no SPF, no DKIM. Nothing here says the
+			// message did not come from where it claims, so it stays.
+			expect(
+				classifyByAuthResults(
+					header(
+						"mx.example.com; dmarc=none header.from=example.com; " +
+							"spf=none smtp.mailfrom=no-reply@example.com",
 					),
 				),
 			).toBe("inbox");
