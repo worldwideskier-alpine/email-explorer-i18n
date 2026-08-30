@@ -1,5 +1,5 @@
 <template>
-  <label :class="floating ? 'fixed top-4 left-4 z-40' : 'ml-1 sm:ml-2'">
+  <label :class="floating ? 'fixed top-4 right-4 z-40' : 'ml-1 sm:ml-2'">
     <span class="sr-only">{{ t("header.language") }}</span>
     <select
       :value="locale"
@@ -23,8 +23,10 @@ import { type Locale, setLocale } from "@/i18n";
  * pages -- puts it in that row. The rest are single centred cards with
  * nothing in the corners, so it pins itself to one.
  *
- * Top left, not top right: Toast is `fixed top-4 right-4`, and a toast would
- * sit straight on top of it.
+ * Top right in both cases, so the control is in the same place on every
+ * screen. It used to pin itself top left to stay clear of Toast, which put
+ * it diagonally opposite the copy that sits in a page's own action row --
+ * one control in two corners. Toast moved to the bottom instead.
  *
  * A page you cannot change the language from is worse than it sounds here:
  * sign-in and password reset are exactly where someone who does not read the

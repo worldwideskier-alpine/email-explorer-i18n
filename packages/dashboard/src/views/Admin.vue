@@ -75,7 +75,7 @@
 				<button
 					@click="loadUsers"
 					:disabled="usersLoading"
-					class="px-3 py-1 text-sm text-indigo-600 hover:text-indigo-800 disabled:opacity-50"
+					class="px-3 py-1 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 disabled:opacity-50"
 				>
 					{{ usersLoading ? t("admin.users.loading") : t("admin.users.refresh") }}
 				</button>

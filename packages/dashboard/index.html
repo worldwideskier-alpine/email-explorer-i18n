@@ -9,7 +9,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Explorer</title>
   </head>
-  <body class="bg-gray-900 text-gray-100">
+  <!-- The one place the page background and default text colour are decided.
+       Views used to each pick their own, three different ways: a hard-coded
+       light background, nothing at all (so this dark one showed through), or
+       a pair that followed the viewer. The same viewer got light, dark and
+       light again walking from sign-in to the mailbox list to the inbox. -->
+  <body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

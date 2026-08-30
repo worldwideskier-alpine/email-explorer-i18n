@@ -1,5 +1,9 @@
 <template>
-  <div class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none">
+  <!-- Bottom right, not top right. The top right corner is where every page
+       keeps its own controls -- the mailbox header, the action rows, the
+       language switcher on the sign-in pages -- and a toast landing there
+       covered them for as long as it was up. -->
+  <div class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none">
     <transition-group name="toast" tag="div">
       <div
         v-for="toast in toasts"
