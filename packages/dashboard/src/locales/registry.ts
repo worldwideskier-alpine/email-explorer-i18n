@@ -14,6 +14,16 @@
  * languages in the language you are currently stuck in is no use to someone
  * who cannot read it.
  *
+ * Chinese is carried as two written standards rather than one `zh`, because
+ * the choice a reader needs to make is Simplified or Traditional, not a
+ * country. Cantonese is separate again: it is an official spoken language of
+ * Hong Kong and Macao, and written Cantonese is not just Traditional
+ * characters with a different accent -- the vocabulary and grammar differ.
+ *
+ * Entries are sorted by code inside each region, which is also the order the
+ * picker shows. Sorting by label would order East Asia by the shape of each
+ * endonym, which is arbitrary to everyone.
+ *
  * Catalogues are fetched on demand (see i18n.ts). At ~16KB each, loading all
  * of them up front would more than double what a first visit downloads.
  */
@@ -30,6 +40,11 @@ export interface LocaleEntry {
 
 export const LOCALES = [
 	{ code: "ja", label: "日本語", region: "eastAsia" },
+	{ code: "ko", label: "한국어", region: "eastAsia" },
+	{ code: "mn", label: "Монгол", region: "eastAsia" },
+	{ code: "yue", label: "廣東話", region: "eastAsia" },
+	{ code: "zh-Hans", label: "简体中文", region: "eastAsia" },
+	{ code: "zh-Hant", label: "繁體中文", region: "eastAsia" },
 
 	{ code: "bg", label: "Български", region: "europe" },
 	{ code: "cs", label: "Čeština", region: "europe" },
