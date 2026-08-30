@@ -187,7 +187,14 @@
 		"exportNote": "Memuat turun semua mesej dalam peti mel ini sebagai arkib mbox, yang boleh diimport oleh Thunderbird dan kebanyakan klien lain. Surat yang diterima ditulis tepat seperti ketika ia tiba; surat yang ditulis di sini dibina semula, termasuk lampirannya.",
 		"exportSubmit": "Muat turun sebagai mbox",
 		"exporting": "Sedang disediakan...",
-		"exportFailed": "Eksport gagal."
+		"exportFailed": "Eksport gagal.",
+		"restoreTitle": "Pemulihan daripada sandaran",
+		"restoreNote": "Membaca fail mbox yang dieksport di sini dan mengembalikan mesej ke folder yang sama, dengan tanda dibaca dan berbintang yang sama. Selamat dijalankan dua kali: mesej yang sudah ada akan dilangkau. Folder yang dinamakan arkib tetapi tiada dalam peti mel ini akan dicipta.",
+		"restoreSubmit": "Pulihkan",
+		"restoreRunning": "Sedang memulihkan...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "{imported} dipulihkan, {skipped} sudah ada, {failed} gagal.",
+		"restoreFailed": "Arkib tidak dapat dibaca."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Butiran log masuk tidak sah",

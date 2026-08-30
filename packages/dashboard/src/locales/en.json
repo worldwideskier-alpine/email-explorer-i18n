@@ -187,7 +187,14 @@
 		"exportNote": "Downloads every message in this mailbox as an mbox archive, which Thunderbird and most other clients can import. Received mail is written out exactly as it arrived; mail composed here is rebuilt, attachments included.",
 		"exportSubmit": "Download as mbox",
 		"exporting": "Preparing...",
-		"exportFailed": "The export failed."
+		"exportFailed": "The export failed.",
+		"restoreTitle": "Restore from a backup",
+		"restoreNote": "Reads an mbox archive taken here and puts the messages back, into the folders they were in and with the read and starred marks they had. Running it twice is safe: a message already here is skipped. A folder the archive names but this mailbox does not have is created.",
+		"restoreSubmit": "Restore",
+		"restoreRunning": "Restoring...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Restored {imported}, skipped {skipped} already here, {failed} failed.",
+		"restoreFailed": "The archive could not be read."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Invalid credentials",

@@ -187,7 +187,14 @@
 		"exportNote": "Tải xuống toàn bộ thư trong hộp thư này dưới dạng kho lưu mbox, mà Thunderbird và hầu hết các trình khách khác đều nhập được. Thư nhận được ghi ra đúng như khi nó đến; thư soạn tại đây được dựng lại, kèm cả tệp đính kèm.",
 		"exportSubmit": "Tải xuống dạng mbox",
 		"exporting": "Đang chuẩn bị...",
-		"exportFailed": "Xuất dữ liệu thất bại."
+		"exportFailed": "Xuất dữ liệu thất bại.",
+		"restoreTitle": "Khôi phục từ bản sao lưu",
+		"restoreNote": "Đọc tệp mbox đã xuất ở đây và đưa thư trở lại đúng thư mục cũ, với trạng thái đã đọc và gắn sao như trước. Chạy hai lần vẫn an toàn: thư đã có sẽ được bỏ qua. Thư mục có trong tệp nhưng chưa có trong hộp thư này sẽ được tạo.",
+		"restoreSubmit": "Khôi phục",
+		"restoreRunning": "Đang khôi phục...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Đã khôi phục {imported}, {skipped} đã có sẵn, {failed} thất bại.",
+		"restoreFailed": "Không đọc được tệp."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Thông tin đăng nhập không đúng",

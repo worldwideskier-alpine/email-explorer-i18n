@@ -187,7 +187,14 @@
 		"exportNote": "Laddar ner alla meddelanden i den här brevlådan som ett mbox-arkiv, som Thunderbird och de flesta andra program kan importera. Mottagen post skrivs ut precis som den kom in; post som skrivits här byggs upp på nytt, bilagor inkluderade.",
 		"exportSubmit": "Ladda ner som mbox",
 		"exporting": "Förbereder...",
-		"exportFailed": "Exporten misslyckades."
+		"exportFailed": "Exporten misslyckades.",
+		"restoreTitle": "Återställning från en säkerhetskopia",
+		"restoreNote": "Läser en mbox-fil som exporterats här och lägger tillbaka meddelandena i samma mappar, med samma markeringar för läst och stjärna. Det är ofarligt att köra två gånger: ett meddelande som redan finns hoppas över. En mapp som arkivet nämner och som den här brevlådan saknar skapas.",
+		"restoreSubmit": "Återställ",
+		"restoreRunning": "Återställer...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Återställde {imported}, fanns redan {skipped}, misslyckades {failed}.",
+		"restoreFailed": "Arkivet kunde inte läsas."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ogiltiga inloggningsuppgifter",

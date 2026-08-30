@@ -117,6 +117,25 @@ export default {
 			responseType: "blob",
 		}),
 
+	// One message back into the mailbox, admin only. A restore posts these one
+	// at a time rather than handing over the whole archive: an mbox can be far
+	// larger than a Worker request may carry, and a message at a time is what
+	// lets the page show progress and pick up where it stopped.
+	//
+	// `id` is what makes it safe to run twice -- the Worker answers
+	// status "duplicate" and writes nothing for a message already there.
+	importEmail: (
+		mailboxId: string,
+		message: {
+			rawEmailBase64: string;
+			folder: string;
+			id?: string;
+			date?: string;
+			read?: boolean;
+			starred?: boolean;
+		},
+	) => apiClient.post(`/api/v1/admin/mailboxes/${mailboxId}/import`, message),
+
 	// Emails
 	listEmails: (mailboxId: string, params: any) =>
 		apiClient.get(`/api/v1/mailboxes/${mailboxId}/emails`, { params }),

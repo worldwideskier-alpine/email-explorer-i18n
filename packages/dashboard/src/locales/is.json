@@ -187,7 +187,14 @@
 		"exportNote": "Sækir öll skeyti í þessu pósthólfi sem mbox-safn sem Thunderbird og flestir aðrir póstforrit geta flutt inn. Móttekinn póstur er skrifaður nákvæmlega eins og hann barst; póstur sem saminn er hér er byggður upp á ný, ásamt viðhengjum.",
 		"exportSubmit": "Sækja sem mbox",
 		"exporting": "Undirbý ...",
-		"exportFailed": "Útflutningurinn mistókst."
+		"exportFailed": "Útflutningurinn mistókst.",
+		"restoreTitle": "Endurheimt úr afriti",
+		"restoreNote": "Les mbox-skrá sem var flutt út hér og setur skeytin aftur í sömu möppur, með sömu merkingum um lesið og stjörnu. Óhætt er að keyra tvisvar: skeyti sem þegar er hér er sleppt. Mappa sem afritið nefnir en þetta pósthólf hefur ekki er búin til.",
+		"restoreSubmit": "Endurheimta",
+		"restoreRunning": "Endurheimti...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Endurheimt {imported}, þegar til {skipped}, mistókst {failed}.",
+		"restoreFailed": "Ekki tókst að lesa afritið."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Rangar innskráningarupplýsingar",

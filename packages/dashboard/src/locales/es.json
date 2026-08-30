@@ -187,7 +187,14 @@
 		"exportNote": "Descarga todos los mensajes de este buzón como un archivo mbox, que Thunderbird y la mayoría de clientes pueden importar. El correo recibido se escribe tal como llegó; el redactado aquí se reconstruye, con los adjuntos incluidos.",
 		"exportSubmit": "Descargar como mbox",
 		"exporting": "Preparando...",
-		"exportFailed": "La exportación falló."
+		"exportFailed": "La exportación falló.",
+		"restoreTitle": "Restaurar desde una copia",
+		"restoreNote": "Lee un archivo mbox exportado aquí y devuelve los mensajes a las mismas carpetas, con las mismas marcas de leído y destacado. Es seguro ejecutarlo dos veces: un mensaje que ya está se omite. Una carpeta que el archivo nombra y este buzón no tiene se crea.",
+		"restoreSubmit": "Restaurar",
+		"restoreRunning": "Restaurando...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Restaurados {imported}, ya estaban {skipped}, fallaron {failed}.",
+		"restoreFailed": "No se pudo leer el archivo."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Credenciales no válidas",

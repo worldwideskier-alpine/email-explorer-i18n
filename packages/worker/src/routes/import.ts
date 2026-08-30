@@ -3,16 +3,29 @@ import type { Context } from "hono";
 import PostalMime from "postal-mime";
 import { z } from "zod";
 import { ingestEmailIntoMailbox } from "../email-ingest";
+import { slugify } from "../slugify";
 import type { Env, Session } from "../types";
 
 type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
 
 const ImportEmailRequestSchema = z.object({
+	/**
+	 * A folder id ("inbox") or its display name ("Inbox", or a folder the user
+	 * made). A backup names folders rather than identifying them, because the
+	 * id of a folder with a Japanese name is a random uuid that means nothing
+	 * in the mailbox being restored into.
+	 */
 	folder: z.string().default("inbox"),
 	rawEmailBase64: z.string(),
 	date: z.string().optional(),
 	read: z.boolean().optional(),
 	starred: z.boolean().optional(),
+	/**
+	 * The id this message had when it was exported. Restoring the same file
+	 * twice should not double the mailbox, so an id already present here is
+	 * reported back as a duplicate and nothing is written.
+	 */
+	id: z.string().optional(),
 });
 
 const ImportEmailResponseSchema = z.object({
@@ -43,6 +56,10 @@ export class PostImportEmail extends OpenAPIRoute {
 			body: contentJson(ImportEmailRequestSchema),
 		},
 		responses: {
+			"200": {
+				description: "That id is already in this mailbox; nothing written",
+				...contentJson(ImportEmailResponseSchema),
+			},
 			"201": {
 				description: "Email imported successfully",
 				...contentJson(ImportEmailResponseSchema),
@@ -73,7 +90,14 @@ export class PostImportEmail extends OpenAPIRoute {
 
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { mailboxId } = data.params;
-		const { folder, rawEmailBase64, date, read, starred } = data.body;
+		const {
+			folder,
+			rawEmailBase64,
+			date,
+			read,
+			starred,
+			id: requestedId,
+		} = data.body;
 
 		let rawEmail: Uint8Array;
 		try {
@@ -84,22 +108,72 @@ export class PostImportEmail extends OpenAPIRoute {
 			return c.json({ error: "rawEmailBase64 is not valid base64" }, 400);
 		}
 
+		const ns = c.env.MAILBOX;
+		const stub = ns.get(ns.idFromName(mailboxId));
+
+		// Already here, so the caller is replaying a backup this mailbox has
+		// already taken back. Saying so beats writing a second copy.
+		if (requestedId && (await stub.getEmail(requestedId))) {
+			return c.json({ id: requestedId, status: "duplicate" }, 200);
+		}
+
+		// The id is only reused when nothing else owns it. R2 keys are not
+		// scoped per mailbox, so restoring one mailbox's backup into a
+		// different mailbox would otherwise overwrite the raw copy the
+		// original still points at.
+		const idIsFree =
+			requestedId !== undefined &&
+			!(await c.env.BUCKET.head(`raw/${requestedId}.eml`));
+
 		const parser = new PostalMime();
 		const parsedEmail = await parser.parse(rawEmail);
 
 		const id = await ingestEmailIntoMailbox(
 			c.env,
 			mailboxId,
-			folder,
+			await resolveFolder(stub, folder),
 			parsedEmail,
 			{
 				date,
 				read,
 				starred,
 				rawEmail,
+				id: idIsFree ? requestedId : undefined,
 			},
 		);
 
 		return c.json({ id, status: "imported" }, 201);
 	}
+}
+
+/**
+ * Turns whatever the caller called the folder into an id the emails row can
+ * hold, creating the folder when the mailbox does not have it. A restore into
+ * an empty mailbox has to rebuild the folders as well as the mail, and the
+ * alternative -- dropping those messages into the inbox -- loses exactly what
+ * the backup went to the trouble of recording.
+ */
+async function resolveFolder(
+	stub: {
+		getFolders: () => Promise<unknown[]>;
+		createFolder: (id: string, name: string) => Promise<unknown>;
+	},
+	folder: string,
+): Promise<string> {
+	const folders = (await stub.getFolders()) as { id: string; name: string }[];
+	const existing = folders.find(
+		(row) => row.id === folder || row.name === folder,
+	);
+	if (existing) return existing.id;
+
+	const id = slugify(folder);
+	await stub.createFolder(id, folder);
+
+	// createFolder answers null when the name is taken, which here means it
+	// was created between the read above and this write; either way the
+	// folder now exists, so read back rather than trusting the return.
+	const after = (await stub.getFolders()) as { id: string; name: string }[];
+	return (
+		after.find((row) => row.id === folder || row.name === folder)?.id ?? id
+	);
 }

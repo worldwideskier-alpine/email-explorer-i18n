@@ -187,7 +187,14 @@
 		"exportNote": "Lued all Message aus dëser Postkëscht als mbox-Archiv erof, dat Thunderbird an déi meescht aner Programmer importéiere kënnen. Empfaangen Post gëtt genee esou erausgeschriwwen, wéi se ukomm ass; Post, déi hei geschriwwe gouf, gëtt nei opgebaut, Unhäng abegraff.",
 		"exportSubmit": "Als mbox eroflueden",
 		"exporting": "Gëtt virbereet...",
-		"exportFailed": "Den Export ass feelgeschloen."
+		"exportFailed": "Den Export ass feelgeschloen.",
+		"restoreTitle": "Widderhierstellung aus enger Sécherung",
+		"restoreNote": "Liest eng mbox-Datei, déi hei exportéiert gouf, a leet d'Messagen zréck an déiselwecht Dossieren, mat deene selwechte Markéierungen fir gelies a Stär. Et ass ongeféierlech, dat zweemol lafen ze loossen: e Message, dee scho do ass, gëtt iwwersprongen. En Dossier, deen d'Sécherung nennt an dës Postkëscht net huet, gëtt ugeluecht.",
+		"restoreSubmit": "Widderhierstellen",
+		"restoreRunning": "Gëtt widderhiergestallt...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "{imported} widderhiergestallt, {skipped} waren scho do, {failed} feelgeschloen.",
+		"restoreFailed": "D'Sécherung konnt net gelies ginn."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ongëlteg Umeldungsdaten",

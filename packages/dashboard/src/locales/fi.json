@@ -187,7 +187,14 @@
 		"exportNote": "Lataa kaikki tämän postilaatikon viestit mbox-arkistona, jonka Thunderbird ja useimmat muut ohjelmat osaavat tuoda. Saapunut posti kirjoitetaan täsmälleen sellaisena kuin se saapui; täällä kirjoitettu posti rakennetaan uudelleen liitteineen.",
 		"exportSubmit": "Lataa mbox-muodossa",
 		"exporting": "Valmistellaan...",
-		"exportFailed": "Vienti epäonnistui."
+		"exportFailed": "Vienti epäonnistui.",
+		"restoreTitle": "Palautus varmuuskopiosta",
+		"restoreNote": "Lukee täältä viedyn mbox-tiedoston ja palauttaa viestit samoihin kansioihin, samoine luettu- ja tähtimerkintöineen. Kahdesti ajaminen on turvallista: jo olemassa oleva viesti ohitetaan. Kansio, jonka arkisto nimeää ja jota tässä postilaatikossa ei ole, luodaan.",
+		"restoreSubmit": "Palauta",
+		"restoreRunning": "Palautetaan...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Palautettu {imported}, oli jo {skipped}, epäonnistui {failed}.",
+		"restoreFailed": "Arkistoa ei voitu lukea."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Virheelliset kirjautumistiedot",

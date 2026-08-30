@@ -17,11 +17,14 @@ interface ExportedAttachment {
 
 export interface ExportedEmail {
 	id: string;
-	folder?: string;
+	/** The emails row stores the folder under this name, not `folder`. */
+	folder_id?: string;
 	subject?: string;
 	sender?: string;
 	recipient?: string;
 	date?: string;
+	read?: boolean;
+	starred?: boolean;
 	body?: string | null;
 	attachments?: ExportedAttachment[];
 }
@@ -116,22 +119,47 @@ async function synthesizeMessage(
 }
 
 /**
+ * Header values must not carry a CR or LF: one would end the header early and
+ * splice whatever followed into the message. Folder names come from the user,
+ * so they are the one field here that could contain either.
+ */
+function headerSafe(value: string): string {
+	return value.replace(/[\r\n]+/g, " ");
+}
+
+/**
  * One mbox entry. Mail that arrived from outside is written back byte for
  * byte from its stored raw copy, so nothing is lost in translation; mail
  * composed here never had a raw form and is rebuilt from what was stored,
  * attachments included.
+ *
+ * `folderName` is passed in rather than read off the row: the row holds a
+ * folder id, and for a folder the user made that id is a uuid, which means
+ * nothing in another mailbox. The name survives being restored somewhere else.
+ *
+ * The X-Email-Explorer-* headers carry what is true of the message here but is
+ * not part of the message itself -- which folder it sat in, whether it had
+ * been read or starred, when this mailbox recorded it, and the id it was
+ * stored under. Without them a backup restores as a heap of unread mail in the
+ * inbox. Other clients ignore headers they do not know, so the file stays a
+ * plain mbox that Thunderbird can still read.
  */
 export async function renderMboxEntry(
 	env: Env,
 	email: ExportedEmail,
+	folderName?: string,
 ): Promise<string> {
 	const raw = await env.BUCKET.get(`raw/${email.id}.eml`);
 	const message = raw ? await raw.text() : await synthesizeMessage(env, email);
 
-	// Which folder a message sat in is not part of the message, and would be
-	// lost otherwise. Thunderbird and friends ignore headers they don't know.
 	const separator = `From ${email.sender || "MAILER-DAEMON"} ${mboxDate(email.date)}`;
-	const folder = `X-Email-Explorer-Folder: ${email.folder ?? "inbox"}`;
+	const headers = [
+		`X-Email-Explorer-Id: ${email.id}`,
+		`X-Email-Explorer-Folder: ${headerSafe(folderName ?? email.folder_id ?? "inbox")}`,
+		`X-Email-Explorer-Read: ${email.read ? "1" : "0"}`,
+		`X-Email-Explorer-Starred: ${email.starred ? "1" : "0"}`,
+	];
+	if (email.date) headers.push(`X-Email-Explorer-Date: ${email.date}`);
 
-	return `${separator}\r\n${folder}\r\n${escapeFromLines(message)}\r\n\r\n`;
+	return `${separator}\r\n${headers.join("\r\n")}\r\n${escapeFromLines(message)}\r\n\r\n`;
 }

@@ -187,7 +187,14 @@
 		"exportNote": "Descarcă toate mesajele acestei căsuțe poștale ca arhivă mbox, pe care Thunderbird și majoritatea celorlalți clienți o pot importa. Mesajele primite sunt scrise exact așa cum au sosit; mesajele compuse aici sunt reconstruite, inclusiv atașamentele.",
 		"exportSubmit": "Descarcă în format mbox",
 		"exporting": "Se pregătește...",
-		"exportFailed": "Exportul a eșuat."
+		"exportFailed": "Exportul a eșuat.",
+		"restoreTitle": "Restaurare dintr-o copie de rezervă",
+		"restoreNote": "Citește un fișier mbox exportat aici și pune mesajele înapoi în aceleași dosare, cu aceleași marcaje de citit și stea. Este sigur să fie rulat de două ori: un mesaj deja prezent este sărit. Un dosar pe care arhiva îl numește și pe care această cutie nu îl are este creat.",
+		"restoreSubmit": "Restaurează",
+		"restoreRunning": "Se restaurează...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Restaurate {imported}, existau deja {skipped}, au eșuat {failed}.",
+		"restoreFailed": "Arhiva nu a putut fi citită."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Date de autentificare nevalide",

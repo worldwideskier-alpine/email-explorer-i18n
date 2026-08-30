@@ -187,7 +187,14 @@
 		"exportNote": "Stáhne všechny zprávy této schránky jako archiv mbox, který umí naimportovat Thunderbird i většina dalších klientů. Přijatá pošta se zapíše přesně tak, jak dorazila; pošta napsaná zde se sestaví znovu, včetně příloh.",
 		"exportSubmit": "Stáhnout jako mbox",
 		"exporting": "Příprava...",
-		"exportFailed": "Export se nezdařil."
+		"exportFailed": "Export se nezdařil.",
+		"restoreTitle": "Obnovení ze zálohy",
+		"restoreNote": "Načte soubor mbox vyexportovaný zde a vrátí zprávy do stejných složek, se stejnými značkami přečteno a hvězdička. Spustit dvakrát je bezpečné: zpráva, která už tu je, se přeskočí. Složka, kterou archiv uvádí a tato schránka ji nemá, se vytvoří.",
+		"restoreSubmit": "Obnovit",
+		"restoreRunning": "Obnovování...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Obnoveno {imported}, již přítomno {skipped}, selhalo {failed}.",
+		"restoreFailed": "Archiv se nepodařilo přečíst."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Neplatné přihlašovací údaje",

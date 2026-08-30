@@ -187,7 +187,14 @@
 		"exportNote": "Lejupielādē visus šīs pastkastes ziņojumus kā mbox arhīvu, ko Thunderbird un lielākā daļa citu klientu spēj importēt. Saņemtās vēstules tiek izrakstītas tieši tā, kā tās pienāca; šeit sastādītās vēstules tiek atjaunotas, ieskaitot pielikumus.",
 		"exportSubmit": "Lejupielādēt kā mbox",
 		"exporting": "Notiek sagatavošana...",
-		"exportFailed": "Eksports neizdevās."
+		"exportFailed": "Eksports neizdevās.",
+		"restoreTitle": "Atjaunošana no dublējuma",
+		"restoreNote": "Nolasa šeit eksportēto mbox failu un ievieto vēstules atpakaļ tajās pašās mapēs, ar tām pašām lasīšanas un zvaigznītes atzīmēm. Palaist divreiz ir droši: jau esoša vēstule tiek izlaista. Mape, ko nosauc arhīvs un kuras šajā pastkastē nav, tiek izveidota.",
+		"restoreSubmit": "Atjaunot",
+		"restoreRunning": "Notiek atjaunošana...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Atjaunotas {imported}, jau bija {skipped}, neizdevās {failed}.",
+		"restoreFailed": "Neizdevās nolasīt arhīvu."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Nederīgi pieteikšanās dati",

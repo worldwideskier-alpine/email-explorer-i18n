@@ -22,9 +22,16 @@ export async function ingestEmailIntoMailbox(
 		starred?: boolean;
 		notify?: boolean;
 		rawEmail?: ArrayBuffer | Uint8Array;
+		/**
+		 * Only the restore path passes this, so a message keeps the id its
+		 * backup recorded and restoring the same file twice is a no-op rather
+		 * than a second copy of every message. The caller has already checked
+		 * the id is free here; inbound mail never has one to reuse.
+		 */
+		id?: string;
 	} = {},
 ) {
-	const messageId = crypto.randomUUID();
+	const messageId = overrides.id ?? crypto.randomUUID();
 
 	// Creating the mailbox here is for the admin import path, which may be
 	// seeding a mailbox that has no settings object yet. Inbound mail must not

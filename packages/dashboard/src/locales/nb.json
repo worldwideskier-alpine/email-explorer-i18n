@@ -187,7 +187,14 @@
 		"exportNote": "Laster ned alle meldingene i denne postkassen som et mbox-arkiv, som Thunderbird og de fleste andre klienter kan importere. Mottatt post skrives ut nøyaktig slik den kom inn; post som er skrevet her, bygges opp på nytt, med vedlegg.",
 		"exportSubmit": "Last ned som mbox",
 		"exporting": "Forbereder ...",
-		"exportFailed": "Eksporten mislyktes."
+		"exportFailed": "Eksporten mislyktes.",
+		"restoreTitle": "Gjenoppretting fra en sikkerhetskopi",
+		"restoreNote": "Leser en mbox-fil eksportert her og legger meldingene tilbake i de samme mappene, med de samme merkene for lest og stjerne. Det er trygt å kjøre to ganger: en melding som allerede er her, hoppes over. En mappe arkivet nevner og som denne postkassen ikke har, opprettes.",
+		"restoreSubmit": "Gjenopprett",
+		"restoreRunning": "Gjenoppretter...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Gjenopprettet {imported}, fantes allerede {skipped}, mislyktes {failed}.",
+		"restoreFailed": "Arkivet kunne ikke leses."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Feil innloggingsopplysninger",

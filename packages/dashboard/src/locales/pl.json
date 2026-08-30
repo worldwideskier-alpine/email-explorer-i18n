@@ -187,7 +187,14 @@
 		"exportNote": "Pobiera wszystkie wiadomości z tej skrzynki jako archiwum mbox, które Thunderbird i większość innych programów potrafi zaimportować. Poczta odebrana zapisywana jest dokładnie tak, jak przyszła; napisana tutaj jest odtwarzana wraz z załącznikami.",
 		"exportSubmit": "Pobierz jako mbox",
 		"exporting": "Przygotowywanie...",
-		"exportFailed": "Eksport się nie powiódł."
+		"exportFailed": "Eksport się nie powiódł.",
+		"restoreTitle": "Przywracanie z kopii zapasowej",
+		"restoreNote": "Odczytuje plik mbox wyeksportowany tutaj i przywraca wiadomości do tych samych folderów, z tymi samymi oznaczeniami przeczytania i gwiazdki. Uruchomienie dwa razy jest bezpieczne: wiadomość, która już tu jest, zostaje pominięta. Folder wymieniony w archiwum, którego ta skrzynka nie ma, zostaje utworzony.",
+		"restoreSubmit": "Przywróć",
+		"restoreRunning": "Przywracanie...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Przywrócono {imported}, już było {skipped}, nie powiodło się {failed}.",
+		"restoreFailed": "Nie udało się odczytać archiwum."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Nieprawidłowe dane logowania",

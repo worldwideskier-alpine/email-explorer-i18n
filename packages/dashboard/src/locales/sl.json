@@ -187,7 +187,14 @@
 		"exportNote": "Prenese vsa sporočila tega poštnega predala kot arhiv mbox, ki ga Thunderbird in večina drugih odjemalcev lahko uvozi. Prejeta pošta se zapiše natanko tako, kot je prispela; sporočila, sestavljena tukaj, se ponovno sestavijo, vključno s prilogami.",
 		"exportSubmit": "Prenesi kot mbox",
 		"exporting": "Pripravljanje...",
-		"exportFailed": "Izvoz ni uspel."
+		"exportFailed": "Izvoz ni uspel.",
+		"restoreTitle": "Obnovitev iz varnostne kopije",
+		"restoreNote": "Prebere datoteko mbox, izvoženo tukaj, in vrne sporočila v iste mape, z istimi oznakami prebranega in zvezdice. Dvakratni zagon je varen: sporočilo, ki je že tu, se preskoči. Mapa, ki jo arhiv imenuje in je ta nabiralnik nima, se ustvari.",
+		"restoreSubmit": "Obnovi",
+		"restoreRunning": "Obnavljanje...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Obnovljenih {imported}, že je bilo {skipped}, ni uspelo {failed}.",
+		"restoreFailed": "Arhiva ni bilo mogoče prebrati."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Neveljavni podatki za prijavo",

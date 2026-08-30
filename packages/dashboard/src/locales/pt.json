@@ -187,7 +187,14 @@
 		"exportNote": "Transfere todas as mensagens desta caixa como um arquivo mbox, que o Thunderbird e a maioria dos clientes conseguem importar. O correio recebido é escrito tal como chegou; o escrito aqui é reconstruído, anexos incluídos.",
 		"exportSubmit": "Transferir como mbox",
 		"exporting": "A preparar...",
-		"exportFailed": "A exportação falhou."
+		"exportFailed": "A exportação falhou.",
+		"restoreTitle": "Restauro a partir de uma cópia",
+		"restoreNote": "Lê um ficheiro mbox exportado aqui e repõe as mensagens nas mesmas pastas, com as mesmas marcas de lida e destacada. É seguro executar duas vezes: uma mensagem que já existe é ignorada. Uma pasta que o arquivo indica e esta caixa não tem é criada.",
+		"restoreSubmit": "Restaurar",
+		"restoreRunning": "A restaurar...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Restauradas {imported}, já existiam {skipped}, falharam {failed}.",
+		"restoreFailed": "Não foi possível ler o arquivo."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Credenciais inválidas",

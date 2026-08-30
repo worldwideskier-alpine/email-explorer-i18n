@@ -187,7 +187,14 @@
 		"exportNote": "Scarica tutti i messaggi di questa casella in un archivio mbox, che Thunderbird e la maggior parte dei client sanno importare. La posta ricevuta viene scritta esattamente come è arrivata; quella composta qui viene ricostruita, allegati inclusi.",
 		"exportSubmit": "Scarica come mbox",
 		"exporting": "Preparazione...",
-		"exportFailed": "L'esportazione non è riuscita."
+		"exportFailed": "L'esportazione non è riuscita.",
+		"restoreTitle": "Ripristino da un backup",
+		"restoreNote": "Legge un archivio mbox esportato qui e rimette i messaggi nelle stesse cartelle, con gli stessi contrassegni di letto e speciale. Eseguirlo due volte è sicuro: un messaggio già presente viene saltato. Una cartella nominata dall'archivio e assente in questa casella viene creata.",
+		"restoreSubmit": "Ripristina",
+		"restoreRunning": "Ripristino in corso...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Ripristinati {imported}, già presenti {skipped}, falliti {failed}.",
+		"restoreFailed": "Non è stato possibile leggere l'archivio."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Credenziali non valide",

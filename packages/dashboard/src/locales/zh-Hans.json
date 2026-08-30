@@ -187,7 +187,14 @@
 		"exportNote": "把这个邮箱里的全部邮件下载为 mbox 归档，Thunderbird 和大多数其他客户端都能导入。收到的邮件按原样写出；在这里撰写的邮件会连同附件一起重新组装。",
 		"exportSubmit": "下载为 mbox",
 		"exporting": "正在准备…",
-		"exportFailed": "导出失败。"
+		"exportFailed": "导出失败。",
+		"restoreTitle": "从备份恢复",
+		"restoreNote": "读取在此导出的 mbox，把邮件连同原来的文件夹、已读和星标状态一起放回。可以重复运行：已存在的邮件会跳过。存档中有而此邮箱没有的文件夹会自动创建。",
+		"restoreSubmit": "恢复",
+		"restoreRunning": "正在恢复...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "已恢复 {imported} 封，{skipped} 封已存在，{failed} 封失败。",
+		"restoreFailed": "无法读取该存档。"
 	},
 	"apiErrors": {
 		"Invalid credentials": "登录信息有误",
