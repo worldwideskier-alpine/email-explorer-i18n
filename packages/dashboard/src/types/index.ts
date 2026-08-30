@@ -30,7 +30,11 @@ export interface Email {
 	id: string;
 	subject: string;
 	sender: string;
+	// Comma-separated address lists, the form the To:/Cc: headers use. The
+	// list endpoints do not select cc and bcc, so they are absent there.
 	recipient: string;
+	cc?: string | null;
+	bcc?: string | null;
 	date: string;
 	read: boolean;
 	starred: boolean;
