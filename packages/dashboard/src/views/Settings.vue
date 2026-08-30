@@ -106,6 +106,36 @@
         </button>
       </div>
 
+      <!-- Restore: the other half of the backup. Admin only, because the
+           endpoint it posts to writes mail into the mailbox. -->
+      <div v-if="isAdmin" class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{{ t("settings.restoreTitle") }}</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ t("settings.restoreNote") }}</p>
+        <div class="flex flex-wrap items-center gap-3">
+          <input
+            ref="restoreInput"
+            type="file"
+            accept=".mbox,message/rfc822,application/mbox,text/plain"
+            :disabled="restoring"
+            @change="onRestoreFileChosen"
+            class="text-sm text-gray-700 dark:text-gray-300 file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-gray-800 dark:file:bg-gray-200 file:text-white dark:file:text-gray-900 file:font-medium file:cursor-pointer disabled:opacity-60"
+          />
+          <button
+            type="button"
+            @click="restoreMailbox"
+            :disabled="restoring || !restoreFile"
+            class="px-4 py-2 bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 rounded-lg font-medium hover:opacity-90 disabled:opacity-60"
+          >
+            {{ restoring ? t("settings.restoreRunning") : t("settings.restoreSubmit") }}
+          </button>
+        </div>
+        <p v-if="restoring" class="text-sm text-gray-600 dark:text-gray-400 mt-3">
+          {{ t("settings.restoreProgress", { done: restoreDone, total: restoreTotal }) }}
+        </p>
+        <p v-if="restoreSummary" class="text-sm text-green-600 dark:text-green-400 mt-3">{{ restoreSummary }}</p>
+        <p v-if="restoreError" class="text-sm text-red-600 dark:text-red-400 mt-3">{{ restoreError }}</p>
+      </div>
+
       <!-- Danger zone: deletion lock and mailbox deletion -->
       <div class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
         <h2 class="text-lg font-medium text-red-700 dark:text-red-400 mb-4">{{ t("settings.dangerZoneTitle") }}</h2>
@@ -178,12 +208,15 @@ import {
 	subscribeToPush,
 	unsubscribeFromPush,
 } from "@/services/push";
+import { useAuthStore } from "@/stores/auth";
 import { useMailboxStore } from "@/stores/mailboxes";
 import { htmlToPlainText } from "@/utils/htmlToPlainText";
+import { parseMbox, toBase64 } from "@/utils/mbox";
 
 const { t } = useI18n();
 const mailboxStore = useMailboxStore();
 const { currentMailbox: mailbox } = storeToRefs(mailboxStore);
+const { isAdmin } = storeToRefs(useAuthStore());
 const route = useRoute();
 const router = useRouter();
 
@@ -297,6 +330,85 @@ async function exportMailbox() {
 		window.alert(t("settings.exportFailed"));
 	} finally {
 		exporting.value = false;
+	}
+}
+
+const restoreInput = ref<HTMLInputElement | null>(null);
+const restoreFile = ref<File | null>(null);
+const restoring = ref(false);
+const restoreDone = ref(0);
+const restoreTotal = ref(0);
+const restoreSummary = ref("");
+const restoreError = ref("");
+
+function onRestoreFileChosen(event: Event) {
+	restoreFile.value = (event.target as HTMLInputElement).files?.[0] ?? null;
+	restoreSummary.value = "";
+	restoreError.value = "";
+}
+
+/**
+ * Reads the archive here and posts one message at a time, rather than handing
+ * the file to the Worker: an mbox is as large as the mailbox it came from,
+ * which is more than a single request can carry, and a message at a time is
+ * what lets this report progress and survive a failure partway.
+ *
+ * Running it twice is safe. Each message carries the id its backup recorded,
+ * and the Worker answers "duplicate" without writing for one it already has,
+ * so a restore interrupted halfway can simply be run again.
+ */
+async function restoreMailbox() {
+	const file = restoreFile.value;
+	if (!file || restoring.value) return;
+
+	restoring.value = true;
+	restoreSummary.value = "";
+	restoreError.value = "";
+	restoreDone.value = 0;
+	restoreTotal.value = 0;
+
+	try {
+		const mailboxId = route.params.mailboxId as string;
+		const entries = parseMbox(await file.text());
+		restoreTotal.value = entries.length;
+
+		let imported = 0;
+		let skipped = 0;
+		let failed = 0;
+
+		for (const entry of entries) {
+			try {
+				const response = await api.importEmail(mailboxId, {
+					rawEmailBase64: toBase64(entry.raw),
+					folder: entry.folder,
+					id: entry.id,
+					date: entry.date,
+					read: entry.read,
+					starred: entry.starred,
+				});
+				if (response.data?.status === "duplicate") skipped += 1;
+				else imported += 1;
+			} catch {
+				// One unreadable message must not end the restore: the rest of
+				// the archive is still worth putting back, and the count says
+				// how many did not make it.
+				failed += 1;
+			}
+			restoreDone.value += 1;
+		}
+
+		restoreSummary.value = t("settings.restoreDone", {
+			imported,
+			skipped,
+			failed,
+		});
+		await mailboxStore.fetchMailbox(mailboxId);
+	} catch {
+		restoreError.value = t("settings.restoreFailed");
+	} finally {
+		restoring.value = false;
+		restoreFile.value = null;
+		if (restoreInput.value) restoreInput.value.value = "";
 	}
 }
 

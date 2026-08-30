@@ -187,7 +187,14 @@
 		"exportNote": "Mengunduh semua pesan di kotak surat ini sebagai arsip mbox, yang dapat diimpor oleh Thunderbird dan sebagian besar klien lain. Surat yang diterima ditulis persis seperti saat tiba; surat yang ditulis di sini disusun ulang, termasuk lampirannya.",
 		"exportSubmit": "Unduh sebagai mbox",
 		"exporting": "Menyiapkan...",
-		"exportFailed": "Ekspor gagal."
+		"exportFailed": "Ekspor gagal.",
+		"restoreTitle": "Pemulihan dari cadangan",
+		"restoreNote": "Membaca berkas mbox yang diekspor di sini dan mengembalikan pesan ke folder yang sama, dengan tanda sudah dibaca dan berbintang yang sama. Aman dijalankan dua kali: pesan yang sudah ada akan dilewati. Folder yang disebut arsip tetapi tidak ada di kotak surat ini akan dibuat.",
+		"restoreSubmit": "Pulihkan",
+		"restoreRunning": "Memulihkan...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "{imported} dipulihkan, {skipped} sudah ada, {failed} gagal.",
+		"restoreFailed": "Arsip tidak dapat dibaca."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Kredensial tidak sah",

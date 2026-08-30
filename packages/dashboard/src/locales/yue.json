@@ -187,7 +187,14 @@
 		"exportNote": "將呢個信箱入面所有信下載做 mbox 封存檔，Thunderbird 同大部分其他程式都入得。收到嘅信會照原樣寫出嚟；喺呢度寫嘅信會連附件一齊重新砌返。",
 		"exportSubmit": "下載做 mbox",
 		"exporting": "準備緊…",
-		"exportFailed": "匯出唔成功。"
+		"exportFailed": "匯出唔成功。",
+		"restoreTitle": "由備份還原",
+		"restoreNote": "讀取喺呢度匯出嘅 mbox，將郵件連原本嘅資料夾、已讀同星號一齊還原。行兩次都冇問題，已經有嘅郵件會跳過。檔案入面有但呢個信箱冇嘅資料夾會自動建立。",
+		"restoreSubmit": "還原",
+		"restoreRunning": "還原緊...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "還原咗 {imported} 封，{skipped} 封已經有，{failed} 封失敗。",
+		"restoreFailed": "讀唔到呢個檔案。"
 	},
 	"apiErrors": {
 		"Invalid credentials": "登入資料唔啱",

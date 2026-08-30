@@ -41,6 +41,7 @@ import {
 	PostPushUnsubscribe,
 } from "./routes/push";
 import { PostForwardEmail, PostReplyEmail } from "./routes/reply-forward";
+import { slugify } from "./slugify";
 import {
 	classifyByAuthResults,
 	isTrustedSelfDomainSender,
@@ -220,24 +221,6 @@ const UpdateContactRequestSchema = z.object({
 	name: z.string().optional(),
 	email: z.string().optional(),
 });
-
-function slugify(text: string) {
-	const slug = text
-		.toString()
-		.toLowerCase()
-		.replace(/\s+/g, "-") // Replace spaces with -
-		.replace(/[^\w-]+/g, "") // Remove all non-word chars
-		.replace(/--+/g, "-") // Replace multiple - with single -
-		.replace(/^-+/, "") // Trim - from start of text
-		.replace(/-+$/, ""); // Trim - from end of text
-
-	// \w only matches ASCII word characters, so names made mostly or
-	// entirely of non-Latin characters (e.g. Japanese) can slugify to
-	// nothing meaningful -- empty, or just leftover "-"/"_" separators --
-	// and collide with every other such folder.
-	const hasContent = /[a-z0-9]/.test(slug);
-	return hasContent ? slug : crypto.randomUUID();
-}
 
 // Routes
 class GetMailboxes extends OpenAPIRoute {
@@ -1524,6 +1507,15 @@ class GetMailboxExport extends OpenAPIRoute {
 		const stub = c.env.MAILBOX.get(c.env.MAILBOX.idFromName(mailboxId));
 		const ids = await stub.listEmailIdsByDate();
 
+		// Read once, up front: a folder the user made has a uuid for an id, so
+		// the row alone cannot say where the message sat in a way that means
+		// anything after a restore. Five to a few dozen rows, so holding the
+		// map costs nothing next to streaming the mail itself.
+		const folderNames = new Map<string, string>();
+		for (const folder of await stub.getFolders()) {
+			folderNames.set(String(folder.id), String(folder.name));
+		}
+
 		// Streamed one message at a time rather than assembled first: a
 		// mailbox can be far larger than a Worker may hold in memory, and the
 		// download starts immediately instead of after the last message.
@@ -1537,8 +1529,17 @@ class GetMailboxExport extends OpenAPIRoute {
 				}
 				const email = await stub.getEmail(ids[index++]);
 				if (!email) return;
+				const folderId = String(
+					(email as { folder_id?: string }).folder_id ?? "inbox",
+				);
 				controller.enqueue(
-					encoder.encode(await renderMboxEntry(c.env, email as never)),
+					encoder.encode(
+						await renderMboxEntry(
+							c.env,
+							email as never,
+							folderNames.get(folderId) ?? folderId,
+						),
+					),
 				);
 			},
 		});

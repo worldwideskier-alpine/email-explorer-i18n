@@ -187,7 +187,14 @@
 		"exportNote": "Laadib alla kõik selle postkasti sõnumid mbox-arhiivina, mida Thunderbird ja enamik teisi kliente oskavad importida. Saabunud kirjad kirjutatakse välja täpselt sellisena, nagu need saabusid; siin koostatud kirjad ehitatakse uuesti üles koos manustega.",
 		"exportSubmit": "Laadi alla mbox-failina",
 		"exporting": "Ettevalmistamine...",
-		"exportFailed": "Eksport ebaõnnestus."
+		"exportFailed": "Eksport ebaõnnestus.",
+		"restoreTitle": "Taastamine varukoopiast",
+		"restoreNote": "Loeb siit eksporditud mbox-faili ja paneb kirjad tagasi samadesse kaustadesse, samade loetud- ja tärnimärgistustega. Kaks korda käivitamine on ohutu: juba olemasolev kiri jäetakse vahele. Kaust, mille arhiiv nimetab ja mida sellel postkastil pole, luuakse.",
+		"restoreSubmit": "Taasta",
+		"restoreRunning": "Taastamine...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Taastatud {imported}, juba olemas {skipped}, ebaõnnestus {failed}.",
+		"restoreFailed": "Arhiivi ei õnnestunud lugeda."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Vigased sisselogimisandmed",

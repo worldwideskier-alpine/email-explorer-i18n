@@ -187,7 +187,14 @@
 		"exportNote": "Shkarkon të gjitha mesazhet e kësaj kutie si arkiv mbox, të cilin Thunderbird dhe shumica e programeve të tjera mund ta importojnë. Posta e marrë shkruhet pikërisht ashtu siç mbërriti; mesazhet e shkruara këtu ndërtohen sërish, bashkë me bashkëngjitjet.",
 		"exportSubmit": "Shkarko si mbox",
 		"exporting": "Po përgatitet...",
-		"exportFailed": "Eksportimi dështoi."
+		"exportFailed": "Eksportimi dështoi.",
+		"restoreTitle": "Rikthimi nga një kopje rezervë",
+		"restoreNote": "Lexon një skedar mbox të eksportuar këtu dhe i kthen mesazhet në të njëjtat dosje, me të njëjtat shenja të lexuar dhe yll. Është e sigurt të ekzekutohet dy herë: një mesazh që ndodhet tashmë këtu anashkalohet. Një dosje që arkivi e emërton dhe kjo kuti nuk e ka krijohet.",
+		"restoreSubmit": "Rikthe",
+		"restoreRunning": "Duke rikthyer...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "U rikthyen {imported}, ishin tashmë {skipped}, dështuan {failed}.",
+		"restoreFailed": "Arkivi nuk mund të lexohej."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Të dhëna hyrjeje të pasakta",

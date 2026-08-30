@@ -187,7 +187,14 @@
 		"exportNote": "Preuzima sve poruke iz ovog sandučića kao mbox arhivu koju Thunderbird i većina drugih programa mogu uvesti. Primljena pošta se ispisuje tačno onako kako je stigla; poruke sastavljene ovdje ponovo se grade, zajedno s prilozima.",
 		"exportSubmit": "Preuzmi kao mbox",
 		"exporting": "Priprema...",
-		"exportFailed": "Izvoz nije uspio."
+		"exportFailed": "Izvoz nije uspio.",
+		"restoreTitle": "Vraćanje iz sigurnosne kopije",
+		"restoreNote": "Čita mbox datoteku izvezenu ovdje i vraća poruke u iste mape, s istim oznakama pročitanog i zvjezdice. Sigurno je pokrenuti dva puta: poruka koja već postoji se preskače. Mapa navedena u arhivi koje nema u ovom sandučetu se kreira.",
+		"restoreSubmit": "Vrati",
+		"restoreRunning": "Vraćanje...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Vraćeno {imported}, već postojalo {skipped}, neuspjelo {failed}.",
+		"restoreFailed": "Arhiva se nije mogla pročitati."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Neispravni podaci za prijavu",

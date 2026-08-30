@@ -187,7 +187,14 @@
 		"exportNote": "Baixa tots els missatges d'aquesta bústia en un arxiu mbox, que el Thunderbird i la majoria de clients poden importar. El correu rebut s'escriu tal com va arribar; el correu redactat aquí es reconstrueix, adjuncions incloses.",
 		"exportSubmit": "Baixa com a mbox",
 		"exporting": "S'està preparant...",
-		"exportFailed": "L'exportació ha fallat."
+		"exportFailed": "L'exportació ha fallat.",
+		"restoreTitle": "Restauració des d'una còpia",
+		"restoreNote": "Llegeix un fitxer mbox exportat aquí i torna els missatges a les mateixes carpetes, amb les marques de llegit i destacat que tenien. És segur executar-ho dues vegades: un missatge que ja hi és s'omet. Una carpeta que l'arxiu anomena i aquesta bústia no té es crea.",
+		"restoreSubmit": "Restaurar",
+		"restoreRunning": "S'està restaurant...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Restaurats {imported}, ja hi eren {skipped}, han fallat {failed}.",
+		"restoreFailed": "No s'ha pogut llegir l'arxiu."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Credencials incorrectes",

@@ -187,7 +187,14 @@
 		"exportNote": "Télécharge tous les messages de cette boîte dans une archive mbox, importable par Thunderbird et la plupart des clients. Les messages reçus sont écrits tels qu'ils sont arrivés ; ceux rédigés ici sont reconstitués, pièces jointes comprises.",
 		"exportSubmit": "Télécharger au format mbox",
 		"exporting": "Préparation...",
-		"exportFailed": "L'export a échoué."
+		"exportFailed": "L'export a échoué.",
+		"restoreTitle": "Restauration depuis une sauvegarde",
+		"restoreNote": "Lit une archive mbox exportée ici et remet les messages dans les mêmes dossiers, avec les mêmes marques de lu et de suivi. L'exécuter deux fois est sans risque : un message déjà présent est ignoré. Un dossier nommé par l'archive et absent de cette boîte est créé.",
+		"restoreSubmit": "Restaurer",
+		"restoreRunning": "Restauration...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "{imported} restaurés, {skipped} déjà présents, {failed} en échec.",
+		"restoreFailed": "L'archive n'a pas pu être lue."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Identifiants invalides",

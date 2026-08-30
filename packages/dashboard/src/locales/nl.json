@@ -187,7 +187,14 @@
 		"exportNote": "Downloadt elk bericht in deze postbus als een mbox-archief, dat Thunderbird en de meeste andere clients kunnen importeren. Ontvangen post wordt precies weggeschreven zoals ze binnenkwam; hier opgestelde post wordt opnieuw opgebouwd, inclusief bijlagen.",
 		"exportSubmit": "Downloaden als mbox",
 		"exporting": "Voorbereiden...",
-		"exportFailed": "De export is mislukt."
+		"exportFailed": "De export is mislukt.",
+		"restoreTitle": "Herstellen vanaf een back-up",
+		"restoreNote": "Leest een hier geëxporteerd mbox-bestand en zet de berichten terug in dezelfde mappen, met dezelfde markeringen voor gelezen en ster. Twee keer uitvoeren is veilig: een bericht dat er al is, wordt overgeslagen. Een map die het archief noemt en deze postbus niet heeft, wordt aangemaakt.",
+		"restoreSubmit": "Herstellen",
+		"restoreRunning": "Bezig met herstellen...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "{imported} hersteld, {skipped} stonden er al, {failed} mislukt.",
+		"restoreFailed": "Het archief kon niet worden gelezen."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ongeldige aanmeldgegevens",

@@ -187,7 +187,14 @@
 		"exportNote": "Bu posta kutusundaki tüm iletileri, Thunderbird ve çoğu istemcinin içe aktarabildiği bir mbox arşivi olarak indirir. Gelen postalar geldiği biçimiyle yazılır; burada yazılan postalar ekleriyle birlikte yeniden oluşturulur.",
 		"exportSubmit": "mbox olarak indir",
 		"exporting": "Hazırlanıyor...",
-		"exportFailed": "Dışa aktarma başarısız oldu."
+		"exportFailed": "Dışa aktarma başarısız oldu.",
+		"restoreTitle": "Yedekten geri yükleme",
+		"restoreNote": "Burada dışa aktarılan mbox dosyasını okur ve iletileri aynı klasörlere, aynı okundu ve yıldız işaretleriyle geri koyar. İki kez çalıştırmak güvenlidir: zaten burada olan bir ileti atlanır. Arşivin adını verdiği ancak bu posta kutusunda bulunmayan klasör oluşturulur.",
+		"restoreSubmit": "Geri yükle",
+		"restoreRunning": "Geri yükleniyor...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "{imported} geri yüklendi, {skipped} zaten vardı, {failed} başarısız.",
+		"restoreFailed": "Arşiv okunamadı."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Kimlik bilgileri geçersiz",

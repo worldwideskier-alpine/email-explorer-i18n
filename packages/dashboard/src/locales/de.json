@@ -187,7 +187,14 @@
 		"exportNote": "Lädt alle Nachrichten dieses Postfachs als mbox-Archiv herunter, das Thunderbird und die meisten anderen Programme importieren können. Empfangene Mail wird unverändert geschrieben; hier verfasste Mail wird samt Anhängen neu aufgebaut.",
 		"exportSubmit": "Als mbox herunterladen",
 		"exporting": "Wird vorbereitet...",
-		"exportFailed": "Der Export ist fehlgeschlagen."
+		"exportFailed": "Der Export ist fehlgeschlagen.",
+		"restoreTitle": "Wiederherstellung aus einer Sicherung",
+		"restoreNote": "Liest eine hier exportierte mbox-Datei und legt die Nachrichten in dieselben Ordner zurück, mit denselben Markierungen für gelesen und Stern. Ein zweiter Durchlauf ist unbedenklich: eine bereits vorhandene Nachricht wird übersprungen. Ein Ordner, den das Archiv nennt und dieses Postfach nicht hat, wird angelegt.",
+		"restoreSubmit": "Wiederherstellen",
+		"restoreRunning": "Wird wiederhergestellt...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "{imported} wiederhergestellt, {skipped} bereits vorhanden, {failed} fehlgeschlagen.",
+		"restoreFailed": "Das Archiv konnte nicht gelesen werden."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ungültige Anmeldedaten",

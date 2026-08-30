@@ -187,7 +187,14 @@
 		"exportNote": "Atsiunčia visus šios pašto dėžutės laiškus kaip mbox archyvą, kurį Thunderbird ir dauguma kitų programų gali importuoti. Gauti laiškai išrašomi lygiai tokie, kokie atėjo; čia parašyti laiškai atkuriami iš naujo kartu su priedais.",
 		"exportSubmit": "Atsisiųsti kaip mbox",
 		"exporting": "Ruošiama...",
-		"exportFailed": "Eksportas nepavyko."
+		"exportFailed": "Eksportas nepavyko.",
+		"restoreTitle": "Atkūrimas iš atsarginės kopijos",
+		"restoreNote": "Perskaito čia eksportuotą mbox failą ir grąžina laiškus į tuos pačius aplankus, su tomis pačiomis skaitymo ir žvaigždutės žymomis. Paleisti du kartus saugu: jau esantis laiškas praleidžiamas. Aplankas, kurį įvardija archyvas ir kurio ši dėžutė neturi, sukuriamas.",
+		"restoreSubmit": "Atkurti",
+		"restoreRunning": "Atkuriama...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Atkurta {imported}, jau buvo {skipped}, nepavyko {failed}.",
+		"restoreFailed": "Nepavyko perskaityti archyvo."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Netinkami prisijungimo duomenys",

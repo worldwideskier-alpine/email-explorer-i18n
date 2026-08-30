@@ -187,7 +187,14 @@
 		"exportNote": "Bu poçt qutusundakı bütün məktubları Thunderbird və əksər digər proqramların idxal edə bildiyi mbox arxivi kimi endirir. Gələn məktublar gəldiyi kimi yazılır; burada yazılan məktublar qoşmaları ilə birlikdə yenidən qurulur.",
 		"exportSubmit": "mbox kimi endir",
 		"exporting": "Hazırlanır...",
-		"exportFailed": "İxrac alınmadı."
+		"exportFailed": "İxrac alınmadı.",
+		"restoreTitle": "Ehtiyat nüsxədən bərpa",
+		"restoreNote": "Burada ixrac edilmiş mbox faylını oxuyur və məktubları olduqları qovluq, oxunma və ulduz vəziyyəti ilə birlikdə geri qaytarır. İki dəfə işə salmaq təhlükəsizdir: artıq mövcud olan məktub buraxılır. Arxivdə adı çəkilən, lakin bu poçt qutusunda olmayan qovluq yaradılır.",
+		"restoreSubmit": "Bərpa et",
+		"restoreRunning": "Bərpa olunur...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "{imported} bərpa edildi, {skipped} artıq var idi, {failed} alınmadı.",
+		"restoreFailed": "Arxivi oxumaq mümkün olmadı."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Giriş məlumatları yanlışdır",

@@ -187,7 +187,14 @@
 		"exportNote": "Dina-download ang lahat ng mensahe sa mailbox na ito bilang mbox archive, na kayang i-import ng Thunderbird at ng karamihan sa ibang kliyente. Ang natanggap na sulat ay isinusulat nang eksakto sa dating dating nito; ang sulat na isinulat dito ay muling binubuo, kasama ang mga kalakip.",
 		"exportSubmit": "I-download bilang mbox",
 		"exporting": "Inihahanda...",
-		"exportFailed": "Nabigo ang pag-export."
+		"exportFailed": "Nabigo ang pag-export.",
+		"restoreTitle": "Pagbawi mula sa isang backup",
+		"restoreNote": "Binabasa ang mbox na na-export dito at ibinabalik ang mga mensahe sa mga folder na kinaroroonan nila, kasama ang mga marka ng nabasa at bituin. Ligtas itong patakbuhin nang dalawang beses: nilalaktawan ang mensaheng nandito na. Ginagawa ang folder na nakapangalan sa archive ngunit wala sa mailbox na ito.",
+		"restoreSubmit": "Ibalik",
+		"restoreRunning": "Ibinabalik...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Naibalik ang {imported}, {skipped} ang nandito na, {failed} ang nabigo.",
+		"restoreFailed": "Hindi mabasa ang archive."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Mali ang impormasyon sa pag-sign in",

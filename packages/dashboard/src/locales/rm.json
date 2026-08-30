@@ -187,7 +187,14 @@
 		"exportNote": "Telecharga mintga messadi da questa chascha da posta sco archiv mbox, che Thunderbird e la gronda part dals auters programs pon importar. La posta retschavida vegn scritta exactamain uschè ch'ella è arrivada; la posta scritta qua vegn reconstruida, cun las agiuntas.",
 		"exportSubmit": "Telechargiar sco mbox",
 		"exporting": "Preparond...",
-		"exportFailed": "L'export è fallì."
+		"exportFailed": "L'export è fallì.",
+		"restoreTitle": "Recuperaziun dad ina copia da segirezza",
+		"restoreNote": "Legia ina datoteca mbox exportada qua e metta ils messadis enavos en ils medems ordinaturs, cun las medemas marcas per legì e staila. Igl è segir da laschar ir quai duas giadas: in messadi ch'è gia qua vegn sursiglì. In ordinatur ch'il archiv numnescha e questa chascha da posta n'ha betg vegn creà.",
+		"restoreSubmit": "Recuperar",
+		"restoreRunning": "Recuperond...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "{imported} recuperads, {skipped} eran gia qua, {failed} fallids.",
+		"restoreFailed": "L'archiv n'ha betg pudì vegnir legì."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Datas d'annunzia nunvalidas",

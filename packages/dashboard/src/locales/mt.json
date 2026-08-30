@@ -187,7 +187,14 @@
 		"exportNote": "Iniżżel kull messaġġ f'din il-kaxxa tal-ittri bħala arkivju mbox, li Thunderbird u l-biċċa l-kbira tal-klijenti l-oħra jistgħu jimportaw. Il-posta li waslet tinkiteb eżattament kif waslet; il-posta miktuba hawn tinbena mill-ġdid, inklużi l-mehmużin.",
 		"exportSubmit": "Niżżel bħala mbox",
 		"exporting": "Qed jitħejja...",
-		"exportFailed": "L-esportazzjoni falliet."
+		"exportFailed": "L-esportazzjoni falliet.",
+		"restoreTitle": "Irkupru minn backup",
+		"restoreNote": "Jaqra fajl mbox esportat hawn u jerġa' jpoġġi l-messaġġi fl-istess folders, bl-istess marki ta' moqri u stilla. Huwa sigur li tħaddmu darbtejn: messaġġ li diġà jinsab hawn jinqabeż. Folder li l-arkivju jsemmi u din il-kaxxa m'għandhiex jinħoloq.",
+		"restoreSubmit": "Irkupra",
+		"restoreRunning": "Qed jiġi rkuprat...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Irkuprati {imported}, diġà kien hemm {skipped}, falliet {failed}.",
+		"restoreFailed": "L-arkivju ma setax jinqara."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Kredenzjali mhux validi",

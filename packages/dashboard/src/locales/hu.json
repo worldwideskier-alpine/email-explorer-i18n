@@ -187,7 +187,14 @@
 		"exportNote": "Letölti a postaláda összes üzenetét mbox archívumként, amelyet a Thunderbird és a legtöbb más kliens be tud importálni. A beérkezett levelek pontosan úgy kerülnek ki, ahogy megérkeztek; az itt írt levelek újraépülnek, a mellékletekkel együtt.",
 		"exportSubmit": "Letöltés mbox formátumban",
 		"exporting": "Előkészítés...",
-		"exportFailed": "Az exportálás nem sikerült."
+		"exportFailed": "Az exportálás nem sikerült.",
+		"restoreTitle": "Visszaállítás mentésből",
+		"restoreNote": "Beolvassa az itt exportált mbox fájlt, és visszateszi a leveleket ugyanazokba a mappákba, ugyanazokkal az olvasott és csillagozott jelölésekkel. Kétszer futtatni biztonságos: a már meglévő levelet kihagyja. A mentésben szereplő, de ebben a postafiókban hiányzó mappát létrehozza.",
+		"restoreSubmit": "Visszaállítás",
+		"restoreRunning": "Visszaállítás...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Visszaállítva {imported}, már megvolt {skipped}, sikertelen {failed}.",
+		"restoreFailed": "A mentést nem sikerült beolvasni."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Érvénytelen bejelentkezési adatok",

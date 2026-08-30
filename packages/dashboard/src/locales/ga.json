@@ -187,7 +187,14 @@
 		"exportNote": "Íoslódálann sé gach teachtaireacht sa bhosca poist seo mar chartlann mbox, ar féidir le Thunderbird agus formhór na gcliant eile í a iompórtáil. Scríobhtar an post a fuarthas amach díreach mar a tháinig sé; atógtar an post a cumadh anseo, na ceangaltáin san áireamh.",
 		"exportSubmit": "Íoslódáil mar mbox",
 		"exporting": "Á ullmhú...",
-		"exportFailed": "Theip ar an easpórtáil."
+		"exportFailed": "Theip ar an easpórtáil.",
+		"restoreTitle": "Athchóiriú ó chúltaca",
+		"restoreNote": "Léann sé cartlann mbox a easpórtáladh anseo agus cuireann sé na teachtaireachtaí ar ais sna fillteáin chéanna, leis na marcanna léite agus réalta a bhí orthu. Tá sé sábháilte é a rith faoi dhó: teachtaireacht atá anseo cheana, ligtear thairsti. Cruthaítear fillteán a ainmníonn an chartlann agus nach bhfuil sa bhosca seo.",
+		"restoreSubmit": "Athchóirigh",
+		"restoreRunning": "Á athchóiriú...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "Athchóiríodh {imported}, bhí {skipped} ann cheana, theip ar {failed}.",
+		"restoreFailed": "Níorbh fhéidir an chartlann a léamh."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Dintiúir neamhbhailí",

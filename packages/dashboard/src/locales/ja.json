@@ -187,7 +187,14 @@
 		"exportNote": "このメールボックスの全メールを mbox 形式で書き出します。Thunderbird などで読み込めます。受信したメールは元のデータそのまま、送信したメールは添付ファイルを含めて再構成して書き出します。",
 		"exportSubmit": "mbox形式で書き出す",
 		"exporting": "書き出し中...",
-		"exportFailed": "書き出しに失敗しました。"
+		"exportFailed": "書き出しに失敗しました。",
+		"restoreTitle": "バックアップからの復元",
+		"restoreNote": "ここで書き出した mbox を読み込み、メールを元のフォルダ・既読・スターの状態で戻します。2回実行しても安全です（すでにあるメールは飛ばします）。アーカイブにあってこのメールボックスに無いフォルダは作成します。",
+		"restoreSubmit": "復元する",
+		"restoreRunning": "復元中...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "{imported} 通を復元し、{skipped} 通は既にあり、{failed} 通が失敗しました。",
+		"restoreFailed": "アーカイブを読み込めませんでした。"
 	},
 	"apiErrors": {
 		"Invalid credentials": "メールアドレスまたはパスワードが正しくありません",

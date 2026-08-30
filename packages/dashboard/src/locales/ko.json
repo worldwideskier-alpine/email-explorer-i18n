@@ -187,7 +187,14 @@
 		"exportNote": "이 메일함의 모든 메일을 mbox 아카이브로 내려받습니다. Thunderbird를 비롯한 대부분의 클라이언트가 가져올 수 있습니다. 받은 메일은 도착한 그대로 기록되고, 여기서 쓴 메일은 첨부 파일까지 포함해 다시 조립됩니다.",
 		"exportSubmit": "mbox로 내려받기",
 		"exporting": "준비하는 중...",
-		"exportFailed": "내보내기에 실패했습니다."
+		"exportFailed": "내보내기에 실패했습니다.",
+		"restoreTitle": "백업에서 복원",
+		"restoreNote": "여기서 내보낸 mbox를 읽어 메일을 원래 폴더와 읽음 및 별표 상태 그대로 되돌립니다. 두 번 실행해도 안전합니다. 이미 있는 메일은 건너뜁니다. 아카이브에 있으나 이 사서함에 없는 폴더는 새로 만듭니다.",
+		"restoreSubmit": "복원",
+		"restoreRunning": "복원 중...",
+		"restoreProgress": "{done} / {total}",
+		"restoreDone": "{imported}통 복원, {skipped}통은 이미 있음, {failed}통 실패.",
+		"restoreFailed": "아카이브를 읽을 수 없습니다."
 	},
 	"apiErrors": {
 		"Invalid credentials": "로그인 정보가 올바르지 않습니다",
