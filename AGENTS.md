@@ -116,6 +116,13 @@ follow it. Set up per test with `beforeEach`.
   runs lint, build and both test suites first.
 - Comments explain why, not what. A sentence about the constraint that forced
   the code beats a restatement of the code.
+- A message shown to the user is never stored as an already-translated string.
+  `t("...")` returns a plain string, so `message.value = t("...")` freezes it
+  at whichever of the 69 languages was current: the line stays behind when the
+  language changes while every `t(...)` in the template follows. Store how to
+  produce it — `useLocalizedMessage` for a message set by an action,
+  `computed` for one derived from state. `storedMessages.test.ts` fails on the
+  old shape; a line built inside a `watch` slips past it, so check by hand.
 - Keep business identifiers out of `packages/worker/src`,
   `packages/dashboard` and the tests — this repository is public.
   Deployment-specific values belong in `packages/worker/dev`.

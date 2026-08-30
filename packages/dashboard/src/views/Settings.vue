@@ -275,10 +275,11 @@
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import RichTextEditor from "@/components/RichTextEditor.vue";
+import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 import {
 	getExistingSubscription,
@@ -358,7 +359,7 @@ watch(
 const claudeApiKeyInput = ref("");
 const claudeApiKeyConfigured = ref(false);
 const spamFilterLoading = ref(false);
-const spamFilterMessage = ref("");
+const spamFilterMessage = useLocalizedMessage();
 
 watch(
 	mailbox,
@@ -423,9 +424,7 @@ const autoBackupKeep = ref(7);
  */
 const autoBackupKeepFloor = ref(1);
 const autoBackupSaving = ref(false);
-const autoBackupMessage = ref("");
-const autoBackupLastOk = ref<boolean | undefined>(undefined);
-const autoBackupLastLine = ref("");
+const autoBackupMessage = useLocalizedMessage();
 const backups = ref<{ name: string; at: string; size: number }[]>([]);
 
 watch(
@@ -436,23 +435,33 @@ watch(
 		autoBackupFrequency.value = backup?.frequency ?? "daily";
 		autoBackupKeep.value = backup?.keep ?? 7;
 		autoBackupKeepFloor.value = backup?.keep ?? 1;
-
-		const last = backup?.lastResult;
-		autoBackupLastOk.value = last?.ok;
-		autoBackupLastLine.value = !last
-			? t("settings.autoBackupNeverRun")
-			: last.ok
-				? t("settings.autoBackupLastOk", {
-						at: new Date(last.at).toLocaleString(),
-						messages: last.messages ?? 0,
-					})
-				: t("settings.autoBackupLastFailed", {
-						at: new Date(last.at).toLocaleString(),
-						error: last.error ?? "",
-					});
 	},
 	{ immediate: true },
 );
+
+const autoBackupLastResult = computed(
+	() => mailbox.value?.settings?.autoBackup?.lastResult,
+);
+const autoBackupLastOk = computed(() => autoBackupLastResult.value?.ok);
+
+/**
+ * Computed, not a ref written when the mailbox loads: this line stays on
+ * screen for as long as the settings page is open, so it has to be produced at
+ * render time or a language change leaves it behind in the old language.
+ */
+const autoBackupLastLine = computed(() => {
+	const last = autoBackupLastResult.value;
+	if (!last) return t("settings.autoBackupNeverRun");
+	return last.ok
+		? t("settings.autoBackupLastOk", {
+				at: new Date(last.at).toLocaleString(),
+				messages: last.messages ?? 0,
+			})
+		: t("settings.autoBackupLastFailed", {
+				at: new Date(last.at).toLocaleString(),
+				error: last.error ?? "",
+			});
+});
 
 const formatSize = (bytes: number): string => {
 	if (bytes < 1024) return `${bytes} B`;
@@ -485,7 +494,7 @@ async function saveAutoBackup() {
 		});
 		await mailboxStore.fetchMailbox(mailboxId);
 		await loadBackups();
-		autoBackupMessage.value = t("settings.autoBackupSaved");
+		autoBackupMessage.value = () => t("settings.autoBackupSaved");
 	} catch {
 		autoBackupMessage.value = "";
 	} finally {
@@ -517,8 +526,8 @@ const restoreFile = ref<File | null>(null);
 const restoring = ref(false);
 const restoreDone = ref(0);
 const restoreTotal = ref(0);
-const restoreSummary = ref("");
-const restoreError = ref("");
+const restoreSummary = useLocalizedMessage();
+const restoreError = useLocalizedMessage();
 
 function onRestoreFileChosen(event: Event) {
 	restoreFile.value = (event.target as HTMLInputElement).files?.[0] ?? null;
@@ -576,14 +585,11 @@ async function restoreMailbox() {
 			restoreDone.value += 1;
 		}
 
-		restoreSummary.value = t("settings.restoreDone", {
-			imported,
-			skipped,
-			failed,
-		});
+		restoreSummary.value = () =>
+			t("settings.restoreDone", { imported, skipped, failed });
 		await mailboxStore.fetchMailbox(mailboxId);
 	} catch {
-		restoreError.value = t("settings.restoreFailed");
+		restoreError.value = () => t("settings.restoreFailed");
 	} finally {
 		restoring.value = false;
 		restoreFile.value = null;
@@ -625,7 +631,7 @@ const saveApiKey = async () => {
 			settings,
 		);
 		claudeApiKeyInput.value = "";
-		spamFilterMessage.value = t("settings.spamFilterSaved");
+		spamFilterMessage.value = () => t("settings.spamFilterSaved");
 	} finally {
 		spamFilterLoading.value = false;
 	}

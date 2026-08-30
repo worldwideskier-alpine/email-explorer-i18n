@@ -20,6 +20,7 @@
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
+import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 
 const { t } = useI18n();
@@ -28,7 +29,7 @@ const router = useRouter();
 
 const source = ref("");
 const loading = ref(true);
-const error = ref("");
+const error = useLocalizedMessage();
 
 onMounted(async () => {
 	const mailboxId = route.params.mailboxId as string;
@@ -37,7 +38,7 @@ onMounted(async () => {
 		const response = await api.getEmailSource(mailboxId, emailId);
 		source.value = response.data;
 	} catch (_err) {
-		error.value = t("emailDetail.viewSourceFailed");
+		error.value = () => t("emailDetail.viewSourceFailed");
 	} finally {
 		loading.value = false;
 	}

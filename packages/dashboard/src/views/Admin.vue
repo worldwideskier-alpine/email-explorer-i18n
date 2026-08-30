@@ -240,6 +240,7 @@ import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
+import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
 import { translateApiError } from "@/utils/apiError";
@@ -264,8 +265,8 @@ if (!authStore.isAdmin) {
 // Register User State
 const newUser = ref({ email: "", password: "" });
 const registerLoading = ref(false);
-const registerError = ref("");
-const registerSuccess = ref("");
+const registerError = useLocalizedMessage();
+const registerSuccess = useLocalizedMessage();
 
 // Users List State
 const users = ref<User[]>([]);
@@ -276,8 +277,8 @@ const adminTogglePending = ref<string | null>(null);
 const selectedUser = ref<User | null>(null);
 const accessForm = ref({ mailboxId: "", role: "read" });
 const accessLoading = ref(false);
-const accessError = ref("");
-const accessSuccess = ref("");
+const accessError = useLocalizedMessage();
+const accessSuccess = useLocalizedMessage();
 
 onMounted(() => {
 	loadUsers();
@@ -290,15 +291,16 @@ async function handleRegisterUser() {
 
 	try {
 		await api.adminRegisterUser(newUser.value.email, newUser.value.password);
-		registerSuccess.value = t("admin.registerUser.successMessage", {
-			email: newUser.value.email,
-		});
+		const registeredEmail = newUser.value.email;
+		registerSuccess.value = () =>
+			t("admin.registerUser.successMessage", { email: registeredEmail });
 		newUser.value = { email: "", password: "" };
 		// Reload users list
 		await loadUsers();
 	} catch (error: any) {
-		registerError.value =
-			error.response?.data?.error || t("admin.registerUser.failedToCreate");
+		const fromApi = error.response?.data?.error;
+		registerError.value = () =>
+			fromApi || t("admin.registerUser.failedToCreate");
 	} finally {
 		registerLoading.value = false;
 	}
@@ -378,11 +380,11 @@ async function handleGrantAccess() {
 			accessForm.value.mailboxId,
 			accessForm.value.role,
 		);
-		accessSuccess.value = t("admin.accessModal.grantSuccess");
+		accessSuccess.value = () => t("admin.accessModal.grantSuccess");
 		accessForm.value.mailboxId = "";
 	} catch (error: any) {
-		accessError.value =
-			error.response?.data?.error || t("admin.accessModal.failedToGrant");
+		const fromApi = error.response?.data?.error;
+		accessError.value = () => fromApi || t("admin.accessModal.failedToGrant");
 	} finally {
 		accessLoading.value = false;
 	}
@@ -411,11 +413,11 @@ async function handleRevokeAccess() {
 			selectedUser.value.id,
 			accessForm.value.mailboxId,
 		);
-		accessSuccess.value = t("admin.accessModal.revokeSuccess");
+		accessSuccess.value = () => t("admin.accessModal.revokeSuccess");
 		accessForm.value.mailboxId = "";
 	} catch (error: any) {
-		accessError.value =
-			error.response?.data?.error || t("admin.accessModal.failedToRevoke");
+		const fromApi = error.response?.data?.error;
+		accessError.value = () => fromApi || t("admin.accessModal.failedToRevoke");
 	} finally {
 		accessLoading.value = false;
 	}
