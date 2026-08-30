@@ -72,7 +72,9 @@ const ChangePasswordRequestSchema = z.object({
 const ChangeEmailRequestSchema = z.object({
 	currentPassword: z.string(),
 	newEmail: z.string().email(),
-	// Which language to write the confirmation mail in; see MAIL_LOCALES.
+	// Which language to write the confirmation mail in; see MAIL_LOCALES. The
+	// confirmation wording itself is still ja/en/de, so most of these accept
+	// the request and send the Japanese text rather than refusing it.
 	locale: z.enum(MAIL_LOCALES).optional(),
 });
 

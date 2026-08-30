@@ -4,7 +4,7 @@ import { LOCALES } from "./registry";
 /**
  * docs/readme/ holds one short summary per language the picker offers.
  *
- * These are summaries, not translations of the README: keeping 46 full
+ * These are summaries, not translations of the README: keeping 69 full
  * translations current is not realistic, and a stale translation is worse
  * than a short accurate one.
  *
