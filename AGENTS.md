@@ -58,6 +58,12 @@ values. `packages/worker/dev` is this deployment, and does.
 - **API schema.** Generated at runtime by chanfana from the route classes.
   There is no checked-in `openapi.json`, and `/openapi.json` needs a session.
 - **Sending.** Outbound mail goes through Resend, not Email Routing.
+- **Dashboard theming.** `index.html` fixes the body to a dark palette
+  (`bg-gray-900 text-gray-100`) while cards use `bg-white dark:bg-gray-800`
+  and follow the viewer's colour scheme. In light mode a card is white but
+  text still inherits gray-100, so anything without its own unprefixed text
+  colour renders near-white on white. `formContrast.test.ts` enforces that
+  for form controls; the wider inconsistency is still there.
 
 ## Working here
 
@@ -72,13 +78,27 @@ To try a change against a real runtime, build first, then run the deployment
 worker locally:
 
 ```bash
-rm -rf packages/worker/dashboard && pnpm build
+pnpm build
 cd packages/worker/dev && npx wrangler dev
 ```
 
-The `rm -rf` matters: the build copies the dashboard with
-`cp -R ../dashboard/dist/ dashboard/`, which nests into `dashboard/dist/`
-when the directory already exists, leaving the old assets in place.
+Check which bundle is actually being served before concluding anything from a
+browser session -- `curl -s localhost:8787/ | grep -o 'index-[A-Za-z0-9_-]*\.js'`
+against the file the build just produced. A stale bundle makes a verification
+run agree with whatever you expected, whichever way you expected it.
+
+Reply and forward call the real Resend API. Without outbound network that
+request returns 500 no matter what is in it; the tests stub `api.resend.com`
+through the pool's `outboundService`. Check the request the page sent rather
+than the response when verifying compose behaviour offline.
+
+### Worker tests
+
+`@cloudflare/vitest-pool-workers` dropped `isolatedStorage` in 0.22, so
+`tests/reset-storage.ts` calls `reset()` after every test through
+`setupFiles`. That wipes storage completely rather than unwinding one test's
+writes, so state set up in `beforeAll` does not survive into the tests that
+follow it. Set up per test with `beforeEach`.
 
 ## Conventions
 
