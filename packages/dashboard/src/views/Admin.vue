@@ -8,12 +8,15 @@
 				</h1>
 				<p class="text-gray-600 dark:text-gray-400">{{ t("admin.subtitle") }}</p>
 			</div>
-			<router-link
-				to="/"
-				class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors"
-			>
-				{{ t("admin.backToHome") }}
-			</router-link>
+			<div class="flex items-center gap-2 flex-shrink-0">
+				<router-link
+					to="/"
+					class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors"
+				>
+					{{ t("admin.backToHome") }}
+				</router-link>
+				<LanguageSwitcher />
+			</div>
 		</div>
 
 		<!-- Register New User Section -->
@@ -236,6 +239,7 @@
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 import api from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
 import { translateApiError } from "@/utils/apiError";

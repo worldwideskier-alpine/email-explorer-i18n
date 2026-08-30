@@ -38,6 +38,7 @@
         >
           {{ t("home.logout") }}
         </button>
+        <LanguageSwitcher />
       </div>
     </div>
     <div v-if="mailboxes.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -167,6 +168,7 @@ import { storeToRefs } from "pinia";
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 import { useToast } from "@/composables/useToast";
 import api from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
