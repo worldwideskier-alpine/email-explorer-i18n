@@ -92,6 +92,16 @@ request returns 500 no matter what is in it; the tests stub `api.resend.com`
 through the pool's `outboundService`. Check the request the page sent rather
 than the response when verifying compose behaviour offline.
 
+`pnpm test` and `pnpm build` disagree about what a dashboard test may import.
+Vitest runs tests in node, but `type-check` compiles all of `src/**/*` --
+tests included -- against `@vue/tsconfig`'s DOM config, which has no node
+types. So a test under `src/` that imports `node:fs` passes `pnpm test` and
+fails `pnpm build` with TS2307. Read fixtures with `import.meta.glob` instead
+(`messages.test.ts` and `readmeDocs.test.ts` both do); it reaches outside the
+package fine. Run `pnpm build` before pushing a new test, and take the exit
+code directly -- piping it through `tail` reports the pager's status, not the
+compiler's.
+
 ### Worker tests
 
 `@cloudflare/vitest-pool-workers` dropped `isolatedStorage` in 0.22, so
