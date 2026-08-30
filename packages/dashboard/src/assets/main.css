@@ -1,1 +1,16 @@
 @import "tailwindcss";
+
+/* Tailwind 4.3 が --font-sans の既定を
+   `ui-sans-serif, system-ui, sans-serif, ...` から
+   `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+   "Noto Sans", Arial, sans-serif, ...` に変えた。新しい並びは和文を持たない
+   欧文フォントが先頭に来るため、日本語だけが sans-serif まで落ちて
+   ブラウザ既定の和文フォントに当たり、1行の中で欧文と和文が別のフォントで
+   描画される。system-ui はOSのUIフォント（日本語Windowsなら Yu Gothic UI、
+   macOS なら Hiragino Sans）が欧文・和文の両方を賄うので、この画面が
+   日本語主体である以上そちらが正しい。4.3 以前のスタックを明示して固定する。 */
+@theme {
+	--font-sans:
+		ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+		"Segoe UI Symbol", "Noto Color Emoji";
+}
