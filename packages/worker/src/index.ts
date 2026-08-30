@@ -3,6 +3,9 @@ import { type Context, Hono } from "hono";
 import { cors } from "hono/cors";
 import PostalMime from "postal-mime";
 import { z } from "zod";
+import { backupKeyPrefix } from "./auto-backup";
+import { runScheduledBackups } from "./backup-run";
+import { listBackups } from "./backup-writer";
 import { classifyWithClaude } from "./claude-spam-filter";
 import { ingestEmailIntoMailbox } from "./email-ingest";
 import { buildPasswordResetEmail, MAIL_LOCALES } from "./mail-templates";
@@ -1554,6 +1557,100 @@ class GetMailboxExport extends OpenAPIRoute {
 	}
 }
 
+const StoredBackupSchema = z.object({
+	name: z.string(),
+	at: z.string(),
+	size: z.number(),
+});
+
+/**
+ * The archives kept for this mailbox, newest first.
+ *
+ * There is no companion route that deletes one, and that is the point:
+ * rotation inside the scheduled run is the only thing that removes a backup.
+ * Someone who takes over an account here can destroy the mail but not the
+ * copies of it. Adding a delete endpoint would quietly undo that.
+ */
+class GetMailboxBackups extends OpenAPIRoute {
+	schema = {
+		summary: "List the automatic backups kept for a mailbox",
+		operationId: "listMailboxBackups",
+		tags: ["Mailboxes"],
+		request: { params: z.object({ mailboxId: z.string() }) },
+		responses: {
+			"200": {
+				description: "Stored backups, newest first",
+				...contentJson(z.array(StoredBackupSchema)),
+			},
+			"404": {
+				description: "Mailbox not found",
+				...contentJson(ErrorResponseSchema),
+			},
+		},
+	};
+
+	async handle(c: AppContext) {
+		const data = await this.getValidatedData<typeof this.schema>();
+		const { mailboxId } = data.params ?? {};
+
+		if (!(await c.env.BUCKET.head(`mailboxes/${mailboxId}.json`))) {
+			return c.json({ error: "Not found" }, 404);
+		}
+
+		return c.json(await listBackups(c.env, mailboxId));
+	}
+}
+
+class GetMailboxBackup extends OpenAPIRoute {
+	schema = {
+		summary: "Download one stored backup",
+		operationId: "getMailboxBackup",
+		tags: ["Mailboxes"],
+		request: {
+			params: z.object({ mailboxId: z.string(), name: z.string() }),
+		},
+		responses: {
+			"200": {
+				description: "The archive",
+				content: { "application/mbox": { schema: z.string() } },
+			},
+			"404": {
+				description: "No such backup",
+				...contentJson(ErrorResponseSchema),
+			},
+		},
+	};
+
+	async handle(c: AppContext) {
+		const data = await this.getValidatedData<typeof this.schema>();
+		const { mailboxId, name } = data.params ?? {};
+
+		// A sanity check on the name, not the thing that makes this safe: R2
+		// keys are literal, so a "../" in one is part of the key rather than a
+		// step up, and the router will not match a path parameter across a
+		// slash anyway. Both were measured rather than assumed. The check
+		// stays because it costs nothing and says what a name is allowed to
+		// be, but it is not load-bearing.
+		if (!/^[\w.-]+\.mbox$/.test(name)) {
+			return c.json({ error: "Not found" }, 404);
+		}
+
+		const object = await c.env.BUCKET.get(
+			`${backupKeyPrefix(mailboxId)}${name}`,
+		);
+		if (!object) {
+			return c.json({ error: "Not found" }, 404);
+		}
+
+		return new Response(object.body, {
+			headers: {
+				"Content-Type": "application/mbox; charset=utf-8",
+				"Content-Disposition": `attachment; filename="${mailboxId}-${name}"`,
+			},
+		});
+	}
+}
+
 const PutEmailSourceRequestSchema = z.object({
 	rawEmailBase64: z.string(),
 });
@@ -1973,6 +2070,10 @@ openapi.get("/api/v1/mailboxes/:mailboxId", GetMailbox);
 openapi.put("/api/v1/mailboxes/:mailboxId", PutMailbox);
 openapi.delete("/api/v1/mailboxes/:mailboxId", DeleteMailbox);
 openapi.get("/api/v1/mailboxes/:mailboxId/export", GetMailboxExport);
+// Listing and downloading only. There is deliberately no delete route:
+// rotation in the scheduled run is the only thing that removes a backup.
+openapi.get("/api/v1/mailboxes/:mailboxId/backups", GetMailboxBackups);
+openapi.get("/api/v1/mailboxes/:mailboxId/backups/:name", GetMailboxBackup);
 openapi.get("/api/v1/mailboxes/:mailboxId/emails", GetEmails);
 openapi.post("/api/v1/mailboxes/:mailboxId/emails", PostEmail);
 openapi.get("/api/v1/mailboxes/:mailboxId/emails/:id", GetEmail);
@@ -2139,6 +2240,22 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 			context: ExecutionContext,
 		) {
 			await receiveEmail(event, env, context);
+		},
+		/**
+		 * The cron fires once a day for the whole Worker; each mailbox's own
+		 * frequency decides whether it is written this time (see backup-run).
+		 *
+		 * Awaited rather than handed to waitUntil: a scheduled invocation is
+		 * allowed to take its time, and returning early would let the run be
+		 * cut off partway through a mailbox.
+		 */
+		async scheduled(
+			_event: { cron: string; scheduledTime: number },
+			env: Env,
+			_context: ExecutionContext,
+		) {
+			env.config = options;
+			await runScheduledBackups(env);
 		},
 		async fetch(request: Request, env: Env, context: ExecutionContext) {
 			// Make options available to routes via env

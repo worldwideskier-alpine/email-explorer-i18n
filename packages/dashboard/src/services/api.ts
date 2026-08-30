@@ -117,6 +117,20 @@ export default {
 			responseType: "blob",
 		}),
 
+	// The archives the scheduled run keeps. Listing and downloading only:
+	// there is no delete counterpart, on purpose. Rotation inside the
+	// scheduled run is the only thing that removes one, so someone who takes
+	// over an account here can destroy the mail but not the copies of it.
+	listBackups: (mailboxId: string) =>
+		apiClient.get(`/api/v1/mailboxes/${mailboxId}/backups`),
+	// Through this client rather than a plain link, for the same reason the
+	// export is: a new browsing context carries neither the Authorization
+	// header nor the session cookie.
+	downloadBackup: (mailboxId: string, name: string) =>
+		apiClient.get(`/api/v1/mailboxes/${mailboxId}/backups/${name}`, {
+			responseType: "blob",
+		}),
+
 	// One message back into the mailbox, admin only. A restore posts these one
 	// at a time rather than handing over the whole archive: an mbox can be far
 	// larger than a Worker request may carry, and a message at a time is what

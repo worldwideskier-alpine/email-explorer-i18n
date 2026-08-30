@@ -12,6 +12,12 @@
 		"enabled": true
 	},
 	"compatibility_flags": ["nodejs_compat", "enable_email_sending_queuing"],
+	// Once a day, 18:00 UTC (03:00 JST). The Worker wakes, and each mailbox's
+	// own frequency decides whether it is backed up this time -- so this only
+	// has to fire as often as the shortest frequency on offer, which is daily.
+	"triggers": {
+		"crons": ["0 18 * * *"]
+	},
 	"vars": {
 		"VAPID_PUBLIC_KEY": "BGU5ROPsWyFfKmU6wSP0Zff_Ilp1k6DLi-AgwA45rUgFYPqDy-BGTDuSOysCtpteFr0IqwaRMvjP5AJGy_P0g5U"
 	},

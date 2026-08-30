@@ -4,6 +4,11 @@
 // signature) must never silently wipe it out. These helpers keep that
 // behavior in one place instead of scattered across the mailbox routes.
 
+import {
+	MIN_BACKUP_KEEP,
+	normalizeFrequency,
+	normalizeKeep,
+} from "./auto-backup";
 import type { Env } from "./types";
 
 type MailboxSettings = Record<string, any>;
@@ -57,7 +62,54 @@ export function mergeMailboxSettings(
 		Object.hasOwn(incoming, "deletionLocked") ? incoming : existing,
 	);
 
+	merged.autoBackup = mergeAutoBackup(
+		existing?.autoBackup,
+		incoming?.autoBackup,
+	);
+
 	return merged;
+}
+
+/**
+ * Merges the automatic-backup settings, with one rule that is the whole point
+ * of the feature: the retention count may rise and may never fall.
+ *
+ * Rotation deletes the oldest archives beyond the count, and there is no
+ * other way to delete one -- no endpoint, no button. A count that could be
+ * lowered would undo that: setting it to one means the next scheduled run
+ * removes everything else. It would be a delete button with a night's delay,
+ * reachable by anyone holding an administrator's password, which is precisely
+ * the person the design is meant to stop.
+ *
+ * Lowering it therefore needs the Cloudflare account rather than a session
+ * here, which is the same line every other guarantee in this feature is drawn
+ * on. The cost is that a mailbox set too high keeps paying for the copies.
+ *
+ * The results of past runs are server-written and are never taken from the
+ * client, which would otherwise let a caller forge a healthy-looking history.
+ */
+function mergeAutoBackup(
+	existing: MailboxSettings | undefined,
+	incoming: MailboxSettings | undefined,
+): MailboxSettings {
+	const previousKeep = normalizeKeep(existing?.keep ?? MIN_BACKUP_KEEP);
+	const requestedKeep = Object.hasOwn(incoming ?? {}, "keep")
+		? normalizeKeep(incoming?.keep)
+		: previousKeep;
+
+	return {
+		enabled: Object.hasOwn(incoming ?? {}, "enabled")
+			? !!incoming?.enabled
+			: !!existing?.enabled,
+		frequency: normalizeFrequency(
+			Object.hasOwn(incoming ?? {}, "frequency")
+				? incoming?.frequency
+				: existing?.frequency,
+		),
+		keep: Math.max(previousKeep, requestedKeep),
+		lastRunAt: existing?.lastRunAt,
+		lastResult: existing?.lastResult,
+	};
 }
 
 /**
