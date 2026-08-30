@@ -2,9 +2,14 @@
  * Every language the dashboard ships, grouped the way the picker shows them.
  *
  * The target is the national and official languages of each region -- for
- * Europe the 24 official languages of the EU -- rather than a judgement about
- * which ones matter. A line someone can check is easier to maintain than a
- * list of favourites.
+ * Europe, those of its sovereign states, taking the Council of Europe's
+ * membership as the map, which is why Armenian, Azerbaijani, Georgian and
+ * Turkish are here -- rather than a judgement about which ones matter. A line
+ * someone can check is easier to maintain than a list of favourites. Regional
+ * languages below the state level (Basque, Welsh, Faroese and the rest) sit
+ * outside that line; Romansh is inside it because it is a national language of
+ * Switzerland, and Norwegian is carried as both written standards for the same
+ * reason Chinese is carried as two, not because Norway is a special case.
  *
  * This list is what the picker offers, so an entry goes in with its catalogue
  * and not before: offering a language that falls straight back to English is
@@ -24,8 +29,8 @@
  * picker shows. Sorting by label would order East Asia by the shape of each
  * endonym, which is arbitrary to everyone.
  *
- * Catalogues are fetched on demand (see i18n.ts). At ~16KB each, loading all
- * of them up front would more than double what a first visit downloads.
+ * Catalogues are fetched on demand (see i18n.ts). At ~20KB each, loading all
+ * of them up front would dwarf everything else a first visit downloads.
  */
 
 export type Region = "eastAsia" | "europe" | "southAsia" | "southeastAsia";
@@ -46,7 +51,12 @@ export const LOCALES = [
 	{ code: "zh-Hans", label: "简体中文", region: "eastAsia" },
 	{ code: "zh-Hant", label: "繁體中文", region: "eastAsia" },
 
+	{ code: "az", label: "Azərbaycan dili", region: "europe" },
+	{ code: "be", label: "Беларуская", region: "europe" },
 	{ code: "bg", label: "Български", region: "europe" },
+	{ code: "bs", label: "Bosanski", region: "europe" },
+	{ code: "ca", label: "Català", region: "europe" },
+	{ code: "cnr", label: "Crnogorski", region: "europe" },
 	{ code: "cs", label: "Čeština", region: "europe" },
 	{ code: "da", label: "Dansk", region: "europe" },
 	{ code: "de", label: "Deutsch", region: "europe" },
@@ -59,17 +69,30 @@ export const LOCALES = [
 	{ code: "ga", label: "Gaeilge", region: "europe" },
 	{ code: "hr", label: "Hrvatski", region: "europe" },
 	{ code: "hu", label: "Magyar", region: "europe" },
+	{ code: "hy", label: "Հայերեն", region: "europe" },
+	{ code: "is", label: "Íslenska", region: "europe" },
 	{ code: "it", label: "Italiano", region: "europe" },
+	{ code: "ka", label: "ქართული", region: "europe" },
+	{ code: "lb", label: "Lëtzebuergesch", region: "europe" },
 	{ code: "lt", label: "Lietuvių", region: "europe" },
 	{ code: "lv", label: "Latviešu", region: "europe" },
+	{ code: "mk", label: "Македонски", region: "europe" },
 	{ code: "mt", label: "Malti", region: "europe" },
+	{ code: "nb", label: "Norsk bokmål", region: "europe" },
 	{ code: "nl", label: "Nederlands", region: "europe" },
+	{ code: "nn", label: "Norsk nynorsk", region: "europe" },
 	{ code: "pl", label: "Polski", region: "europe" },
 	{ code: "pt", label: "Português", region: "europe" },
+	{ code: "rm", label: "Rumantsch", region: "europe" },
 	{ code: "ro", label: "Română", region: "europe" },
+	{ code: "ru", label: "Русский", region: "europe" },
 	{ code: "sk", label: "Slovenčina", region: "europe" },
 	{ code: "sl", label: "Slovenščina", region: "europe" },
+	{ code: "sq", label: "Shqip", region: "europe" },
+	{ code: "sr", label: "Српски", region: "europe" },
 	{ code: "sv", label: "Svenska", region: "europe" },
+	{ code: "tr", label: "Türkçe", region: "europe" },
+	{ code: "uk", label: "Українська", region: "europe" },
 
 	{ code: "bn", label: "বাংলা", region: "southAsia" },
 	{ code: "gu", label: "ગુજરાતી", region: "southAsia" },
