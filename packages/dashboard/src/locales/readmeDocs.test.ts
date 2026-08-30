@@ -1,6 +1,3 @@
-import { readdirSync, readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { LOCALES } from "./registry";
 
@@ -16,25 +13,42 @@ import { LOCALES } from "./registry";
  * forgetting the summary is the obvious way for this to rot. Nothing at build
  * time would notice -- the docs are not compiled, and the deploy workflow
  * skips runs that only touch docs/**.
+ *
+ * The docs are read through import.meta.glob rather than node:fs because
+ * `type-check` builds this file against @vue/tsconfig's DOM config, which has
+ * no node types; node:fs type-checks locally under vitest and then fails the
+ * build. Globbing is also what messages.test.ts already does.
  */
 
-const HERE = dirname(fileURLToPath(import.meta.url));
-const DOCS = join(HERE, "..", "..", "..", "..", "docs", "readme");
+const docs = import.meta.glob<string>("../../../../docs/readme/*.md", {
+	query: "?raw",
+	import: "default",
+	eager: true,
+});
 
-const summaries = readdirSync(DOCS)
-	.filter((name) => name.endsWith(".md") && name !== "README.md")
-	.map((name) => name.replace(/\.md$/, ""));
+const nameOf = (path: string) =>
+	(path.split("/").pop() as string).replace(/\.md$/, "");
+
+const byCode = new Map(
+	Object.entries(docs)
+		.map(([path, text]) => [nameOf(path), text] as const)
+		.filter(([name]) => name !== "README"),
+);
+
+const index = Object.entries(docs).find(
+	([path]) => nameOf(path) === "README",
+)?.[1];
 
 describe("per-language README summaries", () => {
 	it("has a summary for every language the picker offers, and no others", () => {
 		const advertised = LOCALES.map((entry) => entry.code).sort();
-		expect([...summaries].sort()).toEqual(advertised);
+		expect([...byCode.keys()].sort()).toEqual(advertised);
 	});
 
 	it("lists every language in the index", () => {
-		const index = readFileSync(join(DOCS, "README.md"), "utf8");
+		expect(index).toBeTypeOf("string");
 		const missing = LOCALES.filter(
-			(entry) => !index.includes(`(${entry.code}.md)`),
+			(entry) => !(index as string).includes(`(${entry.code}.md)`),
 		).map((entry) => entry.code);
 		expect(missing).toEqual([]);
 	});
@@ -42,7 +56,11 @@ describe("per-language README summaries", () => {
 	it("names each language in its own language and links back to the README", () => {
 		const problems: string[] = [];
 		for (const entry of LOCALES) {
-			const text = readFileSync(join(DOCS, `${entry.code}.md`), "utf8");
+			const text = byCode.get(entry.code);
+			if (text === undefined) {
+				problems.push(`${entry.code}: no summary`);
+				continue;
+			}
 			if (!text.includes(entry.label)) {
 				problems.push(`${entry.code}: heading does not carry ${entry.label}`);
 			}
