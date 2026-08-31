@@ -1,6 +1,7 @@
 import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
+import { recoveryFromEmail } from "../deployment-config";
 import { buildEmailChangeEmail, MAIL_LOCALES } from "../mail-templates";
 import { sendEmail } from "../resend";
 import {
@@ -338,7 +339,8 @@ export class PostChangeEmail extends OpenAPIRoute {
 		// The confirmation link is the whole mechanism, and it goes out over
 		// the same sender the recovery mail uses. Without that configured
 		// there is no way to prove the new address is reachable.
-		if (!c.env.config?.accountRecovery) {
+		const fromEmail = recoveryFromEmail(c.env);
+		if (!fromEmail) {
 			return c.json({ error: "Account recovery is not enabled" }, 503);
 		}
 
@@ -382,7 +384,7 @@ export class PostChangeEmail extends OpenAPIRoute {
 		const message = buildEmailChangeEmail(locale, link);
 		try {
 			await sendEmail(c.env, {
-				from: c.env.config.accountRecovery.fromEmail,
+				from: fromEmail,
 				to: address,
 				subject: message.subject,
 				html: message.html,

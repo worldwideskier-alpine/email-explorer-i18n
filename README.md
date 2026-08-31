@@ -54,14 +54,37 @@
 
   `MAIL_LOCALES` は**UIの72言語と同じ集合でなければなりません**。ダッシュボードは表示中のロケールをそのまま送り、Worker 側は `z.enum(MAIL_LOCALES)` で検証するため、リストから漏れたコードは日本語にフォールバックするのではなく **400 で弾かれ、メールが1通も送られません**。しかも画面には「アカウントがあればリンクを送りました」と出るので気づけません（実際に、UIを72言語に増やしたときこのリストが3言語のままで、66言語でパスワード再設定が死んでいました）。`packages/dashboard/src/locales/mailLocales.test.ts` が両者の集合一致を検査します。
 
-## Cloudflareへのデプロイについて
+## 自分の環境で動かす
 
-このリポジトリのコードはデプロイ可能な状態ですが、実際に Cloudflare 上へ `wrangler deploy` を実行するには、ご自身の Cloudflare アカウントと API トークンが必要です。認証情報を安全に管理するため、デプロイはご自身の環境から実行してください。手順はオリジナルプロジェクトの [Getting Started](#getting-started) を参照してください。
+**このリポジトリはフォークして使います。** ファイルを写し取る必要はありません。フォークして、GitHub のリポジトリ変数とシークレットをいくつか設定すれば、`main` への push でご自身の Cloudflare アカウントにデプロイされます。
 
-> **Cloudflare側のリソース名について**
+手順は **[docs/deploying-your-own.md](docs/deploying-your-own.md)** にまとめてあります。
+
+設定する値は次のとおりです。**どれも追跡されているファイルには入りません**。そのため、後から本リポジトリの更新を `git pull` しても、設定が衝突することはありません。
+
+| 種別 | 名前 | 内容 |
+|---|---|---|
+| Secret | `CLOUDFLARE_API_TOKEN` | Cloudflare の API トークン |
+| Secret | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare のアカウント ID |
+| Secret | `VAPID_PRIVATE_KEY` | プッシュ通知の秘密鍵 |
+| Variable | `WORKER_NAME` | Worker 名。公開URLもこれで決まります |
+| Variable | `R2_BUCKET_NAME` | メールと添付を置く R2 バケット名 |
+| Variable | `VAPID_PUBLIC_KEY` | プッシュ通知の公開鍵 |
+| Variable | `ACCOUNT_RECOVERY_FROM` | パスワード再設定メールの差出人 |
+
+Resend の API キーだけはここに含みません。**管理画面（`/admin`）で設定します**（後述）。
+
+変数を設定しなかった項目は、`packages/worker/dev/wrangler.jsonc` に書かれている既定値、つまり**本デプロイの値**がそのまま使われます。デプロイのログは、項目ごとに「設定値を使ったか、既定値のままか」を1行ずつ出すので、初回はそこを確認してください。
+
+仕組みとしては、`packages/worker/scripts/apply-deployment-config.mjs` がデプロイ時に **ランナー上のコピーだけ** を書き換えています。チェックインされている `wrangler.jsonc` は本物の設定のままなので、`wrangler dev` もテストもそれを読みます。生成ファイルを別に持つと、開発時に読むものと CI がデプロイするものが食い違うため、この形にしています。
+
+> **本デプロイのリソース名について**
 > Worker名・R2バケット名・公開URL（`email-explorer-ja.<subdomain>.workers.dev`）は、リポジトリ名とは別に `email-explorer-ja` のままです。
 > Worker名を変更すると別のWorkerとして作成され、Durable Objectに保存されている全メールが引き継がれないため、意図的に据え置いています。
 > 公開URLを変えたい場合は、Worker名の変更ではなくカスタムドメインの割り当てを使用してください。
+
+> **上流の `template/` を削除しました。**
+> 上流には「これをコピーして自分のWorkerを作る」ための `template/` があり、その `package.json` は npm の `email-explorer@^1.0.4` を入れる作りでした。それは**上流のパッケージ**であって、本フォークの成果（72言語対応・添付・バックアップ・迷惑メール判定など）は一切含まれません。フォークして配布する形にした以上、そこにあること自体が誤解を招くので外しました。
 
 ### CI／デプロイの実行タイミング
 

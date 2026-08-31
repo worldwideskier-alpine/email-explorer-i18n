@@ -50,6 +50,15 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # This deployment's own values, so a fork configures itself without
+      # editing a file this repository keeps changing. Every one is optional:
+      # a repository variable that was never created arrives as an empty
+      # string and the checked-in default in dev/wrangler.jsonc stands. See
+      # docs/deploying-your-own.md.
+      WORKER_NAME: ${{ vars.WORKER_NAME }}
+      R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME }}
+      VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
+      ACCOUNT_RECOVERY_FROM: ${{ vars.ACCOUNT_RECOVERY_FROM }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v6
@@ -60,10 +69,17 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Before the build, because the build copies the dashboard into the
+      # place wrangler.jsonc points at and the deploy reads the config.
+      - name: Apply this deployment's configuration
+        run: node packages/worker/scripts/apply-deployment-config.mjs
       - run: pnpm run build
       - name: Ensure R2 bucket exists
         working-directory: packages/worker/dev
-        run: npx wrangler r2 bucket create email-explorer-ja || true
+        # Creating a bucket that is already there is an error, and an error
+        # here is not a reason to stop; the deploy below fails loudly if the
+        # bucket really is missing.
+        run: npx wrangler r2 bucket create "${R2_BUCKET_NAME:-email-explorer-ja}" || true
       - name: Deploy Worker
         run: pnpm run deploy-dev-worker
       # RESEND_API_KEY is no longer pushed from here. It is set on the admin

@@ -18,8 +18,18 @@
 	"triggers": {
 		"crons": ["0 18 * * *"]
 	},
+	// These three are this deployment's own. A fork sets its values as GitHub
+	// repository variables instead of editing them here, so pulling updates
+	// from upstream never collides -- see scripts/deployment-config.mjs and
+	// docs/deploying-your-own.md. What is written here is the default, and it
+	// is also what `wrangler dev` and the test pool read.
 	"vars": {
-		"VAPID_PUBLIC_KEY": "BGU5ROPsWyFfKmU6wSP0Zff_Ilp1k6DLi-AgwA45rUgFYPqDy-BGTDuSOysCtpteFr0IqwaRMvjP5AJGy_P0g5U"
+		"VAPID_PUBLIC_KEY": "BGU5ROPsWyFfKmU6wSP0Zff_Ilp1k6DLi-AgwA45rUgFYPqDy-BGTDuSOysCtpteFr0IqwaRMvjP5AJGy_P0g5U",
+		// Blank here because this deployment sets its own in dev/index.ts.
+		// Whatever is set here wins over that, which is what lets a fork
+		// configure the sender without touching source. See
+		// src/deployment-config.ts.
+		"ACCOUNT_RECOVERY_FROM": ""
 	},
 	"assets": {
 		"directory": "node_modules/email-explorer/dashboard",

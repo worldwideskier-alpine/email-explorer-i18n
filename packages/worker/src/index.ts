@@ -9,6 +9,7 @@ import { runScheduledBackups } from "./backup-run";
 import { listBackups } from "./backup-writer";
 import { base64ToBytes } from "./base64";
 import { classifyWithClaude } from "./claude-spam-filter";
+import { recoveryFromEmail } from "./deployment-config";
 import { ingestEmailIntoMailbox } from "./email-ingest";
 import { buildPasswordResetEmail, MAIL_LOCALES } from "./mail-templates";
 import {
@@ -1761,7 +1762,8 @@ class PostForgotPassword extends OpenAPIRoute {
 	};
 
 	async handle(c: AppContext) {
-		if (!c.env.config?.accountRecovery) {
+		const fromEmail = recoveryFromEmail(c.env);
+		if (!fromEmail) {
 			return c.json({ error: "Account recovery is not enabled" }, 503);
 		}
 
@@ -1818,7 +1820,7 @@ class PostForgotPassword extends OpenAPIRoute {
 
 		try {
 			await sendEmail(c.env, {
-				from: c.env.config.accountRecovery.fromEmail,
+				from: fromEmail,
 				to: email,
 				subject: message.subject,
 				html: message.html,
@@ -1865,7 +1867,8 @@ class PostResetPassword extends OpenAPIRoute {
 	};
 
 	async handle(c: AppContext) {
-		if (!c.env.config?.accountRecovery) {
+		const fromEmail = recoveryFromEmail(c.env);
+		if (!fromEmail) {
 			return c.json({ error: "Account recovery is not enabled" }, 503);
 		}
 
@@ -2037,9 +2040,9 @@ class GetAppSettings extends OpenAPIRoute {
 			config.auth?.registerEnabled === true ||
 			(config.auth?.registerEnabled !== false && userCount === 0);
 
-		// Account recovery is enabled if the config has accountRecovery with fromEmail
-		const accountRecoveryEnabled =
-			config.accountRecovery?.fromEmail !== undefined;
+		// Account recovery is on exactly when a from-address is configured,
+		// from either source. See recoveryFromEmail.
+		const accountRecoveryEnabled = recoveryFromEmail(c.env) !== undefined;
 
 		return c.json({
 			auth: {
