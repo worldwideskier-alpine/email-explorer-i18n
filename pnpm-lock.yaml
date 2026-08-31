@@ -127,8 +127,8 @@ importers:
         specifier: 4.13.5
         version: 4.13.5
       postal-mime:
-        specifier: ^2.6.1
-        version: 2.6.1
+        specifier: ^3.0.0
+        version: 3.0.0
       workers-qb:
         specifier: ^1.15.0
         version: 1.15.0
@@ -3138,8 +3138,8 @@ packages:
   pkg-types@2.3.1:
     resolution: {integrity: sha512-y+ichcgc2LrADuhLNAx8DFjVfgz91pRxfZdI3UDhxHvcVEZsenLO+7XaU5vOp0u/7V/wZ+plyuQxtrDlZJ+yeg==}
 
-  postal-mime@2.6.1:
-    resolution: {integrity: sha512-YnNYvLTsWzk1Mpf1drc7XZPR1c2XInI94H5RY/hZ9vzTSYjLw9zuebdi/K0yfR3PVnedQZUn2umTyxfw9yOWBA==}
+  postal-mime@3.0.0:
+    resolution: {integrity: sha512-Z4a9ar2Bv3YpK3IXag+Yda30k7bMZfpRuUGyqtHnZ2pjHG8Bl62EhZIk4n1dzv00gfzP9g+94e9kd8+XmjVWLA==}
 
   postcss-load-config@6.0.1:
     resolution: {integrity: sha512-oPtTM4oerL+UXmx+93ytZVN82RrlY/wPUV8IeDxFrzIjXOLF1pN+EmKPLbubvKHT2HC20xXsCAH2Z+CKV6Oz/g==}
@@ -6473,7 +6473,7 @@ snapshots:
       exsolve: 1.1.1
       pathe: 2.0.3
 
-  postal-mime@2.6.1: {}
+  postal-mime@3.0.0: {}
 
   postcss-load-config@6.0.1(jiti@2.7.0)(postcss@8.5.26)(yaml@2.9.0):
     dependencies:
