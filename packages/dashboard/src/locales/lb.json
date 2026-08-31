@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Leschte Laf {at}: feelgeschloen ({error})",
 		"autoBackupStored": "Gespäichert Sécherungen",
 		"autoBackupDownload": "Eroflueden",
-		"autoBackupNone": "Nach keng gespäichert Sécherungen."
+		"autoBackupNone": "Nach keng gespäichert Sécherungen.",
+		"spamCheckNeverRun": "Déi zweet Iwwerpréiwung ass nach ni gelaf.",
+		"spamCheckOk": "Si huet de leschte Kéier den {date} funktionéiert.",
+		"spamCheckFailing": "Déi lescht Iwwerpréiwung ass feelgeschloen ({date}).",
+		"spamCheckFailNote": "Post, déi net iwwerpréift konnt ginn, kënnt an d'Postagang, also kann Spam duerchkommen.",
+		"spamCheckUnauthorized": "De API-Schlëssel gouf ofgeleent. Kuckt de Schlëssel no.",
+		"spamCheckRateLimited": "D'Limite vun den Ufroe ass erreecht.",
+		"spamCheckServerError": "D'API huet e Feeler zréckginn.",
+		"spamCheckTimeout": "Et koum keng Äntwert an der Zäit.",
+		"spamCheckNetwork": "D'API war net erreechbar.",
+		"spamCheckMalformed": "D'Äntwert konnt net gelies ginn."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ongëlteg Umeldungsdaten",

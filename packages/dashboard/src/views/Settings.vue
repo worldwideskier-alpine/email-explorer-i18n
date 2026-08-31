@@ -90,6 +90,21 @@
           </button>
         </form>
         <p v-if="spamFilterMessage" class="text-sm text-green-600 dark:text-green-400 mt-2">{{ spamFilterMessage }}</p>
+
+        <!-- Whether the check is actually running. It fails open, so a
+             rejected key looks exactly like a filter finding nothing to
+             catch, and the badge above stays green either way. -->
+        <div v-if="claudeApiKeyConfigured" class="mt-3 text-sm">
+          <p v-if="spamCheckFailing" class="text-amber-700 dark:text-amber-400">
+            <span class="font-semibold">{{ t("settings.spamCheckFailing", { date: formatFullDate(spamCheck?.lastFailureAt) }) }}</span>
+            {{ spamCheckReason }}
+          </p>
+          <p v-if="spamCheckFailing" class="text-amber-700 dark:text-amber-400 mt-1">{{ t("settings.spamCheckFailNote") }}</p>
+          <p v-if="spamCheck?.lastSuccessAt" class="text-gray-500 dark:text-gray-400" :class="{ 'mt-1': spamCheckFailing }">
+            {{ t("settings.spamCheckOk", { date: formatFullDate(spamCheck?.lastSuccessAt) }) }}
+          </p>
+          <p v-else-if="!spamCheckFailing" class="text-gray-500 dark:text-gray-400">{{ t("settings.spamCheckNeverRun") }}</p>
+        </div>
       </div>
 
       <!-- Backup: the only way to get the mail out of this system -->
@@ -279,6 +294,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import RichTextEditor from "@/components/RichTextEditor.vue";
+import { useDateFormat } from "@/composables/useDateFormat";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 import {
@@ -291,6 +307,11 @@ import { useAuthStore } from "@/stores/auth";
 import { useMailboxStore } from "@/stores/mailboxes";
 import { htmlToPlainText } from "@/utils/htmlToPlainText";
 import { parseMbox, toBase64 } from "@/utils/mbox";
+import {
+	isSpamCheckFailing,
+	type SpamCheckHealth,
+	spamCheckReasonKey,
+} from "@/utils/spamCheckHealth";
 
 const { t } = useI18n();
 const mailboxStore = useMailboxStore();
@@ -362,11 +383,24 @@ const claudeApiKeyConfigured = ref(false);
 const spamFilterLoading = ref(false);
 const spamFilterMessage = useLocalizedMessage();
 
+const { formatFullDate } = useDateFormat();
+
+// How the second-stage check has actually been going. The badge above says
+// only whether a key is stored; see spamCheckHealth.ts for why that is not
+// the same question.
+const spamCheck = ref<SpamCheckHealth | null>(null);
+const spamCheckFailing = computed(() => isSpamCheckFailing(spamCheck.value));
+const spamCheckReason = computed(() =>
+	t(spamCheckReasonKey(spamCheck.value?.lastFailureReason)),
+);
+
 watch(
 	mailbox,
 	(m) => {
 		claudeApiKeyConfigured.value =
 			!!m?.settings?.spamFilter?.claudeApiKeyConfigured;
+		spamCheck.value =
+			(m as { spamCheck?: SpamCheckHealth } | null)?.spamCheck ?? null;
 	},
 	{ immediate: true },
 );

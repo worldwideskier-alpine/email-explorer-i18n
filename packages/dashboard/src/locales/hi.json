@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "अंतिम बार {at}: विफल ({error})",
 		"autoBackupStored": "सहेजे गए बैकअप",
 		"autoBackupDownload": "डाउनलोड",
-		"autoBackupNone": "अभी कोई सहेजा गया बैकअप नहीं है।"
+		"autoBackupNone": "अभी कोई सहेजा गया बैकअप नहीं है।",
+		"spamCheckNeverRun": "दूसरे चरण की जाँच अभी तक नहीं चली है।",
+		"spamCheckOk": "यह अंतिम बार {date} को चली थी।",
+		"spamCheckFailing": "पिछली जाँच विफल रही ({date})।",
+		"spamCheckFailNote": "जिस मेल की जाँच नहीं हो सकी वह इनबॉक्स में जाता है, इसलिए स्पैम निकल सकता है।",
+		"spamCheckUnauthorized": "API कुंजी अस्वीकृत हुई। कुंजी जाँचें।",
+		"spamCheckRateLimited": "कॉल की सीमा पूरी हो गई।",
+		"spamCheckServerError": "API ने त्रुटि लौटाई।",
+		"spamCheckTimeout": "समय पर कोई उत्तर नहीं आया।",
+		"spamCheckNetwork": "API तक पहुँचा नहीं जा सका।",
+		"spamCheckMalformed": "उत्तर पढ़ा नहीं जा सका।"
 	},
 	"apiErrors": {
 		"Invalid credentials": "साइन इन जानकारी गलत है",

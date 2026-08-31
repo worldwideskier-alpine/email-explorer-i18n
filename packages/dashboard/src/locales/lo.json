@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "ຄັ້ງລ່າສຸດ {at}: ລົ້ມເຫລວ ({error})",
 		"autoBackupStored": "ສຳຮອງທີ່ເກັບໄວ້",
 		"autoBackupDownload": "ດາວໂຫລດ",
-		"autoBackupNone": "ຍັງບໍ່ມີສຳຮອງທີ່ເກັບໄວ້."
+		"autoBackupNone": "ຍັງບໍ່ມີສຳຮອງທີ່ເກັບໄວ້.",
+		"spamCheckNeverRun": "ການກວດຂັ້ນທີສອງຍັງບໍ່ເຄີຍເຮັດວຽກເທື່ອ.",
+		"spamCheckOk": "ຄັ້ງສຸດທ້າຍທີ່ສຳເລັດແມ່ນ {date}.",
+		"spamCheckFailing": "ການກວດຄັ້ງລ່າສຸດລົ້ມເຫລວ ({date}).",
+		"spamCheckFailNote": "ຈົດໝາຍທີ່ກວດບໍ່ໄດ້ຈະເຂົ້າກ່ອງຂາເຂົ້າ ດັ່ງນັ້ນສະແປມອາດຜ່ານໄປໄດ້.",
+		"spamCheckUnauthorized": "ກະແຈ API ຖືກປະຕິເສດ. ກະລຸນາກວດກະແຈ.",
+		"spamCheckRateLimited": "ຮອດຂີດຈຳກັດຈຳນວນການເອີ້ນແລ້ວ.",
+		"spamCheckServerError": "API ຕອບກັບເປັນຄວາມຜິດພາດ.",
+		"spamCheckTimeout": "ບໍ່ມີຄຳຕອບພາຍໃນເວລາ.",
+		"spamCheckNetwork": "ຕິດຕໍ່ API ບໍ່ໄດ້.",
+		"spamCheckMalformed": "ອ່ານຄຳຕອບບໍ່ໄດ້."
 	},
 	"apiErrors": {
 		"Invalid credentials": "ຂໍ້ມູນເຂົ້າສູ່ລະບົບບໍ່ຖືກຕ້ອງ",

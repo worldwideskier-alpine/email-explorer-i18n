@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "آخرین اجرا {at}: ناموفق ({error})",
 		"autoBackupStored": "پشتیبان‌های ذخیره‌شده",
 		"autoBackupDownload": "دریافت",
-		"autoBackupNone": "هنوز پشتیبانی ذخیره نشده است."
+		"autoBackupNone": "هنوز پشتیبانی ذخیره نشده است.",
+		"spamCheckNeverRun": "بررسی دوم هنوز اجرا نشده است.",
+		"spamCheckOk": "آخرین اجرای موفق در {date} بود.",
+		"spamCheckFailing": "آخرین بررسی ناموفق بود ({date}).",
+		"spamCheckFailNote": "نامه‌ای که بررسی نشد به صندوق ورودی می‌رود و ممکن است هرزنامه از قلم بیفتد.",
+		"spamCheckUnauthorized": "کلید رابط رد شد. کلید را بررسی کنید.",
+		"spamCheckRateLimited": "به سقف تعداد فراخوانی رسیدید.",
+		"spamCheckServerError": "رابط خطا برگرداند.",
+		"spamCheckTimeout": "پاسخی در زمان مقرر نرسید.",
+		"spamCheckNetwork": "دسترسی به رابط ممکن نشد.",
+		"spamCheckMalformed": "پاسخ قابل خواندن نبود."
 	},
 	"apiErrors": {
 		"Invalid credentials": "اطلاعات ورود نادرست است",

@@ -122,13 +122,45 @@ export function buildClassificationContent(
 }
 
 /**
+ * Why a check did not produce a verdict. Deliberately a small closed set
+ * rather than the API's own message: it is shown to the mailbox owner in
+ * their own language, and an upstream error body is neither translatable nor
+ * necessarily safe to put on a screen.
+ */
+export type SpamCheckFailure =
+	| "unauthorized"
+	| "rateLimited"
+	| "serverError"
+	| "timeout"
+	| "network"
+	| "malformed";
+
+export interface ClassifyResult {
+	folder: "inbox" | "spam";
+	/** Absent when the check ran and answered. */
+	failure?: SpamCheckFailure;
+}
+
+function failureFromStatus(status: number): SpamCheckFailure {
+	if (status === 401 || status === 403) return "unauthorized";
+	if (status === 429) return "rateLimited";
+	return "serverError";
+}
+
+/**
  * Best-effort: any failure (network error, non-2xx response, malformed
  * response, timeout) falls back to "inbox" so a flaky API call never causes
  * a real email to be lost.
+ *
+ * Failing open is right, but it used to be silent -- a console line and
+ * nothing else. A rejected key therefore looked exactly like a filter finding
+ * nothing to catch, and the settings screen went on showing the key as
+ * configured. So the reason comes back with the verdict now, for the caller
+ * to record; see recordSpamCheck.
  */
 export async function classifyWithClaude(
 	input: ClassifyInput,
-): Promise<"inbox" | "spam"> {
+): Promise<ClassifyResult> {
 	const content = buildClassificationContent(input);
 
 	const controller = new AbortController();
@@ -156,7 +188,7 @@ export async function classifyWithClaude(
 			console.error(
 				`Claude spam classification failed: ${response.status} ${await response.text()}`,
 			);
-			return "inbox";
+			return { folder: "inbox", failure: failureFromStatus(response.status) };
 		}
 
 		const data = await response.json<{
@@ -168,10 +200,20 @@ export async function classifyWithClaude(
 			.trim()
 			.toUpperCase();
 
-		return verdict?.startsWith("SPAM") ? "spam" : "inbox";
+		// Neither word came back. The check did not fail, but it did not
+		// answer either, and treating that as "not spam" is what would hide it.
+		if (verdict !== "SPAM" && verdict !== "NOT_SPAM") {
+			console.error(`Claude spam classification returned: ${verdict}`);
+			return { folder: "inbox", failure: "malformed" };
+		}
+
+		return { folder: verdict === "SPAM" ? "spam" : "inbox" };
 	} catch (err) {
 		console.error("Claude spam classification error:", err);
-		return "inbox";
+		// An abort is the timeout above firing, not the network refusing.
+		const failure =
+			err instanceof Error && err.name === "AbortError" ? "timeout" : "network";
+		return { folder: "inbox", failure };
 	} finally {
 		clearTimeout(timeout);
 	}

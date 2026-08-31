@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Huling takbo {at}: nabigo ({error})",
 		"autoBackupStored": "Mga naka-imbak na backup",
 		"autoBackupDownload": "I-download",
-		"autoBackupNone": "Wala pang naka-imbak na backup."
+		"autoBackupNone": "Wala pang naka-imbak na backup.",
+		"spamCheckNeverRun": "Hindi pa naisasagawa ang pangalawang pagsusuri.",
+		"spamCheckOk": "Huling gumana ito noong {date}.",
+		"spamCheckFailing": "Nabigo ang huling pagsusuri ({date}).",
+		"spamCheckFailNote": "Ang mail na hindi nasuri ay napupunta sa inbox, kaya maaaring makalusot ang spam.",
+		"spamCheckUnauthorized": "Tinanggihan ang API key. Suriin ang key.",
+		"spamCheckRateLimited": "Naabot na ang limitasyon ng tawag.",
+		"spamCheckServerError": "Nagbalik ng error ang API.",
+		"spamCheckTimeout": "Walang sagot sa loob ng takdang oras.",
+		"spamCheckNetwork": "Hindi maabot ang API.",
+		"spamCheckMalformed": "Hindi mabasa ang sagot."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Mali ang impormasyon sa pag-sign in",

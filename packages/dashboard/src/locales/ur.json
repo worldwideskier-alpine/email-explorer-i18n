@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "آخری بار {at}: ناکام ({error})",
 		"autoBackupStored": "محفوظ بیک اپ",
 		"autoBackupDownload": "ڈاؤن لوڈ",
-		"autoBackupNone": "ابھی کوئی محفوظ بیک اپ نہیں۔"
+		"autoBackupNone": "ابھی کوئی محفوظ بیک اپ نہیں۔",
+		"spamCheckNeverRun": "دوسرے مرحلے کی جانچ ابھی تک نہیں چلی۔",
+		"spamCheckOk": "آخری بار یہ {date} کو چلی تھی۔",
+		"spamCheckFailing": "پچھلی جانچ ناکام رہی ({date})۔",
+		"spamCheckFailNote": "جو میل جانچی نہ جا سکی وہ ان باکس میں جاتی ہے، اس لیے سپیم گزر سکتی ہے۔",
+		"spamCheckUnauthorized": "API کلید مسترد ہوئی۔ کلید جانچیں۔",
+		"spamCheckRateLimited": "کالوں کی حد پوری ہو گئی۔",
+		"spamCheckServerError": "API نے خرابی لوٹائی۔",
+		"spamCheckTimeout": "وقت پر کوئی جواب نہیں آیا۔",
+		"spamCheckNetwork": "API تک رسائی نہ ہو سکی۔",
+		"spamCheckMalformed": "جواب پڑھا نہ جا سکا۔"
 	},
 	"apiErrors": {
 		"Invalid credentials": "سائن ان کی معلومات غلط ہیں",

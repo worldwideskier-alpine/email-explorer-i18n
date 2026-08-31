@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "അവസാനം {at}: പരാജയപ്പെട്ടു ({error})",
 		"autoBackupStored": "സൂക്ഷിച്ച ബാക്കപ്പുകൾ",
 		"autoBackupDownload": "ഡൗൺലോഡ്",
-		"autoBackupNone": "ഇതുവരെ സൂക്ഷിച്ച ബാക്കപ്പില്ല."
+		"autoBackupNone": "ഇതുവരെ സൂക്ഷിച്ച ബാക്കപ്പില്ല.",
+		"spamCheckNeverRun": "രണ്ടാം ഘട്ട പരിശോധന ഇതുവരെ പ്രവർത്തിച്ചിട്ടില്ല.",
+		"spamCheckOk": "അവസാനമായി അത് {date}-ന് പ്രവർത്തിച്ചു.",
+		"spamCheckFailing": "അവസാന പരിശോധന പരാജയപ്പെട്ടു ({date}).",
+		"spamCheckFailNote": "പരിശോധിക്കാനാകാത്ത മെയിൽ ഇൻബോക്സിലേക്ക് പോകുന്നു, അതിനാൽ സ്പാം കടന്നുകൂടാം.",
+		"spamCheckUnauthorized": "API കീ നിരസിച്ചു. കീ പരിശോധിക്കുക.",
+		"spamCheckRateLimited": "കോളുകളുടെ പരിധി എത്തി.",
+		"spamCheckServerError": "API ഒരു പിശക് നൽകി.",
+		"spamCheckTimeout": "സമയത്ത് ഉത്തരം ലഭിച്ചില്ല.",
+		"spamCheckNetwork": "API-യിൽ എത്താനായില്ല.",
+		"spamCheckMalformed": "ഉത്തരം വായിക്കാനായില്ല."
 	},
 	"apiErrors": {
 		"Invalid credentials": "സൈൻ ഇൻ വിവരങ്ങൾ തെറ്റാണ്",

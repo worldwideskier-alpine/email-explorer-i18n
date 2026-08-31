@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "शेवटचे {at}: अयशस्वी ({error})",
 		"autoBackupStored": "जतन केलेले बॅकअप",
 		"autoBackupDownload": "डाउनलोड",
-		"autoBackupNone": "अजून जतन केलेला बॅकअप नाही."
+		"autoBackupNone": "अजून जतन केलेला बॅकअप नाही.",
+		"spamCheckNeverRun": "दुसऱ्या टप्प्याची तपासणी अद्याप चालवली गेलेली नाही.",
+		"spamCheckOk": "शेवटची यशस्वी तपासणी {date} रोजी झाली.",
+		"spamCheckFailing": "शेवटची तपासणी अयशस्वी झाली ({date}).",
+		"spamCheckFailNote": "तपासता न आलेले मेल इनबॉक्समध्ये जाते, त्यामुळे स्पॅम निसटू शकतो.",
+		"spamCheckUnauthorized": "API की नाकारली गेली. की तपासा.",
+		"spamCheckRateLimited": "कॉलची मर्यादा गाठली.",
+		"spamCheckServerError": "API ने त्रुटी परत केली.",
+		"spamCheckTimeout": "वेळेत उत्तर आले नाही.",
+		"spamCheckNetwork": "API पर्यंत पोहोचता आले नाही.",
+		"spamCheckMalformed": "उत्तर वाचता आले नाही."
 	},
 	"apiErrors": {
 		"Invalid credentials": "साइन इनची माहिती चुकीची आहे",

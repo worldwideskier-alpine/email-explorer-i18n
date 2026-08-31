@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Last run {at}: failed ({error})",
 		"autoBackupStored": "Stored backups",
 		"autoBackupDownload": "Download",
-		"autoBackupNone": "No backups stored yet."
+		"autoBackupNone": "No backups stored yet.",
+		"spamCheckNeverRun": "The second-stage check has not run yet.",
+		"spamCheckOk": "It last worked on {date}.",
+		"spamCheckFailing": "The last check failed ({date}).",
+		"spamCheckFailNote": "Mail that could not be checked goes to the inbox, so spam may be getting through.",
+		"spamCheckUnauthorized": "The API key was rejected. Check the key.",
+		"spamCheckRateLimited": "The call limit was reached.",
+		"spamCheckServerError": "The API returned an error.",
+		"spamCheckTimeout": "There was no answer in time.",
+		"spamCheckNetwork": "The API could not be reached.",
+		"spamCheckMalformed": "The answer could not be read."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Invalid credentials",

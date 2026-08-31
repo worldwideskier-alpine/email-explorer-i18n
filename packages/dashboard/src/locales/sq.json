@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Herën e fundit {at}: dështoi ({error})",
 		"autoBackupStored": "Kopjet e ruajtura",
 		"autoBackupDownload": "Shkarko",
-		"autoBackupNone": "Ende nuk ka kopje të ruajtura."
+		"autoBackupNone": "Ende nuk ka kopje të ruajtura.",
+		"spamCheckNeverRun": "Kontrolli i dytë nuk është kryer ende asnjëherë.",
+		"spamCheckOk": "Ka funksionuar për herë të fundit më {date}.",
+		"spamCheckFailing": "Kontrolli i fundit dështoi ({date}).",
+		"spamCheckFailNote": "Posta që nuk u kontrollua dot shkon në kutinë hyrëse, kështu që spami mund të kalojë.",
+		"spamCheckUnauthorized": "Çelësi i API-t u refuzua. Kontrolloni çelësin.",
+		"spamCheckRateLimited": "U arrit kufiri i thirrjeve.",
+		"spamCheckServerError": "API-ja ktheu një gabim.",
+		"spamCheckTimeout": "Nuk erdhi përgjigje në kohë.",
+		"spamCheckNetwork": "Nuk u arrit lidhja me API-në.",
+		"spamCheckMalformed": "Përgjigjja nuk u lexua dot."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Të dhëna hyrjeje të pasakta",

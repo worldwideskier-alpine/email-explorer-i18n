@@ -79,6 +79,35 @@ export const mailboxMigrations: Migration[] = [
             ALTER TABLE emails ADD COLUMN bcc TEXT;
         `,
 	},
+	{
+		/**
+		 * Whether the second-stage spam check is actually working.
+		 *
+		 * It fails open: a rejected key, a timeout, anything at all, and the
+		 * message goes to the inbox with a line in the Worker log nobody
+		 * reads. The settings screen meanwhile went on showing the key as
+		 * configured, so a filter that had stopped running looked exactly like
+		 * one finding nothing to catch.
+		 *
+		 * One row, held to one row by the CHECK. Kept here rather than in the
+		 * mailbox's R2 settings object because this is written on every
+		 * incoming message: the Durable Object serialises those writes, while
+		 * a read-modify-write against R2 would race two arrivals against each
+		 * other and could lose the API key or the sender rules stored beside
+		 * it.
+		 */
+		name: "5_spam_check_health",
+		sql: `
+            CREATE TABLE spam_check_health (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                last_success_at TEXT,
+                last_failure_at TEXT,
+                last_failure_reason TEXT
+            );
+
+            INSERT INTO spam_check_health (id) VALUES (1);
+        `,
+	},
 ];
 
 export const authMigrations: Migration[] = [

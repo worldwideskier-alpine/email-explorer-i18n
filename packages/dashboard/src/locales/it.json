@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Ultima esecuzione {at}: fallita ({error})",
 		"autoBackupStored": "Backup conservati",
 		"autoBackupDownload": "Scarica",
-		"autoBackupNone": "Nessun backup conservato."
+		"autoBackupNone": "Nessun backup conservato.",
+		"spamCheckNeverRun": "Il secondo controllo non è ancora mai stato eseguito.",
+		"spamCheckOk": "L'ultima volta ha funzionato il {date}.",
+		"spamCheckFailing": "L'ultimo controllo è fallito ({date}).",
+		"spamCheckFailNote": "La posta che non è stato possibile controllare finisce in arrivo, quindi può passare posta indesiderata.",
+		"spamCheckUnauthorized": "La chiave API è stata rifiutata. Controlla la chiave.",
+		"spamCheckRateLimited": "È stato raggiunto il limite di chiamate.",
+		"spamCheckServerError": "L'API ha restituito un errore.",
+		"spamCheckTimeout": "Non è arrivata risposta in tempo.",
+		"spamCheckNetwork": "Non è stato possibile raggiungere l'API.",
+		"spamCheckMalformed": "Non è stato possibile leggere la risposta."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Credenziali non valide",

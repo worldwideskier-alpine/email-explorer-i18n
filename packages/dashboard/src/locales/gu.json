@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "છેલ્લે {at}: નિષ્ફળ ({error})",
 		"autoBackupStored": "સાચવેલા બેકઅપ",
 		"autoBackupDownload": "ડાઉનલોડ",
-		"autoBackupNone": "હજી કોઈ સાચવેલો બેકઅપ નથી."
+		"autoBackupNone": "હજી કોઈ સાચવેલો બેકઅપ નથી.",
+		"spamCheckNeverRun": "બીજા તબક્કાની ચકાસણી હજી સુધી ચાલી નથી.",
+		"spamCheckOk": "છેલ્લે તે {date} ના રોજ કામ કરી હતી.",
+		"spamCheckFailing": "છેલ્લી ચકાસણી નિષ્ફળ ગઈ ({date}).",
+		"spamCheckFailNote": "જે મેલ ચકાસી ન શકાયો તે ઇનબોક્સમાં જાય છે, તેથી સ્પામ પસાર થઈ શકે છે.",
+		"spamCheckUnauthorized": "API કી નકારવામાં આવી. કી તપાસો.",
+		"spamCheckRateLimited": "કૉલની મર્યાદા પહોંચી ગઈ.",
+		"spamCheckServerError": "API એ ભૂલ પરત કરી.",
+		"spamCheckTimeout": "સમયસર કોઈ જવાબ મળ્યો નહીં.",
+		"spamCheckNetwork": "API સુધી પહોંચી શકાયું નહીં.",
+		"spamCheckMalformed": "જવાબ વાંચી શકાયો નહીં."
 	},
 	"apiErrors": {
 		"Invalid credentials": "સાઇન ઇનની માહિતી ખોટી છે",

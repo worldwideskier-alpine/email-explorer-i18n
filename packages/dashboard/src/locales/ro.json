@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Ultima rulare {at}: eșuată ({error})",
 		"autoBackupStored": "Copii salvate",
 		"autoBackupDownload": "Descarcă",
-		"autoBackupNone": "Încă nu există copii salvate."
+		"autoBackupNone": "Încă nu există copii salvate.",
+		"spamCheckNeverRun": "A doua verificare nu a rulat încă niciodată.",
+		"spamCheckOk": "A funcționat ultima dată pe {date}.",
+		"spamCheckFailing": "Ultima verificare a eșuat ({date}).",
+		"spamCheckFailNote": "Corespondența care nu a putut fi verificată ajunge în inbox, deci spamul poate trece.",
+		"spamCheckUnauthorized": "Cheia API a fost respinsă. Verificați cheia.",
+		"spamCheckRateLimited": "Limita de apeluri a fost atinsă.",
+		"spamCheckServerError": "API-ul a returnat o eroare.",
+		"spamCheckTimeout": "Nu a venit niciun răspuns la timp.",
+		"spamCheckNetwork": "Nu s-a putut contacta API-ul.",
+		"spamCheckMalformed": "Răspunsul nu a putut fi citit."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Date de autentificare nevalide",

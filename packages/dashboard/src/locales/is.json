@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Síðasta keyrsla {at}: mistókst ({error})",
 		"autoBackupStored": "Vistuð afrit",
 		"autoBackupDownload": "Sækja",
-		"autoBackupNone": "Engin vistuð afrit enn."
+		"autoBackupNone": "Engin vistuð afrit enn.",
+		"spamCheckNeverRun": "Seinni athugunin hefur enn ekki verið keyrð.",
+		"spamCheckOk": "Hún virkaði síðast {date}.",
+		"spamCheckFailing": "Síðasta athugun mistókst ({date}).",
+		"spamCheckFailNote": "Póstur sem ekki tókst að athuga fer í innhólfið, svo ruslpóstur getur sloppið í gegn.",
+		"spamCheckUnauthorized": "API-lyklinum var hafnað. Athugaðu lykilinn.",
+		"spamCheckRateLimited": "Hámarksfjölda kalla er náð.",
+		"spamCheckServerError": "API skilaði villu.",
+		"spamCheckTimeout": "Ekkert svar barst í tæka tíð.",
+		"spamCheckNetwork": "Ekki náðist samband við API.",
+		"spamCheckMalformed": "Ekki tókst að lesa svarið."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Rangar innskráningarupplýsingar",

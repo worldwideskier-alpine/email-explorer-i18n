@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Viimane {at}: ebaõnnestus ({error})",
 		"autoBackupStored": "Salvestatud koopiad",
 		"autoBackupDownload": "Laadi alla",
-		"autoBackupNone": "Salvestatud koopiaid veel pole."
+		"autoBackupNone": "Salvestatud koopiaid veel pole.",
+		"spamCheckNeverRun": "Teist kontrolli pole veel kordagi tehtud.",
+		"spamCheckOk": "Viimati toimis see {date}.",
+		"spamCheckFailing": "Viimane kontroll ebaõnnestus ({date}).",
+		"spamCheckFailNote": "Kontrollimata post läheb postkasti, seega võib rämpspost läbi pääseda.",
+		"spamCheckUnauthorized": "API-võti lükati tagasi. Kontrollige võtit.",
+		"spamCheckRateLimited": "Päringute piir on täis.",
+		"spamCheckServerError": "API tagastas vea.",
+		"spamCheckTimeout": "Vastust ei tulnud õigeks ajaks.",
+		"spamCheckNetwork": "API-ga ei õnnestunud ühendust saada.",
+		"spamCheckMalformed": "Vastust ei õnnestunud lugeda."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Vigased sisselogimisandmed",

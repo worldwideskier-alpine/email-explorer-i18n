@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "上次运行 {at}：失败（{error}）",
 		"autoBackupStored": "已保存的备份",
 		"autoBackupDownload": "下载",
-		"autoBackupNone": "尚无已保存的备份。"
+		"autoBackupNone": "尚无已保存的备份。",
+		"spamCheckNeverRun": "二次判定尚未运行过。",
+		"spamCheckOk": "最后一次成功是 {date}。",
+		"spamCheckFailing": "最近一次判定失败（{date}）。",
+		"spamCheckFailNote": "无法判定的邮件会进入收件箱，可能漏掉垃圾邮件。",
+		"spamCheckUnauthorized": "API 密钥被拒绝。请检查密钥。",
+		"spamCheckRateLimited": "已达到调用次数上限。",
+		"spamCheckServerError": "API 返回了错误。",
+		"spamCheckTimeout": "未在时限内收到响应。",
+		"spamCheckNetwork": "无法连接到 API。",
+		"spamCheckMalformed": "无法解析响应。"
 	},
 	"apiErrors": {
 		"Invalid credentials": "登录信息有误",

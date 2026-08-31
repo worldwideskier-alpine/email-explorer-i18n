@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Zadnje {at}: neuspješno ({error})",
 		"autoBackupStored": "Spremljene kopije",
 		"autoBackupDownload": "Preuzmi",
-		"autoBackupNone": "Još nema spremljenih kopija."
+		"autoBackupNone": "Još nema spremljenih kopija.",
+		"spamCheckNeverRun": "Druga provjera još nije pokrenuta.",
+		"spamCheckOk": "Posljednji put je uspjela {date}.",
+		"spamCheckFailing": "Posljednja provjera nije uspjela ({date}).",
+		"spamCheckFailNote": "Pošta koja se nije mogla provjeriti ide u pristiglu poštu, pa neželjena pošta može proći.",
+		"spamCheckUnauthorized": "API ključ je odbijen. Provjerite ključ.",
+		"spamCheckRateLimited": "Dosegnuto je ograničenje broja poziva.",
+		"spamCheckServerError": "API je vratio pogrešku.",
+		"spamCheckTimeout": "Odgovor nije stigao na vrijeme.",
+		"spamCheckNetwork": "Nije bilo moguće doći do API-ja.",
+		"spamCheckMalformed": "Odgovor nije bilo moguće pročitati."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Neispravni podaci za prijavu",

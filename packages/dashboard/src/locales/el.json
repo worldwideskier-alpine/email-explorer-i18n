@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Τελευταία {at}: απέτυχε ({error})",
 		"autoBackupStored": "Αποθηκευμένα αντίγραφα",
 		"autoBackupDownload": "Λήψη",
-		"autoBackupNone": "Δεν υπάρχουν ακόμη αποθηκευμένα αντίγραφα."
+		"autoBackupNone": "Δεν υπάρχουν ακόμη αποθηκευμένα αντίγραφα.",
+		"spamCheckNeverRun": "Ο δεύτερος έλεγχος δεν έχει εκτελεστεί ακόμη.",
+		"spamCheckOk": "Τελευταία φορά λειτούργησε στις {date}.",
+		"spamCheckFailing": "Ο τελευταίος έλεγχος απέτυχε ({date}).",
+		"spamCheckFailNote": "Η αλληλογραφία που δεν ελέγχθηκε πηγαίνει στα εισερχόμενα, οπότε μπορεί να περνά ανεπιθύμητη.",
+		"spamCheckUnauthorized": "Το κλειδί API απορρίφθηκε. Ελέγξτε το κλειδί.",
+		"spamCheckRateLimited": "Συμπληρώθηκε το όριο κλήσεων.",
+		"spamCheckServerError": "Το API επέστρεψε σφάλμα.",
+		"spamCheckTimeout": "Δεν ήρθε απάντηση εγκαίρως.",
+		"spamCheckNetwork": "Δεν ήταν δυνατή η σύνδεση με το API.",
+		"spamCheckMalformed": "Δεν ήταν δυνατή η ανάγνωση της απάντησης."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Μη έγκυρα στοιχεία σύνδεσης",

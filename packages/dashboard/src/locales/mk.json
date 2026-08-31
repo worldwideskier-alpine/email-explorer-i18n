@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Последно {at}: неуспешно ({error})",
 		"autoBackupStored": "Зачувани копии",
 		"autoBackupDownload": "Преземи",
-		"autoBackupNone": "Сè уште нема зачувани копии."
+		"autoBackupNone": "Сè уште нема зачувани копии.",
+		"spamCheckNeverRun": "Втората проверка сè уште не е извршена.",
+		"spamCheckOk": "Последен пат работеше на {date}.",
+		"spamCheckFailing": "Последната проверка не успеа ({date}).",
+		"spamCheckFailNote": "Поштата што не можеше да се провери оди во приемното сандаче, па спам може да помине.",
+		"spamCheckUnauthorized": "API клучот беше одбиен. Проверете го клучот.",
+		"spamCheckRateLimited": "Достигнато е ограничувањето на повици.",
+		"spamCheckServerError": "API врати грешка.",
+		"spamCheckTimeout": "Не пристигна одговор навреме.",
+		"spamCheckNetwork": "Не можеше да се воспостави врска со API.",
+		"spamCheckMalformed": "Одговорот не можеше да се прочита."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Неисправни податоци за најава",

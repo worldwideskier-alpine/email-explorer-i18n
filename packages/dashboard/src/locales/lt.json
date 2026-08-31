@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Paskutinis {at}: nepavyko ({error})",
 		"autoBackupStored": "Išsaugotos kopijos",
 		"autoBackupDownload": "Atsisiųsti",
-		"autoBackupNone": "Išsaugotų kopijų dar nėra."
+		"autoBackupNone": "Išsaugotų kopijų dar nėra.",
+		"spamCheckNeverRun": "Antras patikrinimas dar nė karto nevykdytas.",
+		"spamCheckOk": "Paskutinį kartą jis suveikė {date}.",
+		"spamCheckFailing": "Paskutinis patikrinimas nepavyko ({date}).",
+		"spamCheckFailNote": "Nepatikrintas paštas patenka į gautuosius, todėl brukalas gali prasprūsti.",
+		"spamCheckUnauthorized": "API raktas atmestas. Patikrinkite raktą.",
+		"spamCheckRateLimited": "Pasiekta iškvietimų riba.",
+		"spamCheckServerError": "API grąžino klaidą.",
+		"spamCheckTimeout": "Atsakymas laiku negautas.",
+		"spamCheckNetwork": "Nepavyko pasiekti API.",
+		"spamCheckMalformed": "Nepavyko perskaityti atsakymo."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Netinkami prisijungimo duomenys",

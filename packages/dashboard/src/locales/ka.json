@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "ბოლო გაშვება {at}: ვერ შესრულდა ({error})",
 		"autoBackupStored": "შენახული ასლები",
 		"autoBackupDownload": "ჩამოტვირთვა",
-		"autoBackupNone": "შენახული ასლები ჯერ არ არის."
+		"autoBackupNone": "შენახული ასლები ჯერ არ არის.",
+		"spamCheckNeverRun": "მეორე შემოწმება ჯერ არასოდეს გაშვებულა.",
+		"spamCheckOk": "ბოლოს იმუშავა {date}.",
+		"spamCheckFailing": "ბოლო შემოწმება ჩავარდა ({date}).",
+		"spamCheckFailNote": "შეუმოწმებელი ფოსტა შემოსულებში ხვდება, ამიტომ სპამმა შეიძლება გაიაროს.",
+		"spamCheckUnauthorized": "API გასაღები უარყოფილია. შეამოწმეთ გასაღები.",
+		"spamCheckRateLimited": "მიღწეულია გამოძახებების ზღვარი.",
+		"spamCheckServerError": "API-მ შეცდომა დააბრუნა.",
+		"spamCheckTimeout": "პასუხი დროულად არ მოვიდა.",
+		"spamCheckNetwork": "API-სთან დაკავშირება ვერ მოხერხდა.",
+		"spamCheckMalformed": "პასუხის წაკითხვა ვერ მოხერხდა."
 	},
 	"apiErrors": {
 		"Invalid credentials": "მონაცემები არასწორია",

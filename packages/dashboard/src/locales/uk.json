@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Останній запуск {at}: невдало ({error})",
 		"autoBackupStored": "Збережені копії",
 		"autoBackupDownload": "Завантажити",
-		"autoBackupNone": "Збережених копій поки немає."
+		"autoBackupNone": "Збережених копій поки немає.",
+		"spamCheckNeverRun": "Друга перевірка ще жодного разу не виконувалася.",
+		"spamCheckOk": "Востаннє вона спрацювала {date}.",
+		"spamCheckFailing": "Остання перевірка не вдалася ({date}).",
+		"spamCheckFailNote": "Неперевірена пошта потрапляє до вхідних, тож спам може проходити.",
+		"spamCheckUnauthorized": "Ключ API відхилено. Перевірте ключ.",
+		"spamCheckRateLimited": "Досягнуто межу кількості викликів.",
+		"spamCheckServerError": "API повернув помилку.",
+		"spamCheckTimeout": "Відповідь не надійшла вчасно.",
+		"spamCheckNetwork": "Не вдалося зв'язатися з API.",
+		"spamCheckMalformed": "Не вдалося прочитати відповідь."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Хибні дані для входу",

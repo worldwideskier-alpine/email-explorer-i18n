@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Son çalışma {at}: başarısız ({error})",
 		"autoBackupStored": "Saklanan yedekler",
 		"autoBackupDownload": "İndir",
-		"autoBackupNone": "Henüz saklanan yedek yok."
+		"autoBackupNone": "Henüz saklanan yedek yok.",
+		"spamCheckNeverRun": "İkinci denetim henüz hiç çalışmadı.",
+		"spamCheckOk": "En son {date} tarihinde çalıştı.",
+		"spamCheckFailing": "Son denetim başarısız oldu ({date}).",
+		"spamCheckFailNote": "Denetlenemeyen posta gelen kutusuna düşer, bu yüzden istenmeyen posta geçebilir.",
+		"spamCheckUnauthorized": "API anahtarı reddedildi. Anahtarı denetleyin.",
+		"spamCheckRateLimited": "Çağrı sınırına ulaşıldı.",
+		"spamCheckServerError": "API bir hata döndürdü.",
+		"spamCheckTimeout": "Zamanında yanıt gelmedi.",
+		"spamCheckNetwork": "API'ye ulaşılamadı.",
+		"spamCheckMalformed": "Yanıt okunamadı."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Kimlik bilgileri geçersiz",

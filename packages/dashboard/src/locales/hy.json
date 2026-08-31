@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Վերջին անգամ {at}՝ ձախողվեց ({error})",
 		"autoBackupStored": "Պահված պատճեններ",
 		"autoBackupDownload": "Ներբեռնել",
-		"autoBackupNone": "Պահված պատճեններ դեռ չկան։"
+		"autoBackupNone": "Պահված պատճեններ դեռ չկան։",
+		"spamCheckNeverRun": "Երկրորդ ստուգումը դեռ երբեք չի աշխատել։",
+		"spamCheckOk": "Վերջին անգամ աշխատել է {date}։",
+		"spamCheckFailing": "Վերջին ստուգումը ձախողվել է ({date})։",
+		"spamCheckFailNote": "Չստուգված նամակը գնում է մուտքի արկղ, ուստի սպամը կարող է անցնել։",
+		"spamCheckUnauthorized": "API բանալին մերժվել է։ Ստուգեք բանալին։",
+		"spamCheckRateLimited": "Հասել եք կանչերի սահմանին։",
+		"spamCheckServerError": "API-ն սխալ վերադարձրեց։",
+		"spamCheckTimeout": "Ժամանակին պատասխան չեկավ։",
+		"spamCheckNetwork": "API-ին հասնել չհաջողվեց։",
+		"spamCheckMalformed": "Պատասխանը կարդալ չհաջողվեց։"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Մուտքի տվյալները սխալ են",

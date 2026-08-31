@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Laatste run {at}: mislukt ({error})",
 		"autoBackupStored": "Opgeslagen back-ups",
 		"autoBackupDownload": "Downloaden",
-		"autoBackupNone": "Nog geen opgeslagen back-ups."
+		"autoBackupNone": "Nog geen opgeslagen back-ups.",
+		"spamCheckNeverRun": "De tweede controle is nog nooit uitgevoerd.",
+		"spamCheckOk": "Hij werkte voor het laatst op {date}.",
+		"spamCheckFailing": "De laatste controle is mislukt ({date}).",
+		"spamCheckFailNote": "Post die niet kon worden gecontroleerd, komt in de inbox, dus er kan spam doorheen glippen.",
+		"spamCheckUnauthorized": "De API-sleutel is geweigerd. Controleer de sleutel.",
+		"spamCheckRateLimited": "De limiet voor het aantal aanroepen is bereikt.",
+		"spamCheckServerError": "De API gaf een fout terug.",
+		"spamCheckTimeout": "Er kwam niet op tijd antwoord.",
+		"spamCheckNetwork": "De API was niet bereikbaar.",
+		"spamCheckMalformed": "Het antwoord kon niet worden gelezen."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ongeldige aanmeldgegevens",

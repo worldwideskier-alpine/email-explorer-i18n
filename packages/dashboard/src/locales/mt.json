@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "L-aħħar {at}: falla ({error})",
 		"autoBackupStored": "Kopji salvati",
 		"autoBackupDownload": "Niżżel",
-		"autoBackupNone": "Għad m'hemmx kopji salvati."
+		"autoBackupNone": "Għad m'hemmx kopji salvati.",
+		"spamCheckNeverRun": "It-tieni verifika għadha qatt ma saret.",
+		"spamCheckOk": "L-aħħar darba ħadmet fl-{date}.",
+		"spamCheckFailing": "L-aħħar verifika falliet ({date}).",
+		"spamCheckFailNote": "Il-posta li ma setgħetx tiġi verifikata tmur fl-inbox, għalhekk l-ispam jista' jgħaddi.",
+		"spamCheckUnauthorized": "Iċ-ċavetta tal-API ġiet miċħuda. Iċċekkja ċ-ċavetta.",
+		"spamCheckRateLimited": "Intlaħaq il-limitu tas-sejħiet.",
+		"spamCheckServerError": "L-API rritorna żball.",
+		"spamCheckTimeout": "Ma waslet l-ebda tweġiba fil-ħin.",
+		"spamCheckNetwork": "L-API ma setax jintlaħaq.",
+		"spamCheckMalformed": "It-tweġiba ma setgħetx tinqara."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Kredenzjali mhux validi",

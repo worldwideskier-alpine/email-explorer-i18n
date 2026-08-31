@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Ultim decurs {at}: fallì ({error})",
 		"autoBackupStored": "Copias memorisadas",
 		"autoBackupDownload": "Telechargiar",
-		"autoBackupNone": "Anc naginas copias memorisadas."
+		"autoBackupNone": "Anc naginas copias memorisadas.",
+		"spamCheckNeverRun": "La segunda controlla n'è anc mai vegnida exequida.",
+		"spamCheckOk": "Ella ha funcziunà l'ultima giada ils {date}.",
+		"spamCheckFailing": "L'ultima controlla è fallida ({date}).",
+		"spamCheckFailNote": "La posta che n'ha betg pudì vegnir controllada va en la posta entrada, uschia po spam passar.",
+		"spamCheckUnauthorized": "La clav API è vegnida refusada. Controllai la clav.",
+		"spamCheckRateLimited": "La limita da clomadas è cuntanschida.",
+		"spamCheckServerError": "L'API ha dà enavos in sbagl.",
+		"spamCheckTimeout": "Nagina resposta n'è arrivada a temp.",
+		"spamCheckNetwork": "L'API n'ha betg pudì vegnir cuntanschida.",
+		"spamCheckMalformed": "La resposta n'ha betg pudì vegnir legida."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Datas d'annunzia nunvalidas",

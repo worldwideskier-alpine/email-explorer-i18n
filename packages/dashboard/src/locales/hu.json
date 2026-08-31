@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Utolsó futás {at}: sikertelen ({error})",
 		"autoBackupStored": "Mentett másolatok",
 		"autoBackupDownload": "Letöltés",
-		"autoBackupNone": "Még nincs mentett másolat."
+		"autoBackupNone": "Még nincs mentett másolat.",
+		"spamCheckNeverRun": "A második ellenőrzés még egyszer sem futott le.",
+		"spamCheckOk": "Utoljára {date} napján működött.",
+		"spamCheckFailing": "A legutóbbi ellenőrzés sikertelen volt ({date}).",
+		"spamCheckFailNote": "Az ellenőrizetlen levél a beérkezett üzenetek közé kerül, így átjuthat kéretlen levél.",
+		"spamCheckUnauthorized": "Az API-kulcsot elutasították. Ellenőrizze a kulcsot.",
+		"spamCheckRateLimited": "Elérte a hívások felső határát.",
+		"spamCheckServerError": "Az API hibát adott vissza.",
+		"spamCheckTimeout": "Nem érkezett válasz időben.",
+		"spamCheckNetwork": "Az API nem volt elérhető.",
+		"spamCheckMalformed": "A válasz nem volt olvasható."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Érvénytelen bejelentkezési adatok",

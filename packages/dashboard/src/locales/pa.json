@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "ਆਖਰੀ ਵਾਰ {at}: ਅਸਫਲ ({error})",
 		"autoBackupStored": "ਸੰਭਾਲੇ ਬੈਕਅੱਪ",
 		"autoBackupDownload": "ਡਾਊਨਲੋਡ",
-		"autoBackupNone": "ਹਾਲੇ ਕੋਈ ਸੰਭਾਲਿਆ ਬੈਕਅੱਪ ਨਹੀਂ।"
+		"autoBackupNone": "ਹਾਲੇ ਕੋਈ ਸੰਭਾਲਿਆ ਬੈਕਅੱਪ ਨਹੀਂ।",
+		"spamCheckNeverRun": "ਦੂਜੇ ਪੜਾਅ ਦੀ ਜਾਂਚ ਹਾਲੇ ਤੱਕ ਨਹੀਂ ਚੱਲੀ।",
+		"spamCheckOk": "ਆਖ਼ਰੀ ਵਾਰ ਇਹ {date} ਨੂੰ ਚੱਲੀ ਸੀ।",
+		"spamCheckFailing": "ਪਿਛਲੀ ਜਾਂਚ ਅਸਫਲ ਰਹੀ ({date})।",
+		"spamCheckFailNote": "ਜਿਹੜੀ ਮੇਲ ਜਾਂਚੀ ਨਹੀਂ ਜਾ ਸਕੀ ਉਹ ਇਨਬਾਕਸ ਵਿੱਚ ਜਾਂਦੀ ਹੈ, ਇਸ ਲਈ ਸਪੈਮ ਲੰਘ ਸਕਦੀ ਹੈ।",
+		"spamCheckUnauthorized": "API ਕੁੰਜੀ ਰੱਦ ਕੀਤੀ ਗਈ। ਕੁੰਜੀ ਜਾਂਚੋ।",
+		"spamCheckRateLimited": "ਕਾਲਾਂ ਦੀ ਹੱਦ ਪੂਰੀ ਹੋ ਗਈ।",
+		"spamCheckServerError": "API ਨੇ ਗਲਤੀ ਵਾਪਸ ਕੀਤੀ।",
+		"spamCheckTimeout": "ਸਮੇਂ ਸਿਰ ਕੋਈ ਜਵਾਬ ਨਹੀਂ ਆਇਆ।",
+		"spamCheckNetwork": "API ਤੱਕ ਪਹੁੰਚ ਨਹੀਂ ਹੋ ਸਕੀ।",
+		"spamCheckMalformed": "ਜਵਾਬ ਪੜ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ਸਾਈਨ ਇਨ ਦੀ ਜਾਣਕਾਰੀ ਗਲਤ ਹੈ",

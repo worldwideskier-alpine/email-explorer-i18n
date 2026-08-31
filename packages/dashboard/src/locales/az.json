@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Son işə salma {at}: alınmadı ({error})",
 		"autoBackupStored": "Saxlanmış nüsxələr",
 		"autoBackupDownload": "Endir",
-		"autoBackupNone": "Hələ saxlanmış nüsxə yoxdur."
+		"autoBackupNone": "Hələ saxlanmış nüsxə yoxdur.",
+		"spamCheckNeverRun": "İkinci yoxlama hələ işə düşməyib.",
+		"spamCheckOk": "Sonuncu dəfə {date} tarixində işlədi.",
+		"spamCheckFailing": "Son yoxlama uğursuz oldu ({date}).",
+		"spamCheckFailNote": "Yoxlanıla bilməyən poçt gələnlərə düşür, spam keçə bilər.",
+		"spamCheckUnauthorized": "API açarı rədd edildi. Açarı yoxlayın.",
+		"spamCheckRateLimited": "Çağırış sayı həddinə çatdı.",
+		"spamCheckServerError": "API xəta qaytardı.",
+		"spamCheckTimeout": "Vaxtında cavab gəlmədi.",
+		"spamCheckNetwork": "API-yə qoşulmaq mümkün olmadı.",
+		"spamCheckMalformed": "Cavabı oxumaq mümkün olmadı."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Giriş məlumatları yanlışdır",

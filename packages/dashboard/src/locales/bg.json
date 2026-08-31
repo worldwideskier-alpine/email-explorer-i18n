@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Последно {at}: неуспешно ({error})",
 		"autoBackupStored": "Записани копия",
 		"autoBackupDownload": "Изтегляне",
-		"autoBackupNone": "Още няма записани копия."
+		"autoBackupNone": "Още няма записани копия.",
+		"spamCheckNeverRun": "Втората проверка още не е изпълнявана.",
+		"spamCheckOk": "Последно работи на {date}.",
+		"spamCheckFailing": "Последната проверка се провали ({date}).",
+		"spamCheckFailNote": "Поща, която не е проверена, отива във входящата кутия, така че спам може да минава.",
+		"spamCheckUnauthorized": "Ключът за API беше отхвърлен. Проверете ключа.",
+		"spamCheckRateLimited": "Достигнат е лимитът на извикванията.",
+		"spamCheckServerError": "API върна грешка.",
+		"spamCheckTimeout": "Не пристигна отговор навреме.",
+		"spamCheckNetwork": "Не може да се осъществи връзка с API.",
+		"spamCheckMalformed": "Отговорът не можа да бъде прочетен."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Невалидни данни за вход",

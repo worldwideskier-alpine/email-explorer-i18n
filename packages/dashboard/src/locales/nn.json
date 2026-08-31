@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Siste køyring {at}: mislukkast ({error})",
 		"autoBackupStored": "Lagra kopiar",
 		"autoBackupDownload": "Last ned",
-		"autoBackupNone": "Ingen lagra kopiar enno."
+		"autoBackupNone": "Ingen lagra kopiar enno.",
+		"spamCheckNeverRun": "Den andre kontrollen har enno ikkje køyrt.",
+		"spamCheckOk": "Han verka sist {date}.",
+		"spamCheckFailing": "Den siste kontrollen mislukkast ({date}).",
+		"spamCheckFailNote": "Post som ikkje kunne kontrollerast, hamnar i innboksen, så søppelpost kan sleppe gjennom.",
+		"spamCheckUnauthorized": "API-nøkkelen vart avvist. Sjekk nøkkelen.",
+		"spamCheckRateLimited": "Grensa for talet på kall er nådd.",
+		"spamCheckServerError": "API-et returnerte ein feil.",
+		"spamCheckTimeout": "Det kom ikkje svar i tide.",
+		"spamCheckNetwork": "API-et kunne ikkje nåast.",
+		"spamCheckMalformed": "Svaret kunne ikkje lesast."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Feil innloggingsopplysningar",
