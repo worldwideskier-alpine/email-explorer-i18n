@@ -218,4 +218,70 @@ describe("Claude second-stage spam classification", () => {
 			"inbox",
 		);
 	});
+
+	/**
+	 * These two ride on how the stub decides its verdict: it answers SPAM when
+	 * the marker appears anywhere in the request body. Putting the marker in a
+	 * field rather than in the subject turns "did this field reach the API at
+	 * all" into something the folder can answer.
+	 *
+	 * Both cover the gap a message impersonating a card issuer walked through:
+	 * it authenticated cleanly on a domain its sender owned, and everything
+	 * that would have given it away -- the display name, the failed signature,
+	 * the absent DMARC policy -- was dropped before the classifier saw it.
+	 */
+	describe("what reaches the classifier", () => {
+		it("passes the sender's display name, not just the address", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			const rawEmail = buildRawEmail(
+				{
+					// Encoded exactly as an impersonating display name arrives:
+					// RFC 2047, so the name only exists once postal-mime decodes it.
+					From: `=?UTF-8?B?${Buffer.from("TRIGGER_CLAUDE_SPAM", "utf8").toString("base64")}?= <sender@legit.com>`,
+					To: mailboxId,
+					Subject: "Display name reaches the classifier",
+					"Content-Type": "text/plain",
+					"Authentication-Results": PASSING_AUTH_RESULTS,
+				},
+				"Hello",
+			);
+
+			await simulateReceiveEmail(rawEmail);
+
+			// Nothing else in this message carries the marker: the subject, the
+			// body and the address are all clean. Landing in spam is only
+			// possible if the decoded display name was sent.
+			expect(await folderOf("Display name reaches the classifier")).toBe(
+				"spam",
+			);
+		});
+
+		it("passes the authentication verdicts", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			const rawEmail = buildRawEmail(
+				{
+					From: "sender@legit.com",
+					To: mailboxId,
+					Subject: "Auth verdicts reach the classifier",
+					"Content-Type": "text/plain",
+					// A verdict value is whatever word the relay wrote there, so
+					// the marker travels the same route a real "fail" does: read
+					// out of the header by summarizeAuthResults, put on the
+					// Authentication line, sent. It is not one of the values the
+					// first pass files mail on, so stage 1 lets this through.
+					"Authentication-Results":
+						"mx.example.com; spf=pass smtp.mailfrom=legit.com; dkim=TRIGGER_CLAUDE_SPAM header.i=@legit.com; dmarc=pass header.from=legit.com",
+				},
+				"Hello",
+			);
+
+			await simulateReceiveEmail(rawEmail);
+
+			expect(await folderOf("Auth verdicts reach the classifier")).toBe(
+				"spam",
+			);
+		});
+	});
 });

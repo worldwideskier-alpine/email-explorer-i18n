@@ -50,6 +50,7 @@ import { slugify } from "./slugify";
 import {
 	classifyByAuthResults,
 	isTrustedSelfDomainSender,
+	summarizeAuthResults,
 } from "./spam-filter";
 import {
 	clientIp,
@@ -2292,6 +2293,17 @@ async function receiveEmail(
 				apiKey: claudeApiKey,
 				subject: parsedEmail.subject || "",
 				from: parsedEmail.from?.address || "",
+				// The display name and the authentication verdicts both used to
+				// be dropped here. Impersonation lives in the gap between the
+				// two halves of the From line -- a household brand name over an
+				// address on an unrelated domain -- and passing only the address
+				// hid exactly that. The verdicts matter for the opposite reason:
+				// this stage is reached only by mail that already passed them,
+				// so without them the classifier cannot tell mail that passed
+				// cleanly from mail that passed with a broken signature on a
+				// domain that enforces nothing.
+				fromName: parsedEmail.from?.name,
+				auth: summarizeAuthResults(parsedEmail.headers),
 				text: parsedEmail.text,
 				html: parsedEmail.html,
 			});
