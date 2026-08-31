@@ -123,12 +123,18 @@ describe("a realistic Outlook message", () => {
 <p>いつもお世話になっております。</p>
 </div></body></html>`;
 
+	// The gap after 山田 is a non-breaking space followed by an ordinary one,
+	// and it survives as both. A browser renders it that way -- NBSP is
+	// content, not layout -- and this used to fold it to a single space along
+	// with every ideographic space in a Japanese message. The empty paragraphs
+	// Outlook writes for blank lines still collapse: NBSP alone on a line is
+	// still a blank line.
 	it("reads as the message did, with nothing from the markup", () => {
 		expect(htmlToPlainText(`<blockquote>${html}</blockquote>`)).toBe(
 			[
 				"> サンプル商事株式会社",
 				">",
-				"> 山田 様",
+				"> 山田  様",
 				">",
 				"> いつもお世話になっております。",
 			].join("\n"),
@@ -209,6 +215,34 @@ describe("preformatted text", () => {
 	it("still collapses ordinary markup", () => {
 		expect(htmlToPlainText("<p>一行目\n   まだ同じ行</p>")).toBe(
 			"一行目 まだ同じ行",
+		);
+	});
+});
+
+describe("space that is content, not layout", () => {
+	// JavaScript's \s covers these; CSS's white-space collapsing does not. A
+	// quoted Japanese letter loses its shape when they are folded.
+	it("keeps an ideographic space", () => {
+		expect(htmlToPlainText("<p>魚田　様</p>")).toBe("魚田　様");
+	});
+
+	it("keeps a run of ideographic spaces used to line a column up", () => {
+		expect(
+			htmlToPlainText("<p>商号　　　　　　ビューティフルスノー株式会社</p>"),
+		).toBe("商号　　　　　　ビューティフルスノー株式会社");
+	});
+
+	it("keeps non-breaking spaces", () => {
+		expect(htmlToPlainText("<p>商号&nbsp;&nbsp;&nbsp;&nbsp;サンプル</p>")).toBe(
+			"商号    サンプル",
+		);
+	});
+
+	// The folding itself still has to happen, or source indentation becomes
+	// content.
+	it("still folds the spaces and newlines CSS folds", () => {
+		expect(htmlToPlainText("<p>一行目\n   まだ同じ行\t\tここも</p>")).toBe(
+			"一行目 まだ同じ行 ここも",
 		);
 	});
 });

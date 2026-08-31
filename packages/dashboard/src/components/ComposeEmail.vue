@@ -184,6 +184,7 @@ import { storeToRefs } from "pinia";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
+import { useDateFormat } from "@/composables/useDateFormat";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import { useToast } from "@/composables/useToast";
 import api from "@/services/api";
@@ -202,6 +203,7 @@ import {
 	htmlToPlainText,
 	plainTextToSimpleHtml,
 } from "@/utils/htmlToPlainText";
+import { toQuotableHtml } from "@/utils/quotedBody";
 import RichTextEditor from "./RichTextEditor.vue";
 
 const uiStore = useUIStore();
@@ -291,6 +293,31 @@ const modalTitle = computed(() => {
 	}
 });
 
+const { formatFullDate } = useDateFormat();
+
+/**
+ * The header above a quote, and the quote itself.
+ *
+ * Both halves used to be wrong. The date went in as whatever string the API
+ * returned, so the reader was shown a raw ISO timestamp
+ * ("2026-08-31T05:39:23.339Z") rather than a date in their own language; and
+ * the body went in as stored, which for a plain-text message means a single
+ * `<pre>` that the editor turns into one indivisible code block. See
+ * toQuotableHtml.
+ */
+const quoteHeader = (original: { date: string; sender: string }) =>
+	t("compose.replyQuotePrefix", {
+		date: formatFullDate(original.date),
+		sender: original.sender,
+	});
+
+const quotedBlock = (original: {
+	date: string;
+	sender: string;
+	body: string;
+}) =>
+	`<blockquote style="border-left: 2px solid #ccc; margin: 0; padding-left: 1em; color: #666;"><p>${quoteHeader(original)}</p>${toQuotableHtml(original.body)}</blockquote>`;
+
 // Format quoted text for replies
 const formatQuotedText = (text: string) => {
 	return text
@@ -359,7 +386,7 @@ watch(isComposeModalOpen, (isOpen) => {
 			subject.value = original.subject.startsWith("Re: ")
 				? original.subject
 				: `Re: ${original.subject}`;
-			body.value = `<br>${sigBlock}<br><blockquote style="border-left: 2px solid #ccc; margin: 0; padding-left: 1em; color: #666;">${t("compose.replyQuotePrefix", { date: original.date, sender: original.sender })}<br><br>${original.body}</blockquote>`;
+			body.value = `<p><br></p>${sigBlock}${quotedBlock(original)}`;
 		} else if (options.mode === "reply-all" && original) {
 			// Everyone who saw the original, minus this mailbox: the sender and
 			// the other To: addresses go to To, the original Cc: stays Cc. The
@@ -378,19 +405,13 @@ watch(isComposeModalOpen, (isOpen) => {
 			subject.value = original.subject.startsWith("Re: ")
 				? original.subject
 				: `Re: ${original.subject}`;
-			body.value = `<br>${sigBlock}<br><blockquote style="border-left: 2px solid #ccc; margin: 0; padding-left: 1em; color: #666;">${t("compose.replyQuotePrefix", { date: original.date, sender: original.sender })}<br><br>${original.body}</blockquote>`;
+			body.value = `<p><br></p>${sigBlock}${quotedBlock(original)}`;
 		} else if (options.mode === "forward" && original) {
 			to.value = "";
 			subject.value = original.subject.startsWith("Fwd: ")
 				? original.subject
 				: `Fwd: ${original.subject}`;
-			body.value = `<br>${sigBlock}<br><div style="border: 1px solid #ddd; padding: 1em; background-color: #f9f9f9; margin: 1em 0;">
-<strong>${t("compose.forwardedMessage")}</strong><br>
-<strong>${t("compose.forwardFrom")}</strong> ${original.sender}<br>
-<strong>${t("compose.forwardDate")}</strong> ${original.date}<br>
-<strong>${t("compose.forwardSubject")}</strong> ${original.subject}<br><br>
-${original.body}
-</div>`;
+			body.value = `<p><br></p>${sigBlock}<div style="border: 1px solid #ddd; padding: 1em; background-color: #f9f9f9; margin: 1em 0;"><p><strong>${t("compose.forwardedMessage")}</strong><br><strong>${t("compose.forwardFrom")}</strong> ${original.sender}<br><strong>${t("compose.forwardDate")}</strong> ${formatFullDate(original.date)}<br><strong>${t("compose.forwardSubject")}</strong> ${original.subject}</p>${toQuotableHtml(original.body)}</div>`;
 		} else {
 			to.value = "";
 			subject.value = "";
