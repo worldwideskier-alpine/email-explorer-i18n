@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Aucune réponse n'est arrivée à temps.",
 		"spamCheckNetwork": "L'API n'a pas pu être jointe.",
 		"spamCheckMalformed": "La réponse n'a pas pu être lue.",
-		"spamCheckDetail": "Réponse : {detail}"
+		"spamCheckDetail": "Réponse : {detail}",
+		"spamPurgeTitle": "Suppression automatique des spams",
+		"spamPurgeDescription": "Supprime chaque jour les messages du dossier spam plus anciens que le nombre de jours défini. Exécutée après la sauvegarde automatique, les messages supprimés figurent donc encore dans la dernière sauvegarde.",
+		"spamPurgeDays": "Jours de conservation",
+		"spamPurgeNoBackupNote": "La sauvegarde automatique est désactivée. Les messages supprimés dans cet état ne sont conservés nulle part.",
+		"spamPurgeSaved": "Enregistré.",
+		"spamPurgeNeverRun": "Pas encore exécuté.",
+		"spamPurgeLastOk": "Dernière exécution {at} : {deleted} supprimés.",
+		"spamPurgeLastFailed": "Dernière exécution {at} : échec ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Identifiants invalides",

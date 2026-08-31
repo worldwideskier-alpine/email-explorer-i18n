@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "නියමිත වේලාවට පිළිතුරක් ලැබුණේ නැත.",
 		"spamCheckNetwork": "API වෙත ළඟා විය නොහැකි විය.",
 		"spamCheckMalformed": "පිළිතුර කියවිය නොහැකි විය.",
-		"spamCheckDetail": "ප්‍රතිචාරය: {detail}"
+		"spamCheckDetail": "ප්‍රතිචාරය: {detail}",
+		"spamPurgeTitle": "අයාචිත තැපෑල ස්වයංක්‍රීයව මකා දැමීම",
+		"spamPurgeDescription": "අයාචිත තැපැල් ෆෝල්ඩරයේ ඔබ නියම කළ දින ගණනට වඩා පැරණි තැපැල් දිනපතා මකා දමයි. ස්වයංක්‍රීය උපස්ථයෙන් පසුව ධාවනය වන බැවින්, මකා දැමූ තැපැල් නවතම උපස්ථයේ තවමත් ඇත.",
+		"spamPurgeDays": "තබා ගන්නා දින",
+		"spamPurgeNoBackupNote": "ස්වයංක්‍රීය උපස්ථය ක්‍රියාවිරහිතයි. එවිට මකා දමන තැපැල් කිසිම තැනක ඉතිරි නොවේ.",
+		"spamPurgeSaved": "සුරකින ලදි.",
+		"spamPurgeNeverRun": "තවම වරක්වත් ක්‍රියාත්මක වී නැත.",
+		"spamPurgeLastOk": "අවසන් ධාවනය {at}: {deleted} ක් මකා දමන ලදී.",
+		"spamPurgeLastFailed": "අවසන් වරට {at}: අසාර්ථකයි ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "පිවිසුම් තොරතුරු වැරදියි",

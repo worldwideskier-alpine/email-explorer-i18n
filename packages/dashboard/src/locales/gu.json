@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "સમયસર કોઈ જવાબ મળ્યો નહીં.",
 		"spamCheckNetwork": "API સુધી પહોંચી શકાયું નહીં.",
 		"spamCheckMalformed": "જવાબ વાંચી શકાયો નહીં.",
-		"spamCheckDetail": "પ્રતિસાદ: {detail}"
+		"spamCheckDetail": "પ્રતિસાદ: {detail}",
+		"spamPurgeTitle": "સ્પામનું આપમેળે કાઢી નાખવું",
+		"spamPurgeDescription": "સ્પામ ફોલ્ડરમાં તમે નક્કી કરેલા દિવસો કરતાં જૂના મેલ દરરોજ કાઢી નાખે છે. આપમેળે બેકઅપ પછી ચાલે છે, તેથી કાઢી નાખેલા મેલ સૌથી તાજા બેકઅપમાં હજુ પણ હોય છે.",
+		"spamPurgeDays": "રાખવાના દિવસો",
+		"spamPurgeNoBackupNote": "આપમેળે બેકઅપ બંધ છે. આ દરમિયાન કાઢી નાખેલા મેલ ક્યાંય રહેતા નથી.",
+		"spamPurgeSaved": "સાચવ્યું.",
+		"spamPurgeNeverRun": "હજી એક વાર પણ ચાલ્યું નથી.",
+		"spamPurgeLastOk": "છેલ્લી વખત {at}: {deleted} કાઢી નાખ્યા.",
+		"spamPurgeLastFailed": "છેલ્લે {at}: નિષ્ફળ ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "સાઇન ઇનની માહિતી ખોટી છે",

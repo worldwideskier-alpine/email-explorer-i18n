@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Vastust ei tulnud õigeks ajaks.",
 		"spamCheckNetwork": "API-ga ei õnnestunud ühendust saada.",
 		"spamCheckMalformed": "Vastust ei õnnestunud lugeda.",
-		"spamCheckDetail": "Vastus: {detail}"
+		"spamCheckDetail": "Vastus: {detail}",
+		"spamPurgeTitle": "Rämpsposti automaatne kustutamine",
+		"spamPurgeDescription": "Kustutab iga päev rämpspostikaustast kirjad, mis on vanemad kui määratud päevade arv. Käivitub pärast automaatset varukoopiat, seega kustutatud kirjad on veel kõige uuemas koopias.",
+		"spamPurgeDays": "Säilitamise päevad",
+		"spamPurgeNoBackupNote": "Automaatne varundamine on välja lülitatud. Sel ajal kustutatud kirju ei säilitata kusagil.",
+		"spamPurgeSaved": "Salvestatud.",
+		"spamPurgeNeverRun": "Pole veel käivitunud.",
+		"spamPurgeLastOk": "Viimane käivitus {at}: {deleted} kustutatud.",
+		"spamPurgeLastFailed": "Viimane {at}: ebaõnnestus ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Vigased sisselogimisandmed",

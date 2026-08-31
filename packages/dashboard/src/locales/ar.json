@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "لم يصل ردّ في الوقت المحدد.",
 		"spamCheckNetwork": "تعذّر الوصول إلى الواجهة.",
 		"spamCheckMalformed": "تعذّرت قراءة الرد.",
-		"spamCheckDetail": "الرد: {detail}"
+		"spamCheckDetail": "الرد: {detail}",
+		"spamPurgeTitle": "الحذف التلقائي للبريد المزعج",
+		"spamPurgeDescription": "يحذف يوميًا الرسائل الموجودة في مجلد البريد المزعج والأقدم من عدد الأيام الذي تحدده. يعمل بعد النسخة الاحتياطية التلقائية، لذا تبقى الرسائل المحذوفة في أحدث نسخة.",
+		"spamPurgeDays": "أيام الاحتفاظ",
+		"spamPurgeNoBackupNote": "النسخ الاحتياطي التلقائي متوقف. الرسائل المحذوفة في هذه الحالة لا تُحفظ في أي مكان.",
+		"spamPurgeSaved": "تم الحفظ.",
+		"spamPurgeNeverRun": "لم يُشغَّل بعد.",
+		"spamPurgeLastOk": "آخر تشغيل {at}: حُذفت {deleted}.",
+		"spamPurgeLastFailed": "آخر تشغيل {at}: فشل ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "بيانات الدخول غير صحيحة",

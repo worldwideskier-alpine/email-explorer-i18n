@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "وقت پر کوئی جواب نہیں آیا۔",
 		"spamCheckNetwork": "API تک رسائی نہ ہو سکی۔",
 		"spamCheckMalformed": "جواب پڑھا نہ جا سکا۔",
-		"spamCheckDetail": "جواب: {detail}"
+		"spamCheckDetail": "جواب: {detail}",
+		"spamPurgeTitle": "سپیم کی خودکار حذف",
+		"spamPurgeDescription": "سپیم فولڈر میں آپ کے مقرر کردہ دنوں سے پرانی میلیں روزانہ حذف کرتا ہے۔ خودکار بیک اپ کے بعد چلتا ہے، اس لیے حذف شدہ میلیں تازہ ترین بیک اپ میں اب بھی موجود رہتی ہیں۔",
+		"spamPurgeDays": "رکھنے کے دن",
+		"spamPurgeNoBackupNote": "خودکار بیک اپ بند ہے۔ اس دوران حذف ہونے والی میلیں کہیں محفوظ نہیں رہتیں۔",
+		"spamPurgeSaved": "محفوظ ہو گیا۔",
+		"spamPurgeNeverRun": "ابھی ایک بار بھی نہیں چلا۔",
+		"spamPurgeLastOk": "آخری عمل {at}: {deleted} حذف ہوئیں۔",
+		"spamPurgeLastFailed": "آخری بار {at}: ناکام ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "سائن ان کی معلومات غلط ہیں",

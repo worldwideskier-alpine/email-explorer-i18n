@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Tiada jawapan dalam masa yang ditetapkan.",
 		"spamCheckNetwork": "API tidak dapat dihubungi.",
 		"spamCheckMalformed": "Jawapan tidak dapat dibaca.",
-		"spamCheckDetail": "Respons: {detail}"
+		"spamCheckDetail": "Respons: {detail}",
+		"spamPurgeTitle": "Pemadaman spam automatik",
+		"spamPurgeDescription": "Setiap hari memadam e-mel dalam folder spam yang lebih lama daripada bilangan hari yang anda tetapkan. Dijalankan selepas sandaran automatik, jadi e-mel yang dipadam masih ada dalam sandaran terbaharu.",
+		"spamPurgeDays": "Hari simpanan",
+		"spamPurgeNoBackupNote": "Sandaran automatik dimatikan. E-mel yang dipadam ketika itu tidak disimpan di mana-mana.",
+		"spamPurgeSaved": "Disimpan.",
+		"spamPurgeNeverRun": "Belum pernah dijalankan.",
+		"spamPurgeLastOk": "Larian terakhir {at}: {deleted} dipadam.",
+		"spamPurgeLastFailed": "Kali terakhir {at}: gagal ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Butiran log masuk tidak sah",

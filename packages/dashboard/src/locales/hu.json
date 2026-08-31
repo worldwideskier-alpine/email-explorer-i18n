@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Nem érkezett válasz időben.",
 		"spamCheckNetwork": "Az API nem volt elérhető.",
 		"spamCheckMalformed": "A válasz nem volt olvasható.",
-		"spamCheckDetail": "Válasz: {detail}"
+		"spamCheckDetail": "Válasz: {detail}",
+		"spamPurgeTitle": "Levélszemét automatikus törlése",
+		"spamPurgeDescription": "Naponta törli a levélszemét mappából a megadott napszámnál régebbi leveleket. Az automatikus mentés után fut, így a törölt levelek még benne vannak a legutóbbi mentésben.",
+		"spamPurgeDays": "Megőrzés napokban",
+		"spamPurgeNoBackupNote": "Az automatikus mentés ki van kapcsolva. Az ilyenkor törölt levelek sehol nem maradnak meg.",
+		"spamPurgeSaved": "Mentve.",
+		"spamPurgeNeverRun": "Még nem futott.",
+		"spamPurgeLastOk": "Utolsó futás {at}: {deleted} törölve.",
+		"spamPurgeLastFailed": "Utolsó futás {at}: sikertelen ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Érvénytelen bejelentkezési adatok",

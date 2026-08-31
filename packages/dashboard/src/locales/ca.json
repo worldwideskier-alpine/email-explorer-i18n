@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "No hi ha hagut resposta a temps.",
 		"spamCheckNetwork": "No s'ha pogut connectar amb l'API.",
 		"spamCheckMalformed": "No s'ha pogut llegir la resposta.",
-		"spamCheckDetail": "Resposta: {detail}"
+		"spamCheckDetail": "Resposta: {detail}",
+		"spamPurgeTitle": "Eliminació automàtica del correu brossa",
+		"spamPurgeDescription": "Cada dia elimina els missatges de la carpeta de correu brossa més antics que el nombre de dies que indiqueu. S'executa després de la còpia de seguretat automàtica, així que els missatges eliminats encara són a la còpia més recent.",
+		"spamPurgeDays": "Dies de conservació",
+		"spamPurgeNoBackupNote": "La còpia de seguretat automàtica està desactivada. Els missatges eliminats mentrestant no es conserven enlloc.",
+		"spamPurgeSaved": "Desat.",
+		"spamPurgeNeverRun": "Encara no s'ha executat.",
+		"spamPurgeLastOk": "Última execució {at}: {deleted} eliminats.",
+		"spamPurgeLastFailed": "Darrera execució {at}: ha fallat ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Credencials incorrectes",

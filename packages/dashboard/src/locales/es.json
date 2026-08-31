@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "No hubo respuesta a tiempo.",
 		"spamCheckNetwork": "No se pudo conectar con la API.",
 		"spamCheckMalformed": "No se pudo leer la respuesta.",
-		"spamCheckDetail": "Respuesta: {detail}"
+		"spamCheckDetail": "Respuesta: {detail}",
+		"spamPurgeTitle": "Eliminación automática de spam",
+		"spamPurgeDescription": "Elimina cada día los mensajes de la carpeta de spam más antiguos que el número de días indicado. Se ejecuta después de la copia de seguridad automática, así que lo eliminado sigue estando en la copia más reciente.",
+		"spamPurgeDays": "Días de conservación",
+		"spamPurgeNoBackupNote": "La copia de seguridad automática está desactivada. Los mensajes eliminados así no se conservan en ningún sitio.",
+		"spamPurgeSaved": "Guardado.",
+		"spamPurgeNeverRun": "Todavía no se ha ejecutado.",
+		"spamPurgeLastOk": "Última ejecución {at}: {deleted} eliminados.",
+		"spamPurgeLastFailed": "Última ejecución {at}: falló ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Credenciales no válidas",

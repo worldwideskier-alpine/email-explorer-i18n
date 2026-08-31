@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Одговор није стигао на време.",
 		"spamCheckNetwork": "Није било могуће доћи до API-ја.",
 		"spamCheckMalformed": "Одговор није било могуће прочитати.",
-		"spamCheckDetail": "Одговор: {detail}"
+		"spamCheckDetail": "Одговор: {detail}",
+		"spamPurgeTitle": "Аутоматско брисање нежељене поште",
+		"spamPurgeDescription": "Сваког дана брише поруке у фасцикли нежељене поште старије од задатог броја дана. Покреће се после аутоматске резервне копије, па су обрисане поруке још у најновијој копији.",
+		"spamPurgeDays": "Број дана",
+		"spamPurgeNoBackupNote": "Аутоматска резервна копија је искључена. Поруке обрисане у међувремену нигде се не чувају.",
+		"spamPurgeSaved": "Сачувано.",
+		"spamPurgeNeverRun": "Још није покренуто.",
+		"spamPurgeLastOk": "Последње извршавање {at}: обрисано {deleted}.",
+		"spamPurgeLastFailed": "Последње {at}: неуспешно ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Неисправни подаци за пријаву",

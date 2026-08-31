@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Не пристигна отговор навреме.",
 		"spamCheckNetwork": "Не може да се осъществи връзка с API.",
 		"spamCheckMalformed": "Отговорът не можа да бъде прочетен.",
-		"spamCheckDetail": "Отговор: {detail}"
+		"spamCheckDetail": "Отговор: {detail}",
+		"spamPurgeTitle": "Автоматично изтриване на спам",
+		"spamPurgeDescription": "Всеки ден изтрива писмата в папката за спам, по-стари от зададения брой дни. Изпълнява се след автоматичното резервно копие, така че изтритите писма са още в най-новото копие.",
+		"spamPurgeDays": "Дни за пазене",
+		"spamPurgeNoBackupNote": "Автоматичното резервно копие е изключено. Писмата, изтрити междувременно, не се пазят никъде.",
+		"spamPurgeSaved": "Записано.",
+		"spamPurgeNeverRun": "Още не е изпълнявано.",
+		"spamPurgeLastOk": "Последно изпълнение {at}: изтрити {deleted}.",
+		"spamPurgeLastFailed": "Последно {at}: неуспешно ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Невалидни данни за вход",

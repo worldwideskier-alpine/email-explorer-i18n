@@ -914,6 +914,27 @@ export class MailboxDO extends DurableObject<Env> {
 	 * fetches each body as it goes, so that a mailbox of any size costs one
 	 * message worth of memory rather than all of them at once.
 	 */
+	/**
+	 * The spam folder's messages with their stored dates, for the scheduled
+	 * purge to decide which are past their retention.
+	 *
+	 * The decision is not made in SQL. Most of these dates are ISO timestamps
+	 * in UTC and would compare correctly as text, but an imported message
+	 * carries whatever its own Date header said -- an offset, or a format that
+	 * sorts nowhere near where it belongs -- and comparing those as text would
+	 * pick the wrong messages to delete. See expiredSpamIds.
+	 */
+	async listSpamEmailDates(): Promise<{ id: string; date: string | null }[]> {
+		const rows = this.ctx.storage.sql
+			.exec("SELECT id, date FROM emails WHERE folder_id = 'spam'")
+			.toArray();
+		return rows.map((row) => ({
+			id: String(row.id),
+			date:
+				row.date === null || row.date === undefined ? null : String(row.date),
+		}));
+	}
+
 	async listEmailIdsByDate(): Promise<string[]> {
 		const rows = this.ctx.storage.sql
 			.exec("SELECT id FROM emails ORDER BY date ASC")

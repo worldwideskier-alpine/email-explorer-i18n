@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "ບໍ່ມີຄຳຕອບພາຍໃນເວລາ.",
 		"spamCheckNetwork": "ຕິດຕໍ່ API ບໍ່ໄດ້.",
 		"spamCheckMalformed": "ອ່ານຄຳຕອບບໍ່ໄດ້.",
-		"spamCheckDetail": "ການຕອບສະໜອງ: {detail}"
+		"spamCheckDetail": "ການຕອບສະໜອງ: {detail}",
+		"spamPurgeTitle": "ລຶບອີເມວຂີ້ເຫຍື້ອອັດຕະໂນມັດ",
+		"spamPurgeDescription": "ລຶບອີເມວໃນໂຟນເດີອີເມວຂີ້ເຫຍື້ອທີ່ເກົ່າກວ່າຈຳນວນມື້ທີ່ທ່ານກຳນົດທຸກມື້. ເຮັດວຽກຫຼັງການສຳຮອງຂໍ້ມູນອັດຕະໂນມັດ ດັ່ງນັ້ນອີເມວທີ່ຖືກລຶບຍັງຢູ່ໃນໄຟລ໌ສຳຮອງຫຼ້າສຸດ.",
+		"spamPurgeDays": "ຈຳນວນມື້ທີ່ເກັບໄວ້",
+		"spamPurgeNoBackupNote": "ການສຳຮອງຂໍ້ມູນອັດຕະໂນມັດປິດຢູ່. ອີເມວທີ່ຖືກລຶບໃນຊ່ວງນີ້ຈະບໍ່ຖືກເກັບໄວ້ບ່ອນໃດເລີຍ.",
+		"spamPurgeSaved": "ບັນທຶກແລ້ວ.",
+		"spamPurgeNeverRun": "ຍັງບໍ່ເຄີຍເຮັດວຽກ.",
+		"spamPurgeLastOk": "ເຮັດວຽກຫຼ້າສຸດ {at}: ລຶບແລ້ວ {deleted}.",
+		"spamPurgeLastFailed": "ຄັ້ງລ່າສຸດ {at}: ລົ້ມເຫລວ ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ຂໍ້ມູນເຂົ້າສູ່ລະບົບບໍ່ຖືກຕ້ອງ",

@@ -15,56 +15,22 @@
 import type { AutoBackupSettings } from "./auto-backup";
 import { isBackupDue, normalizeKeep } from "./auto-backup";
 import { writeMailboxBackup } from "./backup-writer";
+import { listMailboxes, updateMailboxSettings } from "./mailbox-records";
 import type { Env } from "./types";
 
-interface MailboxRecord {
-	id: string;
-	settings: Record<string, unknown> & { autoBackup?: AutoBackupSettings };
-}
-
-async function listMailboxes(env: Env): Promise<MailboxRecord[]> {
-	const out: MailboxRecord[] = [];
-	let cursor: string | undefined;
-	do {
-		const listed = await env.BUCKET.list({ prefix: "mailboxes/", cursor });
-		for (const obj of listed.objects) {
-			const id = obj.key.slice("mailboxes/".length).replace(/\.json$/, "");
-			if (!id) continue;
-			const stored = await env.BUCKET.get(obj.key);
-			out.push({
-				id,
-				settings: stored
-					? ((await stored.json()) as MailboxRecord["settings"])
-					: {},
-			});
-		}
-		cursor = listed.truncated ? listed.cursor : undefined;
-	} while (cursor);
-	return out;
-}
-
-/**
- * Writes the outcome back onto the mailbox. Read again rather than reusing
- * the copy from the top of the run: writing the whole archive takes a while,
- * and the settings may have been saved from the browser in between. Only the
- * three fields this run owns are replaced.
- */
+/** Writes the outcome back onto the mailbox. Only the fields this run owns. */
 async function recordResult(
 	env: Env,
 	mailboxId: string,
 	result: NonNullable<AutoBackupSettings["lastResult"]>,
 ): Promise<void> {
-	const key = `mailboxes/${mailboxId}.json`;
-	const stored = await env.BUCKET.get(key);
-	if (!stored) return;
-
-	const settings = (await stored.json()) as MailboxRecord["settings"];
-	settings.autoBackup = {
-		...settings.autoBackup,
-		lastRunAt: result.at,
-		lastResult: result,
-	};
-	await env.BUCKET.put(key, JSON.stringify(settings));
+	await updateMailboxSettings(env, mailboxId, (settings) => {
+		settings.autoBackup = {
+			...settings.autoBackup,
+			lastRunAt: result.at,
+			lastResult: result,
+		};
+	});
 }
 
 export interface BackupPassSummary {

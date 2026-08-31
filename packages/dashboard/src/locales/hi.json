@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "समय पर कोई उत्तर नहीं आया।",
 		"spamCheckNetwork": "API तक पहुँचा नहीं जा सका।",
 		"spamCheckMalformed": "उत्तर पढ़ा नहीं जा सका।",
-		"spamCheckDetail": "प्रतिक्रिया: {detail}"
+		"spamCheckDetail": "प्रतिक्रिया: {detail}",
+		"spamPurgeTitle": "स्पैम का स्वतः विलोपन",
+		"spamPurgeDescription": "स्पैम फ़ोल्डर में आपकी तय की गई दिनों की संख्या से पुराने मेल हर दिन हटा देता है। स्वतः बैकअप के बाद चलता है, इसलिए हटाए गए मेल नवीनतम बैकअप में अब भी मौजूद रहते हैं।",
+		"spamPurgeDays": "रखने के दिन",
+		"spamPurgeNoBackupNote": "स्वतः बैकअप बंद है। इस दौरान हटाए गए मेल कहीं भी सुरक्षित नहीं रहते।",
+		"spamPurgeSaved": "सहेजा गया।",
+		"spamPurgeNeverRun": "अभी तक एक बार भी नहीं चला।",
+		"spamPurgeLastOk": "अंतिम रन {at}: {deleted} हटाए गए।",
+		"spamPurgeLastFailed": "अंतिम बार {at}: विफल ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "साइन इन जानकारी गलत है",

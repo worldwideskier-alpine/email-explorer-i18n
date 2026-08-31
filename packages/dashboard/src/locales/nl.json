@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Er kwam niet op tijd antwoord.",
 		"spamCheckNetwork": "De API was niet bereikbaar.",
 		"spamCheckMalformed": "Het antwoord kon niet worden gelezen.",
-		"spamCheckDetail": "Antwoord: {detail}"
+		"spamCheckDetail": "Antwoord: {detail}",
+		"spamPurgeTitle": "Spam automatisch verwijderen",
+		"spamPurgeDescription": "Verwijdert dagelijks berichten in de spammap die ouder zijn dan het ingestelde aantal dagen. Dit gebeurt na de automatische back-up, dus verwijderde berichten staan nog in de recentste back-up.",
+		"spamPurgeDays": "Bewaardagen",
+		"spamPurgeNoBackupNote": "Automatische back-up staat uit. Berichten die dan worden verwijderd, blijven nergens bewaard.",
+		"spamPurgeSaved": "Opgeslagen.",
+		"spamPurgeNeverRun": "Nog niet uitgevoerd.",
+		"spamPurgeLastOk": "Laatste uitvoering {at}: {deleted} verwijderd.",
+		"spamPurgeLastFailed": "Laatste run {at}: mislukt ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ongeldige aanmeldgegevens",

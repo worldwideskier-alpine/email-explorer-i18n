@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "پاسخی در زمان مقرر نرسید.",
 		"spamCheckNetwork": "دسترسی به رابط ممکن نشد.",
 		"spamCheckMalformed": "پاسخ قابل خواندن نبود.",
-		"spamCheckDetail": "پاسخ: {detail}"
+		"spamCheckDetail": "پاسخ: {detail}",
+		"spamPurgeTitle": "حذف خودکار هرزنامه",
+		"spamPurgeDescription": "هر روز نامه‌های پوشهٔ هرزنامه را که قدیمی‌تر از تعداد روزهای تعیین‌شده هستند حذف می‌کند. پس از پشتیبان‌گیری خودکار اجرا می‌شود، بنابراین نامه‌های حذف‌شده هنوز در تازه‌ترین نسخهٔ پشتیبان هستند.",
+		"spamPurgeDays": "روزهای نگهداری",
+		"spamPurgeNoBackupNote": "پشتیبان‌گیری خودکار خاموش است. نامه‌هایی که در این حالت حذف شوند جایی نگهداری نمی‌شوند.",
+		"spamPurgeSaved": "ذخیره شد.",
+		"spamPurgeNeverRun": "هنوز اجرا نشده است.",
+		"spamPurgeLastOk": "آخرین اجرا {at}: {deleted} حذف شد.",
+		"spamPurgeLastFailed": "آخرین اجرا {at}: ناموفق ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "اطلاعات ورود نادرست است",

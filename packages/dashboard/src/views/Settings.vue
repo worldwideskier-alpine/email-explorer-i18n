@@ -113,6 +113,53 @@
         </div>
       </div>
 
+      <!-- Emptying the back of the spam folder. Permanent, which is only
+           safe because the scheduled pass backs up first and purges second;
+           the note below says so, and says the opposite when the backup is
+           switched off. -->
+      <div class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
+        <div class="flex items-center justify-between mb-2">
+          <div class="pe-4">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-white">{{ t("settings.spamPurgeTitle") }}</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("settings.spamPurgeDescription") }}</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" v-model="spamPurgeEnabled" :disabled="spamPurgeSaving" class="sr-only peer" />
+            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-indigo-600 peer-disabled:opacity-50"></div>
+          </label>
+        </div>
+
+        <div v-if="spamPurgeEnabled" class="mt-4 space-y-4">
+          <div>
+            <label for="spamPurgeDays" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("settings.spamPurgeDays") }}</label>
+            <input
+              id="spamPurgeDays"
+              type="number"
+              v-model.number="spamPurgeDays"
+              min="1"
+              max="365"
+              class="mt-1 w-28 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
+            />
+          </div>
+
+          <p v-if="!autoBackupEnabled" class="text-sm text-amber-700 dark:text-amber-400">{{ t("settings.spamPurgeNoBackupNote") }}</p>
+
+          <button
+            type="button"
+            @click="saveSpamPurge"
+            :disabled="spamPurgeSaving"
+            class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {{ t("settings.save") }}
+          </button>
+          <p v-if="spamPurgeMessage" class="text-sm text-green-600 dark:text-green-400">{{ spamPurgeMessage }}</p>
+
+          <p class="text-sm" :class="spamPurgeLastOk === false ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'">
+            {{ spamPurgeLastLine }}
+          </p>
+        </div>
+      </div>
+
       <!-- Backup: the only way to get the mail out of this system -->
       <div class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
         <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{{ t("settings.exportTitle") }}</h2>
@@ -505,6 +552,64 @@ const autoBackupLastLine = computed(() => {
 				error: last.error ?? "",
 			});
 });
+
+const spamPurgeEnabled = ref(false);
+const spamPurgeDays = ref(30);
+const spamPurgeSaving = ref(false);
+const spamPurgeMessage = useLocalizedMessage();
+
+watch(
+	mailbox,
+	(m) => {
+		const retention = m?.settings?.spamRetention;
+		spamPurgeEnabled.value = !!retention?.enabled;
+		spamPurgeDays.value = retention?.days ?? 30;
+	},
+	{ immediate: true },
+);
+
+const spamPurgeLastResult = computed(
+	() => mailbox.value?.settings?.spamRetention?.lastResult,
+);
+const spamPurgeLastOk = computed(() => spamPurgeLastResult.value?.ok);
+
+// Computed for the same reason autoBackupLastLine is: a line stored as an
+// already-translated string stays behind when the language changes.
+const spamPurgeLastLine = computed(() => {
+	const last = spamPurgeLastResult.value;
+	if (!last) return t("settings.spamPurgeNeverRun");
+	return last.ok
+		? t("settings.spamPurgeLastOk", {
+				at: new Date(last.at).toLocaleString(),
+				deleted: last.deleted ?? 0,
+			})
+		: t("settings.spamPurgeLastFailed", {
+				at: new Date(last.at).toLocaleString(),
+				error: last.error ?? "",
+			});
+});
+
+async function saveSpamPurge() {
+	if (spamPurgeSaving.value) return;
+	spamPurgeSaving.value = true;
+	spamPurgeMessage.value = "";
+	try {
+		const mailboxId = route.params.mailboxId as string;
+		await api.updateMailbox(mailboxId, {
+			...(mailbox.value?.settings ?? {}),
+			spamRetention: {
+				enabled: spamPurgeEnabled.value,
+				days: spamPurgeDays.value,
+			},
+		});
+		await mailboxStore.fetchMailbox(mailboxId);
+		spamPurgeMessage.value = () => t("settings.spamPurgeSaved");
+	} catch {
+		spamPurgeMessage.value = "";
+	} finally {
+		spamPurgeSaving.value = false;
+	}
+}
 
 const formatSize = (bytes: number): string => {
 	if (bytes < 1024) return `${bytes} B`;

@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "לא הגיעה תשובה בזמן.",
 		"spamCheckNetwork": "לא ניתן היה להתחבר לממשק.",
 		"spamCheckMalformed": "לא ניתן היה לקרוא את התשובה.",
-		"spamCheckDetail": "תגובה: {detail}"
+		"spamCheckDetail": "תגובה: {detail}",
+		"spamPurgeTitle": "מחיקה אוטומטית של דואר זבל",
+		"spamPurgeDescription": "מוחק מדי יום את ההודעות בתיקיית דואר הזבל שישנות ממספר הימים שהגדרת. פועל אחרי הגיבוי האוטומטי, ולכן ההודעות שנמחקו עדיין נמצאות בגיבוי האחרון.",
+		"spamPurgeDays": "ימי שמירה",
+		"spamPurgeNoBackupNote": "הגיבוי האוטומטי כבוי. הודעות שנמחקות בזמן הזה אינן נשמרות בשום מקום.",
+		"spamPurgeSaved": "נשמר.",
+		"spamPurgeNeverRun": "עדיין לא רץ.",
+		"spamPurgeLastOk": "הרצה אחרונה {at}: נמחקו {deleted}.",
+		"spamPurgeLastFailed": "הרצה אחרונה {at}: נכשלה ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "פרטי ההתחברות שגויים",

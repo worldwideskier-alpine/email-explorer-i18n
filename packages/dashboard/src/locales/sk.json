@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Odpoveď neprišla včas.",
 		"spamCheckNetwork": "K API sa nepodarilo pripojiť.",
 		"spamCheckMalformed": "Odpoveď sa nepodarilo prečítať.",
-		"spamCheckDetail": "Odpoveď: {detail}"
+		"spamCheckDetail": "Odpoveď: {detail}",
+		"spamPurgeTitle": "Automatické mazanie spamu",
+		"spamPurgeDescription": "Každý deň zmaže v priečinku spam správy staršie ako zadaný počet dní. Beží po automatickej zálohe, takže zmazané správy sú stále v najnovšej zálohe.",
+		"spamPurgeDays": "Počet dní",
+		"spamPurgeNoBackupNote": "Automatická záloha je vypnutá. Správy zmazané v tomto čase sa nikde neuchovávajú.",
+		"spamPurgeSaved": "Uložené.",
+		"spamPurgeNeverRun": "Zatiaľ nebežalo.",
+		"spamPurgeLastOk": "Posledný beh {at}: zmazaných {deleted}.",
+		"spamPurgeLastFailed": "Posledný beh {at}: zlyhalo ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Neplatné prihlasovacie údaje",

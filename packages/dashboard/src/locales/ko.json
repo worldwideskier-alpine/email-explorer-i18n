@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "시간 내에 응답이 없었습니다.",
 		"spamCheckNetwork": "API에 연결할 수 없었습니다.",
 		"spamCheckMalformed": "응답을 해석할 수 없었습니다.",
-		"spamCheckDetail": "응답: {detail}"
+		"spamCheckDetail": "응답: {detail}",
+		"spamPurgeTitle": "스팸 자동 삭제",
+		"spamPurgeDescription": "스팸함에서 설정한 일수보다 오래된 메일을 매일 삭제합니다. 자동 백업 후에 실행되므로 삭제된 메일도 가장 최근 백업에는 남아 있습니다.",
+		"spamPurgeDays": "보관 일수",
+		"spamPurgeNoBackupNote": "자동 백업이 꺼져 있습니다. 이 상태에서 삭제된 메일은 어디에도 남지 않습니다.",
+		"spamPurgeSaved": "저장했습니다.",
+		"spamPurgeNeverRun": "아직 한 번도 실행되지 않았습니다.",
+		"spamPurgeLastOk": "마지막 실행 {at}: {deleted}통 삭제",
+		"spamPurgeLastFailed": "마지막 실행 {at}: 실패({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "로그인 정보가 올바르지 않습니다",

@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Vastausta ei tullut ajoissa.",
 		"spamCheckNetwork": "API:in ei saatu yhteyttä.",
 		"spamCheckMalformed": "Vastausta ei voitu lukea.",
-		"spamCheckDetail": "Vastaus: {detail}"
+		"spamCheckDetail": "Vastaus: {detail}",
+		"spamPurgeTitle": "Roskapostin automaattinen poisto",
+		"spamPurgeDescription": "Poistaa päivittäin roskapostikansiosta viestit, jotka ovat vanhempia kuin asettamasi päivämäärä. Suoritetaan automaattisen varmuuskopion jälkeen, joten poistetut viestit ovat yhä uusimmassa kopiossa.",
+		"spamPurgeDays": "Säilytyspäivät",
+		"spamPurgeNoBackupNote": "Automaattinen varmuuskopiointi on pois päältä. Silloin poistettuja viestejä ei säilytetä missään.",
+		"spamPurgeSaved": "Tallennettu.",
+		"spamPurgeNeverRun": "Ei ole vielä ajettu.",
+		"spamPurgeLastOk": "Viimeisin ajo {at}: {deleted} poistettu.",
+		"spamPurgeLastFailed": "Viimeksi {at}: epäonnistui ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Virheelliset kirjautumistiedot",

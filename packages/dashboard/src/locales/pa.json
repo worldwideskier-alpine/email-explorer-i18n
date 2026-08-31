@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "ਸਮੇਂ ਸਿਰ ਕੋਈ ਜਵਾਬ ਨਹੀਂ ਆਇਆ।",
 		"spamCheckNetwork": "API ਤੱਕ ਪਹੁੰਚ ਨਹੀਂ ਹੋ ਸਕੀ।",
 		"spamCheckMalformed": "ਜਵਾਬ ਪੜ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।",
-		"spamCheckDetail": "ਜਵਾਬ: {detail}"
+		"spamCheckDetail": "ਜਵਾਬ: {detail}",
+		"spamPurgeTitle": "ਸਪੈਮ ਦਾ ਆਪਣੇ-ਆਪ ਮਿਟਾਉਣਾ",
+		"spamPurgeDescription": "ਸਪੈਮ ਫੋਲਡਰ ਵਿੱਚ ਤੁਹਾਡੇ ਤੈਅ ਕੀਤੇ ਦਿਨਾਂ ਤੋਂ ਪੁਰਾਣੇ ਮੇਲ ਹਰ ਰੋਜ਼ ਮਿਟਾ ਦਿੰਦਾ ਹੈ। ਆਪਣੇ-ਆਪ ਬੈਕਅੱਪ ਤੋਂ ਬਾਅਦ ਚੱਲਦਾ ਹੈ, ਇਸ ਲਈ ਮਿਟਾਏ ਮੇਲ ਸਭ ਤੋਂ ਨਵੇਂ ਬੈਕਅੱਪ ਵਿੱਚ ਹਾਲੇ ਵੀ ਹੁੰਦੇ ਹਨ।",
+		"spamPurgeDays": "ਰੱਖਣ ਦੇ ਦਿਨ",
+		"spamPurgeNoBackupNote": "ਆਪਣੇ-ਆਪ ਬੈਕਅੱਪ ਬੰਦ ਹੈ। ਇਸ ਦੌਰਾਨ ਮਿਟਾਏ ਮੇਲ ਕਿਤੇ ਵੀ ਨਹੀਂ ਰਹਿੰਦੇ।",
+		"spamPurgeSaved": "ਸੰਭਾਲਿਆ ਗਿਆ।",
+		"spamPurgeNeverRun": "ਹਾਲੇ ਇੱਕ ਵਾਰ ਵੀ ਨਹੀਂ ਚੱਲਿਆ।",
+		"spamPurgeLastOk": "ਆਖਰੀ ਵਾਰ {at}: {deleted} ਮਿਟਾਏ।",
+		"spamPurgeLastFailed": "ਆਖਰੀ ਵਾਰ {at}: ਅਸਫਲ ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ਸਾਈਨ ਇਨ ਦੀ ਜਾਣਕਾਰੀ ਗਲਤ ਹੈ",

@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "時間內冇回應。",
 		"spamCheckNetwork": "連唔到 API。",
 		"spamCheckMalformed": "睇唔明個回應。",
-		"spamCheckDetail": "回應：{detail}"
+		"spamCheckDetail": "回應：{detail}",
+		"spamPurgeTitle": "自動刪除垃圾郵件",
+		"spamPurgeDescription": "每日刪除垃圾郵件資料夾入面早過所設日數嘅郵件。喺自動備份之後執行，所以刪咗嘅郵件仲喺最近一次備份入面。",
+		"spamPurgeDays": "保留日數",
+		"spamPurgeNoBackupNote": "自動備份已經閂咗。喺呢個狀態下刪咗嘅郵件唔會留喺任何地方。",
+		"spamPurgeSaved": "已儲存。",
+		"spamPurgeNeverRun": "重未行過。",
+		"spamPurgeLastOk": "上次執行 {at}：已刪除 {deleted} 封",
+		"spamPurgeLastFailed": "上次執行 {at}：失敗（{error}）"
 	},
 	"apiErrors": {
 		"Invalid credentials": "登入資料唔啱",

@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Atbilde laikā nepienāca.",
 		"spamCheckNetwork": "Nevarēja sazināties ar API.",
 		"spamCheckMalformed": "Atbildi nevarēja nolasīt.",
-		"spamCheckDetail": "Atbilde: {detail}"
+		"spamCheckDetail": "Atbilde: {detail}",
+		"spamPurgeTitle": "Automātiska mēstuļu dzēšana",
+		"spamPurgeDescription": "Katru dienu dzēš mēstuļu mapē esošās vēstules, kas ir vecākas par norādīto dienu skaitu. Darbojas pēc automātiskās dublējuma izveides, tāpēc dzēstās vēstules joprojām ir jaunākajā dublējumā.",
+		"spamPurgeDays": "Glabāšanas dienas",
+		"spamPurgeNoBackupNote": "Automātiskā dublēšana ir izslēgta. Šajā laikā dzēstās vēstules netiek nekur saglabātas.",
+		"spamPurgeSaved": "Saglabāts.",
+		"spamPurgeNeverRun": "Vēl nav darbojies.",
+		"spamPurgeLastOk": "Pēdējā izpilde {at}: dzēstas {deleted}.",
+		"spamPurgeLastFailed": "Pēdējoreiz {at}: neizdevās ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Nederīgi pieteikšanās dati",

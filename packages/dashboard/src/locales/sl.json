@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Odgovor ni prišel pravočasno.",
 		"spamCheckNetwork": "Do API-ja ni bilo mogoče priti.",
 		"spamCheckMalformed": "Odgovora ni bilo mogoče prebrati.",
-		"spamCheckDetail": "Odgovor: {detail}"
+		"spamCheckDetail": "Odgovor: {detail}",
+		"spamPurgeTitle": "Samodejno brisanje neželene pošte",
+		"spamPurgeDescription": "Vsak dan izbriše sporočila v mapi neželene pošte, starejša od nastavljenega števila dni. Zažene se po samodejni varnostni kopiji, zato so izbrisana sporočila še v najnovejši kopiji.",
+		"spamPurgeDays": "Število dni",
+		"spamPurgeNoBackupNote": "Samodejna varnostna kopija je izklopljena. Sporočila, izbrisana medtem, se nikjer ne hranijo.",
+		"spamPurgeSaved": "Shranjeno.",
+		"spamPurgeNeverRun": "Še ni bilo izvedeno.",
+		"spamPurgeLastOk": "Zadnji zagon {at}: izbrisanih {deleted}.",
+		"spamPurgeLastFailed": "Zadnjič {at}: ni uspelo ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Neveljavni podatki za prijavo",

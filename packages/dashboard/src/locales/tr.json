@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Zamanında yanıt gelmedi.",
 		"spamCheckNetwork": "API'ye ulaşılamadı.",
 		"spamCheckMalformed": "Yanıt okunamadı.",
-		"spamCheckDetail": "Yanıt: {detail}"
+		"spamCheckDetail": "Yanıt: {detail}",
+		"spamPurgeTitle": "Spam'ın otomatik silinmesi",
+		"spamPurgeDescription": "Spam klasöründeki, belirlediğiniz gün sayısından eski iletileri her gün siler. Otomatik yedeklemeden sonra çalışır, bu yüzden silinen iletiler en son yedekte hâlâ bulunur.",
+		"spamPurgeDays": "Saklama günü",
+		"spamPurgeNoBackupNote": "Otomatik yedekleme kapalı. Bu sırada silinen iletiler hiçbir yerde saklanmaz.",
+		"spamPurgeSaved": "Kaydedildi.",
+		"spamPurgeNeverRun": "Henüz çalışmadı.",
+		"spamPurgeLastOk": "Son çalışma {at}: {deleted} silindi.",
+		"spamPurgeLastFailed": "Son çalışma {at}: başarısız ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Kimlik bilgileri geçersiz",

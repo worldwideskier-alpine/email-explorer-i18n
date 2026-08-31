@@ -18,6 +18,29 @@ export interface MailboxSettings {
 	autoReply?: { enabled: boolean; subject: string; message: string };
 	spamFilter?: SpamFilterSettings;
 	autoBackup?: AutoBackupSettings;
+	spamRetention?: SpamRetentionSettings;
+}
+
+/**
+ * Automatic deletion of old mail from the spam folder.
+ *
+ * `days` may be raised or lowered freely, unlike AutoBackupSettings.keep --
+ * what this deletes is spam, and the scheduled pass backs up before it purges,
+ * so what it removes is in the most recent archive.
+ *
+ * `lastRunAt` and `lastResult` are written by the scheduled run and ignored
+ * when they arrive from here.
+ */
+export interface SpamRetentionSettings {
+	enabled?: boolean;
+	days?: number;
+	lastRunAt?: string;
+	lastResult?: {
+		at: string;
+		ok: boolean;
+		deleted?: number;
+		error?: string;
+	};
 }
 
 /**

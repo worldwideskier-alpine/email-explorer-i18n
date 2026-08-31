@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Et koum keng Äntwert an der Zäit.",
 		"spamCheckNetwork": "D'API war net erreechbar.",
 		"spamCheckMalformed": "D'Äntwert konnt net gelies ginn.",
-		"spamCheckDetail": "Äntwert: {detail}"
+		"spamCheckDetail": "Äntwert: {detail}",
+		"spamPurgeTitle": "Automatescht Läsche vu Spam",
+		"spamPurgeDescription": "Läscht all Dag d'Mailen am Spam-Dossier, déi méi al si wéi d'Zuel vun Deeg, déi Dir astellt. Leeft nom automatesche Backup, dofir sinn déi geläschte Mailen nach am leschte Backup.",
+		"spamPurgeDays": "Deeg behalen",
+		"spamPurgeNoBackupNote": "Den automatesche Backup ass ausgeschalt. Mailen, déi dann geläscht ginn, bleiwen néierens erhalen.",
+		"spamPurgeSaved": "Gespäichert.",
+		"spamPurgeNeverRun": "Nach net gelaf.",
+		"spamPurgeLastOk": "Leschte Laf {at}: {deleted} geläscht.",
+		"spamPurgeLastFailed": "Leschte Laf {at}: feelgeschloen ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ongëlteg Umeldungsdaten",

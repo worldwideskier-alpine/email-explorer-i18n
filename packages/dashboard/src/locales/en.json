@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "There was no answer in time.",
 		"spamCheckNetwork": "The API could not be reached.",
 		"spamCheckMalformed": "The answer could not be read.",
-		"spamCheckDetail": "Response: {detail}"
+		"spamCheckDetail": "Response: {detail}",
+		"spamPurgeTitle": "Automatic spam deletion",
+		"spamPurgeDescription": "Deletes mail in the spam folder older than the number of days you set, once a day. It runs after the automatic backup, so deleted mail is still in the most recent backup.",
+		"spamPurgeDays": "Days to keep",
+		"spamPurgeNoBackupNote": "Automatic backup is off. Mail deleted while it is off is not kept anywhere.",
+		"spamPurgeSaved": "Saved.",
+		"spamPurgeNeverRun": "It has not run yet.",
+		"spamPurgeLastOk": "Last run {at}: {deleted} deleted.",
+		"spamPurgeLastFailed": "Last run {at}: failed ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Invalid credentials",

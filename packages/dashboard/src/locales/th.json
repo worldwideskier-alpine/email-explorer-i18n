@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "ไม่มีคำตอบภายในเวลาที่กำหนด",
 		"spamCheckNetwork": "ติดต่อ API ไม่ได้",
 		"spamCheckMalformed": "อ่านคำตอบไม่ได้",
-		"spamCheckDetail": "การตอบกลับ: {detail}"
+		"spamCheckDetail": "การตอบกลับ: {detail}",
+		"spamPurgeTitle": "ลบอีเมลขยะอัตโนมัติ",
+		"spamPurgeDescription": "ลบอีเมลในโฟลเดอร์อีเมลขยะที่เก่ากว่าจำนวนวันที่คุณกำหนดทุกวัน ทำงานหลังการสำรองข้อมูลอัตโนมัติ อีเมลที่ถูกลบจึงยังอยู่ในไฟล์สำรองล่าสุด",
+		"spamPurgeDays": "จำนวนวันที่เก็บไว้",
+		"spamPurgeNoBackupNote": "การสำรองข้อมูลอัตโนมัติปิดอยู่ อีเมลที่ถูกลบในช่วงนี้จะไม่ถูกเก็บไว้ที่ใดเลย",
+		"spamPurgeSaved": "บันทึกแล้ว",
+		"spamPurgeNeverRun": "ยังไม่เคยทำงาน",
+		"spamPurgeLastOk": "ทำงานล่าสุด {at}: ลบแล้ว {deleted} ฉบับ",
+		"spamPurgeLastFailed": "ครั้งล่าสุด {at}: ล้มเหลว ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ข้อมูลการลงชื่อเข้าใช้ไม่ถูกต้อง",

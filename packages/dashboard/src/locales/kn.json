@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "ಸಮಯಕ್ಕೆ ಉತ್ತರ ಬರಲಿಲ್ಲ.",
 		"spamCheckNetwork": "API ತಲುಪಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
 		"spamCheckMalformed": "ಉತ್ತರವನ್ನು ಓದಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
-		"spamCheckDetail": "ಪ್ರತಿಕ್ರಿಯೆ: {detail}"
+		"spamCheckDetail": "ಪ್ರತಿಕ್ರಿಯೆ: {detail}",
+		"spamPurgeTitle": "ಸ್ಪ್ಯಾಮ್ ಸ್ವಯಂಚಾಲಿತ ಅಳಿಸುವಿಕೆ",
+		"spamPurgeDescription": "ಸ್ಪ್ಯಾಮ್ ಫೋಲ್ಡರ್‌ನಲ್ಲಿ ನೀವು ನಿಗದಿಪಡಿಸಿದ ದಿನಗಳಿಗಿಂತ ಹಳೆಯ ಮೇಲ್‌ಗಳನ್ನು ಪ್ರತಿದಿನ ಅಳಿಸುತ್ತದೆ. ಸ್ವಯಂಚಾಲಿತ ಬ್ಯಾಕಪ್ ನಂತರ ನಡೆಯುತ್ತದೆ, ಆದ್ದರಿಂದ ಅಳಿಸಿದ ಮೇಲ್‌ಗಳು ಇತ್ತೀಚಿನ ಬ್ಯಾಕಪ್‌ನಲ್ಲಿ ಇನ್ನೂ ಇರುತ್ತವೆ.",
+		"spamPurgeDays": "ಇಟ್ಟುಕೊಳ್ಳುವ ದಿನಗಳು",
+		"spamPurgeNoBackupNote": "ಸ್ವಯಂಚಾಲಿತ ಬ್ಯಾಕಪ್ ಆಫ್ ಆಗಿದೆ. ಆ ಸಮಯದಲ್ಲಿ ಅಳಿಸಿದ ಮೇಲ್‌ಗಳು ಎಲ್ಲಿಯೂ ಉಳಿಯುವುದಿಲ್ಲ.",
+		"spamPurgeSaved": "ಉಳಿಸಲಾಗಿದೆ.",
+		"spamPurgeNeverRun": "ಇನ್ನೂ ಒಮ್ಮೆಯೂ ನಡೆದಿಲ್ಲ.",
+		"spamPurgeLastOk": "ಕೊನೆಯ ರನ್ {at}: {deleted} ಅಳಿಸಲಾಗಿದೆ.",
+		"spamPurgeLastFailed": "ಕೊನೆಯ ಬಾರಿ {at}: ವಿಫಲ ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ಸೈನ್ ಇನ್ ಮಾಹಿತಿ ತಪ್ಪಾಗಿದೆ",

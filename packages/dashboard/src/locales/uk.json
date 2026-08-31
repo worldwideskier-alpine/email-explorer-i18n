@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Відповідь не надійшла вчасно.",
 		"spamCheckNetwork": "Не вдалося зв'язатися з API.",
 		"spamCheckMalformed": "Не вдалося прочитати відповідь.",
-		"spamCheckDetail": "Відповідь: {detail}"
+		"spamCheckDetail": "Відповідь: {detail}",
+		"spamPurgeTitle": "Автоматичне видалення спаму",
+		"spamPurgeDescription": "Щодня видаляє з теки зі спамом листи, старші за вказану кількість днів. Виконується після автоматичної резервної копії, тож видалені листи ще є в найновішій копії.",
+		"spamPurgeDays": "Днів зберігання",
+		"spamPurgeNoBackupNote": "Автоматичне резервне копіювання вимкнено. Листи, видалені в цей час, ніде не зберігаються.",
+		"spamPurgeSaved": "Збережено.",
+		"spamPurgeNeverRun": "Ще жодного разу не виконувалось.",
+		"spamPurgeLastOk": "Останній запуск {at}: видалено {deleted}.",
+		"spamPurgeLastFailed": "Останній запуск {at}: невдало ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Хибні дані для входу",

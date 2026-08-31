@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "პასუხი დროულად არ მოვიდა.",
 		"spamCheckNetwork": "API-სთან დაკავშირება ვერ მოხერხდა.",
 		"spamCheckMalformed": "პასუხის წაკითხვა ვერ მოხერხდა.",
-		"spamCheckDetail": "პასუხი: {detail}"
+		"spamCheckDetail": "პასუხი: {detail}",
+		"spamPurgeTitle": "სპამის ავტომატური წაშლა",
+		"spamPurgeDescription": "ყოველდღე შლის სპამის საქაღალდეში მითითებულ დღეთა რაოდენობაზე ძველ წერილებს. სრულდება ავტომატური სარეზერვო ასლის შემდეg, ამიტომ წაშლილი წერილები ჯერ კიდევ არის უახლეს ასლში.",
+		"spamPurgeDays": "შენახვის დღეები",
+		"spamPurgeNoBackupNote": "ავტომატური სარეზერვო ასლი გამორთულია. ამ დროს წაშლილი წერილები არსად ინახება.",
+		"spamPurgeSaved": "შენახულია.",
+		"spamPurgeNeverRun": "ჯერ არ გაშვებულა.",
+		"spamPurgeLastOk": "ბოლო გაშვება {at}: წაიშალა {deleted}.",
+		"spamPurgeLastFailed": "ბოლო გაშვება {at}: ვერ შესრულდა ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "მონაცემები არასწორია",
