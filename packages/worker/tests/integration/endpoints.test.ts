@@ -9,10 +9,7 @@ describe("API Integration Tests", () => {
 
 	// Tests for Mailboxes
 	describe("Mailboxes API", () => {
-		it.skip("should get an empty list of mailboxes", async () => {
-			// Skipped: Test times out in isolated environment
-			// The mailboxes endpoint works correctly, but this specific test
-			// has timing issues in the test environment
+		it("should get an empty list of mailboxes", async () => {
 			const response = await authenticatedFetch(
 				`http://local.test/api/v1/mailboxes`,
 			);
@@ -22,9 +19,7 @@ describe("API Integration Tests", () => {
 			expect(Array.isArray(body)).toBe(true);
 		});
 
-		it.skip("should get a list with one mailbox", async () => {
-			// Skipped: Test times out in isolated environment
-			// Mailbox list functionality is tested via other endpoints
+		it("should get a list with one mailbox", async () => {
 			await createMailbox();
 			const response = await authenticatedFetch(
 				`http://local.test/api/v1/mailboxes`,
@@ -45,8 +40,6 @@ describe("API Integration Tests", () => {
 		});
 
 		it("should get a single mailbox", async () => {
-			// Skipped: Test times out in isolated environment
-			// Mailbox GET functionality confirmed by update/delete tests
 			await createMailbox({ setting1: "value1" });
 			const response = await authenticatedFetch(
 				`http://local.test/api/v1/mailboxes/${mailboxId}`,
@@ -64,15 +57,14 @@ describe("API Integration Tests", () => {
 			);
 		});
 
-		it.skip("should return 404 for a non-existent mailbox", async () => {
-			// Skipped: Test times out in isolated environment
+		it("should return 404 for a non-existent mailbox", async () => {
 			const response = await authenticatedFetch(
 				`http://local.test/api/v1/mailboxes/nonexistent@example.com`,
 			);
 			expect(response.status).toBe(404);
 		});
 
-		it.skip("should update a mailbox", async () => {
+		it("should update a mailbox", async () => {
 			await createMailbox();
 			const updatedSettings = { setting2: "value2" };
 			const response = await authenticatedFetch(
@@ -86,29 +78,23 @@ describe("API Integration Tests", () => {
 			const body = await response.json<any>();
 
 			expect(response.status).toBe(200);
-			expect(body.settings).toEqual(updatedSettings);
+			// toMatchObject, not toEqual: the endpoint also stamps the defaults
+			// that later features introduced (deletionLocked, autoBackup). What
+			// this test is for is that the submitted setting survives the round
+			// trip -- asserting the whole object would break on every new
+			// default, which is how it came to be skipped in the first place.
+			expect(body.settings).toMatchObject(updatedSettings);
 		});
 
-		it.skip("should delete a mailbox", async () => {
-			await createMailbox();
-			const response = await authenticatedFetch(
-				`http://local.test/api/v1/mailboxes/${mailboxId}`,
-				{
-					method: "DELETE",
-				},
-			);
-			expect(response.status).toBe(204);
-
-			const getResponse = await authenticatedFetch(
-				`http://local.test/api/v1/mailboxes/${mailboxId}`,
-			);
-			expect(getResponse.status).toBe(404);
-		});
+		// Deleting a mailbox is covered by mailbox-deletion.test.ts, which
+		// exercises what this one could not: a mailbox is deletion-locked
+		// unless the lock is explicitly released, so a plain DELETE answers
+		// 423. This test asserted the behaviour that safeguard replaced.
 	});
 
 	// Tests for Emails
 	describe("Emails API", () => {
-		it.skip("should get an empty list of emails", async () => {
+		it("should get an empty list of emails", async () => {
 			await createMailbox();
 			const response = await authenticatedFetch(
 				`http://local.test/api/v1/mailboxes/${mailboxId}/emails`,
@@ -119,7 +105,7 @@ describe("API Integration Tests", () => {
 			expect(body).toEqual([]);
 		});
 
-		it.skip("should send an email", async () => {
+		it("should send an email", async () => {
 			await createMailbox();
 			const emailData = {
 				to: ["recipient@example.com"],
@@ -141,7 +127,7 @@ describe("API Integration Tests", () => {
 			expect(body.status).toBe("sent");
 		});
 
-		it.skip("should get an email", async () => {
+		it("should get an email", async () => {
 			await createMailbox();
 			const emailData = {
 				to: ["recipient@example.com"],
@@ -169,7 +155,7 @@ describe("API Integration Tests", () => {
 			expect(body.subject).toBe("Test Email");
 		});
 
-		it.skip("should update an email", async () => {
+		it("should update an email", async () => {
 			await createMailbox();
 			const emailData = {
 				to: ["recipient@example.com"],
@@ -207,7 +193,7 @@ describe("API Integration Tests", () => {
 			expect(body.starred).toBe(true);
 		});
 
-		it.skip("should delete an email", async () => {
+		it("should delete an email", async () => {
 			await createMailbox();
 			const emailData = {
 				to: ["recipient@example.com"],
