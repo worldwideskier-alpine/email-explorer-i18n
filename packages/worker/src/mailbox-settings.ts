@@ -9,6 +9,7 @@ import {
 	normalizeFrequency,
 	normalizeKeep,
 } from "./auto-backup";
+import { normalizeRetentionDays } from "./spam-retention";
 import type { Env } from "./types";
 
 type MailboxSettings = Record<string, any>;
@@ -67,7 +68,42 @@ export function mergeMailboxSettings(
 		incoming?.autoBackup,
 	);
 
+	merged.spamRetention = mergeSpamRetention(
+		existing?.spamRetention,
+		incoming?.spamRetention,
+	);
+
 	return merged;
+}
+
+/**
+ * Merges the spam-retention settings.
+ *
+ * The number of days may be raised or lowered freely, unlike the backup
+ * retention count next to it. That count may only rise because rotation is
+ * the only thing that deletes an archive, so lowering it would delete the
+ * last copy of the mail on the next run. The reasoning does not carry over
+ * here: what this deletes is spam, the backup pass runs before the purge, and
+ * so the messages it removes are in the most recent archive.
+ *
+ * The results of past runs are server-written and never taken from the
+ * client, which would otherwise let a caller forge a history showing a purge
+ * that has silently stopped running as healthy.
+ */
+function mergeSpamRetention(
+	existing: MailboxSettings | undefined,
+	incoming: MailboxSettings | undefined,
+): MailboxSettings {
+	return {
+		enabled: Object.hasOwn(incoming ?? {}, "enabled")
+			? !!incoming?.enabled
+			: !!existing?.enabled,
+		days: normalizeRetentionDays(
+			Object.hasOwn(incoming ?? {}, "days") ? incoming?.days : existing?.days,
+		),
+		lastRunAt: existing?.lastRunAt,
+		lastResult: existing?.lastResult,
+	};
 }
 
 /**

@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Níor tháinig freagra in am.",
 		"spamCheckNetwork": "Níorbh fhéidir teagmháil a dhéanamh leis an API.",
 		"spamCheckMalformed": "Níorbh fhéidir an freagra a léamh.",
-		"spamCheckDetail": "Freagra: {detail}"
+		"spamCheckDetail": "Freagra: {detail}",
+		"spamPurgeTitle": "Scriosadh uathoibríoch turscair",
+		"spamPurgeDescription": "Scriosann sé gach lá na teachtaireachtaí san fhillteán turscair atá níos sine ná an líon laethanta a shocraíonn tú. Ritheann sé i ndiaidh an chúltaca uathoibríoch, mar sin tá na teachtaireachtaí scriosta fós sa chúltaca is déanaí.",
+		"spamPurgeDays": "Laethanta coinneála",
+		"spamPurgeNoBackupNote": "Tá an cúltaca uathoibríoch múchta. Ní choinnítear in aon áit teachtaireachtaí a scriostar ansin.",
+		"spamPurgeSaved": "Sábháilte.",
+		"spamPurgeNeverRun": "Níor rith sé fós.",
+		"spamPurgeLastOk": "Rith deireanach {at}: {deleted} scriosta.",
+		"spamPurgeLastFailed": "Rith deiridh {at}: theip air ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Dintiúir neamhbhailí",

@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Адказ не прыйшоў своечасова.",
 		"spamCheckNetwork": "Не ўдалося звязацца з API.",
 		"spamCheckMalformed": "Не ўдалося прачытаць адказ.",
-		"spamCheckDetail": "Адказ: {detail}"
+		"spamCheckDetail": "Адказ: {detail}",
+		"spamPurgeTitle": "Аўтаматычнае выдаленне спаму",
+		"spamPurgeDescription": "Кожны дзень выдаляе з тэчкі са спамам лісты, старэйшыя за ўказаную колькасць дзён. Выконваецца пасля аўтаматычнай рэзервовай копіі, таму выдаленыя лісты яшчэ ёсць у найноўшай копіі.",
+		"spamPurgeDays": "Дзён захоўвання",
+		"spamPurgeNoBackupNote": "Аўтаматычнае рэзервовае капіраванне выключана. Лісты, выдаленыя ў гэты час, нідзе не захоўваюцца.",
+		"spamPurgeSaved": "Захавана.",
+		"spamPurgeNeverRun": "Яшчэ не выконвалася.",
+		"spamPurgeLastOk": "Апошні запуск {at}: выдалена {deleted}.",
+		"spamPurgeLastFailed": "Апошні запуск {at}: няўдала ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Няправільныя даныя для ўваходу",

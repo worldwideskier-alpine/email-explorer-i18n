@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "समयमै जवाफ आएन।",
 		"spamCheckNetwork": "API मा पुग्न सकिएन।",
 		"spamCheckMalformed": "जवाफ पढ्न सकिएन।",
-		"spamCheckDetail": "प्रतिक्रिया: {detail}"
+		"spamCheckDetail": "प्रतिक्रिया: {detail}",
+		"spamPurgeTitle": "स्प्यामको स्वतः मेटाइ",
+		"spamPurgeDescription": "स्प्याम फोल्डरमा तपाईंले तोकेको दिन भन्दा पुराना मेल हरेक दिन मेटाउँछ। स्वतः ब्याकअप पछि चल्छ, त्यसैले मेटिएका मेल सबैभन्दा नयाँ ब्याकअपमा अझै रहन्छन्।",
+		"spamPurgeDays": "राख्ने दिन",
+		"spamPurgeNoBackupNote": "स्वतः ब्याकअप बन्द छ। यस अवधिमा मेटिएका मेल कतै पनि रहँदैनन्।",
+		"spamPurgeSaved": "सुरक्षित गरियो।",
+		"spamPurgeNeverRun": "अझै एक पटक पनि चलेको छैन।",
+		"spamPurgeLastOk": "अन्तिम पटक {at}: {deleted} मेटियो।",
+		"spamPurgeLastFailed": "अन्तिम पटक {at}: असफल ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "साइन इनको जानकारी गलत छ",

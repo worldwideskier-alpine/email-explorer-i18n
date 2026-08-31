@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "لە کاتی خۆیدا هیچ وەڵامێک نەهات.",
 		"spamCheckNetwork": "نەگەیشترایە API.",
 		"spamCheckMalformed": "وەڵامەکە نەخوێندرایەوە.",
-		"spamCheckDetail": "وەڵام: {detail}"
+		"spamCheckDetail": "وەڵام: {detail}",
+		"spamPurgeTitle": "سڕینەوەی خۆکاری هەرزەنامە",
+		"spamPurgeDescription": "ھەموو ڕۆژێک ئەو نامانەی ناو بوخچەی ھەرزەنامە دەسڕێتەوە کە کۆنترن لە ژمارەی ئەو ڕۆژانەی دیاریت کردووە. دوای پاڵپشتی خۆکار کاردەکات، بۆیە نامە سڕاوەکان ھێشتا لە نوێترین پاڵپشتیدا ھەن.",
+		"spamPurgeDays": "ڕۆژانی پاراستن",
+		"spamPurgeNoBackupNote": "پاڵپشتی خۆکار کوژاوەتەوە. ئەو نامانەی لەو کاتەدا دەسڕێنەوە لە ھیچ شوێنێک نامێننەوە.",
+		"spamPurgeSaved": "پاشەکەوت کرا.",
+		"spamPurgeNeverRun": "هێشتا جێبەجێ نەکراوە.",
+		"spamPurgeLastOk": "دوایین جاری کارکردن {at}: {deleted} سڕایەوە.",
+		"spamPurgeLastFailed": "دوایین جێبەجێکردن {at}: سەرکەوتوو نەبوو ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "زانیاری چوونەژوورەوە نادروستە",

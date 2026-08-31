@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Odpowiedź nie nadeszła na czas.",
 		"spamCheckNetwork": "Nie udało się połączyć z API.",
 		"spamCheckMalformed": "Nie udało się odczytać odpowiedzi.",
-		"spamCheckDetail": "Odpowiedź: {detail}"
+		"spamCheckDetail": "Odpowiedź: {detail}",
+		"spamPurgeTitle": "Automatyczne usuwanie spamu",
+		"spamPurgeDescription": "Codziennie usuwa z folderu ze spamem wiadomości starsze niż ustawiona liczba dni. Działa po automatycznej kopii zapasowej, więc usunięte wiadomości są nadal w najnowszej kopii.",
+		"spamPurgeDays": "Liczba dni",
+		"spamPurgeNoBackupNote": "Automatyczna kopia zapasowa jest wyłączona. Wiadomości usunięte w tym czasie nie są nigdzie zachowywane.",
+		"spamPurgeSaved": "Zapisano.",
+		"spamPurgeNeverRun": "Jeszcze nie uruchomiono.",
+		"spamPurgeLastOk": "Ostatnie uruchomienie {at}: usunięto {deleted}.",
+		"spamPurgeLastFailed": "Ostatnio {at}: niepowodzenie ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Nieprawidłowe dane logowania",

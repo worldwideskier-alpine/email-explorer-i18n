@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Es kam keine rechtzeitige Antwort.",
 		"spamCheckNetwork": "Die API war nicht erreichbar.",
 		"spamCheckMalformed": "Die Antwort war nicht lesbar.",
-		"spamCheckDetail": "Antwort: {detail}"
+		"spamCheckDetail": "Antwort: {detail}",
+		"spamPurgeTitle": "Automatisches Löschen von Spam",
+		"spamPurgeDescription": "Löscht täglich alle Nachrichten im Spam-Ordner, die älter sind als die eingestellte Anzahl Tage. Läuft nach der automatischen Sicherung, gelöschte Nachrichten sind also noch in der neuesten Sicherung enthalten.",
+		"spamPurgeDays": "Aufbewahrungstage",
+		"spamPurgeNoBackupNote": "Die automatische Sicherung ist ausgeschaltet. Nachrichten, die währenddessen gelöscht werden, bleiben nirgendwo erhalten.",
+		"spamPurgeSaved": "Gespeichert.",
+		"spamPurgeNeverRun": "Bisher nicht gelaufen.",
+		"spamPurgeLastOk": "Letzter Lauf {at}: {deleted} gelöscht.",
+		"spamPurgeLastFailed": "Letzter Lauf {at}: fehlgeschlagen ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ungültige Anmeldedaten",

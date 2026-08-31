@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Ekkert svar barst í tæka tíð.",
 		"spamCheckNetwork": "Ekki náðist samband við API.",
 		"spamCheckMalformed": "Ekki tókst að lesa svarið.",
-		"spamCheckDetail": "Svar: {detail}"
+		"spamCheckDetail": "Svar: {detail}",
+		"spamPurgeTitle": "Sjálfvirk eyðing ruslpósts",
+		"spamPurgeDescription": "Eyðir daglega pósti í ruslpóstmöppunni sem er eldri en fjöldi daga sem þú velur. Keyrir eftir sjálfvirku afritinu, svo eyddur póstur er enn í nýjasta afritinu.",
+		"spamPurgeDays": "Fjöldi daga",
+		"spamPurgeNoBackupNote": "Sjálfvirk afritun er slökkt. Póstur sem eyðist á meðan varðveitist hvergi.",
+		"spamPurgeSaved": "Vistað.",
+		"spamPurgeNeverRun": "Hefur ekki keyrt enn.",
+		"spamPurgeLastOk": "Síðasta keyrsla {at}: {deleted} eytt.",
+		"spamPurgeLastFailed": "Síðasta keyrsla {at}: mistókst ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Rangar innskráningarupplýsingar",

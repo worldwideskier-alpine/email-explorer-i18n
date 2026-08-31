@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Atsakymas laiku negautas.",
 		"spamCheckNetwork": "Nepavyko pasiekti API.",
 		"spamCheckMalformed": "Nepavyko perskaityti atsakymo.",
-		"spamCheckDetail": "Atsakymas: {detail}"
+		"spamCheckDetail": "Atsakymas: {detail}",
+		"spamPurgeTitle": "Automatinis šlamšto šalinimas",
+		"spamPurgeDescription": "Kasdien ištrina šlamšto aplanke esančius laiškus, senesnius nei nurodytas dienų skaičius. Vykdoma po automatinės atsarginės kopijos, todėl ištrinti laiškai vis dar yra naujausioje kopijoje.",
+		"spamPurgeDays": "Saugojimo dienos",
+		"spamPurgeNoBackupNote": "Automatinė atsarginė kopija išjungta. Tuo metu ištrinti laiškai niekur neišsaugomi.",
+		"spamPurgeSaved": "Išsaugota.",
+		"spamPurgeNeverRun": "Dar nevykdyta.",
+		"spamPurgeLastOk": "Paskutinis vykdymas {at}: ištrinta {deleted}.",
+		"spamPurgeLastFailed": "Paskutinis {at}: nepavyko ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Netinkami prisijungimo duomenys",

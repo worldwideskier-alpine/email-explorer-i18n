@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Inget svar kom i tid.",
 		"spamCheckNetwork": "API:et gick inte att nå.",
 		"spamCheckMalformed": "Svaret gick inte att läsa.",
-		"spamCheckDetail": "Svar: {detail}"
+		"spamCheckDetail": "Svar: {detail}",
+		"spamPurgeTitle": "Automatisk radering av skräppost",
+		"spamPurgeDescription": "Raderar dagligen meddelanden i skräppostmappen som är äldre än det antal dagar du väljer. Den körs efter den automatiska säkerhetskopian, så raderade meddelanden finns kvar i den senaste kopian.",
+		"spamPurgeDays": "Antal dagar",
+		"spamPurgeNoBackupNote": "Automatisk säkerhetskopiering är avstängd. Meddelanden som raderas då sparas ingenstans.",
+		"spamPurgeSaved": "Sparat.",
+		"spamPurgeNeverRun": "Har inte körts än.",
+		"spamPurgeLastOk": "Senaste körning {at}: {deleted} raderade.",
+		"spamPurgeLastFailed": "Senaste körning {at}: misslyckades ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ogiltiga inloggningsuppgifter",

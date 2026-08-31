@@ -5,7 +5,6 @@ import PostalMime from "postal-mime";
 import { z } from "zod";
 import { getResendKeySource, setResendApiKey } from "./app-settings";
 import { backupKeyPrefix } from "./auto-backup";
-import { runScheduledBackups } from "./backup-run";
 import { listBackups } from "./backup-writer";
 import { base64ToBytes } from "./base64";
 import { classifyWithClaude } from "./claude-spam-filter";
@@ -47,6 +46,7 @@ import {
 	PostPushUnsubscribe,
 } from "./routes/push";
 import { PostForwardEmail, PostReplyEmail } from "./routes/reply-forward";
+import { runScheduledMaintenance } from "./scheduled-run";
 import { slugify } from "./slugify";
 import {
 	classifyByAuthResults,
@@ -2388,7 +2388,8 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 		},
 		/**
 		 * The cron fires once a day for the whole Worker; each mailbox's own
-		 * frequency decides whether it is written this time (see backup-run).
+		 * settings decide what happens to it (see backup-run and
+		 * spam-purge-run).
 		 *
 		 * Awaited rather than handed to waitUntil: a scheduled invocation is
 		 * allowed to take its time, and returning early would let the run be
@@ -2400,7 +2401,7 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 			_context: ExecutionContext,
 		) {
 			env.config = options;
-			await runScheduledBackups(env);
+			await runScheduledMaintenance(env);
 		},
 		async fetch(request: Request, env: Env, context: ExecutionContext) {
 			// Make options available to routes via env

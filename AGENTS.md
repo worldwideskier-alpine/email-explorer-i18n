@@ -91,6 +91,11 @@ fork's work. This fork ships by being forked.
 - **API schema.** Generated at runtime by chanfana from the route classes.
   There is no checked-in `openapi.json`, and `/openapi.json` needs a session.
 - **Sending.** Outbound mail goes through Resend, not Email Routing.
+- **The daily cron.** One `scheduled()` handler, and the order inside it
+  matters: `scheduled-run.ts` backs every mailbox up *first* and deletes old
+  spam *second*, so a message the purge removes is already in that run's
+  archive. Reversed, the deletion would be permanent with no copy anywhere.
+  Nothing in the types holds it; `scheduled-order.test.ts` does.
 - **Dashboard theming.** `index.html` fixes the body to a dark palette
   (`bg-gray-900 text-gray-100`) while cards use `bg-white dark:bg-gray-800`
   and follow the viewer's colour scheme. In light mode a card is white but

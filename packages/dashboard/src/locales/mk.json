@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Не пристигна одговор навреме.",
 		"spamCheckNetwork": "Не можеше да се воспостави врска со API.",
 		"spamCheckMalformed": "Одговорот не можеше да се прочита.",
-		"spamCheckDetail": "Одговор: {detail}"
+		"spamCheckDetail": "Одговор: {detail}",
+		"spamPurgeTitle": "Автоматско бришење на непосакувана пошта",
+		"spamPurgeDescription": "Секој ден ги брише пораките во папката за непосакувана пошта постари од зададениот број денови. Се извршува по автоматската резервна копија, па избришаните пораки сè уште се во најновата копија.",
+		"spamPurgeDays": "Број денови",
+		"spamPurgeNoBackupNote": "Автоматската резервна копија е исклучена. Пораките избришани во меѓувреме не се чуваат никаде.",
+		"spamPurgeSaved": "Зачувано.",
+		"spamPurgeNeverRun": "Сè уште не е извршено.",
+		"spamPurgeLastOk": "Последно извршување {at}: избришани {deleted}.",
+		"spamPurgeLastFailed": "Последно {at}: неуспешно ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Неисправни податоци за најава",

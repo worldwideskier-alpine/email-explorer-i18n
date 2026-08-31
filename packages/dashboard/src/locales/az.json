@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Vaxtında cavab gəlmədi.",
 		"spamCheckNetwork": "API-yə qoşulmaq mümkün olmadı.",
 		"spamCheckMalformed": "Cavabı oxumaq mümkün olmadı.",
-		"spamCheckDetail": "Cavab: {detail}"
+		"spamCheckDetail": "Cavab: {detail}",
+		"spamPurgeTitle": "Spamın avtomatik silinməsi",
+		"spamPurgeDescription": "Hər gün spam qovluğunda təyin etdiyiniz gün sayından köhnə məktubları silir. Avtomatik ehtiyat nüsxədən sonra işləyir, ona görə silinmiş məktublar hələ də ən son nüsxədədir.",
+		"spamPurgeDays": "Saxlama günləri",
+		"spamPurgeNoBackupNote": "Avtomatik ehtiyat nüsxə söndürülüb. Bu vaxt silinən məktublar heç yerdə saxlanmır.",
+		"spamPurgeSaved": "Saxlanıldı.",
+		"spamPurgeNeverRun": "Hələ işə salınmayıb.",
+		"spamPurgeLastOk": "Son işləmə {at}: {deleted} silindi.",
+		"spamPurgeLastFailed": "Son işə salma {at}: alınmadı ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Giriş məlumatları yanlışdır",

@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Tidak ada jawaban tepat waktu.",
 		"spamCheckNetwork": "API tidak dapat dihubungi.",
 		"spamCheckMalformed": "Jawaban tidak dapat dibaca.",
-		"spamCheckDetail": "Respons: {detail}"
+		"spamCheckDetail": "Respons: {detail}",
+		"spamPurgeTitle": "Penghapusan spam otomatis",
+		"spamPurgeDescription": "Setiap hari menghapus surel di folder spam yang lebih lama dari jumlah hari yang Anda tetapkan. Dijalankan setelah pencadangan otomatis, jadi surel yang dihapus masih ada di cadangan terbaru.",
+		"spamPurgeDays": "Hari penyimpanan",
+		"spamPurgeNoBackupNote": "Pencadangan otomatis mati. Surel yang dihapus saat itu tidak disimpan di mana pun.",
+		"spamPurgeSaved": "Tersimpan.",
+		"spamPurgeNeverRun": "Belum pernah berjalan.",
+		"spamPurgeLastOk": "Jalan terakhir {at}: {deleted} dihapus.",
+		"spamPurgeLastFailed": "Terakhir {at}: gagal ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Kredensial tidak sah",

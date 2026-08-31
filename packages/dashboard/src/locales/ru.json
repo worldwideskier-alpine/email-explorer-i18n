@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Ответ не пришёл вовремя.",
 		"spamCheckNetwork": "Не удалось связаться с API.",
 		"spamCheckMalformed": "Не удалось прочитать ответ.",
-		"spamCheckDetail": "Ответ: {detail}"
+		"spamCheckDetail": "Ответ: {detail}",
+		"spamPurgeTitle": "Автоматическое удаление спама",
+		"spamPurgeDescription": "Каждый день удаляет из папки со спамом письма старше указанного числа дней. Выполняется после автоматической резервной копии, поэтому удалённые письма всё ещё есть в самой свежей копии.",
+		"spamPurgeDays": "Дней хранения",
+		"spamPurgeNoBackupNote": "Автоматическое резервное копирование выключено. Письма, удалённые в это время, нигде не сохраняются.",
+		"spamPurgeSaved": "Сохранено.",
+		"spamPurgeNeverRun": "Ещё ни разу не выполнялось.",
+		"spamPurgeLastOk": "Последний запуск {at}: удалено {deleted}.",
+		"spamPurgeLastFailed": "Последний запуск {at}: неудачно ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Неверные данные для входа",

@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Der kom ikke svar i tide.",
 		"spamCheckNetwork": "Der kunne ikke opnås forbindelse til API'en.",
 		"spamCheckMalformed": "Svaret kunne ikke læses.",
-		"spamCheckDetail": "Svar: {detail}"
+		"spamCheckDetail": "Svar: {detail}",
+		"spamPurgeTitle": "Automatisk sletning af spam",
+		"spamPurgeDescription": "Sletter dagligt de mails i spammappen, der er ældre end det antal dage, du har valgt. Den kører efter den automatiske sikkerhedskopi, så slettede mails findes stadig i den nyeste kopi.",
+		"spamPurgeDays": "Antal dage",
+		"spamPurgeNoBackupNote": "Automatisk sikkerhedskopi er slået fra. Mails, der slettes imens, gemmes ingen steder.",
+		"spamPurgeSaved": "Gemt.",
+		"spamPurgeNeverRun": "Er ikke kørt endnu.",
+		"spamPurgeLastOk": "Sidste kørsel {at}: {deleted} slettet.",
+		"spamPurgeLastFailed": "Sidste kørsel {at}: mislykkedes ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ugyldige loginoplysninger",

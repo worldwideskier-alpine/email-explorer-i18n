@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Nu a venit niciun răspuns la timp.",
 		"spamCheckNetwork": "Nu s-a putut contacta API-ul.",
 		"spamCheckMalformed": "Răspunsul nu a putut fi citit.",
-		"spamCheckDetail": "Răspuns: {detail}"
+		"spamCheckDetail": "Răspuns: {detail}",
+		"spamPurgeTitle": "Ștergerea automată a spamului",
+		"spamPurgeDescription": "Șterge zilnic mesajele din folderul spam mai vechi decât numărul de zile setat. Rulează după copia de rezervă automată, deci mesajele șterse se află încă în cea mai recentă copie.",
+		"spamPurgeDays": "Zile de păstrare",
+		"spamPurgeNoBackupNote": "Copia de rezervă automată este dezactivată. Mesajele șterse în acest timp nu se păstrează nicăieri.",
+		"spamPurgeSaved": "Salvat.",
+		"spamPurgeNeverRun": "Nu a rulat încă.",
+		"spamPurgeLastOk": "Ultima rulare {at}: {deleted} șterse.",
+		"spamPurgeLastFailed": "Ultima rulare {at}: eșuată ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Date de autentificare nevalide",

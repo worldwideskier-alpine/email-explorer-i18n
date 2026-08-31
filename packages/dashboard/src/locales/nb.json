@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Det kom ikke svar i tide.",
 		"spamCheckNetwork": "API-et kunne ikke nås.",
 		"spamCheckMalformed": "Svaret kunne ikke leses.",
-		"spamCheckDetail": "Svar: {detail}"
+		"spamCheckDetail": "Svar: {detail}",
+		"spamPurgeTitle": "Automatisk sletting av spam",
+		"spamPurgeDescription": "Sletter daglig e-post i spam-mappen som er eldre enn antallet dager du velger. Den kjører etter den automatiske sikkerhetskopien, så slettet e-post finnes fortsatt i den nyeste kopien.",
+		"spamPurgeDays": "Antall dager",
+		"spamPurgeNoBackupNote": "Automatisk sikkerhetskopi er av. E-post som slettes imens, blir ikke tatt vare på noe sted.",
+		"spamPurgeSaved": "Lagret.",
+		"spamPurgeNeverRun": "Har ikke kjørt ennå.",
+		"spamPurgeLastOk": "Siste kjøring {at}: {deleted} slettet.",
+		"spamPurgeLastFailed": "Siste kjøring {at}: mislyktes ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Feil innloggingsopplysninger",

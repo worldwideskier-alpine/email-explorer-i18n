@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Nuk erdhi përgjigje në kohë.",
 		"spamCheckNetwork": "Nuk u arrit lidhja me API-në.",
 		"spamCheckMalformed": "Përgjigjja nuk u lexua dot.",
-		"spamCheckDetail": "Përgjigje: {detail}"
+		"spamCheckDetail": "Përgjigje: {detail}",
+		"spamPurgeTitle": "Fshirja automatike e postës së padëshiruar",
+		"spamPurgeDescription": "Çdo ditë fshin mesazhet në dosjen e postës së padëshiruar më të vjetra se numri i ditëve që caktoni. Ekzekutohet pas kopjes rezervë automatike, prandaj mesazhet e fshira janë ende në kopjen më të re.",
+		"spamPurgeDays": "Ditë ruajtjeje",
+		"spamPurgeNoBackupNote": "Kopja rezervë automatike është e çaktivizuar. Mesazhet e fshira ndërkohë nuk ruhen askund.",
+		"spamPurgeSaved": "U ruajt.",
+		"spamPurgeNeverRun": "Nuk është ekzekutuar ende.",
+		"spamPurgeLastOk": "Ekzekutimi i fundit {at}: u fshinë {deleted}.",
+		"spamPurgeLastFailed": "Herën e fundit {at}: dështoi ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Të dhëna hyrjeje të pasakta",

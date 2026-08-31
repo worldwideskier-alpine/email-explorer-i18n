@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Nagina resposta n'è arrivada a temp.",
 		"spamCheckNetwork": "L'API n'ha betg pudì vegnir cuntanschida.",
 		"spamCheckMalformed": "La resposta n'ha betg pudì vegnir legida.",
-		"spamCheckDetail": "Resposta: {detail}"
+		"spamCheckDetail": "Resposta: {detail}",
+		"spamPurgeTitle": "Stizzar automaticamain il spam",
+		"spamPurgeDescription": "Stizza mintga di ils messadis en l'ordinatur da spam ch'èn pli vegls che il dumber da dis inditgà. Vegn exequì suenter la copia da segirezza automatica, uschè che ils messadis stizzads èn anc en l'ultima copia.",
+		"spamPurgeDays": "Dis da mantegniment",
+		"spamPurgeNoBackupNote": "La copia da segirezza automatica è deactivada. Ils messadis stizzads en quest temp na vegnan mantegnids naginas parts.",
+		"spamPurgeSaved": "Memorisà.",
+		"spamPurgeNeverRun": "Anc betg ì.",
+		"spamPurgeLastOk": "Ultima execuziun {at}: {deleted} stizzads.",
+		"spamPurgeLastFailed": "Ultim decurs {at}: fallì ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Datas d'annunzia nunvalidas",

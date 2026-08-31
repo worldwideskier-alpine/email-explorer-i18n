@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "គ្មានចម្លើយទាន់ពេលទេ។",
 		"spamCheckNetwork": "មិនអាចទាក់ទង API បានទេ។",
 		"spamCheckMalformed": "មិនអាចអានចម្លើយបានទេ។",
-		"spamCheckDetail": "ការឆ្លើយតប៖ {detail}"
+		"spamCheckDetail": "ការឆ្លើយតប៖ {detail}",
+		"spamPurgeTitle": "លុបសំបុត្រឥតបានការដោយស្វ័យប្រវត្តិ",
+		"spamPurgeDescription": "លុបរាល់ថ្ងៃនូវសំបុត្រក្នុងថតសំបុត្រឥតបានការដែលចាស់ជាងចំនួនថ្ងៃដែលអ្នកកំណត់។ ដំណើរការក្រោយការបម្រុងទុកស្វ័យប្រវត្តិ ដូច្នេះសំបុត្រដែលបានលុបនៅតែមានក្នុងច្បាប់ចម្លងចុងក្រោយ។",
+		"spamPurgeDays": "ចំនួនថ្ងៃរក្សាទុក",
+		"spamPurgeNoBackupNote": "ការបម្រុងទុកស្វ័យប្រវត្តិត្រូវបានបិទ។ សំបុត្រដែលលុបនៅពេលនោះមិនត្រូវបានរក្សាទុកនៅកន្លែងណាទេ។",
+		"spamPurgeSaved": "បានរក្សាទុក។",
+		"spamPurgeNeverRun": "មិនទាន់ដំណើរការនៅឡើយទេ។",
+		"spamPurgeLastOk": "ដំណើរការចុងក្រោយ {at}៖ បានលុប {deleted}។",
+		"spamPurgeLastFailed": "លើកចុងក្រោយ {at}៖ បរាជ័យ ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ព័ត៌មានចូលមិនត្រឹមត្រូវ",

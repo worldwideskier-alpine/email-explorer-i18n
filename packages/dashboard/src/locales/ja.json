@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "時間内に応答がありませんでした。",
 		"spamCheckNetwork": "APIに接続できませんでした。",
 		"spamCheckMalformed": "応答を解釈できませんでした。",
-		"spamCheckDetail": "応答: {detail}"
+		"spamCheckDetail": "応答: {detail}",
+		"spamPurgeTitle": "迷惑メールの自動削除",
+		"spamPurgeDescription": "迷惑メールフォルダにある、指定した日数より古いメールを毎日削除します。自動バックアップの後に実行するので、削除したメールも直近のバックアップには残ります。",
+		"spamPurgeDays": "保持日数",
+		"spamPurgeNoBackupNote": "自動バックアップが無効です。このまま削除されたメールは、どこにも残りません。",
+		"spamPurgeSaved": "保存しました。",
+		"spamPurgeNeverRun": "まだ一度も実行されていません。",
+		"spamPurgeLastOk": "最終実行 {at}：{deleted} 通を削除しました",
+		"spamPurgeLastFailed": "最終実行 {at}：失敗（{error}）"
 	},
 	"apiErrors": {
 		"Invalid credentials": "メールアドレスまたはパスワードが正しくありません",

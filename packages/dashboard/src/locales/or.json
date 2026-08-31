@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "ସମୟ ମଧ୍ୟରେ ଉତ୍ତର ଆସିଲା ନାହିଁ।",
 		"spamCheckNetwork": "API ପର୍ଯ୍ୟନ୍ତ ପହଞ୍ଚି ହେଲା ନାହିଁ।",
 		"spamCheckMalformed": "ଉତ୍ତର ପଢ଼ି ହେଲା ନାହିଁ।",
-		"spamCheckDetail": "ପ୍ରତିକ୍ରିୟା: {detail}"
+		"spamCheckDetail": "ପ୍ରତିକ୍ରିୟା: {detail}",
+		"spamPurgeTitle": "ସ୍ପାମର ସ୍ୱୟଂଚାଳିତ ବିଲୋପ",
+		"spamPurgeDescription": "ସ୍ପାମ ଫୋଲ୍ଡରରେ ଆପଣ ନିର୍ଦ୍ଧାରଣ କରିଥିବା ଦିନଠାରୁ ପୁରୁଣା ମେଲ ପ୍ରତିଦିନ ବିଲୋପ କରେ। ସ୍ୱୟଂଚାଳିତ ବ୍ୟାକଅପ ପରେ ଚାଲେ, ତେଣୁ ବିଲୋପ ହୋଇଥିବା ମେଲ ସର୍ବଶେଷ ବ୍ୟାକଅପରେ ଏବେ ବି ଥାଏ।",
+		"spamPurgeDays": "ରଖିବା ଦିନ",
+		"spamPurgeNoBackupNote": "ସ୍ୱୟଂଚାଳିତ ବ୍ୟାକଅପ ବନ୍ଦ ଅଛି। ଏହି ସମୟରେ ବିଲୋପ ହୋଇଥିବା ମେଲ କେଉଁଠି ରହେ ନାହିଁ।",
+		"spamPurgeSaved": "ସଞ୍ଚିତ ହେଲା।",
+		"spamPurgeNeverRun": "ଏପର୍ଯ୍ୟନ୍ତ ଥରେ ବି ଚାଲିନାହିଁ।",
+		"spamPurgeLastOk": "ଶେଷ ଥର {at}: {deleted} ବିଲୋପ ହେଲା।",
+		"spamPurgeLastFailed": "ଶେଷ ଥର {at}: ବିଫଳ ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ସାଇନ ଇନ ସୂଚନା ଭୁଲ",

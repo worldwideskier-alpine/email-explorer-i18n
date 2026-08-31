@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "未在时限内收到响应。",
 		"spamCheckNetwork": "无法连接到 API。",
 		"spamCheckMalformed": "无法解析响应。",
-		"spamCheckDetail": "响应：{detail}"
+		"spamCheckDetail": "响应：{detail}",
+		"spamPurgeTitle": "自动删除垃圾邮件",
+		"spamPurgeDescription": "每天删除垃圾邮件文件夹中早于所设天数的邮件。在自动备份之后执行，因此被删除的邮件仍保留在最近一次备份中。",
+		"spamPurgeDays": "保留天数",
+		"spamPurgeNoBackupNote": "自动备份已关闭。在此状态下删除的邮件不会保留在任何地方。",
+		"spamPurgeSaved": "已保存。",
+		"spamPurgeNeverRun": "尚未运行过。",
+		"spamPurgeLastOk": "上次执行 {at}：已删除 {deleted} 封",
+		"spamPurgeLastFailed": "上次运行 {at}：失败（{error}）"
 	},
 	"apiErrors": {
 		"Invalid credentials": "登录信息有误",

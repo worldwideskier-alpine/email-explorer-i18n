@@ -222,7 +222,15 @@
 		"spamCheckTimeout": "Ժամանակին պատասխան չեկավ։",
 		"spamCheckNetwork": "API-ին հասնել չհաջողվեց։",
 		"spamCheckMalformed": "Պատասխանը կարդալ չհաջողվեց։",
-		"spamCheckDetail": "Պատասխան՝ {detail}"
+		"spamCheckDetail": "Պատասխան՝ {detail}",
+		"spamPurgeTitle": "Սպամի ավտոմատ ջնջում",
+		"spamPurgeDescription": "Ամեն օր ջնջում է սպամի պանակի այն նամակները, որոնք ավելի հին են, քան նշված օրերի քանակը։ Կատարվում է ավտոմատ պահուստավորումից հետո, ուստի ջնջված նամակները դեռ կան ամենավերջին պատճենում։",
+		"spamPurgeDays": "Պահպանման օրեր",
+		"spamPurgeNoBackupNote": "Ավտոմատ պահուստավորումն անջատված է։ Այդ ընթացքում ջնջված նամակները ոչ մի տեղ չեն պահվում։",
+		"spamPurgeSaved": "Պահպանվեց։",
+		"spamPurgeNeverRun": "Դեռ չի գործարկվել։",
+		"spamPurgeLastOk": "Վերջին կատարումը {at}՝ ջնջվել է {deleted}։",
+		"spamPurgeLastFailed": "Վերջին անգամ {at}՝ ձախողվեց ({error})"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Մուտքի տվյալները սխալ են",
