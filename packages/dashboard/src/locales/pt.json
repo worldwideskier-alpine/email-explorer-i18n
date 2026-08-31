@@ -221,7 +221,8 @@
 		"spamCheckServerError": "A API devolveu um erro.",
 		"spamCheckTimeout": "Não houve resposta a tempo.",
 		"spamCheckNetwork": "Não foi possível contactar a API.",
-		"spamCheckMalformed": "Não foi possível ler a resposta."
+		"spamCheckMalformed": "Não foi possível ler a resposta.",
+		"spamCheckDetail": "Resposta: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Credenciais inválidas",

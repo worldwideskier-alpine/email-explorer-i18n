@@ -74,6 +74,44 @@ export default defineConfig({
 						if (body.includes("TRIGGER_CLAUDE_ERROR")) {
 							return new Response("mock error", { status: 500 });
 						}
+						// Replies that are not a bare verdict. Real ones look like
+						// these: a word of preamble, decoration around the word, or
+						// the model declining and returning no content at all.
+						const reply = (text: string, stopReason = "end_turn") =>
+							new Response(
+								JSON.stringify({
+									content: text ? [{ type: "text", text }] : [],
+									stop_reason: stopReason,
+								}),
+								{
+									status: 200,
+									headers: { "content-type": "application/json" },
+								},
+							);
+						if (body.includes("TRIGGER_CLAUDE_PREAMBLE")) {
+							return reply("Based on the sender domain, this is SPAM");
+						}
+						if (body.includes("TRIGGER_CLAUDE_REFUSAL")) {
+							return reply("", "refusal");
+						}
+						if (body.includes("TRIGGER_CLAUDE_DECORATED")) {
+							return reply("**NOT_SPAM**");
+						}
+						// Answers with the shape of the request rather than a
+						// verdict, so a test can see what actually went out --
+						// the prefilled assistant turn is what keeps a preamble
+						// from being produced in the first place, and nothing else
+						// in the suite can observe it.
+						if (body.includes("TRIGGER_CLAUDE_ECHO_SHAPE")) {
+							const sent = JSON.parse(body) as {
+								max_tokens: number;
+								messages: { role: string }[];
+							};
+							const prefilled = sent.messages.at(-1)?.role === "assistant";
+							return reply(
+								`assistant-turn=${prefilled ? "yes" : "no"} max_tokens=${sent.max_tokens}`,
+							);
+						}
 						// Matched case-insensitively so the marker can be planted in
 						// a field the worker normalizes on the way through -- an
 						// SPF/DKIM/DMARC verdict is lowercased before it reaches

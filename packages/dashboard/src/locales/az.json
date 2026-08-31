@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API xəta qaytardı.",
 		"spamCheckTimeout": "Vaxtında cavab gəlmədi.",
 		"spamCheckNetwork": "API-yə qoşulmaq mümkün olmadı.",
-		"spamCheckMalformed": "Cavabı oxumaq mümkün olmadı."
+		"spamCheckMalformed": "Cavabı oxumaq mümkün olmadı.",
+		"spamCheckDetail": "Cavab: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Giriş məlumatları yanlışdır",

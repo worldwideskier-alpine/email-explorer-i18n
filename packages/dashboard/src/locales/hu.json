@@ -221,7 +221,8 @@
 		"spamCheckServerError": "Az API hibát adott vissza.",
 		"spamCheckTimeout": "Nem érkezett válasz időben.",
 		"spamCheckNetwork": "Az API nem volt elérhető.",
-		"spamCheckMalformed": "A válasz nem volt olvasható."
+		"spamCheckMalformed": "A válasz nem volt olvasható.",
+		"spamCheckDetail": "Válasz: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Érvénytelen bejelentkezési adatok",

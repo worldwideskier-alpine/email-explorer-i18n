@@ -221,7 +221,8 @@
 		"spamCheckServerError": "أعادت الواجهة خطأ.",
 		"spamCheckTimeout": "لم يصل ردّ في الوقت المحدد.",
 		"spamCheckNetwork": "تعذّر الوصول إلى الواجهة.",
-		"spamCheckMalformed": "تعذّرت قراءة الرد."
+		"spamCheckMalformed": "تعذّرت قراءة الرد.",
+		"spamCheckDetail": "الرد: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "بيانات الدخول غير صحيحة",

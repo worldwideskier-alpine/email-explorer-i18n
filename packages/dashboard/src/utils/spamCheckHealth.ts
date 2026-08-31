@@ -13,6 +13,13 @@ export interface SpamCheckHealth {
 	lastSuccessAt: string | null;
 	lastFailureAt: string | null;
 	lastFailureReason: string | null;
+	/**
+	 * What the classifier replied, when the reply could not be read as a
+	 * verdict. Only ever set for the `malformed` reason -- every other reason
+	 * is fully described by its code, and an upstream error body is not ours
+	 * to show. Optional so a dashboard newer than its Worker still works.
+	 */
+	lastFailureDetail?: string | null;
 }
 
 /**
@@ -32,6 +39,22 @@ export function isSpamCheckFailing(
 	if (!health?.lastFailureAt) return false;
 	if (!health.lastSuccessAt) return true;
 	return health.lastFailureAt > health.lastSuccessAt;
+}
+
+/**
+ * The classifier's reply, when there is one worth putting on screen.
+ *
+ * Tied to whether the check is failing *now* rather than to the field simply
+ * being set. The detail belongs to a failure, and a failure that has since
+ * been followed by a success is over -- showing what it said would be a
+ * warning about something that is no longer happening, which is the exact
+ * failing this whole health line exists to correct.
+ */
+export function spamCheckDetail(
+	health: SpamCheckHealth | null | undefined,
+): string | null {
+	if (!isSpamCheckFailing(health)) return null;
+	return health?.lastFailureDetail?.trim() || null;
 }
 
 /** The reason codes the Worker records, and the message for each. */

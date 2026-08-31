@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API একটি ত্রুটি ফিরিয়েছে।",
 		"spamCheckTimeout": "সময়মতো কোনও উত্তর আসেনি।",
 		"spamCheckNetwork": "API-তে পৌঁছানো যায়নি।",
-		"spamCheckMalformed": "উত্তরটি পড়া যায়নি।"
+		"spamCheckMalformed": "উত্তরটি পড়া যায়নি।",
+		"spamCheckDetail": "প্রতিক্রিয়া: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "সাইন ইনের তথ্য ভুল",

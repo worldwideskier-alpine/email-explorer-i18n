@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API je vratio grešku.",
 		"spamCheckTimeout": "Odgovor nije stigao na vrijeme.",
 		"spamCheckNetwork": "Nije bilo moguće doći do API-ja.",
-		"spamCheckMalformed": "Odgovor nije bilo moguće pročitati."
+		"spamCheckMalformed": "Odgovor nije bilo moguće pročitati.",
+		"spamCheckDetail": "Odgovor: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Neispravni podaci za prijavu",

@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API skilaði villu.",
 		"spamCheckTimeout": "Ekkert svar barst í tæka tíð.",
 		"spamCheckNetwork": "Ekki náðist samband við API.",
-		"spamCheckMalformed": "Ekki tókst að lesa svarið."
+		"spamCheckMalformed": "Ekki tókst að lesa svarið.",
+		"spamCheckDetail": "Svar: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Rangar innskráningarupplýsingar",

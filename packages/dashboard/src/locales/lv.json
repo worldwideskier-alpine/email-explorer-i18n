@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API atgrieza kļūdu.",
 		"spamCheckTimeout": "Atbilde laikā nepienāca.",
 		"spamCheckNetwork": "Nevarēja sazināties ar API.",
-		"spamCheckMalformed": "Atbildi nevarēja nolasīt."
+		"spamCheckMalformed": "Atbildi nevarēja nolasīt.",
+		"spamCheckDetail": "Atbilde: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Nederīgi pieteikšanās dati",

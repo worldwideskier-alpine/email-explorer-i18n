@@ -221,7 +221,8 @@
 		"spamCheckServerError": "رابط خطا برگرداند.",
 		"spamCheckTimeout": "پاسخی در زمان مقرر نرسید.",
 		"spamCheckNetwork": "دسترسی به رابط ممکن نشد.",
-		"spamCheckMalformed": "پاسخ قابل خواندن نبود."
+		"spamCheckMalformed": "پاسخ قابل خواندن نبود.",
+		"spamCheckDetail": "پاسخ: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "اطلاعات ورود نادرست است",

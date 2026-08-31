@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API 回傳咗錯誤。",
 		"spamCheckTimeout": "時間內冇回應。",
 		"spamCheckNetwork": "連唔到 API。",
-		"spamCheckMalformed": "睇唔明個回應。"
+		"spamCheckMalformed": "睇唔明個回應。",
+		"spamCheckDetail": "回應：{detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "登入資料唔啱",

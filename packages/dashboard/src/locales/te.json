@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API ఒక లోపాన్ని తిరిగి ఇచ్చింది.",
 		"spamCheckTimeout": "సమయానికి సమాధానం రాలేదు.",
 		"spamCheckNetwork": "API ని చేరుకోలేకపోయాం.",
-		"spamCheckMalformed": "సమాధానాన్ని చదవలేకపోయాం."
+		"spamCheckMalformed": "సమాధానాన్ని చదవలేకపోయాం.",
+		"spamCheckDetail": "ప్రతిస్పందన: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "సైన్ ఇన్ వివరాలు తప్పు",

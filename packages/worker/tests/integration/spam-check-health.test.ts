@@ -59,6 +59,17 @@ async function receive(subject: string) {
 	);
 }
 
+async function folderOf(subject: string): Promise<string | undefined> {
+	for (const folder of ["inbox", "spam"]) {
+		const res = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}/emails?folder=${folder}`,
+		);
+		const emails = await res.json<{ subject: string }[]>();
+		if (emails.some((email) => email.subject === subject)) return folder;
+	}
+	return undefined;
+}
+
 async function setClaudeApiKey(apiKey: string) {
 	await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
 		method: "PUT",
@@ -77,6 +88,7 @@ async function health() {
 				lastSuccessAt: string | null;
 				lastFailureAt: string | null;
 				lastFailureReason: string | null;
+				lastFailureDetail: string | null;
 			};
 		}>()
 	).spamCheck;
@@ -93,6 +105,7 @@ describe("the second-stage check reports whether it is working", () => {
 			lastSuccessAt: null,
 			lastFailureAt: null,
 			lastFailureReason: null,
+			lastFailureDetail: null,
 		});
 	});
 
@@ -151,6 +164,7 @@ describe("the second-stage check reports whether it is working", () => {
 			lastSuccessAt: null,
 			lastFailureAt: null,
 			lastFailureReason: null,
+			lastFailureDetail: null,
 		});
 	});
 
@@ -187,6 +201,80 @@ describe("the second-stage check reports whether it is working", () => {
 		);
 
 		expect((await health()).lastSuccessAt).toBeNull();
+	});
+
+	/**
+	 * A reply that carries a verdict but not on its own. The old comparison
+	 * was against the whole reply, so decoration was enough to lose the
+	 * verdict entirely and file the message as unclassifiable.
+	 */
+	it("reads a verdict that arrives with decoration around it", async () => {
+		await setClaudeApiKey("sk-ant-test-key");
+		await receive("Decorated answer TRIGGER_CLAUDE_DECORATED");
+
+		const after = await health();
+		expect(after.lastSuccessAt).not.toBeNull();
+		expect(after.lastFailureAt).toBeNull();
+	});
+
+	/**
+	 * And a reply that does not begin with a verdict. This one must still be
+	 * a failure -- reading on to the SPAM at the end of the sentence would
+	 * file a real message as spam -- but the reply has to be kept, because it
+	 * is the only thing that says why.
+	 */
+	it("keeps the reply it could not read", async () => {
+		await setClaudeApiKey("sk-ant-test-key");
+		await receive("Explained instead of answered TRIGGER_CLAUDE_PREAMBLE");
+
+		const after = await health();
+		expect(after.lastFailureReason).toBe("malformed");
+		expect(after.lastFailureDetail).toBe(
+			"Based on the sender domain, this is SPAM",
+		);
+		expect(
+			await folderOf("Explained instead of answered TRIGGER_CLAUDE_PREAMBLE"),
+		).toBe("inbox");
+	});
+
+	// Nothing to quote: the model returned no content at all. The API's own
+	// reason for stopping stands in, which is what distinguishes "it declined"
+	// from "it rambled".
+	it("records why the model stopped when it said nothing", async () => {
+		await setClaudeApiKey("sk-ant-test-key");
+		await receive("Declined TRIGGER_CLAUDE_REFUSAL");
+
+		const after = await health();
+		expect(after.lastFailureReason).toBe("malformed");
+		expect(after.lastFailureDetail).toBe("stop_reason=refusal");
+	});
+
+	/**
+	 * The mechanism that stops a preamble being produced in the first place:
+	 * the assistant's turn is started for us, so the model continues it rather
+	 * than opening a reply of its own. The stub answers with the shape of the
+	 * request because nothing else in the suite can see what went out.
+	 */
+	it("sends a prefilled assistant turn and room to answer", async () => {
+		await setClaudeApiKey("sk-ant-test-key");
+		await receive("What went out TRIGGER_CLAUDE_ECHO_SHAPE");
+
+		expect((await health()).lastFailureDetail).toBe(
+			"assistant-turn=yes max_tokens=16",
+		);
+	});
+
+	// A later failure of a different kind must not leave the previous reply
+	// on screen beside it, saying something about a failure that is over.
+	it("drops the kept reply when the next failure is a different one", async () => {
+		await setClaudeApiKey("sk-ant-test-key");
+		await receive("First TRIGGER_CLAUDE_PREAMBLE");
+		expect((await health()).lastFailureDetail).not.toBeNull();
+
+		await receive("Then TRIGGER_CLAUDE_ERROR");
+		const after = await health();
+		expect(after.lastFailureReason).toBe("serverError");
+		expect(after.lastFailureDetail).toBeNull();
 	});
 
 	// Timestamps and a reason code only. The key never appears, and neither

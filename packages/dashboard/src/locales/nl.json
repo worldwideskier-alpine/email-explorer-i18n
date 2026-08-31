@@ -221,7 +221,8 @@
 		"spamCheckServerError": "De API gaf een fout terug.",
 		"spamCheckTimeout": "Er kwam niet op tijd antwoord.",
 		"spamCheckNetwork": "De API was niet bereikbaar.",
-		"spamCheckMalformed": "Het antwoord kon niet worden gelezen."
+		"spamCheckMalformed": "Het antwoord kon niet worden gelezen.",
+		"spamCheckDetail": "Antwoord: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ongeldige aanmeldgegevens",

@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API trả về lỗi.",
 		"spamCheckTimeout": "Không có phản hồi kịp thời.",
 		"spamCheckNetwork": "Không liên hệ được với API.",
-		"spamCheckMalformed": "Không đọc được phản hồi."
+		"spamCheckMalformed": "Không đọc được phản hồi.",
+		"spamCheckDetail": "Phản hồi: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Thông tin đăng nhập không đúng",

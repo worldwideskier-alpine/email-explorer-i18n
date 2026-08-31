@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API vrátilo chybu.",
 		"spamCheckTimeout": "Odpoveď neprišla včas.",
 		"spamCheckNetwork": "K API sa nepodarilo pripojiť.",
-		"spamCheckMalformed": "Odpoveď sa nepodarilo prečítať."
+		"spamCheckMalformed": "Odpoveď sa nepodarilo prečítať.",
+		"spamCheckDetail": "Odpoveď: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Neplatné prihlasovacie údaje",

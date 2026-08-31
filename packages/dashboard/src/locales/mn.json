@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API алдаа буцаалаа.",
 		"spamCheckTimeout": "Хугацаанд нь хариу ирсэнгүй.",
 		"spamCheckNetwork": "API-д холбогдож чадсангүй.",
-		"spamCheckMalformed": "Хариуг тайлж чадсангүй."
+		"spamCheckMalformed": "Хариуг тайлж чадсангүй.",
+		"spamCheckDetail": "Хариу: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Нэвтрэх мэдээлэл буруу байна",

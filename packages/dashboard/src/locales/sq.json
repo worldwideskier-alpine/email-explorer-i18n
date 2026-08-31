@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API-ja ktheu një gabim.",
 		"spamCheckTimeout": "Nuk erdhi përgjigje në kohë.",
 		"spamCheckNetwork": "Nuk u arrit lidhja me API-në.",
-		"spamCheckMalformed": "Përgjigjja nuk u lexua dot."
+		"spamCheckMalformed": "Përgjigjja nuk u lexua dot.",
+		"spamCheckDetail": "Përgjigje: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Të dhëna hyrjeje të pasakta",

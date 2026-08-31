@@ -221,7 +221,8 @@
 		"spamCheckServerError": "L'API ha dà enavos in sbagl.",
 		"spamCheckTimeout": "Nagina resposta n'è arrivada a temp.",
 		"spamCheckNetwork": "L'API n'ha betg pudì vegnir cuntanschida.",
-		"spamCheckMalformed": "La resposta n'ha betg pudì vegnir legida."
+		"spamCheckMalformed": "La resposta n'ha betg pudì vegnir legida.",
+		"spamCheckDetail": "Resposta: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Datas d'annunzia nunvalidas",

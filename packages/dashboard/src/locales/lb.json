@@ -221,7 +221,8 @@
 		"spamCheckServerError": "D'API huet e Feeler zréckginn.",
 		"spamCheckTimeout": "Et koum keng Äntwert an der Zäit.",
 		"spamCheckNetwork": "D'API war net erreechbar.",
-		"spamCheckMalformed": "D'Äntwert konnt net gelies ginn."
+		"spamCheckMalformed": "D'Äntwert konnt net gelies ginn.",
+		"spamCheckDetail": "Äntwert: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ongëlteg Umeldungsdaten",

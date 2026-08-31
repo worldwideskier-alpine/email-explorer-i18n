@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API-ն սխալ վերադարձրեց։",
 		"spamCheckTimeout": "Ժամանակին պատասխան չեկավ։",
 		"spamCheckNetwork": "API-ին հասնել չհաջողվեց։",
-		"spamCheckMalformed": "Պատասխանը կարդալ չհաջողվեց։"
+		"spamCheckMalformed": "Պատասխանը կարդալ չհաջողվեց։",
+		"spamCheckDetail": "Պատասխան՝ {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Մուտքի տվյալները սխալ են",

@@ -221,7 +221,8 @@
 		"spamCheckServerError": "The API returned an error.",
 		"spamCheckTimeout": "There was no answer in time.",
 		"spamCheckNetwork": "The API could not be reached.",
-		"spamCheckMalformed": "The answer could not be read."
+		"spamCheckMalformed": "The answer could not be read.",
+		"spamCheckDetail": "Response: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Invalid credentials",

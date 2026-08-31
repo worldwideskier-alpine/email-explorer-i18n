@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API bir hata döndürdü.",
 		"spamCheckTimeout": "Zamanında yanıt gelmedi.",
 		"spamCheckNetwork": "API'ye ulaşılamadı.",
-		"spamCheckMalformed": "Yanıt okunamadı."
+		"spamCheckMalformed": "Yanıt okunamadı.",
+		"spamCheckDetail": "Yanıt: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Kimlik bilgileri geçersiz",

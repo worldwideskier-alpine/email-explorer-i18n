@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API-ul a returnat o eroare.",
 		"spamCheckTimeout": "Nu a venit niciun răspuns la timp.",
 		"spamCheckNetwork": "Nu s-a putut contacta API-ul.",
-		"spamCheckMalformed": "Răspunsul nu a putut fi citit."
+		"spamCheckMalformed": "Răspunsul nu a putut fi citit.",
+		"spamCheckDetail": "Răspuns: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Date de autentificare nevalide",

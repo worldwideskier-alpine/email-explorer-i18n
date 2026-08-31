@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API zwróciło błąd.",
 		"spamCheckTimeout": "Odpowiedź nie nadeszła na czas.",
 		"spamCheckNetwork": "Nie udało się połączyć z API.",
-		"spamCheckMalformed": "Nie udało się odczytać odpowiedzi."
+		"spamCheckMalformed": "Nie udało się odczytać odpowiedzi.",
+		"spamCheckDetail": "Odpowiedź: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Nieprawidłowe dane logowania",

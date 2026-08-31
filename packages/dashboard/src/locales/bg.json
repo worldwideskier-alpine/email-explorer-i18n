@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API върна грешка.",
 		"spamCheckTimeout": "Не пристигна отговор навреме.",
 		"spamCheckNetwork": "Не може да се осъществи връзка с API.",
-		"spamCheckMalformed": "Отговорът не можа да бъде прочетен."
+		"spamCheckMalformed": "Отговорът не можа да бъде прочетен.",
+		"spamCheckDetail": "Отговор: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Невалидни данни за вход",
