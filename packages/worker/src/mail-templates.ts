@@ -69,6 +69,7 @@ export const MAIL_LOCALES = [
 	"uk",
 
 	"ar",
+	"ckb",
 	"fa",
 	"he",
 
@@ -126,6 +127,7 @@ interface LinkEmailStrings {
 /** Only for scripts written right to left, mirroring registry.ts. */
 const RTL_LOCALES: ReadonlySet<string> = new Set<MailLocale>([
 	"ar",
+	"ckb",
 	"fa",
 	"he",
 	"ur",
@@ -697,6 +699,17 @@ const PASSWORD_RESET: Record<MailLocale, LinkEmailStrings> = {
 		expiry: "تنتهي صلاحية هذا الرابط بعد ساعة.",
 		ignore: "إن لم تكن أنت من طلب ذلك، فتجاهل هذه الرسالة.",
 		footer: "Email Explorer - إعادة تعيين كلمة المرور",
+	},
+	ckb: {
+		subject: "ڕێکخستنەوەی وشەی نهێنی",
+		heading: "ڕێکخستنەوەی وشەی نهێنی",
+		intro:
+			"داواکارییەک بۆ ڕێکخستنەوەی وشەی نهێنیت پێمان گەیشت. بۆ بەردەوامبوون دوگمەی خوارەوە دابگرە.",
+		button: "ڕێکخستنەوەی وشەی نهێنی",
+		copyPrompt: "یان ئەم بەستەرە لەبەربگرەوە و لە وێبگەڕەکەت بیلکێنە:",
+		expiry: "ماوەی ئەم بەستەرە دوای کاتژمێرێک بەسەردەچێت.",
+		ignore: "ئەگەر تۆ داوات نەکردووە، ئەم نامەیە پشتگوێ بخە.",
+		footer: "Email Explorer - ڕێکخستنەوەی وشەی نهێنی",
 	},
 	fa: {
 		subject: "بازنشانی گذرواژه",
@@ -1439,6 +1452,15 @@ const EMAIL_CHANGE_TEXT: Record<MailLocale, EmailChangeStrings> = {
 		button: "تأكيد هذا العنوان",
 		ignore: "إن لم تكن أنت من طلب ذلك، فتجاهل هذه الرسالة. لن يتغير شيء.",
 		footer: "Email Explorer - تغيير عنوان البريد",
+	},
+	ckb: {
+		subject: "دووپاتکردنەوەی ناونیشانی ئیمەیڵی نوێ",
+		heading: "دووپاتکردنەوەی ناونیشانی ئیمەیڵی نوێ",
+		intro:
+			"داواکارییەک پێمان گەیشت بۆ گۆڕینی ناونیشانی چوونەژوورەوەت بۆ ئەم ناونیشانە. بۆ دووپاتکردنەوەی گۆڕانەکە دوگمەی خوارەوە دابگرە.",
+		button: "دووپاتکردنەوەی ئەم ناونیشانە",
+		ignore: "ئەگەر تۆ داوات نەکردووە، ئەم نامەیە پشتگوێ بخە. هیچ ناگۆڕدرێت.",
+		footer: "Email Explorer - گۆڕینی ناونیشانی ئیمەیڵ",
 	},
 	fa: {
 		subject: "تأیید نشانی ایمیل تازه",
