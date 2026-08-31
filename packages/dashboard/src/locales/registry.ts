@@ -113,6 +113,15 @@ export const LOCALES = [
 	{ code: "uk", label: "Українська", region: "europe" },
 
 	{ code: "ar", label: "العربية", region: "westAsia", dir: "rtl" },
+	// Central Kurdish (Sorani). Kurdish is inside the West Asia line only
+	// because Iraq's constitution makes it official alongside Arabic, and the
+	// written standard of that state -- and of the Kurdistan Regional
+	// Government -- is this one, in a Perso-Arabic script. Northern Kurdish
+	// (Kurmanji, "ku", Latin script, left to right) has more speakers but is
+	// the official language of no state, so it falls outside the same line
+	// that keeps Basque, Welsh and Faroese out of Europe. The two cannot share
+	// a catalogue: different script, different direction.
+	{ code: "ckb", label: "کوردیی ناوەندی", region: "westAsia", dir: "rtl" },
 	{ code: "fa", label: "فارسی", region: "westAsia", dir: "rtl" },
 	{ code: "he", label: "עברית", region: "westAsia", dir: "rtl" },
 

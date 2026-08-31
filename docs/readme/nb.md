@@ -4,6 +4,6 @@ En nettbasert e-postklient som kjører helt på Cloudflare Workers.
 
 Dette depotet er en flerspråklig fork av G4brym/email-explorer (MIT-lisens).
 
-Grensesnittet finnes på 72 språk. Velg ditt oppe til høyre; valget huskes i nettleseren.
+Grensesnittet finnes på 73 språk. Velg ditt oppe til høyre; valget huskes i nettleseren.
 
 Fullstendig dokumentasjon (på japansk): [README](../../README.md)

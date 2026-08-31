@@ -35,6 +35,14 @@ function mailLocales(text: string): string[] {
 	return [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
 }
 
+function rtlLocales(text: string): string[] {
+	const block = text.match(
+		/const RTL_LOCALES: ReadonlySet<string> = new Set<MailLocale>\(\[([\s\S]*?)\]\);/,
+	);
+	if (!block) return [];
+	return [...block[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+}
+
 describe("Worker mail locales", () => {
 	it("reads the Worker's list", () => {
 		expect(source).toBeTypeOf("string");
@@ -44,6 +52,24 @@ describe("Worker mail locales", () => {
 	it("offers mail in exactly the languages the picker offers", () => {
 		expect(mailLocales(source).slice().sort()).toEqual(
 			LOCALES.map((entry) => entry.code)
+				.slice()
+				.sort(),
+		);
+	});
+
+	/**
+	 * And the Worker's own list of right-to-left languages has to be the same
+	 * set as the picker's.
+	 *
+	 * The same hand-maintained-list problem as MAIL_LOCALES, with a quieter
+	 * failure: a new RTL language missing from the Worker's set still gets its
+	 * mail, correctly translated, laid out left to right. Nothing errors, and
+	 * nobody who reads the language is likely to be the one who notices.
+	 */
+	it("writes right-to-left mail for exactly the right-to-left languages", () => {
+		expect(rtlLocales(source).slice().sort()).toEqual(
+			LOCALES.filter((entry) => "dir" in entry && entry.dir === "rtl")
+				.map((entry) => entry.code)
 				.slice()
 				.sort(),
 		);

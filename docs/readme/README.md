@@ -61,6 +61,7 @@ A short summary of this fork in each language it supports. These are not full tr
 ## 西アジア・中東
 
 - [العربية](ar.md) (`ar`)
+- [کوردیی ناوەندی](ckb.md) (`ckb`)
 - [فارسی](fa.md) (`fa`)
 - [עברית](he.md) (`he`)
 
