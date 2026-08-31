@@ -10,9 +10,36 @@ self-hosted email client that runs entirely on Cloudflare. It receives mail
 through Cloudflare Email Routing, stores it in Durable Objects and R2, and
 serves a Vue dashboard from the same Worker.
 
-The fork ships by deploying to Cloudflare, not by publishing to npm. Upstream
-owns the `email-explorer` package name, so there is no release automation
-here.
+The fork ships by being forked and deployed to Cloudflare, not by publishing
+to npm. Upstream owns the `email-explorer` package name, so there is no
+release automation here.
+
+## Deployment-specific values
+
+Four values belong to one deployment and no other: the Worker's name, its R2
+bucket, its VAPID public key, and the address account-recovery mail is sent
+from. They have to live in `dev/wrangler.jsonc`, which is also a file this
+repository keeps changing -- so a fork editing them by hand would collide with
+every update it pulled.
+
+They are therefore set as **GitHub repository variables**
+(`WORKER_NAME`, `R2_BUCKET_NAME`, `VAPID_PUBLIC_KEY`,
+`ACCOUNT_RECOVERY_FROM`) and written into the runner's copy of the config by
+`scripts/apply-deployment-config.mjs` before the deploy. The checked-in file
+keeps this deployment's values as working defaults, which is what
+`wrangler dev` and the test pool read.
+
+An unset repository variable arrives as an empty string, so **empty means "not
+set"** and the default stands. A deployment that configures nothing -- this
+one -- deploys byte-for-byte what it did before. `deployment-config.test.ts`
+holds that property.
+
+`ACCOUNT_RECOVERY_FROM` is the one that also exists as an
+`EmailExplorer({ accountRecovery })` option, and **the variable wins**. Source
+code is what a fork inherits; the variable is what the fork itself sets. See
+`src/deployment-config.ts`.
+
+User-facing setup lives in `docs/deploying-your-own.md`.
 
 ## Layout
 
@@ -27,15 +54,21 @@ packages/worker/       The Worker: Hono + chanfana API, MailboxDO, mail ingestio
   src/throttle.ts      Rate-limit policy for login and password reset
   tests/               Vitest on @cloudflare/vitest-pool-workers
   dev/                 THIS deployment: wrangler.jsonc and EmailExplorer() options
+  scripts/             Deploy-time tooling, run by node, not bundled
 packages/dashboard/    The Vue 3 SPA, built into the Worker's assets
   src/locales/         ja / en / de message catalogues
   src/**/*.test.ts     Vitest on jsdom
-template/              Upstream's "deploy your own" starter
 docs/features/         User-facing guides, linked from the README
+docs/deploying-your-own.md  How someone forks this and runs their own
 ```
 
 `packages/worker` is the reusable package and carries no deployment-specific
 values. `packages/worker/dev` is this deployment, and does.
+
+There is no `template/`. Upstream keeps one -- a starter whose package.json
+installs `email-explorer` from npm -- and it was inherited here, where it was
+actively misleading: that package is upstream's, so it carries none of this
+fork's work. This fork ships by being forked.
 
 ## Key concepts
 

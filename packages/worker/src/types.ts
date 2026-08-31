@@ -37,5 +37,11 @@ export type Env = {
 	 * to the notified mailbox's own address when unset.
 	 */
 	VAPID_ADMIN_CONTACT?: string;
+	/**
+	 * The address password-reset mail is sent from, set per deployment so a
+	 * fork never has to edit source to configure it. Takes precedence over
+	 * `config.accountRecovery.fromEmail`; see deployment-config.ts.
+	 */
+	ACCOUNT_RECOVERY_FROM?: string;
 	config?: EmailExplorerOptions;
 };
