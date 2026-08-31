@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "අවසන් වරට {at}: අසාර්ථකයි ({error})",
 		"autoBackupStored": "සුරකින ලද උපස්ථ",
 		"autoBackupDownload": "බාගන්න",
-		"autoBackupNone": "තවම සුරකින ලද උපස්ථ නැත."
+		"autoBackupNone": "තවම සුරකින ලද උපස්ථ නැත.",
+		"spamCheckNeverRun": "දෙවන අදියරේ පරීක්ෂාව තවම ක්‍රියාත්මක වී නැත.",
+		"spamCheckOk": "අවසන් වරට එය ක්‍රියා කළේ {date} දිනයි.",
+		"spamCheckFailing": "අවසන් පරීක්ෂාව අසාර්ථක විය ({date}).",
+		"spamCheckFailNote": "පරීක්ෂා කළ නොහැකි වූ තැපෑල එන ලිපි කොටුවට යයි, එබැවින් අනවශ්‍ය තැපෑල රිංගා යා හැක.",
+		"spamCheckUnauthorized": "API යතුර ප්‍රතික්ෂේප විය. යතුර පරීක්ෂා කරන්න.",
+		"spamCheckRateLimited": "ඇමතුම් සීමාවට ළඟා විය.",
+		"spamCheckServerError": "API දෝෂයක් ලබා දුන්නේය.",
+		"spamCheckTimeout": "නියමිත වේලාවට පිළිතුරක් ලැබුණේ නැත.",
+		"spamCheckNetwork": "API වෙත ළඟා විය නොහැකි විය.",
+		"spamCheckMalformed": "පිළිතුර කියවිය නොහැකි විය."
 	},
 	"apiErrors": {
 		"Invalid credentials": "පිවිසුම් තොරතුරු වැරදියි",

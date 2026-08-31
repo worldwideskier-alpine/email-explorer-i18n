@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "最終実行 {at}：失敗（{error}）",
 		"autoBackupStored": "保存済みのバックアップ",
 		"autoBackupDownload": "ダウンロード",
-		"autoBackupNone": "保存済みのバックアップはまだありません。"
+		"autoBackupNone": "保存済みのバックアップはまだありません。",
+		"spamCheckNeverRun": "二次判定はまだ一度も実行されていません。",
+		"spamCheckOk": "最後に判定できたのは {date} です。",
+		"spamCheckFailing": "直近の判定が失敗しています（{date}）。",
+		"spamCheckFailNote": "判定できなかったメールは受信トレイに入ります。迷惑メールを見落とす可能性があります。",
+		"spamCheckUnauthorized": "APIキーが拒否されました。キーを確認してください。",
+		"spamCheckRateLimited": "呼び出し回数の上限に達しました。",
+		"spamCheckServerError": "APIがエラーを返しました。",
+		"spamCheckTimeout": "時間内に応答がありませんでした。",
+		"spamCheckNetwork": "APIに接続できませんでした。",
+		"spamCheckMalformed": "応答を解釈できませんでした。"
 	},
 	"apiErrors": {
 		"Invalid credentials": "メールアドレスまたはパスワードが正しくありません",

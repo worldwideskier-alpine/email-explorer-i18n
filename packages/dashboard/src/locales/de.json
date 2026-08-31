@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Letzter Lauf {at}: fehlgeschlagen ({error})",
 		"autoBackupStored": "Gespeicherte Sicherungen",
 		"autoBackupDownload": "Herunterladen",
-		"autoBackupNone": "Noch keine gespeicherten Sicherungen."
+		"autoBackupNone": "Noch keine gespeicherten Sicherungen.",
+		"spamCheckNeverRun": "Die zweite Prüfung wurde noch nie ausgeführt.",
+		"spamCheckOk": "Zuletzt funktioniert hat sie am {date}.",
+		"spamCheckFailing": "Die letzte Prüfung ist fehlgeschlagen ({date}).",
+		"spamCheckFailNote": "Nicht geprüfte Post landet im Posteingang, es kann also Spam durchkommen.",
+		"spamCheckUnauthorized": "Der API-Schlüssel wurde abgelehnt. Prüfen Sie den Schlüssel.",
+		"spamCheckRateLimited": "Das Aufrufkontingent ist erschöpft.",
+		"spamCheckServerError": "Die API hat einen Fehler zurückgegeben.",
+		"spamCheckTimeout": "Es kam keine rechtzeitige Antwort.",
+		"spamCheckNetwork": "Die API war nicht erreichbar.",
+		"spamCheckMalformed": "Die Antwort war nicht lesbar."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ungültige Anmeldedaten",

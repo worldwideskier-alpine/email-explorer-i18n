@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "अन्तिम पटक {at}: असफल ({error})",
 		"autoBackupStored": "सुरक्षित ब्याकअप",
 		"autoBackupDownload": "डाउनलोड",
-		"autoBackupNone": "अझै सुरक्षित ब्याकअप छैन।"
+		"autoBackupNone": "अझै सुरक्षित ब्याकअप छैन।",
+		"spamCheckNeverRun": "दोस्रो चरणको जाँच अझै चलेको छैन।",
+		"spamCheckOk": "अन्तिम पटक यो {date} मा चलेको थियो।",
+		"spamCheckFailing": "पछिल्लो जाँच असफल भयो ({date})।",
+		"spamCheckFailNote": "जाँच गर्न नसकिएको मेल इनबक्समा जान्छ, त्यसैले स्प्याम छिर्न सक्छ।",
+		"spamCheckUnauthorized": "API कुञ्जी अस्वीकृत भयो। कुञ्जी जाँच्नुहोस्।",
+		"spamCheckRateLimited": "कलको सीमा पुग्यो।",
+		"spamCheckServerError": "API ले त्रुटि फर्कायो।",
+		"spamCheckTimeout": "समयमै जवाफ आएन।",
+		"spamCheckNetwork": "API मा पुग्न सकिएन।",
+		"spamCheckMalformed": "जवाफ पढ्न सकिएन।"
 	},
 	"apiErrors": {
 		"Invalid credentials": "साइन इनको जानकारी गलत छ",

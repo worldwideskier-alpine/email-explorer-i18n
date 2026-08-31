@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "ครั้งล่าสุด {at}: ล้มเหลว ({error})",
 		"autoBackupStored": "ข้อมูลสำรองที่เก็บไว้",
 		"autoBackupDownload": "ดาวน์โหลด",
-		"autoBackupNone": "ยังไม่มีข้อมูลสำรองที่เก็บไว้"
+		"autoBackupNone": "ยังไม่มีข้อมูลสำรองที่เก็บไว้",
+		"spamCheckNeverRun": "การตรวจขั้นที่สองยังไม่เคยทำงาน",
+		"spamCheckOk": "ครั้งล่าสุดที่สำเร็จคือ {date}",
+		"spamCheckFailing": "การตรวจครั้งล่าสุดล้มเหลว ({date})",
+		"spamCheckFailNote": "จดหมายที่ตรวจไม่ได้จะเข้ากล่องขาเข้า จึงอาจมีสแปมหลุดผ่านไป",
+		"spamCheckUnauthorized": "คีย์ API ถูกปฏิเสธ กรุณาตรวจสอบคีย์",
+		"spamCheckRateLimited": "ถึงขีดจำกัดจำนวนการเรียกแล้ว",
+		"spamCheckServerError": "API ตอบกลับเป็นข้อผิดพลาด",
+		"spamCheckTimeout": "ไม่มีคำตอบภายในเวลาที่กำหนด",
+		"spamCheckNetwork": "ติดต่อ API ไม่ได้",
+		"spamCheckMalformed": "อ่านคำตอบไม่ได้"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ข้อมูลการลงชื่อเข้าใช้ไม่ถูกต้อง",

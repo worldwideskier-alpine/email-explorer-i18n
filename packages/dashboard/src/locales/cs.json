@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Poslední běh {at}: selhalo ({error})",
 		"autoBackupStored": "Uložené zálohy",
 		"autoBackupDownload": "Stáhnout",
-		"autoBackupNone": "Zatím žádné uložené zálohy."
+		"autoBackupNone": "Zatím žádné uložené zálohy.",
+		"spamCheckNeverRun": "Druhá kontrola zatím neproběhla.",
+		"spamCheckOk": "Naposledy fungovala {date}.",
+		"spamCheckFailing": "Poslední kontrola selhala ({date}).",
+		"spamCheckFailNote": "Pošta, kterou nešlo zkontrolovat, jde do doručené pošty, takže může procházet spam.",
+		"spamCheckUnauthorized": "Klíč API byl odmítnut. Zkontrolujte klíč.",
+		"spamCheckRateLimited": "Byl dosažen limit počtu volání.",
+		"spamCheckServerError": "API vrátilo chybu.",
+		"spamCheckTimeout": "Odpověď nedorazila včas.",
+		"spamCheckNetwork": "K API se nepodařilo připojit.",
+		"spamCheckMalformed": "Odpověď se nepodařilo přečíst."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Neplatné přihlašovací údaje",

@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Последње {at}: неуспешно ({error})",
 		"autoBackupStored": "Сачуване копије",
 		"autoBackupDownload": "Преузми",
-		"autoBackupNone": "Још нема сачуваних копија."
+		"autoBackupNone": "Још нема сачуваних копија.",
+		"spamCheckNeverRun": "Друга провера још никада није покренута.",
+		"spamCheckOk": "Последњи пут је успела {date}.",
+		"spamCheckFailing": "Последња провера није успела ({date}).",
+		"spamCheckFailNote": "Пошта која није могла да се провери иде у пристиглу пошту, па нежељена пошта може да прође.",
+		"spamCheckUnauthorized": "API кључ је одбијен. Проверите кључ.",
+		"spamCheckRateLimited": "Достигнуто је ограничење броја позива.",
+		"spamCheckServerError": "API је вратио грешку.",
+		"spamCheckTimeout": "Одговор није стигао на време.",
+		"spamCheckNetwork": "Није било могуће доћи до API-ја.",
+		"spamCheckMalformed": "Одговор није било могуће прочитати."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Неисправни подаци за пријаву",

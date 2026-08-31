@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Rith deiridh {at}: theip air ({error})",
 		"autoBackupStored": "Cúltacaí sábháilte",
 		"autoBackupDownload": "Íoslódáil",
-		"autoBackupNone": "Níl aon chúltaca sábháilte fós."
+		"autoBackupNone": "Níl aon chúltaca sábháilte fós.",
+		"spamCheckNeverRun": "Níor ritheadh an dara seiceáil fós.",
+		"spamCheckOk": "D'oibrigh sí an uair dheireanach ar {date}.",
+		"spamCheckFailing": "Theip ar an seiceáil dheireanach ({date}).",
+		"spamCheckFailNote": "Téann post nár seiceáladh chuig an mbosca isteach, mar sin d'fhéadfadh turscar dul tríd.",
+		"spamCheckUnauthorized": "Diúltaíodh don eochair API. Seiceáil an eochair.",
+		"spamCheckRateLimited": "Sroicheadh teorainn na nglaonna.",
+		"spamCheckServerError": "Sheol an API earráid ar ais.",
+		"spamCheckTimeout": "Níor tháinig freagra in am.",
+		"spamCheckNetwork": "Níorbh fhéidir teagmháil a dhéanamh leis an API.",
+		"spamCheckMalformed": "Níorbh fhéidir an freagra a léamh."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Dintiúir neamhbhailí",

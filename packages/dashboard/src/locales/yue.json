@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "上次執行 {at}：失敗（{error}）",
 		"autoBackupStored": "已儲存嘅備份",
 		"autoBackupDownload": "下載",
-		"autoBackupNone": "重未有儲存嘅備份。"
+		"autoBackupNone": "重未有儲存嘅備份。",
+		"spamCheckNeverRun": "二次判斷仲未執行過。",
+		"spamCheckOk": "最後一次成功係 {date}。",
+		"spamCheckFailing": "最近一次判斷失敗咗（{date}）。",
+		"spamCheckFailNote": "判斷唔到嘅郵件會入收件匣，可能會漏咗垃圾郵件。",
+		"spamCheckUnauthorized": "API 金鑰被拒絕。請檢查金鑰。",
+		"spamCheckRateLimited": "已達呼叫次數上限。",
+		"spamCheckServerError": "API 回傳咗錯誤。",
+		"spamCheckTimeout": "時間內冇回應。",
+		"spamCheckNetwork": "連唔到 API。",
+		"spamCheckMalformed": "睇唔明個回應。"
 	},
 	"apiErrors": {
 		"Invalid credentials": "登入資料唔啱",

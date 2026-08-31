@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "နောက်ဆုံး {at}: မအောင်မြင် ({error})",
 		"autoBackupStored": "သိမ်းဆည်းထားသော အရန်များ",
 		"autoBackupDownload": "ဒေါင်းလုဒ်",
-		"autoBackupNone": "သိမ်းဆည်းထားသော အရန် မရှိသေးပါ။"
+		"autoBackupNone": "သိမ်းဆည်းထားသော အရန် မရှိသေးပါ။",
+		"spamCheckNeverRun": "ဒုတိယအဆင့် စစ်ဆေးမှုကို မလုပ်ဆောင်ရသေးပါ။",
+		"spamCheckOk": "နောက်ဆုံး အောင်မြင်ခဲ့သည်မှာ {date} ဖြစ်သည်။",
+		"spamCheckFailing": "နောက်ဆုံး စစ်ဆေးမှု မအောင်မြင်ပါ ({date})။",
+		"spamCheckFailNote": "မစစ်ဆေးနိုင်သော စာများသည် စာဝင်စာအိတ်သို့ ရောက်သွားသဖြင့် အမှိုက်စာ လွတ်သွားနိုင်သည်။",
+		"spamCheckUnauthorized": "API သော့ကို ငြင်းပယ်ခံရသည်။ သော့ကို စစ်ဆေးပါ။",
+		"spamCheckRateLimited": "ခေါ်ဆိုမှု ကန့်သတ်ချက်သို့ ရောက်ရှိပြီ။",
+		"spamCheckServerError": "API က အမှားပြန်ပေးသည်။",
+		"spamCheckTimeout": "အချိန်မီ အဖြေမရရှိပါ။",
+		"spamCheckNetwork": "API သို့ မဆက်သွယ်နိုင်ပါ။",
+		"spamCheckMalformed": "အဖြေကို မဖတ်နိုင်ပါ။"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ဝင်ရောက်ရန် အချက်အလက် မမှန်ကန်ပါ",

@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Lần cuối {at}: thất bại ({error})",
 		"autoBackupStored": "Bản sao lưu đã lưu",
 		"autoBackupDownload": "Tải xuống",
-		"autoBackupNone": "Chưa có bản sao lưu nào."
+		"autoBackupNone": "Chưa có bản sao lưu nào.",
+		"spamCheckNeverRun": "Bước kiểm tra thứ hai chưa từng chạy.",
+		"spamCheckOk": "Lần cuối nó hoạt động là {date}.",
+		"spamCheckFailing": "Lần kiểm tra gần nhất đã thất bại ({date}).",
+		"spamCheckFailNote": "Thư không kiểm tra được sẽ vào hộp thư đến, nên thư rác có thể lọt qua.",
+		"spamCheckUnauthorized": "Khóa API bị từ chối. Hãy kiểm tra khóa.",
+		"spamCheckRateLimited": "Đã đạt giới hạn số lần gọi.",
+		"spamCheckServerError": "API trả về lỗi.",
+		"spamCheckTimeout": "Không có phản hồi kịp thời.",
+		"spamCheckNetwork": "Không liên hệ được với API.",
+		"spamCheckMalformed": "Không đọc được phản hồi."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Thông tin đăng nhập không đúng",

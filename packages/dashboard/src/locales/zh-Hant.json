@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "上次執行 {at}：失敗（{error}）",
 		"autoBackupStored": "已儲存的備份",
 		"autoBackupDownload": "下載",
-		"autoBackupNone": "尚無已儲存的備份。"
+		"autoBackupNone": "尚無已儲存的備份。",
+		"spamCheckNeverRun": "二次判定尚未執行過。",
+		"spamCheckOk": "最後一次成功是 {date}。",
+		"spamCheckFailing": "最近一次判定失敗（{date}）。",
+		"spamCheckFailNote": "無法判定的郵件會進入收件匣，可能漏掉垃圾郵件。",
+		"spamCheckUnauthorized": "API 金鑰遭拒。請檢查金鑰。",
+		"spamCheckRateLimited": "已達呼叫次數上限。",
+		"spamCheckServerError": "API 傳回了錯誤。",
+		"spamCheckTimeout": "未在時限內收到回應。",
+		"spamCheckNetwork": "無法連線至 API。",
+		"spamCheckMalformed": "無法解析回應。"
 	},
 	"apiErrors": {
 		"Invalid credentials": "登入資訊有誤",

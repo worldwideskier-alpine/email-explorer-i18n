@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Kali terakhir {at}: gagal ({error})",
 		"autoBackupStored": "Sandaran tersimpan",
 		"autoBackupDownload": "Muat turun",
-		"autoBackupNone": "Belum ada sandaran tersimpan."
+		"autoBackupNone": "Belum ada sandaran tersimpan.",
+		"spamCheckNeverRun": "Semakan peringkat kedua belum pernah dijalankan.",
+		"spamCheckOk": "Ia terakhir berjaya pada {date}.",
+		"spamCheckFailing": "Semakan terakhir gagal ({date}).",
+		"spamCheckFailNote": "Mel yang tidak dapat disemak masuk ke peti masuk, jadi spam boleh terlepas.",
+		"spamCheckUnauthorized": "Kunci API ditolak. Semak kunci itu.",
+		"spamCheckRateLimited": "Had bilangan panggilan telah dicapai.",
+		"spamCheckServerError": "API mengembalikan ralat.",
+		"spamCheckTimeout": "Tiada jawapan dalam masa yang ditetapkan.",
+		"spamCheckNetwork": "API tidak dapat dihubungi.",
+		"spamCheckMalformed": "Jawapan tidak dapat dibaca."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Butiran log masuk tidak sah",

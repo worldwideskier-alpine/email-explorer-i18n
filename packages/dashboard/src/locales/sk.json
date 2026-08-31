@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Posledný beh {at}: zlyhalo ({error})",
 		"autoBackupStored": "Uložené zálohy",
 		"autoBackupDownload": "Stiahnuť",
-		"autoBackupNone": "Zatiaľ žiadne uložené zálohy."
+		"autoBackupNone": "Zatiaľ žiadne uložené zálohy.",
+		"spamCheckNeverRun": "Druhá kontrola zatiaľ nikdy nebežala.",
+		"spamCheckOk": "Naposledy fungovala {date}.",
+		"spamCheckFailing": "Posledná kontrola zlyhala ({date}).",
+		"spamCheckFailNote": "Pošta, ktorú sa nepodarilo skontrolovať, ide do doručenej pošty, takže spam môže prejsť.",
+		"spamCheckUnauthorized": "Kľúč API bol odmietnutý. Skontrolujte kľúč.",
+		"spamCheckRateLimited": "Dosiahol sa limit počtu volaní.",
+		"spamCheckServerError": "API vrátilo chybu.",
+		"spamCheckTimeout": "Odpoveď neprišla včas.",
+		"spamCheckNetwork": "K API sa nepodarilo pripojiť.",
+		"spamCheckMalformed": "Odpoveď sa nepodarilo prečítať."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Neplatné prihlasovacie údaje",

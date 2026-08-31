@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Viimeksi {at}: epäonnistui ({error})",
 		"autoBackupStored": "Tallennetut kopiot",
 		"autoBackupDownload": "Lataa",
-		"autoBackupNone": "Ei vielä tallennettuja kopioita."
+		"autoBackupNone": "Ei vielä tallennettuja kopioita.",
+		"spamCheckNeverRun": "Toista tarkistusta ei ole vielä ajettu.",
+		"spamCheckOk": "Se toimi viimeksi {date}.",
+		"spamCheckFailing": "Viimeisin tarkistus epäonnistui ({date}).",
+		"spamCheckFailNote": "Tarkistamatta jäänyt posti menee saapuneisiin, joten roskapostia voi päästä läpi.",
+		"spamCheckUnauthorized": "API-avain hylättiin. Tarkista avain.",
+		"spamCheckRateLimited": "Kutsujen yläraja tuli täyteen.",
+		"spamCheckServerError": "API palautti virheen.",
+		"spamCheckTimeout": "Vastausta ei tullut ajoissa.",
+		"spamCheckNetwork": "API:in ei saatu yhteyttä.",
+		"spamCheckMalformed": "Vastausta ei voitu lukea."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Virheelliset kirjautumistiedot",

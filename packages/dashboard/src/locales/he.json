@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "הרצה אחרונה {at}: נכשלה ({error})",
 		"autoBackupStored": "גיבויים שמורים",
 		"autoBackupDownload": "הורדה",
-		"autoBackupNone": "אין עדיין גיבויים שמורים."
+		"autoBackupNone": "אין עדיין גיבויים שמורים.",
+		"spamCheckNeverRun": "הבדיקה השנייה עדיין לא רצה.",
+		"spamCheckOk": "הפעם האחרונה שהצליחה הייתה {date}.",
+		"spamCheckFailing": "הבדיקה האחרונה נכשלה ({date}).",
+		"spamCheckFailNote": "דואר שלא נבדק מגיע לתיבה הנכנסת, וייתכן שדואר זבל עובר.",
+		"spamCheckUnauthorized": "מפתח הממשק נדחה. בדקו את המפתח.",
+		"spamCheckRateLimited": "הגעתם למגבלת מספר הקריאות.",
+		"spamCheckServerError": "הממשק החזיר שגיאה.",
+		"spamCheckTimeout": "לא הגיעה תשובה בזמן.",
+		"spamCheckNetwork": "לא ניתן היה להתחבר לממשק.",
+		"spamCheckMalformed": "לא ניתן היה לקרוא את התשובה."
 	},
 	"apiErrors": {
 		"Invalid credentials": "פרטי ההתחברות שגויים",

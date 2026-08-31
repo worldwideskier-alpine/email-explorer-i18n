@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "លើកចុងក្រោយ {at}៖ បរាជ័យ ({error})",
 		"autoBackupStored": "ច្បាប់ចម្លងដែលបានរក្សាទុក",
 		"autoBackupDownload": "ទាញយក",
-		"autoBackupNone": "មិនទាន់មានច្បាប់ចម្លងរក្សាទុកនៅឡើយ។"
+		"autoBackupNone": "មិនទាន់មានច្បាប់ចម្លងរក្សាទុកនៅឡើយ។",
+		"spamCheckNeverRun": "ការត្រួតពិនិត្យដំណាក់កាលទីពីរមិនទាន់ដំណើរការនៅឡើយ។",
+		"spamCheckOk": "លើកចុងក្រោយវាដំណើរការនៅ {date}។",
+		"spamCheckFailing": "ការត្រួតពិនិត្យចុងក្រោយបានបរាជ័យ ({date})។",
+		"spamCheckFailNote": "សំបុត្រដែលមិនអាចត្រួតពិនិត្យបានទៅកាន់ប្រអប់ទទួល ដូច្នេះសារឥតបានការអាចឆ្លងកាត់។",
+		"spamCheckUnauthorized": "សោ API ត្រូវបានបដិសេធ។ សូមពិនិត្យសោ។",
+		"spamCheckRateLimited": "បានដល់ដែនកំណត់នៃការហៅ។",
+		"spamCheckServerError": "API បានឆ្លើយតបជាកំហុស។",
+		"spamCheckTimeout": "គ្មានចម្លើយទាន់ពេលទេ។",
+		"spamCheckNetwork": "មិនអាចទាក់ទង API បានទេ។",
+		"spamCheckMalformed": "មិនអាចអានចម្លើយបានទេ។"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ព័ត៌មានចូលមិនត្រឹមត្រូវ",

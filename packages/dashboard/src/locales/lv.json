@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Pēdējoreiz {at}: neizdevās ({error})",
 		"autoBackupStored": "Saglabātās kopijas",
 		"autoBackupDownload": "Lejupielādēt",
-		"autoBackupNone": "Saglabātu kopiju vēl nav."
+		"autoBackupNone": "Saglabātu kopiju vēl nav.",
+		"spamCheckNeverRun": "Otrā pārbaude vēl nav veikta.",
+		"spamCheckOk": "Pēdējo reizi tā nostrādāja {date}.",
+		"spamCheckFailing": "Pēdējā pārbaude neizdevās ({date}).",
+		"spamCheckFailNote": "Nepārbaudītais pasts nonāk iesūtnē, tāpēc mēstules var izlauzties cauri.",
+		"spamCheckUnauthorized": "API atslēga tika noraidīta. Pārbaudiet atslēgu.",
+		"spamCheckRateLimited": "Sasniegts izsaukumu ierobežojums.",
+		"spamCheckServerError": "API atgrieza kļūdu.",
+		"spamCheckTimeout": "Atbilde laikā nepienāca.",
+		"spamCheckNetwork": "Nevarēja sazināties ar API.",
+		"spamCheckMalformed": "Atbildi nevarēja nolasīt."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Nederīgi pieteikšanās dati",

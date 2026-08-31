@@ -77,6 +77,18 @@ const MailboxDetailsSchema = z.object({
 	email: z.string(),
 	name: z.string(),
 	settings: z.record(z.any()),
+	/**
+	 * Whether the second-stage spam check is still working. Only ever
+	 * timestamps and a reason code -- never the API key, and never the
+	 * upstream error text.
+	 */
+	spamCheck: z
+		.object({
+			lastSuccessAt: z.string().nullable(),
+			lastFailureAt: z.string().nullable(),
+			lastFailureReason: z.string().nullable(),
+		})
+		.optional(),
 });
 
 const UpdateMailboxRequestSchema = z.object({
@@ -307,11 +319,21 @@ class GetMailbox extends OpenAPIRoute {
 			return c.json({ error: "Not found" }, 404);
 		}
 		const settings = await obj.json<{ fromName?: string }>();
+
+		// How the second-stage spam check has been going. It fails open, so
+		// without this the screen shows a configured key whether the check is
+		// working or has been rejected on every message for a week.
+		const ns = c.env.MAILBOX;
+		const spamCheck = await ns
+			.get(ns.idFromName(mailboxId))
+			.getSpamCheckHealth();
+
 		const response = {
 			id: mailboxId,
 			name: settings?.fromName || mailboxId,
 			email: mailboxId,
 			settings: redactMailboxSettings(settings),
+			spamCheck,
 		};
 		return c.json(response);
 	}
@@ -2292,7 +2314,7 @@ async function receiveEmail(
 	) {
 		const claudeApiKey = await getClaudeApiKey(env, mailboxId);
 		if (claudeApiKey) {
-			folder = await classifyWithClaude({
+			const checked = await classifyWithClaude({
 				apiKey: claudeApiKey,
 				subject: parsedEmail.subject || "",
 				from: parsedEmail.from?.address || "",
@@ -2310,6 +2332,15 @@ async function receiveEmail(
 				text: parsedEmail.text,
 				html: parsedEmail.html,
 			});
+			folder = checked.folder;
+
+			// The check fails open, so a rejected key looks exactly like a
+			// filter finding nothing to catch. Recorded here rather than logged
+			// and forgotten, so the settings screen can say so.
+			const ns = env.MAILBOX;
+			await ns
+				.get(ns.idFromName(mailboxId))
+				.recordSpamCheck(new Date().toISOString(), checked.failure);
 		}
 	}
 

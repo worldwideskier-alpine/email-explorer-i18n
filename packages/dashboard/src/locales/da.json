@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Sidste kørsel {at}: mislykkedes ({error})",
 		"autoBackupStored": "Gemte kopier",
 		"autoBackupDownload": "Hent",
-		"autoBackupNone": "Ingen gemte kopier endnu."
+		"autoBackupNone": "Ingen gemte kopier endnu.",
+		"spamCheckNeverRun": "Andet tjek er endnu ikke kørt.",
+		"spamCheckOk": "Det virkede sidst den {date}.",
+		"spamCheckFailing": "Det seneste tjek mislykkedes ({date}).",
+		"spamCheckFailNote": "Post, der ikke kunne tjekkes, ryger i indbakken, så spam kan slippe igennem.",
+		"spamCheckUnauthorized": "API-nøglen blev afvist. Tjek nøglen.",
+		"spamCheckRateLimited": "Grænsen for antal kald er nået.",
+		"spamCheckServerError": "API'en returnerede en fejl.",
+		"spamCheckTimeout": "Der kom ikke svar i tide.",
+		"spamCheckNetwork": "Der kunne ikke opnås forbindelse til API'en.",
+		"spamCheckMalformed": "Svaret kunne ikke læses."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ugyldige loginoplysninger",

@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Апошні запуск {at}: няўдала ({error})",
 		"autoBackupStored": "Захаваныя копіі",
 		"autoBackupDownload": "Спампаваць",
-		"autoBackupNone": "Захаваных копій пакуль няма."
+		"autoBackupNone": "Захаваных копій пакуль няма.",
+		"spamCheckNeverRun": "Другая праверка яшчэ ні разу не выконвалася.",
+		"spamCheckOk": "Апошні раз спрацавала {date}.",
+		"spamCheckFailing": "Апошняя праверка не ўдалася ({date}).",
+		"spamCheckFailNote": "Пошта, якую не ўдалося праверыць, трапляе ва ўваходныя, таму спам можа прасочвацца.",
+		"spamCheckUnauthorized": "Ключ API адхілены. Праверце ключ.",
+		"spamCheckRateLimited": "Дасягнуты ліміт колькасці выклікаў.",
+		"spamCheckServerError": "API вярнуў памылку.",
+		"spamCheckTimeout": "Адказ не прыйшоў своечасова.",
+		"spamCheckNetwork": "Не ўдалося звязацца з API.",
+		"spamCheckMalformed": "Не ўдалося прачытаць адказ."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Няправільныя даныя для ўваходу",

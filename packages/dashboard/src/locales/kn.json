@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "ಕೊನೆಯ ಬಾರಿ {at}: ವಿಫಲ ({error})",
 		"autoBackupStored": "ಉಳಿಸಿದ ಬ್ಯಾಕಪ್",
 		"autoBackupDownload": "ಡೌನ್‌ಲೋಡ್",
-		"autoBackupNone": "ಇನ್ನೂ ಉಳಿಸಿದ ಬ್ಯಾಕಪ್ ಇಲ್ಲ."
+		"autoBackupNone": "ಇನ್ನೂ ಉಳಿಸಿದ ಬ್ಯಾಕಪ್ ಇಲ್ಲ.",
+		"spamCheckNeverRun": "ಎರಡನೇ ಹಂತದ ಪರಿಶೀಲನೆ ಇನ್ನೂ ನಡೆದಿಲ್ಲ.",
+		"spamCheckOk": "ಕೊನೆಯ ಬಾರಿ ಅದು {date} ರಂದು ಕೆಲಸ ಮಾಡಿತು.",
+		"spamCheckFailing": "ಕೊನೆಯ ಪರಿಶೀಲನೆ ವಿಫಲವಾಯಿತು ({date}).",
+		"spamCheckFailNote": "ಪರಿಶೀಲಿಸಲಾಗದ ಮೇಲ್ ಇನ್‌ಬಾಕ್ಸ್‌ಗೆ ಹೋಗುತ್ತದೆ, ಆದ್ದರಿಂದ ಸ್ಪ್ಯಾಮ್ ತಪ್ಪಿಸಿಕೊಳ್ಳಬಹುದು.",
+		"spamCheckUnauthorized": "API ಕೀ ತಿರಸ್ಕರಿಸಲಾಗಿದೆ. ಕೀ ಪರಿಶೀಲಿಸಿ.",
+		"spamCheckRateLimited": "ಕರೆಗಳ ಮಿತಿ ತಲುಪಿದೆ.",
+		"spamCheckServerError": "API ದೋಷವನ್ನು ಹಿಂತಿರುಗಿಸಿತು.",
+		"spamCheckTimeout": "ಸಮಯಕ್ಕೆ ಉತ್ತರ ಬರಲಿಲ್ಲ.",
+		"spamCheckNetwork": "API ತಲುಪಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+		"spamCheckMalformed": "ಉತ್ತರವನ್ನು ಓದಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ."
 	},
 	"apiErrors": {
 		"Invalid credentials": "ಸೈನ್ ಇನ್ ಮಾಹಿತಿ ತಪ್ಪಾಗಿದೆ",

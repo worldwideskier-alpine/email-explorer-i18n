@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "শেষবার {at}: ব্যর্থ ({error})",
 		"autoBackupStored": "সংরক্ষিত ব্যাকআপ",
 		"autoBackupDownload": "ডাউনলোড",
-		"autoBackupNone": "এখনো কোনো সংরক্ষিত ব্যাকআপ নেই।"
+		"autoBackupNone": "এখনো কোনো সংরক্ষিত ব্যাকআপ নেই।",
+		"spamCheckNeverRun": "দ্বিতীয় পর্যায়ের পরীক্ষা এখনও চালানো হয়নি।",
+		"spamCheckOk": "শেষবার কাজ করেছিল {date} তারিখে।",
+		"spamCheckFailing": "শেষ পরীক্ষাটি ব্যর্থ হয়েছে ({date})।",
+		"spamCheckFailNote": "যে মেল পরীক্ষা করা যায়নি তা ইনবক্সে যায়, তাই স্প্যাম ঢুকে পড়তে পারে।",
+		"spamCheckUnauthorized": "API কী প্রত্যাখ্যাত হয়েছে। কী-টি যাচাই করুন।",
+		"spamCheckRateLimited": "কলের সীমা ছুঁয়ে গেছে।",
+		"spamCheckServerError": "API একটি ত্রুটি ফিরিয়েছে।",
+		"spamCheckTimeout": "সময়মতো কোনও উত্তর আসেনি।",
+		"spamCheckNetwork": "API-তে পৌঁছানো যায়নি।",
+		"spamCheckMalformed": "উত্তরটি পড়া যায়নি।"
 	},
 	"apiErrors": {
 		"Invalid credentials": "সাইন ইনের তথ্য ভুল",

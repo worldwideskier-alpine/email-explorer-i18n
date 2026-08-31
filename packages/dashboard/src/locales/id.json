@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Terakhir {at}: gagal ({error})",
 		"autoBackupStored": "Cadangan tersimpan",
 		"autoBackupDownload": "Unduh",
-		"autoBackupNone": "Belum ada cadangan tersimpan."
+		"autoBackupNone": "Belum ada cadangan tersimpan.",
+		"spamCheckNeverRun": "Pemeriksaan tahap kedua belum pernah berjalan.",
+		"spamCheckOk": "Terakhir berhasil pada {date}.",
+		"spamCheckFailing": "Pemeriksaan terakhir gagal ({date}).",
+		"spamCheckFailNote": "Surat yang tidak dapat diperiksa masuk ke kotak masuk, sehingga spam bisa lolos.",
+		"spamCheckUnauthorized": "Kunci API ditolak. Periksa kuncinya.",
+		"spamCheckRateLimited": "Batas jumlah panggilan tercapai.",
+		"spamCheckServerError": "API mengembalikan kesalahan.",
+		"spamCheckTimeout": "Tidak ada jawaban tepat waktu.",
+		"spamCheckNetwork": "API tidak dapat dihubungi.",
+		"spamCheckMalformed": "Jawaban tidak dapat dibaca."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Kredensial tidak sah",

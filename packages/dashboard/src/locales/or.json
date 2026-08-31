@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "ଶେଷ ଥର {at}: ବିଫଳ ({error})",
 		"autoBackupStored": "ସଞ୍ଚିତ ବ୍ୟାକଅପ",
 		"autoBackupDownload": "ଡାଉନଲୋଡ",
-		"autoBackupNone": "ଏପର୍ଯ୍ୟନ୍ତ ସଞ୍ଚିତ ବ୍ୟାକଅପ ନାହିଁ।"
+		"autoBackupNone": "ଏପର୍ଯ୍ୟନ୍ତ ସଞ୍ଚିତ ବ୍ୟାକଅପ ନାହିଁ।",
+		"spamCheckNeverRun": "ଦ୍ୱିତୀୟ ପର୍ଯ୍ୟାୟର ଯାଞ୍ଚ ଏପର୍ଯ୍ୟନ୍ତ ଚାଲି ନାହିଁ।",
+		"spamCheckOk": "ଶେଷ ଥର ଏହା {date}ରେ କାମ କରିଥିଲା।",
+		"spamCheckFailing": "ଶେଷ ଯାଞ୍ଚ ବିଫଳ ହୋଇଛି ({date})।",
+		"spamCheckFailNote": "ଯେଉଁ ମେଲ ଯାଞ୍ଚ ହୋଇପାରିଲା ନାହିଁ ତାହା ଇନବକ୍ସକୁ ଯାଏ, ତେଣୁ ସ୍ପାମ ଖସିଯାଇପାରେ।",
+		"spamCheckUnauthorized": "API ଚାବି ପ୍ରତ୍ୟାଖ୍ୟାନ ହୋଇଛି। ଚାବି ଯାଞ୍ଚ କରନ୍ତୁ।",
+		"spamCheckRateLimited": "କଲର ସୀମା ପହଞ୍ଚିଛି।",
+		"spamCheckServerError": "API ଏକ ତ୍ରୁଟି ଫେରାଇଛି।",
+		"spamCheckTimeout": "ସମୟ ମଧ୍ୟରେ ଉତ୍ତର ଆସିଲା ନାହିଁ।",
+		"spamCheckNetwork": "API ପର୍ଯ୍ୟନ୍ତ ପହଞ୍ଚି ହେଲା ନାହିଁ।",
+		"spamCheckMalformed": "ଉତ୍ତର ପଢ଼ି ହେଲା ନାହିଁ।"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ସାଇନ ଇନ ସୂଚନା ଭୁଲ",

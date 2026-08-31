@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Dernière exécution {at} : échec ({error})",
 		"autoBackupStored": "Sauvegardes enregistrées",
 		"autoBackupDownload": "Télécharger",
-		"autoBackupNone": "Aucune sauvegarde enregistrée."
+		"autoBackupNone": "Aucune sauvegarde enregistrée.",
+		"spamCheckNeverRun": "La seconde vérification n'a encore jamais été exécutée.",
+		"spamCheckOk": "Elle a fonctionné pour la dernière fois le {date}.",
+		"spamCheckFailing": "La dernière vérification a échoué ({date}).",
+		"spamCheckFailNote": "Le courrier non vérifié arrive dans la boîte de réception : du spam peut donc passer.",
+		"spamCheckUnauthorized": "La clé d'API a été refusée. Vérifiez la clé.",
+		"spamCheckRateLimited": "La limite d'appels est atteinte.",
+		"spamCheckServerError": "L'API a renvoyé une erreur.",
+		"spamCheckTimeout": "Aucune réponse n'est arrivée à temps.",
+		"spamCheckNetwork": "L'API n'a pas pu être jointe.",
+		"spamCheckMalformed": "La réponse n'a pas pu être lue."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Identifiants invalides",

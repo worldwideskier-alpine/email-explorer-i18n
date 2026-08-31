@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Última execução {at}: falhou ({error})",
 		"autoBackupStored": "Cópias guardadas",
 		"autoBackupDownload": "Transferir",
-		"autoBackupNone": "Ainda não há cópias guardadas."
+		"autoBackupNone": "Ainda não há cópias guardadas.",
+		"spamCheckNeverRun": "A segunda verificação ainda não foi executada.",
+		"spamCheckOk": "Funcionou pela última vez em {date}.",
+		"spamCheckFailing": "A última verificação falhou ({date}).",
+		"spamCheckFailNote": "O correio que não pôde ser verificado vai para a caixa de entrada, por isso pode passar spam.",
+		"spamCheckUnauthorized": "A chave de API foi recusada. Verifique a chave.",
+		"spamCheckRateLimited": "O limite de chamadas foi atingido.",
+		"spamCheckServerError": "A API devolveu um erro.",
+		"spamCheckTimeout": "Não houve resposta a tempo.",
+		"spamCheckNetwork": "Não foi possível contactar a API.",
+		"spamCheckMalformed": "Não foi possível ler a resposta."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Credenciais inválidas",

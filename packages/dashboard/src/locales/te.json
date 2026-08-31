@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "చివరిసారి {at}: విఫలం ({error})",
 		"autoBackupStored": "భద్రపరచిన బ్యాకప్‌లు",
 		"autoBackupDownload": "డౌన్‌లోడ్",
-		"autoBackupNone": "ఇంకా భద్రపరచిన బ్యాకప్ లేదు."
+		"autoBackupNone": "ఇంకా భద్రపరచిన బ్యాకప్ లేదు.",
+		"spamCheckNeverRun": "రెండవ దశ తనిఖీ ఇంకా అమలు కాలేదు.",
+		"spamCheckOk": "చివరిసారి అది {date} నాడు పనిచేసింది.",
+		"spamCheckFailing": "చివరి తనిఖీ విఫలమైంది ({date}).",
+		"spamCheckFailNote": "తనిఖీ చేయలేని మెయిల్ ఇన్‌బాక్స్‌కు వెళుతుంది, కాబట్టి స్పామ్ దాటిపోవచ్చు.",
+		"spamCheckUnauthorized": "API కీ తిరస్కరించబడింది. కీని తనిఖీ చేయండి.",
+		"spamCheckRateLimited": "కాల్‌ల పరిమితి చేరుకుంది.",
+		"spamCheckServerError": "API ఒక లోపాన్ని తిరిగి ఇచ్చింది.",
+		"spamCheckTimeout": "సమయానికి సమాధానం రాలేదు.",
+		"spamCheckNetwork": "API ని చేరుకోలేకపోయాం.",
+		"spamCheckMalformed": "సమాధానాన్ని చదవలేకపోయాం."
 	},
 	"apiErrors": {
 		"Invalid credentials": "సైన్ ఇన్ వివరాలు తప్పు",

@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Senaste körning {at}: misslyckades ({error})",
 		"autoBackupStored": "Sparade kopior",
 		"autoBackupDownload": "Ladda ner",
-		"autoBackupNone": "Inga sparade kopior än."
+		"autoBackupNone": "Inga sparade kopior än.",
+		"spamCheckNeverRun": "Den andra kontrollen har ännu inte körts.",
+		"spamCheckOk": "Den fungerade senast {date}.",
+		"spamCheckFailing": "Den senaste kontrollen misslyckades ({date}).",
+		"spamCheckFailNote": "Post som inte kunde kontrolleras hamnar i inkorgen, så skräppost kan slinka igenom.",
+		"spamCheckUnauthorized": "API-nyckeln avvisades. Kontrollera nyckeln.",
+		"spamCheckRateLimited": "Gränsen för antalet anrop är nådd.",
+		"spamCheckServerError": "API:et returnerade ett fel.",
+		"spamCheckTimeout": "Inget svar kom i tid.",
+		"spamCheckNetwork": "API:et gick inte att nå.",
+		"spamCheckMalformed": "Svaret gick inte att läsa."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ogiltiga inloggningsuppgifter",

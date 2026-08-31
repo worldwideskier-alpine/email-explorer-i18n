@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "آخر تشغيل {at}: فشل ({error})",
 		"autoBackupStored": "النسخ المحفوظة",
 		"autoBackupDownload": "تنزيل",
-		"autoBackupNone": "لا توجد نسخ محفوظة بعد."
+		"autoBackupNone": "لا توجد نسخ محفوظة بعد.",
+		"spamCheckNeverRun": "لم يُشغَّل الفحص الثاني بعد.",
+		"spamCheckOk": "آخر مرة نجح فيها كانت {date}.",
+		"spamCheckFailing": "فشل آخر فحص ({date}).",
+		"spamCheckFailNote": "البريد الذي تعذّر فحصه يذهب إلى الوارد، وقد يمر بريد مزعج.",
+		"spamCheckUnauthorized": "رُفض مفتاح الواجهة. تحقّق من المفتاح.",
+		"spamCheckRateLimited": "بلغت عدد الاستدعاءات حدّها.",
+		"spamCheckServerError": "أعادت الواجهة خطأ.",
+		"spamCheckTimeout": "لم يصل ردّ في الوقت المحدد.",
+		"spamCheckNetwork": "تعذّر الوصول إلى الواجهة.",
+		"spamCheckMalformed": "تعذّرت قراءة الرد."
 	},
 	"apiErrors": {
 		"Invalid credentials": "بيانات الدخول غير صحيحة",

@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Ostatnio {at}: niepowodzenie ({error})",
 		"autoBackupStored": "Zapisane kopie",
 		"autoBackupDownload": "Pobierz",
-		"autoBackupNone": "Brak zapisanych kopii."
+		"autoBackupNone": "Brak zapisanych kopii.",
+		"spamCheckNeverRun": "Druga kontrola nie została jeszcze uruchomiona.",
+		"spamCheckOk": "Ostatnio zadziałała {date}.",
+		"spamCheckFailing": "Ostatnia kontrola się nie powiodła ({date}).",
+		"spamCheckFailNote": "Poczta, której nie udało się sprawdzić, trafia do skrzynki odbiorczej, więc spam może się przedostać.",
+		"spamCheckUnauthorized": "Klucz API został odrzucony. Sprawdź klucz.",
+		"spamCheckRateLimited": "Osiągnięto limit wywołań.",
+		"spamCheckServerError": "API zwróciło błąd.",
+		"spamCheckTimeout": "Odpowiedź nie nadeszła na czas.",
+		"spamCheckNetwork": "Nie udało się połączyć z API.",
+		"spamCheckMalformed": "Nie udało się odczytać odpowiedzi."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Nieprawidłowe dane logowania",

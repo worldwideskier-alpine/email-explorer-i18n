@@ -961,6 +961,51 @@ export class MailboxDO extends DurableObject<Env> {
 		return result.results;
 	}
 
+	/**
+	 * Remembers how the last second-stage spam check went, so a filter that
+	 * has quietly stopped working can be seen on the settings screen.
+	 *
+	 * Success and failure are kept side by side rather than as one "last
+	 * outcome": the useful question is not what happened most recently but
+	 * whether it is still working, and "last succeeded three weeks ago" is the
+	 * answer to that. Written on every checked message, which is why this is
+	 * in the Durable Object -- its writes are serialised, an R2
+	 * read-modify-write would not be.
+	 */
+	async recordSpamCheck(at: string, failure?: string): Promise<void> {
+		this.#qb
+			.update({
+				tableName: "spam_check_health",
+				data: failure
+					? { last_failure_at: at, last_failure_reason: failure }
+					: { last_success_at: at },
+				where: { conditions: "id = 1" },
+			})
+			.execute();
+	}
+
+	async getSpamCheckHealth(): Promise<{
+		lastSuccessAt: string | null;
+		lastFailureAt: string | null;
+		lastFailureReason: string | null;
+	}> {
+		const row = this.#qb
+			.select<{
+				last_success_at: string | null;
+				last_failure_at: string | null;
+				last_failure_reason: string | null;
+			}>("spam_check_health")
+			.fields(["last_success_at", "last_failure_at", "last_failure_reason"])
+			.where("id = ?", 1)
+			.one().results;
+
+		return {
+			lastSuccessAt: row?.last_success_at ?? null,
+			lastFailureAt: row?.last_failure_at ?? null,
+			lastFailureReason: row?.last_failure_reason ?? null,
+		};
+	}
+
 	async getFolders() {
 		const query = this.#qb.select("folders").fields(["id", "name"]);
 

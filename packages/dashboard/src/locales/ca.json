@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "Darrera execució {at}: ha fallat ({error})",
 		"autoBackupStored": "Còpies desades",
 		"autoBackupDownload": "Baixa",
-		"autoBackupNone": "Encara no hi ha còpies desades."
+		"autoBackupNone": "Encara no hi ha còpies desades.",
+		"spamCheckNeverRun": "La segona comprovació encara no s'ha executat.",
+		"spamCheckOk": "L'última vegada que va funcionar va ser el {date}.",
+		"spamCheckFailing": "L'última comprovació ha fallat ({date}).",
+		"spamCheckFailNote": "El correu que no s'ha pogut comprovar va a la safata d'entrada, així que pot passar correu brossa.",
+		"spamCheckUnauthorized": "S'ha rebutjat la clau d'API. Reviseu la clau.",
+		"spamCheckRateLimited": "S'ha arribat al límit de crides.",
+		"spamCheckServerError": "L'API ha retornat un error.",
+		"spamCheckTimeout": "No hi ha hagut resposta a temps.",
+		"spamCheckNetwork": "No s'ha pogut connectar amb l'API.",
+		"spamCheckMalformed": "No s'ha pogut llegir la resposta."
 	},
 	"apiErrors": {
 		"Invalid credentials": "Credencials incorrectes",

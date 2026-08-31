@@ -211,7 +211,17 @@
 		"autoBackupLastFailed": "கடைசியாக {at}: தோல்வி ({error})",
 		"autoBackupStored": "சேமித்த காப்புப்பிரதிகள்",
 		"autoBackupDownload": "பதிவிறக்கு",
-		"autoBackupNone": "இதுவரை சேமித்த காப்புப்பிரதி இல்லை."
+		"autoBackupNone": "இதுவரை சேமித்த காப்புப்பிரதி இல்லை.",
+		"spamCheckNeverRun": "இரண்டாம் நிலை சோதனை இதுவரை இயங்கவில்லை.",
+		"spamCheckOk": "கடைசியாக அது {date} அன்று இயங்கியது.",
+		"spamCheckFailing": "கடைசி சோதனை தோல்வியடைந்தது ({date}).",
+		"spamCheckFailNote": "சோதிக்க முடியாத அஞ்சல் உள்பெட்டிக்குச் செல்கிறது, எனவே எரிதம் தப்பிச் செல்லலாம்.",
+		"spamCheckUnauthorized": "API சாவி நிராகரிக்கப்பட்டது. சாவியைச் சரிபார்க்கவும்.",
+		"spamCheckRateLimited": "அழைப்புகளின் வரம்பு எட்டப்பட்டது.",
+		"spamCheckServerError": "API ஒரு பிழையைத் திருப்பியது.",
+		"spamCheckTimeout": "நேரத்தில் பதில் வரவில்லை.",
+		"spamCheckNetwork": "API-ஐ அடைய முடியவில்லை.",
+		"spamCheckMalformed": "பதிலைப் படிக்க முடியவில்லை."
 	},
 	"apiErrors": {
 		"Invalid credentials": "உள்நுழைவுத் தகவல் தவறு",
