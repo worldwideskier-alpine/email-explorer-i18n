@@ -147,3 +147,68 @@ describe("plainTextToSimpleHtml", () => {
 		expect(plainTextToSimpleHtml("本文です")).toBe("本文です");
 	});
 });
+
+describe("preformatted text", () => {
+	/**
+	 * A message that arrived with no HTML part is stored as its plain text
+	 * wrapped in `<pre style="white-space: pre-wrap">` (see the worker's
+	 * plainTextToHtml). Every newline the sender wrote lives in that one text
+	 * node and nowhere else -- there are no <br>s to fall back on.
+	 *
+	 * Collapsing it the way HTML collapses ordinary whitespace turned a quoted
+	 * reply into a single run-on paragraph, and did the same to the text/plain
+	 * part of every reply sent to a plain-text sender, whether or not anyone
+	 * switched the composer over.
+	 */
+	const PLAIN_TEXT_EMAIL =
+		'<pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">魚田　様\n\nお世話になります。\n供述書をお送りください。</pre>';
+
+	it("keeps the newlines inside a pre-wrap block", () => {
+		expect(htmlToPlainText(PLAIN_TEXT_EMAIL)).toBe(
+			"魚田　様\n\nお世話になります。\n供述書をお送りください。",
+		);
+	});
+
+	it("keeps them when the block is quoted in a reply", () => {
+		expect(
+			htmlToPlainText(`<blockquote>${PLAIN_TEXT_EMAIL}</blockquote>`),
+		).toBe("> 魚田　様\n>\n> お世話になります。\n> 供述書をお送りください。");
+	});
+
+	it("keeps the newlines in a bare <pre> with no style attribute", () => {
+		expect(htmlToPlainText("<pre>一行目\n二行目</pre>")).toBe("一行目\n二行目");
+	});
+
+	it("keeps runs of spaces a sender used to line something up", () => {
+		expect(
+			htmlToPlainText(
+				'<pre style="white-space: pre">商号    ビューティフルスノー</pre>',
+			),
+		).toBe("商号    ビューティフルスノー");
+	});
+
+	// pre-line is the one preserving value that still collapses spaces.
+	it("collapses spaces but not newlines under pre-line", () => {
+		expect(
+			htmlToPlainText(
+				'<div style="white-space: pre-line">一行目   と\n二行目</div>',
+			),
+		).toBe("一行目 と\n二行目");
+	});
+
+	it("stops preserving inside an element that turns it back off", () => {
+		expect(
+			htmlToPlainText(
+				'<pre>保つ\n行<span style="white-space: normal">畳む\n行</span></pre>',
+			),
+		).toBe("保つ\n行畳む 行");
+	});
+
+	// Everything outside a preserving element must still collapse: source
+	// indentation is not content.
+	it("still collapses ordinary markup", () => {
+		expect(htmlToPlainText("<p>一行目\n   まだ同じ行</p>")).toBe(
+			"一行目 まだ同じ行",
+		);
+	});
+});

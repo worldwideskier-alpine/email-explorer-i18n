@@ -16,6 +16,12 @@
  * - Block elements have to become line breaks, and the runs of blank lines
  *   that produces have to be collapsed again, or a table-heavy message turns
  *   into pages of empty space.
+ * - Whitespace inside a preserving element is content. A message that arrived
+ *   with no HTML part is stored as `<pre style="white-space: pre-wrap">`
+ *   around its text (see the worker's plainTextToHtml), so every line break
+ *   the sender wrote is a newline in one text node and nothing else. Folding
+ *   those away the way HTML folds ordinary whitespace ran the whole message
+ *   together on one line.
  */
 
 /** Elements whose text content is markup or metadata, never body copy. */
@@ -79,12 +85,57 @@ function collapseBlankLines(text: string): string {
 		.replace(/\n{3,}/g, "\n\n");
 }
 
-function serialize(node: Node): string {
+/**
+ * How whitespace inside an element is to be read: folded away as layout, kept
+ * as written, or -- under `pre-line` -- spaces folded but newlines kept.
+ */
+type Whitespace = "normal" | "preserve" | "newlines";
+
+/**
+ * The `white-space` an element asks for, or the value it inherits.
+ *
+ * Read off the inline `style` attribute rather than through getComputedStyle:
+ * the document is parsed without a browsing context precisely so that nothing
+ * in the message can load or run, and no stylesheet is applied to it. Inline
+ * styles are what actually matters here anyway -- mail clients inline
+ * everything, and the `<pre>` this exists for carries its own.
+ */
+function whitespaceOf(el: Element, inherited: Whitespace): Whitespace {
+	const declared = /white-space\s*:\s*([\w-]+)/i
+		.exec(el.getAttribute("style") ?? "")?.[1]
+		?.toLowerCase();
+
+	switch (declared) {
+		case "pre":
+		case "pre-wrap":
+		case "break-spaces":
+			return "preserve";
+		case "pre-line":
+			return "newlines";
+		case "normal":
+		case "nowrap":
+			return "normal";
+		default:
+			// Either nothing was declared, or it was something that defers to
+			// the parent (inherit, initial, unset, or a value we don't know).
+			return el.tagName.toUpperCase() === "PRE" ? "preserve" : inherited;
+	}
+}
+
+function serialize(node: Node, whitespace: Whitespace = "normal"): string {
 	if (node.nodeType === Node.TEXT_NODE) {
-		// HTML collapses runs of whitespace, including the non-breaking spaces
-		// Outlook is fond of, so the text has to be collapsed the same way --
-		// otherwise every newline in the source becomes one in the output.
-		return (node.textContent ?? "").replace(/\s+/g, " ");
+		const text = node.textContent ?? "";
+		// Inside a preserving element every character is content: the newlines
+		// are the sender's line breaks and the runs of spaces are how they
+		// lined a column up.
+		if (whitespace === "preserve") return text;
+		// pre-line keeps the newlines and folds everything else.
+		if (whitespace === "newlines") return text.replace(/[^\S\n]+/g, " ");
+		// Elsewhere HTML collapses runs of whitespace, including the
+		// non-breaking spaces Outlook is fond of, so the text has to be
+		// collapsed the same way -- otherwise every newline in the source
+		// becomes one in the output.
+		return text.replace(/\s+/g, " ");
 	}
 	if (node.nodeType !== Node.ELEMENT_NODE) return "";
 
@@ -94,8 +145,10 @@ function serialize(node: Node): string {
 	if (tag === "BR") return "\n";
 	if (tag === "HR") return "\n----------------------------------------\n";
 
+	const inherited = whitespaceOf(el, whitespace);
 	let inner = "";
-	for (const child of Array.from(el.childNodes)) inner += serialize(child);
+	for (const child of Array.from(el.childNodes))
+		inner += serialize(child, inherited);
 
 	if (tag === "BLOCKQUOTE") {
 		const quoted = collapseBlankLines(inner)
