@@ -13,8 +13,21 @@ import { backupKey, backupKeyPrefix, keysToRotate } from "./auto-backup";
 import { renderMboxEntry } from "./mbox";
 import type { Env } from "./types";
 
-/** R2 requires every part except the last to be at least 5 MiB. */
-const PART_SIZE = 5 * 1024 * 1024;
+/**
+ * R2 requires every part except the last to be at least 5 MiB *and* for all
+ * of them to be exactly the same length. The second half is the one that
+ * caught us out: parts were flushed whenever the buffer happened to cross the
+ * threshold, so each one came out a different size -- 5 MiB plus whatever the
+ * message that tipped it over happened to weigh. Two such parts and
+ * `complete()` fails with
+ *
+ *   completeMultipartUpload: All non-trailing parts must have the same length.
+ *
+ * which meant no mailbox large enough to need three parts could be backed up
+ * at all, while smaller ones worked and looked like proof the feature was
+ * fine.
+ */
+export const PART_SIZE = 5 * 1024 * 1024;
 
 /** R2 delete accepts up to 1000 keys per call. */
 const DELETE_BATCH = 1000;
@@ -27,15 +40,20 @@ export interface BackupResult {
 }
 
 /**
- * Buffers encoded chunks until a part is full, then hands it over. Keeping
- * the pieces and their total separately avoids copying the whole buffer on
- * every append, which for a large mailbox would dominate the run.
+ * Buffers encoded chunks until a part is full, then hands over exactly one
+ * part's worth. Keeping the pieces and their total separately avoids copying
+ * the whole buffer on every append, which for a large mailbox would dominate
+ * the run.
+ *
+ * Exported for its own tests: this is where the part sizes are decided, and
+ * getting them wrong is not visible until a mailbox grows past two parts.
  */
-class PartBuffer {
+export class PartBuffer {
 	#pieces: Uint8Array[] = [];
 	#size = 0;
 
 	add(bytes: Uint8Array): void {
+		if (bytes.byteLength === 0) return;
 		this.#pieces.push(bytes);
 		this.#size += bytes.byteLength;
 	}
@@ -44,15 +62,29 @@ class PartBuffer {
 		return this.#size;
 	}
 
-	take(): Uint8Array {
-		const out = new Uint8Array(this.#size);
+	/**
+	 * Removes and returns exactly `count` bytes, or everything held if that is
+	 * less. A message that straddles the boundary is split: its tail stays for
+	 * the next part rather than making this one longer than the last.
+	 */
+	take(count: number): Uint8Array {
+		const wanted = Math.min(Math.max(count, 0), this.#size);
+		const out = new Uint8Array(wanted);
 		let at = 0;
-		for (const piece of this.#pieces) {
-			out.set(piece, at);
-			at += piece.byteLength;
+		while (at < wanted) {
+			const piece = this.#pieces[0] as Uint8Array;
+			const room = wanted - at;
+			if (piece.byteLength <= room) {
+				out.set(piece, at);
+				at += piece.byteLength;
+				this.#pieces.shift();
+			} else {
+				out.set(piece.subarray(0, room), at);
+				this.#pieces[0] = piece.subarray(room);
+				at = wanted;
+			}
 		}
-		this.#pieces = [];
-		this.#size = 0;
+		this.#size -= wanted;
 		return out;
 	}
 }
@@ -101,8 +133,12 @@ export async function writeMailboxBackup(
 			bytes += encoded.byteLength;
 			messages += 1;
 
-			if (buffer.size >= PART_SIZE) {
-				parts.push(await upload.uploadPart(parts.length + 1, buffer.take()));
+			// A loop, not an `if`: one message with a large attachment can fill
+			// several parts at once.
+			while (buffer.size >= PART_SIZE) {
+				parts.push(
+					await upload.uploadPart(parts.length + 1, buffer.take(PART_SIZE)),
+				);
 			}
 		}
 
@@ -110,7 +146,9 @@ export async function writeMailboxBackup(
 		// An empty mailbox still gets an object, so "the backup ran and the
 		// mailbox was empty" is distinguishable from "the backup never ran".
 		if (buffer.size > 0 || parts.length === 0) {
-			parts.push(await upload.uploadPart(parts.length + 1, buffer.take()));
+			parts.push(
+				await upload.uploadPart(parts.length + 1, buffer.take(buffer.size)),
+			);
 		}
 
 		await upload.complete(parts);
