@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API ຕອບກັບເປັນຄວາມຜິດພາດ.",
 		"spamCheckTimeout": "ບໍ່ມີຄຳຕອບພາຍໃນເວລາ.",
 		"spamCheckNetwork": "ຕິດຕໍ່ API ບໍ່ໄດ້.",
-		"spamCheckMalformed": "ອ່ານຄຳຕອບບໍ່ໄດ້."
+		"spamCheckMalformed": "ອ່ານຄຳຕອບບໍ່ໄດ້.",
+		"spamCheckDetail": "ການຕອບສະໜອງ: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ຂໍ້ມູນເຂົ້າສູ່ລະບົບບໍ່ຖືກຕ້ອງ",

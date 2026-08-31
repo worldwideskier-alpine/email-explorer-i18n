@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API-მ შეცდომა დააბრუნა.",
 		"spamCheckTimeout": "პასუხი დროულად არ მოვიდა.",
 		"spamCheckNetwork": "API-სთან დაკავშირება ვერ მოხერხდა.",
-		"spamCheckMalformed": "პასუხის წაკითხვა ვერ მოხერხდა."
+		"spamCheckMalformed": "პასუხის წაკითხვა ვერ მოხერხდა.",
+		"spamCheckDetail": "პასუხი: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "მონაცემები არასწორია",

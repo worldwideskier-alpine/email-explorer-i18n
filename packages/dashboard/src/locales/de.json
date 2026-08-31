@@ -221,7 +221,8 @@
 		"spamCheckServerError": "Die API hat einen Fehler zurückgegeben.",
 		"spamCheckTimeout": "Es kam keine rechtzeitige Antwort.",
 		"spamCheckNetwork": "Die API war nicht erreichbar.",
-		"spamCheckMalformed": "Die Antwort war nicht lesbar."
+		"spamCheckMalformed": "Die Antwort war nicht lesbar.",
+		"spamCheckDetail": "Antwort: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ungültige Anmeldedaten",

@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API ਨੇ ਗਲਤੀ ਵਾਪਸ ਕੀਤੀ।",
 		"spamCheckTimeout": "ਸਮੇਂ ਸਿਰ ਕੋਈ ਜਵਾਬ ਨਹੀਂ ਆਇਆ।",
 		"spamCheckNetwork": "API ਤੱਕ ਪਹੁੰਚ ਨਹੀਂ ਹੋ ਸਕੀ।",
-		"spamCheckMalformed": "ਜਵਾਬ ਪੜ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।"
+		"spamCheckMalformed": "ਜਵਾਬ ਪੜ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।",
+		"spamCheckDetail": "ਜਵਾਬ: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ਸਾਈਨ ਇਨ ਦੀ ਜਾਣਕਾਰੀ ਗਲਤ ਹੈ",

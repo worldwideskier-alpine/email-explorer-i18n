@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API grąžino klaidą.",
 		"spamCheckTimeout": "Atsakymas laiku negautas.",
 		"spamCheckNetwork": "Nepavyko pasiekti API.",
-		"spamCheckMalformed": "Nepavyko perskaityti atsakymo."
+		"spamCheckMalformed": "Nepavyko perskaityti atsakymo.",
+		"spamCheckDetail": "Atsakymas: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Netinkami prisijungimo duomenys",

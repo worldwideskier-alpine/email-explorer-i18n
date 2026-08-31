@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API:et returnerade ett fel.",
 		"spamCheckTimeout": "Inget svar kom i tid.",
 		"spamCheckNetwork": "API:et gick inte att nå.",
-		"spamCheckMalformed": "Svaret gick inte att läsa."
+		"spamCheckMalformed": "Svaret gick inte att läsa.",
+		"spamCheckDetail": "Svar: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Ogiltiga inloggningsuppgifter",

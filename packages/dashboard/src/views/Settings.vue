@@ -99,6 +99,12 @@
             <span class="font-semibold">{{ t("settings.spamCheckFailing", { date: formatFullDate(spamCheck?.lastFailureAt) }) }}</span>
             {{ spamCheckReason }}
           </p>
+          <!-- The classifier's own reply, when it could not be read as a
+               verdict. Raw and untranslated because it is not our text; it is
+               the only thing that says why. -->
+          <p v-if="spamCheckDetailText" class="text-gray-500 dark:text-gray-400 mt-1 break-words">
+            {{ t("settings.spamCheckDetail", { detail: spamCheckDetailText }) }}
+          </p>
           <p v-if="spamCheckFailing" class="text-amber-700 dark:text-amber-400 mt-1">{{ t("settings.spamCheckFailNote") }}</p>
           <p v-if="spamCheck?.lastSuccessAt" class="text-gray-500 dark:text-gray-400" :class="{ 'mt-1': spamCheckFailing }">
             {{ t("settings.spamCheckOk", { date: formatFullDate(spamCheck?.lastSuccessAt) }) }}
@@ -310,6 +316,7 @@ import { parseMbox, toBase64 } from "@/utils/mbox";
 import {
 	isSpamCheckFailing,
 	type SpamCheckHealth,
+	spamCheckDetail,
 	spamCheckReasonKey,
 } from "@/utils/spamCheckHealth";
 
@@ -390,6 +397,7 @@ const { formatFullDate } = useDateFormat();
 // the same question.
 const spamCheck = ref<SpamCheckHealth | null>(null);
 const spamCheckFailing = computed(() => isSpamCheckFailing(spamCheck.value));
+const spamCheckDetailText = computed(() => spamCheckDetail(spamCheck.value));
 const spamCheckReason = computed(() =>
 	t(spamCheckReasonKey(spamCheck.value?.lastFailureReason)),
 );

@@ -221,7 +221,8 @@
 		"spamCheckServerError": "L-API rritorna żball.",
 		"spamCheckTimeout": "Ma waslet l-ebda tweġiba fil-ħin.",
 		"spamCheckNetwork": "L-API ma setax jintlaħaq.",
-		"spamCheckMalformed": "It-tweġiba ma setgħetx tinqara."
+		"spamCheckMalformed": "It-tweġiba ma setgħetx tinqara.",
+		"spamCheckDetail": "Rispons: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Kredenzjali mhux validi",

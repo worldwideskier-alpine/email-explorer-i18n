@@ -221,7 +221,8 @@
 		"spamCheckServerError": "Το API επέστρεψε σφάλμα.",
 		"spamCheckTimeout": "Δεν ήρθε απάντηση εγκαίρως.",
 		"spamCheckNetwork": "Δεν ήταν δυνατή η σύνδεση με το API.",
-		"spamCheckMalformed": "Δεν ήταν δυνατή η ανάγνωση της απάντησης."
+		"spamCheckMalformed": "Δεν ήταν δυνατή η ανάγνωση της απάντησης.",
+		"spamCheckDetail": "Απάντηση: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Μη έγκυρα στοιχεία σύνδεσης",

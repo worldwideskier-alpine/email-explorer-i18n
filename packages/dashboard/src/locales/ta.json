@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API ஒரு பிழையைத் திருப்பியது.",
 		"spamCheckTimeout": "நேரத்தில் பதில் வரவில்லை.",
 		"spamCheckNetwork": "API-ஐ அடைய முடியவில்லை.",
-		"spamCheckMalformed": "பதிலைப் படிக்க முடியவில்லை."
+		"spamCheckMalformed": "பதிலைப் படிக்க முடியவில்லை.",
+		"spamCheckDetail": "பதில்: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "உள்நுழைவுத் தகவல் தவறு",

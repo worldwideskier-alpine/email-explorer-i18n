@@ -12,6 +12,28 @@ const CLAUDE_API_URL = "https://api.anthropic.com/v1/messages";
 const MAX_BODY_CHARS = 4000;
 const REQUEST_TIMEOUT_MS = 10_000;
 
+/**
+ * The reply is one word, so this is generous -- deliberately. It used to be 8,
+ * which is enough for the word and nothing else, so a reply that opened with
+ * even a short preamble was cut off mid-sentence and could not be read as
+ * anything. The extra tokens cost nothing and take truncation off the table as
+ * an explanation when a reply cannot be parsed.
+ */
+const MAX_TOKENS = 16;
+
+/**
+ * The assistant's turn is started for us, so the model continues it rather
+ * than beginning a reply of its own. That is what stops "SPAM" from arriving
+ * as "Based on the sender's domain, this is SPAM" -- the slot a preamble would
+ * go in is already filled, and the next thing the model writes is the verdict.
+ *
+ * Must not end in whitespace: the API rejects a prefill that does.
+ */
+const VERDICT_PREFILL = "Classification:";
+
+/** Enough of an unreadable reply to recognise it by, and no more. */
+const MAX_DETAIL_CHARS = 200;
+
 const SYSTEM_PROMPT = [
 	"You are a spam filter for a small business's inbox. Classify the email " +
 		"below as SPAM or NOT_SPAM.",
@@ -139,12 +161,68 @@ export interface ClassifyResult {
 	folder: "inbox" | "spam";
 	/** Absent when the check ran and answered. */
 	failure?: SpamCheckFailure;
+	/**
+	 * What came back instead of a verdict, for `malformed` and nothing else.
+	 *
+	 * The reason codes above are a closed set precisely so nothing upstream
+	 * lands on a screen, and an HTTP error body still does not: this is the
+	 * model's own answer to our own prompt, which is the one case where the
+	 * code is not enough. "The response could not be read" tells the mailbox
+	 * owner nothing they can act on, and tells whoever has to fix it nothing
+	 * at all -- the reply is gone by the time anyone looks, and a Worker's
+	 * logs are not kept.
+	 */
+	detail?: string;
 }
 
 function failureFromStatus(status: number): SpamCheckFailure {
 	if (status === 401 || status === 403) return "unauthorized";
 	if (status === 429) return "rateLimited";
 	return "serverError";
+}
+
+/**
+ * The verdict in a reply, or null if there isn't one.
+ *
+ * Only the first word counts. With the assistant turn prefilled the verdict is
+ * the first thing said, so anything else at the front means the model ignored
+ * the instruction -- and reading on would be worse than giving up: "I cannot
+ * say whether this is SPAM" contains the word, and acting on it would file a
+ * real message as spam. Giving up puts the message in the inbox and says so on
+ * the settings screen, which is the direction this whole stage errs in.
+ *
+ * Exported for its own tests: this is the only place a reply becomes a
+ * decision, and every shape it rejects is a message whose classification is
+ * quietly skipped.
+ */
+export function parseVerdict(reply: string): "spam" | "inbox" | null {
+	const first = reply
+		.toUpperCase()
+		// "NOT SPAM" and "NOT-SPAM" say the same thing as "NOT_SPAM"; joining
+		// them up front stops the split below from cutting one in half and
+		// reading the "NOT" as the whole answer.
+		.replace(/NOT[\s_-]*SPAM/g, "NOT_SPAM")
+		// Everything that is not part of the word is punctuation around it:
+		// quotes, a full stop, the asterisks of markdown emphasis.
+		.split(/[^A-Z_]+/)
+		.filter(Boolean)[0];
+
+	if (first === "NOT_SPAM") return "inbox";
+	if (first === "SPAM") return "spam";
+	return null;
+}
+
+/**
+ * What to record about a reply that carried no verdict. An empty reply has
+ * nothing to quote, so the API's own reason for stopping stands in -- that is
+ * the case where the model declined to answer at all.
+ */
+function unreadableReplyDetail(
+	reply: string,
+	stopReason?: string,
+): string | undefined {
+	if (reply) return reply.slice(0, MAX_DETAIL_CHARS);
+	return stopReason ? `stop_reason=${stopReason}` : undefined;
 }
 
 /**
@@ -176,10 +254,13 @@ export async function classifyWithClaude(
 			},
 			body: JSON.stringify({
 				model: CLAUDE_MODEL,
-				max_tokens: 8,
+				max_tokens: MAX_TOKENS,
 				temperature: 0,
 				system: SYSTEM_PROMPT,
-				messages: [{ role: "user", content }],
+				messages: [
+					{ role: "user", content },
+					{ role: "assistant", content: VERDICT_PREFILL },
+				],
 			}),
 			signal: controller.signal,
 		});
@@ -193,21 +274,26 @@ export async function classifyWithClaude(
 
 		const data = await response.json<{
 			content?: { type: string; text?: string }[];
+			stop_reason?: string;
 		}>();
-		const verdict = data.content
-			?.map((block) => block.text || "")
+		const reply = (data.content ?? [])
+			.map((block) => block.text || "")
 			.join("")
-			.trim()
-			.toUpperCase();
+			.trim();
+		const verdict = parseVerdict(reply);
 
 		// Neither word came back. The check did not fail, but it did not
 		// answer either, and treating that as "not spam" is what would hide it.
-		if (verdict !== "SPAM" && verdict !== "NOT_SPAM") {
-			console.error(`Claude spam classification returned: ${verdict}`);
-			return { folder: "inbox", failure: "malformed" };
+		if (!verdict) {
+			console.error(`Claude spam classification returned: ${reply}`);
+			return {
+				folder: "inbox",
+				failure: "malformed",
+				detail: unreadableReplyDetail(reply, data.stop_reason),
+			};
 		}
 
-		return { folder: verdict === "SPAM" ? "spam" : "inbox" };
+		return { folder: verdict };
 	} catch (err) {
 		console.error("Claude spam classification error:", err);
 		// An abort is the timeout above firing, not the network refusing.

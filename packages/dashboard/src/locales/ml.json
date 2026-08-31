@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API ഒരു പിശക് നൽകി.",
 		"spamCheckTimeout": "സമയത്ത് ഉത്തരം ലഭിച്ചില്ല.",
 		"spamCheckNetwork": "API-യിൽ എത്താനായില്ല.",
-		"spamCheckMalformed": "ഉത്തരം വായിക്കാനായില്ല."
+		"spamCheckMalformed": "ഉത്തരം വായിക്കാനായില്ല.",
+		"spamCheckDetail": "പ്രതികരണം: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "സൈൻ ഇൻ വിവരങ്ങൾ തെറ്റാണ്",

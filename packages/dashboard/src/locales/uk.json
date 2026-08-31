@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API повернув помилку.",
 		"spamCheckTimeout": "Відповідь не надійшла вчасно.",
 		"spamCheckNetwork": "Не вдалося зв'язатися з API.",
-		"spamCheckMalformed": "Не вдалося прочитати відповідь."
+		"spamCheckMalformed": "Не вдалося прочитати відповідь.",
+		"spamCheckDetail": "Відповідь: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Хибні дані для входу",

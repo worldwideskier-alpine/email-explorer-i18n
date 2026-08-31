@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API mengembalikan kesalahan.",
 		"spamCheckTimeout": "Tidak ada jawaban tepat waktu.",
 		"spamCheckNetwork": "API tidak dapat dihubungi.",
-		"spamCheckMalformed": "Jawaban tidak dapat dibaca."
+		"spamCheckMalformed": "Jawaban tidak dapat dibaca.",
+		"spamCheckDetail": "Respons: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Kredensial tidak sah",

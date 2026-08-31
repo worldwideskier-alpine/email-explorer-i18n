@@ -78,15 +78,17 @@ const MailboxDetailsSchema = z.object({
 	name: z.string(),
 	settings: z.record(z.any()),
 	/**
-	 * Whether the second-stage spam check is still working. Only ever
-	 * timestamps and a reason code -- never the API key, and never the
-	 * upstream error text.
+	 * Whether the second-stage spam check is still working. Timestamps and a
+	 * reason code -- never the API key, and never the upstream error text.
+	 * The detail is the one exception and a narrow one: it is the classifier's
+	 * own reply, and only when that reply could not be read as a verdict.
 	 */
 	spamCheck: z
 		.object({
 			lastSuccessAt: z.string().nullable(),
 			lastFailureAt: z.string().nullable(),
 			lastFailureReason: z.string().nullable(),
+			lastFailureDetail: z.string().nullable(),
 		})
 		.optional(),
 });
@@ -2340,7 +2342,11 @@ async function receiveEmail(
 			const ns = env.MAILBOX;
 			await ns
 				.get(ns.idFromName(mailboxId))
-				.recordSpamCheck(new Date().toISOString(), checked.failure);
+				.recordSpamCheck(
+					new Date().toISOString(),
+					checked.failure,
+					checked.detail,
+				);
 		}
 	}
 

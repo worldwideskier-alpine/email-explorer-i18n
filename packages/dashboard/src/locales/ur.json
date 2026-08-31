@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API نے خرابی لوٹائی۔",
 		"spamCheckTimeout": "وقت پر کوئی جواب نہیں آیا۔",
 		"spamCheckNetwork": "API تک رسائی نہ ہو سکی۔",
-		"spamCheckMalformed": "جواب پڑھا نہ جا سکا۔"
+		"spamCheckMalformed": "جواب پڑھا نہ جا سکا۔",
+		"spamCheckDetail": "جواب: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "سائن ان کی معلومات غلط ہیں",

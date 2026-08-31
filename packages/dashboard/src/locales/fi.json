@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API palautti virheen.",
 		"spamCheckTimeout": "Vastausta ei tullut ajoissa.",
 		"spamCheckNetwork": "API:in ei saatu yhteyttä.",
-		"spamCheckMalformed": "Vastausta ei voitu lukea."
+		"spamCheckMalformed": "Vastausta ei voitu lukea.",
+		"spamCheckDetail": "Vastaus: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Virheelliset kirjautumistiedot",

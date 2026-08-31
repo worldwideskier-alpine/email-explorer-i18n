@@ -108,6 +108,15 @@ export const mailboxMigrations: Migration[] = [
             INSERT INTO spam_check_health (id) VALUES (1);
         `,
 	},
+	{
+		// A reason code says the reply could not be read; it cannot say what
+		// the reply was. Without that, an unreadable reply is unfixable: it is
+		// gone by the time anyone looks, and a Worker keeps no logs.
+		name: "6_spam_check_failure_detail",
+		sql: `
+            ALTER TABLE spam_check_health ADD COLUMN last_failure_detail TEXT;
+        `,
+	},
 ];
 
 export const authMigrations: Migration[] = [

@@ -221,7 +221,8 @@
 		"spamCheckServerError": "Sheol an API earráid ar ais.",
 		"spamCheckTimeout": "Níor tháinig freagra in am.",
 		"spamCheckNetwork": "Níorbh fhéidir teagmháil a dhéanamh leis an API.",
-		"spamCheckMalformed": "Níorbh fhéidir an freagra a léamh."
+		"spamCheckMalformed": "Níorbh fhéidir an freagra a léamh.",
+		"spamCheckDetail": "Freagra: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Dintiúir neamhbhailí",

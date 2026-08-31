@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API က အမှားပြန်ပေးသည်။",
 		"spamCheckTimeout": "အချိန်မီ အဖြေမရရှိပါ။",
 		"spamCheckNetwork": "API သို့ မဆက်သွယ်နိုင်ပါ။",
-		"spamCheckMalformed": "အဖြေကို မဖတ်နိုင်ပါ။"
+		"spamCheckMalformed": "အဖြေကို မဖတ်နိုင်ပါ။",
+		"spamCheckDetail": "တုံ့ပြန်ချက်: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "ဝင်ရောက်ရန် အချက်အလက် မမှန်ကန်ပါ",

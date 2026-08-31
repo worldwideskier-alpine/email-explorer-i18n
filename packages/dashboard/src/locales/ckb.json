@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API هەڵەیەکی گەڕاندەوە.",
 		"spamCheckTimeout": "لە کاتی خۆیدا هیچ وەڵامێک نەهات.",
 		"spamCheckNetwork": "نەگەیشترایە API.",
-		"spamCheckMalformed": "وەڵامەکە نەخوێندرایەوە."
+		"spamCheckMalformed": "وەڵامەکە نەخوێندرایەوە.",
+		"spamCheckDetail": "وەڵام: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "زانیاری چوونەژوورەوە نادروستە",

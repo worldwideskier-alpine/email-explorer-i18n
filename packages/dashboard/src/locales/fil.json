@@ -221,7 +221,8 @@
 		"spamCheckServerError": "Nagbalik ng error ang API.",
 		"spamCheckTimeout": "Walang sagot sa loob ng takdang oras.",
 		"spamCheckNetwork": "Hindi maabot ang API.",
-		"spamCheckMalformed": "Hindi mabasa ang sagot."
+		"spamCheckMalformed": "Hindi mabasa ang sagot.",
+		"spamCheckDetail": "Tugon: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Mali ang impormasyon sa pag-sign in",

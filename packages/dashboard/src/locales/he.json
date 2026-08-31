@@ -221,7 +221,8 @@
 		"spamCheckServerError": "הממשק החזיר שגיאה.",
 		"spamCheckTimeout": "לא הגיעה תשובה בזמן.",
 		"spamCheckNetwork": "לא ניתן היה להתחבר לממשק.",
-		"spamCheckMalformed": "לא ניתן היה לקרוא את התשובה."
+		"spamCheckMalformed": "לא ניתן היה לקרוא את התשובה.",
+		"spamCheckDetail": "תגובה: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "פרטי ההתחברות שגויים",

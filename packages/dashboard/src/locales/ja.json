@@ -221,7 +221,8 @@
 		"spamCheckServerError": "APIがエラーを返しました。",
 		"spamCheckTimeout": "時間内に応答がありませんでした。",
 		"spamCheckNetwork": "APIに接続できませんでした。",
-		"spamCheckMalformed": "応答を解釈できませんでした。"
+		"spamCheckMalformed": "応答を解釈できませんでした。",
+		"spamCheckDetail": "応答: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "メールアドレスまたはパスワードが正しくありません",

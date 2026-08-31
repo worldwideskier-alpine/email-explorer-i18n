@@ -972,12 +972,23 @@ export class MailboxDO extends DurableObject<Env> {
 	 * in the Durable Object -- its writes are serialised, an R2
 	 * read-modify-write would not be.
 	 */
-	async recordSpamCheck(at: string, failure?: string): Promise<void> {
+	async recordSpamCheck(
+		at: string,
+		failure?: string,
+		detail?: string,
+	): Promise<void> {
 		this.#qb
 			.update({
 				tableName: "spam_check_health",
 				data: failure
-					? { last_failure_at: at, last_failure_reason: failure }
+					? {
+							last_failure_at: at,
+							last_failure_reason: failure,
+							// Written every time, including when there is nothing to
+							// write: otherwise the detail of an older, different
+							// failure would still be on screen beside the new reason.
+							last_failure_detail: detail ?? null,
+						}
 					: { last_success_at: at },
 				where: { conditions: "id = 1" },
 			})
@@ -988,14 +999,21 @@ export class MailboxDO extends DurableObject<Env> {
 		lastSuccessAt: string | null;
 		lastFailureAt: string | null;
 		lastFailureReason: string | null;
+		lastFailureDetail: string | null;
 	}> {
 		const row = this.#qb
 			.select<{
 				last_success_at: string | null;
 				last_failure_at: string | null;
 				last_failure_reason: string | null;
+				last_failure_detail: string | null;
 			}>("spam_check_health")
-			.fields(["last_success_at", "last_failure_at", "last_failure_reason"])
+			.fields([
+				"last_success_at",
+				"last_failure_at",
+				"last_failure_reason",
+				"last_failure_detail",
+			])
 			.where("id = ?", 1)
 			.one().results;
 
@@ -1003,6 +1021,7 @@ export class MailboxDO extends DurableObject<Env> {
 			lastSuccessAt: row?.last_success_at ?? null,
 			lastFailureAt: row?.last_failure_at ?? null,
 			lastFailureReason: row?.last_failure_reason ?? null,
+			lastFailureDetail: row?.last_failure_detail ?? null,
 		};
 	}
 

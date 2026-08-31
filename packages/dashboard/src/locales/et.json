@@ -221,7 +221,8 @@
 		"spamCheckServerError": "API tagastas vea.",
 		"spamCheckTimeout": "Vastust ei tulnud õigeks ajaks.",
 		"spamCheckNetwork": "API-ga ei õnnestunud ühendust saada.",
-		"spamCheckMalformed": "Vastust ei õnnestunud lugeda."
+		"spamCheckMalformed": "Vastust ei õnnestunud lugeda.",
+		"spamCheckDetail": "Vastus: {detail}"
 	},
 	"apiErrors": {
 		"Invalid credentials": "Vigased sisselogimisandmed",
