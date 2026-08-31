@@ -86,6 +86,13 @@ function collapseBlankLines(text: string): string {
 }
 
 /**
+ * The white space CSS folds away: space, tab, line feed, carriage return and
+ * form feed. Deliberately not `\s`, which in JavaScript also covers U+00A0 and
+ * U+3000 -- those are content a browser renders as written.
+ */
+const COLLAPSIBLE = /[ \t\n\r\f]+/g;
+
+/**
  * How whitespace inside an element is to be read: folded away as layout, kept
  * as written, or -- under `pre-line` -- spaces folded but newlines kept.
  */
@@ -129,13 +136,19 @@ function serialize(node: Node, whitespace: Whitespace = "normal"): string {
 		// are the sender's line breaks and the runs of spaces are how they
 		// lined a column up.
 		if (whitespace === "preserve") return text;
-		// pre-line keeps the newlines and folds everything else.
-		if (whitespace === "newlines") return text.replace(/[^\S\n]+/g, " ");
-		// Elsewhere HTML collapses runs of whitespace, including the
-		// non-breaking spaces Outlook is fond of, so the text has to be
+		// pre-line keeps the newlines and folds everything else -- again, only
+		// what CSS folds.
+		if (whitespace === "newlines") return text.replace(/[ \t\r\f]+/g, " ");
+		// Elsewhere HTML collapses runs of whitespace, so the text has to be
 		// collapsed the same way -- otherwise every newline in the source
 		// becomes one in the output.
-		return text.replace(/\s+/g, " ");
+		//
+		// Only the characters CSS actually collapses, though. This used to use
+		// \s, which in JavaScript also matches the ideographic space U+3000 and
+		// the non-breaking space -- neither of which a browser collapses, and
+		// both of which are content. Folding them turned "魚田　様" into
+		// "魚田 様" and flattened every column a sender had lined up.
+		return text.replace(COLLAPSIBLE, " ");
 	}
 	if (node.nodeType !== Node.ELEMENT_NODE) return "";
 
