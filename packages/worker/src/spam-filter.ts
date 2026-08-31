@@ -78,11 +78,65 @@ function dkimVerdict(authResults: string): string | undefined {
 	return verdicts[0];
 }
 
-export function classifyByAuthResults(headers: Header[]): "inbox" | "spam" {
-	const authResults = headers
+/**
+ * The DMARC policy the From domain publishes, as the relay recorded it.
+ *
+ * Two shapes are in the wild: Cloudflare writes `policy.dmarc=none`, other
+ * relays write `dmarc=pass (p=NONE sp=NONE dis=NONE)`. Both are read from
+ * the DMARC section alone -- `p=` appearing anywhere else in the header is
+ * not this.
+ *
+ * This is not used to file mail. `p=none` says only what the domain wants
+ * done when DMARC *fails*, so it can never make a passing message worse.
+ * It is here because it is worth something to a reader weighing the sender:
+ * a domain registered for one campaign publishes SPF to get delivered and
+ * stops there.
+ */
+function dmarcPolicy(authResults: string): string | undefined {
+	const section = resultSections(authResults).find((s) => /\bdmarc=/i.test(s));
+	if (!section) return undefined;
+	const explicit = /\bpolicy\.dmarc=(\w+)/i.exec(section)?.[1];
+	return (explicit ?? /\bp=(\w+)/i.exec(section)?.[1])?.toLowerCase();
+}
+
+export interface AuthSummary {
+	spf?: string;
+	dkim?: string;
+	dmarc?: string;
+	dmarcPolicy?: string;
+}
+
+function joinAuthResults(headers: Header[]): string {
+	return headers
 		.filter((h) => h.key === "authentication-results")
 		.map((h) => h.value)
 		.join(" ");
+}
+
+/**
+ * The same four verdicts classifyByAuthResults decides on, handed out so the
+ * second-stage classifier can weigh them too.
+ *
+ * The first pass answers one narrow question -- did this message really come
+ * from the domain in the From header -- and then discarded its evidence. But
+ * that evidence says more than the verdict does: a message whose DKIM
+ * signature does not verify, on a domain that publishes no DMARC policy, is
+ * a different proposition from one that is clean on every count, even though
+ * both reach the inbox here.
+ */
+export function summarizeAuthResults(headers: Header[]): AuthSummary {
+	const authResults = joinAuthResults(headers);
+	if (!authResults) return {};
+	return {
+		spf: spfVerdict(authResults),
+		dkim: dkimVerdict(authResults),
+		dmarc: /\bdmarc=(\w+)/i.exec(authResults)?.[1]?.toLowerCase(),
+		dmarcPolicy: dmarcPolicy(authResults),
+	};
+}
+
+export function classifyByAuthResults(headers: Header[]): "inbox" | "spam" {
+	const authResults = joinAuthResults(headers);
 
 	if (!authResults) return "inbox";
 
@@ -130,11 +184,9 @@ export function isTrustedSelfDomainSender(
 ): boolean {
 	if (!fromAddress) return false;
 
-	const authResults = headers
-		.filter((h) => h.key === "authentication-results")
-		.map((h) => h.value)
-		.join(" ");
-	const dmarc = /\bdmarc=(\w+)/i.exec(authResults)?.[1]?.toLowerCase();
+	const dmarc = /\bdmarc=(\w+)/i
+		.exec(joinAuthResults(headers))?.[1]
+		?.toLowerCase();
 	if (dmarc !== "pass") return false;
 
 	return extractDomain(fromAddress) === extractDomain(mailboxId);

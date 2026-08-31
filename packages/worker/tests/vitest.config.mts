@@ -74,7 +74,14 @@ export default defineConfig({
 						if (body.includes("TRIGGER_CLAUDE_ERROR")) {
 							return new Response("mock error", { status: 500 });
 						}
-						const verdict = body.includes("TRIGGER_CLAUDE_SPAM")
+						// Matched case-insensitively so the marker can be planted in
+						// a field the worker normalizes on the way through -- an
+						// SPF/DKIM/DMARC verdict is lowercased before it reaches
+						// the request, and a test that asserts those verdicts
+						// arrive needs the marker to survive that.
+						const verdict = body
+							.toUpperCase()
+							.includes("TRIGGER_CLAUDE_SPAM")
 							? "SPAM"
 							: "NOT_SPAM";
 						return new Response(
