@@ -77,6 +77,7 @@ describe("the reason shown for a failure", () => {
 	it("has a message for every code the Worker records", () => {
 		for (const reason of [
 			"unauthorized",
+			"forbidden",
 			"rateLimited",
 			"serverError",
 			"timeout",
@@ -87,6 +88,21 @@ describe("the reason shown for a failure", () => {
 				`settings.spamCheck${reason[0]!.toUpperCase()}${reason.slice(1)}`,
 			);
 		}
+	});
+
+	/**
+	 * These two were one code, and the advice for them is opposite: 401 is
+	 * answered by entering the right key, 403 is not answered by entering any
+	 * key at all. Sharing a message would send half the readers to re-type a
+	 * key that was already correct.
+	 */
+	it("does not tell a refused key and a refused permission apart by luck", () => {
+		expect(spamCheckReasonKey("forbidden")).not.toBe(
+			spamCheckReasonKey("unauthorized"),
+		);
+		expect(spamCheckReasonKey("forbidden")).not.toBe(
+			spamCheckReasonKey("something-new"),
+		);
 	});
 
 	// A dashboard running against a newer Worker. Showing the raw code, or

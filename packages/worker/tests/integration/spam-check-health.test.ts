@@ -204,6 +204,47 @@ describe("the second-stage check reports whether it is working", () => {
 	});
 
 	/**
+	 * The two refusals, which used to be recorded as one reason.
+	 *
+	 * They are not one problem. 401 is the key: it is wrong, or it was deleted
+	 * upstream, and entering the right one fixes it. 403 is not the key, and
+	 * entering a correct key again and again fixes nothing -- so a screen that
+	 * says "check your key" to both sends half its readers the wrong way.
+	 */
+	it("tells a rejected key from a key that is refused permission", async () => {
+		await setClaudeApiKey("sk-ant-test-key");
+
+		await receive("Wrong key TRIGGER_CLAUDE_401");
+		const rejected = await health();
+		expect(rejected.lastFailureReason).toBe("unauthorized");
+		expect(rejected.lastFailureDetail).toBe("401 authentication_error");
+
+		await receive("Not permitted TRIGGER_CLAUDE_403");
+		const refused = await health();
+		expect(refused.lastFailureReason).toBe("forbidden");
+		expect(refused.lastFailureDetail).toBe("403 permission_error");
+	});
+
+	/**
+	 * And the third case, which shares its status with the second and has
+	 * nothing else in common: the request was turned away before the API saw
+	 * it. The API answers in JSON and names its own reason; whatever stands in
+	 * front of it answers with a page. The absence of that JSON is the finding,
+	 * and the page itself is never quoted.
+	 */
+	it("says when a refusal did not come from the API at all", async () => {
+		await setClaudeApiKey("sk-ant-test-key");
+		await receive("Turned away TRIGGER_CLAUDE_EDGE_403");
+
+		const after = await health();
+		expect(after.lastFailureReason).toBe("forbidden");
+		expect(after.lastFailureDetail).toBe("403 (no API error body)");
+		expect(after.lastFailureDetail).not.toContain("blocked");
+		// Still delivered: this stage fails open, whatever refused it.
+		expect(await folderOf("Turned away TRIGGER_CLAUDE_EDGE_403")).toBe("inbox");
+	});
+
+	/**
 	 * A reply that carries a verdict but not on its own. The old comparison
 	 * was against the whole reply, so decoration was enough to lose the
 	 * verdict entirely and file the message as unclassifiable.
@@ -269,12 +310,15 @@ describe("the second-stage check reports whether it is working", () => {
 	it("drops the kept reply when the next failure is a different one", async () => {
 		await setClaudeApiKey("sk-ant-test-key");
 		await receive("First TRIGGER_CLAUDE_PREAMBLE");
-		expect((await health()).lastFailureDetail).not.toBeNull();
+		expect((await health()).lastFailureDetail).toBe(
+			"Based on the sender domain, this is SPAM",
+		);
 
 		await receive("Then TRIGGER_CLAUDE_ERROR");
 		const after = await health();
 		expect(after.lastFailureReason).toBe("serverError");
-		expect(after.lastFailureDetail).toBeNull();
+		// The new failure's own line, and nothing of the old one.
+		expect(after.lastFailureDetail).toBe("500 (no API error body)");
 	});
 
 	// Timestamps and a reason code only. The key never appears, and neither

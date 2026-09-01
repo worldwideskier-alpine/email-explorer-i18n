@@ -96,6 +96,15 @@
           </button>
         </form>
         <p v-if="spamFilterMessage" class="text-sm text-green-600 dark:text-green-400 mt-2">{{ spamFilterMessage }}</p>
+        <!-- What the API said to the key just saved. Without this the answer
+             arrives whenever the next message does, which on a quiet mailbox
+             is hours, and a refused key looks exactly like a working one until
+             then. -->
+        <p v-if="keyCheckFailure" class="text-sm text-amber-700 dark:text-amber-400 mt-2 break-words">
+          <span class="font-semibold">{{ t("settings.spamFilterKeyRejected") }}</span>
+          {{ t(spamCheckReasonKey(keyCheckFailure)) }}
+          <span v-if="keyCheckDetail" class="text-gray-500 dark:text-gray-400">{{ t("settings.spamCheckDetail", { detail: keyCheckDetail }) }}</span>
+        </p>
 
         <!-- Whether the check is actually running. It fails open, so a
              rejected key looks exactly like a filter finding nothing to
@@ -443,6 +452,12 @@ const claudeApiKeyConfigured = ref(false);
 const claudeApiKeyMasked = ref("");
 const spamFilterLoading = ref(false);
 const spamFilterMessage = useLocalizedMessage();
+// What the API said to the key that was just saved. Held apart from the
+// health line below, which is the history of what happened to actual mail:
+// a manual test is not a message, and writing one into that history would
+// clear a standing warning without anything having been classified.
+const keyCheckFailure = ref<string | null>(null);
+const keyCheckDetail = ref<string | null>(null);
 
 const { formatFullDate } = useDateFormat();
 
@@ -775,6 +790,8 @@ const saveApiKey = async () => {
 	if (!mailbox.value || !claudeApiKeyInput.value.trim()) return;
 	spamFilterLoading.value = true;
 	spamFilterMessage.value = "";
+	keyCheckFailure.value = null;
+	keyCheckDetail.value = null;
 	try {
 		const settings = {
 			...mailbox.value.settings,
@@ -788,7 +805,24 @@ const saveApiKey = async () => {
 			settings,
 		);
 		claudeApiKeyInput.value = "";
-		spamFilterMessage.value = () => t("settings.spamFilterSaved");
+
+		// The key is stored either way; this only says whether it works. A
+		// check that cannot be made at all is not evidence against the key,
+		// so it leaves the plain "saved" message standing.
+		try {
+			const { data } = await api.checkSpamFilterKey(
+				route.params.mailboxId as string,
+			);
+			if (data?.ok) {
+				spamFilterMessage.value = () => t("settings.spamFilterKeyVerified");
+			} else {
+				spamFilterMessage.value = "";
+				keyCheckFailure.value = data?.failure ?? "serverError";
+				keyCheckDetail.value = data?.detail ?? null;
+			}
+		} catch {
+			spamFilterMessage.value = () => t("settings.spamFilterSaved");
+		}
 	} finally {
 		spamFilterLoading.value = false;
 	}
@@ -864,6 +898,9 @@ const removeApiKey = async () => {
 	if (!confirm(t("settings.spamFilterConfirmRemove"))) return;
 	spamFilterLoading.value = true;
 	spamFilterMessage.value = "";
+	// The refusal belonged to the key being removed.
+	keyCheckFailure.value = null;
+	keyCheckDetail.value = null;
 	try {
 		const settings = {
 			...mailbox.value.settings,

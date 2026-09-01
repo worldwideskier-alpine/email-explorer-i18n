@@ -14,10 +14,12 @@ export interface SpamCheckHealth {
 	lastFailureAt: string | null;
 	lastFailureReason: string | null;
 	/**
-	 * What the classifier replied, when the reply could not be read as a
-	 * verdict. Only ever set for the `malformed` reason -- every other reason
-	 * is fully described by its code, and an upstream error body is not ours
-	 * to show. Optional so a dashboard newer than its Worker still works.
+	 * The one line that says more than the code does: what the classifier
+	 * replied when the reply could not be read as a verdict, or -- for a
+	 * refusal -- the status and the API's own name for what went wrong
+	 * (`403 permission_error`), or that no API error body came back at all.
+	 * Never an upstream error body verbatim; the Worker decides what is
+	 * showable. Optional so a dashboard newer than its Worker still works.
 	 */
 	lastFailureDetail?: string | null;
 }
@@ -57,9 +59,17 @@ export function spamCheckDetail(
 	return health?.lastFailureDetail?.trim() || null;
 }
 
-/** The reason codes the Worker records, and the message for each. */
+/**
+ * The reason codes the Worker records, and the message for each.
+ *
+ * `unauthorized` and `forbidden` were one code, and they are not one problem:
+ * the first is answered by entering the right key, the second is not answered
+ * by entering any key at all. Telling a reader to check their key when the key
+ * is already correct is worse than saying nothing.
+ */
 const REASON_KEYS: Record<string, string> = {
 	unauthorized: "settings.spamCheckUnauthorized",
+	forbidden: "settings.spamCheckForbidden",
 	rateLimited: "settings.spamCheckRateLimited",
 	serverError: "settings.spamCheckServerError",
 	timeout: "settings.spamCheckTimeout",

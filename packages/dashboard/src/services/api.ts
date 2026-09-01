@@ -109,6 +109,13 @@ export default {
 			params: purge ? { purge: "true" } : undefined,
 		}),
 
+	// Puts the stored Claude key to the API once and reports what came back.
+	// Without it the only thing that exercises a key is inbound mail, so a key
+	// the API refuses looks exactly like one that works until the next message
+	// happens to arrive.
+	checkSpamFilterKey: (mailboxId: string) =>
+		apiClient.post(`/api/v1/mailboxes/${mailboxId}/spam-filter/check`),
+
 	// The whole mailbox as an mbox archive. Fetched as a blob through this
 	// client because the endpoint needs the session; see exportMailbox in
 	// Settings.vue for why that caps the practical size.

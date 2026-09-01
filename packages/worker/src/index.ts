@@ -1640,6 +1640,77 @@ const StoredBackupSchema = z.object({
 	size: z.number(),
 });
 
+const SpamFilterCheckSchema = z.object({
+	ok: z.boolean(),
+	failure: z.string().optional(),
+	detail: z.string().optional(),
+});
+
+/**
+ * Puts the stored key to the API once, now, and says what came back.
+ *
+ * Without this the only thing that exercises a key is inbound mail, so the
+ * answer to "is this key working?" arrives whenever the next message does --
+ * which, on a quiet mailbox, is hours. Saving a key that the API refuses
+ * therefore looks exactly like saving one that works, and the screen goes on
+ * showing a green badge until something happens to arrive.
+ *
+ * It is the real call: same model, same headers, same request shape, so a
+ * refusal here is the refusal mail would have met. Two things it cannot
+ * promise. It leaves from wherever this request landed, and inbound mail
+ * leaves from wherever that message landed, so a refusal aimed at one address
+ * and not another will not necessarily show up in both. And it says nothing
+ * about the next call -- only about this one.
+ *
+ * Deliberately not recorded in spam_check_health: that line is the history of
+ * what happened to actual mail, and writing a manual test into it would clear
+ * a standing warning without a single message having been classified.
+ */
+class PostSpamFilterCheck extends OpenAPIRoute {
+	schema = {
+		summary: "Check the stored Claude API key against the API",
+		operationId: "checkSpamFilterKey",
+		tags: ["Mailboxes"],
+		request: { params: z.object({ mailboxId: z.string() }) },
+		responses: {
+			"200": {
+				description: "What the API said",
+				...contentJson(SpamFilterCheckSchema),
+			},
+			"404": {
+				description: "Mailbox not found, or no key stored",
+				...contentJson(ErrorResponseSchema),
+			},
+		},
+	};
+
+	async handle(c: AppContext) {
+		const data = await this.getValidatedData<typeof this.schema>();
+		const { mailboxId } = data.params ?? {};
+
+		const apiKey = await getClaudeApiKey(c.env, mailboxId);
+		if (!apiKey) {
+			return c.json({ error: "Not found" }, 404);
+		}
+
+		// A message of the shape the classifier is given, standing in for one.
+		// Its verdict is thrown away -- what is being tested is whether the
+		// call is allowed to happen at all.
+		const result = await classifyWithClaude({
+			apiKey,
+			subject: "Test",
+			from: "postmaster@example.com",
+			text: "This message exists only to check that the key works.",
+		});
+
+		return c.json({
+			ok: !result.failure,
+			failure: result.failure,
+			detail: result.detail,
+		});
+	}
+}
+
 /**
  * The archives kept for this mailbox, newest first.
  *
@@ -2269,6 +2340,10 @@ openapi.delete("/api/v1/mailboxes/:mailboxId", DeleteMailbox);
 openapi.get("/api/v1/mailboxes/:mailboxId/export", GetMailboxExport);
 // Listing and downloading only. There is deliberately no delete route:
 // rotation in the scheduled run is the only thing that removes a backup.
+openapi.post(
+	"/api/v1/mailboxes/:mailboxId/spam-filter/check",
+	PostSpamFilterCheck,
+);
 openapi.get("/api/v1/mailboxes/:mailboxId/backups", GetMailboxBackups);
 openapi.get("/api/v1/mailboxes/:mailboxId/backups/:name", GetMailboxBackup);
 openapi.get("/api/v1/mailboxes/:mailboxId/emails", GetEmails);
