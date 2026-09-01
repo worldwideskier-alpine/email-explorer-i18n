@@ -63,6 +63,12 @@
           <span v-else class="px-2 py-0.5 text-xs font-semibold text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded-full">
             {{ t("settings.spamFilterApiKeyNotConfigured") }}
           </span>
+          <!-- Which key, not just whether there is one. Printed the way the
+               API console lists its keys so the two can be compared by eye:
+               a key deleted upstream and a working one give the same badge. -->
+          <span v-if="claudeApiKeyMasked" class="font-mono text-xs text-gray-500 dark:text-gray-400 break-all">
+            {{ claudeApiKeyMasked }}
+          </span>
         </div>
         <form @submit.prevent="saveApiKey" class="flex flex-col sm:flex-row gap-2">
           <input
@@ -434,6 +440,7 @@ watch(
 
 const claudeApiKeyInput = ref("");
 const claudeApiKeyConfigured = ref(false);
+const claudeApiKeyMasked = ref("");
 const spamFilterLoading = ref(false);
 const spamFilterMessage = useLocalizedMessage();
 
@@ -454,6 +461,8 @@ watch(
 	(m) => {
 		claudeApiKeyConfigured.value =
 			!!m?.settings?.spamFilter?.claudeApiKeyConfigured;
+		claudeApiKeyMasked.value =
+			m?.settings?.spamFilter?.claudeApiKeyMasked ?? "";
 		spamCheck.value =
 			(m as { spamCheck?: SpamCheckHealth } | null)?.spamCheck ?? null;
 	},

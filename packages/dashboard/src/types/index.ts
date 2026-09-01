@@ -7,6 +7,12 @@ export interface SignatureSettings {
 export interface SpamFilterSettings {
 	claudeApiKey?: string;
 	claudeApiKeyConfigured?: boolean;
+	/**
+	 * The stored key as the API console lists it (`sk-ant-api03-SCW...0gAA`),
+	 * so the one in the mailbox can be told apart from the ones in the console.
+	 * Server-computed; never sent up.
+	 */
+	claudeApiKeyMasked?: string;
 }
 
 export interface MailboxSettings {

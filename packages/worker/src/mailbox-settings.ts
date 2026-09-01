@@ -9,6 +9,7 @@ import {
 	normalizeFrequency,
 	normalizeKeep,
 } from "./auto-backup";
+import { maskSecret } from "./mask-secret";
 import { normalizeRetentionDays } from "./spam-retention";
 import type { Env } from "./types";
 
@@ -17,7 +18,12 @@ type MailboxSettings = Record<string, any>;
 /**
  * Strips the raw Claude API key out of a settings object before it's sent
  * to the client, replacing it with a boolean so the UI can still show
- * whether one is configured.
+ * whether one is configured, and with the masked form the API console lists
+ * its keys by, so the owner can tell *which* key is stored.
+ *
+ * Both are computed here, after the stored fields are spread: an older object
+ * may carry a copy of either that the browser echoed back on a save, and a
+ * stale mask would be worse than none.
  */
 export function redactMailboxSettings(
 	settings: MailboxSettings | null | undefined,
@@ -27,7 +33,11 @@ export function redactMailboxSettings(
 	const { claudeApiKey, ...rest } = settings.spamFilter;
 	return {
 		...settings,
-		spamFilter: { ...rest, claudeApiKeyConfigured: !!claudeApiKey },
+		spamFilter: {
+			...rest,
+			claudeApiKeyConfigured: !!claudeApiKey,
+			claudeApiKeyMasked: claudeApiKey ? maskSecret(claudeApiKey) : undefined,
+		},
 	};
 }
 
@@ -54,7 +64,16 @@ export function mergeMailboxSettings(
 		: existing?.spamFilter?.claudeApiKey;
 
 	if (incomingSpamFilter || claudeApiKey) {
-		merged.spamFilter = { ...incomingSpamFilter, claudeApiKey };
+		// The browser has the redacted object and sends it back whole, so the
+		// two fields standing in for the key arrive with every save. They are
+		// derived from the key and are recomputed on the way out; storing them
+		// would leave a copy that goes stale the moment the key is changed.
+		const {
+			claudeApiKeyConfigured: _configured,
+			claudeApiKeyMasked: _masked,
+			...spamFilter
+		} = incomingSpamFilter ?? {};
+		merged.spamFilter = { ...spamFilter, claudeApiKey };
 	}
 
 	// Saving the signature (or anything else) must never quietly unlock a
