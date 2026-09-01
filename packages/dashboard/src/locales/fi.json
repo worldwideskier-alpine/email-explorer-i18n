@@ -324,6 +324,10 @@
 			"removed": "Poistettu.",
 			"failed": "Tallentaminen ei onnistunut.",
 			"storageNote": "Avain tallennetaan R2:een, jossa sen voi lukea kuka tahansa Cloudflare-tilin haltija. Sitä ei koskaan palauteta tälle näytölle."
+		},
+		"rootSetup": {
+			"submit": "Tee omistajaksi",
+			"confirm": "Tehdäänkö {email} omistajaksi? Sen jälkeen vain se tili voi luoda ja poistaa tilejä. Asetettavissa vain kerran."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Nollaa salasana",
 		"deleteAccount": "Poista tili",
 		"confirmDelete": "Poistetaanko {email}? Postilaatikot ja niiden viestit säilyvät.",
-		"deleteFailed": "Poisto ei onnistunut."
+		"deleteFailed": "Poisto ei onnistunut.",
+		"transfer": "Siirrä",
+		"confirmTransfer": "Siirretäänkö omistajan rooli tilille {email}? Menetät tämän näkymän."
 	}
 }

@@ -324,6 +324,10 @@
 			"removed": "削除しました。",
 			"failed": "保存できませんでした。",
 			"storageNote": "鍵は R2 に保存されます。Cloudflare アカウントを持つ人は読み出せます。画面には返しません。"
+		},
+		"rootSetup": {
+			"submit": "特権管理者にする",
+			"confirm": "{email} を特権管理者にします。以後、アカウントの作成・削除はこのアカウントだけが行えます。設定できるのはこの一度だけです。よろしいですか？"
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "パスワードを再設定",
 		"deleteAccount": "アカウントを削除",
 		"confirmDelete": "{email} を削除します。メールボックスとメールは残ります。よろしいですか？",
-		"deleteFailed": "削除できませんでした。"
+		"deleteFailed": "削除できませんでした。",
+		"transfer": "特権管理者を移す",
+		"confirmTransfer": "特権管理者を {email} に移します。あなたはこの画面を使えなくなります。よろしいですか？"
 	}
 }

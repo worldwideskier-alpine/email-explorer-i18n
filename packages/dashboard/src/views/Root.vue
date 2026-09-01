@@ -81,6 +81,14 @@
                 </button>
                 <button
                   v-if="account.role !== 'root'"
+                  @click="transfer(account)"
+                  :disabled="busy"
+                  class="px-3 py-1.5 text-sm text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 rounded-md hover:bg-amber-50 dark:hover:bg-amber-900/30 disabled:opacity-50"
+                >
+                  {{ t("root.transfer") }}
+                </button>
+                <button
+                  v-if="account.role !== 'root'"
                   @click="removeAccount(account)"
                   :disabled="busy"
                   class="px-3 py-1.5 text-sm text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-50"
@@ -231,6 +239,30 @@ async function removeAccount(account: Account) {
 		await api.deleteAccount(account.id);
 		message.value = () => t("admin.resend.removed");
 		await load();
+	} catch {
+		error.value = () => t("root.deleteFailed");
+	} finally {
+		busy.value = false;
+	}
+}
+
+/**
+ * Hands the role to somebody else. The handover path and the recovery path
+ * at once -- and the last thing this account can do here, so it is worth
+ * being asked about plainly.
+ */
+async function transfer(account: Account) {
+	if (!window.confirm(t("root.confirmTransfer", { email: account.email }))) {
+		return;
+	}
+
+	busy.value = true;
+	message.value = "";
+	error.value = "";
+	try {
+		await api.transferRoot(account.id);
+		// No longer root, so this screen is no longer reachable.
+		window.location.assign("/");
 	} catch {
 		error.value = () => t("root.deleteFailed");
 	} finally {

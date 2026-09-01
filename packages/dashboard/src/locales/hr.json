@@ -324,6 +324,10 @@
 			"removed": "Uklonjeno.",
 			"failed": "Spremanje nije uspjelo.",
 			"storageNote": "Ključ se sprema u R2, gdje ga može pročitati svatko tko ima Cloudflare račun. Nikada se ne vraća na ovaj zaslon."
+		},
+		"rootSetup": {
+			"submit": "Postavi kao vlasnika",
+			"confirm": "Postaviti {email} kao vlasnika? Nakon toga samo taj račun može stvarati i brisati račune. Može se postaviti samo jednom."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Postavi novu lozinku",
 		"deleteAccount": "Obriši račun",
 		"confirmDelete": "Obrisati {email}? Sandučići i poruke ostaju.",
-		"deleteFailed": "Brisanje nije uspjelo."
+		"deleteFailed": "Brisanje nije uspjelo.",
+		"transfer": "Prenesi",
+		"confirmTransfer": "Prenijeti ulogu vlasnika na {email}? Izgubit ćete ovaj zaslon."
 	}
 }

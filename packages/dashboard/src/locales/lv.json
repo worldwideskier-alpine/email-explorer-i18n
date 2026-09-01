@@ -324,6 +324,10 @@
 			"removed": "Noņemta.",
 			"failed": "Neizdevās saglabāt.",
 			"storageNote": "Atslēga tiek glabāta R2, kur to var izlasīt ikviens, kam ir Cloudflare konts. Šajā ekrānā tā nekad netiek atgriezta."
+		},
+		"rootSetup": {
+			"submit": "Padarīt par īpašnieku",
+			"confirm": "Padarīt {email} par īpašnieku? Pēc tam tikai šis konts varēs izveidot un dzēst kontus. Iestatāms tikai vienreiz."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Atiestatīt paroli",
 		"deleteAccount": "Dzēst kontu",
 		"confirmDelete": "Dzēst {email}? Pastkastes un to vēstules tiek saglabātas.",
-		"deleteFailed": "Neizdevās izdzēst."
+		"deleteFailed": "Neizdevās izdzēst.",
+		"transfer": "Nodot",
+		"confirmTransfer": "Nodot īpašnieka lomu kontam {email}? Jūs zaudēsiet šo ekrānu."
 	}
 }

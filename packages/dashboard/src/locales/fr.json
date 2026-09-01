@@ -324,6 +324,10 @@
 			"removed": "Supprimée.",
 			"failed": "Enregistrement impossible.",
 			"storageNote": "La clé est stockée dans R2, où toute personne disposant du compte Cloudflare peut la lire. Elle n'est jamais renvoyée à cet écran."
+		},
+		"rootSetup": {
+			"submit": "Définir comme propriétaire",
+			"confirm": "Faire de {email} le propriétaire ? Ensuite, seul ce compte pourra créer et supprimer des comptes. Réglable une seule fois."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Réinitialiser le mot de passe",
 		"deleteAccount": "Supprimer le compte",
 		"confirmDelete": "Supprimer {email} ? Les boîtes et leurs messages sont conservés.",
-		"deleteFailed": "Suppression impossible."
+		"deleteFailed": "Suppression impossible.",
+		"transfer": "Transférer",
+		"confirmTransfer": "Transférer le rôle de propriétaire à {email} ? Vous perdrez cet écran."
 	}
 }

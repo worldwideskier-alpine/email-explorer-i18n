@@ -563,6 +563,71 @@ export class MailboxDO extends DurableObject<Env> {
 		return "ok";
 	}
 
+	/** The account holding the root role, or null when there is none yet. */
+	async getRootUserId(): Promise<string | null> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const row = this.ctx.storage.sql
+			.exec("SELECT root_user_id FROM app_roles WHERE id = 1")
+			.toArray()[0];
+		const value = row?.root_user_id;
+		return value === null || value === undefined ? null : String(value);
+	}
+
+	/**
+	 * Names the first root, and only the first.
+	 *
+	 * Guarded by "there isn't one yet" rather than by who is asking, because
+	 * the caller has to be an administrator anyway and an administrator can
+	 * already make and unmake administrators -- so this hands them nothing
+	 * they could not reach. What it must not be is a way to *replace* a root
+	 * that already exists: that would make the whole tier decorative, since
+	 * any administrator could take it back whenever they liked.
+	 */
+	async claimRoot(userId: string): Promise<"ok" | "not-found" | "taken"> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		if (await this.getRootUserId()) return "taken";
+
+		const user = this.#qb
+			.select<{ id: string }>("users")
+			.fields(["id"])
+			.where("id = ?", userId)
+			.one().results;
+		if (!user) return "not-found";
+
+		this.ctx.storage.sql.exec(
+			"UPDATE app_roles SET root_user_id = ? WHERE id = 1",
+			userId,
+		);
+		return "ok";
+	}
+
+	/**
+	 * Hands the role to another account. Called by root and nobody else.
+	 *
+	 * This is the handover path and the recovery path at once. Without it the
+	 * only way out of a lost root account would be editing the storage from
+	 * the Cloudflare side, which is a thing to fall back on, not a thing to
+	 * plan around.
+	 */
+	async transferRoot(userId: string): Promise<"ok" | "not-found"> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const user = this.#qb
+			.select<{ id: string }>("users")
+			.fields(["id"])
+			.where("id = ?", userId)
+			.one().results;
+		if (!user) return "not-found";
+
+		this.ctx.storage.sql.exec(
+			"UPDATE app_roles SET root_user_id = ? WHERE id = 1",
+			userId,
+		);
+		return "ok";
+	}
+
 	/**
 	 * Grants access, or changes the role if there already is some.
 	 *

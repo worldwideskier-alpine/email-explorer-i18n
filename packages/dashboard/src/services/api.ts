@@ -236,6 +236,12 @@ export default {
 	adminGetResendSettings: () => apiClient.get("/api/v1/admin/settings/resend"),
 	adminSetResendApiKey: (apiKey: string) =>
 		apiClient.put("/api/v1/admin/settings/resend", { apiKey }),
+	getRootAccount: () => apiClient.get("/api/v1/auth/admin/root"),
+	claimRoot: (userId: string) =>
+		apiClient.post("/api/v1/auth/admin/claim-root", { userId }),
+	transferRoot: (userId: string) =>
+		apiClient.post("/api/v1/root/transfer", { userId }),
+
 	// Root: the account list. Nothing here returns mail; see routes/root.ts
 	// in the Worker for why that is deliberate.
 	listAccounts: () => apiClient.get("/api/v1/root/accounts"),

@@ -24,8 +24,7 @@ every update it pulled.
 
 They are therefore set as **GitHub repository variables**
 (`WORKER_NAME`, `R2_BUCKET_NAME`, `VAPID_PUBLIC_KEY`,
-`ACCOUNT_RECOVERY_FROM`, `ROOT_ADMIN_EMAIL`) and written into the runner's
-copy of the config by
+`ACCOUNT_RECOVERY_FROM`) and written into the runner's copy of the config by
 `scripts/apply-deployment-config.mjs` before the deploy. The checked-in file
 keeps this deployment's values as working defaults, which is what
 `wrangler dev` and the test pool read.
@@ -92,15 +91,16 @@ fork's work. This fork ships by being forked.
 - **API schema.** Generated at runtime by chanfana from the route classes.
   There is no checked-in `openapi.json`, and `/openapi.json` needs a session.
 - **Sending.** Outbound mail goes through Resend, not Email Routing.
-- **Roles.** `root` / `admin` / `member`, decided in `roles.ts`. **Root is the
-  address in `ROOT_ADMIN_EMAIL`, not a column** -- so it cannot be seized with
-  a stolen admin session, and cannot be lost (point the variable elsewhere and
-  redeploy). The checked-in default is blank and stays blank: naming that
-  address in a public file would publish half a credential. Blank means nobody
-  is root and every `/api/v1/root/*` route refuses everyone, which is the state
-  a deployment upgrading into this starts in. A `+tag` is never stripped when
-  comparing -- `x+admin@gmail.com` and `x@gmail.com` share an inbox and must
-  not share the role.
+- **Roles.** `root` / `admin` / `member`, decided in `roles.ts`. Root is an
+  **account id in `app_roles`, inside the auth Durable Object** -- not a
+  deployment variable. This is software people fork and deploy: naming who
+  administers their own mail must not send them to GitHub, so every part of it
+  happens on the deployed site. A deployment starts with no root and every
+  `/api/v1/root/*` route refuses everyone; while there is none, an
+  administrator may name one **once** from `/admin` (`claimRoot`), which is no
+  escalation because an administrator can already make and unmake
+  administrators. After that the role only moves by root handing it on
+  (`transferRoot`), which is both the handover and the recovery path.
 - **Mailbox ownership.** A grant in `user_mailboxes` says who a mailbox
   belongs to. Administrators currently *also* see every mailbox by skipping
   the check, which is why the mailboxes in daily use had no grant rows at all;

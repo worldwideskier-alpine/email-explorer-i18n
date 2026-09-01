@@ -324,6 +324,10 @@
 			"removed": "Fjernet.",
 			"failed": "Kunne ikke gemmes.",
 			"storageNote": "Nøglen gemmes i R2, hvor enhver med Cloudflare-kontoen kan læse den. Den returneres aldrig til denne skærm."
+		},
+		"rootSetup": {
+			"submit": "Gør til ejer",
+			"confirm": "Gør {email} til ejer? Derefter kan kun den konto oprette og slette konti. Kan kun indstilles én gang."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Nulstil adgangskoden",
 		"deleteAccount": "Slet kontoen",
 		"confirmDelete": "Slet {email}? Postkasserne og deres mails bevares.",
-		"deleteFailed": "Kunne ikke slette."
+		"deleteFailed": "Kunne ikke slette.",
+		"transfer": "Overdrag",
+		"confirmTransfer": "Overdrag ejerrollen til {email}? Du mister denne skærm."
 	}
 }

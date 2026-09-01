@@ -1,7 +1,7 @@
 import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
-import { recoveryFromEmail, rootAdminEmail } from "../deployment-config";
+import { recoveryFromEmail } from "../deployment-config";
 import { buildEmailChangeEmail, MAIL_LOCALES } from "../mail-templates";
 import { sendEmail } from "../resend";
 import { roleOf } from "../roles";
@@ -224,13 +224,15 @@ export class PostLogin extends OpenAPIRoute {
 		const cookie = `session=${session.id}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${30 * 24 * 60 * 60}`;
 		c.header("Set-Cookie", cookie);
 
-		// The role travels with the session from here on. The Durable Object
-		// cannot work it out -- it does not see the deployment's
-		// configuration -- and the dashboard decides which screen to open
-		// from this response, before it has asked anything else.
+		// The role travels with the session from here on: the dashboard
+		// decides which screen to open from this response, before it has
+		// asked anything else.
 		return c.json({
 			...session,
-			role: roleOf(session, rootAdminEmail(c.env)),
+			role: roleOf(
+				{ id: session.userId, isAdmin: session.isAdmin },
+				await authDO.getRootUserId(),
+			),
 		});
 	}
 }

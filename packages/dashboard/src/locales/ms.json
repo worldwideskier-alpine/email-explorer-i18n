@@ -324,6 +324,10 @@
 			"removed": "Dibuang.",
 			"failed": "Tidak dapat disimpan.",
 			"storageNote": "Kunci disimpan dalam R2, di mana sesiapa yang memegang akaun Cloudflare boleh membacanya. Ia tidak pernah dikembalikan ke skrin ini."
+		},
+		"rootSetup": {
+			"submit": "Jadikan pemilik",
+			"confirm": "Jadikan {email} pemilik? Selepas itu hanya akaun tersebut boleh mencipta dan memadam akaun. Hanya boleh ditetapkan sekali."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Tetapkan semula kata laluan",
 		"deleteAccount": "Padam akaun",
 		"confirmDelete": "Padam {email}? Peti mel dan e-mel dikekalkan.",
-		"deleteFailed": "Tidak dapat memadam."
+		"deleteFailed": "Tidak dapat memadam.",
+		"transfer": "Serahkan",
+		"confirmTransfer": "Serahkan peranan pemilik kepada {email}? Anda akan kehilangan skrin ini."
 	}
 }

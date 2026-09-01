@@ -324,6 +324,10 @@
 			"removed": "U hoq.",
 			"failed": "Nuk u ruajt dot.",
 			"storageNote": "Çelësi ruhet në R2, ku mund ta lexojë kushdo që ka llogarinë Cloudflare. Nuk kthehet kurrë në këtë ekran."
+		},
+		"rootSetup": {
+			"submit": "Bëje pronar",
+			"confirm": "Ta bëni {email} pronar? Që atëherë vetëm ajo llogari mund të krijojë dhe fshijë llogari. Mund të caktohet vetëm një herë."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Rivendos fjalëkalimin",
 		"deleteAccount": "Fshi llogarinë",
 		"confirmDelete": "Të fshihet {email}? Kutitë dhe mesazhet ruhen.",
-		"deleteFailed": "Nuk u fshi dot."
+		"deleteFailed": "Nuk u fshi dot.",
+		"transfer": "Transfero",
+		"confirmTransfer": "Ta transferoni rolin e pronarit te {email}? Do ta humbni këtë ekran."
 	}
 }

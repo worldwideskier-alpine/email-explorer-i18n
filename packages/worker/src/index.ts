@@ -8,7 +8,7 @@ import { backupKeyPrefix } from "./auto-backup";
 import { listBackups } from "./backup-writer";
 import { base64ToBytes } from "./base64";
 import { classifyWithClaude } from "./claude-spam-filter";
-import { recoveryFromEmail, rootAdminEmail } from "./deployment-config";
+import { recoveryFromEmail } from "./deployment-config";
 import { ingestEmailIntoMailbox } from "./email-ingest";
 import { ensureLegacyMailboxGrants } from "./legacy-grants";
 import { buildPasswordResetEmail, MAIL_LOCALES } from "./mail-templates";
@@ -52,9 +52,12 @@ import {
 	DeleteAccount,
 	DeleteAccountMailbox,
 	GetAccounts,
+	GetRootAccount,
 	PostAccount,
 	PostAccountMailbox,
 	PostAccountPassword,
+	PostClaimRoot,
+	PostTransferRoot,
 } from "./routes/root";
 import { runScheduledMaintenance } from "./scheduled-run";
 import { slugify } from "./slugify";
@@ -2138,11 +2141,15 @@ async function validateSession(
 	try {
 		const session = await authDO.validateSession(token);
 		if (!session) return null;
-		// The one place every authenticated request passes through, and the
-		// only place that has both the session and the deployment's
-		// configuration. Deciding the role anywhere else would mean a route
-		// that forgot to ask.
-		return { ...session, role: roleOf(session, rootAdminEmail(env)) };
+		// The one place every authenticated request passes through. Deciding
+		// the role anywhere else would mean a route that forgot to ask.
+		return {
+			...session,
+			role: roleOf(
+				{ id: session.userId, isAdmin: session.isAdmin },
+				await authDO.getRootUserId(),
+			),
+		};
 	} catch {
 		return null;
 	}
@@ -2214,6 +2221,10 @@ openapi.delete(
 	"/api/v1/root/accounts/:userId/mailboxes/:mailboxId",
 	DeleteAccountMailbox,
 );
+openapi.post("/api/v1/root/transfer", PostTransferRoot);
+// Not root-only: there is no root yet when this is called. See PostClaimRoot.
+openapi.get("/api/v1/auth/admin/root", GetRootAccount);
+openapi.post("/api/v1/auth/admin/claim-root", PostClaimRoot);
 openapi.post("/api/v1/admin/mailboxes/:mailboxId/import", PostImportEmail);
 
 // Push notification endpoints

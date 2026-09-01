@@ -324,6 +324,10 @@
 			"removed": "Eliminada.",
 			"failed": "No s'ha pogut desar.",
 			"storageNote": "La clau es desa a R2, on pot llegir-la qui tingui el compte de Cloudflare. Mai es retorna a aquesta pantalla."
+		},
+		"rootSetup": {
+			"submit": "Fes-lo propietari",
+			"confirm": "Voleu fer propietari {email}? A partir d'aleshores només aquest compte podrà crear i suprimir comptes. Només es pot definir una vegada."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Restableix la contrasenya",
 		"deleteAccount": "Suprimeix el compte",
 		"confirmDelete": "Voleu suprimir {email}? Les bústies i els missatges es conserven.",
-		"deleteFailed": "No s'ha pogut suprimir."
+		"deleteFailed": "No s'ha pogut suprimir.",
+		"transfer": "Transfereix",
+		"confirmTransfer": "Voleu transferir el rol de propietari a {email}? Perdreu aquesta pantalla."
 	}
 }

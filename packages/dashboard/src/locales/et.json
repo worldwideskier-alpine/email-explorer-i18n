@@ -324,6 +324,10 @@
 			"removed": "Eemaldatud.",
 			"failed": "Salvestamine ebaõnnestus.",
 			"storageNote": "Võti salvestatakse R2-e, kus seda saab lugeda igaüks, kellel on Cloudflare'i konto. Sellele ekraanile seda kunagi tagasi ei saadeta."
+		},
+		"rootSetup": {
+			"submit": "Määra omanikuks",
+			"confirm": "Kas määrata {email} omanikuks? Seejärel saab ainult see konto kontosid luua ja kustutada. Määrata saab ainult ühe korra."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Lähtesta parool",
 		"deleteAccount": "Kustuta konto",
 		"confirmDelete": "Kas kustutada {email}? Postkastid ja nende kirjad jäävad alles.",
-		"deleteFailed": "Kustutamine ebaõnnestus."
+		"deleteFailed": "Kustutamine ebaõnnestus.",
+		"transfer": "Anna üle",
+		"confirmTransfer": "Kas anda omaniku roll üle kontole {email}? Kaotad selle vaate."
 	}
 }

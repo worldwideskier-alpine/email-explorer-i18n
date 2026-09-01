@@ -324,6 +324,10 @@
 			"removed": "Odstránené.",
 			"failed": "Uloženie sa nepodarilo.",
 			"storageNote": "Kľúč sa ukladá do R2, kde si ho môže prečítať ktokoľvek s účtom Cloudflare. Na túto obrazovku sa nikdy nevracia."
+		},
+		"rootSetup": {
+			"submit": "Nastaviť ako vlastníka",
+			"confirm": "Nastaviť {email} ako vlastníka? Potom budú môcť účty vytvárať a mazať len tento účet. Dá sa nastaviť len raz."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Nastaviť nové heslo",
 		"deleteAccount": "Zmazať účet",
 		"confirmDelete": "Zmazať {email}? Schránky a ich správy zostanú.",
-		"deleteFailed": "Nepodarilo sa zmazať."
+		"deleteFailed": "Nepodarilo sa zmazať.",
+		"transfer": "Odovzdať",
+		"confirmTransfer": "Odovzdať rolu vlastníka účtu {email}? Prídete o túto obrazovku."
 	}
 }
