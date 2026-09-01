@@ -324,10 +324,6 @@
 			"removed": "Kaldırıldı.",
 			"failed": "Kaydedilemedi.",
 			"storageNote": "Anahtar R2'de saklanır ve Cloudflare hesabı olan herkes okuyabilir. Bu ekrana asla geri döndürülmez."
-		},
-		"rootSetup": {
-			"submit": "Sahip yap",
-			"confirm": "{email} sahip yapılsın mı? Bundan sonra yalnızca o hesap hesap oluşturup silebilir. Yalnızca bir kez ayarlanabilir."
 		}
 	},
 	"compose": {

@@ -324,10 +324,6 @@
 			"removed": "U hoq.",
 			"failed": "Nuk u ruajt dot.",
 			"storageNote": "Çelësi ruhet në R2, ku mund ta lexojë kushdo që ka llogarinë Cloudflare. Nuk kthehet kurrë në këtë ekran."
-		},
-		"rootSetup": {
-			"submit": "Bëje pronar",
-			"confirm": "Ta bëni {email} pronar? Që atëherë vetëm ajo llogari mund të krijojë dhe fshijë llogari. Mund të caktohet vetëm një herë."
 		}
 	},
 	"compose": {

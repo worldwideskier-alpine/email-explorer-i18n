@@ -324,10 +324,6 @@
 			"removed": "Eliminată.",
 			"failed": "Nu s-a putut salva.",
 			"storageNote": "Cheia se păstrează în R2, unde o poate citi oricine are contul Cloudflare. Nu este niciodată returnată acestui ecran."
-		},
-		"rootSetup": {
-			"submit": "Setează ca proprietar",
-			"confirm": "Setați {email} ca proprietar? De atunci doar acel cont va putea crea și șterge conturi. Se poate seta o singură dată."
 		}
 	},
 	"compose": {

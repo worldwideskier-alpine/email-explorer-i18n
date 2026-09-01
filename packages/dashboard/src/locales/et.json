@@ -324,10 +324,6 @@
 			"removed": "Eemaldatud.",
 			"failed": "Salvestamine ebaõnnestus.",
 			"storageNote": "Võti salvestatakse R2-e, kus seda saab lugeda igaüks, kellel on Cloudflare'i konto. Sellele ekraanile seda kunagi tagasi ei saadeta."
-		},
-		"rootSetup": {
-			"submit": "Määra omanikuks",
-			"confirm": "Kas määrata {email} omanikuks? Seejärel saab ainult see konto kontosid luua ja kustutada. Määrata saab ainult ühe korra."
 		}
 	},
 	"compose": {

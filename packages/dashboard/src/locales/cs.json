@@ -324,10 +324,6 @@
 			"removed": "Odebráno.",
 			"failed": "Uložení se nezdařilo.",
 			"storageNote": "Klíč se ukládá do R2, kde si ho může přečíst kdokoli s účtem Cloudflare. Na tuto obrazovku se nikdy nevrací."
-		},
-		"rootSetup": {
-			"submit": "Nastavit jako vlastníka",
-			"confirm": "Nastavit {email} jako vlastníka? Poté bude moci účty vytvářet a mazat jen tento účet. Lze nastavit jen jednou."
 		}
 	},
 	"compose": {

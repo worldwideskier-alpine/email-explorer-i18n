@@ -324,10 +324,6 @@
 			"removed": "Imneħħija.",
 			"failed": "Ma setgħetx tiġi ssejvjata.",
 			"storageNote": "Iċ-ċavetta tinżamm f'R2, fejn kull min għandu l-kont ta' Cloudflare jista' jaqraha. Qatt ma tintbagħat lura f'din l-iskrin."
-		},
-		"rootSetup": {
-			"submit": "Agħmlu sid",
-			"confirm": "Tagħmel lil {email} is-sid? Minn hemm 'il quddiem dak il-kont biss jista' joħloq u jħassar kontijiet. Jista' jiġi ssettjat darba biss."
 		}
 	},
 	"compose": {

@@ -324,10 +324,6 @@
 			"removed": "Fjerna.",
 			"failed": "Kunne ikkje lagrast.",
 			"storageNote": "Nøkkelen blir lagra i R2, der alle med Cloudflare-kontoen kan lese han. Han blir aldri returnert til denne skjermen."
-		},
-		"rootSetup": {
-			"submit": "Gjer til eigar",
-			"confirm": "Gjere {email} til eigar? Deretter kan berre den kontoen opprette og slette kontoar. Kan berre setjast éin gong."
 		}
 	},
 	"compose": {

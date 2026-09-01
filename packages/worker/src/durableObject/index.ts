@@ -577,12 +577,14 @@ export class MailboxDO extends DurableObject<Env> {
 	/**
 	 * Names the first root, and only the first.
 	 *
-	 * Guarded by "there isn't one yet" rather than by who is asking, because
-	 * the caller has to be an administrator anyway and an administrator can
-	 * already make and unmake administrators -- so this hands them nothing
-	 * they could not reach. What it must not be is a way to *replace* a root
-	 * that already exists: that would make the whole tier decorative, since
-	 * any administrator could take it back whenever they liked.
+	 * Called from one place: the registration of the very first account. It
+	 * is not reachable over HTTP, and that is the point -- an endpoint that
+	 * named root, however well guarded, would be "somebody may take the tier
+	 * above them" on every deployment of this that exists.
+	 *
+	 * The guard is still here because the caller is a route: a second
+	 * registration racing the first must not be able to replace the root
+	 * account.
 	 */
 	async claimRoot(userId: string): Promise<"ok" | "not-found" | "taken"> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");

@@ -14,7 +14,6 @@ import { createMailbox, mailboxId } from "./utils";
  * not a change worth having.
  */
 
-
 async function register(email: string, password: string) {
 	const res = await SELF.fetch("http://local.test/api/v1/auth/register", {
 		method: "POST",
@@ -40,18 +39,6 @@ async function signIn(email: string, password = "password123") {
 	return res.json<{ id: string; role?: string }>();
 }
 
-/**
- * Names the first root the way the admin screen does. There is no root yet,
- * so this cannot be a root-only route -- see PostClaimRoot.
- */
-async function claimRoot(adminToken: string, userId: string) {
-	return as(adminToken)("http://local.test/api/v1/auth/admin/claim-root", {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ userId }),
-	});
-}
-
 function as(token: string) {
 	return (url: string, options: RequestInit = {}) =>
 		SELF.fetch(url, {
@@ -67,12 +54,6 @@ describe("who may reach the account list", () => {
 
 	it("refuses an administrator who is not root", async () => {
 		await register("operator@example.com", "password123");
-		const first = await signIn("operator@example.com");
-		const me = await (
-			await as(first.id)("http://local.test/api/v1/auth/me")
-		).json<{ userId: string }>();
-		await claimRoot(first.id, me.userId);
-
 		const other = await createUser("other@example.com", true);
 		expect(other).toBeTruthy();
 		const otherSession = await signIn("other@example.com");
@@ -94,11 +75,6 @@ describe("what root does with accounts", () => {
 	beforeEach(async () => {
 		resetLegacyGrantMemo();
 		await register("operator@example.com", "password123");
-		const first = await signIn("operator@example.com");
-		const me = await (
-			await as(first.id)("http://local.test/api/v1/auth/me")
-		).json<{ userId: string }>();
-		await claimRoot(first.id, me.userId);
 		root = (await signIn("operator@example.com")).id;
 	});
 
@@ -189,20 +165,12 @@ describe("what root does with accounts", () => {
 
 	/**
 	 * Deleting a person must not delete the mail. The addresses outlive
-	 * whoever was looking after them, and root reassigns them afterwards.
+	 * whoever was looking after them.
 	 */
 	it("leaves the mailbox behind when the account goes", async () => {
 		await createMailbox();
 		await createUser("keeper@example.com", true);
 		const userId = await createUser("leaver@example.com", true);
-		await as(root)(
-			`http://local.test/api/v1/root/accounts/${userId}/mailboxes`,
-			{
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ mailboxId }),
-			},
-		);
 
 		await as(root)(`http://local.test/api/v1/root/accounts/${userId}`, {
 			method: "DELETE",
@@ -228,55 +196,7 @@ describe("what root does with accounts", () => {
 		expect(res.status).toBe(409);
 	});
 
-	it("assigns a mailbox and takes it away again", async () => {
-		await createMailbox();
-		const userId = await createUser("hanako@example.com", true);
 
-		await as(root)(
-			`http://local.test/api/v1/root/accounts/${userId}/mailboxes`,
-			{
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ mailboxId }),
-			},
-		);
-		let listed = await (
-			await as(root)("http://local.test/api/v1/root/accounts")
-		).json<{ id: string; mailboxes: string[] }[]>();
-		expect(listed.find((a) => a.id === userId)?.mailboxes).toEqual([mailboxId]);
-
-		await as(root)(
-			`http://local.test/api/v1/root/accounts/${userId}/mailboxes/${mailboxId}`,
-			{ method: "DELETE" },
-		);
-		listed = await (
-			await as(root)("http://local.test/api/v1/root/accounts")
-		).json<{ id: string; mailboxes: string[] }[]>();
-		expect(listed.find((a) => a.id === userId)?.mailboxes).toEqual([]);
-	});
-
-	it("refuses to assign a mailbox that does not exist", async () => {
-		const userId = await createUser("hanako@example.com", true);
-		const res = await as(root)(
-			`http://local.test/api/v1/root/accounts/${userId}/mailboxes`,
-			{
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ mailboxId: "typo@example.com" }),
-			},
-		);
-		expect(res.status).toBe(404);
-	});
-
-	// Root manages accounts. It is not a second pair of eyes on the mail, and
-	// nothing it can reach returns a message.
-	it("owns no mailbox of its own", async () => {
-		await createMailbox();
-		const accounts = await (
-			await as(root)("http://local.test/api/v1/root/accounts")
-		).json<{ role: string; mailboxes: string[] }[]>();
-		expect(accounts.find((a) => a.role === "root")?.mailboxes).toEqual([]);
-	});
 });
 
 /**
@@ -295,7 +215,8 @@ describe("mailboxes that predate the grant model", () => {
 
 	it("gives each existing administrator an explicit ownership row", async () => {
 		await register("first@example.com", "password123");
-		const firstSession = await signIn("first@example.com");
+		const adminId = await createUser("admin@example.com", true);
+		const firstSession = await signIn("admin@example.com");
 		await createMailbox();
 
 		// The screen where a missing grant would first show. Asking for it is
@@ -306,14 +227,11 @@ describe("mailboxes that predate the grant model", () => {
 
 		const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 		await runInDurableObject(stub, async (instance) => {
-			const users = await (
-				instance as unknown as { getUsers(): Promise<{ id: string }[]> }
-			).getUsers();
 			const owned = await (
 				instance as unknown as {
 					getUserMailboxes(id: string): Promise<{ mailboxId: string }[]>;
 				}
-			).getUserMailboxes(users[0]?.id ?? "");
+			).getUserMailboxes(adminId);
 			expect(owned.map((entry) => entry.mailboxId)).toContain(mailboxId);
 		});
 	});
@@ -323,22 +241,24 @@ describe("mailboxes that predate the grant model", () => {
 	 * account was an administrator first and then became root, so the
 	 * backfill has to have skipped it.
 	 */
-	it("does not hand the existing mailboxes to root", async () => {
+	it("does not give the existing mailboxes to root", async () => {
 		await register("operator@example.com", "password123");
-		const first = await signIn("operator@example.com");
-		const me = await (
-			await as(first.id)("http://local.test/api/v1/auth/me")
-		).json<{ userId: string }>();
-		await claimRoot(first.id, me.userId);
-		await createMailbox();
-
 		const rootSession = await signIn("operator@example.com");
+		await createMailbox();
 		await as(rootSession.id)("http://local.test/api/v1/mailboxes");
 
-		const accounts = await (
-			await as(rootSession.id)("http://local.test/api/v1/root/accounts")
-		).json<{ role: string; mailboxes: string[] }[]>();
-		expect(accounts.find((a) => a.role === "root")?.mailboxes).toEqual([]);
+		const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
+		const me = await (
+			await as(rootSession.id)("http://local.test/api/v1/auth/me")
+		).json<{ userId: string }>();
+		await runInDurableObject(stub, async (instance) => {
+			const owned = await (
+				instance as unknown as {
+					getUserMailboxes(id: string): Promise<{ mailboxId: string }[]>;
+				}
+			).getUserMailboxes(me.userId);
+			expect(owned).toEqual([]);
+		});
 	});
 
 	/**
@@ -405,73 +325,57 @@ describe("a mailbox made today", () => {
 	});
 });
 
-describe("naming the first root", () => {
+describe("the first account", () => {
 	beforeEach(() => {
 		resetLegacyGrantMemo();
 	});
 
-	it("starts with nobody as root", async () => {
-		await register("first@example.com", "password123");
-		expect((await signIn("first@example.com")).role).toBe("admin");
-	});
-
-	it("refuses the account list until one exists", async () => {
-		await register("first@example.com", "password123");
-		const session = await signIn("first@example.com");
-		expect(
-			(await as(session.id)("http://local.test/api/v1/root/accounts")).status,
-		).toBe(403);
-	});
-
 	/**
-	 * An administrator may do it, and that is not an escalation: an
-	 * administrator can already make and unmake administrators, so this hands
-	 * them nothing they could not already reach.
+	 * Step one of the only flow there is: root, then the administrators root
+	 * makes, then the mailboxes those administrators make.
 	 */
-	it("lets an administrator name one from the admin screen", async () => {
+	it("is root, without anyone having to ask for it", async () => {
 		await register("first@example.com", "password123");
-		const session = await signIn("first@example.com");
-		const me = await (
-			await as(session.id)("http://local.test/api/v1/auth/me")
-		).json<{ userId: string }>();
-
-		expect((await claimRoot(session.id, me.userId)).status).toBe(200);
-		// The role travels with a new sign-in, and with a refresh of an old one.
 		expect((await signIn("first@example.com")).role).toBe("root");
 	});
 
-	// The door opens once. Otherwise any administrator could take the role
-	// back whenever they liked, and the tier would be decorative.
-	it("refuses a second naming", async () => {
+	it("is the only account that gets it", async () => {
 		await register("first@example.com", "password123");
-		const session = await signIn("first@example.com");
-		const me = await (
-			await as(session.id)("http://local.test/api/v1/auth/me")
-		).json<{ userId: string }>();
-		await claimRoot(session.id, me.userId);
-
-		const other = await createUser("other@example.com", true);
-		expect((await claimRoot(session.id, other)).status).toBe(409);
+		await createUser("second@example.com", true);
+		expect((await signIn("second@example.com")).role).toBe("admin");
 	});
 
-	it("refuses an account that does not exist", async () => {
+	/**
+	 * There is no route that names a root. An endpoint for it, however well
+	 * guarded, would read as "somebody may take the tier above them" on every
+	 * deployment of this that exists -- and this is software people fork and
+	 * put on the public internet.
+	 */
+	it("cannot be named over HTTP at all", async () => {
 		await register("first@example.com", "password123");
 		const session = await signIn("first@example.com");
-		expect((await claimRoot(session.id, "no-such-user")).status).toBe(404);
+
+		for (const path of [
+			"/api/v1/auth/admin/claim-root",
+			"/api/v1/auth/admin/root",
+		]) {
+			const res = await as(session.id)(`http://local.test${path}`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ userId: "anyone" }),
+			});
+			expect(res.status, path).toBe(404);
+		}
 	});
 
-	it("refuses somebody who is not an administrator", async () => {
+	// Root manages accounts. The estate is not its to look at.
+	it("does not see the mailboxes", async () => {
 		await register("first@example.com", "password123");
-		const admin = await signIn("first@example.com");
-		await createUser("plain@example.com", false);
-		const plain = await signIn("plain@example.com");
+		const session = await signIn("first@example.com");
+		await createMailbox();
 
-		expect((await claimRoot(plain.id, "anything")).status).toBe(403);
-		// And the administrator can still do it afterwards.
-		const me = await (
-			await as(admin.id)("http://local.test/api/v1/auth/me")
-		).json<{ userId: string }>();
-		expect((await claimRoot(admin.id, me.userId)).status).toBe(200);
+		const listed = await as(session.id)("http://local.test/api/v1/mailboxes");
+		expect(await listed.json<unknown[]>()).toEqual([]);
 	});
 });
 
@@ -488,12 +392,12 @@ describe("handing root to somebody else", () => {
 		resetLegacyGrantMemo();
 		await register("first@example.com", "password123");
 		const session = await signIn("first@example.com");
-		const me = await (
-			await as(session.id)("http://local.test/api/v1/auth/me")
-		).json<{ userId: string }>();
-		await claimRoot(session.id, me.userId);
-		rootUserId = me.userId;
-		root = (await signIn("first@example.com")).id;
+		rootUserId = (
+			await (
+				await as(session.id)("http://local.test/api/v1/auth/me")
+			).json<{ userId: string }>()
+		).userId;
+		root = session.id;
 	});
 
 	it("moves the role, and the old holder loses the screen", async () => {
@@ -534,12 +438,5 @@ describe("handing root to somebody else", () => {
 			body: JSON.stringify({ userId: "no-such-user" }),
 		});
 		expect(res.status).toBe(404);
-	});
-
-	it("reports who holds the role", async () => {
-		const res = await as(root)("http://local.test/api/v1/auth/admin/root");
-		expect(await res.json<{ userId: string | null }>()).toEqual({
-			userId: rootUserId,
-		});
 	});
 });

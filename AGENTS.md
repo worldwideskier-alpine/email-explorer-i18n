@@ -97,10 +97,15 @@ fork's work. This fork ships by being forked.
   administers their own mail must not send them to GitHub, so every part of it
   happens on the deployed site. A deployment starts with no root and every
   `/api/v1/root/*` route refuses everyone; while there is none, an
-  administrator may name one **once** from `/admin` (`claimRoot`), which is no
-  escalation because an administrator can already make and unmake
-  administrators. After that the role only moves by root handing it on
+  **the first account to register is root**, and that is the only way one
+  comes into being -- `claimRoot` is called from registration and is reachable
+  from no route. An endpoint that named a root, however well guarded, would
+  read as "somebody may take the tier above them" on every deployment of this
+  that exists. After that the role only moves by root handing it on
   (`transferRoot`), which is both the handover and the recovery path.
+  Root owns no mailbox, is left out of the `GetMailboxes` administrator view,
+  and its screen does not list anyone's mailboxes: what an administrator does
+  with their own addresses is not root's business.
 - **Mailbox ownership.** A grant in `user_mailboxes` says who a mailbox
   belongs to. Administrators currently *also* see every mailbox by skipping
   the check, which is why the mailboxes in daily use had no grant rows at all;

@@ -324,10 +324,6 @@
 			"removed": "Bainte.",
 			"failed": "Níorbh fhéidir í a shábháil.",
 			"storageNote": "Stóráiltear an eochair in R2, áit ar féidir le duine ar bith a bhfuil an cuntas Cloudflare aige í a léamh. Ní chuirtear ar ais chuig an scáileán seo riamh í."
-		},
-		"rootSetup": {
-			"submit": "Déan úinéir de",
-			"confirm": "An ndéanfar úinéir de {email}? Ina dhiaidh sin ní féidir ach leis an gcuntas sin cuntais a chruthú agus a scriosadh. Ní féidir é a shocrú ach uair amháin."
 		}
 	},
 	"compose": {

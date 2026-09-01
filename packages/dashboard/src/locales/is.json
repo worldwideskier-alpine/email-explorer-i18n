@@ -324,10 +324,6 @@
 			"removed": "Fjarlægt.",
 			"failed": "Ekki tókst að vista.",
 			"storageNote": "Lykillinn er geymdur í R2, þar sem hver sá sem hefur Cloudflare-reikninginn getur lesið hann. Honum er aldrei skilað á þennan skjá."
-		},
-		"rootSetup": {
-			"submit": "Gera að eiganda",
-			"confirm": "Gera {email} að eiganda? Eftir það getur aðeins sá reikningur búið til og eytt reikningum. Aðeins hægt að stilla einu sinni."
 		}
 	},
 	"compose": {

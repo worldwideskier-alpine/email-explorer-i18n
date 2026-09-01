@@ -324,10 +324,6 @@
 			"removed": "Noņemta.",
 			"failed": "Neizdevās saglabāt.",
 			"storageNote": "Atslēga tiek glabāta R2, kur to var izlasīt ikviens, kam ir Cloudflare konts. Šajā ekrānā tā nekad netiek atgriezta."
-		},
-		"rootSetup": {
-			"submit": "Padarīt par īpašnieku",
-			"confirm": "Padarīt {email} par īpašnieku? Pēc tam tikai šis konts varēs izveidot un dzēst kontus. Iestatāms tikai vienreiz."
 		}
 	},
 	"compose": {

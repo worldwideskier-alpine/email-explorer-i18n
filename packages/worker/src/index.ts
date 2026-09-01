@@ -50,13 +50,9 @@ import {
 import { PostForwardEmail, PostReplyEmail } from "./routes/reply-forward";
 import {
 	DeleteAccount,
-	DeleteAccountMailbox,
 	GetAccounts,
-	GetRootAccount,
 	PostAccount,
-	PostAccountMailbox,
 	PostAccountPassword,
-	PostClaimRoot,
 	PostTransferRoot,
 } from "./routes/root";
 import { runScheduledMaintenance } from "./scheduled-run";
@@ -297,8 +293,10 @@ class GetMailboxes extends OpenAPIRoute {
 		// administrator bypass below is removed. Runs once; see legacy-grants.
 		await ensureLegacyMailboxGrants(c.env);
 
-		// If no session (auth disabled) or user is admin, return all mailboxes
-		if (!session || session.isAdmin) {
+		// If no session (auth disabled) or user is admin, return all mailboxes.
+		// Root is excluded on purpose: it manages accounts and owns no
+		// mailbox, so the whole estate is not its to look at.
+		if (!session || (session.isAdmin && session.role !== "root")) {
 			return c.json(allMailboxes);
 		}
 
@@ -2216,15 +2214,7 @@ openapi.get("/api/v1/root/accounts", GetAccounts);
 openapi.post("/api/v1/root/accounts", PostAccount);
 openapi.post("/api/v1/root/accounts/:userId/password", PostAccountPassword);
 openapi.delete("/api/v1/root/accounts/:userId", DeleteAccount);
-openapi.post("/api/v1/root/accounts/:userId/mailboxes", PostAccountMailbox);
-openapi.delete(
-	"/api/v1/root/accounts/:userId/mailboxes/:mailboxId",
-	DeleteAccountMailbox,
-);
 openapi.post("/api/v1/root/transfer", PostTransferRoot);
-// Not root-only: there is no root yet when this is called. See PostClaimRoot.
-openapi.get("/api/v1/auth/admin/root", GetRootAccount);
-openapi.post("/api/v1/auth/admin/claim-root", PostClaimRoot);
 openapi.post("/api/v1/admin/mailboxes/:mailboxId/import", PostImportEmail);
 
 // Push notification endpoints

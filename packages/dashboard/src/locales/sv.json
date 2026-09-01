@@ -324,10 +324,6 @@
 			"removed": "Borttagen.",
 			"failed": "Det gick inte att spara.",
 			"storageNote": "Nyckeln lagras i R2, där alla med Cloudflare-kontot kan läsa den. Den skickas aldrig tillbaka till den här skärmen."
-		},
-		"rootSetup": {
-			"submit": "Gör till ägare",
-			"confirm": "Göra {email} till ägare? Därefter kan bara det kontot skapa och ta bort konton. Kan bara ställas in en gång."
 		}
 	},
 	"compose": {

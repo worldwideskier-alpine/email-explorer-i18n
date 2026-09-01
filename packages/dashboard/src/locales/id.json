@@ -324,10 +324,6 @@
 			"removed": "Dihapus.",
 			"failed": "Tidak dapat disimpan.",
 			"storageNote": "Kunci disimpan di R2, tempat siapa pun yang memegang akun Cloudflare dapat membacanya. Kunci tidak pernah dikembalikan ke layar ini."
-		},
-		"rootSetup": {
-			"submit": "Jadikan pemilik",
-			"confirm": "Jadikan {email} pemilik? Setelah itu hanya akun tersebut yang dapat membuat dan menghapus akun. Hanya dapat diatur sekali."
 		}
 	},
 	"compose": {

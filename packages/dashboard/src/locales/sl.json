@@ -324,10 +324,6 @@
 			"removed": "Odstranjeno.",
 			"failed": "Shranjevanje ni uspelo.",
 			"storageNote": "Ključ je shranjen v R2, kjer ga lahko prebere vsak, ki ima račun Cloudflare. Na ta zaslon se nikoli ne vrne."
-		},
-		"rootSetup": {
-			"submit": "Nastavi za lastnika",
-			"confirm": "Naj bo {email} lastnik? Nato bo lahko račune ustvarjal in brisal samo ta račun. Nastaviti je mogoče samo enkrat."
 		}
 	},
 	"compose": {

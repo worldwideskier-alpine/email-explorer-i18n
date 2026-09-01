@@ -324,10 +324,6 @@
 			"removed": "Entfernt.",
 			"failed": "Speichern nicht möglich.",
 			"storageNote": "Der Schlüssel wird in R2 abgelegt, wo ihn jeder mit dem Cloudflare-Konto lesen kann. An diesen Bildschirm wird er nie zurückgegeben."
-		},
-		"rootSetup": {
-			"submit": "Zum Eigentümer machen",
-			"confirm": "{email} zum Eigentümer machen? Danach kann nur noch dieses Konto Konten anlegen und löschen. Nur einmal einstellbar."
 		}
 	},
 	"compose": {

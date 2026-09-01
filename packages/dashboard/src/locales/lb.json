@@ -324,10 +324,6 @@
 			"removed": "Ewechgeholl.",
 			"failed": "Konnt net gespäichert ginn.",
 			"storageNote": "De Schlëssel gëtt an R2 gespäichert, wou en all Persoun mam Cloudflare-Kont liese kann. Op dësen Écran gëtt en ni zréckginn."
-		},
-		"rootSetup": {
-			"submit": "Zum Besëtzer maachen",
-			"confirm": "{email} zum Besëtzer maachen? Duerno kann nëmmen dee Kont Konten uleeën a läschen. Nëmmen eng Kéier astellbar."
 		}
 	},
 	"compose": {

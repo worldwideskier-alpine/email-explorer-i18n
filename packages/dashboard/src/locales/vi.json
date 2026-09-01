@@ -324,10 +324,6 @@
 			"removed": "Đã xóa.",
 			"failed": "Không lưu được.",
 			"storageNote": "Khóa được lưu trong R2, nơi bất kỳ ai có tài khoản Cloudflare đều đọc được. Khóa không bao giờ được trả về màn hình này."
-		},
-		"rootSetup": {
-			"submit": "Đặt làm chủ sở hữu",
-			"confirm": "Đặt {email} làm chủ sở hữu? Từ đó chỉ tài khoản đó mới có thể tạo và xoá tài khoản. Chỉ đặt được một lần."
 		}
 	},
 	"compose": {
