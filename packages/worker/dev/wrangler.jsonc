@@ -29,7 +29,13 @@
 		// Whatever is set here wins over that, which is what lets a fork
 		// configure the sender without touching source. See
 		// src/deployment-config.ts.
-		"ACCOUNT_RECOVERY_FROM": ""
+		"ACCOUNT_RECOVERY_FROM": "",
+		// Blank on purpose, and blank in the repository for good: naming the
+		// one account that can create and delete every other, in a public
+		// file, would be handing over half the credential. Set it as the
+		// ROOT_ADMIN_EMAIL repository variable. Blank means no account is
+		// root and every root-only route refuses everyone.
+		"ROOT_ADMIN_EMAIL": ""
 	},
 	"assets": {
 		"directory": "node_modules/email-explorer/dashboard",

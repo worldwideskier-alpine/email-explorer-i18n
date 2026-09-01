@@ -236,6 +236,25 @@ export default {
 	adminGetResendSettings: () => apiClient.get("/api/v1/admin/settings/resend"),
 	adminSetResendApiKey: (apiKey: string) =>
 		apiClient.put("/api/v1/admin/settings/resend", { apiKey }),
+	// Root: the account list. Nothing here returns mail; see routes/root.ts
+	// in the Worker for why that is deliberate.
+	listAccounts: () => apiClient.get("/api/v1/root/accounts"),
+	createAccount: (email: string, password: string) =>
+		apiClient.post("/api/v1/root/accounts", { email, password }),
+	setAccountPassword: (userId: string, password: string) =>
+		apiClient.post(`/api/v1/root/accounts/${userId}/password`, { password }),
+	deleteAccount: (userId: string) =>
+		apiClient.delete(`/api/v1/root/accounts/${userId}`),
+	assignMailbox: (userId: string, mailboxId: string, role = "owner") =>
+		apiClient.post(`/api/v1/root/accounts/${userId}/mailboxes`, {
+			mailboxId,
+			role,
+		}),
+	unassignMailbox: (userId: string, mailboxId: string) =>
+		apiClient.delete(
+			`/api/v1/root/accounts/${userId}/mailboxes/${encodeURIComponent(mailboxId)}`,
+		),
+
 	adminRegisterUser: (email: string, password: string) =>
 		apiClient.post("/api/v1/auth/admin/register", { email, password }),
 	adminListUsers: () => apiClient.get("/api/v1/auth/admin/users"),

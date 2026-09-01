@@ -429,5 +429,14 @@
 		"toLogin": "Fara í innskráningu",
 		"missingToken": "Þessi tengill er ekki gildur.",
 		"failed": "Ekki tókst að ljúka breytingunni."
+	},
+	"root": {
+		"title": "Reikningar",
+		"subtitle": "Sér um innskráningarreikninga og hvaða pósthólf tilheyra þeim. Enginn póstur birtist hér.",
+		"roleRoot": "Eigandi",
+		"resetPassword": "Endurstilla lykilorð",
+		"deleteAccount": "Eyða reikningi",
+		"confirmDelete": "Eyða {email}? Pósthólfin og pósturinn haldast.",
+		"deleteFailed": "Ekki tókst að eyða."
 	}
 }

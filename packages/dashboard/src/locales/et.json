@@ -429,5 +429,14 @@
 		"toLogin": "Mine sisselogimisse",
 		"missingToken": "See link ei ole kehtiv.",
 		"failed": "Muudatust ei õnnestunud lõpetada."
+	},
+	"root": {
+		"title": "Kontod",
+		"subtitle": "Haldab sisselogimiskontosid ja neile kuuluvaid postkaste. Kirju siin ei kuvata.",
+		"roleRoot": "Omanik",
+		"resetPassword": "Lähtesta parool",
+		"deleteAccount": "Kustuta konto",
+		"confirmDelete": "Kas kustutada {email}? Postkastid ja nende kirjad jäävad alles.",
+		"deleteFailed": "Kustutamine ebaõnnestus."
 	}
 }

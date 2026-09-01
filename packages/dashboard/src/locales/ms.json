@@ -429,5 +429,14 @@
 		"toLogin": "Pergi ke log masuk",
 		"missingToken": "Pautan itu tidak sah.",
 		"failed": "Pertukaran tidak dapat diselesaikan."
+	},
+	"root": {
+		"title": "Akaun",
+		"subtitle": "Mengurus akaun log masuk dan peti mel yang menjadi miliknya. E-mel tidak dipaparkan di sini.",
+		"roleRoot": "Pemilik",
+		"resetPassword": "Tetapkan semula kata laluan",
+		"deleteAccount": "Padam akaun",
+		"confirmDelete": "Padam {email}? Peti mel dan e-mel dikekalkan.",
+		"deleteFailed": "Tidak dapat memadam."
 	}
 }

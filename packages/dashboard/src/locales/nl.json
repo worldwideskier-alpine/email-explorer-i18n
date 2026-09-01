@@ -429,5 +429,14 @@
 		"toLogin": "Naar aanmelden",
 		"missingToken": "Die link is niet geldig.",
 		"failed": "De wijziging kon niet worden afgerond."
+	},
+	"root": {
+		"title": "Accounts",
+		"subtitle": "Beheert inlogaccounts en welke postvakken bij elk horen. Hier worden geen berichten getoond.",
+		"roleRoot": "Eigenaar",
+		"resetPassword": "Wachtwoord opnieuw instellen",
+		"deleteAccount": "Account verwijderen",
+		"confirmDelete": "{email} verwijderen? De postvakken en hun berichten blijven bestaan.",
+		"deleteFailed": "Verwijderen mislukt."
 	}
 }

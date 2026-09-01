@@ -429,5 +429,14 @@
 		"toLogin": "로그인으로 이동",
 		"missingToken": "이 링크는 올바르지 않습니다.",
 		"failed": "변경을 마치지 못했습니다."
+	},
+	"root": {
+		"title": "계정 관리",
+		"subtitle": "로그인 계정과 각 계정에 속한 메일함을 관리합니다. 메일 내용은 여기에 표시되지 않습니다.",
+		"roleRoot": "특권 관리자",
+		"resetPassword": "비밀번호 재설정",
+		"deleteAccount": "계정 삭제",
+		"confirmDelete": "{email} 계정을 삭제할까요? 메일함과 메일은 그대로 남습니다.",
+		"deleteFailed": "삭제하지 못했습니다."
 	}
 }

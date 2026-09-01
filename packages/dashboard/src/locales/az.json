@@ -429,5 +429,14 @@
 		"toLogin": "Girişə keç",
 		"missingToken": "Bu keçid etibarlı deyil.",
 		"failed": "Dəyişiklik tamamlana bilmədi."
+	},
+	"root": {
+		"title": "Hesablar",
+		"subtitle": "Giriş hesablarını və onlara aid poçt qutularını idarə edir. Məktublar burada göstərilmir.",
+		"roleRoot": "Sahib",
+		"resetPassword": "Parolu sıfırla",
+		"deleteAccount": "Hesabı sil",
+		"confirmDelete": "{email} silinsin? Poçt qutuları və məktublar qalır.",
+		"deleteFailed": "Silmək mümkün olmadı."
 	}
 }

@@ -429,5 +429,14 @@
 		"toLogin": "Doties uz pieteikšanos",
 		"missingToken": "Šī saite nav derīga.",
 		"failed": "Maiņu neizdevās pabeigt."
+	},
+	"root": {
+		"title": "Konti",
+		"subtitle": "Pārvalda pieteikšanās kontus un tiem piešķirtās pastkastes. Vēstules šeit netiek rādītas.",
+		"roleRoot": "Īpašnieks",
+		"resetPassword": "Atiestatīt paroli",
+		"deleteAccount": "Dzēst kontu",
+		"confirmDelete": "Dzēst {email}? Pastkastes un to vēstules tiek saglabātas.",
+		"deleteFailed": "Neizdevās izdzēst."
 	}
 }

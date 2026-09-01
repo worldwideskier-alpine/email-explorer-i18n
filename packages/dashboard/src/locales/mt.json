@@ -429,5 +429,14 @@
 		"toLogin": "Mur għad-dħul",
 		"missingToken": "Dak il-link mhuwiex validu.",
 		"failed": "Il-bidla ma setgħetx titlesta."
+	},
+	"root": {
+		"title": "Kontijiet",
+		"subtitle": "Jimmaniġġja l-kontijiet tad-dħul u l-kaxxi li jappartjenu lilhom. Hawn ma jintwera l-ebda messaġġ.",
+		"roleRoot": "Sid",
+		"resetPassword": "Erġa' issettja l-password",
+		"deleteAccount": "Ħassar il-kont",
+		"confirmDelete": "Tħassar {email}? Il-kaxxi u l-messaġġi jinżammu.",
+		"deleteFailed": "Ma setax jitħassar."
 	}
 }

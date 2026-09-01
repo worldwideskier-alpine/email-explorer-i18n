@@ -429,5 +429,14 @@
 		"toLogin": "Vai all'accesso",
 		"missingToken": "Questo link non è valido.",
 		"failed": "Non è stato possibile completare il cambio."
+	},
+	"root": {
+		"title": "Account",
+		"subtitle": "Gestisce gli account di accesso e le caselle assegnate. Qui non viene mostrato alcun messaggio.",
+		"roleRoot": "Proprietario",
+		"resetPassword": "Reimposta la password",
+		"deleteAccount": "Elimina l'account",
+		"confirmDelete": "Eliminare {email}? Le caselle e i messaggi restano.",
+		"deleteFailed": "Impossibile eliminare."
 	}
 }

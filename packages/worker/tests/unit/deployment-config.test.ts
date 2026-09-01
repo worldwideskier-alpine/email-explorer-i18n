@@ -26,7 +26,8 @@ const CONFIG = `{
 	// A comment that has to survive.
 	"vars": {
 		"VAPID_PUBLIC_KEY": "BGU5original",
-		"ACCOUNT_RECOVERY_FROM": ""
+		"ACCOUNT_RECOVERY_FROM": "",
+		"ROOT_ADMIN_EMAIL": ""
 	},
 	"r2_buckets": [
 		{
@@ -50,6 +51,7 @@ const FORK = {
 	R2_BUCKET_NAME: "fork-mail",
 	VAPID_PUBLIC_KEY: "BGforkkey",
 	ACCOUNT_RECOVERY_FROM: "noreply@fork.example",
+	ROOT_ADMIN_EMAIL: "operator+root@fork.example",
 };
 
 describe("applying a fork's own values", () => {
@@ -60,6 +62,9 @@ describe("applying a fork's own values", () => {
 		expect(source).toContain('"preview_bucket_name": "fork-mail"');
 		expect(source).toContain('"VAPID_PUBLIC_KEY": "BGforkkey"');
 		expect(source).toContain('"ACCOUNT_RECOVERY_FROM": "noreply@fork.example"');
+		expect(source).toContain(
+			'"ROOT_ADMIN_EMAIL": "operator+root@fork.example"',
+		);
 	});
 
 	it("keeps the comments", () => {

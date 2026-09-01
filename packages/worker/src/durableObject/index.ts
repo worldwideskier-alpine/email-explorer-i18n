@@ -563,7 +563,15 @@ export class MailboxDO extends DurableObject<Env> {
 		return "ok";
 	}
 
-	// Auth operation: grant mailbox access
+	/**
+	 * Grants access, or changes the role if there already is some.
+	 *
+	 * A plain insert used to throw on the primary key, which made "assign this
+	 * mailbox" a request that succeeded the first time and returned a 500 the
+	 * second -- and there is no way for a caller to know which it is without
+	 * reading the grants first. Assigning a mailbox to somebody who already
+	 * has it is not an error; it is the same sentence said twice.
+	 */
 	async grantMailboxAccess(
 		userId: string,
 		mailboxId: string,
@@ -571,16 +579,113 @@ export class MailboxDO extends DurableObject<Env> {
 	): Promise<void> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
-		this.#qb
-			.insert({
-				tableName: "user_mailboxes",
-				data: {
-					user_id: userId,
-					mailbox_id: mailboxId,
-					role,
-				},
-			})
-			.execute();
+		this.ctx.storage.sql.exec(
+			"INSERT OR REPLACE INTO user_mailboxes (user_id, mailbox_id, role) VALUES (?, ?, ?)",
+			userId,
+			mailboxId,
+			role,
+		);
+	}
+
+	/**
+	 * Grants access only if the user does not already have some on that
+	 * mailbox, leaving any existing role alone.
+	 *
+	 * The backfill that gives every already-existing mailbox an explicit owner
+	 * has to be safe to run twice -- it runs from whichever request happens to
+	 * arrive first after a deploy, and two of those can be in flight at once.
+	 * A plain insert would fail on the primary key the second time, and
+	 * INSERT OR REPLACE would quietly demote an owner to whatever the backfill
+	 * happens to pass.
+	 */
+	async grantMailboxAccessIfAbsent(
+		userId: string,
+		mailboxId: string,
+		role: string,
+	): Promise<void> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		this.ctx.storage.sql.exec(
+			"INSERT OR IGNORE INTO user_mailboxes (user_id, mailbox_id, role) VALUES (?, ?, ?)",
+			userId,
+			mailboxId,
+			role,
+		);
+	}
+
+	/**
+	 * Removes an account: its mailbox grants and its sessions go with it.
+	 *
+	 * The grants have to go or a later account reusing the same id would
+	 * inherit them, and the sessions have to go or a deleted account keeps
+	 * working until its token expires -- thirty days of an account somebody
+	 * deleted on purpose.
+	 *
+	 * The mailboxes themselves are untouched. Deleting a person must not
+	 * delete the mail: the addresses outlive whoever was looking after them,
+	 * and root reassigns them afterwards.
+	 */
+	async deleteUser(userId: string): Promise<"ok" | "not-found" | "last-admin"> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const user = this.#qb
+			.select<{ is_admin: number }>("users")
+			.fields(["is_admin"])
+			.where("id = ?", userId)
+			.one().results;
+		if (!user) return "not-found";
+
+		// The same guard as demotion, for the same reason: rights here can
+		// only be granted by an administrator, so removing the last one leaves
+		// nobody able to grant them back.
+		if (user.is_admin === 1) {
+			const admins = this.ctx.storage.sql
+				.exec("SELECT COUNT(*) AS count FROM users WHERE is_admin = 1")
+				.toArray();
+			if (Number(admins[0]?.count ?? 0) <= 1) return "last-admin";
+		}
+
+		this.ctx.storage.sql.exec(
+			"DELETE FROM user_mailboxes WHERE user_id = ?",
+			userId,
+		);
+		this.ctx.storage.sql.exec("DELETE FROM sessions WHERE user_id = ?", userId);
+		this.ctx.storage.sql.exec("DELETE FROM users WHERE id = ?", userId);
+		return "ok";
+	}
+
+	/**
+	 * Sets an account's password without asking for the old one.
+	 *
+	 * Only root reaches this. It is what makes an in-system address usable as
+	 * a login: a person whose recovery mail arrives in a mailbox they cannot
+	 * open until they log in is otherwise locked out for good.
+	 *
+	 * Every session of that account is dropped. A password reset that leaves
+	 * the old sessions alive resets nothing -- whoever prompted the reset
+	 * keeps the access they already had.
+	 */
+	async setUserPassword(
+		userId: string,
+		password: string,
+	): Promise<"ok" | "not-found"> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const user = this.#qb
+			.select<{ id: string }>("users")
+			.fields(["id"])
+			.where("id = ?", userId)
+			.one().results;
+		if (!user) return "not-found";
+
+		this.ctx.storage.sql.exec(
+			"UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
+			await hashPassword(password),
+			Date.now(),
+			userId,
+		);
+		this.ctx.storage.sql.exec("DELETE FROM sessions WHERE user_id = ?", userId);
+		return "ok";
 	}
 
 	// Auth operation: revoke mailbox access

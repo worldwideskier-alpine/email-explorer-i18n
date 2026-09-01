@@ -429,5 +429,14 @@
 		"toLogin": "Gå til innlogging",
 		"missingToken": "Lenken er ikke gyldig.",
 		"failed": "Endringen kunne ikke fullføres."
+	},
+	"root": {
+		"title": "Kontoer",
+		"subtitle": "Administrerer innloggingskontoer og hvilke postkasser som hører til dem. Ingen e-post vises her.",
+		"roleRoot": "Eier",
+		"resetPassword": "Tilbakestill passordet",
+		"deleteAccount": "Slett kontoen",
+		"confirmDelete": "Slette {email}? Postkassene og e-posten beholdes.",
+		"deleteFailed": "Kunne ikke slette."
 	}
 }

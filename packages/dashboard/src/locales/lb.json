@@ -429,5 +429,14 @@
 		"toLogin": "Op d'Umeldung",
 		"missingToken": "Dëse Link ass net gëlteg.",
 		"failed": "D'Ännerung konnt net ofgeschloss ginn."
+	},
+	"root": {
+		"title": "Konten",
+		"subtitle": "Verwalt d'Umeldungskonten an d'Postkëschten, déi hinne gehéieren. Hei ginn keng Mailen ugewisen.",
+		"roleRoot": "Besëtzer",
+		"resetPassword": "Passwuert zrécksetzen",
+		"deleteAccount": "Kont läschen",
+		"confirmDelete": "{email} läschen? D'Postkëschten an d'Mailen bleiwen erhalen.",
+		"deleteFailed": "Konnt net geläscht ginn."
 	}
 }

@@ -429,5 +429,14 @@
 		"toLogin": "Go to sign in",
 		"missingToken": "That link is not valid.",
 		"failed": "Could not complete the change."
+	},
+	"root": {
+		"title": "Accounts",
+		"subtitle": "Manages sign-in accounts and which mailboxes belong to them. No mail is shown here.",
+		"roleRoot": "Owner",
+		"resetPassword": "Reset password",
+		"deleteAccount": "Delete account",
+		"confirmDelete": "Delete {email}? The mailboxes and their mail are kept.",
+		"deleteFailed": "Could not delete."
 	}
 }

@@ -429,5 +429,14 @@
 		"toLogin": "Przejdź do logowania",
 		"missingToken": "Ten link jest nieprawidłowy.",
 		"failed": "Nie udało się dokończyć zmiany."
+	},
+	"root": {
+		"title": "Konta",
+		"subtitle": "Zarządza kontami logowania i przypisanymi do nich skrzynkami. Wiadomości nie są tu pokazywane.",
+		"roleRoot": "Właściciel",
+		"resetPassword": "Ustaw nowe hasło",
+		"deleteAccount": "Usuń konto",
+		"confirmDelete": "Usunąć {email}? Skrzynki i wiadomości pozostaną.",
+		"deleteFailed": "Nie udało się usunąć."
 	}
 }

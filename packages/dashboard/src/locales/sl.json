@@ -429,5 +429,14 @@
 		"toLogin": "Pojdi na prijavo",
 		"missingToken": "Ta povezava ni veljavna.",
 		"failed": "Spremembe ni bilo mogoče dokončati."
+	},
+	"root": {
+		"title": "Računi",
+		"subtitle": "Upravlja prijavne račune in nabiralnike, ki jim pripadajo. Sporočila tukaj niso prikazana.",
+		"roleRoot": "Lastnik",
+		"resetPassword": "Nastavi novo geslo",
+		"deleteAccount": "Izbriši račun",
+		"confirmDelete": "Izbrišem {email}? Nabiralniki in sporočila ostanejo.",
+		"deleteFailed": "Brisanje ni uspelo."
 	}
 }

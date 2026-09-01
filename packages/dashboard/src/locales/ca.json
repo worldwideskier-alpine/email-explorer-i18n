@@ -429,5 +429,14 @@
 		"toLogin": "Vés a l'inici de sessió",
 		"missingToken": "Aquest enllaç no és vàlid.",
 		"failed": "No s'ha pogut completar el canvi."
+	},
+	"root": {
+		"title": "Comptes",
+		"subtitle": "Gestiona els comptes d'inici de sessió i les bústies que hi pertanyen. Aquí no es mostra cap missatge.",
+		"roleRoot": "Propietari",
+		"resetPassword": "Restableix la contrasenya",
+		"deleteAccount": "Suprimeix el compte",
+		"confirmDelete": "Voleu suprimir {email}? Les bústies i els missatges es conserven.",
+		"deleteFailed": "No s'ha pogut suprimir."
 	}
 }

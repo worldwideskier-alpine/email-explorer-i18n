@@ -429,5 +429,14 @@
 		"toLogin": "Idi na prijavu",
 		"missingToken": "Ta veza nije ispravna.",
 		"failed": "Promjenu nije bilo moguće dovršiti."
+	},
+	"root": {
+		"title": "Nalozi",
+		"subtitle": "Upravlja nalozima za prijavu i sandučićima koji im pripadaju. Poruke se ovdje ne prikazuju.",
+		"roleRoot": "Vlasnik",
+		"resetPassword": "Postavi novu lozinku",
+		"deleteAccount": "Obriši nalog",
+		"confirmDelete": "Obrisati {email}? Sandučići i poruke ostaju.",
+		"deleteFailed": "Brisanje nije uspjelo."
 	}
 }

@@ -429,5 +429,14 @@
 		"toLogin": "Zur Anmeldung",
 		"missingToken": "Dieser Link ist ungültig.",
 		"failed": "Die Änderung konnte nicht abgeschlossen werden."
+	},
+	"root": {
+		"title": "Konten",
+		"subtitle": "Verwaltet Anmeldekonten und die Zuordnung der Postfächer. Nachrichten werden hier nicht angezeigt.",
+		"roleRoot": "Eigentümer",
+		"resetPassword": "Passwort zurücksetzen",
+		"deleteAccount": "Konto löschen",
+		"confirmDelete": "{email} löschen? Die Postfächer und ihre Nachrichten bleiben erhalten.",
+		"deleteFailed": "Löschen nicht möglich."
 	}
 }

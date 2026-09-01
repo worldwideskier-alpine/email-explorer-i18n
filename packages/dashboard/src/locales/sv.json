@@ -429,5 +429,14 @@
 		"toLogin": "Gå till inloggningen",
 		"missingToken": "Den länken är inte giltig.",
 		"failed": "Bytet kunde inte slutföras."
+	},
+	"root": {
+		"title": "Konton",
+		"subtitle": "Hanterar inloggningskonton och vilka brevlådor som hör till dem. Inga meddelanden visas här.",
+		"roleRoot": "Ägare",
+		"resetPassword": "Återställ lösenordet",
+		"deleteAccount": "Ta bort kontot",
+		"confirmDelete": "Ta bort {email}? Brevlådorna och deras meddelanden behålls.",
+		"deleteFailed": "Kunde inte ta bort."
 	}
 }

@@ -56,6 +56,12 @@ export const SETTINGS = [
 		validate: validateEmail,
 		describe: "the address password-reset mail is sent from",
 	},
+	{
+		env: "ROOT_ADMIN_EMAIL",
+		keys: ["ROOT_ADMIN_EMAIL"],
+		validate: validateEmail,
+		describe: "the login address that may create and delete accounts",
+	},
 ];
 
 /**

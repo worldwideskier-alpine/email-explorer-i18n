@@ -429,5 +429,14 @@
 		"toLogin": "Siirry kirjautumiseen",
 		"missingToken": "Tämä linkki ei ole kelvollinen.",
 		"failed": "Vaihtoa ei voitu viimeistellä."
+	},
+	"root": {
+		"title": "Tilit",
+		"subtitle": "Hallitsee kirjautumistilejä ja niille kuuluvia postilaatikoita. Viestejä ei näytetä tässä.",
+		"roleRoot": "Omistaja",
+		"resetPassword": "Nollaa salasana",
+		"deleteAccount": "Poista tili",
+		"confirmDelete": "Poistetaanko {email}? Postilaatikot ja niiden viestit säilyvät.",
+		"deleteFailed": "Poisto ei onnistunut."
 	}
 }

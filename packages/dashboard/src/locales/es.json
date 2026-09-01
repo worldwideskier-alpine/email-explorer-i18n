@@ -429,5 +429,14 @@
 		"toLogin": "Ir al inicio de sesión",
 		"missingToken": "Ese enlace no es válido.",
 		"failed": "No se pudo completar el cambio."
+	},
+	"root": {
+		"title": "Cuentas",
+		"subtitle": "Gestiona las cuentas de acceso y los buzones asignados a cada una. Aquí no se muestra ningún mensaje.",
+		"roleRoot": "Propietario",
+		"resetPassword": "Restablecer la contraseña",
+		"deleteAccount": "Eliminar la cuenta",
+		"confirmDelete": "¿Eliminar {email}? Los buzones y sus mensajes se conservan.",
+		"deleteFailed": "No se pudo eliminar."
 	}
 }

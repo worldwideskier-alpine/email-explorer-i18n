@@ -429,5 +429,14 @@
 		"toLogin": "Aller à la connexion",
 		"missingToken": "Ce lien n'est pas valide.",
 		"failed": "Impossible de terminer le changement."
+	},
+	"root": {
+		"title": "Comptes",
+		"subtitle": "Gère les comptes de connexion et les boîtes qui leur sont attribuées. Aucun message n'est affiché ici.",
+		"roleRoot": "Propriétaire",
+		"resetPassword": "Réinitialiser le mot de passe",
+		"deleteAccount": "Supprimer le compte",
+		"confirmDelete": "Supprimer {email} ? Les boîtes et leurs messages sont conservés.",
+		"deleteFailed": "Suppression impossible."
 	}
 }
