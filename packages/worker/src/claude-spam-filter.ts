@@ -151,6 +151,7 @@ export function buildClassificationContent(
  */
 export type SpamCheckFailure =
 	| "unauthorized"
+	| "forbidden"
 	| "rateLimited"
 	| "serverError"
 	| "timeout"
@@ -162,23 +163,62 @@ export interface ClassifyResult {
 	/** Absent when the check ran and answered. */
 	failure?: SpamCheckFailure;
 	/**
-	 * What came back instead of a verdict, for `malformed` and nothing else.
+	 * The one line that says more than the code does.
 	 *
-	 * The reason codes above are a closed set precisely so nothing upstream
-	 * lands on a screen, and an HTTP error body still does not: this is the
-	 * model's own answer to our own prompt, which is the one case where the
-	 * code is not enough. "The response could not be read" tells the mailbox
-	 * owner nothing they can act on, and tells whoever has to fix it nothing
-	 * at all -- the reply is gone by the time anyone looks, and a Worker's
-	 * logs are not kept.
+	 * For `malformed` it is the model's own answer to our own prompt. For a
+	 * refusal it is the status and the API's own name for what went wrong
+	 * (`403 permission_error`), or the fact that no API error body came back at
+	 * all -- which is how a refusal by something in front of the API shows
+	 * itself. Never an upstream error body verbatim; see upstreamFailureDetail.
+	 *
+	 * All of it exists because a Worker's logs are not kept: whatever is not
+	 * recorded here is gone by the time anyone reads the screen.
 	 */
 	detail?: string;
 }
 
+/**
+ * 401 and 403 used to be one reason, and they are not one problem.
+ *
+ * 401 is the key: it is wrong, or it was deleted upstream, and re-entering it
+ * is the fix. 403 is not the key -- either it is refused permission for this
+ * model, or something in front of the API refused the request before the API
+ * saw it -- and re-entering a correct key over and over fixes neither. The
+ * advice for the two is opposite, so a screen that cannot tell them apart
+ * sends the reader the wrong way half the time.
+ */
 function failureFromStatus(status: number): SpamCheckFailure {
-	if (status === 401 || status === 403) return "unauthorized";
+	if (status === 401) return "unauthorized";
+	if (status === 403) return "forbidden";
 	if (status === 429) return "rateLimited";
 	return "serverError";
+}
+
+/** Enough of an error body to name what refused the request, and no more. */
+const MAX_UPSTREAM_TYPE_CHARS = 40;
+
+/**
+ * What the far end said, as something short enough to put on a screen.
+ *
+ * The status alone does not separate the two kinds of 403. The API answers in
+ * JSON and names its own reason in a closed vocabulary (`permission_error`,
+ * `authentication_error`), which is safe to show as it stands. Anything in
+ * front of it answers with a page, and the absence of that JSON is itself the
+ * finding: the request never reached the API. So a body that will not parse
+ * is reported as exactly that, and never quoted -- an error page is somebody
+ * else's HTML and has no business on this screen.
+ */
+export function upstreamFailureDetail(status: number, body: string): string {
+	try {
+		const parsed = JSON.parse(body) as { error?: { type?: unknown } };
+		const type = parsed?.error?.type;
+		if (typeof type === "string" && type) {
+			return `${status} ${type.slice(0, MAX_UPSTREAM_TYPE_CHARS)}`;
+		}
+	} catch {
+		// Not JSON at all -- see above.
+	}
+	return `${status} (no API error body)`;
 }
 
 /**
@@ -266,10 +306,18 @@ export async function classifyWithClaude(
 		});
 
 		if (!response.ok) {
+			const body = await response.text();
 			console.error(
-				`Claude spam classification failed: ${response.status} ${await response.text()}`,
+				`Claude spam classification failed: ${response.status} ${body}`,
 			);
-			return { folder: "inbox", failure: failureFromStatus(response.status) };
+			// Recorded rather than only logged. A Worker's logs are not kept, so
+			// by the time anyone reads the screen the one thing that says which
+			// of the two 403s this was is already gone.
+			return {
+				folder: "inbox",
+				failure: failureFromStatus(response.status),
+				detail: upstreamFailureDetail(response.status, body),
+			};
 		}
 
 		const data = await response.json<{

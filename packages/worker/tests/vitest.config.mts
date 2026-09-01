@@ -71,8 +71,38 @@ export default defineConfig({
 					// request's message content.
 					if (url.hostname === "api.anthropic.com") {
 						const body = await request.clone().text();
+						// The key-check endpoint sends a fixed message of its own, so
+						// a marker cannot be planted in it. The key can be: it is
+						// what that endpoint is testing, and it reaches here in the
+						// header.
+						const steer = `${body} ${request.headers.get("x-api-key") ?? ""}`;
 						if (body.includes("TRIGGER_CLAUDE_ERROR")) {
 							return new Response("mock error", { status: 500 });
+						}
+						// The two refusals that used to be recorded as one reason,
+						// and the shape that separates them: the API answers in JSON
+						// and names its own error type, while anything standing in
+						// front of it answers with a page and never reaches the API
+						// at all.
+						const refusal = (status: number, type: string) =>
+							new Response(
+								JSON.stringify({
+									type: "error",
+									error: { type, message: "refused" },
+								}),
+								{ status, headers: { "content-type": "application/json" } },
+							);
+						if (steer.includes("TRIGGER_CLAUDE_401")) {
+							return refusal(401, "authentication_error");
+						}
+						if (steer.includes("TRIGGER_CLAUDE_403")) {
+							return refusal(403, "permission_error");
+						}
+						if (steer.includes("TRIGGER_CLAUDE_EDGE_403")) {
+							return new Response(
+								"<html><title>Sorry, you have been blocked</title></html>",
+								{ status: 403, headers: { "content-type": "text/html" } },
+							);
 						}
 						// Replies that are not a bare verdict. Real ones look like
 						// these: a word of preamble, decoration around the word, or
