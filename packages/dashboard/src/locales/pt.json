@@ -429,5 +429,14 @@
 		"toLogin": "Ir para o início de sessão",
 		"missingToken": "Essa ligação não é válida.",
 		"failed": "Não foi possível concluir a alteração."
+	},
+	"root": {
+		"title": "Contas",
+		"subtitle": "Gere as contas de acesso e as caixas atribuídas a cada uma. Aqui não é mostrada nenhuma mensagem.",
+		"roleRoot": "Proprietário",
+		"resetPassword": "Repor a palavra-passe",
+		"deleteAccount": "Eliminar a conta",
+		"confirmDelete": "Eliminar {email}? As caixas e as mensagens são mantidas.",
+		"deleteFailed": "Não foi possível eliminar."
 	}
 }

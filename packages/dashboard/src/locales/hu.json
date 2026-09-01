@@ -429,5 +429,14 @@
 		"toLogin": "Tovább a bejelentkezéshez",
 		"missingToken": "Ez a hivatkozás nem érvényes.",
 		"failed": "A módosítást nem sikerült befejezni."
+	},
+	"root": {
+		"title": "Fiókok",
+		"subtitle": "A bejelentkezési fiókokat és a hozzájuk tartozó postafiókokat kezeli. Levelek itt nem jelennek meg.",
+		"roleRoot": "Tulajdonos",
+		"resetPassword": "Jelszó visszaállítása",
+		"deleteAccount": "Fiók törlése",
+		"confirmDelete": "Törli a következőt: {email}? A postafiókok és a levelek megmaradnak.",
+		"deleteFailed": "Nem sikerült törölni."
 	}
 }

@@ -10,11 +10,18 @@ export interface User {
 	isAdmin: boolean;
 }
 
+export type AccountRole = "root" | "admin" | "member";
+
 export interface Session {
 	id: string;
 	userId: string;
 	email: string;
 	isAdmin: boolean;
+	/**
+	 * Absent on a session stored by an older build of this dashboard, so it
+	 * falls back to the least privileged role rather than to the most.
+	 */
+	role?: AccountRole;
 	expiresAt: number;
 }
 
@@ -25,6 +32,14 @@ export const useAuthStore = defineStore("auth", () => {
 
 	const isAuthenticated = computed(() => session.value !== null);
 	const isAdmin = computed(() => session.value?.isAdmin ?? false);
+	/**
+	 * Which screen this account belongs on. Decided by the Worker from the
+	 * deployment's configuration -- see roles.ts there -- and only ever used
+	 * here to pick a view. The server checks it again on every root-only
+	 * request, because a typed URL skips this entirely.
+	 */
+	const role = computed(() => session.value?.role ?? "member");
+	const isRoot = computed(() => role.value === "root");
 	const currentUser = computed(() =>
 		session.value
 			? {
@@ -127,6 +142,8 @@ export const useAuthStore = defineStore("auth", () => {
 	}
 
 	return {
+		role,
+		isRoot,
 		session,
 		loading,
 		error,

@@ -429,5 +429,14 @@
 		"toLogin": "Téigh chuig an síniú isteach",
 		"missingToken": "Níl an nasc sin bailí.",
 		"failed": "Níorbh fhéidir an t-athrú a chur i gcrích."
+	},
+	"root": {
+		"title": "Cuntais",
+		"subtitle": "Bainistíonn sé cuntais logála isteach agus na boscaí a bhaineann leo. Ní thaispeántar aon phost anseo.",
+		"roleRoot": "Úinéir",
+		"resetPassword": "Athshocraigh an pasfhocal",
+		"deleteAccount": "Scrios an cuntas",
+		"confirmDelete": "An scriosfar {email}? Coinnítear na boscaí agus an post.",
+		"deleteFailed": "Níorbh fhéidir é a scriosadh."
 	}
 }

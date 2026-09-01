@@ -59,6 +59,7 @@ jobs:
       R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME }}
       VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
       ACCOUNT_RECOVERY_FROM: ${{ vars.ACCOUNT_RECOVERY_FROM }}
+      ROOT_ADMIN_EMAIL: ${{ vars.ROOT_ADMIN_EMAIL }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v6

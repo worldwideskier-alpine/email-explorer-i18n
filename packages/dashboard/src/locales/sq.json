@@ -429,5 +429,14 @@
 		"toLogin": "Shko te hyrja",
 		"missingToken": "Kjo lidhje nuk është e vlefshme.",
 		"failed": "Ndryshimi nuk mundi të përfundohej."
+	},
+	"root": {
+		"title": "Llogaritë",
+		"subtitle": "Menaxhon llogaritë e hyrjes dhe kutitë që u përkasin. Këtu nuk shfaqet asnjë mesazh.",
+		"roleRoot": "Pronar",
+		"resetPassword": "Rivendos fjalëkalimin",
+		"deleteAccount": "Fshi llogarinë",
+		"confirmDelete": "Të fshihet {email}? Kutitë dhe mesazhet ruhen.",
+		"deleteFailed": "Nuk u fshi dot."
 	}
 }

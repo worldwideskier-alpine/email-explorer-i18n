@@ -429,5 +429,14 @@
 		"toLogin": "Idi na prijavu",
 		"missingToken": "Ta poveznica nije valjana.",
 		"failed": "Promjenu nije bilo moguće dovršiti."
+	},
+	"root": {
+		"title": "Računi",
+		"subtitle": "Upravlja računima za prijavu i sandučićima koji im pripadaju. Poruke se ovdje ne prikazuju.",
+		"roleRoot": "Vlasnik",
+		"resetPassword": "Postavi novu lozinku",
+		"deleteAccount": "Obriši račun",
+		"confirmDelete": "Obrisati {email}? Sandučići i poruke ostaju.",
+		"deleteFailed": "Brisanje nije uspjelo."
 	}
 }

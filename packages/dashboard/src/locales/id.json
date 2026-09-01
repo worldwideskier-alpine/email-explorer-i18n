@@ -429,5 +429,14 @@
 		"toLogin": "Ke halaman masuk",
 		"missingToken": "Tautan itu tidak sah.",
 		"failed": "Perubahan tidak dapat diselesaikan."
+	},
+	"root": {
+		"title": "Akun",
+		"subtitle": "Mengelola akun masuk dan kotak surat yang menjadi miliknya. Surel tidak ditampilkan di sini.",
+		"roleRoot": "Pemilik",
+		"resetPassword": "Setel ulang kata sandi",
+		"deleteAccount": "Hapus akun",
+		"confirmDelete": "Hapus {email}? Kotak surat dan surel tetap tersimpan.",
+		"deleteFailed": "Tidak dapat menghapus."
 	}
 }

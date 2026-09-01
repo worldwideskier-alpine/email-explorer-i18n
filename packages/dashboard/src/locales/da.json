@@ -429,5 +429,14 @@
 		"toLogin": "Gå til login",
 		"missingToken": "Det link er ikke gyldigt.",
 		"failed": "Skiftet kunne ikke fuldføres."
+	},
+	"root": {
+		"title": "Konti",
+		"subtitle": "Administrerer login-konti og hvilke postkasser der hører til dem. Der vises ingen mails her.",
+		"roleRoot": "Ejer",
+		"resetPassword": "Nulstil adgangskoden",
+		"deleteAccount": "Slet kontoen",
+		"confirmDelete": "Slet {email}? Postkasserne og deres mails bevares.",
+		"deleteFailed": "Kunne ikke slette."
 	}
 }

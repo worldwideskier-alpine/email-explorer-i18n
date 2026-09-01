@@ -429,5 +429,14 @@
 		"toLogin": "前往登入頁",
 		"missingToken": "這個連結無效。",
 		"failed": "無法完成變更。"
+	},
+	"root": {
+		"title": "帳戶管理",
+		"subtitle": "管理登入帳戶以及歸屬於各帳戶的信箱。此處不顯示郵件內容。",
+		"roleRoot": "超級管理員",
+		"resetPassword": "重設密碼",
+		"deleteAccount": "刪除帳戶",
+		"confirmDelete": "要刪除 {email} 嗎？信箱和郵件將保留。",
+		"deleteFailed": "無法刪除。"
 	}
 }

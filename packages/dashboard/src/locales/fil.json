@@ -429,5 +429,14 @@
 		"toLogin": "Pumunta sa pag-sign in",
 		"missingToken": "Hindi wasto ang link na iyon.",
 		"failed": "Hindi natapos ang pagpapalit."
+	},
+	"root": {
+		"title": "Mga account",
+		"subtitle": "Namamahala ng mga account sa pag-sign in at ng mga mailbox na kanila. Walang ipinapakitang mensahe rito.",
+		"roleRoot": "May-ari",
+		"resetPassword": "I-reset ang password",
+		"deleteAccount": "Tanggalin ang account",
+		"confirmDelete": "Tanggalin ang {email}? Mananatili ang mga mailbox at mensahe.",
+		"deleteFailed": "Hindi natanggal."
 	}
 }

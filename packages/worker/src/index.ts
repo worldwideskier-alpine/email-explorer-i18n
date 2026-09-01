@@ -8,8 +8,9 @@ import { backupKeyPrefix } from "./auto-backup";
 import { listBackups } from "./backup-writer";
 import { base64ToBytes } from "./base64";
 import { classifyWithClaude } from "./claude-spam-filter";
-import { recoveryFromEmail } from "./deployment-config";
+import { recoveryFromEmail, rootAdminEmail } from "./deployment-config";
 import { ingestEmailIntoMailbox } from "./email-ingest";
+import { ensureLegacyMailboxGrants } from "./legacy-grants";
 import { buildPasswordResetEmail, MAIL_LOCALES } from "./mail-templates";
 import {
 	getClaudeApiKey,
@@ -24,6 +25,7 @@ import { plainTextToHtml } from "./plain-text-to-html";
 import { dismissEmailNotification } from "./push-notify";
 import { formatAddressList } from "./recipients";
 import { sendEmail } from "./resend";
+import { roleOf } from "./roles";
 import {
 	GetMe,
 	GetUsers,
@@ -46,6 +48,14 @@ import {
 	PostPushUnsubscribe,
 } from "./routes/push";
 import { PostForwardEmail, PostReplyEmail } from "./routes/reply-forward";
+import {
+	DeleteAccount,
+	DeleteAccountMailbox,
+	GetAccounts,
+	PostAccount,
+	PostAccountMailbox,
+	PostAccountPassword,
+} from "./routes/root";
 import { runScheduledMaintenance } from "./scheduled-run";
 import { slugify } from "./slugify";
 import {
@@ -277,6 +287,12 @@ class GetMailboxes extends OpenAPIRoute {
 				};
 			}),
 		);
+
+		// Before answering, make sure every mailbox that predates the grant
+		// model has an owner. This is the screen where a missing grant would
+		// first be visible, and the backfill has to be in place before the
+		// administrator bypass below is removed. Runs once; see legacy-grants.
+		await ensureLegacyMailboxGrants(c.env);
 
 		// If no session (auth disabled) or user is admin, return all mailboxes
 		if (!session || session.isAdmin) {
@@ -568,6 +584,16 @@ class PostMailbox extends OpenAPIRoute {
 
 		// Trigger first run of the durable object to initialize database
 		await stub.getFolders();
+
+		// Whoever made it owns it. Without this the mailbox belongs to nobody:
+		// an administrator sees it anyway today, and would stop seeing it the
+		// moment that bypass is removed -- a mailbox created and lost in the
+		// same click.
+		const session = c.get("session");
+		if (session) {
+			const authDO = c.env.MAILBOX.get(c.env.MAILBOX.idFromName("AUTH"));
+			await authDO.grantMailboxAccessIfAbsent(session.userId, email, "owner");
+		}
 
 		const response = {
 			id: email,
@@ -2111,7 +2137,12 @@ async function validateSession(
 
 	try {
 		const session = await authDO.validateSession(token);
-		return session;
+		if (!session) return null;
+		// The one place every authenticated request passes through, and the
+		// only place that has both the session and the deployment's
+		// configuration. Deciding the role anywhere else would mean a route
+		// that forgot to ask.
+		return { ...session, role: roleOf(session, rootAdminEmail(env)) };
 	} catch {
 		return null;
 	}
@@ -2172,6 +2203,17 @@ openapi.get("/api/v1/auth/admin/users", GetUsers);
 openapi.put("/api/v1/auth/admin/users/:userId", PutUser);
 openapi.post("/api/v1/auth/admin/grant-access", PostGrantAccess);
 openapi.post("/api/v1/auth/admin/revoke-access", PostRevokeAccess);
+
+// Root: the account list, and nothing that returns mail. See routes/root.ts.
+openapi.get("/api/v1/root/accounts", GetAccounts);
+openapi.post("/api/v1/root/accounts", PostAccount);
+openapi.post("/api/v1/root/accounts/:userId/password", PostAccountPassword);
+openapi.delete("/api/v1/root/accounts/:userId", DeleteAccount);
+openapi.post("/api/v1/root/accounts/:userId/mailboxes", PostAccountMailbox);
+openapi.delete(
+	"/api/v1/root/accounts/:userId/mailboxes/:mailboxId",
+	DeleteAccountMailbox,
+);
 openapi.post("/api/v1/admin/mailboxes/:mailboxId/import", PostImportEmail);
 
 // Push notification endpoints
@@ -2401,6 +2443,7 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 			_context: ExecutionContext,
 		) {
 			env.config = options;
+			await ensureLegacyMailboxGrants(env);
 			await runScheduledMaintenance(env);
 		},
 		async fetch(request: Request, env: Env, context: ExecutionContext) {

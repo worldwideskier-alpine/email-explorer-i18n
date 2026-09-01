@@ -429,5 +429,14 @@
 		"toLogin": "Tới trang đăng nhập",
 		"missingToken": "Liên kết đó không hợp lệ.",
 		"failed": "Không hoàn tất được việc thay đổi."
+	},
+	"root": {
+		"title": "Tài khoản",
+		"subtitle": "Quản lý tài khoản đăng nhập và các hộp thư thuộc về chúng. Thư không được hiển thị ở đây.",
+		"roleRoot": "Chủ sở hữu",
+		"resetPassword": "Đặt lại mật khẩu",
+		"deleteAccount": "Xoá tài khoản",
+		"confirmDelete": "Xoá {email}? Các hộp thư và thư được giữ lại.",
+		"deleteFailed": "Không xoá được."
 	}
 }

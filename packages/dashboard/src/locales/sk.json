@@ -429,5 +429,14 @@
 		"toLogin": "Prejsť na prihlásenie",
 		"missingToken": "Tento odkaz nie je platný.",
 		"failed": "Zmenu sa nepodarilo dokončiť."
+	},
+	"root": {
+		"title": "Účty",
+		"subtitle": "Spravuje prihlasovacie účty a schránky, ktoré k nim patria. Správy sa tu nezobrazujú.",
+		"roleRoot": "Vlastník",
+		"resetPassword": "Nastaviť nové heslo",
+		"deleteAccount": "Zmazať účet",
+		"confirmDelete": "Zmazať {email}? Schránky a ich správy zostanú.",
+		"deleteFailed": "Nepodarilo sa zmazať."
 	}
 }

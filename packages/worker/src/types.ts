@@ -13,6 +13,12 @@ export interface Session {
 	userId: string;
 	email: string;
 	isAdmin: boolean;
+	/**
+	 * Filled in where the deployment's configuration is in scope, which the
+	 * Durable Object is not -- see roles.ts. Absent on a session that came
+	 * straight out of the DO without passing through validateSession.
+	 */
+	role?: import("./roles").AccountRole;
 	expiresAt: number;
 }
 
@@ -43,5 +49,12 @@ export type Env = {
 	 * `config.accountRecovery.fromEmail`; see deployment-config.ts.
 	 */
 	ACCOUNT_RECOVERY_FROM?: string;
+	/**
+	 * The login address that holds the root role. Set per deployment, and
+	 * deliberately not a flag in the database -- see roles.ts for why that is
+	 * the design rather than a shortcut. Unset means this deployment has no
+	 * root account, which is the state every existing deployment starts in.
+	 */
+	ROOT_ADMIN_EMAIL?: string;
 	config?: EmailExplorerOptions;
 };

@@ -429,5 +429,14 @@
 		"toLogin": "Mergi la autentificare",
 		"missingToken": "Acest link nu este valid.",
 		"failed": "Schimbarea nu a putut fi finalizată."
+	},
+	"root": {
+		"title": "Conturi",
+		"subtitle": "Gestionează conturile de conectare și cutiile atribuite lor. Aici nu se afișează niciun mesaj.",
+		"roleRoot": "Proprietar",
+		"resetPassword": "Resetează parola",
+		"deleteAccount": "Șterge contul",
+		"confirmDelete": "Ștergeți {email}? Cutiile și mesajele se păstrează.",
+		"deleteFailed": "Nu s-a putut șterge."
 	}
 }

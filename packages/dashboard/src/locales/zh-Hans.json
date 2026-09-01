@@ -429,5 +429,14 @@
 		"toLogin": "前往登录页",
 		"missingToken": "该链接无效。",
 		"failed": "无法完成更改。"
+	},
+	"root": {
+		"title": "账户管理",
+		"subtitle": "管理登录账户以及归属于各账户的邮箱。此处不显示邮件内容。",
+		"roleRoot": "超级管理员",
+		"resetPassword": "重设密码",
+		"deleteAccount": "删除账户",
+		"confirmDelete": "要删除 {email} 吗？邮箱和邮件将保留。",
+		"deleteFailed": "无法删除。"
 	}
 }

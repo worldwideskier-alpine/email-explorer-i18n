@@ -429,5 +429,14 @@
 		"toLogin": "Girişe git",
 		"missingToken": "Bu bağlantı geçerli değil.",
 		"failed": "Değişiklik tamamlanamadı."
+	},
+	"root": {
+		"title": "Hesaplar",
+		"subtitle": "Oturum açma hesaplarını ve onlara ait posta kutularını yönetir. Burada ileti gösterilmez.",
+		"roleRoot": "Sahip",
+		"resetPassword": "Parolayı sıfırla",
+		"deleteAccount": "Hesabı sil",
+		"confirmDelete": "{email} silinsin mi? Posta kutuları ve iletiler korunur.",
+		"deleteFailed": "Silinemedi."
 	}
 }

@@ -429,5 +429,14 @@
 		"toLogin": "A l'annunzia",
 		"missingToken": "Quest link n'è betg valid.",
 		"failed": "La midada n'ha betg pudì vegnir finida."
+	},
+	"root": {
+		"title": "Contos",
+		"subtitle": "Administrescha ils contos d'annunzia e las chaschettas che tutgan tar els. Naginas messadis vegnan mussadas qua.",
+		"roleRoot": "Proprietari",
+		"resetPassword": "Reinizialisar la pled-clav",
+		"deleteAccount": "Stizzar il conto",
+		"confirmDelete": "Stizzar {email}? Las chaschettas ed ils messadis restan.",
+		"deleteFailed": "Betg pussaivel da stizzar."
 	}
 }

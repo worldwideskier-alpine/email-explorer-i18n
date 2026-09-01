@@ -14,6 +14,7 @@ import Mailbox from "@/views/Mailbox.vue";
 import NotFound from "@/views/NotFound.vue";
 import Register from "@/views/Register.vue";
 import ResetPassword from "@/views/ResetPassword.vue";
+import Root from "@/views/Root.vue";
 import SearchResults from "@/views/SearchResults.vue";
 import Settings from "@/views/Settings.vue";
 
@@ -63,6 +64,17 @@ const router = createRouter({
 			name: "Home",
 			component: Home,
 			meta: { title: "Home", requiresAuth: true, hasLanguageSwitcher: true },
+		},
+		{
+			path: "/root",
+			name: "Root",
+			component: Root,
+			meta: {
+				title: "Accounts",
+				requiresAuth: true,
+				requiresRoot: true,
+				hasLanguageSwitcher: true,
+			},
 		},
 		{
 			path: "/admin",
@@ -143,6 +155,7 @@ router.beforeEach(async (to, _from, next) => {
 	const isPublicRoute = to.meta.public === true;
 	const requiresAuth = to.meta.requiresAuth !== false; // Auth required by default
 	const requiresAdmin = to.meta.requiresAdmin === true;
+	const requiresRoot = to.meta.requiresRoot === true;
 
 	// Initialize auth token if exists
 	if (authStore.session && !authStore.loading) {
@@ -156,9 +169,20 @@ router.beforeEach(async (to, _from, next) => {
 	if (!isPublicRoute && requiresAuth && !authStore.isAuthenticated) {
 		// Redirect to login if not authenticated
 		next({ name: "Login", query: { redirect: to.fullPath } });
+	} else if (requiresRoot && !authStore.isRoot) {
+		next({ name: "Home" });
 	} else if (requiresAdmin && !authStore.isAdmin) {
 		// Redirect to home if not admin
 		next({ name: "Home" });
+	} else if (
+		authStore.isRoot &&
+		requiresAuth &&
+		!isPublicRoute &&
+		to.name !== "Root"
+	) {
+		// Root owns no mailbox, so the mailbox list it would otherwise land on
+		// is an empty screen saying it has none. Its home is the account list.
+		next({ name: "Root" });
 	} else if (
 		isPublicRoute &&
 		authStore.isAuthenticated &&
@@ -167,7 +191,7 @@ router.beforeEach(async (to, _from, next) => {
 			to.name === "ForgotPassword")
 	) {
 		// Redirect to home if already authenticated and trying to access login/register/forgot-password
-		next({ name: "Home" });
+		next({ name: authStore.isRoot ? "Root" : "Home" });
 	} else {
 		next();
 	}

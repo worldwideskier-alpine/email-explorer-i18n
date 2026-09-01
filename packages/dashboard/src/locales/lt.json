@@ -429,5 +429,14 @@
 		"toLogin": "Eiti į prisijungimą",
 		"missingToken": "Ši nuoroda negalioja.",
 		"failed": "Nepavyko užbaigti pakeitimo."
+	},
+	"root": {
+		"title": "Paskyros",
+		"subtitle": "Tvarko prisijungimo paskyras ir joms priskirtas pašto dėžutes. Laiškai čia nerodomi.",
+		"roleRoot": "Savininkas",
+		"resetPassword": "Nustatyti naują slaptažodį",
+		"deleteAccount": "Ištrinti paskyrą",
+		"confirmDelete": "Ištrinti {email}? Pašto dėžutės ir laiškai išliks.",
+		"deleteFailed": "Nepavyko ištrinti."
 	}
 }
