@@ -125,11 +125,20 @@ export const useAuthStore = defineStore("auth", () => {
 		loading.value = true;
 		try {
 			const response = await api.getCurrentUser();
-			// Update session with fresh data
+			// Update session with fresh data.
+			//
+			// The role has to be refreshed here as well as at sign-in. It is
+			// decided by the deployment's configuration, so it can change
+			// while somebody is signed in -- naming a root address for the
+			// first time is exactly that -- and a session stored before the
+			// change would otherwise keep its old role until the person
+			// happened to sign out. They would set the variable, redeploy,
+			// reload, and see no difference.
 			session.value = {
 				...session.value,
 				email: response.data.email,
 				isAdmin: response.data.isAdmin,
+				role: response.data.role,
 			};
 			localStorage.setItem("session", JSON.stringify(session.value));
 			return true;
