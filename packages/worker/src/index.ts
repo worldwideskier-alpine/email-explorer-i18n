@@ -89,19 +89,46 @@ const MailboxDetailsSchema = z.object({
 	 * The detail is the one exception and a narrow one: it is the classifier's
 	 * own reply, and only when that reply could not be read as a verdict.
 	 */
-	spamCheck: z
-		.object({
-			lastSuccessAt: z.string().nullable(),
-			lastFailureAt: z.string().nullable(),
-			lastFailureReason: z.string().nullable(),
-			lastFailureDetail: z.string().nullable(),
-		})
-		.optional(),
+	spamCheck: z.object({
+		lastSuccessAt: z.string().nullable(),
+		lastFailureAt: z.string().nullable(),
+		lastFailureReason: z.string().nullable(),
+		lastFailureDetail: z.string().nullable(),
+	}),
 });
 
 const UpdateMailboxRequestSchema = z.object({
 	settings: z.record(z.any()),
 });
+
+/**
+ * One mailbox, as every route that returns one returns it.
+ *
+ * Built in one place because the client treats these responses as
+ * interchangeable: it replaces its whole copy of the mailbox with whatever a
+ * save hands back. When the save left `spamCheck` out -- it was optional in
+ * the schema, so nothing complained -- saving the key blanked the health line
+ * on screen and the line came back on reload, because the record had never
+ * changed. A response that describes the same thing has to carry the same
+ * fields, and the way to keep that true is to have only one of them.
+ */
+async function mailboxResponse(
+	env: Env,
+	mailboxId: string,
+	settings: { fromName?: string } | null | undefined,
+) {
+	const ns = env.MAILBOX;
+	return {
+		id: mailboxId,
+		name: settings?.fromName || mailboxId,
+		email: mailboxId,
+		settings: redactMailboxSettings(settings),
+		// How the second-stage spam check has been going. It fails open, so
+		// without this the screen shows a configured key whether the check is
+		// working or has been rejected on every message for a week.
+		spamCheck: await ns.get(ns.idFromName(mailboxId)).getSpamCheckHealth(),
+	};
+}
 
 const CreateMailboxRequestSchema = z.object({
 	email: z.string().email(),
@@ -340,22 +367,7 @@ class GetMailbox extends OpenAPIRoute {
 		}
 		const settings = await obj.json<{ fromName?: string }>();
 
-		// How the second-stage spam check has been going. It fails open, so
-		// without this the screen shows a configured key whether the check is
-		// working or has been rejected on every message for a week.
-		const ns = c.env.MAILBOX;
-		const spamCheck = await ns
-			.get(ns.idFromName(mailboxId))
-			.getSpamCheckHealth();
-
-		const response = {
-			id: mailboxId,
-			name: settings?.fromName || mailboxId,
-			email: mailboxId,
-			settings: redactMailboxSettings(settings),
-			spamCheck,
-		};
-		return c.json(response);
+		return c.json(await mailboxResponse(c.env, mailboxId, settings));
 	}
 }
 
@@ -397,13 +409,7 @@ class PutMailbox extends OpenAPIRoute {
 		);
 		await c.env.BUCKET.put(key, JSON.stringify(mergedSettings));
 
-		const response = {
-			id: mailboxId,
-			name: mergedSettings?.fromName || mailboxId,
-			email: mailboxId,
-			settings: redactMailboxSettings(mergedSettings),
-		};
-		return c.json(response);
+		return c.json(await mailboxResponse(c.env, mailboxId, mergedSettings));
 	}
 }
 
@@ -613,14 +619,10 @@ class PostMailbox extends OpenAPIRoute {
 			await authDO.giveMailboxToPersonOf(session.userId, email);
 		}
 
-		const response = {
-			id: email,
-			email: email,
-			name: name,
-			settings: redactMailboxSettings(finalSettings),
-		};
-
-		return c.json(response, 201);
+		// The same shape as the other two, even though a mailbox created a
+		// moment ago has nothing to report: one shape is what keeps a client
+		// from losing a field by taking one response for another.
+		return c.json(await mailboxResponse(c.env, email, finalSettings), 201);
 	}
 }
 

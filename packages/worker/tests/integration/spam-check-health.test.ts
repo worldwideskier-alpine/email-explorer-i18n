@@ -204,6 +204,56 @@ describe("the second-stage check reports whether it is working", () => {
 	});
 
 	/**
+	 * Saving anything on the settings screen must not blank the health line.
+	 *
+	 * The browser replaces its whole copy of the mailbox with whatever a save
+	 * returns, and the save used to return everything except this. So saving
+	 * the key -- which is exactly when someone is looking at this line -- took
+	 * the screen from "last failed at 21:34" to "never run", while the record
+	 * itself had not been touched at all. The two responses describe the same
+	 * thing and the client treats them as interchangeable, so they have to
+	 * carry the same fields.
+	 */
+	it("still reports the record in the response to a save", async () => {
+		await setClaudeApiKey("sk-ant-test-key");
+		await receive("One that worked");
+		await receive("One that did not TRIGGER_CLAUDE_401");
+		const recorded = await health();
+		expect(recorded.lastSuccessAt).not.toBeNull();
+		expect(recorded.lastFailureAt).not.toBeNull();
+
+		// Saving the key: the case that made this visible.
+		const saved = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}`,
+			{
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					settings: { spamFilter: { claudeApiKey: "sk-ant-test-key" } },
+				}),
+			},
+		);
+		expect(await saved.json<{ spamCheck: unknown }>()).toMatchObject({
+			spamCheck: recorded,
+		});
+
+		// And saving something with nothing to do with the key.
+		const other = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}`,
+			{
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					settings: { signature: { enabled: true, text: "hi" } },
+				}),
+			},
+		);
+		expect(await other.json<{ spamCheck: unknown }>()).toMatchObject({
+			spamCheck: recorded,
+		});
+	});
+
+	/**
 	 * The two refusals, which used to be recorded as one reason.
 	 *
 	 * They are not one problem. 401 is the key: it is wrong, or it was deleted
