@@ -27,6 +27,34 @@ describe("redactMailboxSettings", () => {
 		const result = redactMailboxSettings(settings);
 		expect(result?.spamFilter.claudeApiKeyConfigured).toBe(false);
 	});
+
+	// "Configured" cannot say *which* key, so a key deleted upstream and a
+	// working one look identical on the screen. The masked form is what makes
+	// the stored key comparable to the ones the API console lists.
+	it("says which key is stored, in the console's own format", () => {
+		const key = `sk-ant-api03-SCW${"x".repeat(90)}0gAA`;
+		const result = redactMailboxSettings({ spamFilter: { claudeApiKey: key } });
+
+		expect(result?.spamFilter.claudeApiKeyMasked).toBe("sk-ant-api03-SCW...0gAA");
+		expect(JSON.stringify(result)).not.toContain(key);
+	});
+
+	it("has no masked key when there is no key", () => {
+		const result = redactMailboxSettings({ spamFilter: {} });
+		expect(result?.spamFilter.claudeApiKeyMasked).toBeUndefined();
+	});
+
+	// The browser holds the redacted object and sends it back on every save,
+	// so a mask stored alongside the key would be handed out again after the
+	// key had been replaced -- naming the old key on a screen showing the new.
+	it("recomputes the mask rather than trusting a stored one", () => {
+		const key = `sk-ant-api03-J7w${"x".repeat(90)}mwAA`;
+		const result = redactMailboxSettings({
+			spamFilter: { claudeApiKey: key, claudeApiKeyMasked: "sk-ant-api03-OLD...aaaa" },
+		});
+
+		expect(result?.spamFilter.claudeApiKeyMasked).toBe("sk-ant-api03-J7w...mwAA");
+	});
 });
 
 describe("mergeMailboxSettings", () => {
@@ -60,6 +88,27 @@ describe("mergeMailboxSettings", () => {
 		const incoming = { spamFilter: { claudeApiKey: "" } };
 		const result = mergeMailboxSettings(existing, incoming);
 		expect(result.spamFilter.claudeApiKey).toBeUndefined();
+	});
+
+	// Both stand in for the key on the way out and are recomputed from it, so
+	// storing what the browser echoes back would leave a copy that is wrong
+	// the moment the key changes.
+	it("does not store the fields that stand in for the key", () => {
+		const existing = { spamFilter: { claudeApiKey: "sk-ant-old" } };
+		const incoming = {
+			spamFilter: {
+				claudeApiKeyConfigured: true,
+				claudeApiKeyMasked: "sk-ant-api03-OLD...aaaa",
+				claudeApiKey: "sk-ant-new",
+			},
+		};
+		const result = mergeMailboxSettings(existing, incoming);
+
+		expect(result.spamFilter.claudeApiKey).toBe("sk-ant-new");
+		expect(Object.hasOwn(result.spamFilter, "claudeApiKeyMasked")).toBe(false);
+		expect(Object.hasOwn(result.spamFilter, "claudeApiKeyConfigured")).toBe(
+			false,
+		);
 	});
 
 	it("does not invent a spamFilter object when there was never one", () => {

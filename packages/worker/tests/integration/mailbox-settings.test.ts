@@ -37,6 +37,75 @@ describe("Mailbox settings: Claude API key redaction", () => {
 		expect(JSON.stringify(getBody)).not.toContain("sk-ant-secret");
 	});
 
+	/**
+	 * Which key, over the real route. The screen used to say only that one was
+	 * stored, so a key deleted in the API console and a working one produced
+	 * the same green badge, and the only way to find out which was in there was
+	 * to overwrite it and wait for the next message to arrive.
+	 */
+	it("names the stored key the way its console lists it", async () => {
+		const key = `sk-ant-api03-SCW${"x".repeat(90)}0gAA`;
+		await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ settings: { spamFilter: { claudeApiKey: key } } }),
+		});
+
+		const first = await (
+			await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`)
+		).json<any>();
+		expect(first.settings.spamFilter.claudeApiKeyMasked).toBe(
+			"sk-ant-api03-SCW...0gAA",
+		);
+		expect(JSON.stringify(first)).not.toContain(key);
+
+		// Replacing the key the way the screen does -- spreading back the
+		// redacted object it holds, with a new key in it. The mask that came
+		// with that object must not survive as the answer to "which key".
+		const replacement = `sk-ant-api03-J7w${"x".repeat(90)}mwAA`;
+		await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				settings: {
+					...first.settings,
+					spamFilter: {
+						...first.settings.spamFilter,
+						claudeApiKey: replacement,
+					},
+				},
+			}),
+		});
+
+		const second = await (
+			await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`)
+		).json<any>();
+		expect(second.settings.spamFilter.claudeApiKeyMasked).toBe(
+			"sk-ant-api03-J7w...mwAA",
+		);
+		expect(JSON.stringify(second)).not.toContain(replacement);
+	});
+
+	it("shows no key once it is removed", async () => {
+		const key = `sk-ant-api03-SCW${"x".repeat(90)}0gAA`;
+		await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ settings: { spamFilter: { claudeApiKey: key } } }),
+		});
+		await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ settings: { spamFilter: { claudeApiKey: "" } } }),
+		});
+
+		const body = await (
+			await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`)
+		).json<any>();
+		expect(body.settings.spamFilter.claudeApiKeyConfigured).toBe(false);
+		expect(body.settings.spamFilter.claudeApiKeyMasked).toBeUndefined();
+	});
+
 	it("preserves the stored key when saving unrelated settings", async () => {
 		await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
 			method: "PUT",
