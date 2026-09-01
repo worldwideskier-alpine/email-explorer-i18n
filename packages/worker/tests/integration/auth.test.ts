@@ -403,146 +403,29 @@ describe("Authentication & User Management Integration Tests", () => {
 			expect(body.some((u) => u.email === "listuser@example.com")).toBe(true);
 		});
 
-		it("should allow admin to grant mailbox access", async () => {
-			// Create user
-			const registerResponse = await authenticatedFetch(
-				"http://local.test/api/v1/auth/admin/register",
-				adminSessionToken,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						email: "accessuser@example.com",
-						password: "password123",
-					}),
-				},
-			);
-			const user = await registerResponse.json<any>();
-
-			// Grant mailbox access
-			const response = await authenticatedFetch(
-				"http://local.test/api/v1/auth/admin/grant-access",
-				adminSessionToken,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						userId: user.id,
-						mailboxId: "mailbox@example.com",
-						role: "read",
-					}),
-				},
-			);
-
-			expect(response.status).toBe(200);
-			const body = await response.json<any>();
-			expect(body.status).toBe("access granted");
-		});
-
-		it("should allow admin to revoke mailbox access", async () => {
-			// Create user and grant access
-			const registerResponse = await authenticatedFetch(
-				"http://local.test/api/v1/auth/admin/register",
-				adminSessionToken,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						email: "revokeuser@example.com",
-						password: "password123",
-					}),
-				},
-			);
-			const user = await registerResponse.json<any>();
-
-			await authenticatedFetch(
-				"http://local.test/api/v1/auth/admin/grant-access",
-				adminSessionToken,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						userId: user.id,
-						mailboxId: "mailbox@example.com",
-						role: "write",
-					}),
-				},
-			);
-
-			// Revoke access
-			const response = await authenticatedFetch(
-				"http://local.test/api/v1/auth/admin/revoke-access",
-				adminSessionToken,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						userId: user.id,
-						mailboxId: "mailbox@example.com",
-					}),
-				},
-			);
-
-			expect(response.status).toBe(200);
-			const body = await response.json<any>();
-			expect(body.status).toBe("access revoked");
-		});
-
-		it("should validate role types for mailbox access", async () => {
-			// Create user
-			const registerResponse = await authenticatedFetch(
-				"http://local.test/api/v1/auth/admin/register",
-				adminSessionToken,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						email: "roleuser@example.com",
-						password: "password123",
-					}),
-				},
-			);
-			const user = await registerResponse.json<any>();
-
-			// Valid roles
-			const validRoles = ["owner", "admin", "write", "read"];
-			for (const role of validRoles) {
-				const response = await authenticatedFetch(
-					"http://local.test/api/v1/auth/admin/grant-access",
-					adminSessionToken,
-					{
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({
-							userId: user.id,
-							mailboxId: `mailbox-${role}@example.com`,
-							role,
-						}),
-					},
-				);
-				expect(response.status).toBe(200);
-			}
-
-			// Invalid role
-			const invalidResponse = await authenticatedFetch(
-				"http://local.test/api/v1/auth/admin/grant-access",
-				adminSessionToken,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						userId: user.id,
-						mailboxId: "mailbox@example.com",
-						role: "invalid-role",
-					}),
-				},
-			);
-			expect(invalidResponse.status).toBe(400);
-		});
+		/*
+		 * Granting and revoking access to a mailbox used to be tested here,
+		 * at four levels: owner, admin, write, read. The routes are gone.
+		 * The levels were never read by anything -- all four stored a row and
+		 * the row was the whole of the answer -- and the act itself, handing
+		 * one person's mailbox to another, does not happen: an address
+		 * belongs to the person who registered it.
+		 */
 	});
 
 	describe("Authorization & Permissions", () => {
-		it("should reject non-admin from accessing admin endpoints", async () => {
+		/**
+		 * What "admin/register" now does, seen from the account screen.
+		 *
+		 * The second address here is not a second person: it is another way
+		 * for the same person to sign in, so both appear on their screen and
+		 * both carry their role. There is no promoting to do afterwards, and
+		 * no account that owns nothing waiting to be given something.
+		 *
+		 * That one person cannot see another's logins is asserted in
+		 * own-logins.test.ts, where there are two people to tell apart.
+		 */
+		it("adds a login to the person who asked, not a separate account", async () => {
 			// Register admin and a regular user
 			await SELF.fetch("http://local.test/api/v1/auth/register", {
 				method: "POST",
@@ -596,15 +479,28 @@ describe("Authentication & User Management Integration Tests", () => {
 			const userBody = await userLoginResponse.json<any>();
 			const userToken = userBody.id;
 
-			// Try to access admin endpoint with regular user token
+			// The screen is no longer refused to anybody signed in -- it is
+			// each person's own logins, and everybody has some. What it must
+			// not do is show one person another's, which is what "admin
+			// privileges required" was standing in for and doing badly: the
+			// privilege was carried by half the accounts in the deployment.
 			const response = await authenticatedFetch(
 				"http://local.test/api/v1/auth/admin/users",
 				userToken,
 			);
 
-			expect(response.status).toBe(403);
-			const body = await response.json<any>();
-			expect(body.error).toContain("Admin privileges required");
+			expect(response.status).toBe(200);
+			const listed = await response.json<Array<{ email: string; role: string }>>();
+			expect(listed.map((u) => u.email).sort()).toEqual([
+				"permadmin@example.com",
+				"regularuser@example.com",
+			]);
+			// Both are the same person, so both hold that person's role. Here
+			// that person registered first and so runs the deployment: the
+			// spare carries root, which is the whole of root's succession.
+			// Losing one address does not lose the deployment, and nothing
+			// has to be handed to anybody to make that true.
+			expect(new Set(listed.map((u) => u.role))).toEqual(new Set(["root"]));
 		});
 	});
 

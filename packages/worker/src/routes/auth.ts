@@ -39,10 +39,10 @@ const UserResponseSchema = z.object({
 	id: z.string(),
 	email: z.string(),
 	isAdmin: z.boolean(),
-	// The role the account actually holds. `isAdmin` alone cannot say it:
-	// root is deliberately not an administrator, so a screen reading the flag
-	// shows the top account as the bottom role.
-	role: z.enum(["root", "admin", "member"]),
+	// The role, which belongs to the person rather than to this login. A flag
+	// on the row cannot say it: root is deliberately not an administrator, so
+	// a screen reading the flag showed the top account as the bottom role.
+	role: z.enum(["root", "admin"]),
 	createdAt: z.number(),
 	updatedAt: z.number(),
 });
@@ -53,21 +53,6 @@ const ErrorResponseSchema = z.object({
 
 const SuccessResponseSchema = z.object({
 	status: z.string(),
-});
-
-const GrantAccessRequestSchema = z.object({
-	userId: z.string(),
-	mailboxId: z.string(),
-	role: z.enum(["owner", "admin", "write", "read"]),
-});
-
-const RevokeAccessRequestSchema = z.object({
-	userId: z.string(),
-	mailboxId: z.string(),
-});
-
-const UpdateUserRequestSchema = z.object({
-	isAdmin: z.boolean().optional(),
 });
 
 const ChangePasswordRequestSchema = z.object({
@@ -242,13 +227,11 @@ export class PostLogin extends OpenAPIRoute {
 		// The role travels with the session from here on: the dashboard
 		// decides which screen to open from this response, before it has
 		// asked anything else.
-		return c.json({
-			...session,
-			role: roleOf(
-				{ id: session.userId, isAdmin: session.isAdmin },
-				await authDO.getRootUserId(),
-			),
-		});
+		const [personId, rootPersonId] = await Promise.all([
+			authDO.getPersonId(session.userId),
+			authDO.getRootPersonId(),
+		]);
+		return c.json({ ...session, role: roleOf(personId, rootPersonId) });
 	}
 }
 
@@ -408,13 +391,18 @@ export class PostChangeEmail extends OpenAPIRoute {
 		const link = `${new URL(c.req.url).origin}/confirm-email-change?token=${token}`;
 		const message = buildEmailChangeEmail(locale, link);
 		try {
-			await sendEmail(c.env, {
-				from: fromEmail,
-				to: address,
-				subject: message.subject,
-				html: message.html,
-				text: message.text,
-			});
+			// The person changing their own address, so their own key.
+			await sendEmail(
+				c.env,
+				{
+					from: fromEmail,
+					to: address,
+					subject: message.subject,
+					html: message.html,
+					text: message.text,
+				},
+				session.personId,
+			);
 		} catch (e) {
 			console.error("Failed to send address-change confirmation:", e);
 			return c.json({ error: "Failed to send confirmation email" }, 500);
@@ -543,18 +531,32 @@ export class GetMe extends OpenAPIRoute {
 	}
 }
 
-// Admin routes
+/**
+ * Adds another address the same person can sign in with.
+ *
+ * Not "create a user". This used to make a separate account with the flag
+ * off, which somebody then had to promote by hand -- two steps that produced
+ * something the model has no word for, and whose only visible trace was a
+ * role column showing accounts that were really one person as two kinds of
+ * stranger.
+ *
+ * The addresses a person signs in with are equal: none is the original, and
+ * losing one is why the others exist. So this adds a login to the person
+ * making the request, and to nobody else. There is no form anywhere for
+ * adding a login to somebody else's person -- an administrator's spare
+ * addresses are their own business, and root does not reach into them.
+ */
 export class PostAdminRegister extends OpenAPIRoute {
 	schema = {
-		summary: "Register a new user (admin only)",
-		operationId: "adminRegister",
+		summary: "Add another login to your own account",
+		operationId: "addOwnLogin",
 		tags: ["Auth - Admin"],
 		request: {
 			body: contentJson(RegisterRequestSchema),
 		},
 		responses: {
 			"201": {
-				description: "User registered successfully",
+				description: "Login added",
 				...contentJson(UserResponseSchema),
 			},
 			"400": {
@@ -565,31 +567,27 @@ export class PostAdminRegister extends OpenAPIRoute {
 				description: "Unauthorized",
 				...contentJson(ErrorResponseSchema),
 			},
-			"403": {
-				description: "Forbidden - Admin privileges required",
-				...contentJson(ErrorResponseSchema),
-			},
 		},
 	};
 
 	async handle(c: AppContext) {
 		const session = c.get("session");
-		if (!session) {
-			return c.json({ error: "Unauthorized" }, 401);
-		}
-
-		if (!session.isAdmin) {
-			return c.json({ error: "Admin privileges required" }, 403);
+		if (!session) return c.json({ error: "Unauthorized" }, 401);
+		if (!session.personId) {
+			return c.json({ error: "Account has no person" }, 409);
 		}
 
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { email, password } = data.body;
 
-		const authDO = getAuthDO(c.env);
-
 		try {
-			const user = await authDO.register(email, password, false);
-			return c.json(user, 201);
+			const user = await getAuthDO(c.env).register(
+				email,
+				password,
+				false,
+				session.personId,
+			);
+			return c.json({ ...user, role: session.role ?? "admin" }, 201);
 		} catch (error: any) {
 			if (error.message?.includes("UNIQUE constraint failed")) {
 				return c.json({ error: "Email already registered" }, 400);
@@ -599,71 +597,69 @@ export class PostAdminRegister extends OpenAPIRoute {
 	}
 }
 
+/**
+ * The addresses the signed-in person can sign in with -- theirs and nobody
+ * else's.
+ *
+ * It used to answer with every account in the deployment. On a deployment
+ * with one person that reads as "my logins" and looks harmless; with two it
+ * hands each of them the other's address, and it showed root's address to the
+ * customers root can delete.
+ */
 export class GetUsers extends OpenAPIRoute {
 	schema = {
-		summary: "Get all users (admin only)",
-		operationId: "getUsers",
+		summary: "List your own logins",
+		operationId: "getOwnLogins",
 		tags: ["Auth - Admin"],
 		responses: {
 			"200": {
-				description: "List of users",
+				description: "Your logins",
 				...contentJson(z.array(UserResponseSchema)),
 			},
 			"401": {
 				description: "Unauthorized",
 				...contentJson(ErrorResponseSchema),
 			},
-			"403": {
-				description: "Forbidden - Admin privileges required",
-				...contentJson(ErrorResponseSchema),
-			},
 		},
 	};
 
 	async handle(c: AppContext) {
 		const session = c.get("session");
-		if (!session) {
-			return c.json({ error: "Unauthorized" }, 401);
-		}
+		if (!session) return c.json({ error: "Unauthorized" }, 401);
+		if (!session.personId) return c.json([]);
 
-		if (!session.isAdmin) {
-			return c.json({ error: "Admin privileges required" }, 403);
-		}
-
-		const authDO = getAuthDO(c.env);
-		const [users, rootUserId] = await Promise.all([
-			authDO.getUsers(),
-			authDO.getRootUserId(),
-		]);
-
+		const users = await getAuthDO(c.env).listPersonLogins(session.personId);
 		return c.json(
-			users.map((user) => ({ ...user, role: roleOf(user, rootUserId) })),
+			users.map((user) => ({ ...user, role: session.role ?? "admin" })),
 		);
 	}
 }
 
-export class PutUser extends OpenAPIRoute {
+/**
+ * Drops one of your own logins.
+ *
+ * How a spare is replaced: add the new address, then remove the old one. The
+ * Durable Object refuses the last one, because a person with no way in is a
+ * person nobody can reach.
+ *
+ * There is no route for deleting somebody else's login. Root deletes people
+ * whole, and an administrator's spares are their own to manage.
+ */
+export class DeleteOwnLogin extends OpenAPIRoute {
 	schema = {
-		summary: "Update a user (admin only)",
-		operationId: "updateUser",
+		summary: "Remove one of your own logins",
+		operationId: "deleteOwnLogin",
 		tags: ["Auth - Admin"],
-		request: {
-			params: z.object({
-				userId: z.string(),
-			}),
-			body: contentJson(UpdateUserRequestSchema),
-		},
+		request: { params: z.object({ userId: z.string() }) },
 		responses: {
-			"200": {
-				description: "User updated successfully",
-				...contentJson(SuccessResponseSchema),
-			},
+			"204": { description: "Removed" },
 			"401": {
 				description: "Unauthorized",
 				...contentJson(ErrorResponseSchema),
 			},
-			"403": {
-				description: "Forbidden - Admin privileges required",
+			"403": { description: "Not yours", ...contentJson(ErrorResponseSchema) },
+			"409": {
+				description: "That is the only way in",
 				...contentJson(ErrorResponseSchema),
 			},
 		},
@@ -671,127 +667,23 @@ export class PutUser extends OpenAPIRoute {
 
 	async handle(c: AppContext) {
 		const session = c.get("session");
-		if (!session) {
-			return c.json({ error: "Unauthorized" }, 401);
-		}
-
-		if (!session.isAdmin) {
-			return c.json({ error: "Admin privileges required" }, 403);
-		}
-
-		const data = await this.getValidatedData<typeof this.schema>();
-		const { isAdmin } = data.body;
-		if (isAdmin === undefined) {
-			return c.json({ status: "updated" });
-		}
+		if (!session) return c.json({ error: "Unauthorized" }, 401);
 
 		const userId = c.req.param("userId");
 		const authDO = getAuthDO(c.env);
 
-		// The account above this screen is not administered from it. An
-		// administrator toggling root's `isAdmin` flag would not take the role
-		// away -- root is an id in `app_roles`, not a flag -- but offering the
-		// action at all says the hierarchy runs the other way.
-		if (userId === (await authDO.getRootUserId())) {
-			return c.json({ error: "Cannot change the root account" }, 403);
+		// Yours means: belonging to the same person. Not "any account", which
+		// is what made the old admin screen able to reach strangers.
+		const owner = await authDO.getPersonId(userId);
+		if (!owner || owner !== session.personId) {
+			return c.json({ error: "Not yours" }, 403);
 		}
 
-		const result = await authDO.setUserAdmin(userId, isAdmin);
-
-		if (result === "not-found") {
-			return c.json({ error: "User not found" }, 404);
+		const result = await authDO.deleteLogin(userId);
+		if (result === "not-found") return c.json({ error: "Not found" }, 404);
+		if (result === "last-login") {
+			return c.json({ error: "That is the only way in" }, 409);
 		}
-		if (result === "last-admin") {
-			return c.json({ error: "Cannot remove the last administrator" }, 409);
-		}
-		return c.json({ status: "updated" });
-	}
-}
-
-export class PostGrantAccess extends OpenAPIRoute {
-	schema = {
-		summary: "Grant mailbox access to a user (admin only)",
-		operationId: "grantMailboxAccess",
-		tags: ["Auth - Admin"],
-		request: {
-			body: contentJson(GrantAccessRequestSchema),
-		},
-		responses: {
-			"200": {
-				description: "Access granted successfully",
-				...contentJson(SuccessResponseSchema),
-			},
-			"401": {
-				description: "Unauthorized",
-				...contentJson(ErrorResponseSchema),
-			},
-			"403": {
-				description: "Forbidden - Admin privileges required",
-				...contentJson(ErrorResponseSchema),
-			},
-		},
-	};
-
-	async handle(c: AppContext) {
-		const session = c.get("session");
-		if (!session) {
-			return c.json({ error: "Unauthorized" }, 401);
-		}
-
-		if (!session.isAdmin) {
-			return c.json({ error: "Admin privileges required" }, 403);
-		}
-
-		const data = await this.getValidatedData<typeof this.schema>();
-		const { userId, mailboxId, role } = data.body;
-
-		const authDO = getAuthDO(c.env);
-		await authDO.grantMailboxAccess(userId, mailboxId, role);
-
-		return c.json({ status: "access granted" });
-	}
-}
-
-export class PostRevokeAccess extends OpenAPIRoute {
-	schema = {
-		summary: "Revoke mailbox access from a user (admin only)",
-		operationId: "revokeMailboxAccess",
-		tags: ["Auth - Admin"],
-		request: {
-			body: contentJson(RevokeAccessRequestSchema),
-		},
-		responses: {
-			"200": {
-				description: "Access revoked successfully",
-				...contentJson(SuccessResponseSchema),
-			},
-			"401": {
-				description: "Unauthorized",
-				...contentJson(ErrorResponseSchema),
-			},
-			"403": {
-				description: "Forbidden - Admin privileges required",
-				...contentJson(ErrorResponseSchema),
-			},
-		},
-	};
-
-	async handle(c: AppContext) {
-		const session = c.get("session");
-		if (!session) {
-			return c.json({ error: "Unauthorized" }, 401);
-		}
-
-		if (!session.isAdmin) {
-			return c.json({ error: "Admin privileges required" }, 403);
-		}
-
-		const data = await this.getValidatedData<typeof this.schema>();
-		const { userId, mailboxId } = data.body;
-
-		const authDO = getAuthDO(c.env);
-		await authDO.revokeMailboxAccess(userId, mailboxId);
-
-		return c.json({ status: "access revoked" });
+		return c.body(null, 204);
 	}
 }

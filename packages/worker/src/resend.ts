@@ -20,9 +20,19 @@ interface SendEmailParams {
 	references?: string[];
 }
 
+/**
+ * Sends one message, through the key of the person it belongs to.
+ *
+ * Every caller has to say whose mail this is, because the answer decides who
+ * pays for it. A mailbox's outbound mail belongs to the person holding that
+ * mailbox; a password reset belongs to the person being reset; root's own
+ * account mail belongs to root. There is no "the deployment's mail" that
+ * quietly bills somebody else.
+ */
 export async function sendEmail(
 	env: Env,
 	params: SendEmailParams,
+	personId?: string | null,
 ): Promise<void> {
 	const headers: Record<string, string> = {};
 	if (params.inReplyTo) headers["In-Reply-To"] = `<${params.inReplyTo}>`;
@@ -30,10 +40,10 @@ export async function sendEmail(
 		headers.References = params.references.map((id) => `<${id}>`).join(" ");
 	}
 
-	// Resolved per send rather than captured once: an administrator can change
-	// the key on the admin screen, and the next message has to use the new one
+	// Resolved per send rather than captured once: the key can be changed on
+	// the settings screen, and the next message has to use the new one
 	// without a redeploy.
-	const apiKey = await getResendApiKey(env);
+	const apiKey = await getResendApiKey(env, personId);
 	if (!apiKey) {
 		throw new Error(
 			"No Resend API key is configured. Set one on the admin screen.",

@@ -65,6 +65,17 @@ const post = (path: string, body: unknown) =>
 		body: JSON.stringify(body),
 	});
 
+/*
+ * There is no "administrator rights" block any more, and no route for one.
+ *
+ * Promoting and demoting existed because the account screen could make an
+ * account that owned nothing, which then had to be raised by hand. Both ends
+ * of that are gone: the screen adds another login to the person using it, so
+ * what it makes is already theirs and already carries their role. Nothing
+ * grants a role to anybody, so nothing can remove one either -- and the
+ * "cannot remove the last administrator" guard has nothing left to guard.
+ */
+
 describe("Changing your own password", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
@@ -208,70 +219,5 @@ describe("Changing your sign-in address", () => {
 			newEmail: "taken@example.net",
 		});
 		expect(res.status).toBe(409);
-	});
-});
-
-describe("Administrator rights", () => {
-	beforeEach(async () => {
-		await testAuthBeforeAll();
-		await seedOwner();
-		await runInDurableObject(authStub(), async (_i, state) => {
-			const now = Date.now();
-			state.storage.sql.exec(
-				"INSERT OR REPLACE INTO users (id, email, password_hash, is_admin, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-				"user2",
-				"second@example.net",
-				"x",
-				0,
-				now,
-				now,
-			);
-		});
-	});
-
-	const setAdmin = (userId: string, isAdmin: boolean) =>
-		authenticatedFetch(`http://local.test/api/v1/auth/admin/users/${userId}`, {
-			method: "PUT",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ isAdmin }),
-		});
-
-	async function isAdminFlag(userId: string): Promise<number> {
-		return await runInDurableObject(authStub(), async (_i, state) =>
-			Number(
-				state.storage.sql
-					.exec("SELECT is_admin FROM users WHERE id = ?", userId)
-					.toArray()[0].is_admin,
-			),
-		);
-	}
-
-	// Previously this route answered {"status":"updated"} and did nothing,
-	// which left a deployment permanently stuck with one administrator.
-	it("promotes a user to administrator", async () => {
-		expect(await isAdminFlag("user2")).toBe(0);
-		const res = await setAdmin("user2", true);
-		expect(res.status).toBe(200);
-		expect(await isAdminFlag("user2")).toBe(1);
-	});
-
-	it("demotes an administrator once another one exists", async () => {
-		await setAdmin("user2", true);
-		const res = await setAdmin("user2", false);
-		expect(res.status).toBe(200);
-		expect(await isAdminFlag("user2")).toBe(0);
-	});
-
-	// Rights can only be granted by an administrator, so removing the last one
-	// leaves nobody able to put it back.
-	it("refuses to remove the last administrator", async () => {
-		const res = await setAdmin("user1", false);
-		expect(res.status).toBe(409);
-		expect(await isAdminFlag("user1")).toBe(1);
-	});
-
-	it("answers 404 for a user that does not exist", async () => {
-		const res = await setAdmin("nobody", true);
-		expect(res.status).toBe(404);
 	});
 });

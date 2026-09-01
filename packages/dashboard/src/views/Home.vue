@@ -8,7 +8,10 @@
       <div class="flex flex-wrap items-center gap-2 sm:gap-4">
         <div class="text-right me-2">
           <p class="text-sm text-gray-600 dark:text-gray-400 break-all">{{ authStore.currentUser?.email }}</p>
-          <p v-if="authStore.isAdmin" class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">{{ t("home.admin") }}</p>
+          <!-- No role badge. There are two roles, they differ in kind rather
+               than in degree, and root does not come here at all -- so the
+               only thing it could ever say is "administrator", to everybody
+               who can read it. -->
         </div>
         <button
           @click="openCreateMailboxModal"
@@ -26,7 +29,6 @@
           {{ t("home.account") }}
         </router-link>
         <router-link
-          v-if="authStore.isAdmin"
           to="/admin"
           class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
         >

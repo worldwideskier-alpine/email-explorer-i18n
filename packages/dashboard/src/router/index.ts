@@ -80,10 +80,15 @@ const router = createRouter({
 			path: "/admin",
 			name: "Admin",
 			component: Admin,
+			// Signing in is the whole of the requirement. This screen is the
+			// signed-in person's own logins and their own sending key, so
+			// everybody has one to look at. It used to require the `isAdmin`
+			// flag, which answered the wrong question in both directions: it
+			// let half the deployment see the other half's accounts, and it
+			// shut root out of its own settings.
 			meta: {
 				title: "Admin Panel",
 				requiresAuth: true,
-				requiresAdmin: true,
 				hasLanguageSwitcher: true,
 			},
 		},
@@ -177,7 +182,6 @@ router.beforeEach(async (to, _from, next) => {
 	}
 	const isPublicRoute = to.meta.public === true;
 	const requiresAuth = to.meta.requiresAuth !== false; // Auth required by default
-	const requiresAdmin = to.meta.requiresAdmin === true;
 	const requiresRoot = to.meta.requiresRoot === true;
 
 	// Initialize auth token if exists
@@ -193,9 +197,6 @@ router.beforeEach(async (to, _from, next) => {
 		// Redirect to login if not authenticated
 		next({ name: "Login", query: { redirect: to.fullPath } });
 	} else if (requiresRoot && !authStore.isRoot) {
-		next({ name: "Home" });
-	} else if (requiresAdmin && !authStore.isAdmin) {
-		// Redirect to home if not admin
 		next({ name: "Home" });
 	} else if (
 		authStore.isRoot &&

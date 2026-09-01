@@ -1,31 +1,36 @@
 /**
- * Who a signed-in account is, above the level of a single mailbox.
+ * Who a signed-in person is.
  *
- * Three roles:
+ * Two roles, and they are different in kind rather than in degree:
  *
- *  - **root** -- creates, edits and deletes the accounts below it. Its whole
- *    job is the account list; it owns no mailbox and reads no mail.
- *  - **admin** -- an ordinary person with several addresses. Makes mailboxes
- *    and hands access to them out.
- *  - **member** -- someone given access to a mailbox they do not own.
+ *  - **root** -- runs the deployment. Makes and unmakes the accounts of the
+ *    people who use it. Holds no mailbox and reads no mail.
+ *  - **admin** -- one of those people. Registers the addresses they use,
+ *    reads their own mail, and sees nothing of anybody else's.
  *
- * These three are what the admin screen's role column has to show. It used to
- * derive the label from the `isAdmin` flag alone, which left root -- an
- * account that is deliberately not an administrator -- displayed as the
- * bottom of the three, the one thing it certainly is not.
+ * There used to be a third, "member": somebody handed access to a mailbox
+ * they did not register. Nothing ever created one on purpose. It existed
+ * because the admin screen could make accounts that owned nothing, and it
+ * gave the screen a word to print in a column -- so the role column showed
+ * root, an account deliberately not carrying the admin flag, as the lowest of
+ * the three. Removing the screen that made them removed the tier, and the
+ * hierarchy is now two roles and, below them, mailboxes: not a third kind of
+ * person.
  *
- * **Root is an account id held in this application's own storage.** Not a
- * deployment variable, not an environment setting: this is software people
- * fork and deploy, and requiring them to go to GitHub to say who administers
- * their own mail would be a strange thing to ask. Every part of it happens on
- * the deployed site.
+ * **The role belongs to a person, not to a login.** A person signs in through
+ * any of several addresses, equal to each other, so that losing one does not
+ * lock them out. Held against a login the role would die with that login, and
+ * the way back would have to be somebody handing it over -- which on software
+ * sold to customers means a button that gives a customer the deployment.
+ * There is no such button. Held against the person, a spare login is the
+ * whole of succession and recovery.
  *
  * It is an id rather than an address on purpose. An address can be changed by
  * its owner, and comparing addresses means normalising them -- fold the case,
  * trim the space, and then somebody wonders whether to strip a `+tag` and
- * quietly hands the role to a different account. An id is the account.
+ * quietly hands the role to a different account.
  *
- * How the first one comes to be, and how it survives:
+ * How the first one comes to be:
  *
  *  - A deployment starts with no root, and every root-only route refuses
  *    everyone. That is the state a deployment upgrading into this begins in,
@@ -34,21 +39,18 @@
  *    way in. Nothing on the site offers to promote an existing account: a
  *    screen that hands out the top role is worth more to whoever finds it
  *    than to the person who deployed this, and this repository is public.
- *  - Root can hand the role to another account. That is the handover path,
- *    and it is also the recovery path, which is why it exists rather than
- *    being left to a database edit.
- *  - If root is lost entirely -- password gone, recovery address gone -- what
- *    remains is the Cloudflare account, which reaches the storage directly.
- *    That is the same line every other guarantee here is drawn on; see the
- *    backup section of the README.
+ *  - If every login of the root person is lost, what remains is the
+ *    Cloudflare account, which reaches the storage directly. That is the same
+ *    line every other guarantee here is drawn on; see the backup section of
+ *    the README.
  */
 
-export type AccountRole = "root" | "admin" | "member";
+export type AccountRole = "root" | "admin";
 
 export function roleOf(
-	user: { id: string; isAdmin: boolean },
-	rootUserId: string | null | undefined,
+	personId: string | null | undefined,
+	rootPersonId: string | null | undefined,
 ): AccountRole {
-	if (rootUserId && user.id === rootUserId) return "root";
-	return user.isAdmin ? "admin" : "member";
+	if (rootPersonId && personId && personId === rootPersonId) return "root";
+	return "admin";
 }

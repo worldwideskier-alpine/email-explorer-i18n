@@ -14,9 +14,15 @@ export interface Session {
 	email: string;
 	isAdmin: boolean;
 	/**
-	 * Filled in where the deployment's configuration is in scope, which the
-	 * Durable Object is not -- see roles.ts. Absent on a session that came
-	 * straight out of the DO without passing through validateSession.
+	 * The person this login belongs to. Everything about what a session may
+	 * reach is decided from here rather than from the login: the role, and
+	 * which mailboxes. See roles.ts.
+	 */
+	personId?: string;
+	/**
+	 * Filled in by validateSession, the one place every authenticated request
+	 * passes through. Absent on a session that came straight out of the
+	 * Durable Object without passing through it.
 	 */
 	role?: import("./roles").AccountRole;
 	expiresAt: number;

@@ -1,430 +1,209 @@
-import { env, SELF } from "cloudflare:test";
-import { describe, expect, it } from "vitest";
+import { SELF } from "cloudflare:test";
+import { beforeEach, describe, expect, it } from "vitest";
+import { resetLegacyGrantMemo } from "../../src/legacy-grants";
 
-describe("Mailbox Authorization Regression Tests (Issue #19)", () => {
-	// Helper to make authenticated request
-	const authenticatedFetch = (
-		url: string,
-		sessionToken: string,
-		options: RequestInit = {},
-	) => {
-		return SELF.fetch(url, {
-			...options,
-			headers: {
-				...options.headers,
-				Authorization: `Bearer ${sessionToken}`,
-			},
-		});
-	};
+/**
+ * Who can reach which mailbox (originally issue #19).
+ *
+ * The question used to be answered by a flag: an account carrying `is_admin`
+ * skipped the check entirely and reached every mailbox in the deployment,
+ * while everybody else was checked against grants somebody had to hand out.
+ * That reads as "my own estate" only while the deployment holds one person.
+ * With two, the second -- given an account so they could keep their own
+ * addresses -- was handed the first's mail, and nothing in the stored data
+ * could tell the two situations apart.
+ *
+ * It is now answered by the person: a mailbox belongs to whoever registered
+ * it, and every login of that person reaches it. Nobody hands anything to
+ * anybody, so there is no lifecycle of granting and revoking to test; there
+ * is only whose it is.
+ */
 
-	// Helper to create a mailbox in R2
-	const createMailbox = async (mailboxId: string, settings = {}) => {
-		// @ts-expect-error
-		await env.BUCKET.put(
-			`mailboxes/${mailboxId}.json`,
-			JSON.stringify(settings),
-		);
-	};
+const login = async (email: string, password = "password123") => {
+	const res = await SELF.fetch("http://local.test/api/v1/auth/login", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ email, password }),
+	});
+	return (await res.json<{ id: string }>()).id;
+};
 
-	// Setup: create admin, non-admin user, and mailboxes
-	const setupUsersAndMailboxes = async () => {
-		// Register admin (first user)
-		await SELF.fetch("http://local.test/api/v1/auth/register", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				email: "admin@test.com",
-				password: "password123",
-			}),
-		});
-
-		const adminLogin = await SELF.fetch("http://local.test/api/v1/auth/login", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				email: "admin@test.com",
-				password: "password123",
-			}),
-		});
-		const adminBody = await adminLogin.json<any>();
-		const adminToken = adminBody.id;
-
-		// Create non-admin user
-		const registerRes = await authenticatedFetch(
-			"http://local.test/api/v1/auth/admin/register",
-			adminToken,
-			{
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					email: "user@test.com",
-					password: "password123",
-				}),
-			},
-		);
-		const user = await registerRes.json<any>();
-
-		// Login as non-admin user
-		const userLogin = await SELF.fetch("http://local.test/api/v1/auth/login", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				email: "user@test.com",
-				password: "password123",
-			}),
-		});
-		const userBody = await userLogin.json<any>();
-		const userToken = userBody.id;
-
-		// Create mailboxes in R2
-		await createMailbox("allowed@test.com");
-		await createMailbox("forbidden@test.com");
-		await createMailbox("another-forbidden@test.com");
-
-		// Grant user access only to "allowed@test.com"
-		await authenticatedFetch(
-			"http://local.test/api/v1/auth/admin/grant-access",
-			adminToken,
-			{
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					userId: user.id,
-					mailboxId: "allowed@test.com",
-					role: "read",
-				}),
-			},
-		);
-
-		// A real administrator, distinct from the first account.
-		//
-		// The first account to register is root, and root is deliberately kept
-		// out of the administrator's view of every mailbox: it manages
-		// accounts and owns no mail. So "an administrator sees everything"
-		// has to be asserted on somebody root made an administrator.
-		const secondRes = await authenticatedFetch(
-			"http://local.test/api/v1/auth/admin/register",
-			adminToken,
-			{
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					email: "admin2@test.com",
-					password: "password123",
-				}),
-			},
-		);
-		const second = await secondRes.json<any>();
-		await authenticatedFetch(
-			`http://local.test/api/v1/auth/admin/users/${second.id}`,
-			adminToken,
-			{
-				method: "PUT",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ isAdmin: true }),
-			},
-		);
-		const secondLogin = await SELF.fetch("http://local.test/api/v1/auth/login", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				email: "admin2@test.com",
-				password: "password123",
-			}),
-		});
-		const otherAdminToken = (await secondLogin.json<any>()).id;
-
-		return { adminToken, otherAdminToken, userToken, userId: user.id };
-	};
-
-	describe("GetMailboxes endpoint filtering", () => {
-		it("should only return mailboxes the non-admin user has access to", async () => {
-			const { userToken } = await setupUsersAndMailboxes();
-
-			const response = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes",
-				userToken,
-			);
-
-			expect(response.status).toBe(200);
-			const mailboxes = await response.json<any[]>();
-
-			// Non-admin user should only see the mailbox they have access to
-			expect(mailboxes.length).toBe(1);
-			expect(mailboxes[0].id).toBe("allowed@test.com");
-		});
-
-		/**
-		 * This used to assert the opposite: that an administrator sees every
-		 * mailbox there is. That rule reads as "one person's own estate" only
-		 * while the deployment holds one person. A second person, made an
-		 * administrator so they could keep their own addresses, was handed the
-		 * first one's mail by the same line -- and there was nothing in the
-		 * stored data that could have told them apart, because what tied a
-		 * person's logins together had nowhere to live.
-		 *
-		 * Now the question is whose it is, not what flag the account carries.
-		 */
-		it("shows a second person nothing of the first person's", async () => {
-			const { otherAdminToken } = await setupUsersAndMailboxes();
-
-			const response = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes",
-				otherAdminToken,
-			);
-
-			expect(response.status).toBe(200);
-			const ids = (await response.json<any[]>()).map((m: any) => m.id);
-			expect(ids).not.toContain("allowed@test.com");
-			expect(ids).not.toContain("forbidden@test.com");
-			expect(ids).not.toContain("another-forbidden@test.com");
-		});
-
-		it("should return no mailboxes for a non-admin user with no access grants", async () => {
-			// Register admin
-			await SELF.fetch("http://local.test/api/v1/auth/register", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					email: "admin2@test.com",
-					password: "password123",
-				}),
-			});
-
-			const adminLogin = await SELF.fetch(
-				"http://local.test/api/v1/auth/login",
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						email: "admin2@test.com",
-						password: "password123",
-					}),
-				},
-			);
-			const adminBody = await adminLogin.json<any>();
-			const adminToken = adminBody.id;
-
-			// Create non-admin user with no mailbox access
-			await authenticatedFetch(
-				"http://local.test/api/v1/auth/admin/register",
-				adminToken,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						email: "noaccess@test.com",
-						password: "password123",
-					}),
-				},
-			);
-
-			const userLogin = await SELF.fetch(
-				"http://local.test/api/v1/auth/login",
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						email: "noaccess@test.com",
-						password: "password123",
-					}),
-				},
-			);
-			const userBody = await userLogin.json<any>();
-			const userToken = userBody.id;
-
-			// Create a mailbox
-			await createMailbox("some-mailbox@test.com");
-
-			const response = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes",
-				userToken,
-			);
-
-			expect(response.status).toBe(200);
-			const mailboxes = await response.json<any[]>();
-			expect(mailboxes.length).toBe(0);
-		});
+const as = (token: string) => (url: string, options: RequestInit = {}) =>
+	SELF.fetch(url, {
+		...options,
+		headers: { ...options.headers, Authorization: `Bearer ${token}` },
 	});
 
-	describe("Mailbox route middleware authorization", () => {
-		it("should return 403 when non-admin accesses a mailbox they don't have access to", async () => {
-			const { userToken } = await setupUsersAndMailboxes();
+/** Root, and two unrelated people, each with one address of their own. */
+async function setUpTwoPeople() {
+	await SELF.fetch("http://local.test/api/v1/auth/register", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ email: "root@test.com", password: "password123" }),
+	});
+	const rootToken = await login("root@test.com");
 
-			const response = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/forbidden@test.com",
-				userToken,
-			);
+	for (const email of ["first@test.com", "second@test.com"]) {
+		const created = await as(rootToken)(
+			"http://local.test/api/v1/root/accounts",
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email, password: "password123", role: "admin" }),
+			},
+		);
+		expect(created.status).toBe(201);
+	}
 
-			expect(response.status).toBe(403);
-			const body = await response.json<any>();
-			expect(body.error).toContain("don't have access");
+	const firstToken = await login("first@test.com");
+	const secondToken = await login("second@test.com");
+
+	for (const [token, address] of [
+		[firstToken, "theirs@test.com"],
+		[secondToken, "mine@test.com"],
+	] as const) {
+		const made = await as(token)("http://local.test/api/v1/mailboxes", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ email: address, name: address }),
 		});
+		expect(made.status).toBe(201);
+	}
 
-		it("should allow non-admin to access a mailbox they have been granted access to", async () => {
-			const { userToken } = await setupUsersAndMailboxes();
+	return { rootToken, firstToken, secondToken };
+}
 
-			const response = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/allowed@test.com",
-				userToken,
-			);
+const listed = async (token: string): Promise<string[]> => {
+	const res = await as(token)("http://local.test/api/v1/mailboxes");
+	expect(res.status).toBe(200);
+	return (await res.json<Array<{ id: string }>>()).map((m) => m.id).sort();
+};
 
-			expect(response.status).toBe(200);
-		});
-
-		// The same change, one mailbox at a time rather than the list.
-		it("refuses a second person a mailbox that is not theirs", async () => {
-			const { otherAdminToken } = await setupUsersAndMailboxes();
-
-			const response = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/forbidden@test.com",
-				otherAdminToken,
-			);
-
-			expect(response.status).toBe(403);
-		});
-
-		it("should block non-admin from accessing sub-routes of unauthorized mailbox", async () => {
-			const { userToken } = await setupUsersAndMailboxes();
-
-			// Try to access emails of a forbidden mailbox
-			const emailsResponse = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/forbidden@test.com/emails",
-				userToken,
-			);
-			expect(emailsResponse.status).toBe(403);
-
-			// Try to access folders of a forbidden mailbox
-			const foldersResponse = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/forbidden@test.com/folders",
-				userToken,
-			);
-			expect(foldersResponse.status).toBe(403);
-
-			// Try to access contacts of a forbidden mailbox
-			const contactsResponse = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/forbidden@test.com/contacts",
-				userToken,
-			);
-			expect(contactsResponse.status).toBe(403);
-
-			// Try to search in a forbidden mailbox
-			const searchResponse = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/forbidden@test.com/search?query=test",
-				userToken,
-			);
-			expect(searchResponse.status).toBe(403);
-		});
-
-		it("should allow non-admin to access sub-routes of authorized mailbox", async () => {
-			const { userToken } = await setupUsersAndMailboxes();
-
-			// Access folders of an allowed mailbox
-			const foldersResponse = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/allowed@test.com/folders",
-				userToken,
-			);
-			expect(foldersResponse.status).toBe(200);
-
-			// Access emails of an allowed mailbox
-			const emailsResponse = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/allowed@test.com/emails",
-				userToken,
-			);
-			expect(emailsResponse.status).toBe(200);
-
-			// Access contacts of an allowed mailbox
-			const contactsResponse = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/allowed@test.com/contacts",
-				userToken,
-			);
-			expect(contactsResponse.status).toBe(200);
-		});
+describe("which mailboxes a person is shown", () => {
+	beforeEach(() => {
+		resetLegacyGrantMemo();
 	});
 
-	describe("Access grant and revoke lifecycle", () => {
-		it("should block access after mailbox access is revoked", async () => {
-			const { adminToken, userToken, userId } = await setupUsersAndMailboxes();
+	it("shows each person the ones they registered", async () => {
+		const { firstToken, secondToken } = await setUpTwoPeople();
+		expect(await listed(firstToken)).toEqual(["theirs@test.com"]);
+		expect(await listed(secondToken)).toEqual(["mine@test.com"]);
+	});
 
-			// Verify user can access the allowed mailbox
-			const beforeResponse = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/allowed@test.com/folders",
-				userToken,
-			);
-			expect(beforeResponse.status).toBe(200);
+	/**
+	 * Root manages the people, not their mail. There is no route here that
+	 * returns a message, a subject or a sender, and the mailbox list is the
+	 * same: the person who can create and delete every account is not also a
+	 * second pair of eyes on every conversation.
+	 */
+	it("shows root nothing", async () => {
+		const { rootToken } = await setUpTwoPeople();
+		expect(await listed(rootToken)).toEqual([]);
+	});
+});
 
-			// Revoke access
-			await authenticatedFetch(
-				"http://local.test/api/v1/auth/admin/revoke-access",
-				adminToken,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						userId: userId,
-						mailboxId: "allowed@test.com",
-					}),
-				},
-			);
+describe("reaching a mailbox directly", () => {
+	beforeEach(() => {
+		resetLegacyGrantMemo();
+	});
 
-			// Verify user can no longer access the mailbox
-			const afterResponse = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/allowed@test.com",
-				userToken,
-			);
-			expect(afterResponse.status).toBe(403);
+	it("lets a person open their own", async () => {
+		const { firstToken } = await setUpTwoPeople();
+		const res = await as(firstToken)(
+			"http://local.test/api/v1/mailboxes/theirs@test.com",
+		);
+		expect(res.status).toBe(200);
+	});
 
-			// Verify the mailbox no longer appears in the list
-			const listResponse = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes",
-				userToken,
+	it("refuses somebody else's", async () => {
+		const { secondToken } = await setUpTwoPeople();
+		const res = await as(secondToken)(
+			"http://local.test/api/v1/mailboxes/theirs@test.com",
+		);
+		expect(res.status).toBe(403);
+	});
+
+	// The sub-routes are where the mail actually is, so they are checked the
+	// same way rather than trusting that the list already filtered.
+	it("refuses somebody else's sub-routes too", async () => {
+		const { secondToken } = await setUpTwoPeople();
+		for (const path of ["emails", "folders", "contacts"]) {
+			const res = await as(secondToken)(
+				`http://local.test/api/v1/mailboxes/theirs@test.com/${path}`,
 			);
-			const mailboxes = await listResponse.json<any[]>();
-			expect(mailboxes.length).toBe(0);
+			expect(res.status).toBe(403);
+		}
+	});
+
+	it("refuses root, which holds none of them", async () => {
+		const { rootToken } = await setUpTwoPeople();
+		const res = await as(rootToken)(
+			"http://local.test/api/v1/mailboxes/theirs@test.com",
+		);
+		expect(res.status).toBe(403);
+	});
+
+	it("refuses anyone with no session at all", async () => {
+		await setUpTwoPeople();
+		const res = await SELF.fetch(
+			"http://local.test/api/v1/mailboxes/theirs@test.com/emails",
+		);
+		expect(res.status).toBe(401);
+	});
+});
+
+describe("a person's other login", () => {
+	beforeEach(() => {
+		resetLegacyGrantMemo();
+	});
+
+	/**
+	 * The reason a second login exists: it is not a lesser account waiting to
+	 * be granted things. It reaches what its person already holds, from the
+	 * moment it is added, without anybody pressing anything.
+	 */
+	it("reaches everything the first one does", async () => {
+		const { firstToken } = await setUpTwoPeople();
+
+		await as(firstToken)("http://local.test/api/v1/auth/admin/register", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				email: "first-spare@test.com",
+				password: "password123",
+			}),
 		});
+		const spareToken = await login("first-spare@test.com");
 
-		it("should allow access after mailbox access is granted", async () => {
-			const { adminToken, userToken, userId } = await setupUsersAndMailboxes();
+		expect(await listed(spareToken)).toEqual(["theirs@test.com"]);
+		expect(
+			(
+				await as(spareToken)(
+					"http://local.test/api/v1/mailboxes/theirs@test.com/emails",
+				)
+			).status,
+		).toBe(200);
+	});
 
-			// Verify user cannot access the forbidden mailbox
-			const beforeResponse = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/forbidden@test.com",
-				userToken,
-			);
-			expect(beforeResponse.status).toBe(403);
-
-			// Grant access to the forbidden mailbox
-			await authenticatedFetch(
-				"http://local.test/api/v1/auth/admin/grant-access",
-				adminToken,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						userId: userId,
-						mailboxId: "forbidden@test.com",
-						role: "read",
-					}),
-				},
-			);
-
-			// Verify user can now access the mailbox
-			const afterResponse = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes/forbidden@test.com",
-				userToken,
-			);
-			expect(afterResponse.status).not.toBe(403);
-
-			// Verify the mailbox now appears in the list
-			const listResponse = await authenticatedFetch(
-				"http://local.test/api/v1/mailboxes",
-				userToken,
-			);
-			const mailboxes = await listResponse.json<any[]>();
-			const ids = mailboxes.map((m: any) => m.id);
-			expect(ids).toContain("allowed@test.com");
-			expect(ids).toContain("forbidden@test.com");
-			expect(ids).not.toContain("another-forbidden@test.com");
+	it("still reaches nothing of anybody else's", async () => {
+		const { firstToken } = await setUpTwoPeople();
+		await as(firstToken)("http://local.test/api/v1/auth/admin/register", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				email: "first-spare@test.com",
+				password: "password123",
+			}),
 		});
+		const spareToken = await login("first-spare@test.com");
+
+		expect(await listed(spareToken)).not.toContain("mine@test.com");
+		expect(
+			(
+				await as(spareToken)(
+					"http://local.test/api/v1/mailboxes/mine@test.com",
+				)
+			).status,
+		).toBe(403);
 	});
 });
