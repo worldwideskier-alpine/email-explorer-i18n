@@ -150,8 +150,31 @@ const router = createRouter({
 });
 
 // Navigation guard for authentication
+/**
+ * The stored session is asked about once per page load, and not again.
+ *
+ * It is written at sign-in and then trusted for thirty days, which is wrong
+ * in two ways that both bite. The role is decided by the deployment's
+ * configuration, so naming a root address for the first time changes it while
+ * people are signed in -- and without this they would set the variable,
+ * redeploy, reload, and see no difference at all. And an account deleted by
+ * root keeps a session that still looks valid here, so the screens render
+ * and every request behind them fails.
+ *
+ * Once per load rather than per navigation: this is a request, and moving
+ * between two screens is not new information.
+ */
+let sessionRefreshed = false;
+
 router.beforeEach(async (to, _from, next) => {
 	const authStore = useAuthStore();
+
+	if (!sessionRefreshed && authStore.session) {
+		sessionRefreshed = true;
+		// Signs the person out by itself if the session is no longer good,
+		// which the checks below then act on.
+		await authStore.checkAuth();
+	}
 	const isPublicRoute = to.meta.public === true;
 	const requiresAuth = to.meta.requiresAuth !== false; // Auth required by default
 	const requiresAdmin = to.meta.requiresAdmin === true;
