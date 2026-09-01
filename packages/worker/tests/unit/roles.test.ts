@@ -4,29 +4,33 @@ import { roleOf } from "../../src/roles";
 /**
  * Who is root.
  *
- * An account id held in this application's own storage, not a deployment
- * variable: this is software people fork and deploy, and asking them to go to
- * GitHub to say who administers their own mail would be a strange thing to
- * require. An id rather than an address, because an address can be changed by
- * its owner and comparing addresses means normalising them -- and somebody
- * eventually wonders whether to strip a "+tag".
+ * A person held in this application's own storage, not a deployment variable:
+ * this is software people fork and deploy, and asking them to go to GitHub to
+ * say who administers their own mail would be a strange thing to require.
+ *
+ * A person rather than a login, and an id rather than an address. A person,
+ * because the role has to survive losing the address you sign in with -- the
+ * alternative is a way to hand the role to somebody else, and on software
+ * with customers that is a button that gives a customer the deployment. An
+ * id, because an address can be changed by its owner and comparing addresses
+ * means normalising them, and somebody eventually wonders whether to strip a
+ * "+tag".
  */
 
-const ROOT_ID = "user-1";
+const ROOT = "person-1";
 
 describe("roleOf", () => {
-	it("gives root to the stored account", () => {
-		expect(roleOf({ id: ROOT_ID, isAdmin: true }, ROOT_ID)).toBe("root");
-		// Being root does not depend on also being an administrator.
-		expect(roleOf({ id: ROOT_ID, isAdmin: false }, ROOT_ID)).toBe("root");
+	it("gives root to the person holding it", () => {
+		expect(roleOf(ROOT, ROOT)).toBe("root");
 	});
 
-	it("gives admin to an administrator who is not it", () => {
-		expect(roleOf({ id: "user-2", isAdmin: true }, ROOT_ID)).toBe("admin");
-	});
-
-	it("gives member to everyone else", () => {
-		expect(roleOf({ id: "user-2", isAdmin: false }, ROOT_ID)).toBe("member");
+	/**
+	 * The point of holding it against the person: every login of theirs is
+	 * root, so a spare address is the whole of succession and recovery. The
+	 * function never sees a login, which is how that is guaranteed.
+	 */
+	it("gives admin to everybody else", () => {
+		expect(roleOf("person-2", ROOT)).toBe("admin");
 	});
 
 	/**
@@ -36,13 +40,15 @@ describe("roleOf", () => {
 	 */
 	it("makes nobody root before one has been named", () => {
 		for (const stored of [null, undefined, ""]) {
-			expect(roleOf({ id: ROOT_ID, isAdmin: true }, stored)).toBe("admin");
-			expect(roleOf({ id: "", isAdmin: false }, stored)).toBe("member");
+			expect(roleOf(ROOT, stored)).toBe("admin");
+			expect(roleOf("person-2", stored)).toBe("admin");
 		}
 	});
 
-	// An account with no id must not match a deployment with no root.
-	it("does not match an empty id against an empty setting", () => {
-		expect(roleOf({ id: "", isAdmin: true }, "")).toBe("admin");
+	// A login with no person must not match a deployment with no root.
+	it("does not match an empty person against an empty setting", () => {
+		expect(roleOf("", "")).toBe("admin");
+		expect(roleOf(null, null)).toBe("admin");
+		expect(roleOf(undefined, ROOT)).toBe("admin");
 	});
 });

@@ -74,42 +74,74 @@ export async function ensureLegacyMailboxGrants(
 	};
 
 	if (checkedInThisIsolate) return nothingToDo;
-	if (await env.BUCKET.head(MARKER_KEY)) {
-		checkedInThisIsolate = true;
-		return nothingToDo;
-	}
 
 	const authDO = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 
-	// The logins the migration folded together, named by the person it made,
-	// rather than by re-reading the admin flag now.
+	/*
+	 * The marker says this has run. Usually that settles it -- repeating the
+	 * backfill is exactly what must not happen, because it would mean the
+	 * original person owning every mailbox for ever, including ones made long
+	 * afterwards by somebody else.
+	 *
+	 * One state overrides it: the original person holds nothing at all while
+	 * mailboxes exist. Since the claim is now the only thing that makes a
+	 * mailbox visible, that state is a deployment whose mail has silently
+	 * vanished from every screen while continuing to arrive -- and there is no
+	 * other way back, because the marker stops the one piece of code that
+	 * could put the rows back.
+	 *
+	 * It cannot pull anybody else's mail in with it. The set it grants to is
+	 * named by the migration, so an account made afterwards has a person of
+	 * its own and is never in it; and it only ever runs when that set holds
+	 * nothing, so there is nothing of theirs to overwrite.
+	 */
+	if (await env.BUCKET.head(MARKER_KEY)) {
+		const held = await authDO.listPersonMailboxes(LEGACY_ADMIN_PERSON_ID);
+		const logins = await authDO.listPersonLoginIds(LEGACY_ADMIN_PERSON_ID);
+		if (held.length > 0 || logins.length === 0) {
+			checkedInThisIsolate = true;
+			return nothingToDo;
+		}
+	}
+
+	// The mailboxes go to the person the migration folded the existing
+	// administrators into -- named by the migration, not by re-reading the
+	// admin flag now.
 	//
 	// The distinction matters, and it is not theoretical. This runs from
 	// whichever request happens to arrive first after the deploy, which can be
 	// long after it. Asking "who is an administrator?" at that moment would
-	// sweep in an account created in between -- a second person, made an
-	// administrator so they could keep their own addresses -- and hand them
-	// every mailbox in the deployment as an owner, permanently, in rows that
-	// look exactly like the ones that belong there. Asking for the person
-	// instead cannot: an account made after the migration is given a person of
-	// its own and is never in this set.
+	// sweep in an account created in between -- a second person, given one so
+	// they could keep their own addresses -- and hand them every mailbox in
+	// the deployment, permanently, in rows indistinguishable from the ones
+	// that belong there. Naming the person cannot: anybody made afterwards has
+	// a person of their own and is never in this set.
 	//
-	// Root is not in it either, and that is the whole point of root: it
-	// manages accounts and owns no mail. It was not an administrator when the
-	// migration ran, so the migration did not put it here.
-	const rootUserId = await authDO.getRootUserId();
-	const owners = (
-		await authDO.listPersonLoginIds(LEGACY_ADMIN_PERSON_ID)
-	).filter((id) => id !== rootUserId);
-	const mailboxes = await listMailboxIds(env);
-
-	let granted = 0;
-	for (const userId of owners) {
-		for (const mailboxId of mailboxes) {
-			await authDO.grantMailboxAccessIfAbsent(userId, mailboxId, "owner");
-			granted += 1;
-		}
+	// Root is not given anything, and that is the whole point of root: it
+	// runs the deployment and holds no mail. In a deployment where the first
+	// account registered was also the only administrator, the person the
+	// migration folded together is root, and there is nothing to hand over.
+	const rootPersonId = await authDO.getRootPersonId();
+	if (rootPersonId === LEGACY_ADMIN_PERSON_ID) {
+		await env.BUCKET.put(
+			MARKER_KEY,
+			JSON.stringify({
+				at: new Date().toISOString(),
+				mailboxes: 0,
+				accounts: 0,
+			}),
+		);
+		checkedInThisIsolate = true;
+		return { ran: true, mailboxes: 0, accounts: 0, granted: 0 };
 	}
+
+	const owners = await authDO.listPersonLoginIds(LEGACY_ADMIN_PERSON_ID);
+	const mailboxes = owners.length === 0 ? [] : await listMailboxIds(env);
+
+	for (const mailboxId of mailboxes) {
+		await authDO.giveMailboxToPerson(LEGACY_ADMIN_PERSON_ID, mailboxId);
+	}
+	const granted = mailboxes.length;
 
 	await env.BUCKET.put(
 		MARKER_KEY,

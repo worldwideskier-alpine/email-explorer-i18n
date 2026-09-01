@@ -27,18 +27,16 @@ import { formatAddressList } from "./recipients";
 import { sendEmail } from "./resend";
 import { roleOf } from "./roles";
 import {
+	DeleteOwnLogin,
 	GetMe,
 	GetUsers,
 	PostAdminRegister,
 	PostChangeEmail,
 	PostChangePassword,
 	PostConfirmEmailChange,
-	PostGrantAccess,
 	PostLogin,
 	PostLogout,
 	PostRegister,
-	PostRevokeAccess,
-	PutUser,
 } from "./routes/auth";
 import { PostDraftEmail, PutDraftEmail } from "./routes/drafts";
 import { PostImportEmail } from "./routes/import";
@@ -53,7 +51,6 @@ import {
 	GetAccounts,
 	PostAccount,
 	PostAccountPassword,
-	PostTransferRoot,
 } from "./routes/root";
 import { runScheduledMaintenance } from "./scheduled-run";
 import { slugify } from "./slugify";
@@ -300,14 +297,15 @@ class GetMailboxes extends OpenAPIRoute {
 			return c.json(allMailboxes);
 		}
 
-		// Otherwise: what this person's logins own, taken together. It used to
-		// be "everything, if the account carries the admin flag", which reads
-		// as one person's estate only while there is one person -- a second
-		// person made administrator saw the first one's mail.
+		// Otherwise: the mailboxes this person holds. It used to be
+		// "everything, if the account carries the admin flag", which reads as
+		// one person's own estate only while the deployment holds one person
+		// -- a second person made administrator saw the first one's mail.
 		const authId = c.env.MAILBOX.idFromName("AUTH");
 		const authDO = c.env.MAILBOX.get(authId);
-		const userMailboxes = await authDO.getPersonMailboxes(session.userId);
-		const allowedMailboxIds = new Set(userMailboxes.map((m) => m.mailboxId));
+		const allowedMailboxIds = new Set(
+			await authDO.getPersonMailboxes(session.userId),
+		);
 
 		return c.json(allMailboxes.filter((m) => allowedMailboxIds.has(m.id)));
 	}
@@ -419,6 +417,22 @@ async function deleteKeysInBatches(
 	for (let i = 0; i < keys.length; i += R2_DELETE_BATCH) {
 		await bucket.delete(keys.slice(i, i + R2_DELETE_BATCH));
 	}
+}
+
+/**
+ * Whether this session's person holds the mailbox.
+ *
+ * The single question every mailbox-scoped route asks. It used to be "does
+ * this account carry the admin flag", which answered yes for every mailbox in
+ * the deployment and so was not a question about this mailbox at all.
+ */
+export async function personHoldsMailbox(
+	env: Env,
+	session: Session,
+	mailboxId: string,
+): Promise<boolean> {
+	const authDO = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
+	return (await authDO.getPersonMailboxes(session.userId)).includes(mailboxId);
 }
 
 /**
@@ -589,14 +603,14 @@ class PostMailbox extends OpenAPIRoute {
 		// Trigger first run of the durable object to initialize database
 		await stub.getFolders();
 
-		// Whoever made it owns it. Without this the mailbox belongs to nobody:
-		// an administrator sees it anyway today, and would stop seeing it the
-		// moment that bypass is removed -- a mailbox created and lost in the
-		// same click.
+		// Whoever registered it holds it -- the person, not the login, so it
+		// stays theirs when they change which address they sign in with.
+		// Without this the mailbox belongs to nobody and is invisible on every
+		// screen: a mailbox created and lost in the same click.
 		const session = c.get("session");
 		if (session) {
 			const authDO = c.env.MAILBOX.get(c.env.MAILBOX.idFromName("AUTH"));
-			await authDO.grantMailboxAccessIfAbsent(session.userId, email, "owner");
+			await authDO.giveMailboxToPersonOf(session.userId, email);
 		}
 
 		const response = {
@@ -720,22 +734,27 @@ class PostEmail extends OpenAPIRoute {
 		}
 
 		try {
-			await sendEmail(c.env, {
-				from,
-				to,
-				cc,
-				bcc,
-				subject,
-				text,
-				html,
-				attachments: attachments?.map((att) => ({
-					filename: att.filename,
-					content: att.content,
-					type: att.type,
-				})),
-				inReplyTo: in_reply_to,
-				references: references,
-			});
+			await sendEmail(
+				c.env,
+				{
+					from,
+					to,
+					cc,
+					bcc,
+					subject,
+					text,
+					html,
+					attachments: attachments?.map((att) => ({
+						filename: att.filename,
+						content: att.content,
+						type: att.type,
+					})),
+					inReplyTo: in_reply_to,
+					references: references,
+				},
+				// Sent by whoever holds this mailbox, and billed to their key.
+				c.get("session")?.personId,
+			);
 		} catch (e) {
 			return c.json({ error: (e as Error).message }, 500);
 		}
@@ -1749,12 +1768,11 @@ class PutEmailSource extends OpenAPIRoute {
 		if (!session) {
 			return c.json({ error: "Unauthorized" }, 401);
 		}
-		if (!session.isAdmin) {
-			return c.json({ error: "Admin privileges required" }, 403);
-		}
-
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { mailboxId, emailId } = data.params ?? {};
+		if (!(await personHoldsMailbox(c.env, session, mailboxId))) {
+			return c.json({ error: "You don't have access to this mailbox" }, 403);
+		}
 		const { rawEmailBase64 } = data.body;
 
 		const key = `mailboxes/${mailboxId}.json`;
@@ -1873,13 +1891,21 @@ class PostForgotPassword extends OpenAPIRoute {
 		const message = buildPasswordResetEmail(locale, resetLink);
 
 		try {
-			await sendEmail(c.env, {
-				from: fromEmail,
-				to: email,
-				subject: message.subject,
-				html: message.html,
-				text: message.text,
-			});
+			// The reset belongs to the person being reset, so it goes through
+			// their key. Somebody with no key cannot be sent one -- which is a
+			// service that has stopped, not a lockout: root sets a password
+			// directly, with no mail involved at all.
+			await sendEmail(
+				c.env,
+				{
+					from: fromEmail,
+					to: email,
+					subject: message.subject,
+					html: message.html,
+					text: message.text,
+				},
+				await authStub.getPersonId(user.id),
+			);
 		} catch (e) {
 			// Also indistinguishable from the unknown-address case: a send only
 			// ever fails for an address that does exist, so surfacing the
@@ -2005,10 +2031,13 @@ class GetResendSettings extends OpenAPIRoute {
 		if (!session) {
 			return c.json({ error: "Unauthorized" }, 401);
 		}
-		if (!session.isAdmin) {
-			return c.json({ error: "Admin privileges required" }, 403);
-		}
-		return c.json({ source: await getResendKeySource(c.env) });
+		// Your own key. Every signed-in person has one to look at, root
+		// included -- root's sends root's own mail and stands behind nobody
+		// else's, which is what keeps the deployment out of its customers'
+		// sending costs.
+		return c.json({
+			source: await getResendKeySource(c.env, session.personId),
+		});
 	}
 }
 
@@ -2043,15 +2072,17 @@ class PutResendSettings extends OpenAPIRoute {
 		if (!session) {
 			return c.json({ error: "Unauthorized" }, 401);
 		}
-		if (!session.isAdmin) {
-			return c.json({ error: "Admin privileges required" }, 403);
+		if (!session.personId) {
+			return c.json({ error: "Account has no person" }, 409);
 		}
 
 		const data = await this.getValidatedData<typeof this.schema>();
 		// An empty string clears the stored key rather than storing an empty
 		// one, which would send `Bearer ` and fail every message.
-		await setResendApiKey(c.env, data.body.apiKey || null);
-		return c.json({ source: await getResendKeySource(c.env) });
+		await setResendApiKey(c.env, session.personId, data.body.apiKey || null);
+		return c.json({
+			source: await getResendKeySource(c.env, session.personId),
+		});
 	}
 }
 
@@ -2144,12 +2175,14 @@ async function validateSession(
 		if (!session) return null;
 		// The one place every authenticated request passes through. Deciding
 		// the role anywhere else would mean a route that forgot to ask.
+		const [personId, rootPersonId] = await Promise.all([
+			authDO.getPersonId(session.userId),
+			authDO.getRootPersonId(),
+		]);
 		return {
 			...session,
-			role: roleOf(
-				{ id: session.userId, isAdmin: session.isAdmin },
-				await authDO.getRootUserId(),
-			),
+			personId: personId ?? undefined,
+			role: roleOf(personId, rootPersonId),
 		};
 	} catch {
 		return null;
@@ -2208,16 +2241,13 @@ openapi.post("/api/v1/auth/change-email", PostChangeEmail);
 openapi.post("/api/v1/auth/confirm-email-change", PostConfirmEmailChange);
 openapi.post("/api/v1/auth/admin/register", PostAdminRegister);
 openapi.get("/api/v1/auth/admin/users", GetUsers);
-openapi.put("/api/v1/auth/admin/users/:userId", PutUser);
-openapi.post("/api/v1/auth/admin/grant-access", PostGrantAccess);
-openapi.post("/api/v1/auth/admin/revoke-access", PostRevokeAccess);
+openapi.delete("/api/v1/auth/admin/users/:userId", DeleteOwnLogin);
 
 // Root: the account list, and nothing that returns mail. See routes/root.ts.
 openapi.get("/api/v1/root/accounts", GetAccounts);
 openapi.post("/api/v1/root/accounts", PostAccount);
 openapi.post("/api/v1/root/accounts/:userId/password", PostAccountPassword);
-openapi.delete("/api/v1/root/accounts/:userId", DeleteAccount);
-openapi.post("/api/v1/root/transfer", PostTransferRoot);
+openapi.delete("/api/v1/root/accounts/:personId", DeleteAccount);
 openapi.post("/api/v1/admin/mailboxes/:mailboxId/import", PostImportEmail);
 
 // Push notification endpoints
@@ -2495,8 +2525,8 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 					}
 					const authId = env.MAILBOX.idFromName("AUTH");
 					const authDO = env.MAILBOX.get(authId);
-					const userMailboxes = await authDO.getPersonMailboxes(session.userId);
-					if (!userMailboxes.some((m: any) => m.mailboxId === mailboxId)) {
+					const held = await authDO.getPersonMailboxes(session.userId);
+					if (!held.includes(mailboxId)) {
 						return c.json(
 							{ error: "You don't have access to this mailbox" },
 							403,

@@ -156,13 +156,16 @@ describe("two people in one deployment", () => {
 
 /**
  * A login written straight into the table without a person -- the shape every
- * row had before this column existed, and the shape a stray insert would have.
- * "Person is unset" must not match every other row whose person is also
- * unset: that would put strangers together, which is the failure this whole
- * change is about, arrived at from the other direction.
+ * row had before the column existed, and the shape a stray insert would have.
+ *
+ * "Person is unset" must not be treated as a group. Matching every other row
+ * whose person is also unset would put strangers together, which is the
+ * failure this whole arrangement exists to prevent, arrived at from the other
+ * direction. Such a login reaches nothing at all: a claim is held by a
+ * person, so a login belonging to nobody holds nothing.
  */
 describe("a login with no person recorded", () => {
-	it("answers for that login alone", async () => {
+	it("reaches nothing", async () => {
 		resetLegacyGrantMemo();
 
 		await SELF.fetch("http://local.test/api/v1/auth/register", {
@@ -176,28 +179,61 @@ describe("a login with no person recorded", () => {
 		const stub = authStub();
 		await runInDurableObject(stub, async (_instance, state) => {
 			const now = Date.now();
-			for (const [id, email] of [
-				["orphan-1", "o1@example.com"],
-				["orphan-2", "o2@example.com"],
-			]) {
-				state.storage.sql.exec(
-					"INSERT INTO users (id, email, password_hash, is_admin, person_id, created_at, updated_at) VALUES (?, ?, ?, 1, NULL, ?, ?)",
-					id,
-					email,
-					"x",
-					now,
-					now,
-				);
-			}
-			// One of them owns something; the other must not inherit it.
 			state.storage.sql.exec(
-				"INSERT INTO user_mailboxes (user_id, mailbox_id, role) VALUES ('orphan-1', 'info@example.com', 'owner')",
+				"INSERT INTO users (id, email, password_hash, is_admin, person_id, created_at, updated_at) VALUES ('orphan-1', 'o1@example.com', 'x', 1, NULL, ?, ?)",
+				now,
+				now,
 			);
 		});
 
-		expect(
-			(await stub.getPersonMailboxes("orphan-1")).map((m) => m.mailboxId),
-		).toEqual(["info@example.com"]);
-		expect(await stub.getPersonMailboxes("orphan-2")).toEqual([]);
+		expect(await stub.getPersonMailboxes("orphan-1")).toEqual([]);
+	});
+});
+
+/**
+ * Who gets told that mail has arrived.
+ *
+ * A push notification carries the subject line and the sender to somebody's
+ * phone, which makes this a question about the mail itself rather than about
+ * a screen. It used to answer "every administrator, plus anyone granted
+ * access" -- so a second person, given an account so they could keep their
+ * own addresses, was pushed the first person's mail as it arrived, on a
+ * device, whether or not they ever opened the application.
+ */
+describe("who a mailbox's notifications go to", () => {
+	it("only the logins of the person who holds it", async () => {
+		resetLegacyGrantMemo();
+
+		await SELF.fetch("http://local.test/api/v1/auth/register", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ email: "a@example.com", password: "password123" }),
+		});
+		const first = await signIn("a@example.com");
+		await makeMailbox(first.id, "info@example.com");
+
+		const stub = authStub();
+		const person = await personOf(
+			(
+				await (
+					await as(first.id)("http://local.test/api/v1/auth/me")
+				).json<{ userId: string }>()
+			).userId,
+		);
+
+		// A's second login, and a different person who is an administrator --
+		// the shape that used to leak.
+		const spare = await addLogin(
+			"a-spare@example.com",
+			false,
+			person ?? undefined,
+		);
+		const stranger = await addLogin("b@example.com", true);
+
+		const told = await stub.getUserIdsForMailbox("info@example.com");
+		expect(told).toContain(spare.id);
+		expect(told).not.toContain(stranger.id);
+		// And a mailbox nobody holds tells nobody, rather than telling everybody.
+		expect(await stub.getUserIdsForMailbox("nobody@example.com")).toEqual([]);
 	});
 });

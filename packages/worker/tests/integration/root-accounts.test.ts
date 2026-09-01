@@ -150,57 +150,106 @@ describe("what root does with accounts", () => {
 		).toBe(401);
 	});
 
-	it("deletes an account, and it can no longer sign in", async () => {
-		await createUser("keeper@example.com", true);
-		const userId = await createUser("leaver@example.com", true);
+	/** Root manages people, so the thing it deletes is a person. */
+	async function personIdOf(email: string): Promise<string> {
+		const people = await (
+			await as(root)("http://local.test/api/v1/root/accounts")
+		).json<{ personId: string; emails: string[] }[]>();
+		const found = people.find((p) => p.emails.includes(email));
+		expect(found).toBeDefined();
+		return (found as { personId: string }).personId;
+	}
+
+	it("deletes a person, and none of their logins can sign in", async () => {
+		await createUser("leaver@example.com", false);
+		await createUser("leaver-spare@example.com", false, await personIdOf("leaver@example.com"));
 
 		const res = await as(root)(
-			`http://local.test/api/v1/root/accounts/${userId}`,
+			`http://local.test/api/v1/root/accounts/${await personIdOf("leaver@example.com")}`,
 			{ method: "DELETE" },
 		);
-		expect(res.status).toBe(204);
+		expect(res.status).toBe(200);
 
-		const attempt = await SELF.fetch("http://local.test/api/v1/auth/login", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ email: "leaver@example.com", password: "password123" }),
-		});
-		expect(attempt.status).not.toBe(200);
+		for (const email of ["leaver@example.com", "leaver-spare@example.com"]) {
+			const attempt = await SELF.fetch("http://local.test/api/v1/auth/login", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email, password: "password123" }),
+			});
+			expect(attempt.status).not.toBe(200);
+		}
 	});
 
 	/**
-	 * Deleting a person must not delete the mail. The addresses outlive
-	 * whoever was looking after them.
+	 * Deleting means deleting.
+	 *
+	 * This used to keep the mailbox, on the reasoning that mail outlives
+	 * whoever read it. Between colleagues that is right; here root runs the
+	 * deployment and the people below are its customers, and a deletion that
+	 * leaves their mail in the bucket has stopped nothing: it still costs, it
+	 * is still readable from the Cloudflare account, and no screen says it is
+	 * there. Half a deletion looks finished and is not.
 	 */
-	it("leaves the mailbox behind when the account goes", async () => {
-		await createMailbox();
-		await createUser("keeper@example.com", true);
-		const userId = await createUser("leaver@example.com", true);
+	it("takes the mailboxes, and the archives, with the person", async () => {
+		const bucket = (env as unknown as { BUCKET: R2Bucket }).BUCKET;
 
-		await as(root)(`http://local.test/api/v1/root/accounts/${userId}`, {
-			method: "DELETE",
+		const leaverId = await createUser("leaver@example.com", false);
+		const leaver = await signIn("leaver@example.com");
+		expect(leaverId).toBeTruthy();
+		const made = await as(leaver.id)("http://local.test/api/v1/mailboxes", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ email: mailboxId, name: "Theirs" }),
 		});
+		expect(made.status).toBe(201);
+		await bucket.put(`backups/${encodeURIComponent(mailboxId)}/2026-01-01.mbox`, "archived");
 
-		expect(
-			await (env as unknown as { BUCKET: R2Bucket }).BUCKET.head(
-				`mailboxes/${mailboxId}.json`,
-			),
-		).not.toBeNull();
+		await as(root)(
+			`http://local.test/api/v1/root/accounts/${await personIdOf("leaver@example.com")}`,
+			{ method: "DELETE" },
+		);
+
+		expect(await bucket.head(`mailboxes/${mailboxId}.json`)).toBeNull();
+		const archives = await bucket.list({
+			prefix: `backups/${encodeURIComponent(mailboxId)}/`,
+		});
+		expect(archives.objects).toEqual([]);
+	});
+
+	/**
+	 * The lock keeps an administrator from destroying their own mailbox by
+	 * mis-clicking. It is not a defence against the person running the
+	 * deployment, and an account that cannot be deleted because of a checkbox
+	 * its own owner ticked is not an account anybody can stop serving.
+	 */
+	it("is not stopped by the mailbox's deletion lock", async () => {
+		const bucket = (env as unknown as { BUCKET: R2Bucket }).BUCKET;
+
+		await createUser("leaver@example.com", false);
+		const leaver = await signIn("leaver@example.com");
+		await as(leaver.id)("http://local.test/api/v1/mailboxes", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ email: mailboxId, name: "Theirs" }),
+		});
+		// The default, stated here so the test does not rest on it silently.
+		const settings = await (await bucket.get(`mailboxes/${mailboxId}.json`))?.json<{ deletionLocked?: boolean }>();
+		expect(settings?.deletionLocked).toBe(true);
+
+		await as(root)(
+			`http://local.test/api/v1/root/accounts/${await personIdOf("leaver@example.com")}`,
+			{ method: "DELETE" },
+		);
+		expect(await bucket.head(`mailboxes/${mailboxId}.json`)).toBeNull();
 	});
 
 	it("will not delete itself", async () => {
-		const accounts = await (
-			await as(root)("http://local.test/api/v1/root/accounts")
-		).json<{ id: string; role: string }[]>();
-		const rootId = accounts.find((a) => a.role === "root")?.id;
-
 		const res = await as(root)(
-			`http://local.test/api/v1/root/accounts/${rootId}`,
+			`http://local.test/api/v1/root/accounts/${await personIdOf("operator@example.com")}`,
 			{ method: "DELETE" },
 		);
 		expect(res.status).toBe(409);
 	});
-
 
 });
 
@@ -246,10 +295,10 @@ describe("mailboxes that predate the grant model", () => {
 		await runInDurableObject(stub, async (instance) => {
 			const owned = await (
 				instance as unknown as {
-					getUserMailboxes(id: string): Promise<{ mailboxId: string }[]>;
+					getPersonMailboxes(id: string): Promise<string[]>;
 				}
-			).getUserMailboxes(adminId);
-			expect(owned.map((entry) => entry.mailboxId)).toContain(mailboxId);
+			).getPersonMailboxes(adminId);
+			expect(owned).toContain(mailboxId);
 		});
 	});
 
@@ -282,9 +331,9 @@ describe("mailboxes that predate the grant model", () => {
 		await runInDurableObject(stub, async (instance) => {
 			const owned = await (
 				instance as unknown as {
-					getUserMailboxes(id: string): Promise<{ mailboxId: string }[]>;
+					getPersonMailboxes(id: string): Promise<string[]>;
 				}
-			).getUserMailboxes(latecomer);
+			).getPersonMailboxes(latecomer);
 			expect(owned).toEqual([]);
 		});
 	});
@@ -307,9 +356,9 @@ describe("mailboxes that predate the grant model", () => {
 		await runInDurableObject(stub, async (instance) => {
 			const owned = await (
 				instance as unknown as {
-					getUserMailboxes(id: string): Promise<{ mailboxId: string }[]>;
+					getPersonMailboxes(id: string): Promise<string[]>;
 				}
-			).getUserMailboxes(me.userId);
+			).getPersonMailboxes(me.userId);
 			expect(owned).toEqual([]);
 		});
 	});
@@ -333,9 +382,9 @@ describe("mailboxes that predate the grant model", () => {
 		await runInDurableObject(stub, async (instance) => {
 			const owned = await (
 				instance as unknown as {
-					getUserMailboxes(id: string): Promise<{ mailboxId: string }[]>;
+					getPersonMailboxes(id: string): Promise<string[]>;
 				}
-			).getUserMailboxes(laterAdmin);
+			).getPersonMailboxes(laterAdmin);
 			expect(owned).toEqual([]);
 		});
 	});
@@ -368,10 +417,10 @@ describe("a mailbox made today", () => {
 		await runInDurableObject(stub, async (instance) => {
 			const owned = await (
 				instance as unknown as {
-					getUserMailboxes(id: string): Promise<{ mailboxId: string }[]>;
+					getPersonMailboxes(id: string): Promise<string[]>;
 				}
-			).getUserMailboxes(me.userId);
-			expect(owned.map((entry) => entry.mailboxId)).toContain(
+			).getPersonMailboxes(me.userId);
+			expect(owned).toContain(
 				"brand-new@example.com",
 			);
 		});
@@ -432,64 +481,188 @@ describe("the first account", () => {
 	});
 });
 
-/**
- * Handing the role on. This is the handover path and the recovery path at
- * once, which is why it exists rather than being left to an edit of the
- * storage from the Cloudflare side.
+/*
+ * Root is no longer handed to anybody, and there is no route that could.
+ *
+ * It used to be the handover path and the recovery path at once. It had to
+ * go: this is software somebody sells, and root's job is making and unmaking
+ * the accounts of the people who pay for it. A button that hands that to one
+ * of them is a button nobody wants to own, however carefully guarded, and its
+ * presence is the thing that is wrong -- not its guard.
+ *
+ * What replaces it is that the role belongs to a person rather than to one
+ * login, so root adds a spare address the same way anybody else does and the
+ * role survives losing the first. See "the first account" above for the role
+ * following the person, and own-logins.test.ts for adding a spare.
  */
-describe("handing root to somebody else", () => {
+
+/**
+ * The one form on the root screen, and the two different things it does.
+ *
+ * "administrator" puts somebody new in the deployment. "super administrator"
+ * adds another address to root's own account -- a spare, not a second holder
+ * of the role. The distinction is the whole reason this is safe: a second
+ * person holding root is a second person who can delete everybody, which is
+ * exactly what removing the transfer button was for. Getting it wrong looks
+ * identical on the screen and is the opposite thing.
+ */
+describe("what root's create form makes", () => {
 	let root: string;
-	let rootUserId: string;
 
 	beforeEach(async () => {
 		resetLegacyGrantMemo();
-		await register("first@example.com", "password123");
-		const session = await signIn("first@example.com");
-		rootUserId = (
-			await (
-				await as(session.id)("http://local.test/api/v1/auth/me")
-			).json<{ userId: string }>()
-		).userId;
-		root = session.id;
+		await register("operator@example.com", "password123");
+		root = (await signIn("operator@example.com")).id;
 	});
 
-	it("moves the role, and the old holder loses the screen", async () => {
-		const successor = await createUser("next@example.com", true);
-
-		const res = await as(root)("http://local.test/api/v1/root/transfer", {
+	const create = (email: string, role: "root" | "admin") =>
+		as(root)("http://local.test/api/v1/root/accounts", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ userId: successor }),
+			body: JSON.stringify({ email, password: "password123", role }),
 		});
-		expect(res.status).toBe(200);
 
-		expect((await signIn("next@example.com")).role).toBe("root");
-		expect((await signIn("first@example.com")).role).toBe("admin");
+	const people = async () =>
+		(
+			await (await as(root)("http://local.test/api/v1/root/accounts")).json<
+				{ personId: string; emails: string[]; role: string }[]
+			>()
+		).sort((a, b) => a.emails[0].localeCompare(b.emails[0]));
+
+	it("adds a spare to root's own account, not a second root", async () => {
+		expect((await create("operator-spare@example.com", "root")).status).toBe(201);
+
+		const listed = await people();
+		// One person, both addresses, still the only root there is.
+		expect(listed).toHaveLength(1);
+		expect(listed[0].emails.sort()).toEqual([
+			"operator-spare@example.com",
+			"operator@example.com",
+		]);
+		expect(listed.filter((p) => p.role === "root")).toHaveLength(1);
+	});
+
+	// And the spare really is root: signing in with it reaches the screen.
+	it("gives the spare the role, so losing the first address loses nothing", async () => {
+		await create("operator-spare@example.com", "root");
+		const spare = await signIn("operator-spare@example.com");
+		expect(spare.role).toBe("root");
 		expect(
-			(await as(root)("http://local.test/api/v1/root/accounts")).status,
-		).toBe(403);
+			(await as(spare.id)("http://local.test/api/v1/root/accounts")).status,
+		).toBe(200);
 	});
 
-	it("is refused to anyone who is not root", async () => {
-		const other = await createUser("other@example.com", true);
-		const otherSession = await signIn("other@example.com");
-		const res = await as(otherSession.id)(
-			"http://local.test/api/v1/root/transfer",
-			{
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ userId: other }),
-			},
+	it("makes a separate person for an administrator", async () => {
+		expect((await create("hanako@example.com", "admin")).status).toBe(201);
+
+		const listed = await people();
+		expect(listed).toHaveLength(2);
+		expect(listed.filter((p) => p.role === "root")).toHaveLength(1);
+		expect(
+			listed.find((p) => p.emails.includes("hanako@example.com"))?.role,
+		).toBe("admin");
+	});
+
+	// Which is to say: the two options are not two labels on one act.
+	it("keeps the two apart", async () => {
+		await create("operator-spare@example.com", "root");
+		await create("hanako@example.com", "admin");
+
+		const listed = await people();
+		const rootPerson = listed.find((p) => p.role === "root");
+		expect(rootPerson?.emails.sort()).toEqual([
+			"operator-spare@example.com",
+			"operator@example.com",
+		]);
+		expect(rootPerson?.emails).not.toContain("hanako@example.com");
+	});
+});
+
+/**
+ * The one state that overrides the "already done" marker.
+ *
+ * The claim on a mailbox is now the only thing that makes it visible. If the
+ * deployment's original person somehow holds none while mailboxes exist, the
+ * mail has vanished from every screen while continuing to arrive -- and the
+ * marker stops the one piece of code that could put the rows back, so there
+ * is no way out from inside the application.
+ *
+ * This is the safety net for exactly that, and it is narrow on purpose:
+ * repeating the backfill in any other circumstance is the thing that must not
+ * happen.
+ */
+describe("mail that has lost its owner", () => {
+	beforeEach(() => {
+		resetLegacyGrantMemo();
+	});
+
+	it("gives it back to the deployment's original person", async () => {
+		await register("first@example.com", "password123");
+		const legacy = await createUser(
+			"legacy@example.com",
+			true,
+			LEGACY_ADMIN_PERSON_ID,
 		);
-		expect(res.status).toBe(403);
+		const session = await signIn("legacy@example.com");
+		await createMailbox();
+
+		// The backfill runs and records that it has.
+		expect(
+			(await as(session.id)("http://local.test/api/v1/mailboxes")).status,
+		).toBe(200);
+
+		// Now the claims are gone but the mailbox is not -- the state that
+		// would otherwise be permanent.
+		const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
+		await runInDurableObject(stub, async (_instance, state) => {
+			state.storage.sql.exec("DELETE FROM person_mailboxes");
+		});
+		resetLegacyGrantMemo();
+
+		const listed = await (
+			await as(session.id)("http://local.test/api/v1/mailboxes")
+		).json<Array<{ id: string }>>();
+		expect(listed.map((m) => m.id)).toContain(mailboxId);
+		expect(legacy).toBeTruthy();
 	});
 
-	it("refuses an account that does not exist", async () => {
-		const res = await as(root)("http://local.test/api/v1/root/transfer", {
+	/**
+	 * And it stays a one-time backfill everywhere else. Widening it to "run
+	 * whenever the marker exists" would hand the original person every
+	 * mailbox in the deployment again, every time -- including ones made
+	 * afterwards by somebody else, which is the arrangement being moved away
+	 * from.
+	 */
+	it("leaves a person who still holds theirs exactly as they are", async () => {
+		await register("first@example.com", "password123");
+		const legacy = await createUser(
+			"legacy@example.com",
+			true,
+			LEGACY_ADMIN_PERSON_ID,
+		);
+		expect(legacy).toBeTruthy();
+		const session = await signIn("legacy@example.com");
+
+		// One mailbox they registered, so they hold something.
+		const made = await as(session.id)("http://local.test/api/v1/mailboxes", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ userId: "no-such-user" }),
+			body: JSON.stringify({ email: "mine@example.com", name: "Mine" }),
 		});
-		expect(res.status).toBe(404);
+		expect(made.status).toBe(201);
+
+		// The backfill runs once and records it.
+		expect(
+			(await as(session.id)("http://local.test/api/v1/mailboxes")).status,
+		).toBe(200);
+
+		// Then somebody else's mailbox appears, claimed by nobody they know.
+		await createMailbox();
+		resetLegacyGrantMemo();
+
+		const listed = await (
+			await as(session.id)("http://local.test/api/v1/mailboxes")
+		).json<Array<{ id: string }>>();
+		expect(listed.map((m) => m.id)).toEqual(["mine@example.com"]);
 	});
 });

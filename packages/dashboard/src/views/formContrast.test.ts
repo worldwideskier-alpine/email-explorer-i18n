@@ -73,10 +73,13 @@ describe("form controls stay readable in light mode", () => {
 
 	// Guards the check itself: without it, the assertion above could pass
 	// because the scan found nothing rather than because the views are correct.
+	// The admin screen is smaller than it was -- the role column, the access
+	// modal and the promote buttons are gone -- so the floor is what it now
+	// actually has: the key field and the two fields for adding a login.
 	it("actually inspects the views", () => {
 		expect(Object.keys(views)).toContain("./Admin.vue");
 
 		const controls = views["./Admin.vue"].match(CONTROL);
-		expect(controls?.length).toBeGreaterThan(3);
+		expect(controls?.length).toBeGreaterThanOrEqual(3);
 	});
 });

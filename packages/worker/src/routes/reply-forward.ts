@@ -108,22 +108,27 @@ export class PostReplyEmail extends OpenAPIRoute {
 		const thread_id = originalEmail.thread_id || originalEmail.id;
 
 		try {
-			await sendEmail(c.env, {
-				from,
-				to,
-				cc,
-				bcc,
-				subject,
-				text,
-				html,
-				attachments: attachments?.map((att) => ({
-					filename: att.filename,
-					content: att.content,
-					type: att.type,
-				})),
-				inReplyTo: in_reply_to,
-				references: references,
-			});
+			await sendEmail(
+				c.env,
+				{
+					from,
+					to,
+					cc,
+					bcc,
+					subject,
+					text,
+					html,
+					attachments: attachments?.map((att) => ({
+						filename: att.filename,
+						content: att.content,
+						type: att.type,
+					})),
+					inReplyTo: in_reply_to,
+					references: references,
+				},
+				// Sent by whoever holds this mailbox, and billed to their key.
+				c.get("session")?.personId,
+			);
 		} catch (e) {
 			return c.json({ error: (e as Error).message }, 500);
 		}
@@ -223,20 +228,25 @@ export class PostForwardEmail extends OpenAPIRoute {
 		// Forwarded emails don't have threading headers
 
 		try {
-			await sendEmail(c.env, {
-				from,
-				to,
-				cc,
-				bcc,
-				subject,
-				text,
-				html,
-				attachments: attachments?.map((att) => ({
-					filename: att.filename,
-					content: att.content,
-					type: att.type,
-				})),
-			});
+			await sendEmail(
+				c.env,
+				{
+					from,
+					to,
+					cc,
+					bcc,
+					subject,
+					text,
+					html,
+					attachments: attachments?.map((att) => ({
+						filename: att.filename,
+						content: att.content,
+						type: att.type,
+					})),
+				},
+				// Sent by whoever holds this mailbox, and billed to their key.
+				c.get("session")?.personId,
+			);
 		} catch (e) {
 			return c.json({ error: (e as Error).message }, 500);
 		}

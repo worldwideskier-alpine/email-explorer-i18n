@@ -224,13 +224,12 @@ describe("Mailbox deletion: what survives", () => {
 		expect(await readSettings(other)).not.toBeNull();
 	});
 
-	it("drops the users' access grants for a purged mailbox", async () => {
+	// A claim on a mailbox that no longer exists would be inherited by the
+	// next mailbox registered at the same address.
+	it("drops the claim on a purged mailbox", async () => {
 		// @ts-expect-error test binding
 		const authStub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
-		await authStub.grantMailboxAccess("user1", mailboxId, "member");
-		expect(
-			(await authStub.getUserMailboxes("user1")).map((m: any) => m.mailboxId),
-		).toContain(mailboxId);
+		expect(await authStub.getPersonMailboxes("user1")).toContain(mailboxId);
 
 		await setLock(mailboxId, false);
 		await authenticatedFetch(
@@ -238,8 +237,6 @@ describe("Mailbox deletion: what survives", () => {
 			{ method: "DELETE" },
 		);
 
-		expect(
-			(await authStub.getUserMailboxes("user1")).map((m: any) => m.mailboxId),
-		).not.toContain(mailboxId);
+		expect(await authStub.getPersonMailboxes("user1")).not.toContain(mailboxId);
 	});
 });

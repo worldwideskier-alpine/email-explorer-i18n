@@ -10,7 +10,15 @@ export interface User {
 	isAdmin: boolean;
 }
 
-export type AccountRole = "root" | "admin" | "member";
+/**
+ * Two roles, different in kind rather than in degree: root runs the
+ * deployment and makes the accounts; an administrator is one of the people
+ * using it. There used to be a third, "member" -- somebody handed access to a
+ * mailbox they did not register. Nothing ever made one on purpose; it existed
+ * because the account screen could create accounts that owned nothing, and it
+ * gave a role column a third word to print. Both are gone.
+ */
+export type AccountRole = "root" | "admin";
 
 export interface Session {
 	id: string;

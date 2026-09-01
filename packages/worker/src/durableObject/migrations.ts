@@ -242,4 +242,58 @@ export const authMigrations: Migration[] = [
             CREATE INDEX idx_users_person_id ON users(person_id);
         `,
 	},
+	{
+		/**
+		 * Everything that was held against a login moves to the person.
+		 *
+		 * Two things were: which account is root, and which mailboxes an
+		 * account may reach. Both belong to the person, for the same reason.
+		 *
+		 * **Root.** Held as a login id, the role dies with that login. The
+		 * person holding it would have to be handed the role again by
+		 * somebody -- and the only somebody is themselves, so the escape was
+		 * a "transfer" button that could point at anyone. On software sold to
+		 * customers that button is a way to hand a customer the whole
+		 * deployment, and no seller wants one. Held against the person, the
+		 * role survives losing a login, because the person keeps their other
+		 * ones. Succession stops being a transfer and becomes the same spare
+		 * login everybody else has.
+		 *
+		 * **Mailboxes.** A grant against a login means deleting that login
+		 * takes its mailboxes' only claim with it, while the person's other
+		 * logins go on existing and seeing nothing. Held against the person,
+		 * a login can come and go and the mail stays reachable.
+		 *
+		 * The grant table is rebuilt rather than altered: its primary key is
+		 * (user_id, mailbox_id), and two logins of one person collapse onto
+		 * the same row once the person is the key. INSERT OR IGNORE on the
+		 * copy is what merges them.
+		 */
+		name: "6_people_own",
+		sql: `
+            ALTER TABLE app_roles ADD COLUMN root_person_id TEXT;
+
+            UPDATE app_roles
+               SET root_person_id = (
+                     SELECT person_id FROM users WHERE users.id = app_roles.root_user_id
+                   )
+             WHERE root_user_id IS NOT NULL;
+
+            CREATE TABLE person_mailboxes (
+                person_id TEXT NOT NULL,
+                mailbox_id TEXT NOT NULL,
+                PRIMARY KEY (person_id, mailbox_id)
+            );
+
+            INSERT OR IGNORE INTO person_mailboxes (person_id, mailbox_id)
+                 SELECT u.person_id, um.mailbox_id
+                   FROM user_mailboxes um
+                   JOIN users u ON u.id = um.user_id
+                  WHERE u.person_id IS NOT NULL;
+
+            DROP TABLE user_mailboxes;
+
+            CREATE INDEX idx_person_mailboxes_mailbox_id ON person_mailboxes(mailbox_id);
+        `,
+	},
 ];

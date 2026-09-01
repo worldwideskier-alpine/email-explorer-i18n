@@ -236,32 +236,25 @@ export default {
 	adminGetResendSettings: () => apiClient.get("/api/v1/admin/settings/resend"),
 	adminSetResendApiKey: (apiKey: string) =>
 		apiClient.put("/api/v1/admin/settings/resend", { apiKey }),
-	transferRoot: (userId: string) =>
-		apiClient.post("/api/v1/root/transfer", { userId }),
-
-	// Root: the account list. Nothing here returns mail; see routes/root.ts
-	// in the Worker for why that is deliberate.
+	// Root: the people using this deployment. Nothing here returns mail; see
+	// routes/root.ts in the Worker for why that is deliberate. There is no
+	// transfer: the role belongs to a person, so root's spare login carries
+	// it, and nothing hands the deployment to somebody else.
 	listAccounts: () => apiClient.get("/api/v1/root/accounts"),
-	createAccount: (email: string, password: string) =>
-		apiClient.post("/api/v1/root/accounts", { email, password }),
+	createAccount: (email: string, password: string, role: "root" | "admin") =>
+		apiClient.post("/api/v1/root/accounts", { email, password, role }),
 	setAccountPassword: (userId: string, password: string) =>
 		apiClient.post(`/api/v1/root/accounts/${userId}/password`, { password }),
-	deleteAccount: (userId: string) =>
-		apiClient.delete(`/api/v1/root/accounts/${userId}`),
+	deletePerson: (personId: string) =>
+		apiClient.delete(`/api/v1/root/accounts/${personId}`),
 
-	adminRegisterUser: (email: string, password: string) =>
+	// Your own logins: the addresses you sign in with. Adding one adds it to
+	// you, not to somebody else, and the list holds yours alone.
+	addOwnLogin: (email: string, password: string) =>
 		apiClient.post("/api/v1/auth/admin/register", { email, password }),
-	adminListUsers: () => apiClient.get("/api/v1/auth/admin/users"),
-	adminSetUserAdmin: (userId: string, isAdmin: boolean) =>
-		apiClient.put(`/api/v1/auth/admin/users/${userId}`, { isAdmin }),
-	adminGrantAccess: (userId: string, mailboxId: string, role: string) =>
-		apiClient.post("/api/v1/auth/admin/grant-access", {
-			userId,
-			mailboxId,
-			role,
-		}),
-	adminRevokeAccess: (userId: string, mailboxId: string) =>
-		apiClient.post("/api/v1/auth/admin/revoke-access", { userId, mailboxId }),
+	listOwnLogins: () => apiClient.get("/api/v1/auth/admin/users"),
+	deleteOwnLogin: (userId: string) =>
+		apiClient.delete(`/api/v1/auth/admin/users/${userId}`),
 
 	// Push notifications
 	getVapidPublicKey: () => apiClient.get("/api/v1/push/vapid-public-key"),

@@ -19,8 +19,9 @@
 			</div>
 		</div>
 
-		<!-- Outbound mail. The key itself is never sent back to this screen;
-		     the API answers only with where the one in use came from. -->
+		<!-- Outbound mail. Your own key: the one your messages are sent with,
+		     and the account they are billed to. The key itself is never sent
+		     back here; the API answers only with whether one is set. -->
 		<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-gray-200 dark:border-gray-700">
 			<h2 class="text-xl font-bold text-gray-900 dark:text-white mb-1">{{ t("admin.resend.title") }}</h2>
 			<p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ t("admin.resend.description") }}</p>
@@ -72,10 +73,12 @@
 			<p class="text-xs text-gray-500 dark:text-gray-400 mt-3">{{ t("admin.resend.storageNote") }}</p>
 		</div>
 
-		<!-- Register New User Section -->
+		<!-- Add another address you can sign in with. Not "create a user":
+		     it belongs to you, and losing the first is why it exists. -->
 		<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-gray-200 dark:border-gray-700">
-			<h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">{{ t("admin.registerUser.title") }}</h2>
-			<form @submit.prevent="handleRegisterUser" class="space-y-4">
+			<h2 class="text-xl font-bold text-gray-900 dark:text-white mb-1">{{ t("admin.registerUser.title") }}</h2>
+			<p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ t("admin.registerUser.description") }}</p>
+			<form @submit.prevent="handleAddLogin" class="space-y-4">
 				<div v-if="registerError" class="rounded-md bg-red-50 p-4">
 					<p class="text-sm text-red-800">{{ registerError }}</p>
 				</div>
@@ -89,7 +92,7 @@
 						</label>
 						<input
 							id="new-email"
-							v-model="newUser.email"
+							v-model="newLogin.email"
 							type="email"
 							required
 							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -102,7 +105,7 @@
 						</label>
 						<input
 							id="new-password"
-							v-model="newUser.password"
+							v-model="newLogin.password"
 							type="password"
 							required
 							minlength="8"
@@ -121,195 +124,49 @@
 			</form>
 		</div>
 
-		<!-- Users List -->
+		<!-- Your logins. Every row is you, so there is nothing to tell apart
+		     and no role column: what used to be here was every account in the
+		     deployment, root's address among them. -->
 		<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8 border border-gray-200 dark:border-gray-700">
-			<div class="flex items-center justify-between mb-4">
+			<div class="flex items-center justify-between mb-1">
 				<h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ t("admin.users.title") }}</h2>
 				<button
-					@click="loadUsers"
-					:disabled="usersLoading"
+					@click="loadLogins"
+					:disabled="loginsLoading"
 					class="px-3 py-1 text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 disabled:opacity-50"
 				>
-					{{ usersLoading ? t("admin.users.loading") : t("admin.users.refresh") }}
+					{{ loginsLoading ? t("admin.users.loading") : t("admin.users.refresh") }}
 				</button>
 			</div>
+			<p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ t("admin.users.description") }}</p>
 
-			<div v-if="usersLoading && users.length === 0" class="text-center py-8 text-gray-500">
+			<div v-if="loginsLoading && logins.length === 0" class="text-center py-8 text-gray-500">
 				{{ t("admin.users.loadingUsers") }}
 			</div>
 
-			<div v-else-if="users.length === 0" class="text-center py-8 text-gray-500">
-				{{ t("admin.users.empty") }}
-			</div>
-
-			<div v-else class="overflow-x-auto">
-				<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-					<thead>
-						<tr>
-							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ t("admin.users.columnEmail") }}</th>
-							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ t("admin.users.columnRole") }}</th>
-							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ t("admin.users.columnCreated") }}</th>
-							<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{{ t("admin.users.columnActions") }}</th>
-						</tr>
-					</thead>
-					<tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-						<tr v-for="user in users" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-							<td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ user.email }}</td>
-							<td class="px-4 py-3 text-sm">
-								<span v-if="roleOf(user) === 'root'" class="px-2 py-1 text-xs font-semibold text-amber-900 bg-amber-100 dark:bg-amber-900/40 dark:text-amber-200 rounded-full">
-									{{ t("admin.users.roleRoot") }}
-								</span>
-								<span v-else-if="roleOf(user) === 'admin'" class="px-2 py-1 text-xs font-semibold text-indigo-800 bg-indigo-100 rounded-full">
-									{{ t("admin.users.roleAdmin") }}
-								</span>
-								<span v-else class="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded-full">
-									{{ t("admin.users.roleUser") }}
-								</span>
-							</td>
-							<td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-								{{ formatDate(user.createdAt) }}
-							</td>
-							<td class="px-4 py-3 text-sm">
-								<!-- The account above this screen is not administered from it. -->
-								<span v-if="roleOf(user) === 'root'" class="text-gray-500 dark:text-gray-400">
-									{{ t("admin.users.rootNotManagedHere") }}
-								</span>
-								<div v-else class="flex flex-wrap gap-4">
-									<button
-										@click="openAccessModal(user)"
-										class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
-									>
-										{{ t("admin.users.manageAccess") }}
-									</button>
-									<button
-										@click="toggleAdmin(user)"
-										:disabled="adminTogglePending === user.id"
-										class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 disabled:opacity-50"
-									>
-										{{ user.isAdmin ? t("admin.users.revokeAdmin") : t("admin.users.grantAdmin") }}
-									</button>
-								</div>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-
-			<!-- What the three words in the role column mean. A one-word label
-			     says which of three boxes an account is in, not what it can do,
-			     and "administrator" and "user" are close enough in ordinary
-			     speech to tell nobody anything. -->
-			<dl v-if="users.length > 0" class="mt-6 space-y-2 text-xs text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-4">
-				<div>
-					<dt class="inline font-semibold text-gray-900 dark:text-gray-100">{{ t("admin.users.roleRoot") }}:</dt>
-					<dd class="inline ms-1">{{ t("admin.users.roleRootDesc") }}</dd>
-				</div>
-				<div>
-					<dt class="inline font-semibold text-gray-900 dark:text-gray-100">{{ t("admin.users.roleAdmin") }}:</dt>
-					<dd class="inline ms-1">{{ t("admin.users.roleAdminDesc") }}</dd>
-				</div>
-				<div>
-					<dt class="inline font-semibold text-gray-900 dark:text-gray-100">{{ t("admin.users.roleUser") }}:</dt>
-					<dd class="inline ms-1">{{ t("admin.users.roleUserDesc") }}</dd>
-				</div>
-			</dl>
-		</div>
-
-		<!-- Access Management Modal -->
-		<div
-			v-if="selectedUser"
-			class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-			@click.self="closeAccessModal"
-		>
-			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-				<div class="p-6 border-b border-gray-200 dark:border-gray-700">
-					<div class="flex items-center justify-between">
-						<h3 class="text-xl font-bold text-gray-900 dark:text-white">
-							{{ t("admin.accessModal.titlePrefix", { email: selectedUser.email }) }}
-						</h3>
-						<button
-							@click="closeAccessModal"
-							class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-						>
-							<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-							</svg>
-						</button>
+			<ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
+				<li
+					v-for="login in logins"
+					:key="login.id"
+					class="py-3 flex flex-wrap items-center justify-between gap-3"
+				>
+					<div>
+						<p class="text-sm text-gray-900 dark:text-gray-100">{{ login.email }}</p>
+						<p class="text-xs text-gray-500 dark:text-gray-400">{{ formatListDate(login.createdAt) }}</p>
 					</div>
-				</div>
-
-				<div class="p-6">
-					<!-- Grant Access Form -->
-					<div class="mb-6">
-						<h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">{{ t("admin.accessModal.grantTitle") }}</h4>
-						<form @submit.prevent="handleGrantAccess" class="space-y-4">
-							<div v-if="accessError" class="rounded-md bg-red-50 p-4">
-								<p class="text-sm text-red-800">{{ accessError }}</p>
-							</div>
-							<div v-if="accessSuccess" class="rounded-md bg-green-50 p-4">
-								<p class="text-sm text-green-800">{{ accessSuccess }}</p>
-							</div>
-							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-								<div>
-									<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-										{{ t("admin.accessModal.mailboxIdLabel") }}
-									</label>
-									<input
-										v-model="accessForm.mailboxId"
-										type="text"
-										required
-										class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-										placeholder="user@example.com"
-									/>
-								</div>
-								<div>
-									<label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-										{{ t("admin.accessModal.roleLabel") }}
-									</label>
-									<select
-										v-model="accessForm.role"
-										required
-										class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-									>
-										<option value="owner">{{ t("admin.accessModal.roleOwner") }}</option>
-										<option value="admin">{{ t("admin.accessModal.roleAdmin") }}</option>
-										<option value="write">{{ t("admin.accessModal.roleWrite") }}</option>
-										<option value="read">{{ t("admin.accessModal.roleRead") }}</option>
-									</select>
-								</div>
-							</div>
-							<div class="flex gap-2">
-								<button
-									type="submit"
-									:disabled="accessLoading"
-									class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-								>
-									{{ accessLoading ? t("admin.accessModal.granting") : t("admin.accessModal.grantAccess") }}
-								</button>
-								<button
-									type="button"
-									@click="handleRevokeAccess"
-									:disabled="accessLoading || !accessForm.mailboxId"
-									class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
-								>
-									{{ accessLoading ? t("admin.accessModal.revoking") : t("admin.accessModal.revokeAccess") }}
-								</button>
-							</div>
-						</form>
-					</div>
-
-					<!-- Role Descriptions -->
-					<div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-						<h4 class="text-sm font-semibold text-gray-900 dark:text-white mb-2">{{ t("admin.accessModal.roleDescriptionsTitle") }}</h4>
-						<ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-							<li><strong>{{ t("admin.accessModal.roleOwner") }}:</strong> {{ t("admin.accessModal.roleOwnerDesc") }}</li>
-							<li><strong>{{ t("admin.accessModal.roleAdmin") }}:</strong> {{ t("admin.accessModal.roleAdminDesc") }}</li>
-							<li><strong>{{ t("admin.accessModal.roleWrite") }}:</strong> {{ t("admin.accessModal.roleWriteDesc") }}</li>
-							<li><strong>{{ t("admin.accessModal.roleRead") }}:</strong> {{ t("admin.accessModal.roleReadDesc") }}</li>
-						</ul>
-					</div>
-				</div>
-			</div>
+					<button
+						v-if="logins.length > 1"
+						@click="removeLogin(login)"
+						:disabled="removing === login.id"
+						class="px-3 py-1 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 dark:text-red-400 dark:border-red-900 dark:hover:bg-red-900/30 disabled:opacity-50"
+					>
+						{{ t("admin.users.remove") }}
+					</button>
+					<span v-else class="text-xs text-gray-500 dark:text-gray-400">
+						{{ t("admin.users.onlyOne") }}
+					</span>
+				</li>
+			</ul>
 		</div>
 	</div>
 </template>
@@ -325,81 +182,53 @@ import api from "@/services/api";
 import { useAuthStore } from "@/stores/auth";
 import { translateApiError } from "@/utils/apiError";
 
-interface User {
+/**
+ * One address you can sign in with. There is no role here and no flag: every
+ * row on this screen is the same person -- you -- so there is nothing for a
+ * role column to distinguish.
+ */
+interface Login {
 	id: string;
 	email: string;
-	isAdmin: boolean;
-	/**
-	 * Sent by the Worker. This screen used to read `isAdmin` and print one of
-	 * two labels from it, which put the root account -- which is deliberately
-	 * not an administrator -- in the lower of the two, the one role it is
-	 * certainly not. Older deployments answer without the field; treat that as
-	 * "no root named yet" and fall back to the flag.
-	 */
-	role?: "root" | "admin" | "member";
 	createdAt: number;
-	updatedAt: number;
-}
-
-function roleOf(user: User): "root" | "admin" | "member" {
-	if (user.role) return user.role;
-	return user.isAdmin ? "admin" : "member";
 }
 
 const router = useRouter();
 const authStore = useAuthStore();
 const { t } = useI18n();
+const { formatListDate } = useDateFormat();
 
-// Check if user is admin
-if (!authStore.isAdmin) {
-	router.push("/");
+// Root manages people; its own mail settings and spare logins live on its own
+// screen, so it has no reason to be here.
+if (authStore.role === "root") {
+	router.push("/root");
 }
 
-// Register User State
-const newUser = ref({ email: "", password: "" });
+const newLogin = ref({ email: "", password: "" });
 const registerLoading = ref(false);
 const registerError = useLocalizedMessage();
 const registerSuccess = useLocalizedMessage();
 
-// Users List State
-const users = ref<User[]>([]);
-const usersLoading = ref(false);
-const adminTogglePending = ref<string | null>(null);
+const logins = ref<Login[]>([]);
+const loginsLoading = ref(false);
+const removing = ref<string | null>(null);
 
-// Access Management State
-const selectedUser = ref<User | null>(null);
-const accessForm = ref({ mailboxId: "", role: "read" });
-const accessLoading = ref(false);
-const accessError = useLocalizedMessage();
-const accessSuccess = useLocalizedMessage();
-
-onMounted(() => {
-	loadUsers();
-	loadResendSettings();
-});
-
-/**
- * The outbound mail key.
- *
- * Only its source is ever held here. The API does not return the key, so
- * there is nothing on this page to leak if the session is taken -- what an
- * attacker gains is the ability to replace it, which someone who can already
- * send as every mailbox largely had anyway.
- */
-type ResendSource = "stored" | "environment" | "none";
-const resendSource = ref<ResendSource>("none");
+const resendSource = ref<"stored" | "environment" | "none">("none");
 const resendApiKeyInput = ref("");
 const resendSaving = ref(false);
 const resendMessage = useLocalizedMessage();
 const resendError = useLocalizedMessage();
+
+onMounted(() => {
+	loadLogins();
+	loadResendSettings();
+});
 
 async function loadResendSettings() {
 	try {
 		const response = await api.adminGetResendSettings();
 		resendSource.value = response.data.source;
 	} catch {
-		// Not fatal: the rest of the panel still works, and the section shows
-		// "not configured" rather than a stale claim that it is.
 		resendSource.value = "none";
 	}
 }
@@ -428,19 +257,26 @@ function clearResendKey() {
 	applyResendKey("", () => t("admin.resend.removed"));
 }
 
-async function handleRegisterUser() {
+/**
+ * Adds another address to your own account.
+ *
+ * It used to create a separate account, which then had to be promoted by hand
+ * -- two steps whose result the model has no word for. What it makes now is
+ * yours from the moment it exists, carrying what you carry, reaching what you
+ * reach.
+ */
+async function handleAddLogin() {
 	registerLoading.value = true;
 	registerError.value = "";
 	registerSuccess.value = "";
 
 	try {
-		await api.adminRegisterUser(newUser.value.email, newUser.value.password);
-		const registeredEmail = newUser.value.email;
+		await api.addOwnLogin(newLogin.value.email, newLogin.value.password);
+		const added = newLogin.value.email;
 		registerSuccess.value = () =>
-			t("admin.registerUser.successMessage", { email: registeredEmail });
-		newUser.value = { email: "", password: "" };
-		// Reload users list
-		await loadUsers();
+			t("admin.registerUser.successMessage", { email: added });
+		newLogin.value = { email: "", password: "" };
+		await loadLogins();
 	} catch (error: any) {
 		const fromApi = error.response?.data?.error;
 		registerError.value = () =>
@@ -450,122 +286,37 @@ async function handleRegisterUser() {
 	}
 }
 
-async function loadUsers() {
-	usersLoading.value = true;
+async function loadLogins() {
+	loginsLoading.value = true;
 	try {
-		const response = await api.adminListUsers();
-		users.value = response.data;
+		const response = await api.listOwnLogins();
+		logins.value = response.data;
 	} catch (error: any) {
-		console.error("Failed to load users:", error);
+		console.error("Failed to load logins:", error);
 	} finally {
-		usersLoading.value = false;
+		loginsLoading.value = false;
 	}
 }
 
 /**
- * A second administrator is what makes losing one account survivable: rights
- * can only be granted by an administrator, so with one there is no way back
- * in. The Worker refuses to remove the last one.
+ * How a spare is replaced: add the new address, then remove the old one. The
+ * Worker refuses the last one, and the button is hidden when there is only
+ * one -- a person with no way in is a person nobody can reach.
  */
-async function toggleAdmin(user: User) {
-	const grant = !user.isAdmin;
-	if (
-		!window.confirm(
-			t(
-				grant
-					? "admin.users.confirmGrantAdmin"
-					: "admin.users.confirmRevokeAdmin",
-				{ email: user.email },
-			),
-		)
-	) {
+async function removeLogin(login: Login) {
+	if (!window.confirm(t("admin.users.confirmRemove", { email: login.email }))) {
 		return;
 	}
-	adminTogglePending.value = user.id;
+	removing.value = login.id;
 	try {
-		await api.adminSetUserAdmin(user.id, grant);
-		await loadUsers();
+		await api.deleteOwnLogin(login.id);
+		await loadLogins();
 	} catch (e: any) {
 		window.alert(
-			translateApiError(
-				e.response?.data?.error,
-				t("admin.users.adminChangeFailed"),
-			),
+			translateApiError(e.response?.data?.error, t("admin.users.removeFailed")),
 		);
 	} finally {
-		adminTogglePending.value = null;
+		removing.value = null;
 	}
 }
-
-function openAccessModal(user: User) {
-	selectedUser.value = user;
-	accessForm.value = { mailboxId: "", role: "read" };
-	accessError.value = "";
-	accessSuccess.value = "";
-}
-
-function closeAccessModal() {
-	selectedUser.value = null;
-	accessForm.value = { mailboxId: "", role: "read" };
-	accessError.value = "";
-	accessSuccess.value = "";
-}
-
-async function handleGrantAccess() {
-	if (!selectedUser.value) return;
-
-	accessLoading.value = true;
-	accessError.value = "";
-	accessSuccess.value = "";
-
-	try {
-		await api.adminGrantAccess(
-			selectedUser.value.id,
-			accessForm.value.mailboxId,
-			accessForm.value.role,
-		);
-		accessSuccess.value = () => t("admin.accessModal.grantSuccess");
-		accessForm.value.mailboxId = "";
-	} catch (error: any) {
-		const fromApi = error.response?.data?.error;
-		accessError.value = () => fromApi || t("admin.accessModal.failedToGrant");
-	} finally {
-		accessLoading.value = false;
-	}
-}
-
-async function handleRevokeAccess() {
-	if (!selectedUser.value || !accessForm.value.mailboxId) return;
-
-	if (
-		!confirm(
-			t("admin.accessModal.revokeConfirm", {
-				mailboxId: accessForm.value.mailboxId,
-				email: selectedUser.value.email,
-			}),
-		)
-	) {
-		return;
-	}
-
-	accessLoading.value = true;
-	accessError.value = "";
-	accessSuccess.value = "";
-
-	try {
-		await api.adminRevokeAccess(
-			selectedUser.value.id,
-			accessForm.value.mailboxId,
-		);
-		accessSuccess.value = () => t("admin.accessModal.revokeSuccess");
-		accessForm.value.mailboxId = "";
-	} catch (error: any) {
-		const fromApi = error.response?.data?.error;
-		accessError.value = () => fromApi || t("admin.accessModal.failedToRevoke");
-	} finally {
-		accessLoading.value = false;
-	}
-}
-
-const { formatDay: formatDate } = useDateFormat();
 </script>

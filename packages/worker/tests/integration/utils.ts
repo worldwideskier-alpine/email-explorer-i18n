@@ -23,11 +23,11 @@ export const testAuthBeforeAll = async () => {
 export const personId = "person-test";
 
 /**
- * Puts a mailbox in the bucket and gives the fixture user it.
+ * Puts a mailbox in the bucket and gives it to the fixture person.
  *
- * The grant is not decoration. A mailbox made through the API belongs to
- * whoever made it, and what a person can see is what their logins own. A
- * fixture that wrote only the bucket object made a mailbox belonging to
+ * The claim is not decoration. A mailbox made through the API belongs to the
+ * person who made it, and that claim is the only thing that makes it visible.
+ * A fixture that wrote only the bucket object made a mailbox belonging to
  * nobody -- something the API cannot produce -- and it was visible anyway
  * only because an account with the admin flag used to skip the question.
  */
@@ -36,7 +36,7 @@ export async function createMailbox(settings = {}) {
     await env.BUCKET.put(`mailboxes/${mailboxId}.json`, JSON.stringify(settings));
     // @ts-expect-error
     const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
-    await stub.grantMailboxAccessIfAbsent(userId, mailboxId, "owner");
+    await stub.giveMailboxToPerson(personId, mailboxId);
 }
 
 // Helper to make authenticated request

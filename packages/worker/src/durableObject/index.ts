@@ -396,6 +396,61 @@ export class MailboxDO extends DurableObject<Env> {
 			.map((row) => String(row.id));
 	}
 
+	/** The same, with the detail a screen needs. Oldest first: not a rank. */
+	async listPersonLogins(personId: string): Promise<User[]> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		return this.ctx.storage.sql
+			.exec(
+				"SELECT id, email, is_admin, created_at, updated_at FROM users WHERE person_id = ? ORDER BY created_at",
+				personId,
+			)
+			.toArray()
+			.map((row) => ({
+				id: String(row.id),
+				email: String(row.email),
+				isAdmin: row.is_admin === 1,
+				createdAt: Number(row.created_at),
+				updatedAt: Number(row.updated_at),
+			}));
+	}
+
+	/**
+	 * Everybody, one entry per person rather than per login.
+	 *
+	 * What root manages is people. A list of logins showed one person as two
+	 * unrelated rows -- with a delete button on each, when deleting a person
+	 * is a single act that takes all of it.
+	 */
+	async listPeople(): Promise<
+		Array<{ personId: string; emails: string[]; createdAt: number }>
+	> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const rows = this.ctx.storage.sql
+			.exec(
+				"SELECT person_id, email, created_at FROM users ORDER BY created_at",
+			)
+			.toArray();
+
+		const byPerson = new Map<
+			string,
+			{ personId: string; emails: string[]; createdAt: number }
+		>();
+		for (const row of rows) {
+			const personId = String(row.person_id);
+			const entry = byPerson.get(personId);
+			if (entry) entry.emails.push(String(row.email));
+			else
+				byPerson.set(personId, {
+					personId,
+					emails: [String(row.email)],
+					createdAt: Number(row.created_at),
+				});
+		}
+		return Array.from(byPerson.values());
+	}
+
 	async getUsers(): Promise<User[]> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
@@ -580,14 +635,14 @@ export class MailboxDO extends DurableObject<Env> {
 		return "ok";
 	}
 
-	/** The account holding the root role, or null when there is none yet. */
-	async getRootUserId(): Promise<string | null> {
+	/** The person holding the root role, or null when there is none yet. */
+	async getRootPersonId(): Promise<string | null> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
 		const row = this.ctx.storage.sql
-			.exec("SELECT root_user_id FROM app_roles WHERE id = 1")
+			.exec("SELECT root_person_id FROM app_roles WHERE id = 1")
 			.toArray()[0];
-		const value = row?.root_user_id;
+		const value = row?.root_person_id;
 		return value === null || value === undefined ? null : String(value);
 	}
 
@@ -606,46 +661,34 @@ export class MailboxDO extends DurableObject<Env> {
 	async claimRoot(userId: string): Promise<"ok" | "not-found" | "taken"> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
-		if (await this.getRootUserId()) return "taken";
+		if (await this.getRootPersonId()) return "taken";
 
-		const user = this.#qb
-			.select<{ id: string }>("users")
-			.fields(["id"])
-			.where("id = ?", userId)
-			.one().results;
-		if (!user) return "not-found";
+		const personId = await this.getPersonId(userId);
+		if (!personId) return "not-found";
 
 		this.ctx.storage.sql.exec(
-			"UPDATE app_roles SET root_user_id = ? WHERE id = 1",
-			userId,
+			"UPDATE app_roles SET root_person_id = ? WHERE id = 1",
+			personId,
 		);
 		return "ok";
 	}
 
-	/**
-	 * Hands the role to another account. Called by root and nobody else.
+	/*
+	 * There is deliberately no way to hand the role to somebody else.
 	 *
-	 * This is the handover path and the recovery path at once. Without it the
-	 * only way out of a lost root account would be editing the storage from
-	 * the Cloudflare side, which is a thing to fall back on, not a thing to
-	 * plan around.
+	 * There used to be, as the handover and recovery path at once. It has to
+	 * go: this is software somebody sells, and root's whole job is making and
+	 * unmaking the accounts of the people who pay for it. A button that hands
+	 * that to one of them is a button nobody wants to own, however carefully
+	 * it is guarded, and its mere presence is the thing that is wrong.
+	 *
+	 * What replaces it is that the role is now held by a person rather than
+	 * by one login. Losing the address you sign in with does not lose the
+	 * role, because you add a second login the same way anybody else does.
+	 * Recovery stops needing a way out of the hierarchy. Losing every login
+	 * of the root person leaves the Cloudflare account, which is the line
+	 * every other guarantee here is drawn on.
 	 */
-	async transferRoot(userId: string): Promise<"ok" | "not-found"> {
-		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-
-		const user = this.#qb
-			.select<{ id: string }>("users")
-			.fields(["id"])
-			.where("id = ?", userId)
-			.one().results;
-		if (!user) return "not-found";
-
-		this.ctx.storage.sql.exec(
-			"UPDATE app_roles SET root_user_id = ? WHERE id = 1",
-			userId,
-		);
-		return "ok";
-	}
 
 	/**
 	 * Grants access, or changes the role if there already is some.
@@ -656,84 +699,105 @@ export class MailboxDO extends DurableObject<Env> {
 	 * reading the grants first. Assigning a mailbox to somebody who already
 	 * has it is not an error; it is the same sentence said twice.
 	 */
-	async grantMailboxAccess(
-		userId: string,
+	async giveMailboxToPerson(
+		personId: string,
 		mailboxId: string,
-		role: string,
 	): Promise<void> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
 		this.ctx.storage.sql.exec(
-			"INSERT OR REPLACE INTO user_mailboxes (user_id, mailbox_id, role) VALUES (?, ?, ?)",
-			userId,
+			"INSERT OR IGNORE INTO person_mailboxes (person_id, mailbox_id) VALUES (?, ?)",
+			personId,
 			mailboxId,
-			role,
 		);
 	}
 
-	/**
-	 * Grants access only if the user does not already have some on that
-	 * mailbox, leaving any existing role alone.
-	 *
-	 * The backfill that gives every already-existing mailbox an explicit owner
-	 * has to be safe to run twice -- it runs from whichever request happens to
-	 * arrive first after a deploy, and two of those can be in flight at once.
-	 * A plain insert would fail on the primary key the second time, and
-	 * INSERT OR REPLACE would quietly demote an owner to whatever the backfill
-	 * happens to pass.
-	 */
-	async grantMailboxAccessIfAbsent(
+	/** The same, addressed by one of the person's logins. */
+	async giveMailboxToPersonOf(
 		userId: string,
 		mailboxId: string,
-		role: string,
 	): Promise<void> {
-		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-
-		this.ctx.storage.sql.exec(
-			"INSERT OR IGNORE INTO user_mailboxes (user_id, mailbox_id, role) VALUES (?, ?, ?)",
-			userId,
-			mailboxId,
-			role,
-		);
+		const personId = await this.getPersonId(userId);
+		if (!personId) return;
+		await this.giveMailboxToPerson(personId, mailboxId);
 	}
 
 	/**
-	 * Removes an account: its mailbox grants and its sessions go with it.
+	 * Removes a person from this side: every login they sign in with, every
+	 * session, every push subscription, and their claim on their mailboxes.
 	 *
-	 * The grants have to go or a later account reusing the same id would
-	 * inherit them, and the sessions have to go or a deleted account keeps
-	 * working until its token expires -- thirty days of an account somebody
-	 * deleted on purpose.
+	 * It returns the mailboxes so the caller can destroy them. Root deleting
+	 * somebody means all of it -- the mail, the archives, the lot -- and the
+	 * mail does not live here; see DeleteAccount for the rest of it.
 	 *
-	 * The mailboxes themselves are untouched. Deleting a person must not
-	 * delete the mail: the addresses outlive whoever was looking after them,
-	 * and root reassigns them afterwards.
+	 * This used to keep the mailboxes, on the reasoning that mail outlives
+	 * whoever read it. That is true between colleagues and false here: root
+	 * is the person running the deployment and the people below are its
+	 * customers, and "delete this customer" that leaves their mail sitting in
+	 * the bucket has not deleted the customer. Half a deletion is worse than
+	 * either whole: the data is still there, still costing, still readable
+	 * from the Cloudflare account, and nothing on any screen says so.
+	 *
+	 * Root itself cannot be deleted. There is no one above it to put it back.
 	 */
-	async deleteUser(userId: string): Promise<"ok" | "not-found" | "last-admin"> {
+	async deletePerson(personId: string): Promise<{
+		status: "ok" | "not-found" | "is-root";
+		mailboxIds: string[];
+	}> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
-		const user = this.#qb
-			.select<{ is_admin: number }>("users")
-			.fields(["is_admin"])
-			.where("id = ?", userId)
-			.one().results;
-		if (!user) return "not-found";
-
-		// The same guard as demotion, for the same reason: rights here can
-		// only be granted by an administrator, so removing the last one leaves
-		// nobody able to grant them back.
-		if (user.is_admin === 1) {
-			const admins = this.ctx.storage.sql
-				.exec("SELECT COUNT(*) AS count FROM users WHERE is_admin = 1")
-				.toArray();
-			if (Number(admins[0]?.count ?? 0) <= 1) return "last-admin";
+		const logins = await this.listPersonLoginIds(personId);
+		if (logins.length === 0) return { status: "not-found", mailboxIds: [] };
+		if (personId === (await this.getRootPersonId())) {
+			return { status: "is-root", mailboxIds: [] };
 		}
 
+		const mailboxIds = (await this.listPersonMailboxes(personId)).slice();
+
+		for (const userId of logins) {
+			this.ctx.storage.sql.exec(
+				"DELETE FROM sessions WHERE user_id = ?",
+				userId,
+			);
+			this.ctx.storage.sql.exec(
+				"DELETE FROM push_subscriptions WHERE user_id = ?",
+				userId,
+			);
+		}
 		this.ctx.storage.sql.exec(
-			"DELETE FROM user_mailboxes WHERE user_id = ?",
+			"DELETE FROM person_mailboxes WHERE person_id = ?",
+			personId,
+		);
+		this.ctx.storage.sql.exec(
+			"DELETE FROM users WHERE person_id = ?",
+			personId,
+		);
+		return { status: "ok", mailboxIds };
+	}
+
+	/**
+	 * Removes one login, leaving the person and their mailboxes alone.
+	 *
+	 * This is how somebody replaces a spare: the addresses they sign in with
+	 * are theirs to change. It refuses the last one, because a person with no
+	 * way in is a person nobody can reach or delete.
+	 */
+	async deleteLogin(
+		userId: string,
+	): Promise<"ok" | "not-found" | "last-login"> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const personId = await this.getPersonId(userId);
+		if (!personId) return "not-found";
+		if ((await this.listPersonLoginIds(personId)).length <= 1) {
+			return "last-login";
+		}
+
+		this.ctx.storage.sql.exec("DELETE FROM sessions WHERE user_id = ?", userId);
+		this.ctx.storage.sql.exec(
+			"DELETE FROM push_subscriptions WHERE user_id = ?",
 			userId,
 		);
-		this.ctx.storage.sql.exec("DELETE FROM sessions WHERE user_id = ?", userId);
 		this.ctx.storage.sql.exec("DELETE FROM users WHERE id = ?", userId);
 		return "ok";
 	}
@@ -772,22 +836,6 @@ export class MailboxDO extends DurableObject<Env> {
 		return "ok";
 	}
 
-	// Auth operation: revoke mailbox access
-	async revokeMailboxAccess(userId: string, mailboxId: string): Promise<void> {
-		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-
-		this.#qb
-			.delete({
-				tableName: "user_mailboxes",
-				where: {
-					conditions: "user_id = ? AND mailbox_id = ?",
-					params: [userId, mailboxId],
-				},
-			})
-			.execute();
-	}
-
-	// Auth operation: get user mailboxes
 	/** Which person a login belongs to, or null if the login is gone. */
 	async getPersonId(userId: string): Promise<string | null> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
@@ -799,81 +847,59 @@ export class MailboxDO extends DurableObject<Env> {
 		return value === null || value === undefined ? null : String(value);
 	}
 
+	/** The mailboxes a person holds. */
+	async listPersonMailboxes(personId: string): Promise<string[]> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		return this.ctx.storage.sql
+			.exec(
+				"SELECT mailbox_id FROM person_mailboxes WHERE person_id = ?",
+				personId,
+			)
+			.toArray()
+			.map((row) => String(row.mailbox_id));
+	}
+
 	/**
-	 * The mailboxes a person can reach, through any of their logins.
+	 * The mailboxes reachable from one login: the ones its person holds.
 	 *
-	 * This is what replaces "an administrator sees everything". A person's
-	 * second login is not given the estate; it is given what that person
-	 * already has, which is the whole point of having a second one. Two
-	 * different people share nothing, which the flag could not express.
+	 * This is what replaces "an administrator sees everything". A second
+	 * login is not handed the estate; it reaches what its person already
+	 * holds, which is the entire point of having a second one. Two different
+	 * people share nothing, which a flag could not express.
 	 */
-	async getPersonMailboxes(
-		userId: string,
-	): Promise<Array<{ mailboxId: string; role: string }>> {
+	async getPersonMailboxes(userId: string): Promise<string[]> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
 		const personId = await this.getPersonId(userId);
-		// A login with no person is nobody's: answer for that login alone
-		// rather than matching every other row whose person is also unset.
-		if (!personId) return this.getUserMailboxes(userId);
-
-		const rows = this.ctx.storage.sql
-			.exec(
-				`SELECT DISTINCT um.mailbox_id AS mailbox_id, um.role AS role
-                 FROM user_mailboxes um
-                 JOIN users u ON u.id = um.user_id
-                 WHERE u.person_id = ?`,
-				personId,
-			)
-			.toArray();
-
-		return rows.map((row) => ({
-			mailboxId: String(row.mailbox_id),
-			role: String(row.role),
-		}));
+		// A login with no person holds nothing. Answering "every mailbox
+		// whose person is also unset" would put strangers together, which is
+		// the failure this whole arrangement exists to prevent.
+		if (!personId) return [];
+		return this.listPersonMailboxes(personId);
 	}
 
-	async getUserMailboxes(
-		userId: string,
-	): Promise<Array<{ mailboxId: string; role: string }>> {
-		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-
-		const result = this.#qb
-			.select("user_mailboxes")
-			.fields(["mailbox_id", "role"])
-			.where("user_id = ?", userId)
-			.execute();
-
-		return (
-			result.results?.map((row) => ({
-				mailboxId: String(row.mailbox_id),
-				role: String(row.role),
-			})) ?? []
-		);
-	}
-
-	// Push operation: get ids of every user who should be notified for a
-	// mailbox -- admins (implicit access to everything) plus anyone granted
-	// explicit access via user_mailboxes.
+	/**
+	 * Who to notify about mail arriving in a mailbox: every login of the
+	 * person who holds it.
+	 *
+	 * It used to be "every administrator, plus anyone granted access", so a
+	 * second person made an administrator was pushed notifications about the
+	 * first person's mail -- the subject line of it, on their phone.
+	 */
 	async getUserIdsForMailbox(mailboxId: string): Promise<string[]> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
-		const admins = this.#qb
-			.select("users")
-			.fields(["id"])
-			.where("is_admin = 1")
-			.execute();
-
-		const granted = this.#qb
-			.select("user_mailboxes")
-			.fields(["user_id"])
-			.where("mailbox_id = ?", mailboxId)
-			.execute();
-
-		const ids = new Set<string>();
-		for (const row of admins.results ?? []) ids.add(String(row.id));
-		for (const row of granted.results ?? []) ids.add(String(row.user_id));
-		return Array.from(ids);
+		return this.ctx.storage.sql
+			.exec(
+				`SELECT u.id AS id
+                 FROM users u
+                 JOIN person_mailboxes pm ON pm.person_id = u.person_id
+                 WHERE pm.mailbox_id = ?`,
+				mailboxId,
+			)
+			.toArray()
+			.map((row) => String(row.id));
 	}
 
 	// Push operation: save a subscription for a user (upsert by endpoint)
@@ -1192,13 +1218,13 @@ export class MailboxDO extends DurableObject<Env> {
 		this.#qb.migrations({ migrations: mailboxMigrations }).apply();
 	}
 
-	// Auth operation: drop every user's access to a mailbox that is going away.
+	// Auth operation: drop every claim on a mailbox that is going away.
 	async revokeAllMailboxAccess(mailboxId: string): Promise<void> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
 		this.#qb
 			.delete({
-				tableName: "user_mailboxes",
+				tableName: "person_mailboxes",
 				where: {
 					conditions: "mailbox_id = ?",
 					params: [mailboxId],
