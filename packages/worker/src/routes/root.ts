@@ -33,7 +33,6 @@ const AccountSchema = z.object({
 	id: z.string(),
 	email: z.string(),
 	role: z.enum(["root", "admin", "member"]),
-	mailboxes: z.array(z.string()),
 	createdAt: z.number(),
 });
 
@@ -83,18 +82,18 @@ export class GetAccounts extends OpenAPIRoute {
 		const rootUserId = await authDO(c.env).getRootUserId();
 
 		const users = await authDO(c.env).getUsers();
-		const accounts = await Promise.all(
-			users.map(async (user) => ({
+		// Which mailboxes an account has is deliberately absent. Root makes
+		// and unmakes accounts; what an administrator does with their own
+		// addresses afterwards is not root's business, and listing them here
+		// would make it so.
+		return c.json(
+			users.map((user) => ({
 				id: user.id,
 				email: user.email,
 				role: roleOf(user, rootUserId),
-				mailboxes: (await authDO(c.env).getUserMailboxes(user.id)).map(
-					(entry) => entry.mailboxId,
-				),
 				createdAt: user.createdAt,
 			})),
 		);
-		return c.json(accounts);
 	}
 }
 
@@ -220,123 +219,6 @@ export class DeleteAccount extends OpenAPIRoute {
 	}
 }
 
-export class PostAccountMailbox extends OpenAPIRoute {
-	schema = {
-		summary: "Assign a mailbox to an account (root only)",
-		operationId: "assignMailbox",
-		tags: ["Root"],
-		request: {
-			params: z.object({ userId: z.string() }),
-			body: contentJson(
-				z.object({
-					mailboxId: z.string(),
-					role: z.enum(["owner", "admin", "write", "read"]).default("owner"),
-				}),
-			),
-		},
-		responses: {
-			"200": { description: "Assigned", ...contentJson(SuccessResponseSchema) },
-			"404": { description: "Not found", ...contentJson(ErrorResponseSchema) },
-			...forbidden,
-		},
-	};
-
-	async handle(c: AppContext) {
-		const session = requireRoot(c);
-		if (session instanceof Response) return session;
-
-		const data = await this.getValidatedData<typeof this.schema>();
-		// Checked because a grant on a mailbox that does not exist is a row
-		// nothing will ever clean up, and a typo that looks like it worked.
-		if (!(await c.env.BUCKET.head(`mailboxes/${data.body.mailboxId}.json`))) {
-			return c.json({ error: "Not found" }, 404);
-		}
-		await authDO(c.env).grantMailboxAccess(
-			data.params.userId,
-			data.body.mailboxId,
-			data.body.role,
-		);
-		return c.json({ status: "assigned" });
-	}
-}
-
-export class DeleteAccountMailbox extends OpenAPIRoute {
-	schema = {
-		summary: "Take a mailbox away from an account (root only)",
-		operationId: "unassignMailbox",
-		tags: ["Root"],
-		request: {
-			params: z.object({ userId: z.string(), mailboxId: z.string() }),
-		},
-		responses: {
-			"204": { description: "Unassigned" },
-			...forbidden,
-		},
-	};
-
-	async handle(c: AppContext) {
-		const session = requireRoot(c);
-		if (session instanceof Response) return session;
-
-		const { userId, mailboxId } = (
-			await this.getValidatedData<typeof this.schema>()
-		).params;
-		// Only the assignment goes. The mailbox and its mail are untouched:
-		// taking an address away from a person must never be a way to delete
-		// the mail in it.
-		await authDO(c.env).revokeMailboxAccess(userId, mailboxId);
-		return c.body(null, 204);
-	}
-}
-
-/**
- * Names the first root, from the admin screen, once.
- *
- * Deliberately **not** a root-only route -- there is no root yet, so a
- * root-only route could never be reached and the tier could never come into
- * existence without going outside the application. An administrator may do
- * it, which grants them nothing: an administrator can already make and unmake
- * administrators. The Durable Object refuses if a root already exists, so
- * this is a door that opens once and then is not there.
- */
-export class PostClaimRoot extends OpenAPIRoute {
-	schema = {
-		summary: "Name the first root account (admin only, once)",
-		operationId: "claimRoot",
-		tags: ["Root"],
-		request: { body: contentJson(z.object({ userId: z.string() })) },
-		responses: {
-			"200": { description: "Named", ...contentJson(SuccessResponseSchema) },
-			"404": { description: "Not found", ...contentJson(ErrorResponseSchema) },
-			"409": {
-				description: "There is already a root account",
-				...contentJson(ErrorResponseSchema),
-			},
-			"401": {
-				description: "Unauthorized",
-				...contentJson(ErrorResponseSchema),
-			},
-			"403": { description: "Admin only", ...contentJson(ErrorResponseSchema) },
-		},
-	};
-
-	async handle(c: AppContext) {
-		const session = c.get("session");
-		if (!session) return c.json({ error: "Unauthorized" }, 401);
-		if (!session.isAdmin) {
-			return c.json({ error: "Admin privileges required" }, 403);
-		}
-
-		const { userId } = (await this.getValidatedData<typeof this.schema>()).body;
-		const result = await authDO(c.env).claimRoot(userId);
-		if (result === "not-found") return c.json({ error: "Not found" }, 404);
-		if (result === "taken") {
-			return c.json({ error: "A root account already exists" }, 409);
-		}
-		return c.json({ status: "assigned" });
-	}
-}
-
 /**
  * Hands the role to another account.
  *
@@ -370,38 +252,5 @@ export class PostTransferRoot extends OpenAPIRoute {
 		const result = await authDO(c.env).transferRoot(userId);
 		if (result === "not-found") return c.json({ error: "Not found" }, 404);
 		return c.json({ status: "transferred" });
-	}
-}
-
-/**
- * Whether this deployment has a root account yet, for the admin screen to
- * know whether to offer the one-time setup. Admin-only, and it returns an id
- * and nothing else -- who root is, is already visible in the account list.
- */
-export class GetRootAccount extends OpenAPIRoute {
-	schema = {
-		summary: "Which account holds the root role (admin only)",
-		operationId: "getRootAccount",
-		tags: ["Root"],
-		responses: {
-			"200": {
-				description: "The root account, or null",
-				...contentJson(z.object({ userId: z.string().nullable() })),
-			},
-			"401": {
-				description: "Unauthorized",
-				...contentJson(ErrorResponseSchema),
-			},
-			"403": { description: "Admin only", ...contentJson(ErrorResponseSchema) },
-		},
-	};
-
-	async handle(c: AppContext) {
-		const session = c.get("session");
-		if (!session) return c.json({ error: "Unauthorized" }, 401);
-		if (!session.isAdmin) {
-			return c.json({ error: "Admin privileges required" }, 403);
-		}
-		return c.json({ userId: await authDO(c.env).getRootUserId() });
 	}
 }

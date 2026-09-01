@@ -98,43 +98,6 @@
               </div>
             </div>
 
-            <!-- Which addresses this account looks after. Root moves them
-                 between accounts; it does not open them. -->
-            <div v-if="account.role !== 'root'" class="mt-3">
-              <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{{ t("admin.accessModal.mailboxIdLabel") }}</p>
-              <div class="flex flex-wrap items-center gap-2">
-                <span
-                  v-for="mailbox in account.mailboxes"
-                  :key="mailbox"
-                  class="inline-flex items-center gap-2 px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md"
-                >
-                  {{ mailbox }}
-                  <button
-                    @click="unassign(account, mailbox)"
-                    :disabled="busy"
-                    class="text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
-                  >
-                    {{ t("admin.accessModal.revokeAccess") }}
-                  </button>
-                </span>
-                <span v-if="account.mailboxes.length === 0" class="text-xs text-gray-400">—</span>
-              </div>
-              <form @submit.prevent="assign(account)" class="flex flex-wrap items-center gap-2 mt-2">
-                <input
-                  v-model="assignTo[account.id]"
-                  type="text"
-                  :placeholder="t('admin.accessModal.mailboxIdLabel')"
-                  class="w-64 max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm text-sm p-1.5"
-                />
-                <button
-                  type="submit"
-                  :disabled="busy"
-                  class="px-3 py-1.5 text-sm text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
-                >
-                  {{ t("admin.accessModal.grantAccess") }}
-                </button>
-              </form>
-            </div>
           </li>
         </ul>
       </div>
@@ -158,7 +121,6 @@ interface Account {
 	id: string;
 	email: string;
 	role: AccountRole;
-	mailboxes: string[];
 	createdAt: number;
 }
 
@@ -171,7 +133,6 @@ const loading = ref(true);
 const busy = ref(false);
 const newEmail = ref("");
 const newPassword = ref("");
-const assignTo = ref<Record<string, string>>({});
 // Stored as how to produce the text, not as the text: a message frozen at
 // whichever language was current stays behind when the language changes.
 const message = useLocalizedMessage();
@@ -265,48 +226,6 @@ async function transfer(account: Account) {
 		window.location.assign("/");
 	} catch {
 		error.value = () => t("root.deleteFailed");
-	} finally {
-		busy.value = false;
-	}
-}
-
-async function assign(account: Account) {
-	const mailboxId = (assignTo.value[account.id] ?? "").trim();
-	if (!mailboxId) return;
-
-	busy.value = true;
-	message.value = "";
-	error.value = "";
-	try {
-		await api.assignMailbox(account.id, mailboxId);
-		assignTo.value[account.id] = "";
-		message.value = () => t("admin.accessModal.grantSuccess");
-		await load();
-	} catch {
-		error.value = () => t("admin.accessModal.failedToGrant");
-	} finally {
-		busy.value = false;
-	}
-}
-
-async function unassign(account: Account, mailboxId: string) {
-	if (
-		!window.confirm(
-			t("admin.accessModal.revokeConfirm", { email: account.email, mailboxId }),
-		)
-	) {
-		return;
-	}
-
-	busy.value = true;
-	message.value = "";
-	error.value = "";
-	try {
-		await api.unassignMailbox(account.id, mailboxId);
-		message.value = () => t("admin.accessModal.revokeSuccess");
-		await load();
-	} catch {
-		error.value = () => t("admin.accessModal.failedToRevoke");
 	} finally {
 		busy.value = false;
 	}

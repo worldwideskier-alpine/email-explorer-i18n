@@ -96,7 +96,45 @@ describe("Mailbox Authorization Regression Tests (Issue #19)", () => {
 			},
 		);
 
-		return { adminToken, userToken, userId: user.id };
+		// A real administrator, distinct from the first account.
+		//
+		// The first account to register is root, and root is deliberately kept
+		// out of the administrator's view of every mailbox: it manages
+		// accounts and owns no mail. So "an administrator sees everything"
+		// has to be asserted on somebody root made an administrator.
+		const secondRes = await authenticatedFetch(
+			"http://local.test/api/v1/auth/admin/register",
+			adminToken,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					email: "admin2@test.com",
+					password: "password123",
+				}),
+			},
+		);
+		const second = await secondRes.json<any>();
+		await authenticatedFetch(
+			`http://local.test/api/v1/auth/admin/users/${second.id}`,
+			adminToken,
+			{
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ isAdmin: true }),
+			},
+		);
+		const secondLogin = await SELF.fetch("http://local.test/api/v1/auth/login", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				email: "admin2@test.com",
+				password: "password123",
+			}),
+		});
+		const otherAdminToken = (await secondLogin.json<any>()).id;
+
+		return { adminToken, otherAdminToken, userToken, userId: user.id };
 	};
 
 	describe("GetMailboxes endpoint filtering", () => {
@@ -117,11 +155,11 @@ describe("Mailbox Authorization Regression Tests (Issue #19)", () => {
 		});
 
 		it("should return all mailboxes for admin users", async () => {
-			const { adminToken } = await setupUsersAndMailboxes();
+			const { otherAdminToken } = await setupUsersAndMailboxes();
 
 			const response = await authenticatedFetch(
 				"http://local.test/api/v1/mailboxes",
-				adminToken,
+				otherAdminToken,
 			);
 
 			expect(response.status).toBe(200);

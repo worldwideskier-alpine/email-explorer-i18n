@@ -324,10 +324,6 @@
 			"removed": "Verwijderd.",
 			"failed": "Opslaan is niet gelukt.",
 			"storageNote": "De sleutel staat in R2, waar iedereen met het Cloudflare-account hem kan lezen. Hij wordt nooit naar dit scherm teruggestuurd."
-		},
-		"rootSetup": {
-			"submit": "Eigenaar maken",
-			"confirm": "{email} eigenaar maken? Daarna kan alleen dat account accounts aanmaken en verwijderen. Eenmalig in te stellen."
 		}
 	},
 	"compose": {

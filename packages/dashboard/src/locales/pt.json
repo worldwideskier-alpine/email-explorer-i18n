@@ -324,10 +324,6 @@
 			"removed": "Removida.",
 			"failed": "Não foi possível guardar.",
 			"storageNote": "A chave é guardada no R2, onde qualquer pessoa com a conta Cloudflare a pode ler. Nunca é devolvida a este ecrã."
-		},
-		"rootSetup": {
-			"submit": "Tornar proprietário",
-			"confirm": "Tornar {email} o proprietário? A partir daí só essa conta poderá criar e eliminar contas. Definível apenas uma vez."
 		}
 	},
 	"compose": {

@@ -324,10 +324,6 @@
 			"removed": "Eltávolítva.",
 			"failed": "A mentés nem sikerült.",
 			"storageNote": "A kulcs az R2-ben tárolódik, ahol bárki elolvashatja, akinek Cloudflare-fiókja van. Erre a képernyőre soha nem kerül vissza."
-		},
-		"rootSetup": {
-			"submit": "Tulajdonossá tétel",
-			"confirm": "Legyen {email} a tulajdonos? Ezután csak az a fiók hozhat létre és törölhet fiókokat. Csak egyszer állítható be."
 		}
 	},
 	"compose": {

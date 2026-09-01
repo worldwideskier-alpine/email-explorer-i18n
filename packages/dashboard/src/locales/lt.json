@@ -324,10 +324,6 @@
 			"removed": "Pašalinta.",
 			"failed": "Nepavyko įrašyti.",
 			"storageNote": "Raktas laikomas R2, kur jį gali perskaityti kiekvienas, turintis Cloudflare paskyrą. Į šį ekraną jis niekada negrąžinamas."
-		},
-		"rootSetup": {
-			"submit": "Padaryti savininku",
-			"confirm": "Padaryti {email} savininku? Nuo tada tik ta paskyra galės kurti ir trinti paskyras. Nustatoma tik kartą."
 		}
 	},
 	"compose": {

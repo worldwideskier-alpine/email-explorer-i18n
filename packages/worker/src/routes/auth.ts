@@ -162,6 +162,17 @@ export class PostRegister extends OpenAPIRoute {
 			// Check if this is the first user
 			const isFirstUser = !(await authDO.hasUsers());
 			const user = await authDO.register(email, password, isFirstUser);
+
+			// The first account to register is the root account, and that is
+			// the only way one comes into being. Not a button somewhere that
+			// an administrator can press: on a public deployment that button
+			// is "any administrator may seize the tier above them, once", and
+			// there is no reading of it that is safe.
+			//
+			// Everything else follows from here -- root makes the
+			// administrators, administrators make the mailboxes.
+			if (isFirstUser) await authDO.claimRoot(user.id);
+
 			return c.json(user, 201);
 		} catch (error: any) {
 			if (error.message?.includes("UNIQUE constraint failed")) {

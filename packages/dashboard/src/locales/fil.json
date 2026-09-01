@@ -324,10 +324,6 @@
 			"removed": "Inalis.",
 			"failed": "Hindi ma-save.",
 			"storageNote": "Nakaimbak ang key sa R2, kung saan mababasa ito ng sinumang may hawak ng Cloudflare account. Hindi ito kailanman ibinabalik sa screen na ito."
-		},
-		"rootSetup": {
-			"submit": "Gawing may-ari",
-			"confirm": "Gawing may-ari ang {email}? Pagkatapos noon, ang account na iyon lang ang makakagawa at makakatanggal ng account. Isang beses lang itong maitatakda."
 		}
 	},
 	"compose": {

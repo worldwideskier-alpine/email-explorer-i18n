@@ -324,10 +324,6 @@
 			"removed": "Usunięto.",
 			"failed": "Nie udało się zapisać.",
 			"storageNote": "Klucz jest przechowywany w R2, gdzie może go odczytać każdy, kto ma konto Cloudflare. Nigdy nie wraca na ten ekran."
-		},
-		"rootSetup": {
-			"submit": "Ustaw jako właściciela",
-			"confirm": "Ustawić {email} jako właściciela? Od tej pory tylko to konto będzie mogło tworzyć i usuwać konta. Można ustawić tylko raz."
 		}
 	},
 	"compose": {

@@ -324,10 +324,6 @@
 			"removed": "Eliminada.",
 			"failed": "No s'ha pogut desar.",
 			"storageNote": "La clau es desa a R2, on pot llegir-la qui tingui el compte de Cloudflare. Mai es retorna a aquesta pantalla."
-		},
-		"rootSetup": {
-			"submit": "Fes-lo propietari",
-			"confirm": "Voleu fer propietari {email}? A partir d'aleshores només aquest compte podrà crear i suprimir comptes. Només es pot definir una vegada."
 		}
 	},
 	"compose": {

@@ -324,10 +324,6 @@
 			"removed": "Supprimée.",
 			"failed": "Enregistrement impossible.",
 			"storageNote": "La clé est stockée dans R2, où toute personne disposant du compte Cloudflare peut la lire. Elle n'est jamais renvoyée à cet écran."
-		},
-		"rootSetup": {
-			"submit": "Définir comme propriétaire",
-			"confirm": "Faire de {email} le propriétaire ? Ensuite, seul ce compte pourra créer et supprimer des comptes. Réglable une seule fois."
 		}
 	},
 	"compose": {

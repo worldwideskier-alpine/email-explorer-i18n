@@ -181,17 +181,6 @@
 									>
 										{{ user.isAdmin ? t("admin.users.revokeAdmin") : t("admin.users.grantAdmin") }}
 									</button>
-									<!-- Only while this deployment has no root account. Once
-										 one exists the door closes, and the role moves from
-										 the root screen instead. -->
-									<button
-										v-if="rootUserId === null"
-										@click="claimRoot(user)"
-										:disabled="adminTogglePending === user.id"
-										class="text-amber-700 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300 disabled:opacity-50"
-									>
-										{{ t("admin.rootSetup.submit") }}
-									</button>
 								</div>
 							</td>
 						</tr>
@@ -338,15 +327,6 @@ const users = ref<User[]>([]);
 const usersLoading = ref(false);
 const adminTogglePending = ref<string | null>(null);
 
-/**
- * Which account holds the root role, or null while this deployment has none.
- *
- * Only used to decide whether to offer the one-time setup. A deployment that
- * has never named a root shows it; one that has, does not -- the role moves
- * from the root screen after that, never from here.
- */
-const rootUserId = ref<string | null>(null);
-
 // Access Management State
 const selectedUser = ref<User | null>(null);
 const accessForm = ref({ mailboxId: "", role: "read" });
@@ -356,39 +336,8 @@ const accessSuccess = useLocalizedMessage();
 
 onMounted(() => {
 	loadUsers();
-	loadRootAccount();
 	loadResendSettings();
 });
-
-async function loadRootAccount() {
-	try {
-		rootUserId.value = (await api.getRootAccount()).data?.userId ?? null;
-	} catch {
-		// Older Worker, or no permission: offering the setup would be worse
-		// than not offering it, so say there is one.
-		rootUserId.value = "";
-	}
-}
-
-/**
- * Names the first root. Available only while there is none: the Worker
- * refuses once one exists, and this button disappears at the same moment.
- */
-async function claimRoot(user: User) {
-	if (!window.confirm(t("admin.rootSetup.confirm", { email: user.email }))) {
-		return;
-	}
-	adminTogglePending.value = user.id;
-	try {
-		await api.claimRoot(user.id);
-		await loadRootAccount();
-		await loadUsers();
-	} catch {
-		accessError.value = () => t("admin.users.adminChangeFailed");
-	} finally {
-		adminTogglePending.value = null;
-	}
-}
 
 /**
  * The outbound mail key.
