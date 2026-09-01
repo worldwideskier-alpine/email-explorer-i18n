@@ -1,6 +1,5 @@
 import { env, runInDurableObject, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
-import { resetLegacyGrantMemo } from "../../src/legacy-grants";
 import { createMailbox, mailboxId } from "./utils";
 
 /**
@@ -48,10 +47,6 @@ function as(token: string) {
 }
 
 describe("who may reach the account list", () => {
-	beforeEach(() => {
-		resetLegacyGrantMemo();
-	});
-
 	it("refuses an administrator who is not root", async () => {
 		await register("operator@example.com", "password123");
 		const other = await createUser("other@example.com", true);
@@ -73,7 +68,6 @@ describe("what root does with accounts", () => {
 	let root: string;
 
 	beforeEach(async () => {
-		resetLegacyGrantMemo();
 		await register("operator@example.com", "password123");
 		root = (await signIn("operator@example.com")).id;
 	});
@@ -85,7 +79,9 @@ describe("what root does with accounts", () => {
 			body: JSON.stringify({ email: "hanako@example.com", password: "password123" }),
 		});
 		expect(created.status).toBe(201);
-		expect((await signIn("hanako@example.com")).role).toBe("admin");
+		// Not an administrator: an account root makes registers the addresses
+		// it uses and administers nothing.
+		expect((await signIn("hanako@example.com")).role).toBe("member");
 	});
 
 	it("will not create the same address twice", async () => {
@@ -200,104 +196,10 @@ describe("what root does with accounts", () => {
 });
 
 /**
- * The migration, and the reason it exists.
- *
- * An administrator saw every mailbox by skipping the access check, so the
- * mailboxes actually in use had no grant rows at all. Remove that skip with
- * nothing in their place and every mailbox vanishes from every screen at
- * once. The backfill writes the rows first, while the skip is still there and
- * nothing depends on them.
- */
-describe("mailboxes that predate the grant model", () => {
-	beforeEach(() => {
-		resetLegacyGrantMemo();
-	});
-
-	it("gives each existing administrator an explicit ownership row", async () => {
-		await register("first@example.com", "password123");
-		const adminId = await createUser("admin@example.com", true);
-		const firstSession = await signIn("admin@example.com");
-		await createMailbox();
-
-		// The screen where a missing grant would first show. Asking for it is
-		// what runs the backfill.
-		expect(
-			(await as(firstSession.id)("http://local.test/api/v1/mailboxes")).status,
-		).toBe(200);
-
-		const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
-		await runInDurableObject(stub, async (instance) => {
-			const owned = await (
-				instance as unknown as {
-					getUserMailboxes(id: string): Promise<{ mailboxId: string }[]>;
-				}
-			).getUserMailboxes(adminId);
-			expect(owned.map((entry) => entry.mailboxId)).toContain(mailboxId);
-		});
-	});
-
-	/**
-	 * Root manages accounts; it does not inherit the estate. Here the same
-	 * account was an administrator first and then became root, so the
-	 * backfill has to have skipped it.
-	 */
-	it("does not give the existing mailboxes to root", async () => {
-		await register("operator@example.com", "password123");
-		const rootSession = await signIn("operator@example.com");
-		await createMailbox();
-		await as(rootSession.id)("http://local.test/api/v1/mailboxes");
-
-		const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
-		const me = await (
-			await as(rootSession.id)("http://local.test/api/v1/auth/me")
-		).json<{ userId: string }>();
-		await runInDurableObject(stub, async (instance) => {
-			const owned = await (
-				instance as unknown as {
-					getUserMailboxes(id: string): Promise<{ mailboxId: string }[]>;
-				}
-			).getUserMailboxes(me.userId);
-			expect(owned).toEqual([]);
-		});
-	});
-
-	/**
-	 * Once, not as a rule. Repeating it would mean every administrator owning
-	 * every mailbox for ever, which is the arrangement being moved away from:
-	 * a mailbox made after this belongs to whoever made it.
-	 */
-	it("does not adopt mailboxes made after it ran", async () => {
-		await register("first@example.com", "password123");
-		const firstSession = await signIn("first@example.com");
-		await createMailbox();
-		await as(firstSession.id)("http://local.test/api/v1/mailboxes");
-
-		const laterAdmin = await createUser("later@example.com", true);
-		resetLegacyGrantMemo();
-		await as(firstSession.id)("http://local.test/api/v1/mailboxes");
-
-		const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
-		await runInDurableObject(stub, async (instance) => {
-			const owned = await (
-				instance as unknown as {
-					getUserMailboxes(id: string): Promise<{ mailboxId: string }[]>;
-				}
-			).getUserMailboxes(laterAdmin);
-			expect(owned).toEqual([]);
-		});
-	});
-});
-
-/**
- * The other half of the same promise: a mailbox made from now on belongs to
- * whoever made it, so it does not disappear the moment the administrator
- * bypass is removed.
+ * A mailbox belongs to whoever registered it. Nobody assigns it; registering
+ * the address is what connects it to an account.
  */
 describe("a mailbox made today", () => {
-	beforeEach(() => {
-		resetLegacyGrantMemo();
-	});
-
 	it("belongs to whoever created it", async () => {
 		await register("first@example.com", "password123");
 		const session = await signIn("first@example.com");
@@ -326,10 +228,6 @@ describe("a mailbox made today", () => {
 });
 
 describe("the first account", () => {
-	beforeEach(() => {
-		resetLegacyGrantMemo();
-	});
-
 	/**
 	 * Step one of the only flow there is: root, then the administrators root
 	 * makes, then the mailboxes those administrators make.
@@ -389,7 +287,6 @@ describe("handing root to somebody else", () => {
 	let rootUserId: string;
 
 	beforeEach(async () => {
-		resetLegacyGrantMemo();
 		await register("first@example.com", "password123");
 		const session = await signIn("first@example.com");
 		rootUserId = (

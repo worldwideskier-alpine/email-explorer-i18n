@@ -10,7 +10,6 @@ import { base64ToBytes } from "./base64";
 import { classifyWithClaude } from "./claude-spam-filter";
 import { recoveryFromEmail } from "./deployment-config";
 import { ingestEmailIntoMailbox } from "./email-ingest";
-import { ensureLegacyMailboxGrants } from "./legacy-grants";
 import { buildPasswordResetEmail, MAIL_LOCALES } from "./mail-templates";
 import {
 	getClaudeApiKey,
@@ -287,20 +286,23 @@ class GetMailboxes extends OpenAPIRoute {
 			}),
 		);
 
-		// Before answering, make sure every mailbox that predates the grant
-		// model has an owner. This is the screen where a missing grant would
-		// first be visible, and the backfill has to be in place before the
-		// administrator bypass below is removed. Runs once; see legacy-grants.
-		await ensureLegacyMailboxGrants(c.env);
-
-		// If no session (auth disabled) or user is admin, return all mailboxes.
-		// Root is excluded on purpose: it manages accounts and owns no
-		// mailbox, so the whole estate is not its to look at.
-		if (!session || (session.isAdmin && session.role !== "root")) {
+		/**
+		 * Everybody sees the mailboxes they registered, and nothing else.
+		 *
+		 * There used to be an exception for administrators, who saw every
+		 * mailbox on the deployment. That is what made two people using the
+		 * same deployment into two people reading each other's mail, and it
+		 * is gone: an account registers the addresses it uses, and those are
+		 * the ones it sees. Nobody assigns them -- registering an address is
+		 * what connects it to an account.
+		 *
+		 * The only remaining exception is no session at all, which happens
+		 * when a deployment has switched authentication off.
+		 */
+		if (!session) {
 			return c.json(allMailboxes);
 		}
 
-		// Non-admin users can only see mailboxes they have access to
 		const authId = c.env.MAILBOX.idFromName("AUTH");
 		const authDO = c.env.MAILBOX.get(authId);
 		const userMailboxes = await authDO.getUserMailboxes(session.userId);
@@ -2444,7 +2446,6 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 			_context: ExecutionContext,
 		) {
 			env.config = options;
-			await ensureLegacyMailboxGrants(env);
 			await runScheduledMaintenance(env);
 		},
 		async fetch(request: Request, env: Env, context: ExecutionContext) {
@@ -2481,12 +2482,10 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 					await next();
 				});
 
-				// Middleware to check mailbox access for non-admin users
+				// Whether this account registered this mailbox. No exception
+				// for administrators: see GetMailboxes for why that exception
+				// had to go.
 				const checkMailboxAccess = async (c: any, next: any) => {
-					if (session.isAdmin) {
-						await next();
-						return;
-					}
 					const mailboxId = c.req.param("mailboxId");
 					if (!mailboxId) {
 						await next();

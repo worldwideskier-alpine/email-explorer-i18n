@@ -126,17 +126,22 @@ export class PostAccount extends OpenAPIRoute {
 		).body;
 
 		try {
-			// Created as an administrator: this is the tier that owns
-			// mailboxes. A member -- someone given access to a mailbox they do
-			// not own -- is made by assigning a mailbox, not by creating an
-			// account.
-			const user = await authDO(c.env).register(email, password, true);
+			// Not created as an administrator, deliberately.
+			//
+			// These accounts are people who register the addresses they use.
+			// They administer nothing: there is nothing above their own
+			// addresses for them to administer, and the tier that does -- root
+			// -- is the one making them. Marking them as administrators would
+			// hand each of them every administrator-only capability on the
+			// deployment, the outbound mail key included, and would pull them
+			// into the one-time backfill that gives an administrator every
+			// mailbox that already exists.
+			const user = await authDO(c.env).register(email, password, false);
 			return c.json(
 				{
 					id: user.id,
 					email: user.email,
-					role: "admin",
-					mailboxes: [],
+					role: "member",
 					createdAt: user.createdAt,
 				},
 				201,
