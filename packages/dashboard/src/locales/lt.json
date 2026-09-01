@@ -324,6 +324,10 @@
 			"removed": "Pašalinta.",
 			"failed": "Nepavyko įrašyti.",
 			"storageNote": "Raktas laikomas R2, kur jį gali perskaityti kiekvienas, turintis Cloudflare paskyrą. Į šį ekraną jis niekada negrąžinamas."
+		},
+		"rootSetup": {
+			"submit": "Padaryti savininku",
+			"confirm": "Padaryti {email} savininku? Nuo tada tik ta paskyra galės kurti ir trinti paskyras. Nustatoma tik kartą."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Nustatyti naują slaptažodį",
 		"deleteAccount": "Ištrinti paskyrą",
 		"confirmDelete": "Ištrinti {email}? Pašto dėžutės ir laiškai išliks.",
-		"deleteFailed": "Nepavyko ištrinti."
+		"deleteFailed": "Nepavyko ištrinti.",
+		"transfer": "Perduoti",
+		"confirmTransfer": "Perduoti savininko vaidmenį paskyrai {email}? Prarasite šį langą."
 	}
 }

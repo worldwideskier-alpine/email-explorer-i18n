@@ -31,13 +31,6 @@ export default defineConfig({
 					// resend-settings.test.ts passes its own env objects to
 					// check which of the two sources wins.
 					RESEND_API_KEY: "re_placeholder_for_tests",
-					// Which login address holds the root role. Normally a
-					// repository variable; here a fixed one, so the tests can
-					// sign in as root and as somebody who merely wishes they
-					// were. Deliberately a "+tag" address: that shape is the
-					// point of the design and the thing most likely to be
-					// broken by a well-meant normalisation.
-					ROOT_ADMIN_EMAIL: "operator+root@example.com",
 				},
 				r2Persist: false,
 				compatibilityFlags: ["nodejs_compat", "nodejs_als"],

@@ -180,4 +180,23 @@ export const authMigrations: Migration[] = [
             CREATE INDEX idx_auth_throttle_window ON auth_throttle(window_started_at);
         `,
 	},
+	{
+		/**
+		 * Which account holds the root role.
+		 *
+		 * Here rather than in a deployment variable because this is software
+		 * people fork and deploy: saying who administers their own mail must
+		 * not require going to GitHub. A single row, so there is exactly one
+		 * root or none at all.
+		 */
+		name: "4_root_account",
+		sql: `
+            CREATE TABLE app_roles (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                root_user_id TEXT
+            );
+
+            INSERT INTO app_roles (id) VALUES (1);
+        `,
+	},
 ];

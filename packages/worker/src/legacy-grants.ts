@@ -22,7 +22,6 @@
  * whoever creates them.
  */
 
-import { isRoot } from "./roles";
 import type { Env } from "./types";
 
 /**
@@ -89,9 +88,8 @@ export async function ensureLegacyMailboxGrants(
 	// Root is skipped too, and that is the whole point of it: it manages
 	// accounts and owns no mail. Backfilling it would make it an owner of
 	// every mailbox on its first day.
-	const owners = users.filter(
-		(user) => user.isAdmin && !isRoot(user, env.ROOT_ADMIN_EMAIL),
-	);
+	const rootUserId = await authDO.getRootUserId();
+	const owners = users.filter((user) => user.isAdmin && user.id !== rootUserId);
 	const mailboxes = await listMailboxIds(env);
 
 	let granted = 0;

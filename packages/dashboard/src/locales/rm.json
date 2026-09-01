@@ -324,6 +324,10 @@
 			"removed": "Allontanà.",
 			"failed": "Betg reussì da memorisar.",
 			"storageNote": "La clav vegn memorisada en R2, nua che mintgin cun il conto Cloudflare la po leger. Ella na vegn mai returnada a quest visur."
+		},
+		"rootSetup": {
+			"submit": "Far a proprietari",
+			"confirm": "Far {email} a proprietari? Suenter po mo quel conto crear e stizzar contos. Sa lascha definir mo ina giada."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Reinizialisar la pled-clav",
 		"deleteAccount": "Stizzar il conto",
 		"confirmDelete": "Stizzar {email}? Las chaschettas ed ils messadis restan.",
-		"deleteFailed": "Betg pussaivel da stizzar."
+		"deleteFailed": "Betg pussaivel da stizzar.",
+		"transfer": "Surdar",
+		"confirmTransfer": "Surdar il rollo da proprietari a {email}? Vus perdais questa fanestra."
 	}
 }

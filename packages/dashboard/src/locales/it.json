@@ -324,6 +324,10 @@
 			"removed": "Rimossa.",
 			"failed": "Non è stato possibile salvarla.",
 			"storageNote": "La chiave è conservata in R2, dove può leggerla chiunque disponga dell'account Cloudflare. Non viene mai restituita a questa schermata."
+		},
+		"rootSetup": {
+			"submit": "Rendi proprietario",
+			"confirm": "Rendere {email} il proprietario? Da quel momento solo quell'account potrà creare ed eliminare account. Impostabile una volta sola."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Reimposta la password",
 		"deleteAccount": "Elimina l'account",
 		"confirmDelete": "Eliminare {email}? Le caselle e i messaggi restano.",
-		"deleteFailed": "Impossibile eliminare."
+		"deleteFailed": "Impossibile eliminare.",
+		"transfer": "Trasferisci",
+		"confirmTransfer": "Trasferire il ruolo di proprietario a {email}? Perderai questa schermata."
 	}
 }

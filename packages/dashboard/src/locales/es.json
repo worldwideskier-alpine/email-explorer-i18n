@@ -324,6 +324,10 @@
 			"removed": "Quitada.",
 			"failed": "No se pudo guardar.",
 			"storageNote": "La clave se guarda en R2, donde puede leerla quien tenga la cuenta de Cloudflare. Nunca se devuelve a esta pantalla."
+		},
+		"rootSetup": {
+			"submit": "Hacer propietario",
+			"confirm": "¿Hacer propietario a {email}? A partir de entonces solo esa cuenta podrá crear y eliminar cuentas. Solo se puede definir una vez."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Restablecer la contraseña",
 		"deleteAccount": "Eliminar la cuenta",
 		"confirmDelete": "¿Eliminar {email}? Los buzones y sus mensajes se conservan.",
-		"deleteFailed": "No se pudo eliminar."
+		"deleteFailed": "No se pudo eliminar.",
+		"transfer": "Transferir",
+		"confirmTransfer": "¿Transferir el rol de propietario a {email}? Perderá esta pantalla."
 	}
 }

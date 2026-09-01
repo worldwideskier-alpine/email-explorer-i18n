@@ -324,6 +324,10 @@
 			"removed": "Removed.",
 			"failed": "Could not save it.",
 			"storageNote": "The key is stored in R2, where anyone holding the Cloudflare account can read it. It is never returned to this screen."
+		},
+		"rootSetup": {
+			"submit": "Make owner",
+			"confirm": "Make {email} the owner? From then on only that account can create and delete accounts. This can be set once."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Reset password",
 		"deleteAccount": "Delete account",
 		"confirmDelete": "Delete {email}? The mailboxes and their mail are kept.",
-		"deleteFailed": "Could not delete."
+		"deleteFailed": "Could not delete.",
+		"transfer": "Hand over",
+		"confirmTransfer": "Hand the owner role to {email}? You will lose this screen."
 	}
 }

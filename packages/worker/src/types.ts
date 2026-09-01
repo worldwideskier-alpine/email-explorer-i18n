@@ -49,12 +49,5 @@ export type Env = {
 	 * `config.accountRecovery.fromEmail`; see deployment-config.ts.
 	 */
 	ACCOUNT_RECOVERY_FROM?: string;
-	/**
-	 * The login address that holds the root role. Set per deployment, and
-	 * deliberately not a flag in the database -- see roles.ts for why that is
-	 * the design rather than a shortcut. Unset means this deployment has no
-	 * root account, which is the state every existing deployment starts in.
-	 */
-	ROOT_ADMIN_EMAIL?: string;
 	config?: EmailExplorerOptions;
 };

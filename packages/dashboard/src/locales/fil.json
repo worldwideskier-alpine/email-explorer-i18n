@@ -324,6 +324,10 @@
 			"removed": "Inalis.",
 			"failed": "Hindi ma-save.",
 			"storageNote": "Nakaimbak ang key sa R2, kung saan mababasa ito ng sinumang may hawak ng Cloudflare account. Hindi ito kailanman ibinabalik sa screen na ito."
+		},
+		"rootSetup": {
+			"submit": "Gawing may-ari",
+			"confirm": "Gawing may-ari ang {email}? Pagkatapos noon, ang account na iyon lang ang makakagawa at makakatanggal ng account. Isang beses lang itong maitatakda."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "I-reset ang password",
 		"deleteAccount": "Tanggalin ang account",
 		"confirmDelete": "Tanggalin ang {email}? Mananatili ang mga mailbox at mensahe.",
-		"deleteFailed": "Hindi natanggal."
+		"deleteFailed": "Hindi natanggal.",
+		"transfer": "Ilipat",
+		"confirmTransfer": "Ilipat ang papel ng may-ari kay {email}? Mawawala sa iyo ang screen na ito."
 	}
 }

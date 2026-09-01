@@ -14,7 +14,6 @@ import { createMailbox, mailboxId } from "./utils";
  * not a change worth having.
  */
 
-const ROOT_EMAIL = "operator+root@example.com";
 
 async function register(email: string, password: string) {
 	const res = await SELF.fetch("http://local.test/api/v1/auth/register", {
@@ -41,6 +40,18 @@ async function signIn(email: string, password = "password123") {
 	return res.json<{ id: string; role?: string }>();
 }
 
+/**
+ * Names the first root the way the admin screen does. There is no root yet,
+ * so this cannot be a root-only route -- see PostClaimRoot.
+ */
+async function claimRoot(adminToken: string, userId: string) {
+	return as(adminToken)("http://local.test/api/v1/auth/admin/claim-root", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ userId }),
+	});
+}
+
 function as(token: string) {
 	return (url: string, options: RequestInit = {}) =>
 		SELF.fetch(url, {
@@ -49,34 +60,29 @@ function as(token: string) {
 		});
 }
 
-describe("who root is", () => {
+describe("who may reach the account list", () => {
 	beforeEach(() => {
 		resetLegacyGrantMemo();
 	});
 
-	it("hands the role to the configured address at sign-in", async () => {
-		await register(ROOT_EMAIL, "password123");
-		expect((await signIn(ROOT_EMAIL)).role).toBe("root");
-	});
-
-	/**
-	 * The address without the tag reaches the same real inbox, and that is
-	 * exactly why it must not inherit the role.
-	 */
-	it("does not hand it to the same inbox without the tag", async () => {
+	it("refuses an administrator who is not root", async () => {
 		await register("operator@example.com", "password123");
-		expect((await signIn("operator@example.com")).role).toBe("admin");
-	});
+		const first = await signIn("operator@example.com");
+		const me = await (
+			await as(first.id)("http://local.test/api/v1/auth/me")
+		).json<{ userId: string }>();
+		await claimRoot(first.id, me.userId);
 
-	it("refuses the account list to an administrator who is not root", async () => {
-		await register("operator@example.com", "password123");
-		const session = await signIn("operator@example.com");
-		const res = await as(session.id)("http://local.test/api/v1/root/accounts");
-		expect(res.status).toBe(403);
+		const other = await createUser("other@example.com", true);
+		expect(other).toBeTruthy();
+		const otherSession = await signIn("other@example.com");
+		expect(
+			(await as(otherSession.id)("http://local.test/api/v1/root/accounts"))
+				.status,
+		).toBe(403);
 	});
 
 	it("refuses it to nobody at all", async () => {
-		await register(ROOT_EMAIL, "password123");
 		const res = await SELF.fetch("http://local.test/api/v1/root/accounts");
 		expect(res.status).toBe(401);
 	});
@@ -87,8 +93,13 @@ describe("what root does with accounts", () => {
 
 	beforeEach(async () => {
 		resetLegacyGrantMemo();
-		await register(ROOT_EMAIL, "password123");
-		root = (await signIn(ROOT_EMAIL)).id;
+		await register("operator@example.com", "password123");
+		const first = await signIn("operator@example.com");
+		const me = await (
+			await as(first.id)("http://local.test/api/v1/auth/me")
+		).json<{ userId: string }>();
+		await claimRoot(first.id, me.userId);
+		root = (await signIn("operator@example.com")).id;
 	});
 
 	it("creates an account, and it can sign in", async () => {
@@ -307,11 +318,21 @@ describe("mailboxes that predate the grant model", () => {
 		});
 	});
 
-	// Root manages accounts; it does not inherit the estate on its first day.
+	/**
+	 * Root manages accounts; it does not inherit the estate. Here the same
+	 * account was an administrator first and then became root, so the
+	 * backfill has to have skipped it.
+	 */
 	it("does not hand the existing mailboxes to root", async () => {
-		await register(ROOT_EMAIL, "password123");
-		const rootSession = await signIn(ROOT_EMAIL);
+		await register("operator@example.com", "password123");
+		const first = await signIn("operator@example.com");
+		const me = await (
+			await as(first.id)("http://local.test/api/v1/auth/me")
+		).json<{ userId: string }>();
+		await claimRoot(first.id, me.userId);
 		await createMailbox();
+
+		const rootSession = await signIn("operator@example.com");
 		await as(rootSession.id)("http://local.test/api/v1/mailboxes");
 
 		const accounts = await (
@@ -380,6 +401,145 @@ describe("a mailbox made today", () => {
 			expect(owned.map((entry) => entry.mailboxId)).toContain(
 				"brand-new@example.com",
 			);
+		});
+	});
+});
+
+describe("naming the first root", () => {
+	beforeEach(() => {
+		resetLegacyGrantMemo();
+	});
+
+	it("starts with nobody as root", async () => {
+		await register("first@example.com", "password123");
+		expect((await signIn("first@example.com")).role).toBe("admin");
+	});
+
+	it("refuses the account list until one exists", async () => {
+		await register("first@example.com", "password123");
+		const session = await signIn("first@example.com");
+		expect(
+			(await as(session.id)("http://local.test/api/v1/root/accounts")).status,
+		).toBe(403);
+	});
+
+	/**
+	 * An administrator may do it, and that is not an escalation: an
+	 * administrator can already make and unmake administrators, so this hands
+	 * them nothing they could not already reach.
+	 */
+	it("lets an administrator name one from the admin screen", async () => {
+		await register("first@example.com", "password123");
+		const session = await signIn("first@example.com");
+		const me = await (
+			await as(session.id)("http://local.test/api/v1/auth/me")
+		).json<{ userId: string }>();
+
+		expect((await claimRoot(session.id, me.userId)).status).toBe(200);
+		// The role travels with a new sign-in, and with a refresh of an old one.
+		expect((await signIn("first@example.com")).role).toBe("root");
+	});
+
+	// The door opens once. Otherwise any administrator could take the role
+	// back whenever they liked, and the tier would be decorative.
+	it("refuses a second naming", async () => {
+		await register("first@example.com", "password123");
+		const session = await signIn("first@example.com");
+		const me = await (
+			await as(session.id)("http://local.test/api/v1/auth/me")
+		).json<{ userId: string }>();
+		await claimRoot(session.id, me.userId);
+
+		const other = await createUser("other@example.com", true);
+		expect((await claimRoot(session.id, other)).status).toBe(409);
+	});
+
+	it("refuses an account that does not exist", async () => {
+		await register("first@example.com", "password123");
+		const session = await signIn("first@example.com");
+		expect((await claimRoot(session.id, "no-such-user")).status).toBe(404);
+	});
+
+	it("refuses somebody who is not an administrator", async () => {
+		await register("first@example.com", "password123");
+		const admin = await signIn("first@example.com");
+		await createUser("plain@example.com", false);
+		const plain = await signIn("plain@example.com");
+
+		expect((await claimRoot(plain.id, "anything")).status).toBe(403);
+		// And the administrator can still do it afterwards.
+		const me = await (
+			await as(admin.id)("http://local.test/api/v1/auth/me")
+		).json<{ userId: string }>();
+		expect((await claimRoot(admin.id, me.userId)).status).toBe(200);
+	});
+});
+
+/**
+ * Handing the role on. This is the handover path and the recovery path at
+ * once, which is why it exists rather than being left to an edit of the
+ * storage from the Cloudflare side.
+ */
+describe("handing root to somebody else", () => {
+	let root: string;
+	let rootUserId: string;
+
+	beforeEach(async () => {
+		resetLegacyGrantMemo();
+		await register("first@example.com", "password123");
+		const session = await signIn("first@example.com");
+		const me = await (
+			await as(session.id)("http://local.test/api/v1/auth/me")
+		).json<{ userId: string }>();
+		await claimRoot(session.id, me.userId);
+		rootUserId = me.userId;
+		root = (await signIn("first@example.com")).id;
+	});
+
+	it("moves the role, and the old holder loses the screen", async () => {
+		const successor = await createUser("next@example.com", true);
+
+		const res = await as(root)("http://local.test/api/v1/root/transfer", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ userId: successor }),
+		});
+		expect(res.status).toBe(200);
+
+		expect((await signIn("next@example.com")).role).toBe("root");
+		expect((await signIn("first@example.com")).role).toBe("admin");
+		expect(
+			(await as(root)("http://local.test/api/v1/root/accounts")).status,
+		).toBe(403);
+	});
+
+	it("is refused to anyone who is not root", async () => {
+		const other = await createUser("other@example.com", true);
+		const otherSession = await signIn("other@example.com");
+		const res = await as(otherSession.id)(
+			"http://local.test/api/v1/root/transfer",
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ userId: other }),
+			},
+		);
+		expect(res.status).toBe(403);
+	});
+
+	it("refuses an account that does not exist", async () => {
+		const res = await as(root)("http://local.test/api/v1/root/transfer", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ userId: "no-such-user" }),
+		});
+		expect(res.status).toBe(404);
+	});
+
+	it("reports who holds the role", async () => {
+		const res = await as(root)("http://local.test/api/v1/auth/admin/root");
+		expect(await res.json<{ userId: string | null }>()).toEqual({
+			userId: rootUserId,
 		});
 	});
 });

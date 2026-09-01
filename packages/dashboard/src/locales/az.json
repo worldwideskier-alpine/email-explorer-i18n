@@ -324,6 +324,10 @@
 			"removed": "Silindi.",
 			"failed": "Saxlamaq mümkün olmadı.",
 			"storageNote": "Açar R2-də saxlanılır və Cloudflare hesabı olan hər kəs onu oxuya bilər. Bu ekrana heç vaxt qaytarılmır."
+		},
+		"rootSetup": {
+			"submit": "Sahib et",
+			"confirm": "{email} sahib edilsin? Bundan sonra yalnız o hesab hesab yarada və silə bilər. Yalnız bir dəfə təyin edilə bilər."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Parolu sıfırla",
 		"deleteAccount": "Hesabı sil",
 		"confirmDelete": "{email} silinsin? Poçt qutuları və məktublar qalır.",
-		"deleteFailed": "Silmək mümkün olmadı."
+		"deleteFailed": "Silmək mümkün olmadı.",
+		"transfer": "Ötür",
+		"confirmTransfer": "Sahib rolu {email} hesabına ötürülsün? Bu ekranı itirəcəksiniz."
 	}
 }

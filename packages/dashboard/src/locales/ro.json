@@ -324,6 +324,10 @@
 			"removed": "Eliminată.",
 			"failed": "Nu s-a putut salva.",
 			"storageNote": "Cheia se păstrează în R2, unde o poate citi oricine are contul Cloudflare. Nu este niciodată returnată acestui ecran."
+		},
+		"rootSetup": {
+			"submit": "Setează ca proprietar",
+			"confirm": "Setați {email} ca proprietar? De atunci doar acel cont va putea crea și șterge conturi. Se poate seta o singură dată."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Resetează parola",
 		"deleteAccount": "Șterge contul",
 		"confirmDelete": "Ștergeți {email}? Cutiile și mesajele se păstrează.",
-		"deleteFailed": "Nu s-a putut șterge."
+		"deleteFailed": "Nu s-a putut șterge.",
+		"transfer": "Transferă",
+		"confirmTransfer": "Transferați rolul de proprietar către {email}? Veți pierde acest ecran."
 	}
 }

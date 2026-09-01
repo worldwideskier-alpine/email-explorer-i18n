@@ -324,6 +324,10 @@
 			"removed": "已刪除。",
 			"failed": "儲存失敗。",
 			"storageNote": "金鑰儲存在 R2 中，持有 Cloudflare 帳戶的人可以讀取。不會回傳至此畫面。"
+		},
+		"rootSetup": {
+			"submit": "設為超級管理員",
+			"confirm": "要將 {email} 設為超級管理員嗎？此後只有該帳戶可以建立和刪除帳戶。只能設定這一次。"
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "重設密碼",
 		"deleteAccount": "刪除帳戶",
 		"confirmDelete": "要刪除 {email} 嗎？信箱和郵件將保留。",
-		"deleteFailed": "無法刪除。"
+		"deleteFailed": "無法刪除。",
+		"transfer": "轉移超級管理員",
+		"confirmTransfer": "要將超級管理員轉移給 {email} 嗎？您將無法再使用此畫面。"
 	}
 }

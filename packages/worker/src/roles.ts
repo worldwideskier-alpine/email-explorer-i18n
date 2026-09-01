@@ -5,61 +5,44 @@
  *
  *  - **root** -- creates, edits and deletes the accounts below it. Its whole
  *    job is the account list; it owns no mailbox and reads no mail.
- *  - **admin** -- an ordinary person with several addresses. Sees the
- *    mailboxes assigned to them and nothing else.
+ *  - **admin** -- an ordinary person with several addresses.
  *  - **member** -- someone given access to a mailbox they do not own.
  *
- * **root is decided by a deployment setting, not by a column in the
- * database.** That is the point of the design rather than an implementation
- * shortcut, and it buys two things:
+ * **Root is an account id held in this application's own storage.** Not a
+ * deployment variable, not an environment setting: this is software people
+ * fork and deploy, and requiring them to go to GitHub to say who administers
+ * their own mail would be a strange thing to ask. Every part of it happens on
+ * the deployed site.
  *
- *  - Nobody can take it from inside the application. There is no "make this
- *    user root" endpoint to find, no flag to flip with a stolen admin
- *    session. Becoming root means being able to change the deployment's
- *    configuration, which means the GitHub account -- a different door,
- *    guarded by somebody else's password.
- *  - It cannot be lost. If the root account's password is forgotten and its
- *    recovery address is gone, point ROOT_ADMIN_EMAIL at another address and
- *    redeploy. A flag in the database has no such way back: the last root
- *    locking themselves out would be final.
+ * It is an id rather than an address on purpose. An address can be changed by
+ * its owner, and comparing addresses means normalising them -- fold the case,
+ * trim the space, and then somebody wonders whether to strip a `+tag` and
+ * quietly hands the role to a different account. An id is the account.
  *
- * The cost is that changing who root is takes a deploy. For a role that
- * changes when a business changes hands, that is the right price.
+ * How the first one comes to be, and how it survives:
+ *
+ *  - A deployment starts with no root, and every root-only route refuses
+ *    everyone. That is the state a deployment upgrading into this begins in,
+ *    and nothing about it is broken.
+ *  - While there is no root, an administrator may name one, once, from the
+ *    admin screen. That is not an escalation: an administrator can already
+ *    make and unmake administrators, so it grants nothing they could not
+ *    reach anyway. The moment root exists the door closes.
+ *  - Root can hand the role to another account. That is the handover path,
+ *    and it is also the recovery path, which is why it exists rather than
+ *    being left to a database edit.
+ *  - If root is lost entirely -- password gone, recovery address gone -- what
+ *    remains is the Cloudflare account, which reaches the storage directly.
+ *    That is the same line every other guarantee here is drawn on; see the
+ *    backup section of the README.
  */
 
 export type AccountRole = "root" | "admin" | "member";
 
-/**
- * How a login address is compared.
- *
- * Case is folded because registration does not fold it, so `Root@x` and
- * `root@x` can both exist as accounts and both must resolve the same way
- * against the configured address.
- *
- * A `+tag` is deliberately **not** stripped. `worldwideskier+admin@gmail.com`
- * and `worldwideskier@gmail.com` arrive in the same Gmail inbox, but they are
- * different accounts here, and that is exactly what makes one address usable
- * as two logins. Folding the tag away would silently make the ordinary
- * account root as well.
- */
-export function normalizeLoginEmail(email: string): string {
-	return email.trim().toLowerCase();
-}
-
 export function roleOf(
-	user: { email: string; isAdmin: boolean },
-	rootAdminEmail: string | undefined,
+	user: { id: string; isAdmin: boolean },
+	rootUserId: string | null | undefined,
 ): AccountRole {
-	const configured = normalizeLoginEmail(rootAdminEmail ?? "");
-	if (configured && normalizeLoginEmail(user.email) === configured) {
-		return "root";
-	}
+	if (rootUserId && user.id === rootUserId) return "root";
 	return user.isAdmin ? "admin" : "member";
-}
-
-export function isRoot(
-	user: { email: string; isAdmin: boolean },
-	rootAdminEmail: string | undefined,
-): boolean {
-	return roleOf(user, rootAdminEmail) === "root";
 }

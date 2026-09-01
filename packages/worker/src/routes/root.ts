@@ -17,7 +17,6 @@
 import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
-import { rootAdminEmail } from "../deployment-config";
 import { roleOf } from "../roles";
 import type { Env, Session } from "../types";
 
@@ -81,14 +80,14 @@ export class GetAccounts extends OpenAPIRoute {
 		const session = requireRoot(c);
 		if (session instanceof Response) return session;
 
-		const configuredRoot = rootAdminEmail(c.env);
+		const rootUserId = await authDO(c.env).getRootUserId();
 
 		const users = await authDO(c.env).getUsers();
 		const accounts = await Promise.all(
 			users.map(async (user) => ({
 				id: user.id,
 				email: user.email,
-				role: roleOf(user, configuredRoot),
+				role: roleOf(user, rootUserId),
 				mailboxes: (await authDO(c.env).getUserMailboxes(user.id)).map(
 					(entry) => entry.mailboxId,
 				),
@@ -287,5 +286,122 @@ export class DeleteAccountMailbox extends OpenAPIRoute {
 		// the mail in it.
 		await authDO(c.env).revokeMailboxAccess(userId, mailboxId);
 		return c.body(null, 204);
+	}
+}
+
+/**
+ * Names the first root, from the admin screen, once.
+ *
+ * Deliberately **not** a root-only route -- there is no root yet, so a
+ * root-only route could never be reached and the tier could never come into
+ * existence without going outside the application. An administrator may do
+ * it, which grants them nothing: an administrator can already make and unmake
+ * administrators. The Durable Object refuses if a root already exists, so
+ * this is a door that opens once and then is not there.
+ */
+export class PostClaimRoot extends OpenAPIRoute {
+	schema = {
+		summary: "Name the first root account (admin only, once)",
+		operationId: "claimRoot",
+		tags: ["Root"],
+		request: { body: contentJson(z.object({ userId: z.string() })) },
+		responses: {
+			"200": { description: "Named", ...contentJson(SuccessResponseSchema) },
+			"404": { description: "Not found", ...contentJson(ErrorResponseSchema) },
+			"409": {
+				description: "There is already a root account",
+				...contentJson(ErrorResponseSchema),
+			},
+			"401": {
+				description: "Unauthorized",
+				...contentJson(ErrorResponseSchema),
+			},
+			"403": { description: "Admin only", ...contentJson(ErrorResponseSchema) },
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = c.get("session");
+		if (!session) return c.json({ error: "Unauthorized" }, 401);
+		if (!session.isAdmin) {
+			return c.json({ error: "Admin privileges required" }, 403);
+		}
+
+		const { userId } = (await this.getValidatedData<typeof this.schema>()).body;
+		const result = await authDO(c.env).claimRoot(userId);
+		if (result === "not-found") return c.json({ error: "Not found" }, 404);
+		if (result === "taken") {
+			return c.json({ error: "A root account already exists" }, 409);
+		}
+		return c.json({ status: "assigned" });
+	}
+}
+
+/**
+ * Hands the role to another account.
+ *
+ * The handover path and the recovery path at once, which is why it is here
+ * rather than left to an edit of the storage. Root loses the account screen
+ * the moment this returns.
+ */
+export class PostTransferRoot extends OpenAPIRoute {
+	schema = {
+		summary: "Hand the root role to another account (root only)",
+		operationId: "transferRoot",
+		tags: ["Root"],
+		request: { body: contentJson(z.object({ userId: z.string() })) },
+		responses: {
+			"200": {
+				description: "Transferred",
+				...contentJson(SuccessResponseSchema),
+			},
+			"404": { description: "Not found", ...contentJson(ErrorResponseSchema) },
+			...forbidden,
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = requireRoot(c);
+		if (session instanceof Response) return session;
+
+		const { userId } = (await this.getValidatedData<typeof this.schema>()).body;
+		if (userId === session.userId) return c.json({ status: "unchanged" });
+
+		const result = await authDO(c.env).transferRoot(userId);
+		if (result === "not-found") return c.json({ error: "Not found" }, 404);
+		return c.json({ status: "transferred" });
+	}
+}
+
+/**
+ * Whether this deployment has a root account yet, for the admin screen to
+ * know whether to offer the one-time setup. Admin-only, and it returns an id
+ * and nothing else -- who root is, is already visible in the account list.
+ */
+export class GetRootAccount extends OpenAPIRoute {
+	schema = {
+		summary: "Which account holds the root role (admin only)",
+		operationId: "getRootAccount",
+		tags: ["Root"],
+		responses: {
+			"200": {
+				description: "The root account, or null",
+				...contentJson(z.object({ userId: z.string().nullable() })),
+			},
+			"401": {
+				description: "Unauthorized",
+				...contentJson(ErrorResponseSchema),
+			},
+			"403": { description: "Admin only", ...contentJson(ErrorResponseSchema) },
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = c.get("session");
+		if (!session) return c.json({ error: "Unauthorized" }, 401);
+		if (!session.isAdmin) {
+			return c.json({ error: "Admin privileges required" }, 403);
+		}
+		return c.json({ userId: await authDO(c.env).getRootUserId() });
 	}
 }

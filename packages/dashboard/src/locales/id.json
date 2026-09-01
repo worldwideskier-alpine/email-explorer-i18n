@@ -324,6 +324,10 @@
 			"removed": "Dihapus.",
 			"failed": "Tidak dapat disimpan.",
 			"storageNote": "Kunci disimpan di R2, tempat siapa pun yang memegang akun Cloudflare dapat membacanya. Kunci tidak pernah dikembalikan ke layar ini."
+		},
+		"rootSetup": {
+			"submit": "Jadikan pemilik",
+			"confirm": "Jadikan {email} pemilik? Setelah itu hanya akun tersebut yang dapat membuat dan menghapus akun. Hanya dapat diatur sekali."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Setel ulang kata sandi",
 		"deleteAccount": "Hapus akun",
 		"confirmDelete": "Hapus {email}? Kotak surat dan surel tetap tersimpan.",
-		"deleteFailed": "Tidak dapat menghapus."
+		"deleteFailed": "Tidak dapat menghapus.",
+		"transfer": "Serahkan",
+		"confirmTransfer": "Serahkan peran pemilik kepada {email}? Anda akan kehilangan layar ini."
 	}
 }

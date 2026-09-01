@@ -324,6 +324,10 @@
 			"removed": "Ewechgeholl.",
 			"failed": "Konnt net gespäichert ginn.",
 			"storageNote": "De Schlëssel gëtt an R2 gespäichert, wou en all Persoun mam Cloudflare-Kont liese kann. Op dësen Écran gëtt en ni zréckginn."
+		},
+		"rootSetup": {
+			"submit": "Zum Besëtzer maachen",
+			"confirm": "{email} zum Besëtzer maachen? Duerno kann nëmmen dee Kont Konten uleeën a läschen. Nëmmen eng Kéier astellbar."
 		}
 	},
 	"compose": {
@@ -437,6 +441,8 @@
 		"resetPassword": "Passwuert zrécksetzen",
 		"deleteAccount": "Kont läschen",
 		"confirmDelete": "{email} läschen? D'Postkëschten an d'Mailen bleiwen erhalen.",
-		"deleteFailed": "Konnt net geläscht ginn."
+		"deleteFailed": "Konnt net geläscht ginn.",
+		"transfer": "Iwwerginn",
+		"confirmTransfer": "D'Besëtzerroll un {email} iwwerginn? Dir verléiert dëse Bildschierm."
 	}
 }
