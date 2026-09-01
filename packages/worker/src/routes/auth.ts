@@ -39,6 +39,10 @@ const UserResponseSchema = z.object({
 	id: z.string(),
 	email: z.string(),
 	isAdmin: z.boolean(),
+	// The role the account actually holds. `isAdmin` alone cannot say it:
+	// root is deliberately not an administrator, so a screen reading the flag
+	// shows the top account as the bottom role.
+	role: z.enum(["root", "admin", "member"]),
 	createdAt: z.number(),
 	updatedAt: z.number(),
 });
@@ -627,9 +631,14 @@ export class GetUsers extends OpenAPIRoute {
 		}
 
 		const authDO = getAuthDO(c.env);
-		const users = await authDO.getUsers();
+		const [users, rootUserId] = await Promise.all([
+			authDO.getUsers(),
+			authDO.getRootUserId(),
+		]);
 
-		return c.json(users);
+		return c.json(
+			users.map((user) => ({ ...user, role: roleOf(user, rootUserId) })),
+		);
 	}
 }
 
@@ -678,6 +687,15 @@ export class PutUser extends OpenAPIRoute {
 
 		const userId = c.req.param("userId");
 		const authDO = getAuthDO(c.env);
+
+		// The account above this screen is not administered from it. An
+		// administrator toggling root's `isAdmin` flag would not take the role
+		// away -- root is an id in `app_roles`, not a flag -- but offering the
+		// action at all says the hierarchy runs the other way.
+		if (userId === (await authDO.getRootUserId())) {
+			return c.json({ error: "Cannot change the root account" }, 403);
+		}
+
 		const result = await authDO.setUserAdmin(userId, isAdmin);
 
 		if (result === "not-found") {

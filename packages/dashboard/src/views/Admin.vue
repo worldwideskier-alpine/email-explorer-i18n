@@ -156,7 +156,10 @@
 						<tr v-for="user in users" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
 							<td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{{ user.email }}</td>
 							<td class="px-4 py-3 text-sm">
-								<span v-if="user.isAdmin" class="px-2 py-1 text-xs font-semibold text-indigo-800 bg-indigo-100 rounded-full">
+								<span v-if="roleOf(user) === 'root'" class="px-2 py-1 text-xs font-semibold text-amber-900 bg-amber-100 dark:bg-amber-900/40 dark:text-amber-200 rounded-full">
+									{{ t("admin.users.roleRoot") }}
+								</span>
+								<span v-else-if="roleOf(user) === 'admin'" class="px-2 py-1 text-xs font-semibold text-indigo-800 bg-indigo-100 rounded-full">
 									{{ t("admin.users.roleAdmin") }}
 								</span>
 								<span v-else class="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 rounded-full">
@@ -167,7 +170,11 @@
 								{{ formatDate(user.createdAt) }}
 							</td>
 							<td class="px-4 py-3 text-sm">
-								<div class="flex flex-wrap gap-4">
+								<!-- The account above this screen is not administered from it. -->
+								<span v-if="roleOf(user) === 'root'" class="text-gray-500 dark:text-gray-400">
+									{{ t("admin.users.rootNotManagedHere") }}
+								</span>
+								<div v-else class="flex flex-wrap gap-4">
 									<button
 										@click="openAccessModal(user)"
 										class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
@@ -187,6 +194,25 @@
 					</tbody>
 				</table>
 			</div>
+
+			<!-- What the three words in the role column mean. A one-word label
+			     says which of three boxes an account is in, not what it can do,
+			     and "administrator" and "user" are close enough in ordinary
+			     speech to tell nobody anything. -->
+			<dl v-if="users.length > 0" class="mt-6 space-y-2 text-xs text-gray-600 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-4">
+				<div>
+					<dt class="inline font-semibold text-gray-900 dark:text-gray-100">{{ t("admin.users.roleRoot") }}:</dt>
+					<dd class="inline ms-1">{{ t("admin.users.roleRootDesc") }}</dd>
+				</div>
+				<div>
+					<dt class="inline font-semibold text-gray-900 dark:text-gray-100">{{ t("admin.users.roleAdmin") }}:</dt>
+					<dd class="inline ms-1">{{ t("admin.users.roleAdminDesc") }}</dd>
+				</div>
+				<div>
+					<dt class="inline font-semibold text-gray-900 dark:text-gray-100">{{ t("admin.users.roleUser") }}:</dt>
+					<dd class="inline ms-1">{{ t("admin.users.roleUserDesc") }}</dd>
+				</div>
+			</dl>
 		</div>
 
 		<!-- Access Management Modal -->
@@ -303,8 +329,21 @@ interface User {
 	id: string;
 	email: string;
 	isAdmin: boolean;
+	/**
+	 * Sent by the Worker. This screen used to read `isAdmin` and print one of
+	 * two labels from it, which put the root account -- which is deliberately
+	 * not an administrator -- in the lower of the two, the one role it is
+	 * certainly not. Older deployments answer without the field; treat that as
+	 * "no root named yet" and fall back to the flag.
+	 */
+	role?: "root" | "admin" | "member";
 	createdAt: number;
 	updatedAt: number;
+}
+
+function roleOf(user: User): "root" | "admin" | "member" {
+	if (user.role) return user.role;
+	return user.isAdmin ? "admin" : "member";
 }
 
 const router = useRouter();

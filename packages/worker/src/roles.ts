@@ -5,8 +5,14 @@
  *
  *  - **root** -- creates, edits and deletes the accounts below it. Its whole
  *    job is the account list; it owns no mailbox and reads no mail.
- *  - **admin** -- an ordinary person with several addresses.
+ *  - **admin** -- an ordinary person with several addresses. Makes mailboxes
+ *    and hands access to them out.
  *  - **member** -- someone given access to a mailbox they do not own.
+ *
+ * These three are what the admin screen's role column has to show. It used to
+ * derive the label from the `isAdmin` flag alone, which left root -- an
+ * account that is deliberately not an administrator -- displayed as the
+ * bottom of the three, the one thing it certainly is not.
  *
  * **Root is an account id held in this application's own storage.** Not a
  * deployment variable, not an environment setting: this is software people
@@ -24,10 +30,10 @@
  *  - A deployment starts with no root, and every root-only route refuses
  *    everyone. That is the state a deployment upgrading into this begins in,
  *    and nothing about it is broken.
- *  - While there is no root, an administrator may name one, once, from the
- *    admin screen. That is not an escalation: an administrator can already
- *    make and unmake administrators, so it grants nothing they could not
- *    reach anyway. The moment root exists the door closes.
+ *  - The first account ever registered becomes root, and there is no other
+ *    way in. Nothing on the site offers to promote an existing account: a
+ *    screen that hands out the top role is worth more to whoever finds it
+ *    than to the person who deployed this, and this repository is public.
  *  - Root can hand the role to another account. That is the handover path,
  *    and it is also the recovery path, which is why it exists rather than
  *    being left to a database edit.
