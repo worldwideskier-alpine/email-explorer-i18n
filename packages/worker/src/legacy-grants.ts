@@ -22,6 +22,7 @@
  * whoever creates them.
  */
 
+import { LEGACY_ADMIN_PERSON_ID } from "./people";
 import type { Env } from "./types";
 
 /**
@@ -79,23 +80,33 @@ export async function ensureLegacyMailboxGrants(
 	}
 
 	const authDO = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
-	const users = await authDO.getUsers();
 
-	// Administrators only. A member already has whatever grants they were
-	// given; giving them the whole estate is not preserving anything, it is
-	// handing them mail they were never able to see.
+	// The logins the migration folded together, named by the person it made,
+	// rather than by re-reading the admin flag now.
 	//
-	// Root is skipped too, and that is the whole point of it: it manages
-	// accounts and owns no mail. Backfilling it would make it an owner of
-	// every mailbox on its first day.
+	// The distinction matters, and it is not theoretical. This runs from
+	// whichever request happens to arrive first after the deploy, which can be
+	// long after it. Asking "who is an administrator?" at that moment would
+	// sweep in an account created in between -- a second person, made an
+	// administrator so they could keep their own addresses -- and hand them
+	// every mailbox in the deployment as an owner, permanently, in rows that
+	// look exactly like the ones that belong there. Asking for the person
+	// instead cannot: an account made after the migration is given a person of
+	// its own and is never in this set.
+	//
+	// Root is not in it either, and that is the whole point of root: it
+	// manages accounts and owns no mail. It was not an administrator when the
+	// migration ran, so the migration did not put it here.
 	const rootUserId = await authDO.getRootUserId();
-	const owners = users.filter((user) => user.isAdmin && user.id !== rootUserId);
+	const owners = (
+		await authDO.listPersonLoginIds(LEGACY_ADMIN_PERSON_ID)
+	).filter((id) => id !== rootUserId);
 	const mailboxes = await listMailboxIds(env);
 
 	let granted = 0;
-	for (const user of owners) {
+	for (const userId of owners) {
 		for (const mailboxId of mailboxes) {
-			await authDO.grantMailboxAccessIfAbsent(user.id, mailboxId, "owner");
+			await authDO.grantMailboxAccessIfAbsent(userId, mailboxId, "owner");
 			granted += 1;
 		}
 	}

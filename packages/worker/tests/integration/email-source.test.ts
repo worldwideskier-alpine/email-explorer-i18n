@@ -3,6 +3,7 @@ import { describe, expect, it, beforeEach } from "vitest";
 import {
 	authenticatedFetch,
 	createDummyMailbox,
+	createMailbox,
 	mailboxId,
 	testAuthBeforeAll,
 } from "./utils";
@@ -44,6 +45,11 @@ describe("Original message source", () => {
 	});
 
 	it("returns the raw source for an email imported via the admin endpoint", async () => {
+		// The mailbox has to exist and belong to somebody before mail is
+		// pushed into it. Importing into an address nobody holds leaves the
+		// mail where no screen can reach it -- see the note on the import
+		// endpoint's guard.
+		await createMailbox();
 		const rawEmail = buildRawEmail(
 			{
 				From: "sender@example.com",

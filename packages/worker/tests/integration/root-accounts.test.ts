@@ -1,6 +1,7 @@
 import { env, runInDurableObject, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { resetLegacyGrantMemo } from "../../src/legacy-grants";
+import { LEGACY_ADMIN_PERSON_ID } from "../../src/people";
 import { createMailbox, mailboxId } from "./utils";
 
 /**
@@ -24,9 +25,13 @@ async function register(email: string, password: string) {
 }
 
 /** Registration closes behind the first account, so the rest are made directly. */
-async function createUser(email: string, isAdmin: boolean): Promise<string> {
+async function createUser(
+	email: string,
+	isAdmin: boolean,
+	personId?: string,
+): Promise<string> {
 	const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
-	const user = await stub.register(email, "password123", isAdmin);
+	const user = await stub.register(email, "password123", isAdmin, personId);
 	return user.id;
 }
 
@@ -213,9 +218,21 @@ describe("mailboxes that predate the grant model", () => {
 		resetLegacyGrantMemo();
 	});
 
-	it("gives each existing administrator an explicit ownership row", async () => {
+	/**
+	 * The subject is a login the migration folded into the deployment's
+	 * original person, which is what "was already here" means now. It used to
+	 * be "carries the admin flag", read at the moment the backfill happened to
+	 * run -- and that moment can be days after the deploy, by which time a
+	 * second person may have been given an account and the flag with it. The
+	 * person is fixed when the migration runs; the flag is not.
+	 */
+	it("gives the deployment's original person an explicit ownership row", async () => {
 		await register("first@example.com", "password123");
-		const adminId = await createUser("admin@example.com", true);
+		const adminId = await createUser(
+			"admin@example.com",
+			true,
+			LEGACY_ADMIN_PERSON_ID,
+		);
 		const firstSession = await signIn("admin@example.com");
 		await createMailbox();
 
@@ -233,6 +250,42 @@ describe("mailboxes that predate the grant model", () => {
 				}
 			).getUserMailboxes(adminId);
 			expect(owned.map((entry) => entry.mailboxId)).toContain(mailboxId);
+		});
+	});
+
+	/**
+	 * The window this closes: the backfill runs from whichever request lands
+	 * first after the deploy, and nothing says that is soon. A second person
+	 * given an account and the admin flag in between must not be swept into
+	 * the deployment's original person and handed every mailbox in it -- as
+	 * an owner, permanently, in rows indistinguishable from the real ones.
+	 *
+	 * The set is named by the migration, so an account made afterwards has a
+	 * person of its own and cannot fall into it however its flag is set.
+	 */
+	it("does not hand the estate to somebody who became an administrator later", async () => {
+		await register("first@example.com", "password123");
+		await createUser("first-spare@example.com", true, LEGACY_ADMIN_PERSON_ID);
+		await createMailbox();
+
+		// A second person, made an administrator so they can keep their own
+		// addresses, before the backfill has had a chance to run.
+		const latecomer = await createUser("second-person@example.com", true);
+		const theirSession = await signIn("second-person@example.com");
+
+		// Their first request is the one that runs the backfill.
+		expect(
+			(await as(theirSession.id)("http://local.test/api/v1/mailboxes")).status,
+		).toBe(200);
+
+		const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
+		await runInDurableObject(stub, async (instance) => {
+			const owned = await (
+				instance as unknown as {
+					getUserMailboxes(id: string): Promise<{ mailboxId: string }[]>;
+				}
+			).getUserMailboxes(latecomer);
+			expect(owned).toEqual([]);
 		});
 	});
 

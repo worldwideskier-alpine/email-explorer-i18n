@@ -241,7 +241,12 @@ describe("The scheduled backup pass", () => {
 			const res = await authenticatedFetch(
 				`http://local.test/api/v1/mailboxes/${mailboxId}/backups/${name}`,
 			);
-			expect(res.status).toBe(404);
+			// 403 for the two that walk up out of the mailbox: the path is
+			// normalised before routing, so what arrives names a different
+			// mailbox, and one that is not this person's is refused. 404 for
+			// the name that stays inside and simply is not an archive.
+			// Either way there is no archive and no other mailbox's data.
+			expect([403, 404]).toContain(res.status);
 		}
 	});
 
