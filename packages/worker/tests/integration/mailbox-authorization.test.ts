@@ -154,7 +154,18 @@ describe("Mailbox Authorization Regression Tests (Issue #19)", () => {
 			expect(mailboxes[0].id).toBe("allowed@test.com");
 		});
 
-		it("should return all mailboxes for admin users", async () => {
+		/**
+		 * This used to assert the opposite: that an administrator sees every
+		 * mailbox there is. That rule reads as "one person's own estate" only
+		 * while the deployment holds one person. A second person, made an
+		 * administrator so they could keep their own addresses, was handed the
+		 * first one's mail by the same line -- and there was nothing in the
+		 * stored data that could have told them apart, because what tied a
+		 * person's logins together had nowhere to live.
+		 *
+		 * Now the question is whose it is, not what flag the account carries.
+		 */
+		it("shows a second person nothing of the first person's", async () => {
 			const { otherAdminToken } = await setupUsersAndMailboxes();
 
 			const response = await authenticatedFetch(
@@ -163,13 +174,10 @@ describe("Mailbox Authorization Regression Tests (Issue #19)", () => {
 			);
 
 			expect(response.status).toBe(200);
-			const mailboxes = await response.json<any[]>();
-
-			// Admin should see all mailboxes
-			const ids = mailboxes.map((m: any) => m.id);
-			expect(ids).toContain("allowed@test.com");
-			expect(ids).toContain("forbidden@test.com");
-			expect(ids).toContain("another-forbidden@test.com");
+			const ids = (await response.json<any[]>()).map((m: any) => m.id);
+			expect(ids).not.toContain("allowed@test.com");
+			expect(ids).not.toContain("forbidden@test.com");
+			expect(ids).not.toContain("another-forbidden@test.com");
 		});
 
 		it("should return no mailboxes for a non-admin user with no access grants", async () => {
@@ -264,16 +272,16 @@ describe("Mailbox Authorization Regression Tests (Issue #19)", () => {
 			expect(response.status).toBe(200);
 		});
 
-		it("should allow admin to access any mailbox", async () => {
-			const { adminToken } = await setupUsersAndMailboxes();
+		// The same change, one mailbox at a time rather than the list.
+		it("refuses a second person a mailbox that is not theirs", async () => {
+			const { otherAdminToken } = await setupUsersAndMailboxes();
 
 			const response = await authenticatedFetch(
 				"http://local.test/api/v1/mailboxes/forbidden@test.com",
-				adminToken,
+				otherAdminToken,
 			);
 
-			// Admin can access any mailbox (404 if it doesn't have settings, but not 403)
-			expect(response.status).not.toBe(403);
+			expect(response.status).toBe(403);
 		});
 
 		it("should block non-admin from accessing sub-routes of unauthorized mailbox", async () => {

@@ -125,6 +125,7 @@ export class MailboxDO extends DurableObject<Env> {
 		email: string,
 		password: string,
 		isFirstUser = false,
+		personId?: string,
 	): Promise<User> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
@@ -132,6 +133,11 @@ export class MailboxDO extends DurableObject<Env> {
 		const passwordHash = await hashPassword(password);
 		const now = Date.now();
 
+		// A login belongs to somebody. Registering makes a new person, because
+		// that is what registering is: somebody who was not here before. The
+		// other way a login comes into being -- a person adding a second
+		// address to sign in with -- joins an existing person and is not this
+		// call.
 		this.#qb
 			.insert({
 				tableName: "users",
@@ -140,6 +146,7 @@ export class MailboxDO extends DurableObject<Env> {
 					email,
 					password_hash: passwordHash,
 					is_admin: isFirstUser ? 1 : 0,
+					person_id: personId ?? `person-${crypto.randomUUID()}`,
 					created_at: now,
 					updated_at: now,
 				},
@@ -379,6 +386,16 @@ export class MailboxDO extends DurableObject<Env> {
 	}
 
 	// Auth operation: get all users (admin only)
+	/** Every login belonging to one person. */
+	async listPersonLoginIds(personId: string): Promise<string[]> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		return this.ctx.storage.sql
+			.exec("SELECT id FROM users WHERE person_id = ?", personId)
+			.toArray()
+			.map((row) => String(row.id));
+	}
+
 	async getUsers(): Promise<User[]> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
@@ -771,6 +788,51 @@ export class MailboxDO extends DurableObject<Env> {
 	}
 
 	// Auth operation: get user mailboxes
+	/** Which person a login belongs to, or null if the login is gone. */
+	async getPersonId(userId: string): Promise<string | null> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const row = this.ctx.storage.sql
+			.exec("SELECT person_id FROM users WHERE id = ?", userId)
+			.toArray()[0];
+		const value = row?.person_id;
+		return value === null || value === undefined ? null : String(value);
+	}
+
+	/**
+	 * The mailboxes a person can reach, through any of their logins.
+	 *
+	 * This is what replaces "an administrator sees everything". A person's
+	 * second login is not given the estate; it is given what that person
+	 * already has, which is the whole point of having a second one. Two
+	 * different people share nothing, which the flag could not express.
+	 */
+	async getPersonMailboxes(
+		userId: string,
+	): Promise<Array<{ mailboxId: string; role: string }>> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const personId = await this.getPersonId(userId);
+		// A login with no person is nobody's: answer for that login alone
+		// rather than matching every other row whose person is also unset.
+		if (!personId) return this.getUserMailboxes(userId);
+
+		const rows = this.ctx.storage.sql
+			.exec(
+				`SELECT DISTINCT um.mailbox_id AS mailbox_id, um.role AS role
+                 FROM user_mailboxes um
+                 JOIN users u ON u.id = um.user_id
+                 WHERE u.person_id = ?`,
+				personId,
+			)
+			.toArray();
+
+		return rows.map((row) => ({
+			mailboxId: String(row.mailbox_id),
+			role: String(row.role),
+		}));
+	}
+
 	async getUserMailboxes(
 		userId: string,
 	): Promise<Array<{ mailboxId: string; role: string }>> {

@@ -15,14 +15,28 @@ export const testAuthBeforeAll = async () => {
         const now = Date.now();
         const expiresAt = now + 30 * 24 * 60 * 60 * 1000;
         sql.exec("INSERT OR REPLACE into sessions (id, user_id, expires_at, created_at) values (?, ?, ?, ?)", sessionToken, userId, expiresAt, now);
-        sql.exec("INSERT OR REPLACE into users (id, email, password_hash, is_admin, created_at, updated_at) values (?, ?, ?, ?, ?, ?)", userId, 'aa', 'bb', 1, now, now);
+        sql.exec("INSERT OR REPLACE into users (id, email, password_hash, is_admin, person_id, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?)", userId, 'aa', 'bb', 1, personId, now, now);
     });
 }
 
+/** The person the fixture login belongs to. A login always belongs to one. */
+export const personId = "person-test";
 
+/**
+ * Puts a mailbox in the bucket and gives the fixture user it.
+ *
+ * The grant is not decoration. A mailbox made through the API belongs to
+ * whoever made it, and what a person can see is what their logins own. A
+ * fixture that wrote only the bucket object made a mailbox belonging to
+ * nobody -- something the API cannot produce -- and it was visible anyway
+ * only because an account with the admin flag used to skip the question.
+ */
 export async function createMailbox(settings = {}) {
     // @ts-expect-error
     await env.BUCKET.put(`mailboxes/${mailboxId}.json`, JSON.stringify(settings));
+    // @ts-expect-error
+    const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
+    await stub.grantMailboxAccessIfAbsent(userId, mailboxId, "owner");
 }
 
 // Helper to make authenticated request

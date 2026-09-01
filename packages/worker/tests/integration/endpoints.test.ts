@@ -57,11 +57,18 @@ describe("API Integration Tests", () => {
 			);
 		});
 
-		it("should return 404 for a non-existent mailbox", async () => {
+		/**
+		 * 403 rather than 404, and on purpose. A mailbox that is not yours is
+		 * refused before anything looks at whether it exists, so the answer
+		 * cannot be used to find out which addresses this deployment hosts.
+		 * It used to be 404 because an administrator skipped the check
+		 * entirely and fell through to "no settings object here".
+		 */
+		it("refuses a mailbox that is not this person's", async () => {
 			const response = await authenticatedFetch(
 				`http://local.test/api/v1/mailboxes/nonexistent@example.com`,
 			);
-			expect(response.status).toBe(404);
+			expect(response.status).toBe(403);
 		});
 
 		it("should update a mailbox", async () => {

@@ -289,21 +289,24 @@ class GetMailboxes extends OpenAPIRoute {
 
 		// Before answering, make sure every mailbox that predates the grant
 		// model has an owner. This is the screen where a missing grant would
-		// first be visible, and the backfill has to be in place before the
-		// administrator bypass below is removed. Runs once; see legacy-grants.
+		// first be visible, and now that the administrator bypass below is
+		// gone it is the only thing standing between a deployment upgrading
+		// into this and an empty mailbox list. Runs once; see legacy-grants.
 		await ensureLegacyMailboxGrants(c.env);
 
-		// If no session (auth disabled) or user is admin, return all mailboxes.
-		// Root is excluded on purpose: it manages accounts and owns no
-		// mailbox, so the whole estate is not its to look at.
-		if (!session || (session.isAdmin && session.role !== "root")) {
+		// With authentication switched off there is nobody to ask about, so
+		// everything is on show. That is the deployment's own choice.
+		if (!session) {
 			return c.json(allMailboxes);
 		}
 
-		// Non-admin users can only see mailboxes they have access to
+		// Otherwise: what this person's logins own, taken together. It used to
+		// be "everything, if the account carries the admin flag", which reads
+		// as one person's estate only while there is one person -- a second
+		// person made administrator saw the first one's mail.
 		const authId = c.env.MAILBOX.idFromName("AUTH");
 		const authDO = c.env.MAILBOX.get(authId);
-		const userMailboxes = await authDO.getUserMailboxes(session.userId);
+		const userMailboxes = await authDO.getPersonMailboxes(session.userId);
 		const allowedMailboxIds = new Set(userMailboxes.map((m) => m.mailboxId));
 
 		return c.json(allMailboxes.filter((m) => allowedMailboxIds.has(m.id)));
@@ -2481,12 +2484,10 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 					await next();
 				});
 
-				// Middleware to check mailbox access for non-admin users
+				// Middleware to check mailbox access. The admin flag used to
+				// skip this entirely; now the question is whether the mailbox
+				// belongs to this person, through any of their logins.
 				const checkMailboxAccess = async (c: any, next: any) => {
-					if (session.isAdmin) {
-						await next();
-						return;
-					}
 					const mailboxId = c.req.param("mailboxId");
 					if (!mailboxId) {
 						await next();
@@ -2494,7 +2495,7 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 					}
 					const authId = env.MAILBOX.idFromName("AUTH");
 					const authDO = env.MAILBOX.get(authId);
-					const userMailboxes = await authDO.getUserMailboxes(session.userId);
+					const userMailboxes = await authDO.getPersonMailboxes(session.userId);
 					if (!userMailboxes.some((m: any) => m.mailboxId === mailboxId)) {
 						return c.json(
 							{ error: "You don't have access to this mailbox" },

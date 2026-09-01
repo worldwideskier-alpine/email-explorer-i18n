@@ -1,5 +1,7 @@
 import type { Migration } from "workers-qb";
 
+import { LEGACY_ADMIN_PERSON_ID } from "../people";
+
 export const mailboxMigrations: Migration[] = [
 	{
 		name: "1_initial_setup",
@@ -197,6 +199,47 @@ export const authMigrations: Migration[] = [
             );
 
             INSERT INTO app_roles (id) VALUES (1);
+        `,
+	},
+	{
+		/**
+		 * The person a login belongs to.
+		 *
+		 * A row in `users` is a login, not a person. One person holds several
+		 * of them -- a second address to sign in with, so that losing the
+		 * first does not lock them out -- and they are equal: none is the
+		 * original, the second was simply added later. What ties them
+		 * together had nowhere to live until this column, so it did not exist
+		 * at all, and the deployment made up for the gap with a flag: an
+		 * account carrying `is_admin` saw every mailbox there was. That reads
+		 * as one person's own estate only while the deployment holds one
+		 * person, and fails the moment it holds two, because nothing in the
+		 * stored data can tell them apart.
+		 *
+		 * The backfill:
+		 *
+		 *  - **Everyone who is an administrator today becomes one person.** In
+		 *    a deployment used by one person with a spare login that is
+		 *    exactly right, and it is the only rule that leaves what they can
+		 *    see unchanged: the flag already treated them as one.
+		 *  - Everybody else gets a person of their own.
+		 *
+		 * The first line is a migration, not a policy. It describes a
+		 * deployment whose administrators are one person with several logins,
+		 * which is the shape this fork is in and the shape the flag
+		 * encouraged. A deployment where two different people had both been
+		 * made administrators would be merged by it, and nothing stored can
+		 * distinguish the two cases -- the link never existed to be read.
+		 * Anyone in that position has to separate them afterwards.
+		 */
+		name: "5_people",
+		sql: `
+            ALTER TABLE users ADD COLUMN person_id TEXT;
+
+            UPDATE users SET person_id = '${LEGACY_ADMIN_PERSON_ID}' WHERE is_admin = 1;
+            UPDATE users SET person_id = 'person-' || id WHERE person_id IS NULL;
+
+            CREATE INDEX idx_users_person_id ON users(person_id);
         `,
 	},
 ];

@@ -155,11 +155,13 @@ describe("Exporting a mailbox as mbox", () => {
 		expect(lines[start + ours + 1]).toBe("From: sender@example.org");
 	});
 
-	it("refuses a mailbox that does not exist", async () => {
+	it("refuses a mailbox that is not this person's", async () => {
 		const res = await authenticatedFetch(
 			"http://local.test/api/v1/mailboxes/nobody@example.com/export",
 		);
-		expect(res.status).toBe(404);
+		// Refused for not being this person's, which comes before the
+		// question of whether it exists at all.
+		expect(res.status).toBe(403);
 	});
 
 	it("needs a session", async () => {
