@@ -145,27 +145,65 @@ describe("the wording", () => {
  * Worker now asks: see administrators-are-equal.test.ts there.
  */
 describe("no screen decides anything by the legacy admin flag", () => {
-	it("is not read anywhere", () => {
-		for (const [path, source] of Object.entries(views)) {
-			// The badge names the role; `isAdmin` as a message key is the label
-			// on it, not a decision, so only a read of the store counts.
-			expect([
-				path,
-				/\bauthStore\.isAdmin\b|storeToRefs[\s\S]{0,80}isAdmin/.test(source),
-			]).toEqual([path, false]);
+	/**
+	 * Every source in the dashboard, not just the views.
+	 *
+	 * The first version of this scanned `./*.vue` -- the views beside this
+	 * file -- and matched two spellings of the read. Both limits were real:
+	 * the same gate written in a component, or written as
+	 * `const auth = useAuthStore()` and then `auth.isAdmin`, went unnoticed.
+	 * Measured, not assumed: a probe put in Header.vue passed this suite.
+	 *
+	 * What that probe also showed is where the actual guarantee lives. A read
+	 * of a property the store no longer returns does not compile -- vue-tsc
+	 * fails the build, so it can never reach a browser. What did compile was
+	 * `authStore.session?.isAdmin`, because the field was still on the stored
+	 * Session; that one passed the type check and this suite together, and it
+	 * is why the field is off the interface now. This looks for the name at
+	 * all, so the next spelling of it is caught here rather than by whoever
+	 * notices a control has gone missing.
+	 */
+	const sources = import.meta.glob("../**/*.{vue,ts}", {
+		query: "?raw",
+		import: "default",
+		eager: true,
+	}) as Record<string, string>;
+
+	/**
+	 * What is left after the parts that can name it without reading it.
+	 *
+	 * Comments go first: the store explains at length why the flag is gone and
+	 * quotes the exact spelling that used to slip through, so a scan of raw
+	 * text finds the warning and reports it as the thing it warns about. The
+	 * `(^|\s)` before `//` is what keeps `https://` out of that.
+	 *
+	 * Then string literals, because `t("account.isAdmin")` is the label on the
+	 * badge -- the words "administrator", looked up by name. A gate is never
+	 * inside a string, so nothing that decides anything is lost with them.
+	 */
+	const code = (source: string) =>
+		source
+			.replace(/\/\*[\s\S]*?\*\//g, " ")
+			.replace(/<!--[\s\S]*?-->/g, " ")
+			.replace(/(^|\s)\/\/.*$/gm, "$1")
+			.replace(/"(?:[^"\\]|\\.)*"/g, '""')
+			.replace(/'(?:[^'\\]|\\.)*'/g, "''")
+			.replace(/`(?:[^`\\]|\\.)*`/g, "``");
+
+	it("is not read anywhere in the dashboard", () => {
+		for (const [path, source] of Object.entries(sources)) {
+			// A read has a dot -- or an optional-chaining `?.` -- in front of it.
+			const reads = /[.?]\s*isAdmin\b/.test(code(source));
+			expect([path, reads]).toEqual([path, false]);
 		}
 	});
 
-	// And the store does not offer it, which is what stops the next screen
-	// from reaching for it again.
-	it("is not offered by the auth store", () => {
-		const store = Object.values(
-			import.meta.glob("../stores/auth.ts", {
-				query: "?raw",
-				import: "default",
-				eager: true,
-			}) as Record<string, string>,
-		)[0];
+	// And it is not on the session either, which is what stopped the type
+	// checker from catching the spelling above.
+	it("is not kept on the stored session", () => {
+		const store = sources["../stores/auth.ts"];
+		expect(store).toBeTruthy();
+		expect(store).not.toMatch(/^\s*isAdmin: boolean;/m);
 		expect(store).not.toMatch(/const isAdmin = computed/);
 	});
 

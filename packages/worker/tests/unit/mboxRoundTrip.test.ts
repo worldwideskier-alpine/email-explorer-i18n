@@ -60,7 +60,12 @@ describe("a message put through the archive and back", () => {
 				'From: sender@example.com\r\nSubject: x\r\nContent-Type: text/plain; charset="Shift_JIS"\r\nContent-Transfer-Encoding: 8bit\r\n\r\n',
 			),
 			// 日本語
-			0x93, 0xfa, 0x96, 0x7b, 0x8c, 0xea,
+			0x93,
+			0xfa,
+			0x96,
+			0x7b,
+			0x8c,
+			0xea,
 		]);
 
 		const restored = await roundTrip(message);
@@ -88,7 +93,12 @@ describe("a message put through the archive and back", () => {
 	it("keeps bytes that are not text in any encoding", async () => {
 		const message = new Uint8Array([
 			...enc("From: sender@example.com\r\nSubject: x\r\n\r\n"),
-			0x00, 0xff, 0x80, 0xfe, 0x93, 0xfa,
+			0x00,
+			0xff,
+			0x80,
+			0xfe,
+			0x93,
+			0xfa,
 		]);
 		const restored = await roundTrip(message);
 		expect(Array.from(restored.raw)).toEqual(Array.from(message));

@@ -31,11 +31,13 @@ const login = async (email: string, password = "password123") => {
 	return (await res.json<{ id: string }>()).id;
 };
 
-const as = (token: string) => (url: string, options: RequestInit = {}) =>
-	SELF.fetch(url, {
-		...options,
-		headers: { ...options.headers, Authorization: `Bearer ${token}` },
-	});
+const as =
+	(token: string) =>
+	(url: string, options: RequestInit = {}) =>
+		SELF.fetch(url, {
+			...options,
+			headers: { ...options.headers, Authorization: `Bearer ${token}` },
+		});
 
 const rawEmail = (subject: string) =>
 	Buffer.from(
@@ -222,5 +224,53 @@ describe("but only on their own", () => {
 			a.mailbox,
 		);
 		expect((await SELF.fetch(intoA, init)).status).toBe(401);
+	});
+
+	/**
+	 * And it refuses before reading the body.
+	 *
+	 * The check used to run after the request had been validated, so a caller
+	 * with no rights here got their payload parsed on their behalf and were
+	 * told whether it was well formed -- 400 for a malformed body where the
+	 * true answer is 403, which is an answer about the body given to somebody
+	 * with no standing to ask about it.
+	 */
+	it("says 403, not 400, to a stranger with a malformed body", async () => {
+		const { a, b } = await setUpTwoAdministrators();
+
+		const res = await as(a.token)(
+			`http://local.test/api/v1/admin/mailboxes/${b.mailbox}/import`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ nothing: "that the schema allows" }),
+			},
+		);
+		expect(res.status).toBe(403);
+	});
+
+	/**
+	 * The mailbox id is an email address, so it arrives percent-encoded from
+	 * the dashboard and unencoded from a script. Reading it off the path
+	 * rather than off the validated params is only safe if both spellings
+	 * reach the same mailbox.
+	 */
+	it("reads the same mailbox whether the address is encoded or not", async () => {
+		const { a } = await setUpTwoAdministrators();
+
+		for (const spelling of [a.mailbox, encodeURIComponent(a.mailbox)]) {
+			const res = await as(a.token)(
+				`http://local.test/api/v1/admin/mailboxes/${spelling}/import`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						rawEmailBase64: rawEmail(`encoded ${spelling}`),
+						folder: "inbox",
+					}),
+				},
+			);
+			expect([spelling, res.status]).toEqual([spelling, 201]);
+		}
 	});
 });
