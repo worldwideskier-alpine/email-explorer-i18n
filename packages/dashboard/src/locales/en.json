@@ -421,6 +421,12 @@
 			"roleAdminHint": "Creates a new administrator.",
 			"roleRootHint": "Adds another address you can sign in with.",
 			"addedOwn": "Added {email} to your own account."
+		},
+		"maintenance": {
+			"never": "The scheduled maintenance has never run.",
+			"done": "Scheduled maintenance {at}: finished ({backups} backed up, {purges} purged).",
+			"notReached": "Scheduled maintenance {at}: it ended before reaching the spam purge.",
+			"unfinished": "Scheduled maintenance {at}: it reached the spam purge, but there is no record of it finishing."
 		}
 	}
 }

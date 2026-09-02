@@ -421,6 +421,12 @@
 			"roleAdminHint": "Pravi novog administratora.",
 			"roleRootHint": "Dodaje još jednu adresu za vašu prijavu.",
 			"addedOwn": "{email} je dodan vašem računu."
+		},
+		"maintenance": {
+			"never": "Planirano održavanje još nije nijednom pokrenuto.",
+			"done": "Planirano održavanje {at}: završeno (rezervne kopije: {backups}, čišćenja neželjene pošte: {purges}).",
+			"notReached": "Planirano održavanje {at}: završilo je prije nego što je stiglo do čišćenja neželjene pošte.",
+			"unfinished": "Planirano održavanje {at}: stiglo je do čišćenja neželjene pošte, ali nema zapisa o završetku."
 		}
 	}
 }

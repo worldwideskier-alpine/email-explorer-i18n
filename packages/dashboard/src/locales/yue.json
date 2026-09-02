@@ -421,6 +421,12 @@
 			"roleAdminHint": "建立一個新管理員。",
 			"roleRootHint": "為你嘅登入加多個地址。",
 			"addedOwn": "已將 {email} 加入你自己嘅帳戶。"
+		},
+		"maintenance": {
+			"never": "定期維護未曾執行過。",
+			"done": "定期維護 {at}：已完成（備份 {backups} 個，垃圾郵件清理 {purges} 個）。",
+			"notReached": "定期維護 {at}：未去到垃圾郵件清理就結束咗。",
+			"unfinished": "定期維護 {at}：去到咗垃圾郵件清理，但冇完成嘅紀錄。"
 		}
 	}
 }

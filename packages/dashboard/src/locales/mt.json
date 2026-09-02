@@ -421,6 +421,12 @@
 			"roleAdminHint": "Joħloq amministratur ġdid.",
 			"roleRootHint": "Iżid indirizz ieħor biex tidħol bih.",
 			"addedOwn": "{email} miżjud mal-kont tiegħek stess."
+		},
+		"maintenance": {
+			"never": "Il-manutenzjoni skedata qatt ma ġiet imħaddma.",
+			"done": "Manutenzjoni skedata {at}: lesta (backups: {backups}, tindif tal-ispam: {purges}).",
+			"notReached": "Manutenzjoni skedata {at}: intemmet qabel ma waslet għat-tindif tal-ispam.",
+			"unfinished": "Manutenzjoni skedata {at}: waslet għat-tindif tal-ispam, imma m'hemmx rekord li ntemmet."
 		}
 	}
 }

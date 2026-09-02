@@ -421,6 +421,12 @@
 			"roleAdminHint": "Býr til nýjan kerfisstjóra.",
 			"roleRootHint": "Bætir við öðru netfangi til að skrá þig inn með.",
 			"addedOwn": "{email} bætt við þinn eigin reikning."
+		},
+		"maintenance": {
+			"never": "Áætluð viðhaldskeyrsla hefur aldrei verið keyrð.",
+			"done": "Áætlað viðhald {at}: lokið (afrit: {backups}, ruslpóstshreinsanir: {purges}).",
+			"notReached": "Áætlað viðhald {at}: lauk áður en það komst að ruslpóstshreinsuninni.",
+			"unfinished": "Áætlað viðhald {at}: komst að ruslpóstshreinsuninni en engin skráning er um að því hafi lokið."
 		}
 	}
 }

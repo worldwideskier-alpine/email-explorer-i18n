@@ -421,6 +421,12 @@
 			"roleAdminHint": "Yeni bir yönetici oluşturur.",
 			"roleRootHint": "Oturum açmanız için başka bir adres ekler.",
 			"addedOwn": "{email} kendi hesabınıza eklendi."
+		},
+		"maintenance": {
+			"never": "Zamanlanmış bakım henüz hiç çalışmadı.",
+			"done": "Zamanlanmış bakım {at}: tamamlandı (yedek: {backups}, istenmeyen posta temizliği: {purges}).",
+			"notReached": "Zamanlanmış bakım {at}: istenmeyen posta temizliğine ulaşmadan sona erdi.",
+			"unfinished": "Zamanlanmış bakım {at}: istenmeyen posta temizliğine ulaştı, ancak tamamlandığına dair kayıt yok."
 		}
 	}
 }

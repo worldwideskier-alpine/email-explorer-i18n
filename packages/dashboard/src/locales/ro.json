@@ -421,6 +421,12 @@
 			"roleAdminHint": "Creează un administrator nou.",
 			"roleRootHint": "Adaugă altă adresă pentru autentificarea ta.",
 			"addedOwn": "{email} adăugat la contul tău."
+		},
+		"maintenance": {
+			"never": "Mentenanța programată nu a rulat niciodată.",
+			"done": "Mentenanță programată {at}: finalizată (copii: {backups}, curățări de spam: {purges}).",
+			"notReached": "Mentenanță programată {at}: s-a încheiat înainte de a ajunge la curățarea spamului.",
+			"unfinished": "Mentenanță programată {at}: a ajuns la curățarea spamului, dar nu există nicio consemnare că s-ar fi încheiat."
 		}
 	}
 }

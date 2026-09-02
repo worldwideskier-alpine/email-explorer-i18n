@@ -421,6 +421,12 @@
 			"roleAdminHint": "Membuat administrator baru.",
 			"roleRootHint": "Menambahkan alamat lain untuk Anda masuk.",
 			"addedOwn": "{email} ditambahkan ke akun Anda sendiri."
+		},
+		"maintenance": {
+			"never": "Pemeliharaan terjadwal belum pernah berjalan.",
+			"done": "Pemeliharaan terjadwal {at}: selesai (cadangan: {backups}, pembersihan spam: {purges}).",
+			"notReached": "Pemeliharaan terjadwal {at}: berakhir sebelum sampai ke pembersihan spam.",
+			"unfinished": "Pemeliharaan terjadwal {at}: sampai ke pembersihan spam, tetapi tidak ada catatan bahwa ia selesai."
 		}
 	}
 }

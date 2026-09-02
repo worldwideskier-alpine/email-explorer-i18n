@@ -421,6 +421,12 @@
 			"roleAdminHint": "Crée un nouvel administrateur.",
 			"roleRootHint": "Ajoute une autre adresse pour vous connecter.",
 			"addedOwn": "{email} ajoutée à votre propre compte."
+		},
+		"maintenance": {
+			"never": "La maintenance planifiée n'a jamais été exécutée.",
+			"done": "Maintenance planifiée {at} : terminée (sauvegardes : {backups}, purges de spam : {purges}).",
+			"notReached": "Maintenance planifiée {at} : elle s'est arrêtée avant d'atteindre la purge du spam.",
+			"unfinished": "Maintenance planifiée {at} : elle a atteint la purge du spam, mais rien n'indique qu'elle se soit terminée."
 		}
 	}
 }

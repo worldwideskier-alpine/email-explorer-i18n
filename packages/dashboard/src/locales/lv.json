@@ -421,6 +421,12 @@
 			"roleAdminHint": "Izveido jaunu administratoru.",
 			"roleRootHint": "Pievieno vēl vienu adresi jūsu pieteikšanās vajadzībām.",
 			"addedOwn": "{email} pievienots jūsu kontam."
+		},
+		"maintenance": {
+			"never": "Plānotā apkope vēl nekad nav veikta.",
+			"done": "Plānotā apkope {at}: pabeigta (dublējumi: {backups}, mēstuļu tīrīšanas: {purges}).",
+			"notReached": "Plānotā apkope {at}: beidzās, nesasniedzot mēstuļu tīrīšanu.",
+			"unfinished": "Plānotā apkope {at}: sasniedza mēstuļu tīrīšanu, bet ieraksta par pabeigšanu nav."
 		}
 	}
 }

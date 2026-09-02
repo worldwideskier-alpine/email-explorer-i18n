@@ -421,6 +421,12 @@
 			"roleAdminHint": "Gumagawa ng bagong administrador.",
 			"roleRootHint": "Nagdaragdag ng isa pang address na maisa-sign in mo.",
 			"addedOwn": "Naidagdag ang {email} sa sarili mong account."
+		},
+		"maintenance": {
+			"never": "Hindi pa kailanman tumakbo ang naka-iskedyul na maintenance.",
+			"done": "Naka-iskedyul na maintenance {at}: tapos na ({backups} na-backup, {purges} na-purge).",
+			"notReached": "Naka-iskedyul na maintenance {at}: natapos bago pa marating ang paglilinis ng spam.",
+			"unfinished": "Naka-iskedyul na maintenance {at}: narating ang paglilinis ng spam, ngunit walang talaan na natapos ito."
 		}
 	}
 }

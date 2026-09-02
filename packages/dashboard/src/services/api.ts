@@ -248,6 +248,10 @@ export default {
 	// transfer: the role belongs to a person, so root's spare login carries
 	// it, and nothing hands the deployment to somebody else.
 	listAccounts: () => apiClient.get("/api/v1/root/accounts"),
+	// Whether the nightly cron finished last time. Each mailbox records what
+	// happened to it, which answers "did my backup run" but not "did the run
+	// finish" -- and those came apart in production.
+	getMaintenance: () => apiClient.get("/api/v1/root/maintenance"),
 	createAccount: (email: string, password: string, role: "root" | "admin") =>
 		apiClient.post("/api/v1/root/accounts", { email, password, role }),
 	setAccountPassword: (userId: string, password: string) =>
