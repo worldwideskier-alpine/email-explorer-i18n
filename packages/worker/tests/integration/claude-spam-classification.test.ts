@@ -1,5 +1,5 @@
-import { env, createExecutionContext } from "cloudflare:test";
-import { describe, expect, it, beforeEach } from "vitest";
+import { createExecutionContext, env } from "cloudflare:test";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
 	authenticatedFetch,
 	createDummyMailbox,
@@ -58,7 +58,9 @@ async function setClaudeApiKey(apiKey: string) {
 	await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
 		method: "PUT",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ settings: { spamFilter: { claudeApiKey: apiKey } } }),
+		body: JSON.stringify({
+			settings: { spamFilter: { claudeApiKey: apiKey } },
+		}),
 	});
 }
 
@@ -193,9 +195,7 @@ describe("Claude second-stage spam classification", () => {
 
 		await simulateReceiveEmail(rawEmail);
 
-		expect(await folderOf("Different domain TRIGGER_CLAUDE_SPAM")).toBe(
-			"spam",
-		);
+		expect(await folderOf("Different domain TRIGGER_CLAUDE_SPAM")).toBe("spam");
 	});
 
 	it("fails open to inbox when the Claude API call errors", async () => {
@@ -279,9 +279,7 @@ describe("Claude second-stage spam classification", () => {
 
 			await simulateReceiveEmail(rawEmail);
 
-			expect(await folderOf("Auth verdicts reach the classifier")).toBe(
-				"spam",
-			);
+			expect(await folderOf("Auth verdicts reach the classifier")).toBe("spam");
 		});
 	});
 });

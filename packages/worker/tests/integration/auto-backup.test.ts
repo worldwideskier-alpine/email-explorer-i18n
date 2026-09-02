@@ -50,11 +50,10 @@ const importEmail = async (subject: string, folder = "inbox") =>
 async function setBackup(settings: Record<string, unknown>): Promise<void> {
 	const key = `mailboxes/${mailboxId}.json`;
 	const stored = await bucket().get(key);
-	const current = stored ? ((await stored.json()) as Record<string, unknown>) : {};
-	await bucket().put(
-		key,
-		JSON.stringify({ ...current, autoBackup: settings }),
-	);
+	const current = stored
+		? ((await stored.json()) as Record<string, unknown>)
+		: {};
+	await bucket().put(key, JSON.stringify({ ...current, autoBackup: settings }));
 }
 
 async function readBackupSettings(): Promise<Record<string, any>> {
@@ -157,11 +156,14 @@ describe("The scheduled backup pass", () => {
 		}
 
 		// Someone with a session empties the mailbox.
-		await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
-			method: "PUT",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ settings: { deletionLocked: false } }),
-		});
+		await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}`,
+			{
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ settings: { deletionLocked: false } }),
+			},
+		);
 		const purge = await authenticatedFetch(
 			`http://local.test/api/v1/mailboxes/${mailboxId}?purge=true`,
 			{ method: "DELETE" },
@@ -188,9 +190,9 @@ describe("The scheduled backup pass", () => {
 			}),
 		);
 
-		expect(contents.some((text) => text.includes("the only copy of this"))).toBe(
-			true,
-		);
+		expect(
+			contents.some((text) => text.includes("the only copy of this")),
+		).toBe(true);
 	});
 
 	it("writes an archive for an empty mailbox rather than nothing at all", async () => {
@@ -327,7 +329,10 @@ describe("The scheduled entrypoint", () => {
 
 		const ctx = createExecutionContext();
 		await worker.scheduled?.(
-			createScheduledController({ scheduledTime: new Date(), cron: "0 18 * * *" }),
+			createScheduledController({
+				scheduledTime: new Date(),
+				cron: "0 18 * * *",
+			}),
 			env,
 			ctx,
 		);

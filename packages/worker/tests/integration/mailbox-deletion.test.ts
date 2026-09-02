@@ -17,11 +17,14 @@ async function readSettings(id: string): Promise<any> {
 }
 
 async function setLock(id: string, locked: boolean) {
-	const res = await authenticatedFetch(`http://local.test/api/v1/mailboxes/${id}`, {
-		method: "PUT",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ settings: { deletionLocked: locked } }),
-	});
+	const res = await authenticatedFetch(
+		`http://local.test/api/v1/mailboxes/${id}`,
+		{
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ settings: { deletionLocked: locked } }),
+		},
+	);
 	expect(res.status).toBe(200);
 }
 
@@ -119,23 +122,29 @@ describe("Mailbox deletion lock", () => {
 	it("keeps the lock through a save that doesn't mention it", async () => {
 		await setLock(mailboxId, false);
 
-		await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
-			method: "PUT",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				settings: { signature: { enabled: true, text: "bye" } },
-			}),
-		});
+		await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}`,
+			{
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					settings: { signature: { enabled: true, text: "bye" } },
+				}),
+			},
+		);
 		expect((await readSettings(mailboxId)).deletionLocked).toBe(false);
 
 		await setLock(mailboxId, true);
-		await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
-			method: "PUT",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				settings: { signature: { enabled: false, text: "" } },
-			}),
-		});
+		await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}`,
+			{
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					settings: { signature: { enabled: false, text: "" } },
+				}),
+			},
+		);
 		expect((await readSettings(mailboxId)).deletionLocked).toBe(true);
 	});
 

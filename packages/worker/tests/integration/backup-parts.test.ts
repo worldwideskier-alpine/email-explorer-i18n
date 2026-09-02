@@ -1,7 +1,16 @@
 import { env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
-import { PART_SIZE, PartBuffer, writeMailboxBackup } from "../../src/backup-writer";
-import { authenticatedFetch, createDummyMailbox, mailboxId, testAuthBeforeAll } from "./utils";
+import {
+	PART_SIZE,
+	PartBuffer,
+	writeMailboxBackup,
+} from "../../src/backup-writer";
+import {
+	authenticatedFetch,
+	createDummyMailbox,
+	mailboxId,
+	testAuthBeforeAll,
+} from "./utils";
 
 /**
  * How the archive is cut into parts.

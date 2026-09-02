@@ -102,7 +102,10 @@ describe("choosing what to delete", () => {
 	// that cannot be undone.
 	it("leaves a message sitting exactly on the cutoff", () => {
 		expect(
-			expiredSpamIds([{ id: "edge", date: new Date(cutoff).toISOString() }], cutoff),
+			expiredSpamIds(
+				[{ id: "edge", date: new Date(cutoff).toISOString() }],
+				cutoff,
+			),
 		).toEqual([]);
 	});
 

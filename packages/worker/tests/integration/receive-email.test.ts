@@ -1,5 +1,5 @@
-import { env, createExecutionContext } from "cloudflare:test";
-import { describe, expect, it, beforeEach } from "vitest";
+import { createExecutionContext, env } from "cloudflare:test";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
 	authenticatedFetch,
 	createDummyMailbox,
@@ -56,8 +56,7 @@ describe("Incoming Email Threading Tests", () => {
 					"Content-Type": "text/plain",
 					"Message-ID": "<reply-1@external.com>",
 					"In-Reply-To": "<original@external.com>",
-					References:
-						"<first@external.com> <original@external.com>",
+					References: "<first@external.com> <original@external.com>",
 				},
 				"This is a threaded reply",
 			);
@@ -72,9 +71,7 @@ describe("Incoming Email Threading Tests", () => {
 			const emails = await listResponse.json<any[]>();
 			expect(emails.length).toBeGreaterThanOrEqual(1);
 
-			const received = emails.find(
-				(e: any) => e.subject === "Re: Test Thread",
-			);
+			const received = emails.find((e: any) => e.subject === "Re: Test Thread");
 			expect(received).toBeDefined();
 
 			// Fetch full email details
@@ -148,9 +145,7 @@ describe("Incoming Email Threading Tests", () => {
 				`http://local.test/api/v1/mailboxes/${mailboxId}/emails?folder=inbox`,
 			);
 			const emails = await listResponse.json<any[]>();
-			const received = emails.find(
-				(e: any) => e.subject === "Bracket Test",
-			);
+			const received = emails.find((e: any) => e.subject === "Bracket Test");
 			expect(received).toBeDefined();
 
 			const emailResponse = await authenticatedFetch(
@@ -231,9 +226,7 @@ describe("Incoming Email Threading Tests", () => {
 				`http://local.test/api/v1/mailboxes/${mailboxId}/emails?folder=inbox`,
 			);
 			const emails = await listResponse.json<any[]>();
-			const received = emails.find(
-				(e: any) => e.subject === "External Thread",
-			);
+			const received = emails.find((e: any) => e.subject === "External Thread");
 			expect(received).toBeDefined();
 
 			// Reply to the incoming email

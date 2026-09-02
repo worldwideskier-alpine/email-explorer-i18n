@@ -19,14 +19,11 @@ import {
 const ECHO = "ECHO_RESEND_REQUEST";
 
 const send = (body: Record<string, unknown>) =>
-	authenticatedFetch(
-		`http://local.test/api/v1/mailboxes/${mailboxId}/emails`,
-		{
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ from: mailboxId, ...body }),
-		},
-	);
+	authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}/emails`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ from: mailboxId, ...body }),
+	});
 
 async function sentRow(id: string) {
 	// @ts-expect-error test binding

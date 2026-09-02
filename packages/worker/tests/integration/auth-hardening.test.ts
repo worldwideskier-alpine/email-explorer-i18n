@@ -192,10 +192,12 @@ describe("Route authorisation", () => {
 			200,
 		);
 		expect(
-			(await SELF.fetch("http://local.test/api/v1/settings-and-secrets")).status,
+			(await SELF.fetch("http://local.test/api/v1/settings-and-secrets"))
+				.status,
 		).toBe(401);
 		expect(
-			(await SELF.fetch("http://local.test/api/v1/auth/login-as-anyone")).status,
+			(await SELF.fetch("http://local.test/api/v1/auth/login-as-anyone"))
+				.status,
 		).toBe(401);
 	});
 

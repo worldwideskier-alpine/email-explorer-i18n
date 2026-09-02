@@ -1,5 +1,5 @@
-import { env, createExecutionContext, SELF } from "cloudflare:test";
-import { describe, expect, it, beforeEach } from "vitest";
+import { createExecutionContext, env, SELF } from "cloudflare:test";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
 	authenticatedFetch,
 	createDummyMailbox,
@@ -92,7 +92,8 @@ describe("Original message source", () => {
 				To: mailboxId,
 				Subject: "Inbound source test",
 				"Content-Type": "text/plain",
-				"Authentication-Results": "mx.example.com; spf=pass; dkim=pass; dmarc=pass",
+				"Authentication-Results":
+					"mx.example.com; spf=pass; dkim=pass; dmarc=pass",
 			},
 			"Inbound body",
 		);
@@ -103,7 +104,9 @@ describe("Original message source", () => {
 			`http://local.test/api/v1/mailboxes/${mailboxId}/emails?folder=inbox`,
 		);
 		const emails = await listResponse.json<any[]>();
-		const received = emails.find((e: any) => e.subject === "Inbound source test");
+		const received = emails.find(
+			(e: any) => e.subject === "Inbound source test",
+		);
 		expect(received).toBeDefined();
 
 		const sourceResponse = await authenticatedFetch(
@@ -134,7 +137,8 @@ describe("Original message source", () => {
 					To: mailboxId,
 					Subject: "Backfill target",
 					"Content-Type": "text/plain",
-					"Authentication-Results": "mx.example.com; spf=pass; dkim=pass; dmarc=pass",
+					"Authentication-Results":
+						"mx.example.com; spf=pass; dkim=pass; dmarc=pass",
 				},
 				"Original body",
 			);
@@ -155,7 +159,9 @@ describe("Original message source", () => {
 				{
 					method: "PUT",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ rawEmailBase64: btoa("X-Backfilled: true\r\n\r\nBackfilled body") }),
+					body: JSON.stringify({
+						rawEmailBase64: btoa("X-Backfilled: true\r\n\r\nBackfilled body"),
+					}),
 				},
 			);
 			expect(putResponse.status).toBe(204);

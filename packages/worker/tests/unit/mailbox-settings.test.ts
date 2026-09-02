@@ -35,7 +35,9 @@ describe("redactMailboxSettings", () => {
 		const key = `sk-ant-api03-SCW${"x".repeat(90)}0gAA`;
 		const result = redactMailboxSettings({ spamFilter: { claudeApiKey: key } });
 
-		expect(result?.spamFilter.claudeApiKeyMasked).toBe("sk-ant-api03-SCW...0gAA");
+		expect(result?.spamFilter.claudeApiKeyMasked).toBe(
+			"sk-ant-api03-SCW...0gAA",
+		);
 		expect(JSON.stringify(result)).not.toContain(key);
 	});
 
@@ -50,10 +52,15 @@ describe("redactMailboxSettings", () => {
 	it("recomputes the mask rather than trusting a stored one", () => {
 		const key = `sk-ant-api03-J7w${"x".repeat(90)}mwAA`;
 		const result = redactMailboxSettings({
-			spamFilter: { claudeApiKey: key, claudeApiKeyMasked: "sk-ant-api03-OLD...aaaa" },
+			spamFilter: {
+				claudeApiKey: key,
+				claudeApiKeyMasked: "sk-ant-api03-OLD...aaaa",
+			},
 		});
 
-		expect(result?.spamFilter.claudeApiKeyMasked).toBe("sk-ant-api03-J7w...mwAA");
+		expect(result?.spamFilter.claudeApiKeyMasked).toBe(
+			"sk-ant-api03-J7w...mwAA",
+		);
 	});
 });
 

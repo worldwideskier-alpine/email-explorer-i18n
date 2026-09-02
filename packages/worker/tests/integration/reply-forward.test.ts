@@ -1,13 +1,17 @@
-import { SELF, env, runInDurableObject } from "cloudflare:test";
-import { describe, expect, it, beforeEach } from "vitest";
-import {authenticatedFetch, createMailbox, mailboxId, testAuthBeforeAll} from "./utils";
+import { env, runInDurableObject, SELF } from "cloudflare:test";
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+	authenticatedFetch,
+	createMailbox,
+	mailboxId,
+	testAuthBeforeAll,
+} from "./utils";
 
 describe("Reply & Forward Functionality Integration Tests", () => {
 	let originalEmailId: string;
 
-
 	beforeEach(async () => {
-		await testAuthBeforeAll()
+		await testAuthBeforeAll();
 
 		// Create a test mailbox directly in R2
 		await createMailbox();
