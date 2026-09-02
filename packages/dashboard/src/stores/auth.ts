@@ -106,12 +106,26 @@ export const useAuthStore = defineStore("auth", () => {
 		error.value = null;
 		try {
 			const response = await api.login(email, password);
-			session.value = response.data;
+			// Field by field, not the whole response.
+			//
+			// It used to be `session.value = response.data`, and the Worker's
+			// login response still carries `isAdmin`. So the flag went on
+			// living in the reactive session and in localStorage no matter
+			// what this file said about it, and the type saying it was gone
+			// only meant a cast would reach a real value. Naming what is kept
+			// is what makes "not kept" true rather than asserted.
+			session.value = {
+				id: response.data.id,
+				userId: response.data.userId,
+				email: response.data.email,
+				role: response.data.role,
+				expiresAt: response.data.expiresAt,
+			};
 			// Store session in localStorage
-			localStorage.setItem("session", JSON.stringify(response.data));
+			localStorage.setItem("session", JSON.stringify(session.value));
 			// Set default auth header for future requests
 			api.setAuthToken(response.data.id);
-			return response.data;
+			return session.value;
 		} catch (err: any) {
 			const fromApi = err.response?.data?.error;
 			error.value = () => translateApiError(fromApi, "Login failed");

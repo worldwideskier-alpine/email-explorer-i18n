@@ -2587,16 +2587,22 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 				// Middleware to check mailbox access. The admin flag used to
 				// skip this entirely; now the question is whether the mailbox
 				// belongs to this person, through any of their logins.
+				//
+				// Asked through personHoldsMailbox rather than by querying the
+				// Durable Object here, so that this gate and the ones inside
+				// the routes are the same question with the same precondition.
+				// Asking it directly skipped the legacy backfill, so on a
+				// deployment upgrading into the ownership model this refused
+				// every mailbox -- the one screen that would have repaired it
+				// being the mailbox list, which nobody reaches without first
+				// getting past here.
 				const checkMailboxAccess = async (c: any, next: any) => {
 					const mailboxId = c.req.param("mailboxId");
 					if (!mailboxId) {
 						await next();
 						return;
 					}
-					const authId = env.MAILBOX.idFromName("AUTH");
-					const authDO = env.MAILBOX.get(authId);
-					const held = await authDO.getPersonMailboxes(session.userId);
-					if (!held.includes(mailboxId)) {
+					if (!(await personHoldsMailbox(env, session, mailboxId))) {
 						return c.json(
 							{ error: "You don't have access to this mailbox" },
 							403,

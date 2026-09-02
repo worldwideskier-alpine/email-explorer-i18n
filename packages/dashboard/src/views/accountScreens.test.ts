@@ -177,18 +177,24 @@ describe("no screen decides anything by the legacy admin flag", () => {
 	 * text finds the warning and reports it as the thing it warns about. The
 	 * `(^|\s)` before `//` is what keeps `https://` out of that.
 	 *
-	 * Then string literals, because `t("account.isAdmin")` is the label on the
-	 * badge -- the words "administrator", looked up by name. A gate is never
-	 * inside a string, so nothing that decides anything is lost with them.
+	 * Then message keys, and only those. `t("account.isAdmin")` is the label on
+	 * the badge -- the word "administrator", looked up by name -- and it is the
+	 * one place the string appears without anything reading the flag.
+	 *
+	 * An earlier version of this blanked every quoted region instead, which in
+	 * a .vue file is every template binding: `v-if="authStore.session?.isAdmin"`
+	 * became `v-if=""` and the scan saw nothing. That is the exact shape of the
+	 * gate this file exists to keep out -- the one that was on the restore
+	 * control -- so the broader rule made the guard blind to the only case that
+	 * has ever actually happened here. Measured, not reasoned about: a probe of
+	 * that shape passed the suite.
 	 */
 	const code = (source: string) =>
 		source
 			.replace(/\/\*[\s\S]*?\*\//g, " ")
 			.replace(/<!--[\s\S]*?-->/g, " ")
 			.replace(/(^|\s)\/\/.*$/gm, "$1")
-			.replace(/"(?:[^"\\]|\\.)*"/g, '""')
-			.replace(/'(?:[^'\\]|\\.)*'/g, "''")
-			.replace(/`(?:[^`\\]|\\.)*`/g, "``");
+			.replace(/\$?t\(\s*(['"])[^'"]*\1/g, "t(");
 
 	it("is not read anywhere in the dashboard", () => {
 		for (const [path, source] of Object.entries(sources)) {
@@ -198,9 +204,17 @@ describe("no screen decides anything by the legacy admin flag", () => {
 		}
 	});
 
-	// And it is not on the session either, which is what stopped the type
-	// checker from catching the spelling above.
-	it("is not kept on the stored session", () => {
+	/**
+	 * And it is not on the Session type either, which is what stopped the
+	 * compiler from catching `session?.isAdmin`.
+	 *
+	 * This reads the source, so it says what the file declares and not what a
+	 * sign-in leaves behind -- those came apart once already, the type saying
+	 * the field was gone while `session.value = response.data` kept it. What a
+	 * sign-in actually stores is asked of a sign-in, in
+	 * stores/authSession.test.ts.
+	 */
+	it("is not declared on the Session type", () => {
 		const store = sources["../stores/auth.ts"];
 		expect(store).toBeTruthy();
 		expect(store).not.toMatch(/^\s*isAdmin: boolean;/m);

@@ -5,6 +5,20 @@ import { LEGACY_ADMIN_PERSON_ID } from "../../src/people";
 import { createMailbox, mailboxId } from "./utils";
 
 /**
+ * A mailbox in the state this section is named after: present in the bucket,
+ * with no owner row behind it.
+ *
+ * `createMailbox` from utils grants it to the fixture person, which is a
+ * mailbox that already belongs to somebody -- the opposite of what predates
+ * the grant model. Using it here meant the test below asserted that the
+ * backfill takes a mailbox belonging to another person, which is a hole
+ * rather than a requirement, and it kept that hole from being noticed.
+ */
+async function createUnownedMailbox() {
+	await env.BUCKET.put(`mailboxes/${mailboxId}.json`, JSON.stringify({}));
+}
+
+/**
  * The account tier above the mailboxes, and the migration into it.
  *
  * Two things are being held at once here. One is that root can manage
@@ -87,7 +101,10 @@ describe("what root does with accounts", () => {
 		const created = await as(root)("http://local.test/api/v1/root/accounts", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ email: "hanako@example.com", password: "password123" }),
+			body: JSON.stringify({
+				email: "hanako@example.com",
+				password: "password123",
+			}),
 		});
 		expect(created.status).toBe(201);
 		expect((await signIn("hanako@example.com")).role).toBe("admin");
@@ -128,7 +145,9 @@ describe("what root does with accounts", () => {
 			},
 		);
 		expect(res.status).toBe(200);
-		expect((await signIn("hanako@example.com", "brand-new-password")).id).toBeTruthy();
+		expect(
+			(await signIn("hanako@example.com", "brand-new-password")).id,
+		).toBeTruthy();
 	});
 
 	// A reset that leaves the old sessions alive resets nothing.
@@ -139,11 +158,14 @@ describe("what root does with accounts", () => {
 			(await as(before.id)("http://local.test/api/v1/mailboxes")).status,
 		).toBe(200);
 
-		await as(root)(`http://local.test/api/v1/root/accounts/${userId}/password`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ password: "brand-new-password" }),
-		});
+		await as(root)(
+			`http://local.test/api/v1/root/accounts/${userId}/password`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ password: "brand-new-password" }),
+			},
+		);
 
 		expect(
 			(await as(before.id)("http://local.test/api/v1/mailboxes")).status,
@@ -162,7 +184,11 @@ describe("what root does with accounts", () => {
 
 	it("deletes a person, and none of their logins can sign in", async () => {
 		await createUser("leaver@example.com", false);
-		await createUser("leaver-spare@example.com", false, await personIdOf("leaver@example.com"));
+		await createUser(
+			"leaver-spare@example.com",
+			false,
+			await personIdOf("leaver@example.com"),
+		);
 
 		const res = await as(root)(
 			`http://local.test/api/v1/root/accounts/${await personIdOf("leaver@example.com")}`,
@@ -202,7 +228,10 @@ describe("what root does with accounts", () => {
 			body: JSON.stringify({ email: mailboxId, name: "Theirs" }),
 		});
 		expect(made.status).toBe(201);
-		await bucket.put(`backups/${encodeURIComponent(mailboxId)}/2026-01-01.mbox`, "archived");
+		await bucket.put(
+			`backups/${encodeURIComponent(mailboxId)}/2026-01-01.mbox`,
+			"archived",
+		);
 
 		await as(root)(
 			`http://local.test/api/v1/root/accounts/${await personIdOf("leaver@example.com")}`,
@@ -233,7 +262,9 @@ describe("what root does with accounts", () => {
 			body: JSON.stringify({ email: mailboxId, name: "Theirs" }),
 		});
 		// The default, stated here so the test does not rest on it silently.
-		const settings = await (await bucket.get(`mailboxes/${mailboxId}.json`))?.json<{ deletionLocked?: boolean }>();
+		const settings = await (
+			await bucket.get(`mailboxes/${mailboxId}.json`)
+		)?.json<{ deletionLocked?: boolean }>();
 		expect(settings?.deletionLocked).toBe(true);
 
 		await as(root)(
@@ -250,7 +281,6 @@ describe("what root does with accounts", () => {
 		);
 		expect(res.status).toBe(409);
 	});
-
 });
 
 /**
@@ -283,7 +313,7 @@ describe("mailboxes that predate the grant model", () => {
 			LEGACY_ADMIN_PERSON_ID,
 		);
 		const firstSession = await signIn("admin@example.com");
-		await createMailbox();
+		await createUnownedMailbox();
 
 		// The screen where a missing grant would first show. Asking for it is
 		// what runs the backfill.
@@ -420,9 +450,7 @@ describe("a mailbox made today", () => {
 					getPersonMailboxes(id: string): Promise<string[]>;
 				}
 			).getPersonMailboxes(me.userId);
-			expect(owned).toContain(
-				"brand-new@example.com",
-			);
+			expect(owned).toContain("brand-new@example.com");
 		});
 	});
 });
@@ -524,13 +552,15 @@ describe("what root's create form makes", () => {
 
 	const people = async () =>
 		(
-			await (await as(root)("http://local.test/api/v1/root/accounts")).json<
-				{ personId: string; emails: string[]; role: string }[]
-			>()
+			await (
+				await as(root)("http://local.test/api/v1/root/accounts")
+			).json<{ personId: string; emails: string[]; role: string }[]>()
 		).sort((a, b) => a.emails[0].localeCompare(b.emails[0]));
 
 	it("adds a spare to root's own account, not a second root", async () => {
-		expect((await create("operator-spare@example.com", "root")).status).toBe(201);
+		expect((await create("operator-spare@example.com", "root")).status).toBe(
+			201,
+		);
 
 		const listed = await people();
 		// One person, both addresses, still the only root there is.
