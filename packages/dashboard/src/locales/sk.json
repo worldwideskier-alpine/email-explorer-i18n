@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Odpoveď neprišla včas.",
 		"spamCheckNetwork": "K API sa nepodarilo pripojiť.",
 		"spamCheckMalformed": "Odpoveď sa nepodarilo prečítať.",
+		"spamCheckUnknown": "Kontrola zlyhala.",
 		"spamCheckDetail": "Odpoveď: {detail}",
 		"spamPurgeTitle": "Automatické mazanie spamu",
 		"spamPurgeDescription": "Každý deň zmaže v priečinku spam správy staršie ako zadaný počet dní. Beží po automatickej zálohe, takže zmazané správy sú stále v najnovšej zálohe.",

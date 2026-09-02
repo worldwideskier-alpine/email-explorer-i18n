@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Vastust ei tulnud õigeks ajaks.",
 		"spamCheckNetwork": "API-ga ei õnnestunud ühendust saada.",
 		"spamCheckMalformed": "Vastust ei õnnestunud lugeda.",
+		"spamCheckUnknown": "Kontroll ebaõnnestus.",
 		"spamCheckDetail": "Vastus: {detail}",
 		"spamPurgeTitle": "Rämpsposti automaatne kustutamine",
 		"spamPurgeDescription": "Kustutab iga päev rämpspostikaustast kirjad, mis on vanemad kui määratud päevade arv. Käivitub pärast automaatset varukoopiat, seega kustutatud kirjad on veel kõige uuemas koopias.",

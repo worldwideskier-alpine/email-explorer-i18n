@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Atbilde laikā nepienāca.",
 		"spamCheckNetwork": "Nevarēja sazināties ar API.",
 		"spamCheckMalformed": "Atbildi nevarēja nolasīt.",
+		"spamCheckUnknown": "Pārbaude neizdevās.",
 		"spamCheckDetail": "Atbilde: {detail}",
 		"spamPurgeTitle": "Automātiska mēstuļu dzēšana",
 		"spamPurgeDescription": "Katru dienu dzēš mēstuļu mapē esošās vēstules, kas ir vecākas par norādīto dienu skaitu. Darbojas pēc automātiskās dublējuma izveides, tāpēc dzēstās vēstules joprojām ir jaunākajā dublējumā.",

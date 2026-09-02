@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "時間內冇回應。",
 		"spamCheckNetwork": "連唔到 API。",
 		"spamCheckMalformed": "睇唔明個回應。",
+		"spamCheckUnknown": "檢查失敗咗。",
 		"spamCheckDetail": "回應：{detail}",
 		"spamPurgeTitle": "自動刪除垃圾郵件",
 		"spamPurgeDescription": "每日刪除垃圾郵件資料夾入面早過所設日數嘅郵件。喺自動備份之後執行，所以刪咗嘅郵件仲喺最近一次備份入面。",

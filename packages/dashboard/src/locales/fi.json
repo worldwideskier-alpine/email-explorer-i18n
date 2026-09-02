@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Vastausta ei tullut ajoissa.",
 		"spamCheckNetwork": "API:in ei saatu yhteyttä.",
 		"spamCheckMalformed": "Vastausta ei voitu lukea.",
+		"spamCheckUnknown": "Tarkistus epäonnistui.",
 		"spamCheckDetail": "Vastaus: {detail}",
 		"spamPurgeTitle": "Roskapostin automaattinen poisto",
 		"spamPurgeDescription": "Poistaa päivittäin roskapostikansiosta viestit, jotka ovat vanhempia kuin asettamasi päivämäärä. Suoritetaan automaattisen varmuuskopion jälkeen, joten poistetut viestit ovat yhä uusimmassa kopiossa.",

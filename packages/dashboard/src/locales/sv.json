@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Inget svar kom i tid.",
 		"spamCheckNetwork": "API:et gick inte att nå.",
 		"spamCheckMalformed": "Svaret gick inte att läsa.",
+		"spamCheckUnknown": "Kontrollen misslyckades.",
 		"spamCheckDetail": "Svar: {detail}",
 		"spamPurgeTitle": "Automatisk radering av skräppost",
 		"spamPurgeDescription": "Raderar dagligen meddelanden i skräppostmappen som är äldre än det antal dagar du väljer. Den körs efter den automatiska säkerhetskopian, så raderade meddelanden finns kvar i den senaste kopian.",

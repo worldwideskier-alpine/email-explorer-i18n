@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Det kom ikke svar i tide.",
 		"spamCheckNetwork": "API-et kunne ikke nås.",
 		"spamCheckMalformed": "Svaret kunne ikke leses.",
+		"spamCheckUnknown": "Kontrollen mislyktes.",
 		"spamCheckDetail": "Svar: {detail}",
 		"spamPurgeTitle": "Automatisk sletting av spam",
 		"spamPurgeDescription": "Sletter daglig e-post i spam-mappen som er eldre enn antallet dager du velger. Den kjører etter den automatiske sikkerhetskopien, så slettet e-post finnes fortsatt i den nyeste kopien.",

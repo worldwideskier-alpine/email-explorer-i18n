@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "There was no answer in time.",
 		"spamCheckNetwork": "The API could not be reached.",
 		"spamCheckMalformed": "The answer could not be read.",
+		"spamCheckUnknown": "The check failed.",
 		"spamCheckDetail": "Response: {detail}",
 		"spamPurgeTitle": "Automatic spam deletion",
 		"spamPurgeDescription": "Deletes mail in the spam folder older than the number of days you set, once a day. It runs after the automatic backup, so deleted mail is still in the most recent backup.",

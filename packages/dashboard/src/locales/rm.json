@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Nagina resposta n'è arrivada a temp.",
 		"spamCheckNetwork": "L'API n'ha betg pudì vegnir cuntanschida.",
 		"spamCheckMalformed": "La resposta n'ha betg pudì vegnir legida.",
+		"spamCheckUnknown": "La controlla n'è betg reussida.",
 		"spamCheckDetail": "Resposta: {detail}",
 		"spamPurgeTitle": "Stizzar automaticamain il spam",
 		"spamPurgeDescription": "Stizza mintga di ils messadis en l'ordinatur da spam ch'èn pli vegls che il dumber da dis inditgà. Vegn exequì suenter la copia da segirezza automatica, uschè che ils messadis stizzads èn anc en l'ultima copia.",

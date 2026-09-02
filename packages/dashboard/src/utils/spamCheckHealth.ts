@@ -80,10 +80,17 @@ const REASON_KEYS: Record<string, string> = {
 };
 
 /**
- * The message key for a recorded reason. A code this version does not know --
- * a deployment running an older dashboard against a newer Worker -- falls back
- * to the vaguest of them rather than showing the raw code or nothing at all.
+ * The message key for a recorded reason.
+ *
+ * A code this version does not know -- a screen running against a newer Worker
+ * -- gets a message that says only that the check failed. It used to fall back
+ * to "the API returned an error", which was called the vaguest of them and is
+ * not vague at all: it is a specific claim, and it was wrong the first time it
+ * mattered. A Worker that had just learnt to say "the request never reached
+ * the API" was read by a screen that had not, and the screen announced the
+ * opposite of what had happened. The reply line beside it still carries the
+ * evidence, so nothing is lost by declining to guess.
  */
 export function spamCheckReasonKey(reason: string | null | undefined): string {
-	return REASON_KEYS[reason ?? ""] ?? "settings.spamCheckServerError";
+	return REASON_KEYS[reason ?? ""] ?? "settings.spamCheckUnknown";
 }

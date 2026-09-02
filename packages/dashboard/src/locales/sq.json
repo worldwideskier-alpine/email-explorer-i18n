@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Nuk erdhi përgjigje në kohë.",
 		"spamCheckNetwork": "Nuk u arrit lidhja me API-në.",
 		"spamCheckMalformed": "Përgjigjja nuk u lexua dot.",
+		"spamCheckUnknown": "Kontrolli dështoi.",
 		"spamCheckDetail": "Përgjigje: {detail}",
 		"spamPurgeTitle": "Fshirja automatike e postës së padëshiruar",
 		"spamPurgeDescription": "Çdo ditë fshin mesazhet në dosjen e postës së padëshiruar më të vjetra se numri i ditëve që caktoni. Ekzekutohet pas kopjes rezervë automatike, prandaj mesazhet e fshira janë ende në kopjen më të re.",

@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Ma waslet l-ebda tweġiba fil-ħin.",
 		"spamCheckNetwork": "L-API ma setax jintlaħaq.",
 		"spamCheckMalformed": "It-tweġiba ma setgħetx tinqara.",
+		"spamCheckUnknown": "Il-verifika falliet.",
 		"spamCheckDetail": "Rispons: {detail}",
 		"spamPurgeTitle": "Tħassir awtomatiku tal-ispam",
 		"spamPurgeDescription": "Kuljum iħassar il-messaġġi fil-folder tal-ispam li huma eqdem min-numru ta' jiem li tagħżel. Jaħdem wara l-backup awtomatiku, għalhekk il-messaġġi mħassra għadhom fl-aħħar backup.",

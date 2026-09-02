@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Tidak ada jawaban tepat waktu.",
 		"spamCheckNetwork": "API tidak dapat dihubungi.",
 		"spamCheckMalformed": "Jawaban tidak dapat dibaca.",
+		"spamCheckUnknown": "Pemeriksaan gagal.",
 		"spamCheckDetail": "Respons: {detail}",
 		"spamPurgeTitle": "Penghapusan spam otomatis",
 		"spamPurgeDescription": "Setiap hari menghapus surel di folder spam yang lebih lama dari jumlah hari yang Anda tetapkan. Dijalankan setelah pencadangan otomatis, jadi surel yang dihapus masih ada di cadangan terbaru.",

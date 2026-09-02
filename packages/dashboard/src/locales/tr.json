@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Zamanında yanıt gelmedi.",
 		"spamCheckNetwork": "API'ye ulaşılamadı.",
 		"spamCheckMalformed": "Yanıt okunamadı.",
+		"spamCheckUnknown": "Denetim başarısız oldu.",
 		"spamCheckDetail": "Yanıt: {detail}",
 		"spamPurgeTitle": "Spam'ın otomatik silinmesi",
 		"spamPurgeDescription": "Spam klasöründeki, belirlediğiniz gün sayısından eski iletileri her gün siler. Otomatik yedeklemeden sonra çalışır, bu yüzden silinen iletiler en son yedekte hâlâ bulunur.",

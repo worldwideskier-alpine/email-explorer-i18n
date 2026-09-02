@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Tiada jawapan dalam masa yang ditetapkan.",
 		"spamCheckNetwork": "API tidak dapat dihubungi.",
 		"spamCheckMalformed": "Jawapan tidak dapat dibaca.",
+		"spamCheckUnknown": "Pemeriksaan gagal.",
 		"spamCheckDetail": "Respons: {detail}",
 		"spamPurgeTitle": "Pemadaman spam automatik",
 		"spamPurgeDescription": "Setiap hari memadam e-mel dalam folder spam yang lebih lama daripada bilangan hari yang anda tetapkan. Dijalankan selepas sandaran automatik, jadi e-mel yang dipadam masih ada dalam sandaran terbaharu.",

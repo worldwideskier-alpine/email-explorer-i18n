@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Atsakymas laiku negautas.",
 		"spamCheckNetwork": "Nepavyko pasiekti API.",
 		"spamCheckMalformed": "Nepavyko perskaityti atsakymo.",
+		"spamCheckUnknown": "Patikra nepavyko.",
 		"spamCheckDetail": "Atsakymas: {detail}",
 		"spamPurgeTitle": "Automatinis šlamšto šalinimas",
 		"spamPurgeDescription": "Kasdien ištrina šlamšto aplanke esančius laiškus, senesnius nei nurodytas dienų skaičius. Vykdoma po automatinės atsarginės kopijos, todėl ištrinti laiškai vis dar yra naujausioje kopijoje.",
