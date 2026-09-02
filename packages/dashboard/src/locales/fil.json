@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Ang mail na hindi nasuri ay napupunta sa inbox, kaya maaaring makalusot ang spam.",
 		"spamCheckUnauthorized": "Tinanggihan ang API key. Suriin ang key.",
 		"spamCheckForbidden": "Walang pahintulot ang API key para sa tawag na ito. Suriin ang workspace kung saan ito nabibilang.",
+		"spamCheckBlocked": "Tinanggihan ang kahilingan bago ito nakarating sa API. Hindi ang key ang problema.",
 		"spamCheckRateLimited": "Naabot na ang limitasyon ng tawag.",
 		"spamCheckServerError": "Nagbalik ng error ang API.",
 		"spamCheckTimeout": "Walang sagot sa loob ng takdang oras.",

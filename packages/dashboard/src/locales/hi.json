@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "जिस मेल की जाँच नहीं हो सकी वह इनबॉक्स में जाता है, इसलिए स्पैम निकल सकता है।",
 		"spamCheckUnauthorized": "API कुंजी अस्वीकृत हुई। कुंजी जाँचें।",
 		"spamCheckForbidden": "इस कॉल के लिए API कुंजी को अनुमति नहीं है। कुंजी जिस वर्कस्पेस की है, उसे जाँचें।",
+		"spamCheckBlocked": "अनुरोध API तक पहुँचने से पहले ही अस्वीकार कर दिया गया। समस्या कुंजी की नहीं है।",
 		"spamCheckRateLimited": "कॉल की सीमा पूरी हो गई।",
 		"spamCheckServerError": "API ने त्रुटि लौटाई।",
 		"spamCheckTimeout": "समय पर कोई उत्तर नहीं आया।",

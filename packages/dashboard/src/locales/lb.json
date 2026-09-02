@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Post, déi net iwwerpréift konnt ginn, kënnt an d'Postagang, also kann Spam duerchkommen.",
 		"spamCheckUnauthorized": "De API-Schlëssel gouf ofgeleent. Kuckt de Schlëssel no.",
 		"spamCheckForbidden": "De API-Schlëssel huet keng Berechtegung fir dësen Opruff. Kuckt de Workspace no, zu deem en gehéiert.",
+		"spamCheckBlocked": "D'Ufro gouf ofgeleent, ier se bei d'API koum. De Schlëssel ass net d'Problem.",
 		"spamCheckRateLimited": "D'Limite vun den Ufroe ass erreecht.",
 		"spamCheckServerError": "D'API huet e Feeler zréckginn.",
 		"spamCheckTimeout": "Et koum keng Äntwert an der Zäit.",

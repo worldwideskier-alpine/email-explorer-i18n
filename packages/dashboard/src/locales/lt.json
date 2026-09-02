@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Nepatikrintas paštas patenka į gautuosius, todėl brukalas gali prasprūsti.",
 		"spamCheckUnauthorized": "API raktas atmestas. Patikrinkite raktą.",
 		"spamCheckForbidden": "API raktas neturi teisių šiam iškvietimui. Patikrinkite darbo sritį, kuriai jis priklauso.",
+		"spamCheckBlocked": "Užklausa buvo atmesta dar nepasiekusi API. Problema ne rakte.",
 		"spamCheckRateLimited": "Pasiekta iškvietimų riba.",
 		"spamCheckServerError": "API grąžino klaidą.",
 		"spamCheckTimeout": "Atsakymas laiku negautas.",

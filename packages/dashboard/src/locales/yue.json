@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "判斷唔到嘅郵件會入收件匣，可能會漏咗垃圾郵件。",
 		"spamCheckUnauthorized": "API 金鑰被拒絕。請檢查金鑰。",
 		"spamCheckForbidden": "API 金鑰無呢個呼叫嘅權限。請檢查金鑰所屬嘅工作區。",
+		"spamCheckBlocked": "請求喺去到 API 之前已經被拒絕。問題唔喺金鑰。",
 		"spamCheckRateLimited": "已達呼叫次數上限。",
 		"spamCheckServerError": "API 回傳咗錯誤。",
 		"spamCheckTimeout": "時間內冇回應。",

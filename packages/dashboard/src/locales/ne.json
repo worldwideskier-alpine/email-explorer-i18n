@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "जाँच गर्न नसकिएको मेल इनबक्समा जान्छ, त्यसैले स्प्याम छिर्न सक्छ।",
 		"spamCheckUnauthorized": "API कुञ्जी अस्वीकृत भयो। कुञ्जी जाँच्नुहोस्।",
 		"spamCheckForbidden": "यो कलका लागि API कुञ्जीलाई अनुमति छैन। कुञ्जी रहेको कार्यक्षेत्र जाँच्नुहोस्।",
+		"spamCheckBlocked": "अनुरोध API सम्म पुग्नु अघि नै अस्वीकार भयो। समस्या कुञ्जीको होइन।",
 		"spamCheckRateLimited": "कलको सीमा पुग्यो।",
 		"spamCheckServerError": "API ले त्रुटि फर्कायो।",
 		"spamCheckTimeout": "समयमै जवाफ आएन।",

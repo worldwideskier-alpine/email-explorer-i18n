@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Posta që nuk u kontrollua dot shkon në kutinë hyrëse, kështu që spami mund të kalojë.",
 		"spamCheckUnauthorized": "Çelësi i API-t u refuzua. Kontrolloni çelësin.",
 		"spamCheckForbidden": "Çelësi API nuk ka leje për këtë thirrje. Kontrolloni hapësirën e punës së cilës i përket.",
+		"spamCheckBlocked": "Kërkesa u refuzua para se të arrinte te API. Problemi nuk është çelësi.",
 		"spamCheckRateLimited": "U arrit kufiri i thirrjeve.",
 		"spamCheckServerError": "API-ja ktheu një gabim.",
 		"spamCheckTimeout": "Nuk erdhi përgjigje në kohë.",

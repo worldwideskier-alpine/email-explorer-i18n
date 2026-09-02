@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "无法判定的邮件会进入收件箱，可能漏掉垃圾邮件。",
 		"spamCheckUnauthorized": "API 密钥被拒绝。请检查密钥。",
 		"spamCheckForbidden": "API 密钥没有此调用的权限。请检查密钥所属的工作区。",
+		"spamCheckBlocked": "请求在到达 API 之前就被拒绝了。问题不在密钥。",
 		"spamCheckRateLimited": "已达到调用次数上限。",
 		"spamCheckServerError": "API 返回了错误。",
 		"spamCheckTimeout": "未在时限内收到响应。",

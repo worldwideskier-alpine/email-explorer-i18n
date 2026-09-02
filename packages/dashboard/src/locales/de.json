@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Nicht geprüfte Post landet im Posteingang, es kann also Spam durchkommen.",
 		"spamCheckUnauthorized": "Der API-Schlüssel wurde abgelehnt. Prüfen Sie den Schlüssel.",
 		"spamCheckForbidden": "Der API-Schlüssel ist für diesen Aufruf nicht berechtigt. Prüfen Sie den Workspace, zu dem er gehört.",
+		"spamCheckBlocked": "Die Anfrage wurde abgewiesen, bevor sie die API erreichte. Der Schlüssel ist nicht das Problem.",
 		"spamCheckRateLimited": "Das Aufrufkontingent ist erschöpft.",
 		"spamCheckServerError": "Die API hat einen Fehler zurückgegeben.",
 		"spamCheckTimeout": "Es kam keine rechtzeitige Antwort.",

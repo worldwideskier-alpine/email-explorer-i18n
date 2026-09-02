@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "El correu que no s'ha pogut comprovar va a la safata d'entrada, així que pot passar correu brossa.",
 		"spamCheckUnauthorized": "S'ha rebutjat la clau d'API. Reviseu la clau.",
 		"spamCheckForbidden": "La clau API no té permís per fer aquesta crida. Comproveu l'espai de treball al qual pertany.",
+		"spamCheckBlocked": "La sol·licitud s'ha rebutjat abans d'arribar a l'API. El problema no és la clau.",
 		"spamCheckRateLimited": "S'ha arribat al límit de crides.",
 		"spamCheckServerError": "L'API ha retornat un error.",
 		"spamCheckTimeout": "No hi ha hagut resposta a temps.",

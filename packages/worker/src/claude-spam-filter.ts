@@ -152,6 +152,7 @@ export function buildClassificationContent(
 export type SpamCheckFailure =
 	| "unauthorized"
 	| "forbidden"
+	| "blocked"
 	| "rateLimited"
 	| "serverError"
 	| "timeout"
@@ -177,48 +178,98 @@ export interface ClassifyResult {
 	detail?: string;
 }
 
-/**
- * 401 and 403 used to be one reason, and they are not one problem.
- *
- * 401 is the key: it is wrong, or it was deleted upstream, and re-entering it
- * is the fix. 403 is not the key -- either it is refused permission for this
- * model, or something in front of the API refused the request before the API
- * saw it -- and re-entering a correct key over and over fixes neither. The
- * advice for the two is opposite, so a screen that cannot tell them apart
- * sends the reader the wrong way half the time.
- */
-function failureFromStatus(status: number): SpamCheckFailure {
-	if (status === 401) return "unauthorized";
-	if (status === 403) return "forbidden";
-	if (status === 429) return "rateLimited";
-	return "serverError";
-}
-
 /** Enough of an error body to name what refused the request, and no more. */
 const MAX_UPSTREAM_TYPE_CHARS = 40;
 
 /**
- * What the far end said, as something short enough to put on a screen.
+ * Every error type the Messages API names. Anything outside this set did not
+ * come from the Messages API, whatever HTTP status carried it.
  *
- * The status alone does not separate the two kinds of 403. The API answers in
- * JSON and names its own reason in a closed vocabulary (`permission_error`,
- * `authentication_error`), which is safe to show as it stands. Anything in
- * front of it answers with a page, and the absence of that JSON is itself the
- * finding: the request never reached the API. So a body that will not parse
- * is reported as exactly that, and never quoted -- an error page is somebody
- * else's HTML and has no business on this screen.
+ * This is what makes the difference between the two 403s decidable. It was
+ * first written as "the API answers in JSON, anything in front of it answers
+ * with a page", and that was wrong: a 403 arrived carrying
+ * `{"error":{"type":"forbidden"}}` -- JSON, and not a word the API uses. Read
+ * as the API's own answer it became "your key lacks permission for this call",
+ * which sent the reader to a console where there was nothing to find, on a key
+ * that had classified a message eight minutes earlier.
  */
-export function upstreamFailureDetail(status: number, body: string): string {
+const API_ERROR_TYPES = new Set([
+	"invalid_request_error",
+	"authentication_error",
+	"billing_error",
+	"permission_error",
+	"not_found_error",
+	"request_too_large",
+	"rate_limit_error",
+	"api_error",
+	"overloaded_error",
+]);
+
+/** The `error.type` in an error body, or null if there isn't one. */
+function upstreamErrorType(body: string): string | null {
 	try {
 		const parsed = JSON.parse(body) as { error?: { type?: unknown } };
 		const type = parsed?.error?.type;
-		if (typeof type === "string" && type) {
-			return `${status} ${type.slice(0, MAX_UPSTREAM_TYPE_CHARS)}`;
-		}
+		return typeof type === "string" && type ? type : null;
 	} catch {
-		// Not JSON at all -- see above.
+		// Not JSON at all: an error page, which is somebody else's HTML and
+		// has no business on this screen. Its absence is the finding.
+		return null;
 	}
-	return `${status} (no API error body)`;
+}
+
+/**
+ * What the far end said, as something short enough to put on a screen.
+ *
+ * The type is shown as it stands whether or not it is one of the API's --
+ * a word the API does not use is exactly what identifies the refusal as
+ * somebody else's, so hiding it would remove the evidence. The body itself is
+ * never quoted.
+ */
+export function upstreamFailureDetail(status: number, body: string): string {
+	const type = upstreamErrorType(body);
+	return type
+		? `${status} ${type.slice(0, MAX_UPSTREAM_TYPE_CHARS)}`
+		: `${status} (no API error body)`;
+}
+
+/**
+ * Which of the refusals this is, decided by what answered rather than by the
+ * status alone.
+ *
+ * Three outcomes, and the advice for each is different:
+ *
+ * - `unauthorized` -- the API says the key is not valid. Enter the right one.
+ * - `forbidden` -- the API says the key is valid but not allowed this call.
+ *   The key is not the thing to change; its workspace is.
+ * - `blocked` -- a 401 or 403 that the API did not send. The request never
+ *   reached it, so neither the key nor its workspace has anything to do with
+ *   it, and there is nothing on this screen to fix. It comes and goes.
+ *
+ * Telling any of these to do what another one needs wastes the reader's time
+ * on a console that will show nothing wrong.
+ */
+export function failureFromResponse(
+	status: number,
+	body: string,
+): SpamCheckFailure {
+	const type = upstreamErrorType(body);
+
+	// The API's own name for what happened outranks the status: it is the more
+	// specific statement, and it is the one the advice is written against.
+	if (type === "authentication_error") return "unauthorized";
+	if (type === "permission_error") return "forbidden";
+
+	if (status === 401 || status === 403) {
+		return type && API_ERROR_TYPES.has(type)
+			? status === 401
+				? "unauthorized"
+				: "forbidden"
+			: "blocked";
+	}
+
+	if (status === 429) return "rateLimited";
+	return "serverError";
 }
 
 /**
@@ -315,7 +366,7 @@ export async function classifyWithClaude(
 			// of the two 403s this was is already gone.
 			return {
 				folder: "inbox",
-				failure: failureFromStatus(response.status),
+				failure: failureFromResponse(response.status, body),
 				detail: upstreamFailureDetail(response.status, body),
 			};
 		}

@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Il-posta li ma setgħetx tiġi verifikata tmur fl-inbox, għalhekk l-ispam jista' jgħaddi.",
 		"spamCheckUnauthorized": "Iċ-ċavetta tal-API ġiet miċħuda. Iċċekkja ċ-ċavetta.",
 		"spamCheckForbidden": "Iċ-ċavetta API m'għandhiex permess għal din is-sejħa. Iċċekkja l-workspace li tappartjeni għalih.",
+		"spamCheckBlocked": "It-talba ġiet irrifjutata qabel ma waslet għand l-API. Il-problema mhijiex iċ-ċavetta.",
 		"spamCheckRateLimited": "Intlaħaq il-limitu tas-sejħiet.",
 		"spamCheckServerError": "L-API rritorna żball.",
 		"spamCheckTimeout": "Ma waslet l-ebda tweġiba fil-ħin.",

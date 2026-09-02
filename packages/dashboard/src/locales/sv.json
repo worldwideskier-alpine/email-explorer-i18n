@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Post som inte kunde kontrolleras hamnar i inkorgen, så skräppost kan slinka igenom.",
 		"spamCheckUnauthorized": "API-nyckeln avvisades. Kontrollera nyckeln.",
 		"spamCheckForbidden": "API-nyckeln har inte behörighet för det här anropet. Kontrollera arbetsytan som den tillhör.",
+		"spamCheckBlocked": "Begäran avvisades innan den nådde API:et. Problemet är inte nyckeln.",
 		"spamCheckRateLimited": "Gränsen för antalet anrop är nådd.",
 		"spamCheckServerError": "API:et returnerade ett fel.",
 		"spamCheckTimeout": "Inget svar kom i tid.",

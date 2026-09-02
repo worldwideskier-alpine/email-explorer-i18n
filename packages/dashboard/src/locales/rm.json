@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "La posta che n'ha betg pudì vegnir controllada va en la posta entrada, uschia po spam passar.",
 		"spamCheckUnauthorized": "La clav API è vegnida refusada. Controllai la clav.",
 		"spamCheckForbidden": "La clav API n'ha betg il dretg per questa clamada. Controllai il spazi da lavur al qual ella tutga.",
+		"spamCheckBlocked": "La dumonda è vegnida refusada avant ch'ella ha cuntanschì l'API. La clav n'è betg il problem.",
 		"spamCheckRateLimited": "La limita da clomadas è cuntanschida.",
 		"spamCheckServerError": "L'API ha dà enavos in sbagl.",
 		"spamCheckTimeout": "Nagina resposta n'è arrivada a temp.",

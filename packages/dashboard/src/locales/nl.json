@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Post die niet kon worden gecontroleerd, komt in de inbox, dus er kan spam doorheen glippen.",
 		"spamCheckUnauthorized": "De API-sleutel is geweigerd. Controleer de sleutel.",
 		"spamCheckForbidden": "De API-sleutel heeft geen toestemming voor deze aanroep. Controleer de workspace waartoe hij behoort.",
+		"spamCheckBlocked": "Het verzoek is geweigerd voordat het de API bereikte. De sleutel is niet het probleem.",
 		"spamCheckRateLimited": "De limiet voor het aantal aanroepen is bereikt.",
 		"spamCheckServerError": "De API gaf een fout terug.",
 		"spamCheckTimeout": "Er kwam niet op tijd antwoord.",

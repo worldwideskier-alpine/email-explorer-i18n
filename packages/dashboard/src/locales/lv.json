@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Nepārbaudītais pasts nonāk iesūtnē, tāpēc mēstules var izlauzties cauri.",
 		"spamCheckUnauthorized": "API atslēga tika noraidīta. Pārbaudiet atslēgu.",
 		"spamCheckForbidden": "API atslēgai nav atļaujas šim izsaukumam. Pārbaudiet darbvietu, kurai tā pieder.",
+		"spamCheckBlocked": "Pieprasījums tika noraidīts, pirms tas sasniedza API. Problēma nav atslēgā.",
 		"spamCheckRateLimited": "Sasniegts izsaukumu ierobežojums.",
 		"spamCheckServerError": "API atgrieza kļūdu.",
 		"spamCheckTimeout": "Atbilde laikā nepienāca.",

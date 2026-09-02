@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "ਜਿਹੜੀ ਮੇਲ ਜਾਂਚੀ ਨਹੀਂ ਜਾ ਸਕੀ ਉਹ ਇਨਬਾਕਸ ਵਿੱਚ ਜਾਂਦੀ ਹੈ, ਇਸ ਲਈ ਸਪੈਮ ਲੰਘ ਸਕਦੀ ਹੈ।",
 		"spamCheckUnauthorized": "API ਕੁੰਜੀ ਰੱਦ ਕੀਤੀ ਗਈ। ਕੁੰਜੀ ਜਾਂਚੋ।",
 		"spamCheckForbidden": "ਇਸ ਕਾਲ ਲਈ API ਕੁੰਜੀ ਕੋਲ ਇਜਾਜ਼ਤ ਨਹੀਂ ਹੈ। ਕੁੰਜੀ ਜਿਸ ਵਰਕਸਪੇਸ ਦੀ ਹੈ, ਉਹ ਜਾਂਚੋ।",
+		"spamCheckBlocked": "ਬੇਨਤੀ API ਤੱਕ ਪਹੁੰਚਣ ਤੋਂ ਪਹਿਲਾਂ ਹੀ ਰੱਦ ਕਰ ਦਿੱਤੀ ਗਈ। ਸਮੱਸਿਆ ਕੁੰਜੀ ਦੀ ਨਹੀਂ ਹੈ।",
 		"spamCheckRateLimited": "ਕਾਲਾਂ ਦੀ ਹੱਦ ਪੂਰੀ ਹੋ ਗਈ।",
 		"spamCheckServerError": "API ਨੇ ਗਲਤੀ ਵਾਪਸ ਕੀਤੀ।",
 		"spamCheckTimeout": "ਸਮੇਂ ਸਿਰ ਕੋਈ ਜਵਾਬ ਨਹੀਂ ਆਇਆ।",

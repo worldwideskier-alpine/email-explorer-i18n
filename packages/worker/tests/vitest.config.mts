@@ -104,6 +104,12 @@ export default defineConfig({
 								{ status: 403, headers: { "content-type": "text/html" } },
 							);
 						}
+						// The one that actually happened in production, and the
+						// reason the "JSON means the API answered" rule had to
+						// go: JSON, and `forbidden` is not a word the API uses.
+						if (steer.includes("TRIGGER_CLAUDE_FOREIGN_403")) {
+							return refusal(403, "forbidden");
+						}
 						// Replies that are not a bare verdict. Real ones look like
 						// these: a word of preamble, decoration around the word, or
 						// the model declining and returning no content at all.

@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Surat yang tidak dapat diperiksa masuk ke kotak masuk, sehingga spam bisa lolos.",
 		"spamCheckUnauthorized": "Kunci API ditolak. Periksa kuncinya.",
 		"spamCheckForbidden": "Kunci API tidak memiliki izin untuk panggilan ini. Periksa ruang kerja tempat kunci itu berada.",
+		"spamCheckBlocked": "Permintaan ditolak sebelum sampai ke API. Masalahnya bukan pada kunci.",
 		"spamCheckRateLimited": "Batas jumlah panggilan tercapai.",
 		"spamCheckServerError": "API mengembalikan kesalahan.",
 		"spamCheckTimeout": "Tidak ada jawaban tepat waktu.",

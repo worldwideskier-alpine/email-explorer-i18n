@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Mel yang tidak dapat disemak masuk ke peti masuk, jadi spam boleh terlepas.",
 		"spamCheckUnauthorized": "Kunci API ditolak. Semak kunci itu.",
 		"spamCheckForbidden": "Kunci API tidak mempunyai kebenaran untuk panggilan ini. Semak ruang kerja tempat kunci itu berada.",
+		"spamCheckBlocked": "Permintaan ditolak sebelum sampai ke API. Masalahnya bukan pada kunci.",
 		"spamCheckRateLimited": "Had bilangan panggilan telah dicapai.",
 		"spamCheckServerError": "API mengembalikan ralat.",
 		"spamCheckTimeout": "Tiada jawapan dalam masa yang ditetapkan.",

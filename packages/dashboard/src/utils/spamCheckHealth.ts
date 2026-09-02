@@ -62,14 +62,16 @@ export function spamCheckDetail(
 /**
  * The reason codes the Worker records, and the message for each.
  *
- * `unauthorized` and `forbidden` were one code, and they are not one problem:
- * the first is answered by entering the right key, the second is not answered
- * by entering any key at all. Telling a reader to check their key when the key
- * is already correct is worse than saying nothing.
+ * The three refusals were once one code, and they are three problems with
+ * three different answers: enter the right key; change what the key's
+ * workspace may do; or nothing at all on this screen, because the request
+ * never reached the API. Telling a reader to check a key that is already
+ * correct is worse than saying nothing.
  */
 const REASON_KEYS: Record<string, string> = {
 	unauthorized: "settings.spamCheckUnauthorized",
 	forbidden: "settings.spamCheckForbidden",
+	blocked: "settings.spamCheckBlocked",
 	rateLimited: "settings.spamCheckRateLimited",
 	serverError: "settings.spamCheckServerError",
 	timeout: "settings.spamCheckTimeout",

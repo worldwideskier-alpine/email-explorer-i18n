@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Mail that could not be checked goes to the inbox, so spam may be getting through.",
 		"spamCheckUnauthorized": "The API key was rejected. Check the key.",
 		"spamCheckForbidden": "The API key is not permitted to make this call. Check the workspace it belongs to.",
+		"spamCheckBlocked": "The request was refused before it reached the API. This is not a problem with the key.",
 		"spamCheckRateLimited": "The call limit was reached.",
 		"spamCheckServerError": "The API returned an error.",
 		"spamCheckTimeout": "There was no answer in time.",

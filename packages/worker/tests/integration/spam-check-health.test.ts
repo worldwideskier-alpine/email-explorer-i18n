@@ -278,20 +278,32 @@ describe("the second-stage check reports whether it is working", () => {
 	/**
 	 * And the third case, which shares its status with the second and has
 	 * nothing else in common: the request was turned away before the API saw
-	 * it. The API answers in JSON and names its own reason; whatever stands in
-	 * front of it answers with a page. The absence of that JSON is the finding,
-	 * and the page itself is never quoted.
+	 * it. Neither the key nor its workspace has anything to do with it, so the
+	 * screen must not send the reader to either.
+	 *
+	 * Two shapes, and the first version only recognised one. A page, where the
+	 * absence of an error body is the finding -- and JSON that names a reason
+	 * the API does not use, which is what actually arrived in production and
+	 * was read as the API's own answer.
 	 */
 	it("says when a refusal did not come from the API at all", async () => {
 		await setClaudeApiKey("sk-ant-test-key");
-		await receive("Turned away TRIGGER_CLAUDE_EDGE_403");
 
-		const after = await health();
-		expect(after.lastFailureReason).toBe("forbidden");
-		expect(after.lastFailureDetail).toBe("403 (no API error body)");
-		expect(after.lastFailureDetail).not.toContain("blocked");
+		await receive("Turned away TRIGGER_CLAUDE_EDGE_403");
+		const page = await health();
+		expect(page.lastFailureReason).toBe("blocked");
+		expect(page.lastFailureDetail).toBe("403 (no API error body)");
+		// The page itself is never quoted.
+		expect(page.lastFailureDetail).not.toContain("blocked");
 		// Still delivered: this stage fails open, whatever refused it.
 		expect(await folderOf("Turned away TRIGGER_CLAUDE_EDGE_403")).toBe("inbox");
+
+		await receive("Turned away in JSON TRIGGER_CLAUDE_FOREIGN_403");
+		const foreign = await health();
+		expect(foreign.lastFailureReason).toBe("blocked");
+		// The word is kept: a word the API does not use is what identifies the
+		// refusal as somebody else's.
+		expect(foreign.lastFailureDetail).toBe("403 forbidden");
 	});
 
 	/**
