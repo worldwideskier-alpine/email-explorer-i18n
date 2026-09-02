@@ -88,12 +88,14 @@ export class PostImportEmail extends OpenAPIRoute {
 		if (!session) {
 			return c.json({ error: "Unauthorized" }, 401);
 		}
-		const data = await this.getValidatedData<typeof this.schema>();
-		const { mailboxId } = data.params;
-
 		/**
 		 * Whether this mailbox is yours -- the same question every other
 		 * mailbox-scoped route asks, and the one this route was not asking.
+		 *
+		 * Asked before the body is read, from the path rather than from the
+		 * validated data. Validating first means parsing a stranger's body on
+		 * their behalf and answering 400 where the answer is 403 -- telling
+		 * somebody with no rights here whether their payload was well formed.
 		 *
 		 * It used to ask for `session.isAdmin`, which is the legacy `is_admin`
 		 * column, and that column is set for exactly one account: the first
@@ -109,9 +111,15 @@ export class PostImportEmail extends OpenAPIRoute {
 		 * could write mail into somebody else's; holding the mailbox is the
 		 * rule the rest of the application already follows.
 		 */
+		const mailboxId = c.req.param("mailboxId");
+		if (!mailboxId) {
+			return c.json({ error: "Not found" }, 404);
+		}
 		if (!(await personHoldsMailbox(c.env, session, mailboxId))) {
 			return c.json({ error: "You don't have access to this mailbox" }, 403);
 		}
+
+		const data = await this.getValidatedData<typeof this.schema>();
 		const {
 			folder,
 			rawEmailBase64,

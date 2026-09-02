@@ -7,7 +7,6 @@ import { translateApiError } from "@/utils/apiError";
 export interface User {
 	id: string;
 	email: string;
-	isAdmin: boolean;
 }
 
 /**
@@ -24,7 +23,6 @@ export interface Session {
 	id: string;
 	userId: string;
 	email: string;
-	isAdmin: boolean;
 	/**
 	 * Absent on a session stored by an older build of this dashboard, so it
 	 * falls back to the least privileged role rather than to the most.
@@ -40,7 +38,7 @@ export const useAuthStore = defineStore("auth", () => {
 
 	const isAuthenticated = computed(() => session.value !== null);
 	/**
-	 * There is deliberately no `isAdmin` here any more.
+	 * There is deliberately no `isAdmin` anywhere in this file.
 	 *
 	 * It read the Worker's legacy `is_admin` column, which is set for the
 	 * first account ever registered and for no other -- there is no way to
@@ -51,8 +49,13 @@ export const useAuthStore = defineStore("auth", () => {
 	 * mailboxes they hold, which is `personHoldsMailbox` on the Worker and
 	 * "can you open this screen at all" here.
 	 *
-	 * The field is still on the session because the Worker still sends it.
-	 * Not exposing it is what stops it being used to decide something again.
+	 * Not offering it as a computed was the first half. The field stayed on
+	 * the stored Session, so `authStore.session?.isAdmin` still type-checked
+	 * and still read the flag -- a way back to the same defect that the
+	 * compiler allowed and a test looking for `authStore.isAdmin` could not
+	 * see. It is off the interface now, and off what login and checkAuth
+	 * store, so reaching for it does not compile. The Worker still sends the
+	 * field; nothing here keeps it.
 	 */
 	/**
 	 * Which screen this account belongs on. Decided by the Worker from the
@@ -158,7 +161,6 @@ export const useAuthStore = defineStore("auth", () => {
 			session.value = {
 				...session.value,
 				email: response.data.email,
-				isAdmin: response.data.isAdmin,
 				role: response.data.role,
 			};
 			localStorage.setItem("session", JSON.stringify(session.value));
