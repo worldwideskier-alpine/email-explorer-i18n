@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "समयमै जवाफ आएन।",
 		"spamCheckNetwork": "API मा पुग्न सकिएन।",
 		"spamCheckMalformed": "जवाफ पढ्न सकिएन।",
+		"spamCheckUnknown": "जाँच असफल भयो।",
 		"spamCheckDetail": "प्रतिक्रिया: {detail}",
 		"spamPurgeTitle": "स्प्यामको स्वतः मेटाइ",
 		"spamPurgeDescription": "स्प्याम फोल्डरमा तपाईंले तोकेको दिन भन्दा पुराना मेल हरेक दिन मेटाउँछ। स्वतः ब्याकअप पछि चल्छ, त्यसैले मेटिएका मेल सबैभन्दा नयाँ ब्याकअपमा अझै रहन्छन्।",

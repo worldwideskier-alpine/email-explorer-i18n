@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Et koum keng Äntwert an der Zäit.",
 		"spamCheckNetwork": "D'API war net erreechbar.",
 		"spamCheckMalformed": "D'Äntwert konnt net gelies ginn.",
+		"spamCheckUnknown": "D'Kontroll ass feelgeschloen.",
 		"spamCheckDetail": "Äntwert: {detail}",
 		"spamPurgeTitle": "Automatescht Läsche vu Spam",
 		"spamPurgeDescription": "Läscht all Dag d'Mailen am Spam-Dossier, déi méi al si wéi d'Zuel vun Deeg, déi Dir astellt. Leeft nom automatesche Backup, dofir sinn déi geläschte Mailen nach am leschte Backup.",

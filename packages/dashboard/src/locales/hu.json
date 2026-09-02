@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Nem érkezett válasz időben.",
 		"spamCheckNetwork": "Az API nem volt elérhető.",
 		"spamCheckMalformed": "A válasz nem volt olvasható.",
+		"spamCheckUnknown": "Az ellenőrzés nem sikerült.",
 		"spamCheckDetail": "Válasz: {detail}",
 		"spamPurgeTitle": "Levélszemét automatikus törlése",
 		"spamPurgeDescription": "Naponta törli a levélszemét mappából a megadott napszámnál régebbi leveleket. Az automatikus mentés után fut, így a törölt levelek még benne vannak a legutóbbi mentésben.",

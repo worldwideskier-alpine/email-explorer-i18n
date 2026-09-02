@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Không có phản hồi kịp thời.",
 		"spamCheckNetwork": "Không liên hệ được với API.",
 		"spamCheckMalformed": "Không đọc được phản hồi.",
+		"spamCheckUnknown": "Việc kiểm tra đã thất bại.",
 		"spamCheckDetail": "Phản hồi: {detail}",
 		"spamPurgeTitle": "Tự động xoá thư rác",
 		"spamPurgeDescription": "Mỗi ngày xoá các thư trong thư mục thư rác cũ hơn số ngày bạn đặt. Chạy sau khi sao lưu tự động, nên thư đã xoá vẫn còn trong bản sao lưu mới nhất.",

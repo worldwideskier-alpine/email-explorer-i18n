@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Es kam keine rechtzeitige Antwort.",
 		"spamCheckNetwork": "Die API war nicht erreichbar.",
 		"spamCheckMalformed": "Die Antwort war nicht lesbar.",
+		"spamCheckUnknown": "Die Prüfung ist fehlgeschlagen.",
 		"spamCheckDetail": "Antwort: {detail}",
 		"spamPurgeTitle": "Automatisches Löschen von Spam",
 		"spamPurgeDescription": "Löscht täglich alle Nachrichten im Spam-Ordner, die älter sind als die eingestellte Anzahl Tage. Läuft nach der automatischen Sicherung, gelöschte Nachrichten sind also noch in der neuesten Sicherung enthalten.",

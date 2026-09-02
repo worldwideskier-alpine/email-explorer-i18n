@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Non è arrivata risposta in tempo.",
 		"spamCheckNetwork": "Non è stato possibile raggiungere l'API.",
 		"spamCheckMalformed": "Non è stato possibile leggere la risposta.",
+		"spamCheckUnknown": "La verifica non è riuscita.",
 		"spamCheckDetail": "Risposta: {detail}",
 		"spamPurgeTitle": "Eliminazione automatica dello spam",
 		"spamPurgeDescription": "Elimina ogni giorno i messaggi nella cartella spam più vecchi del numero di giorni impostato. Viene eseguita dopo il backup automatico, quindi i messaggi eliminati sono ancora nel backup più recente.",

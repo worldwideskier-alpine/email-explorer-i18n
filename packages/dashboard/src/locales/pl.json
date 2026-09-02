@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Odpowiedź nie nadeszła na czas.",
 		"spamCheckNetwork": "Nie udało się połączyć z API.",
 		"spamCheckMalformed": "Nie udało się odczytać odpowiedzi.",
+		"spamCheckUnknown": "Sprawdzenie się nie powiodło.",
 		"spamCheckDetail": "Odpowiedź: {detail}",
 		"spamPurgeTitle": "Automatyczne usuwanie spamu",
 		"spamPurgeDescription": "Codziennie usuwa z folderu ze spamem wiadomości starsze niż ustawiona liczba dni. Działa po automatycznej kopii zapasowej, więc usunięte wiadomości są nadal w najnowszej kopii.",

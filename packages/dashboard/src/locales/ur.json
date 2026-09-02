@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "وقت پر کوئی جواب نہیں آیا۔",
 		"spamCheckNetwork": "API تک رسائی نہ ہو سکی۔",
 		"spamCheckMalformed": "جواب پڑھا نہ جا سکا۔",
+		"spamCheckUnknown": "جانچ ناکام رہی۔",
 		"spamCheckDetail": "جواب: {detail}",
 		"spamPurgeTitle": "سپیم کی خودکار حذف",
 		"spamPurgeDescription": "سپیم فولڈر میں آپ کے مقرر کردہ دنوں سے پرانی میلیں روزانہ حذف کرتا ہے۔ خودکار بیک اپ کے بعد چلتا ہے، اس لیے حذف شدہ میلیں تازہ ترین بیک اپ میں اب بھی موجود رہتی ہیں۔",

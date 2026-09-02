@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Ekkert svar barst í tæka tíð.",
 		"spamCheckNetwork": "Ekki náðist samband við API.",
 		"spamCheckMalformed": "Ekki tókst að lesa svarið.",
+		"spamCheckUnknown": "Athugunin mistókst.",
 		"spamCheckDetail": "Svar: {detail}",
 		"spamPurgeTitle": "Sjálfvirk eyðing ruslpósts",
 		"spamPurgeDescription": "Eyðir daglega pósti í ruslpóstmöppunni sem er eldri en fjöldi daga sem þú velur. Keyrir eftir sjálfvirku afritinu, svo eyddur póstur er enn í nýjasta afritinu.",

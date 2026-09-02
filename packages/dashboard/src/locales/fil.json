@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Walang sagot sa loob ng takdang oras.",
 		"spamCheckNetwork": "Hindi maabot ang API.",
 		"spamCheckMalformed": "Hindi mabasa ang sagot.",
+		"spamCheckUnknown": "Nabigo ang pagsusuri.",
 		"spamCheckDetail": "Tugon: {detail}",
 		"spamPurgeTitle": "Awtomatikong pagbura ng spam",
 		"spamPurgeDescription": "Araw-araw na binubura ang mga mensahe sa spam folder na mas luma kaysa sa bilang ng araw na itinakda mo. Tumatakbo pagkatapos ng awtomatikong backup, kaya nasa pinakabagong backup pa rin ang mga nabura.",

@@ -124,13 +124,37 @@ describe("the reason shown for a failure", () => {
 		);
 	});
 
-	// A dashboard running against a newer Worker. Showing the raw code, or
-	// nothing, would be worse than being vague.
-	it("falls back for a code it does not know", () => {
+	/**
+	 * A screen running against a newer Worker.
+	 *
+	 * The fallback used to be "the API returned an error", called the vaguest
+	 * of the messages. It is not vague -- it is a specific claim, and it was
+	 * wrong the first time it mattered: the Worker had learnt to say "the
+	 * request never reached the API", the screen had not, and the screen
+	 * announced the opposite of what had happened. A code we cannot read may
+	 * only produce a message that says the check failed.
+	 */
+	it("says only that it failed for a code it does not know", () => {
 		expect(spamCheckReasonKey("something-new")).toBe(
-			"settings.spamCheckServerError",
+			"settings.spamCheckUnknown",
 		);
-		expect(spamCheckReasonKey(null)).toBe("settings.spamCheckServerError");
+		expect(spamCheckReasonKey(null)).toBe("settings.spamCheckUnknown");
+	});
+
+	// The specific mistake, kept as its own case: an unknown code must never
+	// borrow the words of a known one.
+	it("does not answer an unknown code with another reason's message", () => {
+		const known = [
+			"unauthorized",
+			"forbidden",
+			"blocked",
+			"rateLimited",
+			"serverError",
+			"timeout",
+			"network",
+			"malformed",
+		].map(spamCheckReasonKey);
+		expect(known).not.toContain(spamCheckReasonKey("something-new"));
 	});
 });
 

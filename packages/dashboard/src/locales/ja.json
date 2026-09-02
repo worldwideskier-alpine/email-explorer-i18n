@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "時間内に応答がありませんでした。",
 		"spamCheckNetwork": "APIに接続できませんでした。",
 		"spamCheckMalformed": "応答を解釈できませんでした。",
+		"spamCheckUnknown": "判定に失敗しました。",
 		"spamCheckDetail": "応答: {detail}",
 		"spamPurgeTitle": "迷惑メールの自動削除",
 		"spamPurgeDescription": "迷惑メールフォルダにある、指定した日数より古いメールを毎日削除します。自動バックアップの後に実行するので、削除したメールも直近のバックアップには残ります。",

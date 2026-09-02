@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Er kwam niet op tijd antwoord.",
 		"spamCheckNetwork": "De API was niet bereikbaar.",
 		"spamCheckMalformed": "Het antwoord kon niet worden gelezen.",
+		"spamCheckUnknown": "De controle is mislukt.",
 		"spamCheckDetail": "Antwoord: {detail}",
 		"spamPurgeTitle": "Spam automatisch verwijderen",
 		"spamPurgeDescription": "Verwijdert dagelijks berichten in de spammap die ouder zijn dan het ingestelde aantal dagen. Dit gebeurt na de automatische back-up, dus verwijderde berichten staan nog in de recentste back-up.",

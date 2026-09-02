@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "No hi ha hagut resposta a temps.",
 		"spamCheckNetwork": "No s'ha pogut connectar amb l'API.",
 		"spamCheckMalformed": "No s'ha pogut llegir la resposta.",
+		"spamCheckUnknown": "La comprovació ha fallat.",
 		"spamCheckDetail": "Resposta: {detail}",
 		"spamPurgeTitle": "Eliminació automàtica del correu brossa",
 		"spamPurgeDescription": "Cada dia elimina els missatges de la carpeta de correu brossa més antics que el nombre de dies que indiqueu. S'executa després de la còpia de seguretat automàtica, així que els missatges eliminats encara són a la còpia més recent.",

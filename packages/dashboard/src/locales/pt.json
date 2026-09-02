@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Não houve resposta a tempo.",
 		"spamCheckNetwork": "Não foi possível contactar a API.",
 		"spamCheckMalformed": "Não foi possível ler a resposta.",
+		"spamCheckUnknown": "A verificação falhou.",
 		"spamCheckDetail": "Resposta: {detail}",
 		"spamPurgeTitle": "Eliminação automática de spam",
 		"spamPurgeDescription": "Elimina diariamente as mensagens na pasta de spam mais antigas do que o número de dias definido. É executada depois da cópia de segurança automática, por isso as mensagens eliminadas ainda estão na cópia mais recente.",

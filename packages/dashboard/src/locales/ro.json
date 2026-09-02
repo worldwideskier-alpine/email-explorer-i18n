@@ -226,6 +226,7 @@
 		"spamCheckTimeout": "Nu a venit niciun răspuns la timp.",
 		"spamCheckNetwork": "Nu s-a putut contacta API-ul.",
 		"spamCheckMalformed": "Răspunsul nu a putut fi citit.",
+		"spamCheckUnknown": "Verificarea a eșuat.",
 		"spamCheckDetail": "Răspuns: {detail}",
 		"spamPurgeTitle": "Ștergerea automată a spamului",
 		"spamPurgeDescription": "Șterge zilnic mesajele din folderul spam mai vechi decât numărul de zile setat. Rulează după copia de rezervă automată, deci mesajele șterse se află încă în cea mai recentă copie.",
