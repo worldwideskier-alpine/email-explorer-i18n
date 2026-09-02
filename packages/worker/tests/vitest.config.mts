@@ -2,6 +2,15 @@ import { fileURLToPath } from "node:url";
 import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
 import { defineConfig } from "vitest/config";
 
+/**
+ * How many times each `TRIGGER_CLAUDE_OVERLOAD_<tag>_<n>` marker has been
+ * asked, so the stub below can fail the first n and then answer.
+ *
+ * It has to live out here: the stub is called once per attempt, and counting
+ * inside it would start again from zero every time.
+ */
+const overloadAttempts = new Map<string, number>();
+
 export default defineConfig({
 	plugins: [
 		cloudflareTest({
@@ -78,6 +87,51 @@ export default defineConfig({
 						const steer = `${body} ${request.headers.get("x-api-key") ?? ""}`;
 						if (body.includes("TRIGGER_CLAUDE_ERROR")) {
 							return new Response("mock error", { status: 500 });
+						}
+						/*
+						 * Overloaded for the first N attempts, then fine.
+						 *
+						 * `529 overloaded_error` is Anthropic saying it is busy this
+						 * second, and it is the failure that has actually been
+						 * letting mail into the inbox unclassified. A stub that
+						 * always fails cannot tell a retry from a single attempt --
+						 * both end in the same recorded failure. One that stops
+						 * failing can: the verdict only arrives if something asked
+						 * again.
+						 *
+						 * The count is kept per tag and lives across requests in
+						 * this worker process, so each test uses a tag of its own.
+						 */
+						const overload = /TRIGGER_CLAUDE_OVERLOAD_([A-Z0-9]+)_(\d+)/.exec(
+							steer,
+						);
+						if (overload) {
+							const tag = overload[1];
+							const failuresWanted = Number(overload[2]);
+							const seen = (overloadAttempts.get(tag) ?? 0) + 1;
+							overloadAttempts.set(tag, seen);
+							if (seen <= failuresWanted) {
+								return new Response(
+									JSON.stringify({
+										type: "error",
+										error: {
+											type: "overloaded_error",
+											message: "Overloaded",
+										},
+									}),
+									{
+										status: 529,
+										headers: { "content-type": "application/json" },
+									},
+								);
+							}
+							return new Response(
+								JSON.stringify({ content: [{ type: "text", text: " SPAM" }] }),
+								{
+									status: 200,
+									headers: { "content-type": "application/json" },
+								},
+							);
 						}
 						// The two refusals that used to be recorded as one reason,
 						// and the shape that separates them: the API answers in JSON

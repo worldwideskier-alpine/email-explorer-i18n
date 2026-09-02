@@ -13,6 +13,54 @@ const MAX_BODY_CHARS = 4000;
 const REQUEST_TIMEOUT_MS = 10_000;
 
 /**
+ * How many times to ask, when asking again is the right answer.
+ *
+ * Some of what the API replies is about this request and will say the same
+ * thing however many times it is asked -- a key that is not valid stays not
+ * valid. The rest is about the minute it arrived in: 429 when the account is
+ * over its rate, and 5xx, of which `529 overloaded_error` is Anthropic saying
+ * it is busy right now. Those clear on their own, usually within seconds.
+ *
+ * There was no retry at all, and the cost of that is not an error message: the
+ * check fails open, so one busy second upstream let a message into the inbox
+ * unclassified, silently, and nothing ever looks at it again. The official
+ * SDKs retry the same set twice by default; this is a hand-written fetch, so
+ * it has to do it itself.
+ *
+ * Three attempts, the SDK's default. The reply here is one word from Haiku and
+ * normally arrives in well under a second, so the usual cost of a retry is
+ * that same fraction of a second, paid only when the first attempt failed.
+ */
+const MAX_ATTEMPTS = 3;
+
+/**
+ * The ceiling on the whole thing, retries and waiting included.
+ *
+ * A per-attempt timeout alone does not bound the total: three attempts and two
+ * waits could run to well over half a minute, and this is inside the handler
+ * delivering a message. The deadline is what makes the worst case knowable --
+ * an attempt is only started if there is time for it, and the last one is cut
+ * short rather than allowed to overrun.
+ */
+const TOTAL_BUDGET_MS = 20_000;
+
+/** Wait before the 2nd and 3rd attempts, doubling. */
+const BASE_BACKOFF_MS = 500;
+
+/**
+ * A little noise on each wait.
+ *
+ * Mail arrives in bursts, and a burst that hits an overloaded API retries in
+ * lockstep without this -- every message waiting the same 500ms and asking
+ * again in the same instant, which is the shape of a request that stays
+ * overloaded.
+ */
+const BACKOFF_JITTER_MS = 250;
+
+/** The longest `retry-after` worth honouring; past this the budget decides. */
+const MAX_RETRY_AFTER_MS = 5_000;
+
+/**
  * The reply is one word, so this is generous -- deliberately. It used to be 8,
  * which is enough for the word and nothing else, so a reply that opened with
  * even a short preamble was cut off mid-sentence and could not be read as
@@ -273,6 +321,46 @@ export function failureFromResponse(
 }
 
 /**
+ * Whether asking again could get a different answer.
+ *
+ * The line is what the status is about. 400, 401, 403, 404, 413 are about this
+ * request -- the key, the workspace, the body -- and asking again just spends
+ * the time twice. 408, 409, 429 and every 5xx are about the moment: the API is
+ * busy, rate-limited, or briefly unwell, and `529 overloaded_error` is the one
+ * that has actually been happening here. Those are worth another go.
+ */
+export function isRetryableStatus(status: number): boolean {
+	return status === 408 || status === 409 || status === 429 || status >= 500;
+}
+
+/**
+ * How long the API asked us to wait, if it said and if it is worth honouring.
+ *
+ * `retry-after` is the API's own answer to "when", so it outranks the backoff
+ * this code would have picked -- but only up to a point: a header asking for
+ * a minute is longer than the whole budget, and waiting it out would mean
+ * spending the budget on sleeping rather than asking.
+ */
+export function retryAfterMs(header: string | null): number | null {
+	if (!header) return null;
+	const seconds = Number(header.trim());
+	if (!Number.isFinite(seconds) || seconds < 0) return null;
+	const ms = seconds * 1000;
+	return ms <= MAX_RETRY_AFTER_MS ? ms : null;
+}
+
+/** The wait before attempt `n` (1-based), doubling, with a little noise. */
+export function backoffMs(attempt: number, random = Math.random): number {
+	return (
+		BASE_BACKOFF_MS * 2 ** (attempt - 1) +
+		Math.floor(random() * BACKOFF_JITTER_MS)
+	);
+}
+
+const sleep = (ms: number) =>
+	new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
  * The verdict in a reply, or null if there isn't one.
  *
  * Only the first word counts. With the assistant turn prefilled the verdict is
@@ -331,16 +419,56 @@ export async function classifyWithClaude(
 	input: ClassifyInput,
 ): Promise<ClassifyResult> {
 	const content = buildClassificationContent(input);
+	const deadline = Date.now() + TOTAL_BUDGET_MS;
 
+	let last: ClassifyResult = { folder: "inbox", failure: "network" };
+
+	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+		const remaining = deadline - Date.now();
+		// Out of budget. Whatever the last attempt said stands -- starting one
+		// there is no time to finish would only turn its answer into a timeout.
+		if (remaining <= 0) break;
+
+		const outcome = await attemptClassification(
+			content,
+			input.apiKey,
+			Math.min(REQUEST_TIMEOUT_MS, remaining),
+		);
+		last = outcome.result;
+
+		if (!outcome.retryable || attempt === MAX_ATTEMPTS) break;
+
+		const wait = outcome.retryAfterMs ?? backoffMs(attempt);
+		// Only wait if there is still something on the other side of it.
+		if (Date.now() + wait >= deadline) break;
+		await sleep(wait);
+	}
+
+	return last;
+}
+
+/** What one attempt came back with, and whether asking again could differ. */
+interface Attempt {
+	result: ClassifyResult;
+	retryable: boolean;
+	/** What the API asked for, when it asked and the ask was reasonable. */
+	retryAfterMs?: number;
+}
+
+async function attemptClassification(
+	content: string,
+	apiKey: string,
+	timeoutMs: number,
+): Promise<Attempt> {
 	const controller = new AbortController();
-	const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+	const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
 	try {
 		const response = await fetch(CLAUDE_API_URL, {
 			method: "POST",
 			headers: {
 				"content-type": "application/json",
-				"x-api-key": input.apiKey,
+				"x-api-key": apiKey,
 				"anthropic-version": "2023-06-01",
 			},
 			body: JSON.stringify({
@@ -365,9 +493,14 @@ export async function classifyWithClaude(
 			// by the time anyone reads the screen the one thing that says which
 			// of the two 403s this was is already gone.
 			return {
-				folder: "inbox",
-				failure: failureFromResponse(response.status, body),
-				detail: upstreamFailureDetail(response.status, body),
+				result: {
+					folder: "inbox",
+					failure: failureFromResponse(response.status, body),
+					detail: upstreamFailureDetail(response.status, body),
+				},
+				retryable: isRetryableStatus(response.status),
+				retryAfterMs:
+					retryAfterMs(response.headers.get("retry-after")) ?? undefined,
 			};
 		}
 
@@ -385,20 +518,29 @@ export async function classifyWithClaude(
 		// answer either, and treating that as "not spam" is what would hide it.
 		if (!verdict) {
 			console.error(`Claude spam classification returned: ${reply}`);
+			// Not retried. The API answered, and asking the same question again
+			// gets the same answer -- temperature is 0. A reply that cannot be
+			// read is a prompt problem, not a busy-minute problem.
 			return {
-				folder: "inbox",
-				failure: "malformed",
-				detail: unreadableReplyDetail(reply, data.stop_reason),
+				result: {
+					folder: "inbox",
+					failure: "malformed",
+					detail: unreadableReplyDetail(reply, data.stop_reason),
+				},
+				retryable: false,
 			};
 		}
 
-		return { folder: verdict };
+		return { result: { folder: verdict }, retryable: false };
 	} catch (err) {
 		console.error("Claude spam classification error:", err);
 		// An abort is the timeout above firing, not the network refusing.
 		const failure =
 			err instanceof Error && err.name === "AbortError" ? "timeout" : "network";
-		return { folder: "inbox", failure };
+		// Both are worth another go: a connection that failed to open and one
+		// that stalled are the two things most likely to be different a second
+		// later. The overall budget is what stops this from doubling the wait.
+		return { result: { folder: "inbox", failure }, retryable: true };
 	} finally {
 		clearTimeout(timeout);
 	}
