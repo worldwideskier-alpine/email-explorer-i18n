@@ -121,7 +121,11 @@
       </div>
     </div>
     <div class="flex-grow">
-      <EmailIframe :body="emailBodyWithInlineImages" :disable-links="fromFolder === 'spam'" />
+      <EmailIframe
+        :body="emailBodyWithInlineImages"
+        :disable-links="fromFolder === 'spam'"
+        :block-remote-content="blocksRemoteContent"
+      />
     </div>
     <div v-if="visibleAttachments.length > 0" class="p-6 sm:p-8 border-t border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gray-50 dark:bg-gray-900/30">
       <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
@@ -217,10 +221,21 @@ onBeforeUnmount(() => {
 	document.removeEventListener("click", handleClickOutside);
 });
 
-const moveToFolders = computed(() => {
-	const fromFolder = route.query.fromFolder as string;
-	return folders.value.filter((folder) => folder.id !== fromFolder);
-});
+const fromFolder = computed(
+	() => (route.query.fromFolder as string) || "inbox",
+);
+
+/**
+ * Spam is read with nothing loaded: no images, no stylesheets, no media.
+ * The frame is told so and the body is stripped before it gets there, since
+ * a tracking pixel turns "I looked at this to see whether it was spam" into
+ * a confirmation to the sender that the address is live.
+ */
+const blocksRemoteContent = computed(() => fromFolder.value === "spam");
+
+const moveToFolders = computed(() =>
+	folders.value.filter((folder) => folder.id !== fromFolder.value),
+);
 
 /**
  * Rewrites the body's `cid:` references into attachment URLs and records
@@ -243,9 +258,30 @@ const renderedBody = computed<{ html: string; inlineIds: Set<string> }>(() => {
 		return { html: "", inlineIds };
 	}
 
-	let html = email.value.body;
+	const html = email.value.body;
 
-	for (const attachment of email.value.attachments ?? []) {
+	// In the spam folder nothing in the body is loaded, an inline attachment
+	// included, so its cid: reference is left alone. Substituting it would put
+	// an address in the body that is then stripped again -- and, worse, mark
+	// the attachment as already on screen, so it would vanish from the list
+	// below as well. Left unsubstituted it shows up there, and a reader who
+	// wants to see it can ask for it.
+	if (blocksRemoteContent.value) return { html, inlineIds };
+
+	return substituteInlineImages(html, inlineIds);
+});
+
+/**
+ * The cid: substitution itself, once it has been decided that it should
+ * happen at all.
+ */
+function substituteInlineImages(
+	body: string,
+	inlineIds: Set<string>,
+): { html: string; inlineIds: Set<string> } {
+	let html = body;
+
+	for (const attachment of email.value?.attachments ?? []) {
 		if (attachment.disposition !== "inline" || !attachment.content_id) {
 			continue;
 		}
@@ -264,7 +300,7 @@ const renderedBody = computed<{ html: string; inlineIds: Set<string> }>(() => {
 	}
 
 	return { html, inlineIds };
-});
+}
 
 const emailBodyWithInlineImages = computed(() => renderedBody.value.html);
 
@@ -391,10 +427,6 @@ const handleMove = (folderId: string) => {
 	}
 };
 
-const fromFolder = computed(
-	() => (route.query.fromFolder as string) || "inbox",
-);
-
 const handleMarkSpam = async () => {
 	if (!email.value) return;
 	const mailboxId = route.params.mailboxId as string;
@@ -412,14 +444,13 @@ const handleMarkNotSpam = async () => {
 const handleDelete = () => {
 	if (!email.value) return;
 	const mailboxId = route.params.mailboxId as string;
-	const fromFolder = (route.query.fromFolder as string) || "inbox";
-	const isPermanent = fromFolder === "trash";
+	const isPermanent = fromFolder.value === "trash";
 
 	if (isPermanent && !confirm(t("emailList.confirmPermanentDelete"))) {
 		return;
 	}
 
-	emailStore.deleteOrTrashEmail(mailboxId, email.value.id, fromFolder);
+	emailStore.deleteOrTrashEmail(mailboxId, email.value.id, fromFolder.value);
 	goToList();
 };
 
