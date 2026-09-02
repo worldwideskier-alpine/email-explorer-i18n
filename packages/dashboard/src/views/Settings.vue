@@ -267,9 +267,17 @@
         </div>
       </div>
 
-      <!-- Restore: the other half of the backup. Admin only, because the
-           endpoint it posts to writes mail into the mailbox. -->
-      <div v-if="isAdmin" class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
+      <!-- Restore: the other half of the backup, and shown to everyone who
+           can open this screen.
+
+           It used to be behind `isAdmin`, the legacy is_admin column, which
+           belongs to exactly one account: the first one ever registered. Every
+           administrator made since had no way to restore a backup and no way
+           to tell that was deliberate -- the control simply was not there, and
+           the endpoint refused them as well. Reaching this screen already
+           means the mailbox is yours, which is the only question worth asking
+           about writing mail into it, and the endpoint now asks the same one. -->
+      <div class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
         <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{{ t("settings.restoreTitle") }}</h2>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ t("settings.restoreNote") }}</p>
         <div class="flex flex-wrap items-center gap-3">
@@ -371,7 +379,6 @@ import {
 	subscribeToPush,
 	unsubscribeFromPush,
 } from "@/services/push";
-import { useAuthStore } from "@/stores/auth";
 import { useMailboxStore } from "@/stores/mailboxes";
 import { htmlToPlainText } from "@/utils/htmlToPlainText";
 import { parseMbox, toBase64 } from "@/utils/mbox";
@@ -385,7 +392,6 @@ import {
 const { t } = useI18n();
 const mailboxStore = useMailboxStore();
 const { currentMailbox: mailbox } = storeToRefs(mailboxStore);
-const { isAdmin } = storeToRefs(useAuthStore());
 const route = useRoute();
 const router = useRouter();
 

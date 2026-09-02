@@ -39,7 +39,21 @@ export const useAuthStore = defineStore("auth", () => {
 	const error = useLocalizedMessage();
 
 	const isAuthenticated = computed(() => session.value !== null);
-	const isAdmin = computed(() => session.value?.isAdmin ?? false);
+	/**
+	 * There is deliberately no `isAdmin` here any more.
+	 *
+	 * It read the Worker's legacy `is_admin` column, which is set for the
+	 * first account ever registered and for no other -- there is no way to
+	 * set it on a second one. Anything gated on it was therefore available to
+	 * one particular person rather than to a role, and the two places that
+	 * did gate on it were a backup-restore control and this person's own
+	 * badge. Administrators are equal; what varies between them is which
+	 * mailboxes they hold, which is `personHoldsMailbox` on the Worker and
+	 * "can you open this screen at all" here.
+	 *
+	 * The field is still on the session because the Worker still sends it.
+	 * Not exposing it is what stops it being used to decide something again.
+	 */
 	/**
 	 * Which screen this account belongs on. Decided by the Worker from the
 	 * deployment's configuration -- see roles.ts there -- and only ever used
@@ -53,7 +67,6 @@ export const useAuthStore = defineStore("auth", () => {
 			? {
 					id: session.value.userId,
 					email: session.value.email,
-					isAdmin: session.value.isAdmin,
 				}
 			: null,
 	);
@@ -165,7 +178,6 @@ export const useAuthStore = defineStore("auth", () => {
 		loading,
 		error,
 		isAuthenticated,
-		isAdmin,
 		currentUser,
 		register,
 		login,

@@ -12,6 +12,7 @@ import { recoveryFromEmail } from "./deployment-config";
 import { ingestEmailIntoMailbox } from "./email-ingest";
 import { ensureLegacyMailboxGrants } from "./legacy-grants";
 import { buildPasswordResetEmail, MAIL_LOCALES } from "./mail-templates";
+import { personHoldsMailbox } from "./mailbox-access";
 import {
 	getClaudeApiKey,
 	getSenderVerdictOverride,
@@ -424,22 +425,6 @@ async function deleteKeysInBatches(
 	for (let i = 0; i < keys.length; i += R2_DELETE_BATCH) {
 		await bucket.delete(keys.slice(i, i + R2_DELETE_BATCH));
 	}
-}
-
-/**
- * Whether this session's person holds the mailbox.
- *
- * The single question every mailbox-scoped route asks. It used to be "does
- * this account carry the admin flag", which answered yes for every mailbox in
- * the deployment and so was not a question about this mailbox at all.
- */
-export async function personHoldsMailbox(
-	env: Env,
-	session: Session,
-	mailboxId: string,
-): Promise<boolean> {
-	const authDO = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
-	return (await authDO.getPersonMailboxes(session.userId)).includes(mailboxId);
 }
 
 /**
