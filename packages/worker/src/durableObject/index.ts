@@ -861,6 +861,22 @@ export class MailboxDO extends DurableObject<Env> {
 	}
 
 	/**
+	 * Every mailbox that somebody already holds, whoever that is.
+	 *
+	 * Asked by the legacy backfill, which repairs mailboxes that have no owner
+	 * at all. Without this it could not tell the two apart, and a re-run handed
+	 * the old person mailboxes other people had registered since.
+	 */
+	async listOwnedMailboxIds(): Promise<string[]> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		return this.ctx.storage.sql
+			.exec("SELECT DISTINCT mailbox_id FROM person_mailboxes")
+			.toArray()
+			.map((row) => String(row.mailbox_id));
+	}
+
+	/**
 	 * The mailboxes reachable from one login: the ones its person holds.
 	 *
 	 * This is what replaces "an administrator sees everything". A second

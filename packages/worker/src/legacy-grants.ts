@@ -90,10 +90,14 @@ export async function ensureLegacyMailboxGrants(
 	 * other way back, because the marker stops the one piece of code that
 	 * could put the rows back.
 	 *
-	 * It cannot pull anybody else's mail in with it. The set it grants to is
-	 * named by the migration, so an account made afterwards has a person of
-	 * its own and is never in it; and it only ever runs when that set holds
-	 * nothing, so there is nothing of theirs to overwrite.
+	 * It cannot pull anybody else's mail in with it, for two reasons rather
+	 * than the one this used to give. The set it grants *to* is named by the
+	 * migration, so an account made afterwards has a person of its own and is
+	 * never in it. And the set it grants *from* is only mailboxes nobody
+	 * holds -- see the filter below, which is what actually keeps somebody
+	 * else's mail out. The original reasoning here ("nothing of theirs to
+	 * overwrite") was true and did not say that: the run grants every mailbox
+	 * in the bucket, not the ones this person used to have.
 	 */
 	if (await env.BUCKET.head(MARKER_KEY)) {
 		const held = await authDO.listPersonMailboxes(LEGACY_ADMIN_PERSON_ID);
@@ -136,7 +140,29 @@ export async function ensureLegacyMailboxGrants(
 	}
 
 	const owners = await authDO.listPersonLoginIds(LEGACY_ADMIN_PERSON_ID);
-	const mailboxes = owners.length === 0 ? [] : await listMailboxIds(env);
+	const candidates = owners.length === 0 ? [] : await listMailboxIds(env);
+
+	/*
+	 * Only the ones nobody holds.
+	 *
+	 * What this repairs is a mailbox with no owner row -- that is the whole of
+	 * the legacy state. A mailbox somebody holds is not in that state, and it
+	 * is not this function's to give away.
+	 *
+	 * The filter reads as redundant on the first run, when nothing is owned
+	 * yet, and it is: it exists for the second. The marker stops a second run
+	 * except in one case -- the old person holding nothing while mailboxes
+	 * exist -- and "holding nothing" is also what deleting your own last
+	 * mailbox looks like. Without this, that ordinary act handed them every
+	 * mailbox in the deployment on the next cold isolate, including ones
+	 * somebody else had registered in the meantime, in rows indistinguishable
+	 * from the ones that belong there. The comment above this used to reason
+	 * that there was "nothing of theirs to overwrite", which is true and is
+	 * not the same as not taking anybody's: the run grants the whole bucket,
+	 * not what this person used to hold.
+	 */
+	const alreadyOwned = new Set(await authDO.listOwnedMailboxIds());
+	const mailboxes = candidates.filter((id) => !alreadyOwned.has(id));
 
 	for (const mailboxId of mailboxes) {
 		await authDO.giveMailboxToPerson(LEGACY_ADMIN_PERSON_ID, mailboxId);

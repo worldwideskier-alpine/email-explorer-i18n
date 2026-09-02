@@ -140,6 +140,28 @@ describe("a restore posted before anyone opens the dashboard", () => {
 	});
 
 	/**
+	 * The same, through the middleware that guards every /mailboxes route.
+	 *
+	 * It asked the Durable Object directly instead of going through
+	 * personHoldsMailbox, so it never triggered the backfill -- and the one
+	 * screen that would have, the mailbox list, is behind it. Opening any
+	 * mailbox on an upgrading deployment answered 403 with the marker still
+	 * absent, measured before this was changed.
+	 */
+	it("is accepted through the mailbox routes too", async () => {
+		const { token } = await setUpLegacyDeployment();
+
+		expect(await env.BUCKET.head(MARKER_KEY)).toBeNull();
+
+		const res = await as(token)(
+			`http://local.test/api/v1/mailboxes/${LEGACY_MAILBOX}/emails`,
+		);
+
+		expect(res.status).toBe(200);
+		expect(await env.BUCKET.head(MARKER_KEY)).not.toBeNull();
+	});
+
+	/**
 	 * The backfill is a one-time repair, not a rule, so it must not make the
 	 * old person the owner of a mailbox somebody else registers afterwards.
 	 * Reaching it from more routes must not change that.
