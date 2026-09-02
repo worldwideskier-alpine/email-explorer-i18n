@@ -19,6 +19,7 @@ import type { Context } from "hono";
 import { z } from "zod";
 import { personSettingsKey } from "../app-settings";
 import { destroyMailboxCompletely } from "../mailbox-destroy";
+import { readMaintenanceRecord } from "../maintenance-record";
 import { roleOf } from "../roles";
 import type { Env, Session } from "../types";
 
@@ -70,6 +71,55 @@ function requireRoot(c: AppContext): Session | Response {
 
 function authDO(env: Env) {
 	return env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
+}
+
+const MaintenancePhaseSchema = z.object({
+	finishedAt: z.string(),
+	considered: z.number(),
+	ran: z.number(),
+	failed: z.number(),
+	deleted: z.number().optional(),
+	error: z.string().optional(),
+});
+
+const MaintenanceRecordSchema = z.object({
+	startedAt: z.string(),
+	finishedAt: z.string().optional(),
+	backups: MaintenancePhaseSchema.optional(),
+	spamPurge: MaintenancePhaseSchema.optional(),
+});
+
+/**
+ * Whether the nightly cron finished the last time it fired.
+ *
+ * Counts and timestamps only: which mailboxes were touched is on each
+ * mailbox's own screen, and root has no business in those. What is here is
+ * the one thing no mailbox can say -- whether the run reached its end.
+ *
+ * It sits on root because a run is deployment-wide and root is the only
+ * screen that is. An administrator seeing "the maintenance pass stops
+ * halfway" could do nothing with it; the person who deploys can.
+ */
+export class GetMaintenance extends OpenAPIRoute {
+	schema = {
+		summary: "How the last scheduled maintenance run went (root only)",
+		operationId: "getMaintenance",
+		tags: ["Root"],
+		responses: {
+			"200": {
+				description: "The last run, or null if it has never run",
+				...contentJson(MaintenanceRecordSchema.nullable()),
+			},
+			...forbidden,
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = requireRoot(c);
+		if (session instanceof Response) return session;
+
+		return c.json(await readMaintenanceRecord(c.env));
+	}
 }
 
 export class GetAccounts extends OpenAPIRoute {

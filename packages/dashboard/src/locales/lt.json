@@ -421,6 +421,12 @@
 			"roleAdminHint": "Sukuria naują administratorių.",
 			"roleRootHint": "Prideda dar vieną adresą jūsų prisijungimui.",
 			"addedOwn": "{email} pridėtas prie jūsų paskyros."
+		},
+		"maintenance": {
+			"never": "Suplanuota priežiūra dar nė karto nevykdyta.",
+			"done": "Suplanuota priežiūra {at}: baigta (atsarginių kopijų: {backups}, šlamšto valymų: {purges}).",
+			"notReached": "Suplanuota priežiūra {at}: baigėsi nepasiekusi šlamšto valymo.",
+			"unfinished": "Suplanuota priežiūra {at}: pasiekė šlamšto valymą, bet įrašo apie pabaigą nėra."
 		}
 	}
 }

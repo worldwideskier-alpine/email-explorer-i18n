@@ -421,6 +421,12 @@
 			"roleAdminHint": "Maakt een nieuwe beheerder aan.",
 			"roleRootHint": "Voegt nog een adres toe om mee aan te melden.",
 			"addedOwn": "{email} toegevoegd aan uw eigen account."
+		},
+		"maintenance": {
+			"never": "Het geplande onderhoud is nog nooit uitgevoerd.",
+			"done": "Gepland onderhoud {at}: voltooid (back-ups: {backups}, spamopruimingen: {purges}).",
+			"notReached": "Gepland onderhoud {at}: het eindigde voordat het de spamopruiming bereikte.",
+			"unfinished": "Gepland onderhoud {at}: het bereikte de spamopruiming, maar er is niets vastgelegd over de voltooiing."
 		}
 	}
 }

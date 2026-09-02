@@ -421,6 +421,12 @@
 			"roleAdminHint": "Új rendszergazdát hoz létre.",
 			"roleRootHint": "Hozzáad egy másik címet a bejelentkezéséhez.",
 			"addedOwn": "{email} hozzáadva a saját fiókjához."
+		},
+		"maintenance": {
+			"never": "Az ütemezett karbantartás még soha nem futott le.",
+			"done": "Ütemezett karbantartás {at}: befejeződött (mentés: {backups}, levélszemét-törlés: {purges}).",
+			"notReached": "Ütemezett karbantartás {at}: véget ért, mielőtt elérte volna a levélszemét törlését.",
+			"unfinished": "Ütemezett karbantartás {at}: elérte a levélszemét törlését, de a befejezésről nincs bejegyzés."
 		}
 	}
 }

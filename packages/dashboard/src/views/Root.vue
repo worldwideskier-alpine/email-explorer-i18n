@@ -20,6 +20,26 @@
         </div>
       </div>
 
+      <!-- Whether the nightly run finished. Each mailbox records what happened
+           to it, which answers "did my backup run" but not "did the run
+           finish": a pass that never started and a pass that ran and found
+           nothing to do leave the same absence on every mailbox. -->
+      <div v-if="!maintenanceLoading" class="mb-6 text-sm">
+        <p v-if="!maintenance" class="text-gray-500 dark:text-gray-400">
+          {{ t("root.maintenance.never") }}
+        </p>
+        <p v-else-if="maintenance.finishedAt" class="text-gray-500 dark:text-gray-400">
+          {{ t("root.maintenance.done", {
+            at: formatFullDate(maintenance.startedAt),
+            backups: maintenance.backups?.ran ?? 0,
+            purges: maintenance.spamPurge?.ran ?? 0,
+          }) }}
+        </p>
+        <p v-else class="text-amber-700 dark:text-amber-400 font-semibold">
+          {{ t(stoppedKey, { at: formatFullDate(maintenance.startedAt) }) }}
+        </p>
+      </div>
+
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-200 dark:border-gray-700 mb-6">
         <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-1">{{ t("root.create.title") }}</h2>
         <!-- Two different acts behind one form: "administrator" makes
@@ -126,13 +146,22 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
+import { useDateFormat } from "@/composables/useDateFormat";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 import { type AccountRole, useAuthStore } from "@/stores/auth";
+
+/** How the last nightly run went. See maintenance-record.ts in the Worker. */
+interface MaintenanceRecord {
+	startedAt: string;
+	finishedAt?: string;
+	backups?: { finishedAt: string; ran: number };
+	spamPurge?: { finishedAt: string; ran: number };
+}
 
 /** A person: the addresses they sign in with, and which role they hold. */
 interface Person {
@@ -157,12 +186,35 @@ const newRole = ref<AccountRole>("admin");
 const message = useLocalizedMessage();
 const error = useLocalizedMessage();
 
+const { formatFullDate } = useDateFormat();
+const maintenance = ref<MaintenanceRecord | null>(null);
+const maintenanceLoading = ref(true);
+
+/**
+ * How far an unfinished run got, which is the whole of what it says.
+ *
+ * The passes run in a fixed order and each writes down that it finished, so
+ * the last one recorded is where the invocation ended. "It never got past the
+ * backups" is a different problem from "it reached the purge", and the run
+ * itself is the only place either can be seen.
+ */
+const stoppedKey = computed(() =>
+	maintenance.value?.spamPurge
+		? "root.maintenance.unfinished"
+		: "root.maintenance.notReached",
+);
+
 async function load() {
 	loading.value = true;
 	try {
 		accounts.value = (await api.listAccounts()).data ?? [];
 	} finally {
 		loading.value = false;
+	}
+	try {
+		maintenance.value = (await api.getMaintenance()).data ?? null;
+	} finally {
+		maintenanceLoading.value = false;
 	}
 }
 

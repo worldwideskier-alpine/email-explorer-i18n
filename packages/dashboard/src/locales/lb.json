@@ -421,6 +421,12 @@
 			"roleAdminHint": "Leet en neien Administrateur un.",
 			"roleRootHint": "Setzt nach eng Adress fir Är Umeldung derbäi.",
 			"addedOwn": "{email} op Äre Kont dobäigesat."
+		},
+		"maintenance": {
+			"never": "De geplangte Ënnerhalt ass nach ni gelaf.",
+			"done": "Geplangten Ënnerhalt {at}: ofgeschloss (Backupen: {backups}, Spam-Läschungen: {purges}).",
+			"notReached": "Geplangten Ënnerhalt {at}: en ass eriwwer, ier en bei d'Spam-Läschung koum.",
+			"unfinished": "Geplangten Ënnerhalt {at}: en ass bei d'Spam-Läschung komm, mä en Ofschloss ass net festgehalen."
 		}
 	}
 }

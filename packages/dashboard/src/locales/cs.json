@@ -421,6 +421,12 @@
 			"roleAdminHint": "Vytvoří nového správce.",
 			"roleRootHint": "Přidá další adresu pro vaše přihlášení.",
 			"addedOwn": "{email} přidán k vašemu účtu."
+		},
+		"maintenance": {
+			"never": "Plánovaná údržba dosud nikdy neproběhla.",
+			"done": "Plánovaná údržba {at}: dokončena (záloh: {backups}, mazání spamu: {purges}).",
+			"notReached": "Plánovaná údržba {at}: skončila dříve, než se dostala k mazání spamu.",
+			"unfinished": "Plánovaná údržba {at}: dostala se k mazání spamu, ale záznam o dokončení chybí."
 		}
 	}
 }

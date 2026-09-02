@@ -421,6 +421,12 @@
 			"roleAdminHint": "Crea un administrador nou.",
 			"roleRootHint": "Afegeix una altra adreça per iniciar la sessió.",
 			"addedOwn": "S'ha afegit {email} al vostre compte."
+		},
+		"maintenance": {
+			"never": "El manteniment programat encara no s'ha executat mai.",
+			"done": "Manteniment programat {at}: finalitzat (còpies: {backups}, neteges de correu brossa: {purges}).",
+			"notReached": "Manteniment programat {at}: ha acabat abans d'arribar a la neteja de correu brossa.",
+			"unfinished": "Manteniment programat {at}: ha arribat a la neteja de correu brossa, però no hi ha registre que finalitzés."
 		}
 	}
 }

@@ -421,6 +421,12 @@
 			"roleAdminHint": "Cruthaíonn sé riarthóir nua.",
 			"roleRootHint": "Cuireann sé seoladh eile leis chun logáil isteach.",
 			"addedOwn": "{email} curtha le do chuntas féin."
+		},
+		"maintenance": {
+			"never": "Níor ritheadh an chothabháil sceidealta riamh.",
+			"done": "Cothabháil sceidealta {at}: críochnaithe (cúltacaí: {backups}, glantacháin turscair: {purges}).",
+			"notReached": "Cothabháil sceidealta {at}: chríochnaigh sí sular shroich sí glanadh an turscair.",
+			"unfinished": "Cothabháil sceidealta {at}: shroich sí glanadh an turscair, ach níl aon taifead ann gur chríochnaigh sí."
 		}
 	}
 }

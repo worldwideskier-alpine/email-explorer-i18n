@@ -421,6 +421,12 @@
 			"roleAdminHint": "创建一个新管理员。",
 			"roleRootHint": "为你的登录添加另一个地址。",
 			"addedOwn": "已将 {email} 添加到你自己的帐户。"
+		},
+		"maintenance": {
+			"never": "定期维护尚未运行过。",
+			"done": "定期维护 {at}：已完成（备份 {backups} 个，垃圾邮件清理 {purges} 个）。",
+			"notReached": "定期维护 {at}：未到达垃圾邮件清理就结束了。",
+			"unfinished": "定期维护 {at}：已到达垃圾邮件清理，但没有完成的记录。"
 		}
 	}
 }

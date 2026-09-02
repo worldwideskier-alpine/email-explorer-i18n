@@ -421,6 +421,12 @@
 			"roleAdminHint": "Ustvari novega skrbnika.",
 			"roleRootHint": "Doda še en naslov za vašo prijavo.",
 			"addedOwn": "{email} dodan vašemu računu."
+		},
+		"maintenance": {
+			"never": "Načrtovano vzdrževanje se še ni nikoli izvedlo.",
+			"done": "Načrtovano vzdrževanje {at}: končano (varnostne kopije: {backups}, čiščenja neželene pošte: {purges}).",
+			"notReached": "Načrtovano vzdrževanje {at}: končalo se je, preden je prišlo do čiščenja neželene pošte.",
+			"unfinished": "Načrtovano vzdrževanje {at}: prišlo je do čiščenja neželene pošte, vendar ni zapisa, da bi se končalo."
 		}
 	}
 }

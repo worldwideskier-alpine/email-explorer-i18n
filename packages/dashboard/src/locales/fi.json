@@ -421,6 +421,12 @@
 			"roleAdminHint": "Luo uuden ylläpitäjän.",
 			"roleRootHint": "Lisää toisen osoitteen, jolla voit kirjautua.",
 			"addedOwn": "{email} lisättiin omaan tiliisi."
+		},
+		"maintenance": {
+			"never": "Ajastettua ylläpitoa ei ole vielä kertaakaan ajettu.",
+			"done": "Ajastettu ylläpito {at}: valmis (varmuuskopioita: {backups}, roskapostin siivouksia: {purges}).",
+			"notReached": "Ajastettu ylläpito {at}: päättyi ennen kuin ehti roskapostin siivoukseen.",
+			"unfinished": "Ajastettu ylläpito {at}: ehti roskapostin siivoukseen, mutta valmistumisesta ei ole merkintää."
 		}
 	}
 }

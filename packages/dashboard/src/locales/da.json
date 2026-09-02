@@ -421,6 +421,12 @@
 			"roleAdminHint": "Opretter en ny administrator.",
 			"roleRootHint": "Tilføjer endnu en adresse du kan logge ind med.",
 			"addedOwn": "{email} føjet til din egen konto."
+		},
+		"maintenance": {
+			"never": "Den planlagte vedligeholdelse har aldrig kørt.",
+			"done": "Planlagt vedligeholdelse {at}: gennemført (sikkerhedskopier: {backups}, spamoprydninger: {purges}).",
+			"notReached": "Planlagt vedligeholdelse {at}: sluttede, før den nåede spamoprydningen.",
+			"unfinished": "Planlagt vedligeholdelse {at}: nåede spamoprydningen, men der er ingen registrering af, at den blev færdig."
 		}
 	}
 }

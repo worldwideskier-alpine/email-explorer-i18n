@@ -421,6 +421,12 @@
 			"roleAdminHint": "Crea un administrador nuevo.",
 			"roleRootHint": "Añade otra dirección con la que iniciar sesión.",
 			"addedOwn": "Se añadió {email} a tu propia cuenta."
+		},
+		"maintenance": {
+			"never": "El mantenimiento programado no se ha ejecutado nunca.",
+			"done": "Mantenimiento programado {at}: finalizado (copias: {backups}, limpiezas de spam: {purges}).",
+			"notReached": "Mantenimiento programado {at}: terminó antes de llegar a la limpieza de spam.",
+			"unfinished": "Mantenimiento programado {at}: llegó a la limpieza de spam, pero no consta que finalizara."
 		}
 	}
 }

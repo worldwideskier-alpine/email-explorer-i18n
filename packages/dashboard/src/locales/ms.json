@@ -421,6 +421,12 @@
 			"roleAdminHint": "Mencipta pentadbir baharu.",
 			"roleRootHint": "Menambah alamat lain untuk log masuk anda.",
 			"addedOwn": "{email} ditambah pada akaun anda sendiri."
+		},
+		"maintenance": {
+			"never": "Penyelenggaraan berjadual belum pernah dijalankan.",
+			"done": "Penyelenggaraan berjadual {at}: selesai (sandaran: {backups}, pembersihan spam: {purges}).",
+			"notReached": "Penyelenggaraan berjadual {at}: berakhir sebelum sampai ke pembersihan spam.",
+			"unfinished": "Penyelenggaraan berjadual {at}: sampai ke pembersihan spam, tetapi tiada rekod bahawa ia selesai."
 		}
 	}
 }

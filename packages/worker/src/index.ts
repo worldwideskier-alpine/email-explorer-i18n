@@ -49,6 +49,7 @@ import { PostForwardEmail, PostReplyEmail } from "./routes/reply-forward";
 import {
 	DeleteAccount,
 	GetAccounts,
+	GetMaintenance,
 	PostAccount,
 	PostAccountPassword,
 } from "./routes/root";
@@ -2318,6 +2319,7 @@ openapi.delete("/api/v1/auth/admin/users/:userId", DeleteOwnLogin);
 
 // Root: the account list, and nothing that returns mail. See routes/root.ts.
 openapi.get("/api/v1/root/accounts", GetAccounts);
+openapi.get("/api/v1/root/maintenance", GetMaintenance);
 openapi.post("/api/v1/root/accounts", PostAccount);
 openapi.post("/api/v1/root/accounts/:userId/password", PostAccountPassword);
 openapi.delete("/api/v1/root/accounts/:personId", DeleteAccount);

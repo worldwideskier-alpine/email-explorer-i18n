@@ -421,6 +421,12 @@
 			"roleAdminHint": "Tạo một quản trị viên mới.",
 			"roleRootHint": "Thêm một địa chỉ nữa để bạn đăng nhập.",
 			"addedOwn": "Đã thêm {email} vào tài khoản của chính bạn."
+		},
+		"maintenance": {
+			"never": "Bảo trì theo lịch chưa từng chạy.",
+			"done": "Bảo trì theo lịch {at}: đã hoàn tất (sao lưu {backups}, dọn thư rác {purges}).",
+			"notReached": "Bảo trì theo lịch {at}: đã kết thúc trước khi đến bước dọn thư rác.",
+			"unfinished": "Bảo trì theo lịch {at}: đã đến bước dọn thư rác, nhưng không có ghi nhận là đã hoàn tất."
 		}
 	}
 }
