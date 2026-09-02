@@ -124,3 +124,69 @@ describe("the wording", () => {
 		expect(ja.root.transfer).toBeUndefined();
 	});
 });
+
+/**
+ * What one administrator can reach that another cannot: nothing.
+ *
+ * There is one way to make an administrator -- root makes one -- so two of
+ * them are the same kind of thing, and any control shown to one and hidden
+ * from the other is a defect rather than a policy. Nothing on any screen
+ * grants or withholds anything between them.
+ *
+ * The thing that broke it was `isAdmin`, which reads the Worker's legacy
+ * `is_admin` column. Registration sets that column for the first account ever
+ * created and nothing sets it on a second, so a control behind it belonged to
+ * one particular person. Restoring a backup was behind it, and so was this
+ * person's own badge -- the screen whose entire subject is who you are told
+ * every administrator but one that they were nobody.
+ *
+ * What legitimately varies between administrators is which mailboxes they
+ * hold. That is a different question, asked per mailbox, and it is what the
+ * Worker now asks: see administrators-are-equal.test.ts there.
+ */
+describe("no screen decides anything by the legacy admin flag", () => {
+	it("is not read anywhere", () => {
+		for (const [path, source] of Object.entries(views)) {
+			// The badge names the role; `isAdmin` as a message key is the label
+			// on it, not a decision, so only a read of the store counts.
+			expect([
+				path,
+				/\bauthStore\.isAdmin\b|storeToRefs[\s\S]{0,80}isAdmin/.test(source),
+			]).toEqual([path, false]);
+		}
+	});
+
+	// And the store does not offer it, which is what stops the next screen
+	// from reaching for it again.
+	it("is not offered by the auth store", () => {
+		const store = Object.values(
+			import.meta.glob("../stores/auth.ts", {
+				query: "?raw",
+				import: "default",
+				eager: true,
+			}) as Record<string, string>,
+		)[0];
+		expect(store).not.toMatch(/const isAdmin = computed/);
+	});
+
+	/**
+	 * Restoring a backup is the control it hid. Reaching a mailbox's settings
+	 * screen already means the mailbox is yours, which is the only question
+	 * worth asking about writing mail into it.
+	 */
+	it("shows the restore control to everyone who can open the settings screen", () => {
+		const settings = views["./Settings.vue"];
+		expect(settings).toContain("settings.restoreTitle");
+		const block = /<!--[\s\S]*?Restore:[\s\S]*?-->\s*<div([^>]*)>/.exec(
+			settings,
+		);
+		expect(block).toBeTruthy();
+		expect(block?.[1]).not.toContain("v-if");
+	});
+
+	// The badge says the role, which every administrator has, rather than the
+	// flag, which one of them has.
+	it("puts the badge on the role", () => {
+		expect(views["./Account.vue"]).toContain("authStore.role === 'admin'");
+	});
+});

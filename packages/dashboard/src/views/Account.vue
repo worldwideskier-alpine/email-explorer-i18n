@@ -19,7 +19,11 @@
     <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
       <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-2">{{ t("account.signInAddress") }}</h2>
       <p class="text-gray-900 dark:text-gray-100 break-all">{{ authStore.currentUser?.email }}</p>
-      <p v-if="authStore.isAdmin" class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-1">
+      <!-- The role, not the legacy is_admin column. That column is set for
+           the first account ever registered and for no other, so this said
+           "administrator" to one person and nothing at all to every other
+           administrator -- on a screen whose whole subject is who you are. -->
+      <p v-if="authStore.role === 'admin'" class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold mt-1">
         {{ t("account.isAdmin") }}
       </p>
     </div>

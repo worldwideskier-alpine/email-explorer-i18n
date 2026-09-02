@@ -3,6 +3,7 @@ import type { Context } from "hono";
 import PostalMime from "postal-mime";
 import { z } from "zod";
 import { ingestEmailIntoMailbox } from "../email-ingest";
+import { personHoldsMailbox } from "../mailbox-access";
 import { slugify } from "../slugify";
 import type { Env, Session } from "../types";
 
@@ -38,15 +39,18 @@ const ErrorResponseSchema = z.object({
 });
 
 /**
- * Admin-only endpoint for inserting a historical message into a mailbox
- * without sending it -- the receiving side of an IMAP import. Reuses
- * the same postal-mime parsing and ingestion path as real inbound mail
- * (see email-ingest.ts), so imported messages behave identically to mail
- * that arrived via Cloudflare Email Routing.
+ * Inserts a historical message into a mailbox without sending it -- the
+ * receiving side of an IMAP import, and what "restore from backup" posts to,
+ * one message at a time. Reuses the same postal-mime parsing and ingestion
+ * path as real inbound mail (see email-ingest.ts), so imported messages
+ * behave identically to mail that arrived via Cloudflare Email Routing.
+ *
+ * Open to whoever holds the mailbox, which is the rule everywhere else here.
+ * See the check in handle() for what it used to be and what that cost.
  */
 export class PostImportEmail extends OpenAPIRoute {
 	schema = {
-		summary: "Import a raw email into a mailbox (admin only, does not send)",
+		summary: "Import a raw email into a mailbox (does not send)",
 		operationId: "importEmail",
 		tags: ["Admin"],
 		request: {
@@ -69,7 +73,7 @@ export class PostImportEmail extends OpenAPIRoute {
 				...contentJson(ErrorResponseSchema),
 			},
 			"403": {
-				description: "Forbidden - Admin privileges required",
+				description: "Forbidden - this mailbox is not yours",
 				...contentJson(ErrorResponseSchema),
 			},
 			"400": {
@@ -84,12 +88,30 @@ export class PostImportEmail extends OpenAPIRoute {
 		if (!session) {
 			return c.json({ error: "Unauthorized" }, 401);
 		}
-		if (!session.isAdmin) {
-			return c.json({ error: "Admin privileges required" }, 403);
-		}
-
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { mailboxId } = data.params;
+
+		/**
+		 * Whether this mailbox is yours -- the same question every other
+		 * mailbox-scoped route asks, and the one this route was not asking.
+		 *
+		 * It used to ask for `session.isAdmin`, which is the legacy `is_admin`
+		 * column, and that column is set for exactly one account: the first
+		 * one ever registered. Every administrator made since -- there is no
+		 * other way to make one -- got 403 from here, so restoring a backup
+		 * was a thing one particular account could do and no other could,
+		 * which is not what "administrator" means anywhere else in this
+		 * deployment. The screen hid the control from them too, so it looked
+		 * like a missing feature rather than a refusal.
+		 *
+		 * Ownership is also the narrower question of the two. The flag said
+		 * yes for every mailbox there was, so the one account that had it
+		 * could write mail into somebody else's; holding the mailbox is the
+		 * rule the rest of the application already follows.
+		 */
+		if (!(await personHoldsMailbox(c.env, session, mailboxId))) {
+			return c.json({ error: "You don't have access to this mailbox" }, 403);
+		}
 		const {
 			folder,
 			rawEmailBase64,
