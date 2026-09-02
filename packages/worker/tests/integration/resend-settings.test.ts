@@ -1,12 +1,7 @@
 import { env, runInDurableObject, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { getResendApiKey, getResendKeySource } from "../../src/app-settings";
-import {
-	authenticatedFetch,
-	personId,
-	sessionToken,
-	testAuthBeforeAll,
-} from "./utils";
+import { authenticatedFetch, personId, testAuthBeforeAll } from "./utils";
 
 /**
  * The outbound mail key: one per person, settable on their own screen.
@@ -215,7 +210,10 @@ describe("the outbound mail API key", () => {
 		await bucket().put(OWN_KEY, "this is not json");
 		expect(await getResendApiKey(env as never, personId)).toBe(FROM_ENV);
 		expect(
-			await getResendApiKey({ ...env, RESEND_API_KEY: undefined } as never, personId),
+			await getResendApiKey(
+				{ ...env, RESEND_API_KEY: undefined } as never,
+				personId,
+			),
 		).toBeUndefined();
 	});
 });

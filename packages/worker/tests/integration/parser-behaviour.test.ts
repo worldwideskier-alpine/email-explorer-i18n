@@ -1,6 +1,9 @@
 import { createExecutionContext, env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
-import { classifyByAuthResults, summarizeAuthResults } from "../../src/spam-filter";
+import {
+	classifyByAuthResults,
+	summarizeAuthResults,
+} from "../../src/spam-filter";
 import {
 	authenticatedFetch,
 	createDummyMailbox,
@@ -52,7 +55,13 @@ async function inbox() {
 		`http://local.test/api/v1/mailboxes/${mailboxId}/emails?folder=inbox`,
 	);
 	return res.json<
-		{ id: string; subject: string; sender: string; recipient: string; cc: string }[]
+		{
+			id: string;
+			subject: string;
+			sender: string;
+			recipient: string;
+			cc: string;
+		}[]
 	>();
 }
 
@@ -99,9 +108,7 @@ describe("a folded Authentication-Results header", () => {
 		{
 			key: "authentication-results",
 			originalKey: "Authentication-Results",
-			value: raw
-				.replace(/^Authentication-Results: /, "")
-				.replace(/\r\n/g, ""),
+			value: raw.replace(/^Authentication-Results: /, "").replace(/\r\n/g, ""),
 		},
 	];
 
@@ -117,7 +124,9 @@ describe("a folded Authentication-Results header", () => {
 	it("still reads SPF from the envelope sender, not the HELO name", () => {
 		// Both spf= results are in the folded value; taking the first would
 		// read "none" and let a hard failure through.
-		expect(summarizeAuthResults(headerOf(FOLDED_FAILING_AUTH)).spf).toBe("fail");
+		expect(summarizeAuthResults(headerOf(FOLDED_FAILING_AUTH)).spf).toBe(
+			"fail",
+		);
 	});
 
 	it("still files the message the folded header condemns", () => {
@@ -230,9 +239,7 @@ describe("what the parser hands the ingest path", () => {
 	// full-width space in the body, and a folded References chain.
 	it("still decodes an encoded-word display name and keeps the body intact", async () => {
 		const encoded = btoa(
-			String.fromCharCode(
-				...new TextEncoder().encode("セゾンカード"),
-			),
+			String.fromCharCode(...new TextEncoder().encode("セゾンカード")),
 		);
 		await receive(
 			buildRawEmail([

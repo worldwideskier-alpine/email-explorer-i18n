@@ -5,7 +5,11 @@ import {
 } from "../../src/spam-filter";
 
 const header = (value: string) => [
-	{ key: "authentication-results", originalKey: "Authentication-Results", value },
+	{
+		key: "authentication-results",
+		originalKey: "Authentication-Results",
+		value,
+	},
 ];
 
 describe("classifyByAuthResults", () => {
@@ -36,7 +40,9 @@ describe("classifyByAuthResults", () => {
 	it("routes to spam when both spf and dkim fail", () => {
 		expect(
 			classifyByAuthResults(
-				header("mx.example.com; spf=fail smtp.mailfrom=sender.com; dkim=fail header.i=@sender.com"),
+				header(
+					"mx.example.com; spf=fail smtp.mailfrom=sender.com; dkim=fail header.i=@sender.com",
+				),
 			),
 		).toBe("spam");
 	});
@@ -44,7 +50,9 @@ describe("classifyByAuthResults", () => {
 	it("routes to inbox when only spf fails but dkim passes", () => {
 		expect(
 			classifyByAuthResults(
-				header("mx.example.com; spf=fail smtp.mailfrom=sender.com; dkim=pass header.i=@sender.com"),
+				header(
+					"mx.example.com; spf=fail smtp.mailfrom=sender.com; dkim=pass header.i=@sender.com",
+				),
 			),
 		).toBe("inbox");
 	});

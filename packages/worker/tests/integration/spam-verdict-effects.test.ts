@@ -13,7 +13,10 @@ const PUSH_ENDPOINT = "https://push.example.test/subscription/test-endpoint";
 function base64UrlEncode(bytes: Uint8Array): string {
 	let binary = "";
 	for (const b of bytes) binary += String.fromCharCode(b);
-	return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+	return btoa(binary)
+		.replace(/\+/g, "-")
+		.replace(/\//g, "_")
+		.replace(/=+$/, "");
 }
 
 async function generateTestSubscriptionKeys() {

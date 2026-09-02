@@ -73,9 +73,8 @@ describe("the migration that gives each login a person", () => {
 
 			const personOf = (id: string) =>
 				String(
-					sql
-						.exec("SELECT person_id FROM users WHERE id = ?", id)
-						.toArray()[0]?.person_id,
+					sql.exec("SELECT person_id FROM users WHERE id = ?", id).toArray()[0]
+						?.person_id,
 				);
 
 			// The two logins that were administrators are now one person.
@@ -127,7 +126,9 @@ describe("the migration that moves ownership onto the person", () => {
 			// person, each already carrying a claim on the same two mailboxes
 			// -- which is what the old backfill wrote, one row per login --
 			// plus somebody else with their own.
-			sql.exec("CREATE TABLE IF NOT EXISTS user_mailboxes (user_id TEXT NOT NULL, mailbox_id TEXT NOT NULL, role TEXT NOT NULL, PRIMARY KEY (user_id, mailbox_id))");
+			sql.exec(
+				"CREATE TABLE IF NOT EXISTS user_mailboxes (user_id TEXT NOT NULL, mailbox_id TEXT NOT NULL, role TEXT NOT NULL, PRIMARY KEY (user_id, mailbox_id))",
+			);
 			sql.exec("DELETE FROM user_mailboxes");
 			sql.exec("DELETE FROM person_mailboxes");
 			for (const [id, email, person] of [

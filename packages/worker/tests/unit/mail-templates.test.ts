@@ -64,8 +64,12 @@ describe("buildPasswordResetEmail", () => {
 	});
 
 	it("tags the HTML with the matching lang attribute", () => {
-		expect(buildPasswordResetEmail("en", LINK).html).toContain('<html lang="en"');
-		expect(buildPasswordResetEmail("de", LINK).html).toContain('<html lang="de"');
+		expect(buildPasswordResetEmail("en", LINK).html).toContain(
+			'<html lang="en"',
+		);
+		expect(buildPasswordResetEmail("de", LINK).html).toContain(
+			'<html lang="de"',
+		);
 		expect(buildPasswordResetEmail("zh-Hant", LINK).html).toContain(
 			'<html lang="zh-Hant"',
 		);
@@ -91,7 +95,8 @@ describe("buildPasswordResetEmail", () => {
 		const ja = buildPasswordResetEmail("ja", LINK);
 		const untranslated = MAIL_LOCALES.filter(
 			(locale) =>
-				locale !== "ja" && buildPasswordResetEmail(locale, LINK).subject === ja.subject,
+				locale !== "ja" &&
+				buildPasswordResetEmail(locale, LINK).subject === ja.subject,
 		);
 		expect(untranslated).toEqual([]);
 	});
@@ -126,16 +131,15 @@ describe("buildEmailChangeEmail", () => {
 		expect(buildEmailChangeEmail("ru", LINK).subject).toBe(
 			"Подтвердите новый адрес",
 		);
-		expect(buildEmailChangeEmail("th", LINK).subject).toBe(
-			"ยืนยันอีเมลใหม่ของคุณ",
-		);
+		expect(buildEmailChangeEmail("th", LINK).subject).toBe("ยืนยันอีเมลใหม่ของคุณ");
 	});
 
 	it("has its own wording for every locale the picker offers", () => {
 		const ja = buildEmailChangeEmail("ja", LINK);
 		const untranslated = MAIL_LOCALES.filter(
 			(locale) =>
-				locale !== "ja" && buildEmailChangeEmail(locale, LINK).subject === ja.subject,
+				locale !== "ja" &&
+				buildEmailChangeEmail(locale, LINK).subject === ja.subject,
 		);
 		expect(untranslated).toEqual([]);
 	});

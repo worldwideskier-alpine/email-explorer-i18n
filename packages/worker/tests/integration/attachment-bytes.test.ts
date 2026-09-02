@@ -1,4 +1,3 @@
-import { env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
 	authenticatedFetch,
@@ -25,9 +24,25 @@ import {
 
 /** A byte in every class, including the ones UTF-8 encoding would expand. */
 const BINARY = new Uint8Array([
-	0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, // a PNG signature
-	0x00, 0x01, 0x7f, 0x80, 0x81, 0xc0, 0xfe, 0xff, // the boundary bytes
-	0xe3, 0x81, 0x82, // one valid UTF-8 sequence, which must not be "fixed"
+	0x89,
+	0x50,
+	0x4e,
+	0x47,
+	0x0d,
+	0x0a,
+	0x1a,
+	0x0a, // a PNG signature
+	0x00,
+	0x01,
+	0x7f,
+	0x80,
+	0x81,
+	0xc0,
+	0xfe,
+	0xff, // the boundary bytes
+	0xe3,
+	0x81,
+	0x82, // one valid UTF-8 sequence, which must not be "fixed"
 ]);
 
 function toBase64(bytes: Uint8Array): string {

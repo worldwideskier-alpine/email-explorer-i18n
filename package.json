@@ -3,7 +3,7 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"lint": "npx @biomejs/biome check packages/dashboard/src packages/worker/src packages/worker/scripts || (npx @biomejs/biome check --write packages/dashboard/src packages/worker/src/ packages/worker/scripts; exit 1)",
+		"lint": "npx @biomejs/biome check packages/dashboard/src packages/worker/src packages/worker/scripts packages/worker/tests || (npx @biomejs/biome check --write packages/dashboard/src packages/worker/src/ packages/worker/scripts packages/worker/tests; exit 1)",
 		"build-dashboard": "pnpm run --filter email-explorer-dashboard build",
 		"build-worker": "pnpm run --filter email-explorer build",
 		"test-worker": "pnpm run --filter email-explorer test",

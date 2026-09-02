@@ -1,9 +1,9 @@
-import { SELF, env } from "cloudflare:test";
-import { describe, expect, it, beforeEach } from "vitest";
+import { SELF } from "cloudflare:test";
+import { beforeEach, describe, expect, it } from "vitest";
 
 describe("Authentication & User Management Integration Tests", () => {
 	// Helper to create worker instance with auth enabled
-	const createAuthWorker = async (authConfig = { enabled: true }) => {
+	const createAuthWorker = async (_authConfig = { enabled: true }) => {
 		// The worker will use the config from index.ts
 		return SELF;
 	};
@@ -490,7 +490,8 @@ describe("Authentication & User Management Integration Tests", () => {
 			);
 
 			expect(response.status).toBe(200);
-			const listed = await response.json<Array<{ email: string; role: string }>>();
+			const listed =
+				await response.json<Array<{ email: string; role: string }>>();
 			expect(listed.map((u) => u.email).sort()).toEqual([
 				"permadmin@example.com",
 				"regularuser@example.com",

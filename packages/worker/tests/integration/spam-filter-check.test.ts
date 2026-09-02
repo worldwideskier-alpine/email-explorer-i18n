@@ -26,7 +26,9 @@ async function setClaudeApiKey(apiKey: string) {
 	await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
 		method: "PUT",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ settings: { spamFilter: { claudeApiKey: apiKey } } }),
+		body: JSON.stringify({
+			settings: { spamFilter: { claudeApiKey: apiKey } },
+		}),
 	});
 }
 

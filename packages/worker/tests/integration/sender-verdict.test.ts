@@ -1,5 +1,5 @@
-import { env, createExecutionContext } from "cloudflare:test";
-import { describe, expect, it, beforeEach } from "vitest";
+import { createExecutionContext, env } from "cloudflare:test";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
 	authenticatedFetch,
 	createDummyMailbox,
@@ -160,11 +160,16 @@ describe("Sender-based spam verdict override", () => {
 	});
 
 	it("a spam verdict short-circuits before Claude is ever consulted", async () => {
-		await authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
-			method: "PUT",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ settings: { spamFilter: { claudeApiKey: "sk-ant-test-key" } } }),
-		});
+		await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}`,
+			{
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					settings: { spamFilter: { claudeApiKey: "sk-ant-test-key" } },
+				}),
+			},
+		);
 
 		await simulateReceiveEmail(
 			buildRawEmail(

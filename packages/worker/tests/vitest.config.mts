@@ -153,9 +153,7 @@ export default defineConfig({
 						// SPF/DKIM/DMARC verdict is lowercased before it reaches
 						// the request, and a test that asserts those verdicts
 						// arrive needs the marker to survive that.
-						const verdict = body
-							.toUpperCase()
-							.includes("TRIGGER_CLAUDE_SPAM")
+						const verdict = body.toUpperCase().includes("TRIGGER_CLAUDE_SPAM")
 							? "SPAM"
 							: "NOT_SPAM";
 						return new Response(

@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import {authenticatedFetch, createMailbox, mailboxId, testAuthBeforeAll} from "./utils";
-
-
+import {
+	authenticatedFetch,
+	createMailbox,
+	mailboxId,
+	testAuthBeforeAll,
+} from "./utils";
 
 describe("API Integration Tests", () => {
 	// Setup authentication once for all tests

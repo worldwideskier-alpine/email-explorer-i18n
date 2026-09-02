@@ -59,7 +59,9 @@ describe("Exporting a mailbox as mbox", () => {
 		expect(res.status).toBe(200);
 		expect(res.headers.get("Content-Type")).toContain("application/mbox");
 		expect(res.headers.get("Content-Disposition")).toMatch(
-			new RegExp(`attachment; filename="${mailboxId}-\\d{4}-\\d{2}-\\d{2}\\.mbox"`),
+			new RegExp(
+				`attachment; filename="${mailboxId}-\\d{4}-\\d{2}-\\d{2}\\.mbox"`,
+			),
 		);
 	});
 

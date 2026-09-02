@@ -152,8 +152,10 @@ describe("a value that would not work", () => {
 		const { source } = applyDeploymentConfig(CONFIG, {
 			VAPID_PUBLIC_KEY: 'a"b\\c',
 		});
-		expect(JSON.parse(source.replace(/^\s*\/\/[^\n]*\n/gm, "")).vars
-			.VAPID_PUBLIC_KEY).toBe('a"b\\c');
+		expect(
+			JSON.parse(source.replace(/^\s*\/\/[^\n]*\n/gm, "")).vars
+				.VAPID_PUBLIC_KEY,
+		).toBe('a"b\\c');
 	});
 });
 
@@ -178,7 +180,9 @@ describe("setStringValue", () => {
 });
 
 describe("where the recovery sender comes from", () => {
-	const code = { config: { accountRecovery: { fromEmail: "code@example.com" } } };
+	const code = {
+		config: { accountRecovery: { fromEmail: "code@example.com" } },
+	};
 
 	it("is off when neither source has one", () => {
 		expect(recoveryFromEmail({} as never)).toBeUndefined();

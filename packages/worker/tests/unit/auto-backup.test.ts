@@ -25,17 +25,23 @@ describe("isBackupDue", () => {
 	// Otherwise switching it on means waiting a month to find out it works.
 	it("says yes the first time, whatever the frequency", () => {
 		for (const frequency of ["daily", "weekly", "monthly"] as const) {
-			expect(isBackupDue({ enabled: true, frequency, keep: 7 }, NOW)).toBe(true);
+			expect(isBackupDue({ enabled: true, frequency, keep: 7 }, NOW)).toBe(
+				true,
+			);
 		}
 	});
 
 	it("waits out the interval", () => {
 		const daily = { enabled: true, frequency: "daily" as const, keep: 7 };
-		expect(isBackupDue({ ...daily, lastRunAt: ago(2 * HOUR) }, NOW)).toBe(false);
+		expect(isBackupDue({ ...daily, lastRunAt: ago(2 * HOUR) }, NOW)).toBe(
+			false,
+		);
 		expect(isBackupDue({ ...daily, lastRunAt: ago(DAY) }, NOW)).toBe(true);
 
 		const weekly = { enabled: true, frequency: "weekly" as const, keep: 7 };
-		expect(isBackupDue({ ...weekly, lastRunAt: ago(3 * DAY) }, NOW)).toBe(false);
+		expect(isBackupDue({ ...weekly, lastRunAt: ago(3 * DAY) }, NOW)).toBe(
+			false,
+		);
 		expect(isBackupDue({ ...weekly, lastRunAt: ago(7 * DAY) }, NOW)).toBe(true);
 
 		const monthly = { enabled: true, frequency: "monthly" as const, keep: 7 };
@@ -112,7 +118,11 @@ describe("keysToRotate", () => {
 		);
 
 	it("keeps each recent month's newest even when the count is passed", () => {
-		const keys = [...daily("2026-06", 3), ...daily("2026-07", 3), ...daily("2026-08", 3)];
+		const keys = [
+			...daily("2026-06", 3),
+			...daily("2026-07", 3),
+			...daily("2026-08", 3),
+		];
 		const survivors = keys.filter((k) => !keysToRotate(keys, 2).includes(k));
 
 		// Two by count (the newest two of August), plus June's and July's
@@ -176,7 +186,10 @@ describe("keysToRotate", () => {
 
 describe("keys", () => {
 	it("names an archive so that sorting by key sorts by time", () => {
-		const early = backupKey("box@example.com", new Date("2026-08-01T00:00:00Z"));
+		const early = backupKey(
+			"box@example.com",
+			new Date("2026-08-01T00:00:00Z"),
+		);
 		const late = backupKey("box@example.com", new Date("2026-09-01T00:00:00Z"));
 		expect(early < late).toBe(true);
 		expect(early.startsWith(backupKeyPrefix("box@example.com"))).toBe(true);

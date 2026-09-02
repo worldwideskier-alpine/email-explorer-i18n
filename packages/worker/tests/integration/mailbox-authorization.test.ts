@@ -28,11 +28,13 @@ const login = async (email: string, password = "password123") => {
 	return (await res.json<{ id: string }>()).id;
 };
 
-const as = (token: string) => (url: string, options: RequestInit = {}) =>
-	SELF.fetch(url, {
-		...options,
-		headers: { ...options.headers, Authorization: `Bearer ${token}` },
-	});
+const as =
+	(token: string) =>
+	(url: string, options: RequestInit = {}) =>
+		SELF.fetch(url, {
+			...options,
+			headers: { ...options.headers, Authorization: `Bearer ${token}` },
+		});
 
 /** Root, and two unrelated people, each with one address of their own. */
 async function setUpTwoPeople() {
@@ -199,11 +201,8 @@ describe("a person's other login", () => {
 
 		expect(await listed(spareToken)).not.toContain("mine@test.com");
 		expect(
-			(
-				await as(spareToken)(
-					"http://local.test/api/v1/mailboxes/mine@test.com",
-				)
-			).status,
+			(await as(spareToken)("http://local.test/api/v1/mailboxes/mine@test.com"))
+				.status,
 		).toBe(403);
 	});
 });
