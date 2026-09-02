@@ -1602,7 +1602,6 @@ class GetMailboxExport extends OpenAPIRoute {
 		// Streamed one message at a time rather than assembled first: a
 		// mailbox can be far larger than a Worker may hold in memory, and the
 		// download starts immediately instead of after the last message.
-		const encoder = new TextEncoder();
 		let index = 0;
 		const body = new ReadableStream({
 			async pull(controller) {
@@ -1615,13 +1614,14 @@ class GetMailboxExport extends OpenAPIRoute {
 				const folderId = String(
 					(email as { folder_id?: string }).folder_id ?? "inbox",
 				);
+				// Already bytes. Encoding it here as text would undo the whole
+				// point: a message is not necessarily UTF-8, and a round trip
+				// through a string replaces every byte that is not.
 				controller.enqueue(
-					encoder.encode(
-						await renderMboxEntry(
-							c.env,
-							email as never,
-							folderNames.get(folderId) ?? folderId,
-						),
+					await renderMboxEntry(
+						c.env,
+						email as never,
+						folderNames.get(folderId) ?? folderId,
 					),
 				);
 			},
@@ -1630,7 +1630,10 @@ class GetMailboxExport extends OpenAPIRoute {
 		const stamp = new Date().toISOString().slice(0, 10);
 		return new Response(body, {
 			headers: {
-				"Content-Type": "application/mbox; charset=utf-8",
+				// No charset: the file holds whole messages, each declaring
+				// its own, and naming one here would be a claim about all of
+				// them -- and the wrong one for any message that is not UTF-8.
+				"Content-Type": "application/mbox",
 				"Content-Disposition": `attachment; filename="${mailboxId}-${stamp}.mbox"`,
 			},
 		});
@@ -1795,7 +1798,10 @@ class GetMailboxBackup extends OpenAPIRoute {
 
 		return new Response(object.body, {
 			headers: {
-				"Content-Type": "application/mbox; charset=utf-8",
+				// No charset: the file holds whole messages, each declaring
+				// its own, and naming one here would be a claim about all of
+				// them -- and the wrong one for any message that is not UTF-8.
+				"Content-Type": "application/mbox",
 				"Content-Disposition": `attachment; filename="${mailboxId}-${name}"`,
 			},
 		});

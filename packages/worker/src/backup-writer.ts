@@ -110,7 +110,6 @@ export async function writeMailboxBackup(
 
 	const key = backupKey(mailboxId, now);
 	const upload = await env.BUCKET.createMultipartUpload(key);
-	const encoder = new TextEncoder();
 	const buffer = new PartBuffer();
 	const parts: R2UploadedPart[] = [];
 	let messages = 0;
@@ -128,9 +127,8 @@ export async function writeMailboxBackup(
 				email as never,
 				folderNames.get(folderId) ?? folderId,
 			);
-			const encoded = encoder.encode(entry);
-			buffer.add(encoded);
-			bytes += encoded.byteLength;
+			buffer.add(entry);
+			bytes += entry.byteLength;
 			messages += 1;
 
 			// A loop, not an `if`: one message with a large attachment can fill

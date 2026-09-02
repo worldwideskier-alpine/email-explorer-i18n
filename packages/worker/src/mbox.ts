@@ -50,14 +50,63 @@ function base64Lines(bytes: Uint8Array): string {
 	return (btoa(binary).match(/.{1,76}/g) ?? []).join("\r\n");
 }
 
+const GT = 0x3e; // ">"
+const LF = 0x0a;
+/** "From " -- the five bytes that begin an mbox separator line. */
+const FROM = [0x46, 0x72, 0x6f, 0x6d, 0x20];
+
 /**
  * mbox delimits messages with a line beginning "From ", so any body line that
  * looks like one has to be quoted or the file splits in the wrong place. This
  * is the mboxrd convention: prefix with ">", and prefix an already-quoted one
  * again so the escaping can be undone exactly.
+ *
+ * Done on bytes, not on a string. A message is bytes -- plenty of Japanese
+ * mail is 8-bit Shift_JIS or EUC-JP, and neither is valid UTF-8 -- so the
+ * moment this took a string, the decode that produced it had already replaced
+ * every such byte with U+FFFD and there was nothing left to escape correctly.
+ * This scan only ever compares against ASCII, which no multi-byte encoding
+ * puts in a trailing byte, so it is safe to run over bytes of any encoding.
  */
-function escapeFromLines(message: string): string {
-	return message.replace(/^(>*From )/gm, ">$1");
+function escapeFromLines(message: Uint8Array): Uint8Array {
+	const insertAt: number[] = [];
+
+	let lineStart = 0;
+	for (let i = 0; i <= message.length; i++) {
+		if (i !== message.length && message[i] !== LF) continue;
+
+		let p = lineStart;
+		while (p < i && message[p] === GT) p++;
+		if (i - p >= FROM.length && FROM.every((b, k) => message[p + k] === b)) {
+			insertAt.push(lineStart);
+		}
+		lineStart = i + 1;
+	}
+
+	if (insertAt.length === 0) return message;
+
+	const out = new Uint8Array(message.length + insertAt.length);
+	let read = 0;
+	let write = 0;
+	for (const at of insertAt) {
+		out.set(message.subarray(read, at), write);
+		write += at - read;
+		out[write++] = GT;
+		read = at;
+	}
+	out.set(message.subarray(read), write);
+	return out;
+}
+
+function concatBytes(chunks: Uint8Array[]): Uint8Array {
+	const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+	const out = new Uint8Array(total);
+	let offset = 0;
+	for (const chunk of chunks) {
+		out.set(chunk, offset);
+		offset += chunk.length;
+	}
+	return out;
 }
 
 /** Fri Aug 29 04:39:21 2026 -- the ctime-ish stamp an mbox separator uses. */
@@ -128,10 +177,17 @@ function headerSafe(value: string): string {
 }
 
 /**
- * One mbox entry. Mail that arrived from outside is written back byte for
- * byte from its stored raw copy, so nothing is lost in translation; mail
- * composed here never had a raw form and is rebuilt from what was stored,
- * attachments included.
+ * One mbox entry, as bytes. Mail that arrived from outside is written back
+ * byte for byte from its stored raw copy; mail composed here never had a raw
+ * form and is rebuilt from what was stored, attachments included.
+ *
+ * "Byte for byte" is why this returns bytes. It used to say so and not do it:
+ * the raw copy was read with `.text()`, which decodes as UTF-8, and a message
+ * that is not valid UTF-8 came out with U+FFFD where its bytes had been. Sent
+ * a 8-bit Shift_JIS body of six bytes, the archive kept one of them. That is
+ * unrecoverable, and it lands where it can least be afforded: deleting a
+ * message removes its raw copy, so for anything deleted -- including every
+ * message the nightly spam purge removes -- the archive is the only copy left.
  *
  * `folderName` is passed in rather than read off the row: the row holds a
  * folder id, and for a folder the user made that id is a uuid, which means
@@ -148,9 +204,15 @@ export async function renderMboxEntry(
 	env: Env,
 	email: ExportedEmail,
 	folderName?: string,
-): Promise<string> {
+): Promise<Uint8Array> {
+	const encoder = new TextEncoder();
 	const raw = await env.BUCKET.get(`raw/${email.id}.eml`);
-	const message = raw ? await raw.text() : await synthesizeMessage(env, email);
+	// The one place the encoding is known: a message this fork composed is a
+	// string it built itself, so encoding it as UTF-8 is what it already was.
+	// A received message is never decoded at all.
+	const message = raw
+		? new Uint8Array(await raw.arrayBuffer())
+		: encoder.encode(await synthesizeMessage(env, email));
 
 	const separator = `From ${email.sender || "MAILER-DAEMON"} ${mboxDate(email.date)}`;
 	const headers = [
@@ -161,5 +223,9 @@ export async function renderMboxEntry(
 	];
 	if (email.date) headers.push(`X-Email-Explorer-Date: ${email.date}`);
 
-	return `${separator}\r\n${headers.join("\r\n")}\r\n${escapeFromLines(message)}\r\n\r\n`;
+	return concatBytes([
+		encoder.encode(`${separator}\r\n${headers.join("\r\n")}\r\n`),
+		escapeFromLines(message),
+		encoder.encode("\r\n\r\n"),
+	]);
 }
