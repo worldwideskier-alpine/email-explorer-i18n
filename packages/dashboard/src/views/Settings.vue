@@ -729,7 +729,11 @@ async function restoreMailbox() {
 
 	try {
 		const mailboxId = route.params.mailboxId as string;
-		const entries = parseMbox(await file.text());
+		// Read as bytes, never as text. file.text() decodes as UTF-8, and a
+		// message that is not -- 8-bit Shift_JIS, EUC-JP -- would arrive here
+		// with U+FFFD where its bytes had been, and go back into the mailbox
+		// that way, permanently.
+		const entries = parseMbox(new Uint8Array(await file.arrayBuffer()));
 		restoreTotal.value = entries.length;
 
 		let imported = 0;
