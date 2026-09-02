@@ -10,6 +10,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { stripRemoteContent } from "@/utils/remoteContent";
 
 const props = defineProps<{
 	body: string;
@@ -18,9 +19,26 @@ const props = defineProps<{
 	// sender have their href stripped, since a spam/phishing message is
 	// exactly the content where an accidental click is most dangerous.
 	disableLinks?: boolean;
+	// When true (spam-folder emails again), nothing in the body may fetch
+	// anything: no images, no stylesheets, no media. A tracking pixel reports
+	// the open, and for a spam run that is the point of having sent it --
+	// looking at a message to decide whether it is spam should not be what
+	// confirms the address is live.
+	blockRemoteContent?: boolean;
 }>();
 
 const iframe = ref<HTMLIFrameElement | null>(null);
+
+/**
+ * The body as the frame will receive it.
+ *
+ * This has to happen here, on the string, and not in the load handler below:
+ * by the time a frame has loaded, everything in it has already been fetched.
+ * Removing an image then would remove only the picture, not the request.
+ */
+const renderedBody = computed(() =>
+	props.blockRemoteContent ? stripRemoteContent(props.body) : props.body,
+);
 
 const fullHtml = computed(
 	() => `
@@ -41,7 +59,7 @@ const fullHtml = computed(
         </style>
       </head>
       <body>
-        ${props.body}
+        ${renderedBody.value}
       </body>
     </html>
   `,
