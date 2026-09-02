@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Corespondența care nu a putut fi verificată ajunge în inbox, deci spamul poate trece.",
 		"spamCheckUnauthorized": "Cheia API a fost respinsă. Verificați cheia.",
 		"spamCheckForbidden": "Cheia API nu are permisiunea pentru acest apel. Verificați spațiul de lucru căruia îi aparține.",
+		"spamCheckBlocked": "Cererea a fost respinsă înainte de a ajunge la API. Problema nu este cheia.",
 		"spamCheckRateLimited": "Limita de apeluri a fost atinsă.",
 		"spamCheckServerError": "API-ul a returnat o eroare.",
 		"spamCheckTimeout": "Nu a venit niciun răspuns la timp.",

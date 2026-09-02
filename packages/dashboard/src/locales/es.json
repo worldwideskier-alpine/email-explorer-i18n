@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "El correo que no se pudo comprobar va a la bandeja de entrada, así que puede colarse correo basura.",
 		"spamCheckUnauthorized": "Se rechazó la clave de API. Revise la clave.",
 		"spamCheckForbidden": "La clave de API no tiene permiso para esta llamada. Comprueba el espacio de trabajo al que pertenece.",
+		"spamCheckBlocked": "La solicitud se rechazó antes de llegar a la API. El problema no es la clave.",
 		"spamCheckRateLimited": "Se alcanzó el límite de llamadas.",
 		"spamCheckServerError": "La API devolvió un error.",
 		"spamCheckTimeout": "No hubo respuesta a tiempo.",

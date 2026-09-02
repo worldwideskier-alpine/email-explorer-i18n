@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Thư không kiểm tra được sẽ vào hộp thư đến, nên thư rác có thể lọt qua.",
 		"spamCheckUnauthorized": "Khóa API bị từ chối. Hãy kiểm tra khóa.",
 		"spamCheckForbidden": "Khóa API không có quyền cho lệnh gọi này. Hãy kiểm tra không gian làm việc mà khóa thuộc về.",
+		"spamCheckBlocked": "Yêu cầu đã bị từ chối trước khi đến được API. Vấn đề không nằm ở khóa.",
 		"spamCheckRateLimited": "Đã đạt giới hạn số lần gọi.",
 		"spamCheckServerError": "API trả về lỗi.",
 		"spamCheckTimeout": "Không có phản hồi kịp thời.",

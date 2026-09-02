@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "דואר שלא נבדק מגיע לתיבה הנכנסת, וייתכן שדואר זבל עובר.",
 		"spamCheckUnauthorized": "מפתח הממשק נדחה. בדקו את המפתח.",
 		"spamCheckForbidden": "למפתח ה-API אין הרשאה לקריאה הזו. בדקו את סביבת העבודה שאליה הוא שייך.",
+		"spamCheckBlocked": "הבקשה נדחתה לפני שהגיעה ל-API. הבעיה אינה במפתח.",
 		"spamCheckRateLimited": "הגעתם למגבלת מספר הקריאות.",
 		"spamCheckServerError": "הממשק החזיר שגיאה.",
 		"spamCheckTimeout": "לא הגיעה תשובה בזמן.",

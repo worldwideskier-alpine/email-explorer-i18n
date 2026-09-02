@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "La posta che non è stato possibile controllare finisce in arrivo, quindi può passare posta indesiderata.",
 		"spamCheckUnauthorized": "La chiave API è stata rifiutata. Controlla la chiave.",
 		"spamCheckForbidden": "La chiave API non è autorizzata per questa chiamata. Verifica lo spazio di lavoro a cui appartiene.",
+		"spamCheckBlocked": "La richiesta è stata rifiutata prima di arrivare all'API. Il problema non è la chiave.",
 		"spamCheckRateLimited": "È stato raggiunto il limite di chiamate.",
 		"spamCheckServerError": "L'API ha restituito un errore.",
 		"spamCheckTimeout": "Non è arrivata risposta in tempo.",

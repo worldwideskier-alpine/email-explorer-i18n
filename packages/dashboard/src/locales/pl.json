@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Poczta, której nie udało się sprawdzić, trafia do skrzynki odbiorczej, więc spam może się przedostać.",
 		"spamCheckUnauthorized": "Klucz API został odrzucony. Sprawdź klucz.",
 		"spamCheckForbidden": "Klucz API nie ma uprawnień do tego wywołania. Sprawdź obszar roboczy, do którego należy.",
+		"spamCheckBlocked": "Żądanie zostało odrzucone, zanim dotarło do API. Problem nie leży w kluczu.",
 		"spamCheckRateLimited": "Osiągnięto limit wywołań.",
 		"spamCheckServerError": "API zwróciło błąd.",
 		"spamCheckTimeout": "Odpowiedź nie nadeszła na czas.",

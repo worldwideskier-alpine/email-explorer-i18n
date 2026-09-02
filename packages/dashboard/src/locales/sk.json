@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Pošta, ktorú sa nepodarilo skontrolovať, ide do doručenej pošty, takže spam môže prejsť.",
 		"spamCheckUnauthorized": "Kľúč API bol odmietnutý. Skontrolujte kľúč.",
 		"spamCheckForbidden": "Kľúč API nemá oprávnenie na toto volanie. Skontrolujte pracovný priestor, do ktorého patrí.",
+		"spamCheckBlocked": "Požiadavka bola odmietnutá skôr, než sa dostala k API. Problém nie je v kľúči.",
 		"spamCheckRateLimited": "Dosiahol sa limit počtu volaní.",
 		"spamCheckServerError": "API vrátilo chybu.",
 		"spamCheckTimeout": "Odpoveď neprišla včas.",

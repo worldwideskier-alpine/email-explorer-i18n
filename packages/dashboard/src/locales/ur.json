@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "جو میل جانچی نہ جا سکی وہ ان باکس میں جاتی ہے، اس لیے سپیم گزر سکتی ہے۔",
 		"spamCheckUnauthorized": "API کلید مسترد ہوئی۔ کلید جانچیں۔",
 		"spamCheckForbidden": "اس کال کے لیے API کلید کو اجازت نہیں ہے۔ وہ ورک اسپیس جانچیں جس سے کلید تعلق رکھتی ہے۔",
+		"spamCheckBlocked": "درخواست API تک پہنچنے سے پہلے ہی مسترد کر دی گئی۔ مسئلہ کلید کا نہیں ہے۔",
 		"spamCheckRateLimited": "کالوں کی حد پوری ہو گئی۔",
 		"spamCheckServerError": "API نے خرابی لوٹائی۔",
 		"spamCheckTimeout": "وقت پر کوئی جواب نہیں آیا۔",

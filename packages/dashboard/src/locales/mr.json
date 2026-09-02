@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "तपासता न आलेले मेल इनबॉक्समध्ये जाते, त्यामुळे स्पॅम निसटू शकतो.",
 		"spamCheckUnauthorized": "API की नाकारली गेली. की तपासा.",
 		"spamCheckForbidden": "या कॉलसाठी API कीला परवानगी नाही. की ज्या वर्कस्पेसची आहे ती तपासा.",
+		"spamCheckBlocked": "विनंती API पर्यंत पोहोचण्यापूर्वीच नाकारली गेली. समस्या कीची नाही.",
 		"spamCheckRateLimited": "कॉलची मर्यादा गाठली.",
 		"spamCheckServerError": "API ने त्रुटी परत केली.",
 		"spamCheckTimeout": "वेळेत उत्तर आले नाही.",

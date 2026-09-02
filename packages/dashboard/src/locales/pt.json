@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "O correio que não pôde ser verificado vai para a caixa de entrada, por isso pode passar spam.",
 		"spamCheckUnauthorized": "A chave de API foi recusada. Verifique a chave.",
 		"spamCheckForbidden": "A chave de API não tem permissão para esta chamada. Verifique o espaço de trabalho a que pertence.",
+		"spamCheckBlocked": "O pedido foi recusado antes de chegar à API. O problema não é a chave.",
 		"spamCheckRateLimited": "O limite de chamadas foi atingido.",
 		"spamCheckServerError": "A API devolveu um erro.",
 		"spamCheckTimeout": "Não houve resposta a tempo.",

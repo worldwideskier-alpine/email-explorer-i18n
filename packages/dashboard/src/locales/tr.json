@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Denetlenemeyen posta gelen kutusuna düşer, bu yüzden istenmeyen posta geçebilir.",
 		"spamCheckUnauthorized": "API anahtarı reddedildi. Anahtarı denetleyin.",
 		"spamCheckForbidden": "API anahtarının bu çağrı için izni yok. Anahtarın ait olduğu çalışma alanını kontrol edin.",
+		"spamCheckBlocked": "İstek API'ye ulaşmadan önce reddedildi. Sorun anahtarda değil.",
 		"spamCheckRateLimited": "Çağrı sınırına ulaşıldı.",
 		"spamCheckServerError": "API bir hata döndürdü.",
 		"spamCheckTimeout": "Zamanında yanıt gelmedi.",

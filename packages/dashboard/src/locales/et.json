@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Kontrollimata post läheb postkasti, seega võib rämpspost läbi pääseda.",
 		"spamCheckUnauthorized": "API-võti lükati tagasi. Kontrollige võtit.",
 		"spamCheckForbidden": "API võtmel puudub selleks päringuks luba. Kontrollige tööruumi, kuhu võti kuulub.",
+		"spamCheckBlocked": "Päring lükati tagasi enne, kui see jõudis API-ni. Probleem ei ole võtmes.",
 		"spamCheckRateLimited": "Päringute piir on täis.",
 		"spamCheckServerError": "API tagastas vea.",
 		"spamCheckTimeout": "Vastust ei tulnud õigeks ajaks.",

@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Póstur sem ekki tókst að athuga fer í innhólfið, svo ruslpóstur getur sloppið í gegn.",
 		"spamCheckUnauthorized": "API-lyklinum var hafnað. Athugaðu lykilinn.",
 		"spamCheckForbidden": "API-lykillinn hefur ekki heimild fyrir þessu kalli. Athugaðu vinnusvæðið sem hann tilheyrir.",
+		"spamCheckBlocked": "Beiðninni var hafnað áður en hún barst API-inu. Lykillinn er ekki vandamálið.",
 		"spamCheckRateLimited": "Hámarksfjölda kalla er náð.",
 		"spamCheckServerError": "API skilaði villu.",
 		"spamCheckTimeout": "Ekkert svar barst í tæka tíð.",

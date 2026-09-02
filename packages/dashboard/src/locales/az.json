@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Yoxlanıla bilməyən poçt gələnlərə düşür, spam keçə bilər.",
 		"spamCheckUnauthorized": "API açarı rədd edildi. Açarı yoxlayın.",
 		"spamCheckForbidden": "API açarının bu çağırışı etməyə icazəsi yoxdur. Açarın aid olduğu iş sahəsini yoxlayın.",
+		"spamCheckBlocked": "Sorğu API-yə çatmazdan əvvəl rədd edildi. Problem açarda deyil.",
 		"spamCheckRateLimited": "Çağırış sayı həddinə çatdı.",
 		"spamCheckServerError": "API xəta qaytardı.",
 		"spamCheckTimeout": "Vaxtında cavab gəlmədi.",

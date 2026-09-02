@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Post som ikkje kunne kontrollerast, hamnar i innboksen, så søppelpost kan sleppe gjennom.",
 		"spamCheckUnauthorized": "API-nøkkelen vart avvist. Sjekk nøkkelen.",
 		"spamCheckForbidden": "API-nøkkelen har ikkje løyve til dette kallet. Sjekk arbeidsområdet han høyrer til.",
+		"spamCheckBlocked": "Førespurnaden vart avvist før han nådde API-et. Problemet er ikkje nøkkelen.",
 		"spamCheckRateLimited": "Grensa for talet på kall er nådd.",
 		"spamCheckServerError": "API-et returnerte ein feil.",
 		"spamCheckTimeout": "Det kom ikkje svar i tide.",

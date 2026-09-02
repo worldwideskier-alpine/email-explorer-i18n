@@ -78,6 +78,7 @@ describe("the reason shown for a failure", () => {
 		for (const reason of [
 			"unauthorized",
 			"forbidden",
+			"blocked",
 			"rateLimited",
 			"serverError",
 			"timeout",
@@ -101,6 +102,24 @@ describe("the reason shown for a failure", () => {
 			spamCheckReasonKey("unauthorized"),
 		);
 		expect(spamCheckReasonKey("forbidden")).not.toBe(
+			spamCheckReasonKey("something-new"),
+		);
+	});
+
+	/**
+	 * And the third, which is neither. A 401 or 403 the API did not send means
+	 * the request never reached it, so there is nothing about the key or its
+	 * workspace to change -- and sending the reader to check either of them is
+	 * the same wrong turn, one step further on.
+	 */
+	it("keeps a refusal that never reached the API separate from both", () => {
+		const distinct = new Set([
+			spamCheckReasonKey("unauthorized"),
+			spamCheckReasonKey("forbidden"),
+			spamCheckReasonKey("blocked"),
+		]);
+		expect(distinct.size).toBe(3);
+		expect(spamCheckReasonKey("blocked")).not.toBe(
 			spamCheckReasonKey("something-new"),
 		);
 	});

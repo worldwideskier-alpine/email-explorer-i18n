@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Téann post nár seiceáladh chuig an mbosca isteach, mar sin d'fhéadfadh turscar dul tríd.",
 		"spamCheckUnauthorized": "Diúltaíodh don eochair API. Seiceáil an eochair.",
 		"spamCheckForbidden": "Níl cead ag an eochair API an glao seo a dhéanamh. Seiceáil an spás oibre lena mbaineann sí.",
+		"spamCheckBlocked": "Diúltaíodh don iarratas sular shroich sé an API. Ní hí an eochair an fhadhb.",
 		"spamCheckRateLimited": "Sroicheadh teorainn na nglaonna.",
 		"spamCheckServerError": "Sheol an API earráid ar ais.",
 		"spamCheckTimeout": "Níor tháinig freagra in am.",

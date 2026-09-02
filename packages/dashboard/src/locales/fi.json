@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Tarkistamatta jäänyt posti menee saapuneisiin, joten roskapostia voi päästä läpi.",
 		"spamCheckUnauthorized": "API-avain hylättiin. Tarkista avain.",
 		"spamCheckForbidden": "API-avaimella ei ole oikeutta tähän kutsuun. Tarkista työtila, johon avain kuuluu.",
+		"spamCheckBlocked": "Pyyntö hylättiin ennen kuin se ehti API:lle. Vika ei ole avaimessa.",
 		"spamCheckRateLimited": "Kutsujen yläraja tuli täyteen.",
 		"spamCheckServerError": "API palautti virheen.",
 		"spamCheckTimeout": "Vastausta ei tullut ajoissa.",

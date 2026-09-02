@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "જે મેલ ચકાસી ન શકાયો તે ઇનબોક્સમાં જાય છે, તેથી સ્પામ પસાર થઈ શકે છે.",
 		"spamCheckUnauthorized": "API કી નકારવામાં આવી. કી તપાસો.",
 		"spamCheckForbidden": "આ કૉલ કરવાની પરવાનગી API કીને નથી. કી જે વર્કસ્પેસની છે તે તપાસો.",
+		"spamCheckBlocked": "વિનંતી API સુધી પહોંચે તે પહેલાં નકારવામાં આવી. સમસ્યા કીની નથી.",
 		"spamCheckRateLimited": "કૉલની મર્યાદા પહોંચી ગઈ.",
 		"spamCheckServerError": "API એ ભૂલ પરત કરી.",
 		"spamCheckTimeout": "સમયસર કોઈ જવાબ મળ્યો નહીં.",

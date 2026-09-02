@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Le courrier non vérifié arrive dans la boîte de réception : du spam peut donc passer.",
 		"spamCheckUnauthorized": "La clé d'API a été refusée. Vérifiez la clé.",
 		"spamCheckForbidden": "La clé API n'est pas autorisée pour cet appel. Vérifiez l'espace de travail auquel elle appartient.",
+		"spamCheckBlocked": "La requête a été refusée avant d'atteindre l'API. Le problème ne vient pas de la clé.",
 		"spamCheckRateLimited": "La limite d'appels est atteinte.",
 		"spamCheckServerError": "L'API a renvoyé une erreur.",
 		"spamCheckTimeout": "Aucune réponse n'est arrivée à temps.",

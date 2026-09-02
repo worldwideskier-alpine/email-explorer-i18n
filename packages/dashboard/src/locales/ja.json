@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "判定できなかったメールは受信トレイに入ります。迷惑メールを見落とす可能性があります。",
 		"spamCheckUnauthorized": "APIキーが拒否されました。キーを確認してください。",
 		"spamCheckForbidden": "APIキーにこの呼び出しの権限がありません。キーの所属ワークスペースを確認してください。",
+		"spamCheckBlocked": "呼び出しがAPIに届く前に拒否されました。キーの問題ではありません。",
 		"spamCheckRateLimited": "呼び出し回数の上限に達しました。",
 		"spamCheckServerError": "APIがエラーを返しました。",
 		"spamCheckTimeout": "時間内に応答がありませんでした。",

@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "판정하지 못한 메일은 받은편지함으로 들어갑니다. 스팸을 놓칠 수 있습니다.",
 		"spamCheckUnauthorized": "API 키가 거부되었습니다. 키를 확인하세요.",
 		"spamCheckForbidden": "API 키에 이 호출에 대한 권한이 없습니다. 키가 속한 워크스페이스를 확인하세요.",
+		"spamCheckBlocked": "요청이 API에 도달하기 전에 거부되었습니다. 키의 문제가 아닙니다.",
 		"spamCheckRateLimited": "호출 횟수 상한에 도달했습니다.",
 		"spamCheckServerError": "API가 오류를 반환했습니다.",
 		"spamCheckTimeout": "시간 내에 응답이 없었습니다.",

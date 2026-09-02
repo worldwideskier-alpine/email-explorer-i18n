@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Pošta koja se nije mogla provjeriti ide u pristiglu poštu, pa neželjena pošta može proći.",
 		"spamCheckUnauthorized": "API ključ je odbijen. Provjerite ključ.",
 		"spamCheckForbidden": "API ključ nema dozvolu za ovaj poziv. Provjerite radni prostor kojemu pripada.",
+		"spamCheckBlocked": "Zahtjev je odbijen prije nego što je stigao do API-ja. Problem nije u ključu.",
 		"spamCheckRateLimited": "Dostignuto je ograničenje broja poziva.",
 		"spamCheckServerError": "API je vratio grešku.",
 		"spamCheckTimeout": "Odgovor nije stigao na vrijeme.",

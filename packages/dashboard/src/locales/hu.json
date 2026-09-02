@@ -220,6 +220,7 @@
 		"spamCheckFailNote": "Az ellenőrizetlen levél a beérkezett üzenetek közé kerül, így átjuthat kéretlen levél.",
 		"spamCheckUnauthorized": "Az API-kulcsot elutasították. Ellenőrizze a kulcsot.",
 		"spamCheckForbidden": "Az API-kulcsnak nincs jogosultsága ehhez a híváshoz. Ellenőrizze a munkaterületet, amelyhez tartozik.",
+		"spamCheckBlocked": "A kérést még azelőtt elutasították, hogy elérte volna az API-t. Nem a kulccsal van a baj.",
 		"spamCheckRateLimited": "Elérte a hívások felső határát.",
 		"spamCheckServerError": "Az API hibát adott vissza.",
 		"spamCheckTimeout": "Nem érkezett válasz időben.",
