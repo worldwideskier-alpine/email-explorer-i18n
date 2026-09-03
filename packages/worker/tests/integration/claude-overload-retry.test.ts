@@ -75,6 +75,7 @@ async function folderOf(subject: string): Promise<string | undefined> {
 
 async function health(): Promise<{
 	lastFailureReason: string | null;
+	lastFailureDetail?: string | null;
 	lastSuccessAt: string | null;
 }> {
 	const res = await authenticatedFetch(
@@ -83,6 +84,7 @@ async function health(): Promise<{
 	const body = await res.json<{
 		spamCheck?: {
 			lastFailureReason: string | null;
+			lastFailureDetail?: string | null;
 			lastSuccessAt: string | null;
 		};
 	}>();
@@ -134,6 +136,38 @@ describe("an overloaded API", () => {
 
 		expect(await folderOf(subject)).toBe("inbox");
 		expect((await health()).lastFailureReason).toBe("serverError");
+	});
+
+	/**
+	 * The other transient failure, and the one this retry originally missed.
+	 *
+	 * `403 forbidden` is a refusal the Messages API did not send -- the call
+	 * never reached it -- and on the live mailbox it has cleared on its own
+	 * every time. Deciding retryability by status alone gave it a single
+	 * attempt, because 403 normally means "about this request".
+	 */
+	it("retries a 403 the API did not send, and classifies", async () => {
+		const subject = "Blocked once TRIGGER_CLAUDE_BLOCKED_ONCE_1";
+		await deliver(subject);
+
+		expect(await folderOf(subject)).toBe("spam");
+	});
+
+	/**
+	 * And when it does not clear, the record finally says who refused. Every
+	 * occurrence so far has recorded `403 forbidden` and nothing else, which
+	 * cannot distinguish Anthropic's edge from a proxy in front of it.
+	 */
+	it("records who refused when it does not clear", async () => {
+		const subject = "Blocked always TRIGGER_CLAUDE_BLOCKED_ALWAYS_99";
+		await deliver(subject);
+
+		expect(await folderOf(subject)).toBe("inbox");
+		const state = await health();
+		expect(state.lastFailureReason).toBe("blocked");
+		expect(state.lastFailureDetail).toContain("403 forbidden");
+		expect(state.lastFailureDetail).toContain("server=cloudflare");
+		expect(state.lastFailureDetail).toContain("cf-ray=");
 	});
 
 	/**
