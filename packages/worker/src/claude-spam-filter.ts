@@ -274,11 +274,48 @@ function upstreamErrorType(body: string): string | null {
  * somebody else's, so hiding it would remove the evidence. The body itself is
  * never quoted.
  */
-export function upstreamFailureDetail(status: number, body: string): string {
+export function upstreamFailureDetail(
+	status: number,
+	body: string,
+	headers?: Headers,
+): string {
 	const type = upstreamErrorType(body);
-	return type
+	const base = type
 		? `${status} ${type.slice(0, MAX_UPSTREAM_TYPE_CHARS)}`
 		: `${status} (no API error body)`;
+	const who = refusedBy(headers);
+	return who ? `${base} ${who}` : base;
+}
+
+/**
+ * Who answered, when the answer was a refusal nobody has been able to explain.
+ *
+ * `403 forbidden` has now happened repeatedly on the live mailbox, and every
+ * time the record has said exactly that and nothing else -- which is enough to
+ * know it did not come from the Messages API and not enough to know where it
+ * did come from. Anthropic's edge, a proxy in front of it, and Cloudflare's
+ * own egress would all look identical on this screen.
+ *
+ * These two headers separate them. `server` names the software that replied,
+ * and `cf-ray` is the identifier Cloudflare puts on a response it generated --
+ * present when Cloudflare answered, absent when the origin did. Neither is a
+ * secret, and both are exactly what a support conversation would ask for.
+ *
+ * Kept short and stripped to a safe alphabet, for the reason the rest of this
+ * detail is: it is written to storage and shown on a screen, and an upstream
+ * is free to put anything in a header.
+ */
+function refusedBy(headers?: Headers): string {
+	if (!headers) return "";
+	const safe = (value: string | null) =>
+		(value ?? "").replace(/[^\w.:-]/g, "").slice(0, 32);
+
+	const server = safe(headers.get("server"));
+	const ray = safe(headers.get("cf-ray"));
+	const parts = [server && `server=${server}`, ray && `cf-ray=${ray}`].filter(
+		Boolean,
+	);
+	return parts.length ? `[${parts.join(" ")}]` : "";
 }
 
 /**
@@ -331,6 +368,35 @@ export function failureFromResponse(
  */
 export function isRetryableStatus(status: number): boolean {
 	return status === 408 || status === 409 || status === 429 || status >= 500;
+}
+
+/**
+ * The same question, asked with the classification in hand rather than the
+ * status alone -- because for one status the two disagree.
+ *
+ * A 403 is normally about this request and worth no second attempt: the API
+ * saying `permission_error` will say it again. But a 403 the API did not send
+ * is not about the request at all. `failureFromResponse` already separates the
+ * two, and calls the second one `blocked`: the call never reached Anthropic,
+ * so nothing about the key or its workspace explains it, and -- in its own
+ * words, written before this mattered -- it comes and goes.
+ *
+ * Deciding by status alone therefore gave up instantly on the one failure
+ * whose whole description is that it is temporary. Measured on the live
+ * mailbox: `403 forbidden` at 14:01, with the same key that had classified
+ * mail at 09:39.
+ *
+ * Note what this does not claim. Retrying is right because the failure is
+ * transient; whether three attempts across a couple of seconds are enough
+ * depends on how long each block lasts, and that is exactly what nothing here
+ * records yet -- see `upstreamFailureDetail`, which now names who refused.
+ */
+export function isRetryableFailure(
+	status: number,
+	failure: SpamCheckFailure,
+): boolean {
+	if (failure === "blocked") return true;
+	return isRetryableStatus(status);
 }
 
 /**
@@ -492,13 +558,22 @@ async function attemptClassification(
 			// Recorded rather than only logged. A Worker's logs are not kept, so
 			// by the time anyone reads the screen the one thing that says which
 			// of the two 403s this was is already gone.
+			const failure = failureFromResponse(response.status, body);
 			return {
 				result: {
 					folder: "inbox",
-					failure: failureFromResponse(response.status, body),
-					detail: upstreamFailureDetail(response.status, body),
+					failure,
+					// The headers go in only for the refusal nobody can place. On
+					// every other failure the status and the API's own error type
+					// already say what happened, and naming the web server as well
+					// would be noise on a screen a person reads.
+					detail: upstreamFailureDetail(
+						response.status,
+						body,
+						failure === "blocked" ? response.headers : undefined,
+					),
 				},
-				retryable: isRetryableStatus(response.status),
+				retryable: isRetryableFailure(response.status, failure),
 				retryAfterMs:
 					retryAfterMs(response.headers.get("retry-after")) ?? undefined,
 			};

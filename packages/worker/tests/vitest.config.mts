@@ -3,11 +3,17 @@ import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
 import { defineConfig } from "vitest/config";
 
 /**
- * How many times each `TRIGGER_CLAUDE_OVERLOAD_<tag>_<n>` marker has been
- * asked, so the stub below can fail the first n and then answer.
+ * How many times each fail-then-recover marker has been asked, so the stub
+ * below can fail the first n and then answer.
  *
  * It has to live out here: the stub is called once per attempt, and counting
  * inside it would start again from zero every time.
+ *
+ * Keyed by family *and* tag. Keyed by tag alone, `OVERLOAD_ONCE_1` and
+ * `BLOCKED_ONCE_1` shared one count -- so whichever ran second found the
+ * count already spent, was answered on its first attempt, and passed without
+ * ever meeting the failure it was written for. It passed with the retry
+ * removed too, which is how it was caught.
  */
 const overloadAttempts = new Map<string, number>();
 
@@ -108,8 +114,9 @@ export default defineConfig({
 						if (overload) {
 							const tag = overload[1];
 							const failuresWanted = Number(overload[2]);
-							const seen = (overloadAttempts.get(tag) ?? 0) + 1;
-							overloadAttempts.set(tag, seen);
+							const key = `overload:${tag}`;
+							const seen = (overloadAttempts.get(key) ?? 0) + 1;
+							overloadAttempts.set(key, seen);
 							if (seen <= failuresWanted) {
 								return new Response(
 									JSON.stringify({
@@ -163,6 +170,50 @@ export default defineConfig({
 						// go: JSON, and `forbidden` is not a word the API uses.
 						if (steer.includes("TRIGGER_CLAUDE_FOREIGN_403")) {
 							return refusal(403, "forbidden");
+						}
+						/*
+						 * The same refusal, from something that says who it is,
+						 * and only for the first n attempts.
+						 *
+						 * `403 forbidden` has happened repeatedly on the live
+						 * mailbox and cleared on its own -- classified mail at
+						 * 09:39, blocked at 14:01, same key. That is a temporary
+						 * failure, which is what makes retrying it right, and the
+						 * headers are what would say who is doing the blocking:
+						 * nothing recorded has ever said.
+						 */
+						const blocked = /TRIGGER_CLAUDE_BLOCKED_([A-Z0-9]+)_(\d+)/.exec(
+							steer,
+						);
+						if (blocked) {
+							const tag = blocked[1];
+							const failuresWanted = Number(blocked[2]);
+							const key = `blocked:${tag}`;
+							const seen = (overloadAttempts.get(key) ?? 0) + 1;
+							overloadAttempts.set(key, seen);
+							if (seen <= failuresWanted) {
+								return new Response(
+									JSON.stringify({
+										type: "error",
+										error: { type: "forbidden", message: "refused" },
+									}),
+									{
+										status: 403,
+										headers: {
+											"content-type": "application/json",
+											server: "cloudflare",
+											"cf-ray": "9a1b2c3d4e5f6789-NRT",
+										},
+									},
+								);
+							}
+							return new Response(
+								JSON.stringify({ content: [{ type: "text", text: " SPAM" }] }),
+								{
+									status: 200,
+									headers: { "content-type": "application/json" },
+								},
+							);
 						}
 						// Replies that are not a bare verdict. Real ones look like
 						// these: a word of preamble, decoration around the word, or
