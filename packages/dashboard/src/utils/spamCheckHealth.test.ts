@@ -3,6 +3,7 @@ import {
 	isSpamCheckFailing,
 	spamCheckDetail,
 	spamCheckReasonKey,
+	spamCheckSuccessVia,
 } from "./spamCheckHealth";
 
 const AUGUST = "2026-08-28T02:33:00.000Z";
@@ -70,6 +71,78 @@ describe("whether the second-stage check is broken now", () => {
 	it("copes with nothing at all", () => {
 		expect(isSpamCheckFailing(null)).toBe(false);
 		expect(isSpamCheckFailing(undefined)).toBe(false);
+	});
+});
+
+/**
+ * Where the last check that worked was answered.
+ *
+ * The rule here is the opposite of the failure detail's, and deliberately so.
+ * A failure detail describes a failure and stops being true once a success
+ * follows it, so it is hidden then. This belongs to the success line, and the
+ * moment it is most worth reading is exactly while the check is failing --
+ * that is when there is a refusal on the same screen to compare it against.
+ * The live refusal was answered at Cloudflare's Hong Kong data centre; whether
+ * that is the cause turns on what the successes say, and hiding this whenever
+ * a failure is showing would hide it in every case that matters.
+ */
+describe("where the last working check was answered", () => {
+	const NRT = "[server=cloudflare cf-ray=b7d0-NRT request-id=req_01]";
+
+	it("is shown while the check is failing", () => {
+		expect(
+			spamCheckSuccessVia({
+				lastSuccessAt: AUGUST,
+				lastSuccessVia: NRT,
+				lastFailureAt: SEPTEMBER,
+				lastFailureReason: "blocked",
+			}),
+		).toBe(NRT);
+	});
+
+	it("is shown when it is not", () => {
+		expect(
+			spamCheckSuccessVia({
+				lastSuccessAt: SEPTEMBER,
+				lastSuccessVia: NRT,
+				lastFailureAt: null,
+				lastFailureReason: null,
+			}),
+		).toBe(NRT);
+	});
+
+	// Nothing to attach it to. A marker with no success beside it would be a
+	// line about a check that never worked.
+	it("says nothing when no check has ever worked", () => {
+		expect(
+			spamCheckSuccessVia({
+				lastSuccessAt: null,
+				lastSuccessVia: NRT,
+				lastFailureAt: SEPTEMBER,
+				lastFailureReason: "blocked",
+			}),
+		).toBeNull();
+	});
+
+	// A Worker older than this screen, and an upstream that identified itself
+	// with nothing, both arrive here as an absence rather than an empty line.
+	it("copes with a Worker that records none of this", () => {
+		expect(
+			spamCheckSuccessVia({
+				lastSuccessAt: SEPTEMBER,
+				lastFailureAt: null,
+				lastFailureReason: null,
+			}),
+		).toBeNull();
+		expect(
+			spamCheckSuccessVia({
+				lastSuccessAt: SEPTEMBER,
+				lastSuccessVia: "   ",
+				lastFailureAt: null,
+				lastFailureReason: null,
+			}),
+		).toBeNull();
+		expect(spamCheckSuccessVia(null)).toBeNull();
 	});
 });
 

@@ -88,6 +88,7 @@ async function health() {
 		await res.json<{
 			spamCheck: {
 				lastSuccessAt: string | null;
+				lastSuccessVia: string | null;
 				lastFailureAt: string | null;
 				lastFailureReason: string | null;
 				lastFailureDetail: string | null;
@@ -105,6 +106,7 @@ describe("the second-stage check reports whether it is working", () => {
 	it("says nothing has run yet on a fresh mailbox", async () => {
 		expect(await health()).toEqual({
 			lastSuccessAt: null,
+			lastSuccessVia: null,
 			lastFailureAt: null,
 			lastFailureReason: null,
 			lastFailureDetail: null,
@@ -164,6 +166,7 @@ describe("the second-stage check reports whether it is working", () => {
 		await receive("Nobody checked this one");
 		expect(await health()).toEqual({
 			lastSuccessAt: null,
+			lastSuccessVia: null,
 			lastFailureAt: null,
 			lastFailureReason: null,
 			lastFailureDetail: null,
@@ -306,6 +309,74 @@ describe("the second-stage check reports whether it is working", () => {
 		// The word is kept: a word the API does not use is what identifies the
 		// refusal as somebody else's.
 		expect(foreign.lastFailureDetail).toBe("403 forbidden");
+	});
+
+	/**
+	 * Where a check that worked was answered, which nothing recorded until now.
+	 *
+	 * The refusals already carry this. Having it on only one side of the
+	 * question makes the question unanswerable: the live refusal was handled at
+	 * Cloudflare's Hong Kong data centre, and Hong Kong is not on Anthropic's
+	 * published list of the regions it supports access from -- but one colo on
+	 * one failure is not a pattern, and there was nothing to set it beside. A
+	 * Worker runs where its mail arrived, so the colo differs message to
+	 * message and is not ours to pick.
+	 */
+	it("records where a check that worked was answered", async () => {
+		await setClaudeApiKey("sk-ant-test-key");
+		await receive("One that worked");
+
+		const after = await health();
+		expect(after.lastSuccessVia).toContain("cf-ray=b7d0e1f2a3c45566-NRT");
+		// The API's own identifier, which is the one support asks for -- and,
+		// here, the thing that says the call reached the API at all.
+		expect(after.lastSuccessVia).toContain(
+			"request-id=req_011CehH1qEZmDWwon5Yu3W7U",
+		);
+	});
+
+	/**
+	 * And the pairing, on one screen, which is what the recording is for.
+	 *
+	 * `server: cloudflare` is on both and therefore says nothing: measured
+	 * against api.anthropic.com, a 401 the API itself produced carries it too.
+	 * The two that separate them are the colo -- different data centres -- and
+	 * `request-id`, which only the answer that reached the API has.
+	 */
+	it("puts where a refusal was answered beside where a success was", async () => {
+		await setClaudeApiKey("sk-ant-test-key");
+		await receive("One that worked");
+		await receive("Then refused TRIGGER_CLAUDE_BLOCKED_PAIR_99");
+
+		const after = await health();
+		expect(after.lastFailureReason).toBe("blocked");
+		expect(after.lastFailureDetail).toContain("cf-ray=a354afa3a9618488-HKG");
+		expect(after.lastSuccessVia).toContain("cf-ray=b7d0e1f2a3c45566-NRT");
+
+		// Present on both, so it distinguishes nothing.
+		expect(after.lastFailureDetail).toContain("server=cloudflare");
+		expect(after.lastSuccessVia).toContain("server=cloudflare");
+
+		// The one that does. A refusal generated before the Messages API saw
+		// the call cannot carry the identifier the Messages API mints.
+		expect(after.lastFailureDetail).not.toContain("request-id=");
+		expect(after.lastSuccessVia).toContain("request-id=");
+	});
+
+	/**
+	 * The success marker belongs to the last success, and is written on every
+	 * one -- including a success from a Worker that recorded nothing, which
+	 * would otherwise leave an older marker sitting under a fresher timestamp
+	 * and be read as that check's.
+	 */
+	it("does not leave an old marker under a newer success", async () => {
+		await setClaudeApiKey("sk-ant-test-key");
+		await receive("One that worked");
+		expect((await health()).lastSuccessVia).toContain("cf-ray=");
+
+		// A success answered by something that identified itself with nothing.
+		await receive("Bare answer TRIGGER_CLAUDE_DECORATED");
+		expect((await health()).lastSuccessVia).toBeNull();
 	});
 
 	/**

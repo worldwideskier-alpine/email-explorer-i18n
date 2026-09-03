@@ -181,6 +181,15 @@ export default defineConfig({
 						 * failure, which is what makes retrying it right, and the
 						 * headers are what would say who is doing the blocking:
 						 * nothing recorded has ever said.
+						 *
+						 * The headers are the production ones now, including the
+						 * colo -- `-HKG`, Cloudflare's Hong Kong data centre,
+						 * which is not on Anthropic's published list of regions
+						 * it supports access from. And no `request-id`: that
+						 * header is minted by the Messages API, so its absence is
+						 * what says the call never got there. The successful
+						 * answer below has one, and a different colo, so a test
+						 * can set the two against each other.
 						 */
 						const blocked = /TRIGGER_CLAUDE_BLOCKED_([A-Z0-9]+)_(\d+)/.exec(
 							steer,
@@ -202,7 +211,7 @@ export default defineConfig({
 										headers: {
 											"content-type": "application/json",
 											server: "cloudflare",
-											"cf-ray": "9a1b2c3d4e5f6789-NRT",
+											"cf-ray": "a354afa3a9618488-HKG",
 										},
 									},
 								);
@@ -261,11 +270,24 @@ export default defineConfig({
 						const verdict = body.toUpperCase().includes("TRIGGER_CLAUDE_SPAM")
 							? "SPAM"
 							: "NOT_SPAM";
+						// Answered, and carrying what a real answer carries.
+						// Measured against api.anthropic.com: every response
+						// through it has `server: cloudflare` and a `cf-ray`,
+						// including ones the API itself produced, so those two
+						// say only that Cloudflare was in the path. `request-id`
+						// is the API's own, and its colo is not the blocked
+						// response's -- which is the whole point of recording
+						// this on successes as well.
 						return new Response(
 							JSON.stringify({ content: [{ type: "text", text: verdict }] }),
 							{
 								status: 200,
-								headers: { "content-type": "application/json" },
+								headers: {
+									"content-type": "application/json",
+									server: "cloudflare",
+									"cf-ray": "b7d0e1f2a3c45566-NRT",
+									"request-id": "req_011CehH1qEZmDWwon5Yu3W7U",
+								},
 							},
 						);
 					}

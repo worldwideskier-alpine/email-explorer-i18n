@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+	answeredBy,
 	failureFromResponse,
 	isRetryableFailure,
 	isRetryableStatus,
@@ -91,6 +92,53 @@ describe("what answered", () => {
 	 * then shown on a screen. It is trimmed to a safe alphabet and a short
 	 * length for the same reason the rest of the detail never quotes a body.
 	 */
+	/**
+	 * And the header that actually decides it, which the first version left
+	 * out while claiming the other two settled the question.
+	 *
+	 * The comment on this function used to say a `cf-ray` is "present when
+	 * Cloudflare answered, absent when the origin did", and so read a `cf-ray`
+	 * on a refusal as proof the refusal came from the edge. Measured against
+	 * api.anthropic.com:
+	 *
+	 *   HTTP/2 401
+	 *   request-id: req_011CehH1qEZmDWwon5Yu3W7U
+	 *   server: cloudflare
+	 *   cf-ray: a3581bedab9f0cde-ORD
+	 *
+	 * That answer came from the API -- it carries the API's own `request-id` --
+	 * and still has both. They say only that Cloudflare was in the path.
+	 * `request-id` is minted by the Messages API, so it is the one that says
+	 * whether the call arrived.
+	 */
+	it("names the API's own request id, which is the one that says it arrived", () => {
+		expect(
+			answeredBy(
+				headers({
+					server: "cloudflare",
+					"cf-ray": "a3581bedab9f0cde-ORD",
+					"request-id": "req_011CehH1qEZmDWwon5Yu3W7U",
+				}),
+			),
+		).toBe(
+			"[server=cloudflare cf-ray=a3581bedab9f0cde-ORD request-id=req_011CehH1qEZmDWwon5Yu3W7U]",
+		);
+	});
+
+	// The refusal from the live mailbox: the two that prove nothing, and not
+	// the one that would have. Its absence is the finding.
+	it("leaves the request id out when the answer carried none", () => {
+		const detail = upstreamFailureDetail(
+			403,
+			apiError("forbidden"),
+			headers({ server: "cloudflare", "cf-ray": "a354afa3a9618488-HKG" }),
+		);
+		expect(detail).toBe(
+			"403 forbidden [server=cloudflare cf-ray=a354afa3a9618488-HKG]",
+		);
+		expect(detail).not.toContain("request-id");
+	});
+
 	it("does not put an upstream's choice of characters on the screen", () => {
 		const detail = upstreamFailureDetail(
 			403,

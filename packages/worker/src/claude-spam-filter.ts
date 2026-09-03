@@ -70,18 +70,25 @@ const MAX_RETRY_AFTER_MS = 5_000;
  * itself is the normal case, and a request with no `User-Agent` is one of the
  * oldest signals for "not a real client".
  *
- * Which matters here because of who has been refusing us. The record now names
- * it: `403 forbidden [server=cloudflare cf-ray=...-HKG]` -- generated at
- * Cloudflare's edge in front of the API, not by the API. That is a bot or WAF
- * decision, and bot decisions are scored rather than fixed, which is what an
- * intermittent refusal looks like from the outside: classified at 20:28,
- * refused at 21:16, same key, nothing changed in between.
+ * It was added for a reason that has since turned out to be wrong, and the
+ * reasoning is left here rather than tidied away. The record on the live
+ * mailbox said `403 forbidden [server=cloudflare cf-ray=...-HKG]`, and this
+ * comment read that as proof the refusal was generated at Cloudflare's edge
+ * rather than by the API -- therefore a bot or WAF decision, therefore scored
+ * rather than fixed, therefore the intermittency. A missing `User-Agent` is a
+ * plausible input to a bot score and was the one input measurably wrong on our
+ * side.
  *
- * This is not a proof. Nothing here can reproduce another company's WAF, and
- * the refusal may have another cause entirely. It is the one input to that
- * decision that was measurably wrong on our side, and correcting it costs a
- * header. The `cf-ray` in the record is what settles it either way: it names
- * the exact request, and support can say why it was blocked.
+ * The proof was not a proof. `server: cloudflare` and `cf-ray` are on every
+ * response through api.anthropic.com, answers the API itself produced included
+ * -- see answeredBy, which now records the header that actually separates them.
+ * And the far better explanation of the same evidence came from the colo, not
+ * the headers: `-HKG` is Cloudflare's Hong Kong data centre, and Hong Kong is
+ * not on Anthropic's published list of the regions it supports access from.
+ *
+ * So this stays because sending a `User-Agent` is what every SDK does and the
+ * right thing regardless, not because it is expected to fix anything. Nothing
+ * here should be read as saying the refusal was solved by adding a header.
  */
 const CLIENT_USER_AGENT = "email-explorer/1";
 
@@ -249,6 +256,23 @@ export interface ClassifyResult {
 	 * recorded here is gone by the time anyone reads the screen.
 	 */
 	detail?: string;
+	/**
+	 * Who answered a check that worked, and from where -- the same marker a
+	 * refusal carries; see answeredBy.
+	 *
+	 * Kept because a marker on the failures alone cannot answer the question
+	 * the failures raise. The refusal on the live mailbox was handled at
+	 * Cloudflare's Hong Kong data centre (`cf-ray=...-HKG`), and Hong Kong is
+	 * not on Anthropic's published list of regions it supports access from. A
+	 * Worker runs where the mail arrived and its outbound calls leave from
+	 * there, so the colo differs message to message and is not ours to choose
+	 * -- which would explain a refusal that comes and goes with the same key,
+	 * and explain why retrying seconds later never helped.
+	 *
+	 * That is a hypothesis. What makes it checkable is having the colo from a
+	 * check that worked to set beside the one from a check that did not.
+	 */
+	via?: string;
 }
 
 /** Enough of an error body to name what refused the request, and no more. */
@@ -308,38 +332,57 @@ export function upstreamFailureDetail(
 	const base = type
 		? `${status} ${type.slice(0, MAX_UPSTREAM_TYPE_CHARS)}`
 		: `${status} (no API error body)`;
-	const who = refusedBy(headers);
+	const who = answeredBy(headers);
 	return who ? `${base} ${who}` : base;
 }
 
 /**
- * Who answered, when the answer was a refusal nobody has been able to explain.
+ * Who answered, and from where.
  *
- * `403 forbidden` has now happened repeatedly on the live mailbox, and every
- * time the record has said exactly that and nothing else -- which is enough to
- * know it did not come from the Messages API and not enough to know where it
- * did come from. Anthropic's edge, a proxy in front of it, and Cloudflare's
- * own egress would all look identical on this screen.
+ * Three headers, and the third was missing from the first version of this --
+ * which had a claim in its comment that is simply false, so it is recorded here
+ * rather than quietly deleted. It said `cf-ray` is "present when Cloudflare
+ * answered, absent when the origin did", and therefore that a `cf-ray` on a
+ * refusal proved the refusal was generated at the edge. Measured against
+ * api.anthropic.com:
  *
- * These two headers separate them. `server` names the software that replied,
- * and `cf-ray` is the identifier Cloudflare puts on a response it generated --
- * present when Cloudflare answered, absent when the origin did. Neither is a
- * secret, and both are exactly what a support conversation would ask for.
+ *   HTTP/2 401
+ *   request-id: req_011CehH1qEZmDWwon5Yu3W7U
+ *   server: cloudflare
+ *   cf-ray: a3581bedab9f0cde-ORD
  *
- * Kept short and stripped to a safe alphabet, for the reason the rest of this
- * detail is: it is written to storage and shown on a screen, and an upstream
- * is free to put anything in a header.
+ * That 401 came from the API -- it carries the API's own `request-id` -- and it
+ * still has `server: cloudflare` and a `cf-ray`. Cloudflare stamps both on
+ * everything it proxies, answered or forwarded. So they say nothing at all
+ * about who decided.
+ *
+ * `request-id` is what says that. It is minted by the Messages API, so a
+ * response carrying one reached it and a response carrying none did not. It is
+ * also the identifier Anthropic support asks for, which the other two are not.
+ *
+ * What `cf-ray` is good for is the other half of the question: its suffix is
+ * the Cloudflare data centre that handled the connection -- `-ORD` above,
+ * `-HKG` in the refusal on the live mailbox. That is the datum the geography
+ * question turns on, and it is why this is now recorded on successful checks
+ * too and not only on refusals. One colo on a failure proves nothing on its
+ * own; a failure at HKG beside a success at NRT is a pattern.
+ *
+ * Kept short and stripped to a safe alphabet: this is written to storage and
+ * shown on a screen, and an upstream is free to put anything in a header.
  */
-function refusedBy(headers?: Headers): string {
+export function answeredBy(headers?: Headers): string {
 	if (!headers) return "";
-	const safe = (value: string | null) =>
-		(value ?? "").replace(/[^\w.:-]/g, "").slice(0, 32);
+	const safe = (value: string | null, max = 32) =>
+		(value ?? "").replace(/[^\w.:-]/g, "").slice(0, max);
 
 	const server = safe(headers.get("server"));
 	const ray = safe(headers.get("cf-ray"));
-	const parts = [server && `server=${server}`, ray && `cf-ray=${ray}`].filter(
-		Boolean,
-	);
+	const requestId = safe(headers.get("request-id"), 48);
+	const parts = [
+		server && `server=${server}`,
+		ray && `cf-ray=${ray}`,
+		requestId && `request-id=${requestId}`,
+	].filter(Boolean);
 	return parts.length ? `[${parts.join(" ")}]` : "";
 }
 
@@ -635,7 +678,16 @@ async function attemptClassification(
 			};
 		}
 
-		return { result: { folder: verdict }, retryable: false };
+		return {
+			// `|| undefined` because an empty marker is not a marker: nothing
+			// identified itself, and recording "" would put an empty
+			// parenthesis on the screen rather than leaving the line off.
+			result: {
+				folder: verdict,
+				via: answeredBy(response.headers) || undefined,
+			},
+			retryable: false,
+		};
 	} catch (err) {
 		console.error("Claude spam classification error:", err);
 		// An abort is the timeout above firing, not the network refusing.
