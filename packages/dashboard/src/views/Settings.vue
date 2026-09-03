@@ -124,6 +124,12 @@
           <p v-if="spamCheck?.lastSuccessAt" class="text-gray-500 dark:text-gray-400" :class="{ 'mt-1': spamCheckFailing }">
             {{ t("settings.spamCheckOk", { date: formatFullDate(spamCheck?.lastSuccessAt) }) }}
           </p>
+          <!-- Who answered that one, and from where. Same untranslated marker
+               the refusal above carries, and here for the same reason it is
+               there: so the two can be read against each other. -->
+          <p v-if="spamCheckSuccessViaText" class="text-gray-500 dark:text-gray-400 break-words">
+            {{ t("settings.spamCheckDetail", { detail: spamCheckSuccessViaText }) }}
+          </p>
           <p v-else-if="!spamCheckFailing" class="text-gray-500 dark:text-gray-400">{{ t("settings.spamCheckNeverRun") }}</p>
         </div>
       </div>
@@ -387,6 +393,7 @@ import {
 	type SpamCheckHealth,
 	spamCheckDetail,
 	spamCheckReasonKey,
+	spamCheckSuccessVia,
 } from "@/utils/spamCheckHealth";
 
 const { t } = useI18n();
@@ -473,6 +480,9 @@ const { formatFullDate } = useDateFormat();
 const spamCheck = ref<SpamCheckHealth | null>(null);
 const spamCheckFailing = computed(() => isSpamCheckFailing(spamCheck.value));
 const spamCheckDetailText = computed(() => spamCheckDetail(spamCheck.value));
+const spamCheckSuccessViaText = computed(() =>
+	spamCheckSuccessVia(spamCheck.value),
+);
 const spamCheckReason = computed(() =>
 	t(spamCheckReasonKey(spamCheck.value?.lastFailureReason)),
 );

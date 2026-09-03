@@ -4,19 +4,23 @@ import { classifyWithClaude } from "../../src/claude-spam-filter";
 /**
  * What the classifier puts on the wire.
  *
- * Worth its own file because of what has been coming back. The refusal that
- * keeps stopping the check now names who issued it -- `403 forbidden
- * [server=cloudflare cf-ray=...-HKG]` -- which is Cloudflare's edge in front
- * of the API rather than the API. That is a bot or WAF decision, and the
- * request being scored went out with three headers: `anthropic-version`,
- * `content-type`, `x-api-key`. No `User-Agent` at all, because `fetch` in a
- * Worker sends none unless asked and this is a hand-written call rather than
- * an SDK.
+ * Worth its own file because the request went out with three headers --
+ * `anthropic-version`, `content-type`, `x-api-key` -- and no `User-Agent` at
+ * all, since `fetch` in a Worker sends none unless asked and this is a
+ * hand-written call rather than an SDK. Every official SDK sends one.
  *
- * Nothing here proves that caused it. It is the one input to that decision
- * that was measurably wrong on our side, and this file keeps it from
- * regressing silently -- the failure it guards against is invisible from
- * inside: the request still works everywhere that is not scoring it.
+ * It was added believing it might be the recurring `403 forbidden`: that
+ * refusal carried `server=cloudflare cf-ray=...-HKG`, which was read as proof
+ * it came from a WAF in front of the API, and a client that will not say who
+ * it is scores badly with those. That reading was wrong -- both headers are on
+ * every response through api.anthropic.com, including ones the API produced;
+ * see answeredBy. The colo in that same string is the better lead, and it is
+ * not something a header can change.
+ *
+ * These assertions stand on their own merits: an HTTP client should identify
+ * itself and should say what it accepts, and the failure they guard against is
+ * invisible from inside, because the request works everywhere that is not
+ * scoring it. None of it is evidence about the 403.
  */
 
 async function headersSent(): Promise<Headers> {

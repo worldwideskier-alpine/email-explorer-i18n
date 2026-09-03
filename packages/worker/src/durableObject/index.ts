@@ -1273,6 +1273,7 @@ export class MailboxDO extends DurableObject<Env> {
 		at: string,
 		failure?: string,
 		detail?: string,
+		via?: string,
 	): Promise<void> {
 		this.#qb
 			.update({
@@ -1286,7 +1287,13 @@ export class MailboxDO extends DurableObject<Env> {
 							// failure would still be on screen beside the new reason.
 							last_failure_detail: detail ?? null,
 						}
-					: { last_success_at: at },
+					: {
+							last_success_at: at,
+							// Same rule, and the same reason: a stale marker beside a
+							// fresh timestamp would be read as this check's, and this
+							// column exists to be compared against the failure's.
+							last_success_via: via || null,
+						},
 				where: { conditions: "id = 1" },
 			})
 			.execute();
@@ -1294,6 +1301,7 @@ export class MailboxDO extends DurableObject<Env> {
 
 	async getSpamCheckHealth(): Promise<{
 		lastSuccessAt: string | null;
+		lastSuccessVia: string | null;
 		lastFailureAt: string | null;
 		lastFailureReason: string | null;
 		lastFailureDetail: string | null;
@@ -1301,12 +1309,14 @@ export class MailboxDO extends DurableObject<Env> {
 		const row = this.#qb
 			.select<{
 				last_success_at: string | null;
+				last_success_via: string | null;
 				last_failure_at: string | null;
 				last_failure_reason: string | null;
 				last_failure_detail: string | null;
 			}>("spam_check_health")
 			.fields([
 				"last_success_at",
+				"last_success_via",
 				"last_failure_at",
 				"last_failure_reason",
 				"last_failure_detail",
@@ -1316,6 +1326,7 @@ export class MailboxDO extends DurableObject<Env> {
 
 		return {
 			lastSuccessAt: row?.last_success_at ?? null,
+			lastSuccessVia: row?.last_success_via ?? null,
 			lastFailureAt: row?.last_failure_at ?? null,
 			lastFailureReason: row?.last_failure_reason ?? null,
 			lastFailureDetail: row?.last_failure_detail ?? null,

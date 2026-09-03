@@ -11,6 +11,12 @@
  */
 export interface SpamCheckHealth {
 	lastSuccessAt: string | null;
+	/**
+	 * Who answered the last check that worked, and from where -- the same
+	 * marker a refusal carries. Optional so a dashboard newer than its Worker
+	 * still works.
+	 */
+	lastSuccessVia?: string | null;
 	lastFailureAt: string | null;
 	lastFailureReason: string | null;
 	/**
@@ -57,6 +63,24 @@ export function spamCheckDetail(
 ): string | null {
 	if (!isSpamCheckFailing(health)) return null;
 	return health?.lastFailureDetail?.trim() || null;
+}
+
+/**
+ * Who answered the last check that worked, when the Worker recorded it.
+ *
+ * Deliberately not tied to `isSpamCheckFailing`, which is the opposite of the
+ * rule for the failure detail above. That one describes a failure and stops
+ * being true once a success follows it. This one belongs to the success line,
+ * which is shown whether or not the check is currently failing -- and it is
+ * *most* worth showing while it is failing, because that is when there is a
+ * refusal beside it to compare against. Suppressing it then would remove it
+ * from the only screen where the comparison can be made.
+ */
+export function spamCheckSuccessVia(
+	health: SpamCheckHealth | null | undefined,
+): string | null {
+	if (!health?.lastSuccessAt) return null;
+	return health.lastSuccessVia?.trim() || null;
 }
 
 /**

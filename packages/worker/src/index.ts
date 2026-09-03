@@ -93,6 +93,12 @@ const MailboxDetailsSchema = z.object({
 	 */
 	spamCheck: z.object({
 		lastSuccessAt: z.string().nullable(),
+		/**
+		 * Who answered the last check that worked, and from where. Here so the
+		 * colo of a check that worked can be set beside the colo of one that was
+		 * refused; see ClassifyResult.via.
+		 */
+		lastSuccessVia: z.string().nullable(),
 		lastFailureAt: z.string().nullable(),
 		lastFailureReason: z.string().nullable(),
 		lastFailureDetail: z.string().nullable(),
@@ -2492,6 +2498,7 @@ async function receiveEmail(
 					new Date().toISOString(),
 					checked.failure,
 					checked.detail,
+					checked.via,
 				);
 		}
 	}

@@ -119,6 +119,18 @@ export const mailboxMigrations: Migration[] = [
             ALTER TABLE spam_check_health ADD COLUMN last_failure_detail TEXT;
         `,
 	},
+	{
+		// Who answered a check that worked, and from where. The failures already
+		// carry that; without the same on the successes there is nothing to
+		// compare them against, and the recurring refusal turns on a comparison
+		// -- it was answered at Cloudflare's Hong Kong data centre, which is not
+		// a region Anthropic lists as supported. One colo on one failure is not
+		// a pattern. See ClassifyResult.via.
+		name: "7_spam_check_success_via",
+		sql: `
+            ALTER TABLE spam_check_health ADD COLUMN last_success_via TEXT;
+        `,
+	},
 ];
 
 export const authMigrations: Migration[] = [
