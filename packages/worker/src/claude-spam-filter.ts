@@ -61,6 +61,31 @@ const BACKOFF_JITTER_MS = 250;
 const MAX_RETRY_AFTER_MS = 5_000;
 
 /**
+ * Who is calling.
+ *
+ * `fetch` in a Worker sends no `User-Agent` at all unless one is set, and this
+ * is a hand-written call rather than an SDK -- measured: the request went out
+ * carrying `anthropic-version`, `content-type` and `x-api-key`, and nothing
+ * else. Every official Anthropic SDK sends one; an HTTP client that identifies
+ * itself is the normal case, and a request with no `User-Agent` is one of the
+ * oldest signals for "not a real client".
+ *
+ * Which matters here because of who has been refusing us. The record now names
+ * it: `403 forbidden [server=cloudflare cf-ray=...-HKG]` -- generated at
+ * Cloudflare's edge in front of the API, not by the API. That is a bot or WAF
+ * decision, and bot decisions are scored rather than fixed, which is what an
+ * intermittent refusal looks like from the outside: classified at 20:28,
+ * refused at 21:16, same key, nothing changed in between.
+ *
+ * This is not a proof. Nothing here can reproduce another company's WAF, and
+ * the refusal may have another cause entirely. It is the one input to that
+ * decision that was measurably wrong on our side, and correcting it costs a
+ * header. The `cf-ray` in the record is what settles it either way: it names
+ * the exact request, and support can say why it was blocked.
+ */
+const CLIENT_USER_AGENT = "email-explorer/1";
+
+/**
  * The reply is one word, so this is generous -- deliberately. It used to be 8,
  * which is enough for the word and nothing else, so a reply that opened with
  * even a short preamble was cut off mid-sentence and could not be read as
@@ -536,6 +561,10 @@ async function attemptClassification(
 				"content-type": "application/json",
 				"x-api-key": apiKey,
 				"anthropic-version": "2023-06-01",
+				// Both are what an ordinary API client sends and what this one
+				// was not sending. See CLIENT_USER_AGENT.
+				"user-agent": CLIENT_USER_AGENT,
+				accept: "application/json",
 			},
 			body: JSON.stringify({
 				model: CLAUDE_MODEL,
