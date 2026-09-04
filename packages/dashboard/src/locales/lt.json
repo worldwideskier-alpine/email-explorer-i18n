@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "Suplanuota priežiūra dar nė karto nevykdyta.",
-			"done": "Suplanuota priežiūra {at}: baigta (atsarginių kopijų: {backups}, šlamšto valymų: {purges}).",
+			"done": "Suplanuota priežiūra {at}: baigta ({duration} / {backups} atsarginės kopijos / ištrinta {deleted} brukalo).",
 			"notReached": "Suplanuota priežiūra {at}: baigėsi nepasiekusi šlamšto valymo.",
 			"killedInBackup": "Suplanuota priežiūra {at}: nutrūko kuriant atsargines kopijas ({detail}).",
 			"unfinished": "Suplanuota priežiūra {at}: pasiekė šlamšto valymą, bet įrašo apie pabaigą nėra."

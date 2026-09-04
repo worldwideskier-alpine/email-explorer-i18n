@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "Det schemalagda underhållet har aldrig körts.",
-			"done": "Schemalagt underhåll {at}: klart (säkerhetskopior: {backups}, skräppostrensningar: {purges}).",
+			"done": "Schemalagt underhåll {at}: slutfört ({duration} / {backups} säkerhetskopior / {deleted} skräppost raderad).",
 			"notReached": "Schemalagt underhåll {at}: det slutade innan det nådde skräppostrensningen.",
 			"killedInBackup": "Schemalagt underhåll {at}: avbröts under säkerhetskopieringen ({detail}).",
 			"unfinished": "Schemalagt underhåll {at}: det nådde skräppostrensningen, men det finns ingen notering om att det blev klart."

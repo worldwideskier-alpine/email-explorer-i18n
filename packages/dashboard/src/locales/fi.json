@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "Ajastettua ylläpitoa ei ole vielä kertaakaan ajettu.",
-			"done": "Ajastettu ylläpito {at}: valmis (varmuuskopioita: {backups}, roskapostin siivouksia: {purges}).",
+			"done": "Ajastettu ylläpito {at}: valmis ({duration} / {backups} varmuuskopiota / {deleted} roskapostia poistettu).",
 			"notReached": "Ajastettu ylläpito {at}: päättyi ennen kuin ehti roskapostin siivoukseen.",
 			"killedInBackup": "Ajastettu ylläpito {at}: keskeytyi varmuuskopioinnin aikana ({detail}).",
 			"unfinished": "Ajastettu ylläpito {at}: ehti roskapostin siivoukseen, mutta valmistumisesta ei ole merkintää."

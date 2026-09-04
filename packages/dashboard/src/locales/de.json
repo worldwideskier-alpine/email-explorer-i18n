@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "Die geplante Wartung ist noch nie gelaufen.",
-			"done": "Geplante Wartung {at}: abgeschlossen (Sicherungen: {backups}, Spam-Löschungen: {purges}).",
+			"done": "Geplante Wartung {at}: abgeschlossen ({duration} / {backups} Sicherungen / {deleted} Spam gelöscht).",
 			"notReached": "Geplante Wartung {at}: endete, bevor sie die Spam-Löschung erreichte.",
 			"killedInBackup": "Geplante Wartung {at}: während der Sicherung abgebrochen ({detail}).",
 			"unfinished": "Geplante Wartung {at}: erreichte die Spam-Löschung, aber ein Abschluss ist nicht verzeichnet."

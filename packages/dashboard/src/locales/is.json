@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "Áætluð viðhaldskeyrsla hefur aldrei verið keyrð.",
-			"done": "Áætlað viðhald {at}: lokið (afrit: {backups}, ruslpóstshreinsanir: {purges}).",
+			"done": "Áætlað viðhald {at}: lokið ({duration} / {backups} afrit / {deleted} ruslpóstum eytt).",
 			"notReached": "Áætlað viðhald {at}: lauk áður en það komst að ruslpóstshreinsuninni.",
 			"killedInBackup": "Áætlað viðhald {at}: rofnaði meðan á afritun stóð ({detail}).",
 			"unfinished": "Áætlað viðhald {at}: komst að ruslpóstshreinsuninni en engin skráning er um að því hafi lokið."
