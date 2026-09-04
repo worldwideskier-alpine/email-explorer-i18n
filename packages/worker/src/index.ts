@@ -2468,7 +2468,14 @@ async function receiveEmail(
 	) {
 		const claudeApiKey = await getClaudeApiKey(env, mailboxId);
 		if (claudeApiKey) {
-			const checked = await classifyWithClaude({
+			// Asked of the mailbox's Durable Object rather than done here, and
+			// that is the whole point: this handler runs wherever the message
+			// was received, which follows the sender, so the call to Anthropic
+			// was leaving from a different place for every message -- Hong Kong
+			// for one, Frankfurt for the next. The Durable Object is in one
+			// place. See MailboxDO.checkSpam.
+			const ns = env.MAILBOX;
+			const checked = await ns.get(ns.idFromName(mailboxId)).checkSpam({
 				apiKey: claudeApiKey,
 				subject: parsedEmail.subject || "",
 				from: parsedEmail.from?.address || "",
@@ -2487,19 +2494,10 @@ async function receiveEmail(
 				html: parsedEmail.html,
 			});
 			folder = checked.folder;
-
-			// The check fails open, so a rejected key looks exactly like a
-			// filter finding nothing to catch. Recorded here rather than logged
-			// and forgotten, so the settings screen can say so.
-			const ns = env.MAILBOX;
-			await ns
-				.get(ns.idFromName(mailboxId))
-				.recordSpamCheck(
-					new Date().toISOString(),
-					checked.failure,
-					checked.detail,
-					checked.via,
-				);
+			// How it went is recorded by checkSpam, in the same call: the
+			// check fails open, so a rejected key looks exactly like a filter
+			// finding nothing to catch, and a record written separately from
+			// the check is a record that can be missed.
 		}
 	}
 

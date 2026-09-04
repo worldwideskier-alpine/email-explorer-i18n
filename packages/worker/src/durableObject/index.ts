@@ -1,5 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import { DOQB } from "workers-qb";
+import type { ClassifyInput, ClassifyResult } from "../claude-spam-filter";
+import { classifyWithClaude } from "../claude-spam-filter";
 import { hashPassword, verifyPassword } from "../password";
 import type { ThrottleRule } from "../throttle";
 import type { Env, Session, User } from "../types";
@@ -1256,6 +1258,50 @@ export class MailboxDO extends DurableObject<Env> {
 			.where("id = ?", id)
 			.one();
 		return result.results;
+	}
+
+	/**
+	 * Runs the second-stage check, from here, and records how it went.
+	 *
+	 * The classification itself is not this object's business -- it is one
+	 * HTTP call to Anthropic and nothing to do with storage. It is in here for
+	 * one reason: **where the call leaves from.**
+	 *
+	 * It used to run in the `email()` handler. A Worker runs at the Cloudflare
+	 * data centre that received the message, Email Routing's MX addresses are
+	 * anycast, and so the receiving data centre follows the *sender*. Measured
+	 * on the live mailbox, from the marker on each check:
+	 *
+	 *   refused  cf-ray=a354afa3a9618488-HKG  (Hong Kong), no request-id
+	 *   worked   cf-ray=a358d46238e9fcd1-FRA  (Frankfurt), request-id present
+	 *
+	 * Two messages to one mailbox, answered on opposite sides of the world.
+	 * Hong Kong is not on Anthropic's published list of the regions it
+	 * supports access from; Germany is. So the check was passing or failing
+	 * according to where the spam happened to be sent from -- and failing most
+	 * for mail from exactly the places whose mail most needs checking. Nothing
+	 * about the key, which is why every attempt to fix this at the key found
+	 * nothing wrong with it.
+	 *
+	 * A Durable Object is a single instance in one place. Calling from here
+	 * makes the outbound path the same for every message, whoever sent it.
+	 * This does not choose *which* place -- that is not selectable -- so it
+	 * removes the variance rather than guaranteeing the answer, and the marker
+	 * recorded below is what says which place it settled on. If that place
+	 * turns out to be an unsupported one, this trades an intermittent failure
+	 * for a total one and must be reverted; the marker is how that is seen.
+	 *
+	 * The recording is here too so a check and its record cannot come apart.
+	 */
+	async checkSpam(input: ClassifyInput): Promise<ClassifyResult> {
+		const result = await classifyWithClaude(input);
+		await this.recordSpamCheck(
+			new Date().toISOString(),
+			result.failure,
+			result.detail,
+			result.via,
+		);
+		return result;
 	}
 
 	/**
