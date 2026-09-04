@@ -116,6 +116,19 @@ fork's work. This fork ships by being forked.
   spam *second*, so a message the purge removes is already in that run's
   archive. Reversed, the deletion would be permanent with no copy anywhere.
   Nothing in the types holds it; `scheduled-order.test.ts` does.
+- **The nightly run has to survive being cut off**, because it was not. On
+  2026-09-04 the whole record was `{"startedAt":"2026-09-03T18:14:09.407Z"}`:
+  `scheduled-run.ts` writes `backups` whether the pass returns *or throws*, so
+  its absence means the runtime killed the invocation inside the backup pass.
+  No archive for two nights, and the purge — second in the order — had never
+  once run. One fault, three symptoms, and each screen only showed its own.
+  Three things came out of it, all of which a rewrite could quietly undo:
+  `backup-writer.ts` reads messages a page at a time (one Durable Object round
+  trip per message was over 1500 per invocation, plus one R2 read each);
+  `backup-run.ts` takes the **most overdue mailbox first**, so a mailbox missed
+  tonight is first tomorrow rather than never; and the pass reports progress as
+  it goes into `MaintenanceRecord.backupProgress`, which is the only thing a
+  killed run leaves behind. `backup-pass-progress.test.ts` holds all three.
 - **The second-stage spam check runs in the Durable Object**, not in the
   `email()` handler, and that is about geography rather than storage. A Worker
   runs at the data centre that received the message and Email Routing's MX

@@ -82,9 +82,28 @@ const MaintenancePhaseSchema = z.object({
 	error: z.string().optional(),
 });
 
+/**
+ * Names the mailbox, which this screen otherwise never does.
+ *
+ * Root's screen deliberately does not list anyone's mailboxes -- what an
+ * administrator does with their own addresses is not root's business. This is
+ * not that: it is the resource a failed deployment-wide job stopped on, and
+ * root is the only role that can do anything about it. Withholding it would
+ * leave the one person who can fix the run unable to tell "one mailbox is too
+ * large to finish" from "the pass never reaches the back of the list".
+ */
+const MaintenanceProgressSchema = z.object({
+	mailbox: z.string(),
+	index: z.number(),
+	of: z.number(),
+	messages: z.number(),
+	at: z.string(),
+});
+
 const MaintenanceRecordSchema = z.object({
 	startedAt: z.string(),
 	finishedAt: z.string().optional(),
+	backupProgress: MaintenanceProgressSchema.optional(),
 	backups: MaintenancePhaseSchema.optional(),
 	spamPurge: MaintenancePhaseSchema.optional(),
 });

@@ -35,8 +35,11 @@
             purges: maintenance.spamPurge?.ran ?? 0,
           }) }}
         </p>
-        <p v-else class="text-amber-700 dark:text-amber-400 font-semibold">
-          {{ t(stoppedKey, { at: formatFullDate(maintenance.startedAt) }) }}
+        <p v-else class="text-amber-700 dark:text-amber-400 font-semibold break-words">
+          {{ t(stoppedKey, {
+            at: formatFullDate(maintenance.startedAt),
+            detail: stoppedDetail,
+          }) }}
         </p>
       </div>
 
@@ -154,14 +157,11 @@ import { useDateFormat } from "@/composables/useDateFormat";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 import { type AccountRole, useAuthStore } from "@/stores/auth";
-
-/** How the last nightly run went. See maintenance-record.ts in the Worker. */
-interface MaintenanceRecord {
-	startedAt: string;
-	finishedAt?: string;
-	backups?: { finishedAt: string; ran: number };
-	spamPurge?: { finishedAt: string; ran: number };
-}
+import {
+	type MaintenanceRecord,
+	maintenanceStoppedDetail,
+	maintenanceStoppedKey,
+} from "@/utils/maintenance";
 
 /** A person: the addresses they sign in with, and which role they hold. */
 interface Person {
@@ -198,10 +198,10 @@ const maintenanceLoading = ref(true);
  * backups" is a different problem from "it reached the purge", and the run
  * itself is the only place either can be seen.
  */
-const stoppedKey = computed(() =>
-	maintenance.value?.spamPurge
-		? "root.maintenance.unfinished"
-		: "root.maintenance.notReached",
+const stoppedKey = computed(() => maintenanceStoppedKey(maintenance.value));
+
+const stoppedDetail = computed(() =>
+	maintenanceStoppedDetail(maintenance.value),
 );
 
 async function load() {

@@ -31,10 +31,38 @@ export interface MaintenancePhase {
 	error?: string;
 }
 
+/**
+ * How far into the backup pass the run had got, written as it goes.
+ *
+ * `backups` is written whether the pass returns or throws, so its absence
+ * means the pass never handed control back at all -- the runtime cut the
+ * invocation off inside it. That happened on the live deployment: the record
+ * for 2026-09-04 was `{"startedAt":"2026-09-03T18:14:09.407Z"}` and nothing
+ * else, no backup was written for either mailbox that night or the two nights
+ * before, and the spam purge -- which runs after the backups -- had never once
+ * recorded a thing.
+ *
+ * "It was killed inside the backups" is as far as that record could go. Which
+ * mailbox, and how far into it, is the difference between a mailbox that is
+ * too large to finish and a pass that never reaches the mailboxes at the back
+ * of the list. This is what says which.
+ */
+export interface MaintenanceProgress {
+	mailbox: string;
+	/** 1-based position among the mailboxes that were due, and how many. */
+	index: number;
+	of: number;
+	/** Messages written into this mailbox's archive so far. */
+	messages: number;
+	at: string;
+}
+
 export interface MaintenanceRecord {
 	startedAt: string;
 	/** Absent means the invocation ended before the run reached its end. */
 	finishedAt?: string;
+	/** The last thing the backup pass reported; see MaintenanceProgress. */
+	backupProgress?: MaintenanceProgress;
 	backups?: MaintenancePhase;
 	spamPurge?: MaintenancePhase;
 }

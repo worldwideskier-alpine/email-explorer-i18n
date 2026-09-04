@@ -427,6 +427,7 @@
 			"never": "Níor ritheadh an chothabháil sceidealta riamh.",
 			"done": "Cothabháil sceidealta {at}: críochnaithe (cúltacaí: {backups}, glantacháin turscair: {purges}).",
 			"notReached": "Cothabháil sceidealta {at}: chríochnaigh sí sular shroich sí glanadh an turscair.",
+			"killedInBackup": "Cothabháil sceidealta {at}: gearradh siar é le linn na gcúltacaí ({detail}).",
 			"unfinished": "Cothabháil sceidealta {at}: shroich sí glanadh an turscair, ach níl aon taifead ann gur chríochnaigh sí."
 		}
 	}

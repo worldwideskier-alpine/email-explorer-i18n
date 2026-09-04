@@ -427,6 +427,7 @@
 			"never": "Az ütemezett karbantartás még soha nem futott le.",
 			"done": "Ütemezett karbantartás {at}: befejeződött (mentés: {backups}, levélszemét-törlés: {purges}).",
 			"notReached": "Ütemezett karbantartás {at}: véget ért, mielőtt elérte volna a levélszemét törlését.",
+			"killedInBackup": "Ütemezett karbantartás {at}: a mentés közben megszakadt ({detail}).",
 			"unfinished": "Ütemezett karbantartás {at}: elérte a levélszemét törlését, de a befejezésről nincs bejegyzés."
 		}
 	}

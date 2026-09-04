@@ -427,6 +427,7 @@
 			"never": "La mantegnientscha planisada n'è anc mai vegnida exequida.",
 			"done": "Mantegnientscha planisada {at}: terminada (copias: {backups}, mundadas da spam: {purges}).",
 			"notReached": "Mantegnientscha planisada {at}: ella è finida avant ch'ella ha cuntanschì la mundada da spam.",
+			"killedInBackup": "Mantegniment planisà {at}: interrut durant las copias da segirezza ({detail}).",
 			"unfinished": "Mantegnientscha planisada {at}: ella ha cuntanschì la mundada da spam, ma i n'exista nagin protocol ch'ella saja finida."
 		}
 	}

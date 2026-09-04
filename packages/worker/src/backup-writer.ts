@@ -32,6 +32,25 @@ export const PART_SIZE = 5 * 1024 * 1024;
 /** R2 delete accepts up to 1000 keys per call. */
 const DELETE_BATCH = 1000;
 
+/**
+ * How many messages to read from the Durable Object at once.
+ *
+ * One at a time was over 1500 round trips for the live mailbox, inside an
+ * invocation that also does one R2 read per message. A hundred at a time makes
+ * that sixteen. Kept well under SQLite's limit on bound variables, since the
+ * read binds one per id.
+ */
+const READ_BATCH = 100;
+
+/**
+ * How often to say how far this mailbox has got.
+ *
+ * Every message would be a write to R2 per message, which is the cost this
+ * change exists to remove. Every few hundred is enough to answer the question
+ * a killed run leaves behind -- which mailbox, and roughly where in it.
+ */
+const PROGRESS_EVERY = 250;
+
 export interface BackupResult {
 	key: string;
 	messages: number;
@@ -99,6 +118,15 @@ export async function writeMailboxBackup(
 	mailboxId: string,
 	now: Date,
 	keep: number,
+	/**
+	 * Called every few hundred messages with how many have been written.
+	 *
+	 * A run that the runtime cuts off writes nothing at all about itself --
+	 * `writeMailboxBackup` throwing is recorded, being killed is not. This is
+	 * the only thing that survives such a run, so it must not be able to take
+	 * the backup down with it; the caller swallows its failures.
+	 */
+	onProgress?: (messages: number) => Promise<void>,
 ): Promise<BackupResult> {
 	const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 	const ids = await stub.listEmailIdsByDate();
@@ -116,27 +144,40 @@ export async function writeMailboxBackup(
 	let bytes = 0;
 
 	try {
-		for (const id of ids) {
-			const email = await stub.getEmail(id);
-			if (!email) continue;
-			const folderId = String(
-				(email as { folder_id?: string }).folder_id ?? "inbox",
+		let reported = 0;
+		// A page at a time. The ids were taken in date order above and the read
+		// gives them back in that order, so the archive is written in the same
+		// order it always was.
+		for (let from = 0; from < ids.length; from += READ_BATCH) {
+			const page = await stub.getEmailsByIds(
+				ids.slice(from, from + READ_BATCH),
 			);
-			const entry = await renderMboxEntry(
-				env,
-				email as never,
-				folderNames.get(folderId) ?? folderId,
-			);
-			buffer.add(entry);
-			bytes += entry.byteLength;
-			messages += 1;
 
-			// A loop, not an `if`: one message with a large attachment can fill
-			// several parts at once.
-			while (buffer.size >= PART_SIZE) {
-				parts.push(
-					await upload.uploadPart(parts.length + 1, buffer.take(PART_SIZE)),
+			for (const email of page) {
+				const folderId = String(
+					(email as { folder_id?: string }).folder_id ?? "inbox",
 				);
+				const entry = await renderMboxEntry(
+					env,
+					email as never,
+					folderNames.get(folderId) ?? folderId,
+				);
+				buffer.add(entry);
+				bytes += entry.byteLength;
+				messages += 1;
+
+				// A loop, not an `if`: one message with a large attachment can
+				// fill several parts at once.
+				while (buffer.size >= PART_SIZE) {
+					parts.push(
+						await upload.uploadPart(parts.length + 1, buffer.take(PART_SIZE)),
+					);
+				}
+			}
+
+			if (onProgress && messages - reported >= PROGRESS_EVERY) {
+				reported = messages;
+				await onProgress(messages).catch(() => {});
 			}
 		}
 

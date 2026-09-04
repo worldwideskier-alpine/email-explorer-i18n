@@ -427,6 +427,7 @@
 			"never": "Het geplande onderhoud is nog nooit uitgevoerd.",
 			"done": "Gepland onderhoud {at}: voltooid (back-ups: {backups}, spamopruimingen: {purges}).",
 			"notReached": "Gepland onderhoud {at}: het eindigde voordat het de spamopruiming bereikte.",
+			"killedInBackup": "Geplande onderhoud {at}: afgebroken tijdens de back-ups ({detail}).",
 			"unfinished": "Gepland onderhoud {at}: het bereikte de spamopruiming, maar er is niets vastgelegd over de voltooiing."
 		}
 	}

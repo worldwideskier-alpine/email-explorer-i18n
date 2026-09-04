@@ -427,6 +427,7 @@
 			"never": "Det planlagde vedlikehaldet har aldri køyrt.",
 			"done": "Planlagt vedlikehald {at}: fullført (tryggingskopiar: {backups}, opprydding av søppelpost: {purges}).",
 			"notReached": "Planlagt vedlikehald {at}: det slutta før det nådde oppryddinga av søppelpost.",
+			"killedInBackup": "Planlagt vedlikehald {at}: avbrote under tryggingskopieringa ({detail}).",
 			"unfinished": "Planlagt vedlikehald {at}: det nådde oppryddinga av søppelpost, men det finst inga registrering av at det vart ferdig."
 		}
 	}

@@ -427,6 +427,7 @@
 			"never": "Plánovaná údržba sa zatiaľ nikdy nevykonala.",
 			"done": "Plánovaná údržba {at}: dokončená (zálohy: {backups}, mazania spamu: {purges}).",
 			"notReached": "Plánovaná údržba {at}: skončila skôr, než sa dostala k mazaniu spamu.",
+			"killedInBackup": "Plánovaná údržba {at}: prerušená počas zálohovania ({detail}).",
 			"unfinished": "Plánovaná údržba {at}: dostala sa k mazaniu spamu, ale záznam o dokončení chýba."
 		}
 	}

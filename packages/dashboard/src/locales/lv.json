@@ -427,6 +427,7 @@
 			"never": "Plānotā apkope vēl nekad nav veikta.",
 			"done": "Plānotā apkope {at}: pabeigta (dublējumi: {backups}, mēstuļu tīrīšanas: {purges}).",
 			"notReached": "Plānotā apkope {at}: beidzās, nesasniedzot mēstuļu tīrīšanu.",
+			"killedInBackup": "Plānotā apkope {at}: pārtraukta dublēšanas laikā ({detail}).",
 			"unfinished": "Plānotā apkope {at}: sasniedza mēstuļu tīrīšanu, bet ieraksta par pabeigšanu nav."
 		}
 	}

@@ -67,7 +67,13 @@ export async function runScheduledMaintenance(
 	await note(env, record);
 
 	try {
-		summary.backups = await runScheduledBackups(env, now);
+		// The pass says where it is as it goes, and each report is written
+		// straight out. Nothing else survives an invocation that is cut off
+		// inside the backups -- and that is what has been happening.
+		summary.backups = await runScheduledBackups(env, now, async (progress) => {
+			record.backupProgress = { ...progress, at: new Date().toISOString() };
+			await note(env, record);
+		});
 		record.backups = {
 			finishedAt: new Date().toISOString(),
 			...summary.backups,

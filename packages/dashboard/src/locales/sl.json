@@ -427,6 +427,7 @@
 			"never": "Načrtovano vzdrževanje se še ni nikoli izvedlo.",
 			"done": "Načrtovano vzdrževanje {at}: končano (varnostne kopije: {backups}, čiščenja neželene pošte: {purges}).",
 			"notReached": "Načrtovano vzdrževanje {at}: končalo se je, preden je prišlo do čiščenja neželene pošte.",
+			"killedInBackup": "Načrtovano vzdrževanje {at}: prekinjeno med varnostnim kopiranjem ({detail}).",
 			"unfinished": "Načrtovano vzdrževanje {at}: prišlo je do čiščenja neželene pošte, vendar ni zapisa, da bi se končalo."
 		}
 	}
