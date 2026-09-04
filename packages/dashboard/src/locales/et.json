@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "Plaanilist hooldust pole veel kordagi tehtud.",
-			"done": "Plaaniline hooldus {at}: lõpetatud (varukoopiaid: {backups}, rämpsposti puhastusi: {purges}).",
+			"done": "Plaanitud hooldus {at}: lõpetatud ({duration} / {backups} varukoopiat / {deleted} rämpsposti kustutatud).",
 			"notReached": "Plaaniline hooldus {at}: lõppes enne rämpsposti puhastuseni jõudmist.",
 			"killedInBackup": "Plaanitud hooldus {at}: katkes varunduse ajal ({detail}).",
 			"unfinished": "Plaaniline hooldus {at}: jõudis rämpsposti puhastuseni, kuid lõpetamise kohta kirje puudub."

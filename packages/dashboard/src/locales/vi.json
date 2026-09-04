@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "Bảo trì theo lịch chưa từng chạy.",
-			"done": "Bảo trì theo lịch {at}: đã hoàn tất (sao lưu {backups}, dọn thư rác {purges}).",
+			"done": "Bảo trì theo lịch {at}: hoàn tất ({duration} / {backups} bản sao lưu / đã xóa {deleted} thư rác).",
 			"notReached": "Bảo trì theo lịch {at}: đã kết thúc trước khi đến bước dọn thư rác.",
 			"killedInBackup": "Bảo trì theo lịch {at}: bị ngắt giữa chừng khi sao lưu ({detail}).",
 			"unfinished": "Bảo trì theo lịch {at}: đã đến bước dọn thư rác, nhưng không có ghi nhận là đã hoàn tất."

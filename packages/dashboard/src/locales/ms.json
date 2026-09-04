@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "Penyelenggaraan berjadual belum pernah dijalankan.",
-			"done": "Penyelenggaraan berjadual {at}: selesai (sandaran: {backups}, pembersihan spam: {purges}).",
+			"done": "Penyelenggaraan berjadual {at}: selesai ({duration} / {backups} disandarkan / {deleted} spam dipadam).",
 			"notReached": "Penyelenggaraan berjadual {at}: berakhir sebelum sampai ke pembersihan spam.",
 			"killedInBackup": "Penyelenggaraan berjadual {at}: terputus semasa sandaran ({detail}).",
 			"unfinished": "Penyelenggaraan berjadual {at}: sampai ke pembersihan spam, tetapi tiada rekod bahawa ia selesai."

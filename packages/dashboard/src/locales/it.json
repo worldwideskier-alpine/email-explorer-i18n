@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "La manutenzione pianificata non è mai stata eseguita.",
-			"done": "Manutenzione pianificata {at}: completata (backup: {backups}, pulizie spam: {purges}).",
+			"done": "Manutenzione pianificata {at}: completata ({duration} / {backups} backup / {deleted} spam eliminati).",
 			"notReached": "Manutenzione pianificata {at}: si è conclusa prima di arrivare alla pulizia dello spam.",
 			"killedInBackup": "Manutenzione pianificata {at}: interrotta durante i backup ({detail}).",
 			"unfinished": "Manutenzione pianificata {at}: è arrivata alla pulizia dello spam, ma non risulta conclusa."

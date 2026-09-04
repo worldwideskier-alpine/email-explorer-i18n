@@ -24,7 +24,51 @@ export interface MaintenanceRecord {
 	 */
 	backupProgress?: MaintenanceProgress;
 	backups?: { finishedAt: string; ran: number };
-	spamPurge?: { finishedAt: string; ran: number };
+	/** `ran` counts mailboxes; `deleted` counts messages. See below. */
+	spamPurge?: { finishedAt: string; ran: number; deleted?: number };
+}
+
+/**
+ * How many messages the purge actually removed.
+ *
+ * The finished line used to show `spamPurge.ran`, which is the number of
+ * *mailboxes* the purge visited, next to the number of mailboxes backed up.
+ * Read as "2 spam deleted" it is simply wrong, and the first night the purge
+ * ever ran it said "2" while removing 5 messages. The count of messages is
+ * what anyone is asking, and it was recorded all along and never shown.
+ *
+ * Absent on a record written before the field existed, which reads as 0 rather
+ * than as a claim that nothing was deleted -- there is no way to tell those
+ * apart from such a record, and 0 is the smaller lie.
+ */
+export function maintenanceDeleted(
+	record: MaintenanceRecord | null | undefined,
+): number {
+	return record?.spamPurge?.deleted ?? 0;
+}
+
+/**
+ * How long the run took, as `8m42s`.
+ *
+ * The number that says how close this is to the edge. The run that had been
+ * being cut off is now finishing in eight and three quarter minutes, which is
+ * not comfortable -- and the only way to see it creeping back up is to have it
+ * on the screen, before the day it stops finishing again.
+ *
+ * Raw and untranslated, like the response marker on the spam check: it is two
+ * numbers and two letters, and rendering a duration properly in 73 languages
+ * would be a much larger thing than the value it adds here.
+ */
+export function maintenanceDuration(
+	record: MaintenanceRecord | null | undefined,
+): string {
+	if (!record?.finishedAt) return "";
+	const ms = Date.parse(record.finishedAt) - Date.parse(record.startedAt);
+	if (!Number.isFinite(ms) || ms < 0) return "";
+
+	const seconds = Math.round(ms / 1000);
+	const minutes = Math.floor(seconds / 60);
+	return minutes > 0 ? `${minutes}m${seconds % 60}s` : `${seconds}s`;
 }
 
 /**

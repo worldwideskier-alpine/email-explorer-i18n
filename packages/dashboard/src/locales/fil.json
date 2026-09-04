@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "Hindi pa kailanman tumakbo ang naka-iskedyul na maintenance.",
-			"done": "Naka-iskedyul na maintenance {at}: tapos na ({backups} na-backup, {purges} na-purge).",
+			"done": "Nakatakdang pagpapanatili {at}: tapos na ({duration} / {backups} na-back up / {deleted} spam na natanggal).",
 			"notReached": "Naka-iskedyul na maintenance {at}: natapos bago pa marating ang paglilinis ng spam.",
 			"killedInBackup": "Nakatakdang pagpapanatili {at}: naputol habang nagba-backup ({detail}).",
 			"unfinished": "Naka-iskedyul na maintenance {at}: narating ang paglilinis ng spam, ngunit walang talaan na natapos ito."

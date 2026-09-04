@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "Planlı texniki iş hələ heç vaxt icra olunmayıb.",
-			"done": "Planlı texniki iş {at}: tamamlandı (ehtiyat nüsxə {backups}, spam təmizlənməsi {purges}).",
+			"done": "Planlı baxım {at}: bitdi ({duration} / {backups} ehtiyat nüsxə / {deleted} spam silindi).",
 			"notReached": "Planlı texniki iş {at}: spam təmizlənməsinə çatmadan bitib.",
 			"killedInBackup": "Planlı baxım {at}: ehtiyat nüsxə çıxarılarkən yarımçıq kəsildi ({detail}).",
 			"unfinished": "Planlı texniki iş {at}: spam təmizlənməsinə çatdı, lakin tamamlanma qeydi yoxdur."

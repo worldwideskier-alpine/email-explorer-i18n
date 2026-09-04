@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "Den planlagte vedlikeholdskjøringen har aldri kjørt.",
-			"done": "Planlagt vedlikehold {at}: fullført (sikkerhetskopier: {backups}, søppelpostopprydninger: {purges}).",
+			"done": "Planlagt vedlikehold {at}: fullført ({duration} / {backups} sikkerhetskopier / {deleted} søppelpost slettet).",
 			"notReached": "Planlagt vedlikehold {at}: sluttet før det nådde søppelpostopprydningen.",
 			"killedInBackup": "Planlagt vedlikehold {at}: avbrutt under sikkerhetskopieringen ({detail}).",
 			"unfinished": "Planlagt vedlikehold {at}: nådde søppelpostopprydningen, men det finnes ingen registrering av at det ble ferdig."

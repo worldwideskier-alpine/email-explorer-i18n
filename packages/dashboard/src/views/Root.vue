@@ -31,8 +31,9 @@
         <p v-else-if="maintenance.finishedAt" class="text-gray-500 dark:text-gray-400">
           {{ t("root.maintenance.done", {
             at: formatFullDate(maintenance.startedAt),
+            duration: finishedDuration,
             backups: maintenance.backups?.ran ?? 0,
-            purges: maintenance.spamPurge?.ran ?? 0,
+            deleted: deletedCount,
           }) }}
         </p>
         <p v-else class="text-amber-700 dark:text-amber-400 font-semibold break-words">
@@ -159,6 +160,8 @@ import api from "@/services/api";
 import { type AccountRole, useAuthStore } from "@/stores/auth";
 import {
 	type MaintenanceRecord,
+	maintenanceDeleted,
+	maintenanceDuration,
 	maintenanceStoppedDetail,
 	maintenanceStoppedKey,
 } from "@/utils/maintenance";
@@ -199,6 +202,13 @@ const maintenanceLoading = ref(true);
  * itself is the only place either can be seen.
  */
 const stoppedKey = computed(() => maintenanceStoppedKey(maintenance.value));
+
+// What the purge removed, and how long the whole run took. The first used to
+// be the count of mailboxes visited, which read as messages; the second was
+// never shown at all, and is the number that says how close the run is to the
+// edge it was going over.
+const deletedCount = computed(() => maintenanceDeleted(maintenance.value));
+const finishedDuration = computed(() => maintenanceDuration(maintenance.value));
 
 const stoppedDetail = computed(() =>
 	maintenanceStoppedDetail(maintenance.value),

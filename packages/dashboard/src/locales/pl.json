@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "Zaplanowana konserwacja nigdy jeszcze nie została wykonana.",
-			"done": "Zaplanowana konserwacja {at}: zakończona (kopie: {backups}, czyszczenia spamu: {purges}).",
+			"done": "Zaplanowana konserwacja {at}: zakończona ({duration} / {backups} kopii zapasowych / usunięto {deleted} spamu).",
 			"notReached": "Zaplanowana konserwacja {at}: zakończyła się, zanim dotarła do czyszczenia spamu.",
 			"killedInBackup": "Zaplanowana konserwacja {at}: przerwana podczas tworzenia kopii zapasowych ({detail}).",
 			"unfinished": "Zaplanowana konserwacja {at}: dotarła do czyszczenia spamu, ale nie ma zapisu o jej zakończeniu."

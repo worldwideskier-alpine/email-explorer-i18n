@@ -425,7 +425,7 @@
 		},
 		"maintenance": {
 			"never": "定期維護尚未執行過。",
-			"done": "定期維護 {at}：已完成（備份 {backups} 個，垃圾郵件清理 {purges} 個）。",
+			"done": "定期維護 {at}：完成（{duration} ／ 備份 {backups} 個 ／ 刪除垃圾郵件 {deleted} 封）。",
 			"notReached": "定期維護 {at}：未到達垃圾郵件清理就結束了。",
 			"killedInBackup": "定期維護 {at}：在備份過程中被中斷（{detail}）。",
 			"unfinished": "定期維護 {at}：已到達垃圾郵件清理，但沒有完成的紀錄。"
