@@ -427,6 +427,7 @@
 			"never": "De geplangte Ënnerhalt ass nach ni gelaf.",
 			"done": "Geplangten Ënnerhalt {at}: ofgeschloss (Backupen: {backups}, Spam-Läschungen: {purges}).",
 			"notReached": "Geplangten Ënnerhalt {at}: en ass eriwwer, ier en bei d'Spam-Läschung koum.",
+			"killedInBackup": "Geplangten Ënnerhalt {at}: während der Sécherung ofgebrach ({detail}).",
 			"unfinished": "Geplangten Ënnerhalt {at}: en ass bei d'Spam-Läschung komm, mä en Ofschloss ass net festgehalen."
 		}
 	}

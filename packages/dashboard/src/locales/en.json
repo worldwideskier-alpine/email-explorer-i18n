@@ -427,6 +427,7 @@
 			"never": "The scheduled maintenance has never run.",
 			"done": "Scheduled maintenance {at}: finished ({backups} backed up, {purges} purged).",
 			"notReached": "Scheduled maintenance {at}: it ended before reaching the spam purge.",
+			"killedInBackup": "Scheduled maintenance {at}: it was cut off during the backups ({detail}).",
 			"unfinished": "Scheduled maintenance {at}: it reached the spam purge, but there is no record of it finishing."
 		}
 	}

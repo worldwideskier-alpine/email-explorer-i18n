@@ -427,6 +427,7 @@
 			"never": "Den planlagte vedligeholdelse har aldrig kørt.",
 			"done": "Planlagt vedligeholdelse {at}: gennemført (sikkerhedskopier: {backups}, spamoprydninger: {purges}).",
 			"notReached": "Planlagt vedligeholdelse {at}: sluttede, før den nåede spamoprydningen.",
+			"killedInBackup": "Planlagt vedligeholdelse {at}: afbrudt under sikkerhedskopieringen ({detail}).",
 			"unfinished": "Planlagt vedligeholdelse {at}: nåede spamoprydningen, men der er ingen registrering af, at den blev færdig."
 		}
 	}

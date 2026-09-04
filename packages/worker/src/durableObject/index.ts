@@ -1082,6 +1082,59 @@ export class MailboxDO extends DurableObject<Env> {
 		};
 	}
 
+	/**
+	 * The same rows as `getEmail`, for many ids at once.
+	 *
+	 * The nightly backup used to ask for one message at a time. That is one
+	 * round trip to this object per message, and on the live mailbox -- 1557
+	 * messages -- it meant over 1500 of them inside a single invocation, on top
+	 * of one R2 read per message for the raw source. The invocation stopped
+	 * finishing: the maintenance record for 2026-09-04 has a `startedAt` and
+	 * nothing else, which is what it looks like when the runtime cuts a run off
+	 * inside the backup pass rather than the pass throwing.
+	 *
+	 * Two queries here regardless of how many ids are asked for, so a page of a
+	 * hundred costs two instead of a hundred.
+	 *
+	 * Returned in the order the ids were given, not the order SQLite chose:
+	 * the caller is writing an mbox in date order, and `IN (...)` makes no
+	 * promise about either. Ids with no row are skipped, as `getEmail`
+	 * returning null was skipped before.
+	 */
+	async getEmailsByIds(ids: string[]) {
+		if (ids.length === 0) return [];
+
+		const placeholders = ids.map(() => "?").join(",");
+		const emails = this.ctx.storage.sql
+			.exec(`SELECT * FROM emails WHERE id IN (${placeholders})`, ...ids)
+			.toArray();
+		const attachments = this.ctx.storage.sql
+			.exec(
+				`SELECT * FROM attachments WHERE email_id IN (${placeholders})`,
+				...ids,
+			)
+			.toArray();
+
+		const byEmail = new Map<string, Record<string, unknown>[]>();
+		for (const row of attachments) {
+			const key = String(row.email_id);
+			const held = byEmail.get(key);
+			if (held) held.push(row);
+			else byEmail.set(key, [row]);
+		}
+
+		const rows = new Map(emails.map((row) => [String(row.id), row]));
+		return ids
+			.map((id) => rows.get(id))
+			.filter((row) => row !== undefined)
+			.map((row) => ({
+				...row,
+				read: !!row.read,
+				starred: !!row.starred,
+				attachments: byEmail.get(String(row.id)) ?? [],
+			}));
+	}
+
 	async updateEmail(
 		id: string,
 		{ read, starred }: { read?: boolean; starred?: boolean },

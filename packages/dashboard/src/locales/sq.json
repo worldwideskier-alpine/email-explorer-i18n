@@ -427,6 +427,7 @@
 			"never": "Mirëmbajtja e planifikuar nuk është kryer asnjëherë.",
 			"done": "Mirëmbajtje e planifikuar {at}: e përfunduar (kopje rezervë: {backups}, pastrime spam-i: {purges}).",
 			"notReached": "Mirëmbajtje e planifikuar {at}: përfundoi para se të arrinte te pastrimi i spam-it.",
+			"killedInBackup": "Mirëmbajtja e planifikuar {at}: u ndërpre gjatë kopjeve rezervë ({detail}).",
 			"unfinished": "Mirëmbajtje e planifikuar {at}: arriti te pastrimi i spam-it, por nuk ka asnjë shënim se përfundoi."
 		}
 	}

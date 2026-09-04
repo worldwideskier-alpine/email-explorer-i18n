@@ -427,6 +427,7 @@
 			"never": "Planirano održavanje još nije nijednom pokrenuto.",
 			"done": "Planirano održavanje {at}: završeno (rezervne kopije: {backups}, čišćenja neželjene pošte: {purges}).",
 			"notReached": "Planirano održavanje {at}: završilo je prije nego što je stiglo do čišćenja neželjene pošte.",
+			"killedInBackup": "Planirano održavanje {at}: prekinuto tokom izrade rezervne kopije ({detail}).",
 			"unfinished": "Planirano održavanje {at}: stiglo je do čišćenja neželjene pošte, ali nema zapisa o završetku."
 		}
 	}

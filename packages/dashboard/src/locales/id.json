@@ -427,6 +427,7 @@
 			"never": "Pemeliharaan terjadwal belum pernah berjalan.",
 			"done": "Pemeliharaan terjadwal {at}: selesai (cadangan: {backups}, pembersihan spam: {purges}).",
 			"notReached": "Pemeliharaan terjadwal {at}: berakhir sebelum sampai ke pembersihan spam.",
+			"killedInBackup": "Pemeliharaan terjadwal {at}: terputus saat pencadangan ({detail}).",
 			"unfinished": "Pemeliharaan terjadwal {at}: sampai ke pembersihan spam, tetapi tidak ada catatan bahwa ia selesai."
 		}
 	}
