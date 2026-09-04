@@ -116,6 +116,22 @@ fork's work. This fork ships by being forked.
   spam *second*, so a message the purge removes is already in that run's
   archive. Reversed, the deletion would be permanent with no copy anywhere.
   Nothing in the types holds it; `scheduled-order.test.ts` does.
+- **The second-stage spam check runs in the Durable Object**, not in the
+  `email()` handler, and that is about geography rather than storage. A Worker
+  runs at the data centre that received the message and Email Routing's MX
+  addresses are anycast, so the receiving data centre follows the *sender* --
+  which meant the call to Anthropic left from a different place for every
+  message. Measured on the live mailbox: refused at `...-HKG`, worked at
+  `...-FRA`, same key. Hong Kong is not on Anthropic's published list of
+  supported regions, so the check was passing or failing according to where the
+  spam had been sent from. A Durable Object is one instance in one place, so
+  calling from there makes the path the same for every message; it does not
+  choose *which* place, and `spamCheck.lastSuccessVia` on the settings screen
+  is what says where it settled. `MailboxDO.checkSpam` also writes the health
+  record, so a check and its record cannot come apart.
+  `spam-check-location.test.ts` holds the arrangement -- partly structurally,
+  because both sides run in one isolate under the test pool and the difference
+  is only visible in production.
 - **Dashboard theming.** `index.html` fixes the body to a dark palette
   (`bg-gray-900 text-gray-100`) while cards use `bg-white dark:bg-gray-800`
   and follow the viewer's colour scheme. In light mode a card is white but
