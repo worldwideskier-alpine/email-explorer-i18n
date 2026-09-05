@@ -237,7 +237,7 @@ const stoppedLine = computed(() =>
 	}),
 );
 const trailingDetail = computed(() =>
-	maintenanceTrailingDetail(stoppedLine.value, stoppedDetail.value),
+	maintenanceTrailingDetail(stoppedLine.value, maintenance.value),
 );
 
 async function load() {

@@ -406,7 +406,14 @@ describe("the detail that did not fit in the sentence", () => {
 		expect(
 			maintenanceTrailingDetail(
 				"Scheduled maintenance Sep 5: it ended before reaching the spam purge.",
-				"backups: bucket unavailable",
+				run({
+					backupProgress: progress,
+					backups: {
+						finishedAt: "2026-09-05T13:54:20.000Z",
+						ran: 0,
+						error: "bucket unavailable",
+					},
+				}),
 			),
 		).toBe("backups: bucket unavailable");
 	});
@@ -416,13 +423,51 @@ describe("the detail that did not fit in the sentence", () => {
 		expect(
 			maintenanceTrailingDetail(
 				"Scheduled maintenance Sep 5: a pass failed (8m45s / backups: 2 failed).",
-				"backups: 2 failed",
+				run({
+					finishedAt: "2026-09-05T14:02:45.000Z",
+					backups: {
+						finishedAt: "2026-09-05T13:54:20.000Z",
+						ran: 0,
+						failed: 2,
+					},
+				}),
 			),
 		).toBe("");
 	});
 
 	// Nothing recorded, nothing appended -- rather than a dangling separator.
 	it("is empty when there is nothing to say", () => {
-		expect(maintenanceTrailingDetail("anything at all", "")).toBe("");
+		expect(maintenanceTrailingDetail("anything at all", run())).toBe("");
+		expect(maintenanceTrailingDetail("anything at all", null)).toBe("");
+	});
+
+	/**
+	 * And never where the backup pass had got to.
+	 *
+	 * That is what maintenanceStoppedDetail falls back to, and it belongs in
+	 * the slot of the sentence about being cut off *during* the backups. Put
+	 * after "it ended before reaching the spam purge", a mailbox and a position
+	 * read as the place the run died -- about a pass that same sentence says
+	 * finished. Both reviews found this; it is why the record is passed in
+	 * rather than the string.
+	 */
+	it("does not append where the backups got to", () => {
+		const killedAfterHealthyBackups = run({
+			backupProgress: progress,
+			backups: { finishedAt: "2026-09-05T13:54:20.000Z", ran: 2, failed: 0 },
+		});
+
+		expect(maintenanceStoppedKey(killedAfterHealthyBackups)).toBe(
+			"root.maintenance.notReached",
+		);
+		expect(maintenanceStoppedDetail(killedAfterHealthyBackups)).toBe(
+			"info@example.test 1/2 · 1250",
+		);
+		expect(
+			maintenanceTrailingDetail(
+				"Scheduled maintenance Sep 5: it ended before reaching the spam purge.",
+				killedAfterHealthyBackups,
+			),
+		).toBe("");
 	});
 });
