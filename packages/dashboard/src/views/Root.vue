@@ -39,12 +39,11 @@
             deleted: deletedCount,
           }) }}
         </p>
+        <!-- Four of the six sentences have no `{detail}` slot, so what the run
+             recorded is put after the sentence when it did not fit inside
+             one. See maintenanceTrailingDetail. -->
         <p v-else class="text-amber-700 dark:text-amber-400 font-semibold break-words">
-          {{ t(stoppedKey, {
-            at: formatFullDate(maintenance.startedAt),
-            duration: finishedDuration,
-            detail: stoppedDetail,
-          }) }}
+          {{ stoppedLine }}<span v-if="trailingDetail"> · {{ trailingDetail }}</span>
         </p>
       </div>
 
@@ -169,6 +168,7 @@ import {
 	maintenanceFinishedCleanly,
 	maintenanceStoppedDetail,
 	maintenanceStoppedKey,
+	maintenanceTrailingDetail,
 } from "@/utils/maintenance";
 
 /** A person: the addresses they sign in with, and which role they hold. */
@@ -198,6 +198,13 @@ const { formatFullDate } = useDateFormat();
 const maintenance = ref<MaintenanceRecord | null>(null);
 const maintenanceLoading = ref(true);
 
+// Whether the run may be told as simply done. `finishedAt` alone is not that:
+// it is set on the failure paths too, so a night a pass crashed came out as
+// the calm grey line. See maintenanceFinishedCleanly.
+const finishedCleanly = computed(() =>
+	maintenanceFinishedCleanly(maintenance.value),
+);
+
 /**
  * How far an unfinished run got, which is the whole of what it says.
  *
@@ -206,9 +213,6 @@ const maintenanceLoading = ref(true);
  * backups" is a different problem from "it reached the purge", and the run
  * itself is the only place either can be seen.
  */
-const finishedCleanly = computed(() =>
-	maintenanceFinishedCleanly(maintenance.value),
-);
 const stoppedKey = computed(() => maintenanceStoppedKey(maintenance.value));
 
 // What the purge removed, and how long the whole run took. The first used to
@@ -220,6 +224,20 @@ const finishedDuration = computed(() => maintenanceDuration(maintenance.value));
 
 const stoppedDetail = computed(() =>
 	maintenanceStoppedDetail(maintenance.value),
+);
+
+// The sentence, and then what would not fit in it. A run cut off after a pass
+// that recorded an error gets the sentence for a run that stopped -- which is
+// the true one, and has nowhere to say what the error was.
+const stoppedLine = computed(() =>
+	t(stoppedKey.value, {
+		at: maintenance.value ? formatFullDate(maintenance.value.startedAt) : "",
+		duration: finishedDuration.value,
+		detail: stoppedDetail.value,
+	}),
+);
+const trailingDetail = computed(() =>
+	maintenanceTrailingDetail(stoppedLine.value, stoppedDetail.value),
 );
 
 async function load() {

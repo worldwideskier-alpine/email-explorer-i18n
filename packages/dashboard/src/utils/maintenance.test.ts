@@ -7,6 +7,7 @@ import {
 	maintenanceFinishedCleanly,
 	maintenanceStoppedDetail,
 	maintenanceStoppedKey,
+	maintenanceTrailingDetail,
 } from "./maintenance";
 
 /**
@@ -278,6 +279,36 @@ describe("a run that ended with a pass that failed", () => {
 		);
 	});
 
+	/**
+	 * And only about a run that reached its end.
+	 *
+	 * The backup pass records its `error` and the run *carries on* to the purge
+	 * -- scheduled-run.ts writes the record out before it does. So an invocation
+	 * killed in the purge a moment later leaves `backups.error` with no
+	 * `spamPurge` and no `finishedAt`, and calling that "a pass failed" claims
+	 * the run ended when it was cut off. Those are the two faults this screen
+	 * exists to tell apart, and the error must not outrank that.
+	 */
+	it("does not claim a run ended when it was cut off after a failed pass", () => {
+		const killedAfterFailedBackups = run({
+			backupProgress: progress,
+			backups: {
+				finishedAt: "2026-09-04T18:00:20.000Z",
+				ran: 0,
+				error: "bucket unavailable",
+			},
+		});
+
+		expect(maintenanceStoppedKey(killedAfterFailedBackups)).toBe(
+			"root.maintenance.notReached",
+		);
+		expect(maintenanceFinishedCleanly(killedAfterFailedBackups)).toBe(false);
+		// The error is still said, in the sentence for a run that stopped.
+		expect(maintenanceStoppedDetail(killedAfterFailedBackups)).toBe(
+			"backups: bucket unavailable",
+		);
+	});
+
 	// And a clean run is still clean, on all three of the things it decides.
 	it("leaves a run that worked alone", () => {
 		const fine = run({
@@ -289,5 +320,109 @@ describe("a run that ended with a pass that failed", () => {
 		expect(maintenanceFinishedCleanly(fine)).toBe(true);
 		expect(maintenanceErrorDetail(fine)).toBe("");
 		expect(maintenanceDeleted(fine)).toBe(5);
+	});
+});
+
+/**
+ * The likelier failure by far, and the one nothing was looking at.
+ *
+ * Neither pass throws when a *mailbox* fails: both catch per mailbox on
+ * purpose, so that one bad mailbox cannot stop the others. A night on which
+ * every mailbox failed therefore returns normally, with `failed: 2, ran: 0`
+ * and no `error` anywhere -- and reached the calm grey "finished (8m45s / 0
+ * backed up / 0 deleted)", which reads as a quiet night rather than as
+ * everything having failed.
+ */
+describe("a run in which the mailboxes failed on their own", () => {
+	const everyBackupFailed = run({
+		finishedAt: "2026-09-04T18:08:52.622Z",
+		backups: { finishedAt: "2026-09-04T18:08:49.887Z", ran: 0, failed: 2 },
+		spamPurge: { finishedAt: "2026-09-04T18:08:52.622Z", ran: 2, deleted: 5 },
+	});
+
+	it("is not reported as simply finished", () => {
+		expect(maintenanceFinishedCleanly(everyBackupFailed)).toBe(false);
+		expect(maintenanceStoppedKey(everyBackupFailed)).toBe(
+			"root.maintenance.finishedWithError",
+		);
+		expect(maintenanceStoppedDetail(everyBackupFailed)).toBe(
+			"backups: 2 failed",
+		);
+	});
+
+	// The purge counts mailboxes the same way, and is read the same way.
+	it("counts the purge's failures too", () => {
+		expect(
+			maintenanceErrorDetail(
+				run({
+					backups: { finishedAt: "x", ran: 2 },
+					spamPurge: { finishedAt: "y", ran: 0, deleted: 0, failed: 2 },
+				}),
+			),
+		).toBe("spamPurge: 2 failed");
+	});
+
+	/**
+	 * A pass that threw records `failed: 0` beside its error, and a pass that
+	 * worked records `failed: 0` alone. Neither may turn into "0 failed", and
+	 * the thrown one must still say what it threw.
+	 */
+	it("says nothing about a pass that failed nothing", () => {
+		expect(
+			maintenanceErrorDetail(
+				run({
+					backups: { finishedAt: "x", ran: 2, failed: 0 },
+					spamPurge: { finishedAt: "y", ran: 2, failed: 0 },
+				}),
+			),
+		).toBe("");
+		expect(
+			maintenanceErrorDetail(
+				run({
+					spamPurge: {
+						finishedAt: "y",
+						ran: 0,
+						failed: 0,
+						error: "bucket unavailable",
+					},
+				}),
+			),
+		).toBe("spamPurge: bucket unavailable");
+	});
+});
+
+/**
+ * What the run recorded, when the sentence it got has nowhere to say it.
+ *
+ * Found on the screen, not in a test: guarding "a pass failed" on `finishedAt`
+ * moved a run whose backups recorded an error and was then cut off in the
+ * purge onto "it ended before reaching the spam purge" -- which is true of it,
+ * and is one of the four sentences with no `{detail}` slot. So the error went
+ * from being shown in the wrong sentence to not being shown at all. Every
+ * assertion about the key passed throughout.
+ */
+describe("the detail that did not fit in the sentence", () => {
+	it("is given when the sentence has nowhere for it", () => {
+		expect(
+			maintenanceTrailingDetail(
+				"Scheduled maintenance Sep 5: it ended before reaching the spam purge.",
+				"backups: bucket unavailable",
+			),
+		).toBe("backups: bucket unavailable");
+	});
+
+	// And not twice, when the sentence already carries it.
+	it("is not repeated after a sentence that already says it", () => {
+		expect(
+			maintenanceTrailingDetail(
+				"Scheduled maintenance Sep 5: a pass failed (8m45s / backups: 2 failed).",
+				"backups: 2 failed",
+			),
+		).toBe("");
+	});
+
+	// Nothing recorded, nothing appended -- rather than a dangling separator.
+	it("is empty when there is nothing to say", () => {
+		expect(maintenanceTrailingDetail("anything at all", "")).toBe("");
 	});
 });

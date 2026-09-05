@@ -23,41 +23,64 @@ export interface MaintenanceRecord {
 	 * field, so it is absent on exactly the record that motivated it.
 	 */
 	backupProgress?: MaintenanceProgress;
-	/** `error` is set when the pass threw instead of returning. */
-	backups?: { finishedAt: string; ran: number; error?: string };
+	/**
+	 * `error` is set when the whole pass threw; `failed` counts the mailboxes
+	 * that failed on their own while the pass carried on. Both are trouble,
+	 * and only the first of them was being looked at.
+	 */
+	backups?: {
+		finishedAt: string;
+		ran: number;
+		failed?: number;
+		error?: string;
+	};
 	/** `ran` counts mailboxes; `deleted` counts messages. See below. */
 	spamPurge?: {
 		finishedAt: string;
 		ran: number;
 		deleted?: number;
+		failed?: number;
 		error?: string;
 	};
+}
+
+/** One pass's trouble, the more specific of the two things it can say. */
+function passTrouble(
+	name: string,
+	pass?: { failed?: number; error?: string },
+): string {
+	if (pass?.error) return `${name}: ${pass.error}`;
+	// A pass that threw records `failed: 0` beside its error, so these never
+	// both apply to one pass; the order is only about which says more.
+	if (pass?.failed) return `${name}: ${pass.failed} failed`;
+	return "";
 }
 
 /**
  * What went wrong in a run that nevertheless reached its end.
  *
- * A pass that throws is not the same as an invocation that is cut off: the run
- * carries on, records the error, and sets `finishedAt`. The spam purge does it
- * explicitly before rethrowing (scheduled-run.ts), and the backup pass by
- * simply continuing to the purge, which then sets it.
+ * Two different kinds of wrong, and the screen was blind to both.
  *
- * Either way the screen saw `finishedAt` and said "finished" in calm grey --
- * about a night when the purge had crashed and deleted nothing, while the
- * recorded `error` was shown nowhere and was not even in this file's types.
- * That is the failure this whole screen exists to prevent, on the screen
- * itself. `maintenance-record.test.ts` has held the shape of that record since
- * before anyone looked at what it rendered as.
+ * A pass that *throws* records an `error`, and the run still ends: the spam
+ * purge sets `finishedAt` explicitly before rethrowing (scheduled-run.ts), and
+ * the backup pass simply carries on to the purge, which sets it. So the screen
+ * saw `finishedAt`, said "finished" in calm grey about a night the purge had
+ * crashed, and showed the recorded `error` nowhere.
  *
- * Both passes, not just the purge: a backup pass that throws leaves its own
- * `error` and the run still ends, so it reads as "finished, 0 backed up".
+ * A pass in which every *mailbox* failed does not throw at all -- both passes
+ * catch per mailbox, on purpose, so that one bad mailbox cannot stop the
+ * others -- and returns normally with `failed: 2, ran: 0`. That is the likelier
+ * of the two by far, and it reached the same calm sentence: "finished (... / 0
+ * backed up / 0 deleted)", which reads as a quiet night rather than as
+ * everything having failed. Neither `error` nor `failed` was in this file's
+ * types at all.
  */
 export function maintenanceErrorDetail(
 	record: MaintenanceRecord | null | undefined,
 ): string {
 	return [
-		record?.backups?.error && `backups: ${record.backups.error}`,
-		record?.spamPurge?.error && `spamPurge: ${record.spamPurge.error}`,
+		passTrouble("backups", record?.backups),
+		passTrouble("spamPurge", record?.spamPurge),
 	]
 		.filter(Boolean)
 		.join(" · ");
@@ -93,6 +116,9 @@ export function maintenanceDeleted(
 	return record?.spamPurge?.deleted ?? 0;
 }
 
+/** Shown when the record cannot say how long it took. */
+const UNKNOWN_DURATION = "\u2014";
+
 /**
  * How long the run took, as `8m42s`.
  *
@@ -105,9 +131,6 @@ export function maintenanceDeleted(
  * numbers and two letters, and rendering a duration properly in 73 languages
  * would be a much larger thing than the value it adds here.
  */
-/** Shown when the record cannot say how long it took. */
-const UNKNOWN_DURATION = "\u2014";
-
 export function maintenanceDuration(
 	record: MaintenanceRecord | null | undefined,
 ): string {
@@ -141,9 +164,21 @@ export function maintenanceDuration(
 export function maintenanceStoppedKey(
 	record: MaintenanceRecord | null | undefined,
 ): string {
-	// First, because a run that threw in the purge has a `spamPurge` too, and
-	// would otherwise be reported as one that merely did not finish it.
-	if (maintenanceErrorDetail(record))
+	/*
+	 * Only for a run that reached its end, and first among those.
+	 *
+	 * First, because a run that threw in the purge has a `spamPurge` too and
+	 * would otherwise be described as one that merely never finished it.
+	 *
+	 * And only then: the backup pass records its `error` and the run carries
+	 * on, so a record can hold one while the invocation is *still* killed in
+	 * the purge a moment later -- `backups.error`, no `spamPurge`, no
+	 * `finishedAt`, which scheduled-run.ts writes out before it goes on.
+	 * Without the guard that reads as "a pass failed", claiming the run ended,
+	 * about a run that was cut off. That is the one distinction this screen
+	 * exists to make, and checking the error first broke it.
+	 */
+	if (record?.finishedAt && maintenanceErrorDetail(record))
 		return "root.maintenance.finishedWithError";
 	if (record?.spamPurge) return "root.maintenance.unfinished";
 	if (record?.backupProgress && !record.backups)
@@ -170,4 +205,28 @@ export function maintenanceStoppedDetail(
 	const at = record?.backupProgress;
 	if (!at) return "";
 	return `${at.mailbox} ${at.index}/${at.of} · ${at.messages}`;
+}
+
+/**
+ * The detail again, when the sentence that was chosen has nowhere to put it.
+ *
+ * Two of the six sentences have a `{detail}` slot and the other four do not,
+ * because until now the ones without could not have had anything to put in it.
+ * Guarding "a pass failed" on `finishedAt` changed that: a run whose backup
+ * pass recorded an error and was then cut off in the purge is now correctly
+ * told as one that stopped -- and "it ended before reaching the spam purge"
+ * has no slot, so the error it *did* record went from being shown in a wrong
+ * sentence to not being shown at all. Found by looking at the screen; no unit
+ * test on the sentence key could have seen it.
+ *
+ * Decided by looking at the rendered sentence rather than by a list of which
+ * keys have the slot: the list is in 73 files and this is not, and a sentence
+ * that grows or loses a slot would leave such a list quietly wrong.
+ */
+export function maintenanceTrailingDetail(
+	sentence: string,
+	detail: string,
+): string {
+	if (!detail) return "";
+	return sentence.includes(detail) ? "" : detail;
 }
