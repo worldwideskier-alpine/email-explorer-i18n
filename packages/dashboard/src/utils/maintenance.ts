@@ -222,11 +222,20 @@ export function maintenanceStoppedDetail(
  * Decided by looking at the rendered sentence rather than by a list of which
  * keys have the slot: the list is in 73 files and this is not, and a sentence
  * that grows or loses a slot would leave such a list quietly wrong.
+ *
+ * The *error* only, and not what maintenanceStoppedDetail would say. That one
+ * falls back to where the backup pass had got to, which belongs in the slot of
+ * the sentence about being cut off during the backups and nowhere else: after
+ * "it ended before reaching the spam purge" a mailbox and a position read as
+ * the place the run died, about a pass the same sentence says was finished.
+ * The record is taken rather than the string so that there is no caller left
+ * who can pass the wrong one.
  */
 export function maintenanceTrailingDetail(
 	sentence: string,
-	detail: string,
+	record: MaintenanceRecord | null | undefined,
 ): string {
+	const detail = maintenanceErrorDetail(record);
 	if (!detail) return "";
 	return sentence.includes(detail) ? "" : detail;
 }
