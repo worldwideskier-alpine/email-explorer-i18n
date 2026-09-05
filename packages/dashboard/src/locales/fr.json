@@ -426,6 +426,7 @@
 		"maintenance": {
 			"never": "La maintenance planifiée n'a jamais été exécutée.",
 			"done": "Maintenance planifiée {at} : terminée ({duration} / {backups} sauvegardes / {deleted} spams supprimés).",
+			"finishedWithError": "Maintenance planifiée {at} : une étape a échoué ({duration} / {detail}).",
 			"notReached": "Maintenance planifiée {at} : elle s'est arrêtée avant d'atteindre la purge du spam.",
 			"killedInBackup": "Maintenance planifiée {at} : interrompue pendant les sauvegardes ({detail}).",
 			"unfinished": "Maintenance planifiée {at} : elle a atteint la purge du spam, mais rien n'indique qu'elle se soit terminée."

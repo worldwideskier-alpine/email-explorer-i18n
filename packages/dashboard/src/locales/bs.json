@@ -426,6 +426,7 @@
 		"maintenance": {
 			"never": "Planirano održavanje još nije nijednom pokrenuto.",
 			"done": "Planirano održavanje {at}: završeno ({duration} / {backups} sigurnosnih kopija / {deleted} obrisanih neželjenih poruka).",
+			"finishedWithError": "Planirano održavanje {at}: jedan korak nije uspio ({duration} / {detail}).",
 			"notReached": "Planirano održavanje {at}: završilo je prije nego što je stiglo do čišćenja neželjene pošte.",
 			"killedInBackup": "Planirano održavanje {at}: prekinuto tokom izrade sigurnosne kopije ({detail}).",
 			"unfinished": "Planirano održavanje {at}: stiglo je do čišćenja neželjene pošte, ali nema zapisa o završetku."

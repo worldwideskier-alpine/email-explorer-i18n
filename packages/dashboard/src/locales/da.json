@@ -426,6 +426,7 @@
 		"maintenance": {
 			"never": "Den planlagte vedligeholdelse har aldrig kørt.",
 			"done": "Planlagt vedligeholdelse {at}: fuldført ({duration} / {backups} sikkerhedskopier / {deleted} spam slettet).",
+			"finishedWithError": "Planlagt vedligeholdelse {at}: et trin mislykkedes ({duration} / {detail}).",
 			"notReached": "Planlagt vedligeholdelse {at}: sluttede, før den nåede spamoprydningen.",
 			"killedInBackup": "Planlagt vedligeholdelse {at}: afbrudt under sikkerhedskopieringen ({detail}).",
 			"unfinished": "Planlagt vedligeholdelse {at}: nåede spamoprydningen, men der er ingen registrering af, at den blev færdig."

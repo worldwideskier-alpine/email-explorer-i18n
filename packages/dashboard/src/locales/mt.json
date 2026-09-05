@@ -426,6 +426,7 @@
 		"maintenance": {
 			"never": "Il-manutenzjoni skedata qatt ma ġiet imħaddma.",
 			"done": "Manutenzjoni skedata {at}: lesta ({duration} / {backups} backups / {deleted} spam imħassar).",
+			"finishedWithError": "Manutenzjoni skedata {at}: pass falla ({duration} / {detail}).",
 			"notReached": "Manutenzjoni skedata {at}: intemmet qabel ma waslet għat-tindif tal-ispam.",
 			"killedInBackup": "Manutenzjoni skedata {at}: waqfet waqt il-backups ({detail}).",
 			"unfinished": "Manutenzjoni skedata {at}: waslet għat-tindif tal-ispam, imma m'hemmx rekord li ntemmet."

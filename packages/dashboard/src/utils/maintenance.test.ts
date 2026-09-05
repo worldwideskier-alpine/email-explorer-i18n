@@ -3,6 +3,8 @@ import {
 	type MaintenanceRecord,
 	maintenanceDeleted,
 	maintenanceDuration,
+	maintenanceErrorDetail,
+	maintenanceFinishedCleanly,
 	maintenanceStoppedDetail,
 	maintenanceStoppedKey,
 } from "./maintenance";
@@ -170,21 +172,122 @@ describe("how long the run took", () => {
 
 	// A run with no end has no duration, and that is the case the line above
 	// it is for -- saying "0s" there would read as a run that finished at once.
-	it("says nothing about a run that did not finish", () => {
-		expect(maintenanceDuration(run())).toBe("");
-		expect(maintenanceDuration(null)).toBe("");
+	/**
+	 * A dash, not an empty string. The sentence has a slot for this and a
+	 * separator after it, so nothing renders as "finished ( / 2 backed up ...)"
+	 * -- in all 73 of them.
+	 */
+	it("says a dash about a run it cannot time", () => {
+		expect(maintenanceDuration(run())).toBe("—");
+		expect(maintenanceDuration(null)).toBe("—");
 	});
 
 	// Clocks are not ours and a record is not ours to trust.
-	it("says nothing when the record makes no sense", () => {
+	it("says a dash when the record makes no sense", () => {
 		expect(
 			maintenanceDuration({
 				startedAt: "2026-09-04T18:08:52.622Z",
 				finishedAt: "2026-09-04T18:00:07.422Z",
 			}),
-		).toBe("");
+		).toBe("—");
 		expect(
 			maintenanceDuration({ startedAt: "not a date", finishedAt: "nor this" }),
-		).toBe("");
+		).toBe("—");
+	});
+});
+
+/**
+ * A run that reached its end with a pass that threw.
+ *
+ * `finishedAt` was the whole test for "it went well", and it is set on the
+ * failure paths too. The spam purge sets it explicitly before rethrowing
+ * (scheduled-run.ts:99-109, and maintenance-record.test.ts has asserted that
+ * exact record since before anyone looked at what it rendered as); the backup
+ * pass sets its own `error` and lets the run carry on, so the purge sets it a
+ * moment later.
+ *
+ * Either way the screen said, in calm grey, "finished (... / 0 spam deleted)"
+ * about a night the purge had crashed -- and the recorded `error` was shown
+ * nowhere at all. That is the exact failure this screen exists to prevent.
+ */
+describe("a run that ended with a pass that failed", () => {
+	const purgeThrew = run({
+		finishedAt: "2026-09-04T18:08:52.622Z",
+		backups: { finishedAt: "2026-09-04T18:08:49.887Z", ran: 2 },
+		spamPurge: {
+			finishedAt: "2026-09-04T18:08:52.622Z",
+			ran: 0,
+			error: "bucket unavailable",
+		},
+	});
+
+	// The one the reviews found.
+	it("is not reported as simply finished", () => {
+		expect(maintenanceFinishedCleanly(purgeThrew)).toBe(false);
+		expect(maintenanceStoppedKey(purgeThrew)).toBe(
+			"root.maintenance.finishedWithError",
+		);
+		expect(maintenanceStoppedDetail(purgeThrew)).toBe(
+			"spamPurge: bucket unavailable",
+		);
+	});
+
+	/**
+	 * And the half neither review mentioned: the backup pass records its error
+	 * and does *not* set `finishedAt` -- it carries on to the purge, which
+	 * sets it. So a failed backup night reached the same calm sentence, as
+	 * "finished, 0 backed up".
+	 */
+	it("is not reported as finished when it was the backups that failed", () => {
+		const backupThrew = run({
+			finishedAt: "2026-09-04T18:08:52.622Z",
+			backups: {
+				finishedAt: "2026-09-04T18:00:20.000Z",
+				ran: 0,
+				error: "bucket unavailable",
+			},
+			spamPurge: { finishedAt: "2026-09-04T18:08:52.622Z", ran: 2, deleted: 5 },
+		});
+
+		expect(maintenanceFinishedCleanly(backupThrew)).toBe(false);
+		expect(maintenanceStoppedDetail(backupThrew)).toBe(
+			"backups: bucket unavailable",
+		);
+	});
+
+	// Both, which is possible and must not lose one of them.
+	it("names both when both failed", () => {
+		expect(
+			maintenanceErrorDetail(
+				run({
+					backups: { finishedAt: "x", ran: 0, error: "one" },
+					spamPurge: { finishedAt: "y", ran: 0, error: "two" },
+				}),
+			),
+		).toBe("backups: one · spamPurge: two");
+	});
+
+	/**
+	 * The error outranks "it did not reach the purge": a run that threw *in*
+	 * the purge has a `spamPurge` as well, and would otherwise be described as
+	 * one that merely never got there.
+	 */
+	it("outranks the sentence for a run that stopped", () => {
+		expect(maintenanceStoppedKey(purgeThrew)).not.toBe(
+			"root.maintenance.unfinished",
+		);
+	});
+
+	// And a clean run is still clean, on all three of the things it decides.
+	it("leaves a run that worked alone", () => {
+		const fine = run({
+			finishedAt: "2026-09-04T18:08:52.622Z",
+			backups: { finishedAt: "2026-09-04T18:08:49.887Z", ran: 2 },
+			spamPurge: { finishedAt: "2026-09-04T18:08:52.622Z", ran: 2, deleted: 5 },
+		});
+
+		expect(maintenanceFinishedCleanly(fine)).toBe(true);
+		expect(maintenanceErrorDetail(fine)).toBe("");
+		expect(maintenanceDeleted(fine)).toBe(5);
 	});
 });

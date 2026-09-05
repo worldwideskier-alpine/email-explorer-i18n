@@ -426,6 +426,7 @@
 		"maintenance": {
 			"never": "El manteniment programat encara no s'ha executat mai.",
 			"done": "Manteniment programat {at}: finalitzat ({duration} / {backups} còpies / {deleted} correus brossa suprimits).",
+			"finishedWithError": "Manteniment programat {at}: una fase ha fallat ({duration} / {detail}).",
 			"notReached": "Manteniment programat {at}: ha acabat abans d'arribar a la neteja de correu brossa.",
 			"killedInBackup": "Manteniment programat {at}: s'ha interromput durant les còpies de seguretat ({detail}).",
 			"unfinished": "Manteniment programat {at}: ha arribat a la neteja de correu brossa, però no hi ha registre que finalitzés."

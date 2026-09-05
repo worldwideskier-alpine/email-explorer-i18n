@@ -28,7 +28,10 @@
         <p v-if="!maintenance" class="text-gray-500 dark:text-gray-400">
           {{ t("root.maintenance.never") }}
         </p>
-        <p v-else-if="maintenance.finishedAt" class="text-gray-500 dark:text-gray-400">
+        <!-- `finishedAt` alone is not "it went well": it is set on the failure
+             paths too, so a night the purge crashed rendered as this calm grey
+             line claiming 0 messages deleted. See maintenanceFinishedCleanly. -->
+        <p v-else-if="finishedCleanly" class="text-gray-500 dark:text-gray-400">
           {{ t("root.maintenance.done", {
             at: formatFullDate(maintenance.startedAt),
             duration: finishedDuration,
@@ -39,6 +42,7 @@
         <p v-else class="text-amber-700 dark:text-amber-400 font-semibold break-words">
           {{ t(stoppedKey, {
             at: formatFullDate(maintenance.startedAt),
+            duration: finishedDuration,
             detail: stoppedDetail,
           }) }}
         </p>
@@ -162,6 +166,7 @@ import {
 	type MaintenanceRecord,
 	maintenanceDeleted,
 	maintenanceDuration,
+	maintenanceFinishedCleanly,
 	maintenanceStoppedDetail,
 	maintenanceStoppedKey,
 } from "@/utils/maintenance";
@@ -201,6 +206,9 @@ const maintenanceLoading = ref(true);
  * backups" is a different problem from "it reached the purge", and the run
  * itself is the only place either can be seen.
  */
+const finishedCleanly = computed(() =>
+	maintenanceFinishedCleanly(maintenance.value),
+);
 const stoppedKey = computed(() => maintenanceStoppedKey(maintenance.value));
 
 // What the purge removed, and how long the whole run took. The first used to

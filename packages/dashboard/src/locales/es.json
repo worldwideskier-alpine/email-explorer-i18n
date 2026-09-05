@@ -426,6 +426,7 @@
 		"maintenance": {
 			"never": "El mantenimiento programado no se ha ejecutado nunca.",
 			"done": "Mantenimiento programado {at}: finalizado ({duration} / {backups} copias / {deleted} correos no deseados eliminados).",
+			"finishedWithError": "Mantenimiento programado {at}: una fase ha fallado ({duration} / {detail}).",
 			"notReached": "Mantenimiento programado {at}: terminó antes de llegar a la limpieza de spam.",
 			"killedInBackup": "Mantenimiento programado {at}: se interrumpió durante las copias de seguridad ({detail}).",
 			"unfinished": "Mantenimiento programado {at}: llegó a la limpieza de spam, pero no consta que finalizara."
