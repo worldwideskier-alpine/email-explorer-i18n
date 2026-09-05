@@ -426,6 +426,7 @@
 		"maintenance": {
 			"never": "定期メンテナンスはまだ一度も実行されていません。",
 			"done": "定期メンテナンス {at}：完了（{duration} ／ バックアップ {backups} 件 ／ 迷惑メール {deleted} 通を削除）。",
+			"finishedWithError": "定期メンテナンス {at}：工程が失敗しました（{duration} ／ {detail}）。",
 			"notReached": "定期メンテナンス {at}：迷惑メール削除に到達しないまま終わっています。",
 			"killedInBackup": "定期メンテナンス {at}：バックアップの途中で打ち切られています（{detail}）。",
 			"unfinished": "定期メンテナンス {at}：迷惑メール削除まで進みましたが、完了の記録がありません。"

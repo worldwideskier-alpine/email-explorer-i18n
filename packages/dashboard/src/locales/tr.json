@@ -426,6 +426,7 @@
 		"maintenance": {
 			"never": "Zamanlanmış bakım henüz hiç çalışmadı.",
 			"done": "Zamanlanmış bakım {at}: tamamlandı ({duration} / {backups} yedek / {deleted} istenmeyen posta silindi).",
+			"finishedWithError": "Zamanlanmış bakım {at}: bir aşama başarısız oldu ({duration} / {detail}).",
 			"notReached": "Zamanlanmış bakım {at}: istenmeyen posta temizliğine ulaşmadan sona erdi.",
 			"killedInBackup": "Zamanlanmış bakım {at}: yedekleme sırasında yarıda kesildi ({detail}).",
 			"unfinished": "Zamanlanmış bakım {at}: istenmeyen posta temizliğine ulaştı, ancak tamamlandığına dair kayıt yok."

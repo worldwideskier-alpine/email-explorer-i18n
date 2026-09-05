@@ -426,6 +426,7 @@
 		"maintenance": {
 			"never": "Mentenanța programată nu a rulat niciodată.",
 			"done": "Mentenanță programată {at}: finalizată ({duration} / {backups} copii de rezervă / {deleted} spam șterse).",
+			"finishedWithError": "Mentenanță programată {at}: o etapă a eșuat ({duration} / {detail}).",
 			"notReached": "Mentenanță programată {at}: s-a încheiat înainte de a ajunge la curățarea spamului.",
 			"killedInBackup": "Mentenanță programată {at}: a fost întreruptă în timpul copiilor de rezervă ({detail}).",
 			"unfinished": "Mentenanță programată {at}: a ajuns la curățarea spamului, dar nu există nicio consemnare că s-ar fi încheiat."

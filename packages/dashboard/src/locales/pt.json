@@ -426,6 +426,7 @@
 		"maintenance": {
 			"never": "A manutenção agendada nunca foi executada.",
 			"done": "Manutenção agendada {at}: concluída ({duration} / {backups} backups / {deleted} spams excluídos).",
+			"finishedWithError": "Manutenção agendada {at}: uma etapa falhou ({duration} / {detail}).",
 			"notReached": "Manutenção agendada {at}: terminou antes de chegar à limpeza de spam.",
 			"killedInBackup": "Manutenção agendada {at}: foi interrompida durante os backups ({detail}).",
 			"unfinished": "Manutenção agendada {at}: chegou à limpeza de spam, mas não há registo de que tenha terminado."

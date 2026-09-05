@@ -23,9 +23,55 @@ export interface MaintenanceRecord {
 	 * field, so it is absent on exactly the record that motivated it.
 	 */
 	backupProgress?: MaintenanceProgress;
-	backups?: { finishedAt: string; ran: number };
+	/** `error` is set when the pass threw instead of returning. */
+	backups?: { finishedAt: string; ran: number; error?: string };
 	/** `ran` counts mailboxes; `deleted` counts messages. See below. */
-	spamPurge?: { finishedAt: string; ran: number; deleted?: number };
+	spamPurge?: {
+		finishedAt: string;
+		ran: number;
+		deleted?: number;
+		error?: string;
+	};
+}
+
+/**
+ * What went wrong in a run that nevertheless reached its end.
+ *
+ * A pass that throws is not the same as an invocation that is cut off: the run
+ * carries on, records the error, and sets `finishedAt`. The spam purge does it
+ * explicitly before rethrowing (scheduled-run.ts), and the backup pass by
+ * simply continuing to the purge, which then sets it.
+ *
+ * Either way the screen saw `finishedAt` and said "finished" in calm grey --
+ * about a night when the purge had crashed and deleted nothing, while the
+ * recorded `error` was shown nowhere and was not even in this file's types.
+ * That is the failure this whole screen exists to prevent, on the screen
+ * itself. `maintenance-record.test.ts` has held the shape of that record since
+ * before anyone looked at what it rendered as.
+ *
+ * Both passes, not just the purge: a backup pass that throws leaves its own
+ * `error` and the run still ends, so it reads as "finished, 0 backed up".
+ */
+export function maintenanceErrorDetail(
+	record: MaintenanceRecord | null | undefined,
+): string {
+	return [
+		record?.backups?.error && `backups: ${record.backups.error}`,
+		record?.spamPurge?.error && `spamPurge: ${record.spamPurge.error}`,
+	]
+		.filter(Boolean)
+		.join(" · ");
+}
+
+/**
+ * Whether the run may be reported as simply done.
+ *
+ * `finishedAt` alone was the test, and it is set on the failure paths too.
+ */
+export function maintenanceFinishedCleanly(
+	record: MaintenanceRecord | null | undefined,
+): boolean {
+	return !!record?.finishedAt && !maintenanceErrorDetail(record);
 }
 
 /**
@@ -59,12 +105,18 @@ export function maintenanceDeleted(
  * numbers and two letters, and rendering a duration properly in 73 languages
  * would be a much larger thing than the value it adds here.
  */
+/** Shown when the record cannot say how long it took. */
+const UNKNOWN_DURATION = "\u2014";
+
 export function maintenanceDuration(
 	record: MaintenanceRecord | null | undefined,
 ): string {
-	if (!record?.finishedAt) return "";
+	// A dash rather than nothing: this fills a slot in a sentence that always
+	// has one, and an empty string leaves the separator around it dangling --
+	// "finished ( / 2 backed up / ...)" -- in all 73 of them.
+	if (!record?.finishedAt) return UNKNOWN_DURATION;
 	const ms = Date.parse(record.finishedAt) - Date.parse(record.startedAt);
-	if (!Number.isFinite(ms) || ms < 0) return "";
+	if (!Number.isFinite(ms) || ms < 0) return UNKNOWN_DURATION;
 
 	const seconds = Math.round(ms / 1000);
 	const minutes = Math.floor(seconds / 60);
@@ -89,6 +141,10 @@ export function maintenanceDuration(
 export function maintenanceStoppedKey(
 	record: MaintenanceRecord | null | undefined,
 ): string {
+	// First, because a run that threw in the purge has a `spamPurge` too, and
+	// would otherwise be reported as one that merely did not finish it.
+	if (maintenanceErrorDetail(record))
+		return "root.maintenance.finishedWithError";
 	if (record?.spamPurge) return "root.maintenance.unfinished";
 	if (record?.backupProgress && !record.backups)
 		return "root.maintenance.killedInBackup";
@@ -106,6 +162,11 @@ export function maintenanceStoppedKey(
 export function maintenanceStoppedDetail(
 	record: MaintenanceRecord | null | undefined,
 ): string {
+	// A run that failed says what failed; one that was cut off says where it
+	// got to. They are the same slot in two different sentences.
+	const failed = maintenanceErrorDetail(record);
+	if (failed) return failed;
+
 	const at = record?.backupProgress;
 	if (!at) return "";
 	return `${at.mailbox} ${at.index}/${at.of} · ${at.messages}`;

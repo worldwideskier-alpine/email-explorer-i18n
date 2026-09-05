@@ -426,6 +426,7 @@
 		"maintenance": {
 			"never": "定期維護未曾執行過。",
 			"done": "定期維護 {at}：完成（{duration} ／ 備份 {backups} 個 ／ 刪咗 {deleted} 封垃圾郵件）。",
+			"finishedWithError": "定期維護 {at}：有一個步驟失敗咗（{duration} ／ {detail}）。",
 			"notReached": "定期維護 {at}：未去到垃圾郵件清理就結束咗。",
 			"killedInBackup": "定期維護 {at}：喺備份途中畀截斷咗（{detail}）。",
 			"unfinished": "定期維護 {at}：去到咗垃圾郵件清理，但冇完成嘅紀錄。"
