@@ -58,11 +58,17 @@ describe("splitting a page into what may be built at once", () => {
 	});
 
 	/**
-	 * And large ones by their size instead. Three at six megabytes apiece is
-	 * over the budget, so they do not go together however few they are.
+	 * And large ones by their size instead. Nine megabytes apiece is twenty-one
+	 * once the base64 copy is counted: one fits the budget and two do not, so
+	 * they go one at a time although the count would allow twelve.
+	 *
+	 * Nine and not fifteen: fifteen is over the budget on its own, which makes
+	 * this the oversized-message case the test below already covers rather
+	 * than the bytes-beating-the-count case it is here for.
 	 */
 	it("splits on the bytes before the count", () => {
-		const page = Array.from({ length: 6 }, (_, n) => mail(15 * MB, `m${n}`));
+		const page = Array.from({ length: 6 }, (_, n) => mail(9 * MB, `m${n}`));
+		expect(renderCost(mail(9 * MB))).toBeLessThan(24 * MB);
 		expect(sizes(renderBatches(page))).toEqual([1, 1, 1, 1, 1, 1]);
 	});
 

@@ -44,10 +44,34 @@ function encodeHeader(value: string): string {
 	return `=?UTF-8?B?${btoa(binary)}?=`;
 }
 
+/**
+ * Base64, wrapped at 76 characters, a line at a time.
+ *
+ * It used to build the whole thing three times over before wrapping it: one
+ * latin1 string as long as the attachment, `btoa` of that, the array `.match`
+ * cut it into, and then the join. With the source and the encoded result on
+ * top, six or seven full copies were live at the peak.
+ *
+ * Nobody had noticed because nothing ever reached here: the attachment read
+ * above asked for a key no writer used, so it always missed and this was
+ * never called with anything. Fixing that key is what made the cost real, and
+ * at the 20 MiB a message may carry it is the isolate's whole budget.
+ *
+ * 57 bytes is 76 characters of base64 exactly, so each line can be encoded on
+ * its own and no line is ever re-cut. What is held is the source and the lines,
+ * not four more copies of it.
+ */
+const BASE64_LINE_BYTES = 57;
+
 function base64Lines(bytes: Uint8Array): string {
-	let binary = "";
-	for (const byte of bytes) binary += String.fromCharCode(byte);
-	return (btoa(binary).match(/.{1,76}/g) ?? []).join("\r\n");
+	const lines: string[] = [];
+	for (let at = 0; at < bytes.length; at += BASE64_LINE_BYTES) {
+		const chunk = bytes.subarray(at, at + BASE64_LINE_BYTES);
+		let binary = "";
+		for (const byte of chunk) binary += String.fromCharCode(byte);
+		lines.push(btoa(binary));
+	}
+	return lines.join("\r\n");
 }
 
 const GT = 0x3e; // ">"
@@ -166,26 +190,39 @@ async function synthesizeMessage(
 		const object = await env.BUCKET.get(
 			`attachments/${email.id}/${attachment.id}/${attachment.filename}`,
 		);
-		parts.push(
-			`--${boundary}`,
-			`Content-Type: ${attachment.mimetype || "application/octet-stream"}`,
-			`Content-Disposition: attachment; filename="${encodeHeader(attachment.filename || attachment.id)}"`,
-		);
+		const named = encodeHeader(attachment.filename || attachment.id);
+		parts.push(`--${boundary}`);
 
-		// And one that is genuinely gone says so in the archive rather than
-		// leaving a message that looks like it never had an attachment.
+		/*
+		 * One that is genuinely gone says so, as a note rather than as a file.
+		 *
+		 * The headers are written here and not before the branch: a part with
+		 * the original `Content-Type` *and* a second one for the note has two,
+		 * and a reader keeps the first. postal-mime does exactly that -- it
+		 * drops the marker and restores `note.bin` as a 36-byte file whose
+		 * contents are the apology. A plausible corrupt file is worse than the
+		 * silence this replaced, so the part is a text note throughout, named
+		 * so that nothing mistakes it for the attachment.
+		 */
 		if (!object) {
 			parts.push(
 				'Content-Type: text/plain; charset="utf-8"',
+				`Content-Disposition: inline; filename="${named}.missing.txt"`,
 				"X-Email-Explorer-Attachment-Missing: 1",
 				"",
-				`[attachment ${attachment.id} could not be read]`,
+				`[attachment ${attachment.id} (${attachment.filename}) could not be read]`,
 			);
 			continue;
 		}
 
 		const bytes = new Uint8Array(await object.arrayBuffer());
-		parts.push("Content-Transfer-Encoding: base64", "", base64Lines(bytes));
+		parts.push(
+			`Content-Type: ${attachment.mimetype || "application/octet-stream"}`,
+			`Content-Disposition: attachment; filename="${named}"`,
+			"Content-Transfer-Encoding: base64",
+			"",
+			base64Lines(bytes),
+		);
 	}
 	parts.push(`--${boundary}--`);
 

@@ -91,11 +91,20 @@ const RENDER_CONCURRENCY = 12;
  * the invocation is killed with nothing recorded, which is the exact fault
  * this file has spent three commits chasing.
  *
- * Twenty-four megabytes of *estimated source*, which is not the same as
- * twenty-four megabytes held: each render also keeps the escaped copy and the
- * joined copy, so the isolate sees something nearer four times the attachment
- * bytes underneath. Against a 128 MiB isolate that leaves room to spare, and
- * the room is the point -- the number below is not a measurement of the limit.
+ * Twenty-four megabytes of *estimated source*, which is well short of what is
+ * held. Counting the copies the render actually makes -- the fetched bytes,
+ * the base64 lines, the joined parts, the joined message, the encoded bytes,
+ * the escaped copy and the concatenation -- it is nearer six times the
+ * attachment bytes, not the four an earlier draft of this comment claimed.
+ * Add the part buffer and the batch's other renders on top.
+ *
+ * So the headroom against a 128 MiB isolate is real but narrower than the
+ * ratio suggests, and the number below is a budget rather than a measurement.
+ * The case it cannot make safe on its own is a single message near the 20 MiB
+ * a message may carry: renderBatches gives it a batch of its own, and that is
+ * all a batching rule can do about one message. What made that affordable is
+ * base64Lines no longer building the whole encoding three times over; see
+ * mbox.ts.
  *
  * Eight was the first choice and was too tight to do its job. One message with
  * three and a half megabytes of attachments already exceeded the whole budget,

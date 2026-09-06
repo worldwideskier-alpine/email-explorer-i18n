@@ -55,12 +55,18 @@ export async function ingestEmailIntoMailbox(
 	if (parsedEmail.attachments) {
 		for (const att of parsedEmail.attachments) {
 			const attachmentId = crypto.randomUUID();
-			const attKey = `attachments/${messageId}/${attachmentId}/${att.filename}`;
+			// One name for the key and the row. They were `att.filename` and
+			// `att.filename || "untitled"`, so an attachment that arrived
+			// without a name was stored under ".../undefined" and looked for
+			// under ".../untitled" -- present in the bucket and unreadable by
+			// everything that goes through the row, the archive included.
+			const filename = att.filename || "untitled";
+			const attKey = `attachments/${messageId}/${attachmentId}/${filename}`;
 			await env.BUCKET.put(attKey, att.content);
 			attachmentData.push({
 				id: attachmentId,
 				email_id: messageId,
-				filename: att.filename || "untitled",
+				filename,
 				mimetype: att.mimeType,
 				size:
 					typeof att.content === "string"
