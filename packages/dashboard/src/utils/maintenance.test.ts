@@ -124,7 +124,9 @@ describe("how far it got", () => {
 		const { at, ...withoutAt } = progress;
 		expect(
 			maintenanceStoppedDetail(
-				run({ backupProgress: withoutAt as typeof progress }),
+				// No cast: `at` is optional on the type now, which is what the
+				// code has always assumed. The cast was the type being wrong.
+				run({ backupProgress: withoutAt }),
 			),
 		).toBe("info@example.test 1/2 · 1250");
 		expect(

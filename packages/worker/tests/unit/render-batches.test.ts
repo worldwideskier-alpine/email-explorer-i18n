@@ -38,6 +38,25 @@ describe("what a message costs before it is rendered", () => {
 		expect(renderCost(mail(3 * MB))).toBeGreaterThan(4 * MB);
 	});
 
+	/**
+	 * A body is measured in bytes, not in the units a string is counted in.
+	 *
+	 * `String.length` is UTF-16 code units. Every character of a Japanese body
+	 * is one unit and three bytes, so the cost came out at a third of the truth
+	 * and three times as many of them fitted the budget -- on exactly the mail
+	 * this deployment carries.
+	 */
+	it("costs a Japanese body at what it weighs", () => {
+		const ascii = { body: "a".repeat(30_000), attachments: [] };
+		const kanji = { body: "あ".repeat(30_000), attachments: [] };
+
+		expect(renderCost(kanji) - renderCost(ascii)).toBe(60_000);
+		// And a character outside the basic plane is four bytes, not six: it is
+		// two code units, and counting per unit would double it.
+		const emoji = { body: "😀".repeat(10_000), attachments: [] };
+		expect(renderCost(emoji) - 64 * 1024).toBe(40_000);
+	});
+
 	// The row is the customer's data and none of it is ours to trust.
 	it("reads nonsense sizes as nothing rather than as NaN", () => {
 		for (const size of [undefined, null, "", "big", Number.NaN, -1, [], {}]) {

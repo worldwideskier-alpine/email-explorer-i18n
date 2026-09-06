@@ -103,14 +103,28 @@ function quotedFilename(value: string): string {
  * the archive parses back with *no* attachment at all and nothing to say one
  * was lost. Stripping the line endings, as this did, does not touch that.
  *
- * Parameters go with it. A charset on a text attachment is worth less than
- * being certain the part is a leaf, and the bytes are base64 either way.
+ * Every parameter but `charset` goes with it. Dropping that one too was the
+ * first attempt and it destroys mail this deployment actually carries: a
+ * `text/plain; charset=Shift_JIS` attachment archived without its charset is
+ * read back as UTF-8, and every byte of it becomes U+FFFD. The parameter that
+ * makes a part a container is `boundary`; `charset` decides how bytes already
+ * inside a leaf are read, and losing it is the same class of loss this file
+ * exists to prevent.
  */
 export function safeMediaType(value: string | null | undefined): string {
-	const bare = (value ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
+	const [rawType, ...params] = (value ?? "").split(";");
+	const bare = (rawType ?? "").trim().toLowerCase();
 	const token = /^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/;
 	if (!token.test(bare) || bare.startsWith("multipart/")) {
 		return "application/octet-stream";
+	}
+
+	for (const param of params) {
+		// A charset is a token: letters, digits and a little punctuation. Kept
+		// as it was written, since charset names are matched case-insensitively
+		// and Shift_JIS is not ours to rewrite.
+		const found = /^\s*charset\s*=\s*"?([A-Za-z0-9._:+-]+)"?\s*$/.exec(param);
+		if (found) return `${bare}; charset="${found[1]}"`;
 	}
 	return bare;
 }

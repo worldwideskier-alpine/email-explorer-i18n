@@ -11,7 +11,12 @@ export interface MaintenanceProgress {
 	index: number;
 	of: number;
 	messages: number;
-	at: string;
+	/**
+	 * Absent on a record written before it existed. The code has handled
+	 * that from the start; the type said otherwise, so any future reach
+	 * into it type-checks and throws on exactly those records.
+	 */
+	at?: string;
 }
 
 export interface MaintenanceRecord {

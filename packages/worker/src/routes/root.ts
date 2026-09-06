@@ -97,7 +97,9 @@ const MaintenanceProgressSchema = z.object({
 	index: z.number(),
 	of: z.number(),
 	messages: z.number(),
-	at: z.string(),
+	// Absent on a record written before this field existed; see
+	// maintenance-record.ts.
+	at: z.string().optional(),
 });
 
 const MaintenanceRecordSchema = z.object({

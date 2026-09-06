@@ -357,6 +357,34 @@ describe("archiving a message that has no raw form", () => {
 		expect(Array.from(back)).toEqual(Array.from(attached));
 	});
 
+	/**
+	 * And a charset survives, because dropping it destroys the file.
+	 *
+	 * Shift_JIS is ordinary mail here. Archived as `text/plain` with no charset
+	 * it is read back as UTF-8 and every byte becomes U+FFFD -- the same loss,
+	 * by a different route, as the one this file's history is about. `boundary`
+	 * is the parameter that makes a part a container; `charset` only says how
+	 * the bytes inside a leaf are read.
+	 */
+	it("keeps the charset of a text attachment", async () => {
+		const id = `sent-${crypto.randomUUID()}`;
+		// Two Shift_JIS bytes, which are not valid UTF-8.
+		const sjis = new Uint8Array([0x82, 0xa0]);
+		await env.BUCKET.put(`attachments/${id}/att-1/note.txt`, sjis);
+
+		const one = { ...email(id) };
+		one.attachments = [
+			{
+				...one.attachments[0],
+				filename: "note.txt",
+				mimetype: "text/plain; charset=Shift_JIS",
+			},
+		];
+		const entry = text(await renderMboxEntry(env, one as never, "Sent"));
+
+		expect(entry).toContain('Content-Type: text/plain; charset="Shift_JIS"');
+	});
+
 	// And a type that is simply a type is kept, minus its parameters.
 	it("keeps an ordinary content type", async () => {
 		const id = `sent-${crypto.randomUUID()}`;
