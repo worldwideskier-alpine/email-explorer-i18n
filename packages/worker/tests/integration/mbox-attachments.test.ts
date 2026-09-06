@@ -404,6 +404,46 @@ describe("archiving a message that has no raw form", () => {
 		expect(parsed.attachments[0]?.contentId).toBe("<hero@example.test>");
 	});
 
+	/**
+	 * An inline *text* attachment stays an attachment.
+	 *
+	 * Writing the stored `inline` for every part was the fix for cid: images,
+	 * and it cost text ones their existence: a reader returns a text part as an
+	 * attachment only when it is marked `attachment`, and folds an inline one
+	 * into the body. Measured on this parser: `attachments: 0`, with the file's
+	 * contents spliced into both `text` and `html`. In the file that is the
+	 * last copy, and reachable from the send API, which takes any `type`
+	 * alongside `disposition: "inline"`.
+	 */
+	it("keeps an inline text attachment as an attachment", async () => {
+		for (const mimetype of ["text/plain", "text/html", "message/rfc822"]) {
+			const id = `sent-${crypto.randomUUID()}`;
+			await env.BUCKET.put(`attachments/${id}/att-1/notes.txt`, attached);
+
+			const one = { ...email(id) };
+			one.attachments = [
+				{
+					...one.attachments[0],
+					filename: "notes.txt",
+					mimetype,
+					content_id: "<x@example.test>",
+					disposition: "inline",
+				},
+			];
+			const entry = text(await renderMboxEntry(env, one as never, "Sent"));
+			const parsed = await PostalMime.parse(
+				entry.slice(entry.indexOf("\r\n") + 2),
+			);
+
+			expect(parsed.attachments.length, mimetype).toBe(1);
+			expect(parsed.attachments[0]?.filename, mimetype).toBe("notes.txt");
+			const back = new Uint8Array(
+				parsed.attachments[0]?.content as ArrayBuffer,
+			);
+			expect(Array.from(back), mimetype).toEqual(Array.from(attached));
+		}
+	});
+
 	// A message with a raw form still comes from the raw form, untouched.
 	it("prefers the raw message when there is one", async () => {
 		const id = `recv-${crypto.randomUUID()}`;
