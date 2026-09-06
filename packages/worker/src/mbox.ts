@@ -150,17 +150,42 @@ async function synthesizeMessage(
 		body,
 	];
 	for (const attachment of attachments) {
-		const object = await env.BUCKET.get(`attachments/${attachment.id}`);
-		if (!object) continue;
-		const bytes = new Uint8Array(await object.arrayBuffer());
+		/*
+		 * The key every writer uses: `attachments/{emailId}/{attachmentId}/
+		 * {filename}` (index.ts, reply-forward.ts, email-ingest.ts, and the
+		 * deletes in spam-purge-run.ts and mailbox-destroy.ts). This read asked
+		 * for `attachments/{attachmentId}` and therefore always missed, and the
+		 * miss was a `continue`.
+		 *
+		 * Only messages with no raw form reach here, which is every message
+		 * this fork composed or forwarded. So a sent message with an attachment
+		 * was archived without it, in a file nobody opens until the message is
+		 * gone and the archive is the only copy left. Silently, which is the
+		 * whole of what made it survive.
+		 */
+		const object = await env.BUCKET.get(
+			`attachments/${email.id}/${attachment.id}/${attachment.filename}`,
+		);
 		parts.push(
 			`--${boundary}`,
 			`Content-Type: ${attachment.mimetype || "application/octet-stream"}`,
 			`Content-Disposition: attachment; filename="${encodeHeader(attachment.filename || attachment.id)}"`,
-			"Content-Transfer-Encoding: base64",
-			"",
-			base64Lines(bytes),
 		);
+
+		// And one that is genuinely gone says so in the archive rather than
+		// leaving a message that looks like it never had an attachment.
+		if (!object) {
+			parts.push(
+				'Content-Type: text/plain; charset="utf-8"',
+				"X-Email-Explorer-Attachment-Missing: 1",
+				"",
+				`[attachment ${attachment.id} could not be read]`,
+			);
+			continue;
+		}
+
+		const bytes = new Uint8Array(await object.arrayBuffer());
+		parts.push("Content-Transfer-Encoding: base64", "", base64Lines(bytes));
 	}
 	parts.push(`--${boundary}--`);
 
