@@ -62,15 +62,15 @@ describe("splitting a page into what may be built at once", () => {
 	 * over the budget, so they do not go together however few they are.
 	 */
 	it("splits on the bytes before the count", () => {
-		const page = Array.from({ length: 6 }, (_, n) => mail(6 * MB, `m${n}`));
+		const page = Array.from({ length: 6 }, (_, n) => mail(15 * MB, `m${n}`));
 		expect(sizes(renderBatches(page))).toEqual([1, 1, 1, 1, 1, 1]);
 	});
 
 	it("fits what it can inside the budget", () => {
-		const page = Array.from({ length: 6 }, (_, n) => mail(1.5 * MB, `m${n}`));
-		// Three and a half megabytes each once the base64 copy is counted: two
-		// fit in eight, three do not, and the split is on the bytes rather than
-		// on the count of twelve.
+		const page = Array.from({ length: 6 }, (_, n) => mail(5 * MB, `m${n}`));
+		// Just under twelve megabytes each once the base64 copy is counted: two
+		// fit in twenty-four, three do not, and the split is on the bytes rather
+		// than on the count of twelve.
 		expect(sizes(renderBatches(page))).toEqual([2, 2, 2]);
 	});
 

@@ -91,12 +91,25 @@ const RENDER_CONCURRENCY = 12;
  * the invocation is killed with nothing recorded, which is the exact fault
  * this file has spent three commits chasing.
  *
- * Eight megabytes of source, which is a comfortable multiple of ordinary mail
- * and a fraction of what one large message costs. Serial rendering held one
- * message; this holds a few small ones or one big one, and never twelve big
- * ones.
+ * Twenty-four megabytes of *estimated source*, which is not the same as
+ * twenty-four megabytes held: each render also keeps the escaped copy and the
+ * joined copy, so the isolate sees something nearer four times the attachment
+ * bytes underneath. Against a 128 MiB isolate that leaves room to spare, and
+ * the room is the point -- the number below is not a measurement of the limit.
+ *
+ * Eight was the first choice and was too tight to do its job. One message with
+ * three and a half megabytes of attachments already exceeded the whole budget,
+ * so a mailbox of photographs went back to rendering one message at a time --
+ * the serial behaviour, and the 12m30s kill, that the concurrency was added to
+ * remove. A bound that only lets ordinary mail through is a bound on the wrong
+ * mailbox.
+ *
+ * No minimum batch size, though it would keep the concurrency for the largest
+ * mail too: two twenty-megabyte messages forced together are what the byte
+ * bound exists to prevent, and a floor that overrides it is the crash written
+ * a second way.
  */
-const RENDER_BYTES = 8 * 1024 * 1024;
+const RENDER_BYTES = 24 * 1024 * 1024;
 
 /**
  * What an attachment weighs in memory while its message is being built.
@@ -107,8 +120,9 @@ const RENDER_BYTES = 8 * 1024 * 1024;
  * form, so `synthesizeMessage` fetches the attachment *and* base64s it, and
  * holds both: the bytes plus four thirds of them again.
  *
- * Seven thirds is the second of those. An estimate that is only right about
- * the smaller path is not a ceiling, and a ceiling is what this is for.
+ * Seven thirds is the larger of those, so the estimate is not wrong in the
+ * direction that matters. It sizes the *source*, not the peak: the copies each
+ * render makes on top of it are accounted for in the budget below, not here.
  */
 const ATTACHMENT_GROWTH = 7 / 3;
 
