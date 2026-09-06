@@ -412,6 +412,7 @@
 		"deleteAccount": "Padam akaun",
 		"confirmDelete": "Padam {email}? Peti mel, mel dan sandaran mereka turut hilang.",
 		"deleteFailed": "Tidak dapat memadam.",
+		"accountsUnreadable": "Akaun tidak dapat dimuatkan.",
 		"roleAdmin": "Pentadbir",
 		"thisIsYou": "Anda",
 		"confirmDeleteAgain": "Ini tidak boleh dibatalkan. Benar-benar padam segala milik {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Penyelenggaraan berjadual belum pernah dijalankan.",
+			"unreadable": "Rekod penyelenggaraan berjadual terakhir tidak dapat dibaca.",
 			"done": "Penyelenggaraan berjadual {at}: selesai ({duration} / {backups} disandarkan / {deleted} spam dipadam).",
 			"finishedWithError": "Penyelenggaraan berjadual {at}: satu peringkat gagal ({duration} / {detail}).",
 			"notReached": "Penyelenggaraan berjadual {at}: berakhir sebelum sampai ke pembersihan spam.",

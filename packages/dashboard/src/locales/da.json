@@ -412,6 +412,7 @@
 		"deleteAccount": "Slet kontoen",
 		"confirmDelete": "Slet {email}? Deres postkasser, post og sikkerhedskopier ryger med.",
 		"deleteFailed": "Kunne ikke slette.",
+		"accountsUnreadable": "Kontiene kunne ikke indlæses.",
 		"roleAdmin": "Administrator",
 		"thisIsYou": "Dig",
 		"confirmDeleteAgain": "Dette kan ikke fortrydes. Skal alt vedrørende {email} virkelig slettes?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Den planlagte vedligeholdelse har aldrig kørt.",
+			"unreadable": "Posten for den seneste planlagte vedligeholdelse kunne ikke læses.",
 			"done": "Planlagt vedligeholdelse {at}: fuldført ({duration} / {backups} sikkerhedskopier / {deleted} spam slettet).",
 			"finishedWithError": "Planlagt vedligeholdelse {at}: et trin mislykkedes ({duration} / {detail}).",
 			"notReached": "Planlagt vedligeholdelse {at}: sluttede, før den nåede spamoprydningen.",

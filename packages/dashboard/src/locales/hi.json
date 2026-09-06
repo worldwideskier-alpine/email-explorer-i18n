@@ -412,6 +412,7 @@
 		"deleteAccount": "खाता हटाएँ",
 		"confirmDelete": "{email} को हटाएँ? उनके मेलबॉक्स, मेल और बैकअप सब चले जाएँगे।",
 		"deleteFailed": "हटाया नहीं जा सका।",
+		"accountsUnreadable": "खाते लोड नहीं किए जा सके।",
 		"roleAdmin": "प्रशासक",
 		"thisIsYou": "आप",
 		"confirmDeleteAgain": "यह वापस नहीं आएगा। वाकई {email} का सब कुछ हटाएँ?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "निर्धारित रखरखाव अभी तक एक बार भी नहीं चला है।",
+			"unreadable": "पिछले निर्धारित रखरखाव का रिकॉर्ड नहीं पढ़ा जा सका।",
 			"done": "निर्धारित रखरखाव {at}: पूर्ण ({duration} / {backups} बैकअप / {deleted} स्पैम हटाए गए)।",
 			"finishedWithError": "निर्धारित रखरखाव {at}: एक चरण विफल रहा ({duration} / {detail})।",
 			"notReached": "निर्धारित रखरखाव {at}: स्पैम सफाई तक पहुँचे बिना ही समाप्त हो गया।",

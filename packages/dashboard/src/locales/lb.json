@@ -412,6 +412,7 @@
 		"deleteAccount": "Kont läschen",
 		"confirmDelete": "{email} läschen? Seng Bréifboîten, Mailen a Sécherheetskopie ginn och ewech.",
 		"deleteFailed": "Konnt net geläscht ginn.",
+		"accountsUnreadable": "D'Konten konnten net gelueden ginn.",
 		"roleAdmin": "Administrateur",
 		"thisIsYou": "Dir",
 		"confirmDeleteAgain": "Dat léisst sech net réckgängeg maachen. Wierklech alles vum {email} läschen?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "De geplangte Ënnerhalt ass nach ni gelaf.",
+			"unreadable": "Den Andrag vun der leschter geplangter Maintenance konnt net gelies ginn.",
 			"done": "Geplangten Ënnerhalt {at}: ofgeschloss ({duration} / {backups} Sécherungen / {deleted} Spam geläscht).",
 			"finishedWithError": "Geplangten Ënnerhalt {at}: e Schrëtt ass feelgeschloen ({duration} / {detail}).",
 			"notReached": "Geplangten Ënnerhalt {at}: en ass eriwwer, ier en bei d'Spam-Läschung koum.",

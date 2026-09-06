@@ -412,6 +412,7 @@
 		"deleteAccount": "Konto löschen",
 		"confirmDelete": "{email} löschen? Postfächer, E-Mails und Sicherungen gehen mit.",
 		"deleteFailed": "Löschen nicht möglich.",
+		"accountsUnreadable": "Die Konten konnten nicht geladen werden.",
 		"roleAdmin": "Administrator",
 		"thisIsYou": "Sie",
 		"confirmDeleteAgain": "Das lässt sich nicht rückgängig machen. Wirklich alles von {email} löschen?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Die geplante Wartung ist noch nie gelaufen.",
+			"unreadable": "Der Eintrag zur letzten geplanten Wartung konnte nicht gelesen werden.",
 			"done": "Geplante Wartung {at}: abgeschlossen ({duration} / {backups} Sicherungen / {deleted} Spam gelöscht).",
 			"finishedWithError": "Geplante Wartung {at}: ein Durchlauf ist fehlgeschlagen ({duration} / {detail}).",
 			"notReached": "Geplante Wartung {at}: endete, bevor sie die Spam-Löschung erreichte.",

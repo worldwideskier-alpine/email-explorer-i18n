@@ -412,6 +412,7 @@
 		"deleteAccount": "Fshi llogarinë",
 		"confirmDelete": "Të fshihet {email}? Kutitë, posta dhe kopjet e tyre shkojnë bashkë me të.",
 		"deleteFailed": "Nuk u fshi dot.",
+		"accountsUnreadable": "Llogaritë nuk mund të ngarkoheshin.",
 		"roleAdmin": "Administrator",
 		"thisIsYou": "Ju",
 		"confirmDeleteAgain": "Kjo nuk kthehet. Vërtet të fshihet gjithçka e {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Mirëmbajtja e planifikuar nuk është kryer asnjëherë.",
+			"unreadable": "Regjistrimi i mirëmbajtjes së fundit të planifikuar nuk mund të lexohej.",
 			"done": "Mirëmbajtja e planifikuar {at}: përfundoi ({duration} / {backups} kopje rezervë / {deleted} mesazhe të padëshiruara u fshinë).",
 			"finishedWithError": "Mirëmbajtja e planifikuar {at}: një hap dështoi ({duration} / {detail}).",
 			"notReached": "Mirëmbajtje e planifikuar {at}: përfundoi para se të arrinte te pastrimi i spam-it.",

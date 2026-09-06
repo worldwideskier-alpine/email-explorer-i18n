@@ -412,6 +412,7 @@
 		"deleteAccount": "Eliminar la cuenta",
 		"confirmDelete": "¿Eliminar {email}? Sus buzones, su correo y sus copias se van con ella.",
 		"deleteFailed": "No se pudo eliminar.",
+		"accountsUnreadable": "No se han podido cargar las cuentas.",
 		"roleAdmin": "Administrador",
 		"thisIsYou": "Tú",
 		"confirmDeleteAgain": "Esto no se puede deshacer. ¿Eliminar de verdad todo lo de {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "El mantenimiento programado no se ha ejecutado nunca.",
+			"unreadable": "No se ha podido leer el registro del último mantenimiento programado.",
 			"done": "Mantenimiento programado {at}: finalizado ({duration} / {backups} copias / {deleted} correos no deseados eliminados).",
 			"finishedWithError": "Mantenimiento programado {at}: una fase ha fallado ({duration} / {detail}).",
 			"notReached": "Mantenimiento programado {at}: terminó antes de llegar a la limpieza de spam.",

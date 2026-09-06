@@ -412,6 +412,7 @@
 		"deleteAccount": "Usuń konto",
 		"confirmDelete": "Usunąć {email}? Skrzynki, poczta i kopie zapasowe odchodzą razem z nim.",
 		"deleteFailed": "Nie udało się usunąć.",
+		"accountsUnreadable": "Nie udało się wczytać kont.",
 		"roleAdmin": "Administrator",
 		"thisIsYou": "Ty",
 		"confirmDeleteAgain": "Tego nie da się cofnąć. Naprawdę usunąć wszystko, co należy do {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Zaplanowana konserwacja nigdy jeszcze nie została wykonana.",
+			"unreadable": "Nie udało się odczytać zapisu ostatniej zaplanowanej konserwacji.",
 			"done": "Zaplanowana konserwacja {at}: zakończona ({duration} / {backups} kopii zapasowych / usunięto {deleted} spamu).",
 			"finishedWithError": "Zaplanowana konserwacja {at}: jeden etap się nie powiódł ({duration} / {detail}).",
 			"notReached": "Zaplanowana konserwacja {at}: zakończyła się, zanim dotarła do czyszczenia spamu.",

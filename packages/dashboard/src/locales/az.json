@@ -412,6 +412,7 @@
 		"deleteAccount": "Hesabı sil",
 		"confirmDelete": "{email} silinsin? Poçt qutuları, məktublar və ehtiyat nüsxələr də gedəcək.",
 		"deleteFailed": "Silmək mümkün olmadı.",
+		"accountsUnreadable": "Hesabları yükləmək mümkün olmadı.",
 		"roleAdmin": "Administrator",
 		"thisIsYou": "Siz",
 		"confirmDeleteAgain": "Bunu geri qaytarmaq olmaz. {email} ilə bağlı hər şey doğrudan silinsin?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Planlı texniki iş hələ heç vaxt icra olunmayıb.",
+			"unreadable": "Son planlı baxımın qeydini oxumaq mümkün olmadı.",
 			"done": "Planlı baxım {at}: bitdi ({duration} / {backups} ehtiyat nüsxə / {deleted} spam silindi).",
 			"finishedWithError": "Planlı baxım {at}: mərhələlərdən biri uğursuz oldu ({duration} / {detail}).",
 			"notReached": "Planlı texniki iş {at}: spam təmizlənməsinə çatmadan bitib.",

@@ -412,6 +412,7 @@
 		"deleteAccount": "Kustuta konto",
 		"confirmDelete": "Kustutada {email}? Nende postkastid, kirjad ja varukoopiad lähevad kaasa.",
 		"deleteFailed": "Kustutamine ebaõnnestus.",
+		"accountsUnreadable": "Kontosid ei õnnestunud laadida.",
 		"roleAdmin": "Administraator",
 		"thisIsYou": "Teie",
 		"confirmDeleteAgain": "Seda ei saa tagasi võtta. Kas kustutada tõesti kõik, mis kuulub kontole {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Plaanilist hooldust pole veel kordagi tehtud.",
+			"unreadable": "Viimase plaanilise hoolduse kirjet ei õnnestunud lugeda.",
 			"done": "Plaanitud hooldus {at}: lõpetatud ({duration} / {backups} varukoopiat / {deleted} rämpsposti kustutatud).",
 			"finishedWithError": "Plaanitud hooldus {at}: üks etapp ebaõnnestus ({duration} / {detail}).",
 			"notReached": "Plaaniline hooldus {at}: lõppes enne rämpsposti puhastuseni jõudmist.",

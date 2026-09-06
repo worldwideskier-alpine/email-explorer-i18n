@@ -412,6 +412,7 @@
 		"deleteAccount": "حذف الحساب",
 		"confirmDelete": "حذف {email}؟ ستُحذف صناديق بريدهم ورسائلهم ونسخهم الاحتياطية كلها.",
 		"deleteFailed": "تعذّر الحذف.",
+		"accountsUnreadable": "تعذّر تحميل الحسابات.",
 		"roleAdmin": "مسؤول",
 		"thisIsYou": "أنت",
 		"confirmDeleteAgain": "لا يمكن التراجع عن هذا. هل تريد فعلاً حذف كل ما يخص {email}؟",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "لم تُنفَّذ الصيانة المجدولة بعد.",
+			"unreadable": "تعذّرت قراءة سجل آخر صيانة مجدولة.",
 			"done": "الصيانة المجدولة {at}: انتهت ({duration} / نسخ احتياطي {backups} / حذف {deleted} رسالة غير مرغوبة).",
 			"finishedWithError": "الصيانة المجدولة {at}: فشلت إحدى المراحل ({duration} / {detail}).",
 			"notReached": "الصيانة المجدولة {at}: انتهت قبل الوصول إلى تنظيف البريد المزعج.",

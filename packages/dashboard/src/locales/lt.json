@@ -412,6 +412,7 @@
 		"deleteAccount": "Ištrinti paskyrą",
 		"confirmDelete": "Ištrinti {email}? Jų pašto dėžutės, laiškai ir atsarginės kopijos dings kartu.",
 		"deleteFailed": "Nepavyko ištrinti.",
+		"accountsUnreadable": "Nepavyko įkelti paskyrų.",
 		"roleAdmin": "Administratorius",
 		"thisIsYou": "Jūs",
 		"confirmDeleteAgain": "To nebeatšauksite. Tikrai ištrinti viską, kas priklauso {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Suplanuota priežiūra dar nė karto nevykdyta.",
+			"unreadable": "Nepavyko perskaityti paskutinės suplanuotos priežiūros įrašo.",
 			"done": "Suplanuota priežiūra {at}: baigta ({duration} / {backups} atsarginės kopijos / ištrinta {deleted} brukalo).",
 			"finishedWithError": "Suplanuota priežiūra {at}: vienas etapas nepavyko ({duration} / {detail}).",
 			"notReached": "Suplanuota priežiūra {at}: baigėsi nepasiekusi šlamšto valymo.",

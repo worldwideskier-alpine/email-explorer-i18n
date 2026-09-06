@@ -412,6 +412,7 @@
 		"deleteAccount": "刪除帳戶",
 		"confirmDelete": "刪除 {email}？佢嘅郵箱、郵件同備份都會一齊冇咗。",
 		"deleteFailed": "刪除唔到。",
+		"accountsUnreadable": "載入唔到帳戶。",
 		"roleAdmin": "管理員",
 		"thisIsYou": "你",
 		"confirmDeleteAgain": "冇得還原。真係要刪除 {email} 嘅所有嘢？",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "定期維護未曾執行過。",
+			"unreadable": "讀唔到最近一次定期維護嘅記錄。",
 			"done": "定期維護 {at}：完成（{duration} ／ 備份 {backups} 個 ／ 刪咗 {deleted} 封垃圾郵件）。",
 			"finishedWithError": "定期維護 {at}：有一個步驟失敗咗（{duration} ／ {detail}）。",
 			"notReached": "定期維護 {at}：未去到垃圾郵件清理就結束咗。",

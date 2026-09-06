@@ -25,7 +25,13 @@
            finish": a pass that never started and a pass that ran and found
            nothing to do leave the same absence on every mailbox. -->
       <div v-if="!maintenanceLoading" class="mb-6 text-sm">
-        <p v-if="!maintenance" class="text-gray-500 dark:text-gray-400">
+        <!-- A request that failed says so. Falling through to "it has never
+             run" would be this screen's own failure mode: a confident
+             sentence about a deployment nobody managed to ask. -->
+        <p v-if="maintenanceUnreadable" class="text-amber-700 dark:text-amber-400 font-semibold">
+          {{ t("root.maintenance.unreadable") }}
+        </p>
+        <p v-else-if="!maintenance" class="text-gray-500 dark:text-gray-400">
           {{ t("root.maintenance.never") }}
         </p>
         <!-- `finishedAt` alone is not "it went well": it is set on the failure
@@ -108,6 +114,9 @@
         </div>
 
         <p v-if="loading" class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ t("admin.users.loadingUsers") }}</p>
+        <!-- Before "no users found", which on this screen is never true: you
+             are signed in as one of them. It was what a failed request said. -->
+        <p v-else-if="accountsUnreadable" class="px-6 py-4 text-sm text-amber-700 dark:text-amber-400 font-semibold">{{ t("root.accountsUnreadable") }}</p>
         <p v-else-if="accounts.length === 0" class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ t("admin.users.empty") }}</p>
 
         <!-- One row per person, not per login. A person is the addresses
@@ -197,6 +206,10 @@ const error = useLocalizedMessage();
 const { formatFullDate } = useDateFormat();
 const maintenance = ref<MaintenanceRecord | null>(null);
 const maintenanceLoading = ref(true);
+// Set when the request failed, which is not the same as there being nothing
+// to report and must not be told as if it were. See load().
+const maintenanceUnreadable = ref(false);
+const accountsUnreadable = ref(false);
 
 // Whether the run may be told as simply done. `finishedAt` alone is not that:
 // it is set on the failure paths too, so a night a pass crashed came out as
@@ -240,15 +253,40 @@ const trailingDetail = computed(() =>
 	maintenanceTrailingDetail(stoppedLine.value, maintenance.value),
 );
 
+/**
+ * Two requests, and neither may answer for the other.
+ *
+ * They used to be two `try`/`finally` blocks with no `catch` between them, so
+ * a rejected account list threw out of here before the second one ran and
+ * left `maintenanceLoading` true forever: the whole maintenance block is
+ * behind `v-if="!maintenanceLoading"`, so the one line that exists to say the
+ * nightly run failed was simply absent, with nothing on the screen to say a
+ * request had failed at all.
+ *
+ * And each failure has to say so rather than fall back to the emptiness it
+ * cannot tell itself from. An unread record is not "it has never run", and an
+ * unread account list is not "no users found" -- on this screen there is
+ * always at least one, so that one is never true. Both were confident
+ * sentences about a deployment nobody had managed to ask.
+ */
 async function load() {
 	loading.value = true;
+	accountsUnreadable.value = false;
 	try {
 		accounts.value = (await api.listAccounts()).data ?? [];
+	} catch {
+		accounts.value = [];
+		accountsUnreadable.value = true;
 	} finally {
 		loading.value = false;
 	}
+
+	maintenanceUnreadable.value = false;
 	try {
 		maintenance.value = (await api.getMaintenance()).data ?? null;
+	} catch {
+		maintenance.value = null;
+		maintenanceUnreadable.value = true;
 	} finally {
 		maintenanceLoading.value = false;
 	}

@@ -412,6 +412,7 @@
 		"deleteAccount": "Hapus akun",
 		"confirmDelete": "Hapus {email}? Kotak surat, surat, dan cadangan mereka ikut hilang.",
 		"deleteFailed": "Tidak dapat menghapus.",
+		"accountsUnreadable": "Akun tidak dapat dimuat.",
 		"roleAdmin": "Administrator",
 		"thisIsYou": "Anda",
 		"confirmDeleteAgain": "Ini tidak bisa dibatalkan. Benar-benar hapus semua milik {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Pemeliharaan terjadwal belum pernah berjalan.",
+			"unreadable": "Catatan pemeliharaan terjadwal terakhir tidak dapat dibaca.",
 			"done": "Pemeliharaan terjadwal {at}: selesai ({duration} / {backups} dicadangkan / {deleted} spam dihapus).",
 			"finishedWithError": "Pemeliharaan terjadwal {at}: satu tahap gagal ({duration} / {detail}).",
 			"notReached": "Pemeliharaan terjadwal {at}: berakhir sebelum sampai ke pembersihan spam.",

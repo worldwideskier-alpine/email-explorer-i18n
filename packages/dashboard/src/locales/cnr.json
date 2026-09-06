@@ -412,6 +412,7 @@
 		"deleteAccount": "Obriši nalog",
 		"confirmDelete": "Obrisati {email}? Njihova sandučad, pošta i rezervne kopije nestaju.",
 		"deleteFailed": "Brisanje nije uspjelo.",
+		"accountsUnreadable": "Nalozi se nijesu mogli učitati.",
 		"roleAdmin": "Administrator",
 		"thisIsYou": "Vi",
 		"confirmDeleteAgain": "Ovo se ne može poništiti. Zaista obrisati sve što pripada {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Planirano održavanje još nije nijednom pokrenuto.",
+			"unreadable": "Zapis o posljednjem zakazanom održavanju nije se mogao pročitati.",
 			"done": "Planirano održavanje {at}: završeno ({duration} / {backups} rezervnih kopija / {deleted} obrisanih neželjenih poruka).",
 			"finishedWithError": "Planirano održavanje {at}: jedan korak nije uspio ({duration} / {detail}).",
 			"notReached": "Planirano održavanje {at}: završilo je prije nego što je stiglo do čišćenja neželjene pošte.",

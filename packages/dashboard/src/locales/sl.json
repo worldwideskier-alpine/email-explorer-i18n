@@ -412,6 +412,7 @@
 		"deleteAccount": "Izbriši račun",
 		"confirmDelete": "Izbrišem {email}? Njihovi predali, pošta in varnostne kopije gredo zraven.",
 		"deleteFailed": "Brisanje ni uspelo.",
+		"accountsUnreadable": "Računov ni bilo mogoče naložiti.",
 		"roleAdmin": "Skrbnik",
 		"thisIsYou": "Vi",
 		"confirmDeleteAgain": "Tega ni mogoče razveljaviti. Res izbrišem vse, kar pripada {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Načrtovano vzdrževanje se še ni nikoli izvedlo.",
+			"unreadable": "Zapisa o zadnjem načrtovanem vzdrževanju ni bilo mogoče prebrati.",
 			"done": "Načrtovano vzdrževanje {at}: končano ({duration} / {backups} varnostnih kopij / {deleted} izbrisanih neželenih sporočil).",
 			"finishedWithError": "Načrtovano vzdrževanje {at}: en korak ni uspel ({duration} / {detail}).",
 			"notReached": "Načrtovano vzdrževanje {at}: končalo se je, preden je prišlo do čiščenja neželene pošte.",

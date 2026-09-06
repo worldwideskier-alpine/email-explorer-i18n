@@ -412,6 +412,7 @@
 		"deleteAccount": "계정 삭제",
 		"confirmDelete": "{email} 을(를) 삭제할까요? 메일함, 메일, 백업까지 모두 사라집니다.",
 		"deleteFailed": "삭제하지 못했습니다.",
+		"accountsUnreadable": "계정을 불러오지 못했습니다.",
 		"roleAdmin": "관리자",
 		"thisIsYou": "나",
 		"confirmDeleteAgain": "되돌릴 수 없습니다. 정말 {email} 의 모든 것을 삭제할까요?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "예약된 유지 관리가 아직 한 번도 실행되지 않았습니다.",
+			"unreadable": "최근 예약 유지 관리 기록을 읽지 못했습니다.",
 			"done": "예약된 유지 관리 {at}: 완료({duration} / 백업 {backups}건 / 스팸 {deleted}통 삭제).",
 			"finishedWithError": "예약된 유지 관리 {at}: 단계 하나가 실패했습니다({duration} / {detail}).",
 			"notReached": "예약된 유지 관리 {at}: 스팸 삭제에 도달하지 못한 채 끝났습니다.",

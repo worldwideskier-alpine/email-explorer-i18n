@@ -412,6 +412,7 @@
 		"deleteAccount": "Suprimeix el compte",
 		"confirmDelete": "Voleu suprimir {email}? Les bústies, el correu i les còpies també desapareixen.",
 		"deleteFailed": "No s'ha pogut suprimir.",
+		"accountsUnreadable": "No s'han pogut carregar els comptes.",
 		"roleAdmin": "Administrador",
 		"thisIsYou": "Vós",
 		"confirmDeleteAgain": "Això no es pot desfer. Voleu suprimir realment tot el de {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "El manteniment programat encara no s'ha executat mai.",
+			"unreadable": "No s'ha pogut llegir el registre de l'últim manteniment programat.",
 			"done": "Manteniment programat {at}: finalitzat ({duration} / {backups} còpies / {deleted} correus brossa suprimits).",
 			"finishedWithError": "Manteniment programat {at}: una fase ha fallat ({duration} / {detail}).",
 			"notReached": "Manteniment programat {at}: ha acabat abans d'arribar a la neteja de correu brossa.",

@@ -412,6 +412,7 @@
 		"deleteAccount": "Eyða reikningi",
 		"confirmDelete": "Eyða {email}? Pósthólfin, pósturinn og afritin fara með.",
 		"deleteFailed": "Ekki tókst að eyða.",
+		"accountsUnreadable": "Ekki tókst að hlaða reikningunum.",
 		"roleAdmin": "Kerfisstjóri",
 		"thisIsYou": "Þú",
 		"confirmDeleteAgain": "Þessu verður ekki snúið við. Á virkilega að eyða öllu sem tilheyrir {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Áætluð viðhaldskeyrsla hefur aldrei verið keyrð.",
+			"unreadable": "Ekki tókst að lesa skráningu síðasta áætlaða viðhalds.",
 			"done": "Áætlað viðhald {at}: lokið ({duration} / {backups} afrit / {deleted} ruslpóstum eytt).",
 			"finishedWithError": "Áætlað viðhald {at}: eitt skref mistókst ({duration} / {detail}).",
 			"notReached": "Áætlað viðhald {at}: lauk áður en það komst að ruslpóstshreinsuninni.",

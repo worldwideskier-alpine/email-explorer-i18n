@@ -412,6 +412,7 @@
 		"deleteAccount": "Slett kontoen",
 		"confirmDelete": "Slette {email}? Postkassene, posten og tryggingskopiane deira følgjer med.",
 		"deleteFailed": "Kunne ikkje slette.",
+		"accountsUnreadable": "Kontoane kunne ikkje lastast inn.",
 		"roleAdmin": "Administrator",
 		"thisIsYou": "Deg",
 		"confirmDeleteAgain": "Dette kan ikkje angrast. Skal verkeleg alt som høyrer til {email} slettast?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Det planlagde vedlikehaldet har aldri køyrt.",
+			"unreadable": "Oppføringa for siste planlagde vedlikehald kunne ikkje lesast.",
 			"done": "Planlagt vedlikehald {at}: fullført ({duration} / {backups} tryggingskopiar / {deleted} søppelpost sletta).",
 			"finishedWithError": "Planlagt vedlikehald {at}: eit steg mislukkast ({duration} / {detail}).",
 			"notReached": "Planlagt vedlikehald {at}: det slutta før det nådde oppryddinga av søppelpost.",
