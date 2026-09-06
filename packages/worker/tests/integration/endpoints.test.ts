@@ -851,8 +851,15 @@ describe("API Integration Tests", () => {
 			const body = await response.text();
 
 			expect(response.status).toBe(200);
+			/*
+			 * Two parameters now, not one. This pinned the old construction --
+			 * the stored name interpolated straight into a quoted parameter --
+			 * which a name holding a quote ended early. RFC 6266 puts an ASCII
+			 * fallback in the quotes and the real name in `filename*`, so a
+			 * name outside ASCII survives as well; see the route.
+			 */
 			expect(response.headers.get("Content-Disposition")).toBe(
-				`attachment; filename="test.txt"`,
+				`attachment; filename="test.txt"; filename*=UTF-8''test.txt`,
 			);
 			expect(body).toBe(attachmentContent);
 		});

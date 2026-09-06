@@ -13,6 +13,9 @@ interface ExportedAttachment {
 	id: string;
 	filename: string;
 	mimetype: string;
+	/** Both are on the row; neither was ever written into the archive. */
+	content_id?: string | null;
+	disposition?: string | null;
 }
 
 export interface ExportedEmail {
@@ -36,8 +39,15 @@ export interface ExportedEmail {
  * multi-byte characters produces mojibake.
  */
 function encodeHeader(value: string): string {
-	// Printable ASCII only; anything outside it needs encoding.
-	if (!/[^ -~]/.test(value)) return value;
+	/*
+	 * Printable ASCII passes through -- unless it would be read as something
+	 * other than itself. "=?" opens an encoded word, so a value that already
+	 * contains one is decoded on the way back in and what comes out is not
+	 * what went in: an attachment sent as `=?utf-8?B?ZXZpbA==?=.txt` restores
+	 * as `evil.txt`, and the sender chose both. Encoding it makes the encoded
+	 * word the outer one, and the inner text stays text.
+	 */
+	if (!/[^ -~]/.test(value) && !value.includes("=?")) return value;
 	const bytes = new TextEncoder().encode(value);
 	let binary = "";
 	for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -81,6 +91,28 @@ const BASE64_LINE_BYTES = 57;
 function quotedFilename(value: string): string {
 	const oneLine = value.replace(/[\r\n]+/g, " ");
 	return `"${encodeHeader(oneLine).replace(/[\\"]/g, (ch) => `\\${ch}`)}"`;
+}
+
+/**
+ * The media type, cut back to a type and subtype this file is willing to write.
+ *
+ * The stored type is whatever the sender or the composer said -- `type` is an
+ * unvalidated string on the send API -- and it is written as the part's
+ * `Content-Type`. A stored `multipart/mixed; boundary="zz"` therefore turns
+ * the part into a container, and the base64 inside it is read as a preamble:
+ * the archive parses back with *no* attachment at all and nothing to say one
+ * was lost. Stripping the line endings, as this did, does not touch that.
+ *
+ * Parameters go with it. A charset on a text attachment is worth less than
+ * being certain the part is a leaf, and the bytes are base64 either way.
+ */
+export function safeMediaType(value: string | null | undefined): string {
+	const bare = (value ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
+	const token = /^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/;
+	if (!token.test(bare) || bare.startsWith("multipart/")) {
+		return "application/octet-stream";
+	}
+	return bare;
 }
 
 function base64Lines(bytes: Uint8Array): string {
@@ -252,15 +284,23 @@ async function synthesizeMessage(
 		}
 
 		const bytes = new Uint8Array(await object.arrayBuffer());
+		// An inline image is stored as one and was exported as an attachment
+		// with no Content-ID, so every `cid:` in the restored body pointed at
+		// nothing. The row has carried both fields the whole time.
+		const inline = attachment.disposition === "inline";
 		parts.push(
-			// The type is the sender's text too, and headerSafe is what keeps a
-			// line ending in it from ending the header.
-			`Content-Type: ${headerSafe(attachment.mimetype || "application/octet-stream")}`,
-			`Content-Disposition: attachment; filename=${quotedFilename(plainName)}`,
-			"Content-Transfer-Encoding: base64",
-			"",
-			base64Lines(bytes),
+			`Content-Type: ${safeMediaType(attachment.mimetype)}`,
+			`Content-Disposition: ${inline ? "inline" : "attachment"}; filename=${quotedFilename(plainName)}`,
 		);
+		if (attachment.content_id) {
+			// Angle brackets are the syntax around it, not part of it.
+			const cid = headerSafe(String(attachment.content_id)).replace(
+				/[<>]/g,
+				"",
+			);
+			if (cid) parts.push(`Content-ID: <${cid}>`);
+		}
+		parts.push("Content-Transfer-Encoding: base64", "", base64Lines(bytes));
 	}
 	parts.push(`--${boundary}--`);
 
