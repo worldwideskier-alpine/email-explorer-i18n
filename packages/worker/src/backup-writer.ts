@@ -51,6 +51,29 @@ const READ_BATCH = 100;
  */
 const PROGRESS_EVERY = 250;
 
+/**
+ * How many messages to render at once inside a page.
+ *
+ * The reads were batched and the *renders* were not: a hundred rows came back
+ * in one round trip and were then turned into mbox entries one at a time, each
+ * waiting on its own `BUCKET.get` before the next one started. A page of a
+ * hundred was a hundred round trips end to end, and the batching bought only
+ * the sixteen it replaced.
+ *
+ * Measured on the live deployment: the run reached 300 messages into the
+ * second mailbox 12m30s in and was killed there, on a night when the whole run
+ * -- both mailboxes and the purge -- had finished in 8m45s not long before.
+ * Half a second per message is what a serial round trip costs, and there is
+ * nothing about the work that requires them to be serial.
+ *
+ * Bounded rather than the whole page, because each one holds a rendered
+ * message and its attachments in memory until it is appended. Twelve is chosen
+ * to be a large multiple of the serial cost while staying a small number of
+ * messages; how many the runtime will really run at once is its business, and
+ * a lower ceiling there costs speed rather than correctness.
+ */
+const RENDER_CONCURRENCY = 12;
+
 export interface BackupResult {
 	key: string;
 	messages: number;
@@ -153,25 +176,36 @@ export async function writeMailboxBackup(
 				ids.slice(from, from + READ_BATCH),
 			);
 
-			for (const email of page) {
-				const folderId = String(
-					(email as { folder_id?: string }).folder_id ?? "inbox",
+			for (let at = 0; at < page.length; at += RENDER_CONCURRENCY) {
+				const rendered = await Promise.all(
+					page.slice(at, at + RENDER_CONCURRENCY).map((email) => {
+						const folderId = String(
+							(email as { folder_id?: string }).folder_id ?? "inbox",
+						);
+						return renderMboxEntry(
+							env,
+							email as never,
+							folderNames.get(folderId) ?? folderId,
+						);
+					}),
 				);
-				const entry = await renderMboxEntry(
-					env,
-					email as never,
-					folderNames.get(folderId) ?? folderId,
-				);
-				buffer.add(entry);
-				bytes += entry.byteLength;
-				messages += 1;
 
-				// A loop, not an `if`: one message with a large attachment can
-				// fill several parts at once.
-				while (buffer.size >= PART_SIZE) {
-					parts.push(
-						await upload.uploadPart(parts.length + 1, buffer.take(PART_SIZE)),
-					);
+				// Appended in the order they were asked for, whatever order they
+				// came back in: Promise.all keeps the array's positions. The
+				// archive is written in date order and has to stay that way --
+				// a reordering here is invisible until somebody restores from it.
+				for (const entry of rendered) {
+					buffer.add(entry);
+					bytes += entry.byteLength;
+					messages += 1;
+
+					// A loop, not an `if`: one message with a large attachment can
+					// fill several parts at once.
+					while (buffer.size >= PART_SIZE) {
+						parts.push(
+							await upload.uploadPart(parts.length + 1, buffer.take(PART_SIZE)),
+						);
+					}
 				}
 			}
 

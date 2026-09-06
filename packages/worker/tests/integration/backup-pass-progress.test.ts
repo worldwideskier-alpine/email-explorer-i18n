@@ -2,6 +2,7 @@ import { env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { BackupProgress } from "../../src/backup-run";
 import { runScheduledBackups } from "../../src/backup-run";
+import { writeMailboxBackup } from "../../src/backup-writer";
 import { runScheduledMaintenance } from "../../src/scheduled-run";
 import {
 	authenticatedFetch,
@@ -279,12 +280,23 @@ describe("reading a page at a time", () => {
 		const text = await archive?.text();
 
 		expect(text?.match(/^From /gm)?.length).toBe(150);
-		// In order, and all of them: the first, the seam, and the last.
-		for (const n of [0, 99, 100, 149]) {
-			expect(text).toContain(`message ${String(n).padStart(4, "0")}`);
-		}
-		expect(text?.indexOf("message 0099")).toBeLessThan(
-			text?.indexOf("message 0100") as number,
+
+		/*
+		 * Every subject, in the order the archive holds them, against the order
+		 * the ids were taken in. Spot checks at the seam pass on an archive in
+		 * which each group of twelve came out reversed: the messages are all
+		 * there and the boundaries are all right, and the archive is wrong. The
+		 * renders are concurrent now, so the only assertion worth making about
+		 * the order is the whole of it.
+		 */
+		const order = [
+			...(text?.matchAll(/^Subject: (message \d{4})$/gm) ?? []),
+		].map((m) => m[1]);
+		expect(order).toEqual(
+			Array.from(
+				{ length: 150 },
+				(_, n) => `message ${String(n).padStart(4, "0")}`,
+			),
 		);
 	} /*
 	 * Measured at 3.0s running this file alone, against vitest's default of
@@ -296,4 +308,50 @@ describe("reading a page at a time", () => {
 	 * size. Making the count smaller to fit a budget would buy the time by
 	 * giving up the seam this exists to cover, so the budget is what moves.
 	 */, 30_000);
+
+	/**
+	 * And more than one message is in flight at a time.
+	 *
+	 * The rows were already read a page at a time; the renders were not, and
+	 * each waited on its own bucket read before the next one started. The
+	 * archive that comes out is identical either way, so nothing above this
+	 * can tell the two apart -- and the difference on the live deployment was
+	 * a run that finished in 8m45s and one killed 12m30s in.
+	 *
+	 * Counted rather than timed: the bucket under the test answers at once, so
+	 * a stopwatch here would measure nothing. The small delay is what makes an
+	 * overlap observable at all.
+	 */
+	it("reads more than one message at a time", async () => {
+		await setAutoBackup(mailboxId, { enabled: true });
+		await fill(mailboxId, 30);
+
+		let inFlight = 0;
+		let peak = 0;
+		const watched = {
+			...env,
+			BUCKET: new Proxy(env.BUCKET, {
+				get(target, prop, receiver) {
+					const value = Reflect.get(target, prop, receiver);
+					if (typeof value !== "function") return value;
+					if (prop !== "get") return value.bind(target);
+					return async (...args: unknown[]) => {
+						inFlight += 1;
+						peak = Math.max(peak, inFlight);
+						try {
+							await new Promise((done) => setTimeout(done, 5));
+							return await value.apply(target, args);
+						} finally {
+							inFlight -= 1;
+						}
+					};
+				},
+			}),
+		} as typeof env;
+
+		const written = await writeMailboxBackup(watched, mailboxId, new Date(), 5);
+
+		expect(written.messages).toBe(30);
+		expect(peak).toBeGreaterThan(1);
+	}, 30_000);
 });
