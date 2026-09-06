@@ -92,10 +92,46 @@ describe("which sentence an unfinished run gets", () => {
 });
 
 describe("how far it got", () => {
-	it("names the mailbox, its place in the pass, and the count", () => {
+	/**
+	 * And how long into the run it was, which decides what kind of limit
+	 * stopped it. A run killed four minutes in, on a night a nine-minute run
+	 * had finished, did not run out of time -- and a budget of calls is not
+	 * fixed the way a budget of seconds is.
+	 */
+	it("names the mailbox, its place in the pass, the count and the time", () => {
 		expect(maintenanceStoppedDetail(run({ backupProgress: progress }))).toBe(
-			"info@example.test 1/2 · 1250",
+			"info@example.test 1/2 · 1250 · 32s",
 		);
+	});
+
+	it("counts the time from the start of the run, not of the mailbox", () => {
+		expect(
+			maintenanceStoppedDetail(
+				run({
+					backupProgress: {
+						...progress,
+						index: 2,
+						messages: 300,
+						at: "2026-09-03T18:18:21.000Z",
+					},
+				}),
+			),
+		).toBe("info@example.test 2/2 · 300 · 4m12s");
+	});
+
+	// A record written before the field existed says less, not nothing.
+	it("leaves the time out when the record cannot give one", () => {
+		const { at, ...withoutAt } = progress;
+		expect(
+			maintenanceStoppedDetail(
+				run({ backupProgress: withoutAt as typeof progress }),
+			),
+		).toBe("info@example.test 1/2 · 1250");
+		expect(
+			maintenanceStoppedDetail(
+				run({ backupProgress: { ...progress, at: "not a date" } }),
+			),
+		).toBe("info@example.test 1/2 · 1250");
 	});
 
 	// Nothing recorded, nothing shown -- rather than an empty parenthesis.
@@ -461,7 +497,7 @@ describe("the detail that did not fit in the sentence", () => {
 			"root.maintenance.notReached",
 		);
 		expect(maintenanceStoppedDetail(killedAfterHealthyBackups)).toBe(
-			"info@example.test 1/2 · 1250",
+			"info@example.test 1/2 · 1250 · 32s",
 		);
 		expect(
 			maintenanceTrailingDetail(
