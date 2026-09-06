@@ -119,6 +119,27 @@ export function maintenanceDeleted(
 /** Shown when the record cannot say how long it took. */
 const UNKNOWN_DURATION = "\u2014";
 
+/** `8m42s`, or `42s` when there are no whole minutes in it. */
+function formatDuration(ms: number): string {
+	const seconds = Math.round(ms / 1000);
+	const minutes = Math.floor(seconds / 60);
+	return minutes > 0 ? `${minutes}m${seconds % 60}s` : `${seconds}s`;
+}
+
+/**
+ * How far into the run a moment recorded during it was.
+ *
+ * Empty rather than a dash: this one is appended to a detail that is already
+ * a list of raw values, so there is no slot left dangling without it, and a
+ * record written before the field existed simply says less.
+ */
+function elapsedInto(from: string | undefined, to: string | undefined): string {
+	if (!from || !to) return "";
+	const ms = Date.parse(to) - Date.parse(from);
+	if (!Number.isFinite(ms) || ms < 0) return "";
+	return formatDuration(ms);
+}
+
 /**
  * How long the run took, as `8m42s`.
  *
@@ -140,10 +161,7 @@ export function maintenanceDuration(
 	if (!record?.finishedAt) return UNKNOWN_DURATION;
 	const ms = Date.parse(record.finishedAt) - Date.parse(record.startedAt);
 	if (!Number.isFinite(ms) || ms < 0) return UNKNOWN_DURATION;
-
-	const seconds = Math.round(ms / 1000);
-	const minutes = Math.floor(seconds / 60);
-	return minutes > 0 ? `${minutes}m${seconds % 60}s` : `${seconds}s`;
+	return formatDuration(ms);
 }
 
 /**
@@ -187,12 +205,19 @@ export function maintenanceStoppedKey(
 }
 
 /**
- * Which mailbox, where in the pass, and how many messages in.
+ * Which mailbox, where in the pass, how many messages in, and how long in.
  *
  * Raw and untranslated on purpose, like the response marker on the spam check:
- * it is an address and three numbers, and none of it is our prose. It is the
+ * it is an address and four numbers, and none of it is our prose. It is the
  * difference between one mailbox being too large to finish and the pass never
  * reaching the mailboxes at the back of the list.
+ *
+ * The time is the one that says *which kind* of limit stopped it, and it was
+ * recorded from the first and never shown. A run killed a few minutes in, when
+ * a longer one has finished before, was not stopped by being slow: what it ran
+ * out of is counted, not timed -- and the fix for a budget of calls is not the
+ * fix for a budget of seconds. Reading it needed root's own API; it belongs on
+ * the screen that already exists to answer this.
  */
 export function maintenanceStoppedDetail(
 	record: MaintenanceRecord | null | undefined,
@@ -204,7 +229,9 @@ export function maintenanceStoppedDetail(
 
 	const at = record?.backupProgress;
 	if (!at) return "";
-	return `${at.mailbox} ${at.index}/${at.of} · ${at.messages}`;
+	// A record written before `at` existed says less rather than says nothing.
+	const into = elapsedInto(record?.startedAt, at.at);
+	return `${at.mailbox} ${at.index}/${at.of} · ${at.messages}${into ? ` · ${into}` : ""}`;
 }
 
 /**
