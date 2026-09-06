@@ -57,6 +57,36 @@ describe("what a message costs before it is rendered", () => {
 		expect(renderCost(emoji) - 64 * 1024).toBe(40_000);
 	});
 
+	/**
+	 * And a lone surrogate does not eat the character behind it.
+	 *
+	 * The pair branch fired on any high surrogate and skipped the next unit
+	 * whatever it was. A JSON body can carry an unpaired one, and it took a
+	 * kanji with it: `"\uD800あ"` counted four where it encodes six. A third of
+	 * a body missing from the budget is the isolate kill the budget prevents.
+	 *
+	 * Measured against TextEncoder rather than asserted from the formula, so
+	 * the test is not the implementation written twice.
+	 */
+	it("counts what an encoder would count, surrogates and all", () => {
+		const encoder = new TextEncoder();
+		const bodies = [
+			"",
+			"plain ascii",
+			"日本語のメール",
+			"😀😀😀",
+			"\uD800あ".repeat(3),
+			"\uDC00",
+			"あ\uD83D",
+			"\uD83D\uDE00\uD800\uDC00",
+		];
+		for (const body of bodies) {
+			expect(renderCost({ body, attachments: [] }) - 64 * 1024).toBe(
+				encoder.encode(body).length,
+			);
+		}
+	});
+
 	// The row is the customer's data and none of it is ours to trust.
 	it("reads nonsense sizes as nothing rather than as NaN", () => {
 		for (const size of [undefined, null, "", "big", Number.NaN, -1, [], {}]) {

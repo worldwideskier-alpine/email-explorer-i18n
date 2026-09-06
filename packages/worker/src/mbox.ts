@@ -94,6 +94,41 @@ function quotedFilename(value: string): string {
 }
 
 /**
+ * A header value split on its parameters, and not on the semicolons inside
+ * them.
+ *
+ * `split(";")` cuts inside a quoted string too, so
+ * `text/plain; name="report; charset=utf-8"` produced a fragment that looked
+ * exactly like a charset parameter and was believed. A sender could therefore
+ * put any charset on any part -- including a wrong one over a Shift_JIS body,
+ * which is the corruption this file spends its length trying to avoid.
+ */
+function splitParameters(value: string): string[] {
+	const out: string[] = [];
+	let current = "";
+	let quoted = false;
+
+	for (let at = 0; at < value.length; at++) {
+		const ch = value[at];
+		if (ch === "\\" && quoted) {
+			// A quoted pair: the next character is data, whatever it is.
+			current += ch + (value[at + 1] ?? "");
+			at++;
+		} else if (ch === '"') {
+			quoted = !quoted;
+			current += ch;
+		} else if (ch === ";" && !quoted) {
+			out.push(current);
+			current = "";
+		} else {
+			current += ch;
+		}
+	}
+	out.push(current);
+	return out;
+}
+
+/**
  * The media type, cut back to a type and subtype this file is willing to write.
  *
  * The stored type is whatever the sender or the composer said -- `type` is an
@@ -110,9 +145,16 @@ function quotedFilename(value: string): string {
  * makes a part a container is `boundary`; `charset` decides how bytes already
  * inside a leaf are read, and losing it is the same class of loss this file
  * exists to prevent.
+ *
+ * What this does not reach: received mail has no charset by the time it gets
+ * here. postal-mime hands back a bare `mimeType` and the parameters are not on
+ * the object at all, so the row records `text/plain` and the charset is gone
+ * at ingest -- long before this. The archive of a *received* Shift_JIS message
+ * is its raw copy, which still has it; a forwarded one is rebuilt from the row
+ * and does not. Keeping the charset here is right and is not that fix.
  */
 export function safeMediaType(value: string | null | undefined): string {
-	const [rawType, ...params] = (value ?? "").split(";");
+	const [rawType, ...params] = splitParameters(value ?? "");
 	const bare = (rawType ?? "").trim().toLowerCase();
 	const token = /^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/;
 	if (!token.test(bare) || bare.startsWith("multipart/")) {
@@ -122,8 +164,10 @@ export function safeMediaType(value: string | null | undefined): string {
 	for (const param of params) {
 		// A charset is a token: letters, digits and a little punctuation. Kept
 		// as it was written, since charset names are matched case-insensitively
-		// and Shift_JIS is not ours to rewrite.
-		const found = /^\s*charset\s*=\s*"?([A-Za-z0-9._:+-]+)"?\s*$/.exec(param);
+		// and Shift_JIS is not ours to rewrite -- but the *parameter name* is
+		// matched that way too, and matching it case-sensitively dropped the
+		// charset of a `CHARSET=Shift_JIS`, which is the loss this is for.
+		const found = /^\s*charset\s*=\s*"?([A-Za-z0-9._:+-]+)"?\s*$/i.exec(param);
 		if (found) return `${bare}; charset="${found[1]}"`;
 	}
 	return bare;
