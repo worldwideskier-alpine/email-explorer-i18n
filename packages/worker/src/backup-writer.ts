@@ -154,9 +154,22 @@ function utf8Length(value: string): number {
 		if (code < 0x80) bytes += 1;
 		else if (code < 0x800) bytes += 2;
 		else if (code >= 0xd800 && code <= 0xdbff) {
-			// A surrogate pair is one character in four bytes, and two units.
-			bytes += 4;
-			at++;
+			/*
+			 * A *pair* is one character in four bytes and two units. A high
+			 * surrogate with nothing after it is not -- and taking the next
+			 * unit anyway swallowed the character that followed it. A JSON body
+			 * can carry a lone surrogate, and `"\uD800\u3042"` counted four
+			 * where it encodes six, so a third of a body could go missing from
+			 * the budget.
+			 */
+			const next = value.charCodeAt(at + 1);
+			if (next >= 0xdc00 && next <= 0xdfff) {
+				bytes += 4;
+				at++;
+			} else {
+				// Encoded as U+FFFD, which is three bytes like the rest here.
+				bytes += 3;
+			}
 		} else bytes += 3;
 	}
 	return bytes;

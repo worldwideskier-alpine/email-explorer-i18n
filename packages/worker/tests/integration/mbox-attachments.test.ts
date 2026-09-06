@@ -381,8 +381,78 @@ describe("archiving a message that has no raw form", () => {
 			},
 		];
 		const entry = text(await renderMboxEntry(env, one as never, "Sent"));
+		const parsed = await PostalMime.parse(
+			entry.slice(entry.indexOf("\r\n") + 2),
+		);
 
 		expect(entry).toContain('Content-Type: text/plain; charset="Shift_JIS"');
+
+		/*
+		 * And the bytes are the bytes. The charset itself cannot be read back
+		 * through this parser -- an attachment comes out with `content`,
+		 * `disposition`, `filename` and a bare `mimeType`, and nothing else --
+		 * so the header is the only place it can be asserted. What a parse
+		 * *can* say is that the payload survived, which the header alone does
+		 * not: an earlier version of this test stopped at the header and would
+		 * have stayed green with the bytes mangled.
+		 */
+		const back = parsed.attachments[0];
+		expect(back?.filename).toBe("note.txt");
+		expect(Array.from(new Uint8Array(back?.content as ArrayBuffer))).toEqual(
+			Array.from(sjis),
+		);
+	});
+
+	// The parameter name is matched the way the standard matches it.
+	it("keeps a charset written in capitals", async () => {
+		const id = `sent-${crypto.randomUUID()}`;
+		await env.BUCKET.put(`attachments/${id}/att-1/note.txt`, attached);
+
+		const one = { ...email(id) };
+		one.attachments = [
+			{
+				...one.attachments[0],
+				filename: "note.txt",
+				mimetype: "text/plain; CHARSET=Shift_JIS",
+			},
+		];
+		const entry = text(await renderMboxEntry(env, one as never, "Sent"));
+
+		expect(entry).toContain('Content-Type: text/plain; charset="Shift_JIS"');
+	});
+
+	/**
+	 * And a charset cannot be forged from inside another parameter.
+	 *
+	 * Splitting on every semicolon cuts inside a quoted string too, so
+	 * `name="report; charset=utf-8"` produced a fragment that read exactly like
+	 * a charset and was believed -- a sender could put any charset on any part,
+	 * including a wrong one over a Shift_JIS body.
+	 */
+	it("does not read a charset out of a quoted parameter", async () => {
+		const id = `sent-${crypto.randomUUID()}`;
+		await env.BUCKET.put(`attachments/${id}/att-1/note.txt`, attached);
+
+		const one = { ...email(id) };
+		one.attachments = [
+			{
+				...one.attachments[0],
+				filename: "note.txt",
+				mimetype: 'text/plain; name="report; charset=utf-8"',
+			},
+		];
+		const entry = text(await renderMboxEntry(env, one as never, "Sent"));
+
+		/*
+		 * The attachment's part, not the whole entry: the body part legitimately
+		 * carries `charset="utf-8"`, so "the file contains no charset" is a
+		 * claim about the wrong thing and fails on correct output.
+		 */
+		const part = entry
+			.split("\r\n--")
+			.find((chunk) => chunk.includes('filename="note.txt"')) as string;
+		expect(part).toContain("Content-Type: text/plain\r\n");
+		expect(part).not.toContain("charset=");
 	});
 
 	// And a type that is simply a type is kept, minus its parameters.
