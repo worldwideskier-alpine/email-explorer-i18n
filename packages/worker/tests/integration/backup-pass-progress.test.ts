@@ -286,5 +286,14 @@ describe("reading a page at a time", () => {
 		expect(text?.indexOf("message 0099")).toBeLessThan(
 			text?.indexOf("message 0100") as number,
 		);
-	});
+	} /*
+	 * Measured at 3.0s running this file alone, against vitest's default of
+	 * 5s -- 1.7x of headroom, which is none. The full suite is 62 files on
+	 * one worker, and there it went over and took the deploy down with it.
+	 *
+	 * The cost is real and is the test: 150 imports, one request each,
+	 * because that is what the endpoint takes and a hundred is the page
+	 * size. Making the count smaller to fit a budget would buy the time by
+	 * giving up the seam this exists to cover, so the budget is what moves.
+	 */, 30_000);
 });
