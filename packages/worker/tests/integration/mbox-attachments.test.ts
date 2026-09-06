@@ -305,6 +305,105 @@ describe("archiving a message that has no raw form", () => {
 		expect(entry).not.toContain("?=.missing.txt");
 	});
 
+	/**
+	 * A name that already looks like an encoded word stays that text.
+	 *
+	 * `encodeHeader` passed printable ASCII through, and "=?" opens an encoded
+	 * word: an attachment sent as `=?utf-8?B?ZXZpbA==?=.txt` was archived
+	 * verbatim and read back as `evil.txt`. Both names are the sender's, which
+	 * is the point -- the archive has to hold what was sent.
+	 */
+	it("does not let a filename decode itself into another name", async () => {
+		const id = `sent-${crypto.randomUUID()}`;
+		const disguised = "=?utf-8?B?ZXZpbA==?=.txt";
+		await env.BUCKET.put(`attachments/${id}/att-1/${disguised}`, attached);
+
+		const one = { ...email(id) };
+		one.attachments = [{ ...one.attachments[0], filename: disguised }];
+		const entry = text(await renderMboxEntry(env, one as never, "Sent"));
+		const parsed = await PostalMime.parse(
+			entry.slice(entry.indexOf("\r\n") + 2),
+		);
+
+		expect(parsed.attachments[0]?.filename).toBe(disguised);
+		expect(parsed.attachments[0]?.filename).not.toBe("evil.txt");
+	});
+
+	/**
+	 * The stored type cannot turn the part into a container.
+	 *
+	 * `type` is an unvalidated string on the send API, and it was written as
+	 * the part's Content-Type after nothing but a line-ending strip. Stored as
+	 * `multipart/mixed; boundary="zz"`, the part becomes a container and the
+	 * base64 inside it is read as a preamble: the archive parses back with no
+	 * attachment at all, and says nothing about one having been there.
+	 */
+	it("does not let a content type swallow the attachment", async () => {
+		const id = `sent-${crypto.randomUUID()}`;
+		await env.BUCKET.put(`attachments/${id}/att-1/note.bin`, attached);
+
+		const one = { ...email(id) };
+		one.attachments = [
+			{ ...one.attachments[0], mimetype: 'multipart/mixed; boundary="zz"' },
+		];
+		const entry = text(await renderMboxEntry(env, one as never, "Sent"));
+		const parsed = await PostalMime.parse(
+			entry.slice(entry.indexOf("\r\n") + 2),
+		);
+
+		expect(parsed.attachments.length).toBe(1);
+		expect(parsed.attachments[0]?.mimeType).toBe("application/octet-stream");
+		const back = new Uint8Array(parsed.attachments[0]?.content as ArrayBuffer);
+		expect(Array.from(back)).toEqual(Array.from(attached));
+	});
+
+	// And a type that is simply a type is kept, minus its parameters.
+	it("keeps an ordinary content type", async () => {
+		const id = `sent-${crypto.randomUUID()}`;
+		await env.BUCKET.put(`attachments/${id}/att-1/note.bin`, attached);
+
+		const one = { ...email(id) };
+		one.attachments = [
+			{ ...one.attachments[0], mimetype: "image/PNG; name=x" },
+		];
+		const entry = text(await renderMboxEntry(env, one as never, "Sent"));
+		const parsed = await PostalMime.parse(
+			entry.slice(entry.indexOf("\r\n") + 2),
+		);
+
+		expect(parsed.attachments[0]?.mimeType).toBe("image/png");
+	});
+
+	/**
+	 * An inline image keeps the identity its `cid:` refers to.
+	 *
+	 * The row holds `content_id` and `disposition`, and the export wrote
+	 * neither: every inline image came back as a plain attachment, and every
+	 * `cid:` in the restored body pointed at nothing.
+	 */
+	it("keeps the content id of an inline image", async () => {
+		const id = `sent-${crypto.randomUUID()}`;
+		await env.BUCKET.put(`attachments/${id}/att-1/note.bin`, attached);
+
+		const one = { ...email(id) };
+		one.attachments = [
+			{
+				...one.attachments[0],
+				mimetype: "image/png",
+				content_id: "<hero@example.test>",
+				disposition: "inline",
+			},
+		];
+		const entry = text(await renderMboxEntry(env, one as never, "Sent"));
+		const parsed = await PostalMime.parse(
+			entry.slice(entry.indexOf("\r\n") + 2),
+		);
+
+		expect(entry).toContain("Content-ID: <hero@example.test>");
+		expect(entry).toContain("Content-Disposition: inline;");
+		expect(parsed.attachments[0]?.contentId).toBe("<hero@example.test>");
+	});
+
 	// A message with a raw form still comes from the raw form, untouched.
 	it("prefers the raw message when there is one", async () => {
 		const id = `recv-${crypto.randomUUID()}`;

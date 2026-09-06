@@ -21,7 +21,7 @@ import {
 	recordSenderVerdict,
 	redactMailboxSettings,
 } from "./mailbox-settings";
-import { renderMboxEntry } from "./mbox";
+import { renderMboxEntry, safeMediaType } from "./mbox";
 import { plainTextToHtml } from "./plain-text-to-html";
 import { dismissEmailNotification } from "./push-notify";
 import { formatAddressList } from "./recipients";
@@ -1488,11 +1488,23 @@ class GetAttachment extends OpenAPIRoute {
 			return c.json({ error: "Attachment file not found" }, 404);
 		}
 
+		/*
+		 * The type and the name are the sender's text, and both were put into
+		 * response headers as they stood -- the same interpolation the mbox
+		 * writer had. A quote in the name ends the parameter early, so the
+		 * browser saves the file under whatever the sender left before it.
+		 *
+		 * RFC 6266 rather than an encoded word: this is HTTP, not mail. The
+		 * quoted form is the ASCII fallback and `filename*` carries the real
+		 * name, which is what every current browser reads.
+		 */
+		const downloadName = attachment.filename.replace(/[\r\n]+/g, " ");
+		const asciiName = downloadName.replace(/[^\x20-\x7e]|["\\]/g, "_");
 		const headers = new Headers();
-		headers.set("Content-Type", attachment.mimetype);
+		headers.set("Content-Type", safeMediaType(attachment.mimetype));
 		headers.set(
 			"Content-Disposition",
-			`attachment; filename="${attachment.filename}"`,
+			`attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(downloadName)}`,
 		);
 
 		return new Response(attachmentObj.body, {
