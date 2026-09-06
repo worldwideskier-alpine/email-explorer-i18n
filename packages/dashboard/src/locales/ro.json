@@ -412,6 +412,7 @@
 		"deleteAccount": "Șterge contul",
 		"confirmDelete": "Ștergi {email}? Căsuțele, corespondența și copiile lor dispar odată cu el.",
 		"deleteFailed": "Nu s-a putut șterge.",
+		"accountsUnreadable": "Conturile nu au putut fi încărcate.",
 		"roleAdmin": "Administrator",
 		"thisIsYou": "Tu",
 		"confirmDeleteAgain": "Nu se poate anula. Chiar ștergi tot ce îi aparține lui {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Mentenanța programată nu a rulat niciodată.",
+			"unreadable": "Înregistrarea ultimei mentenanțe programate nu a putut fi citită.",
 			"done": "Mentenanță programată {at}: finalizată ({duration} / {backups} copii de rezervă / {deleted} spam șterse).",
 			"finishedWithError": "Mentenanță programată {at}: o etapă a eșuat ({duration} / {detail}).",
 			"notReached": "Mentenanță programată {at}: s-a încheiat înainte de a ajunge la curățarea spamului.",

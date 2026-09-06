@@ -412,6 +412,7 @@
 		"deleteAccount": "Eliminar a conta",
 		"confirmDelete": "Eliminar {email}? As caixas, o correio e as cópias vão com ele.",
 		"deleteFailed": "Não foi possível eliminar.",
+		"accountsUnreadable": "Não foi possível carregar as contas.",
 		"roleAdmin": "Administrador",
 		"thisIsYou": "Você",
 		"confirmDeleteAgain": "Isto não se pode desfazer. Eliminar mesmo tudo o que pertence a {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "A manutenção agendada nunca foi executada.",
+			"unreadable": "Não foi possível ler o registo da última manutenção agendada.",
 			"done": "Manutenção agendada {at}: concluída ({duration} / {backups} backups / {deleted} spams excluídos).",
 			"finishedWithError": "Manutenção agendada {at}: uma etapa falhou ({duration} / {detail}).",
 			"notReached": "Manutenção agendada {at}: terminou antes de chegar à limpeza de spam.",

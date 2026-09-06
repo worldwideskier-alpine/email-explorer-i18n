@@ -412,6 +412,7 @@
 		"deleteAccount": "Zmazať účet",
 		"confirmDelete": "Zmazať {email}? Ich schránky, pošta aj zálohy zmiznú tiež.",
 		"deleteFailed": "Nepodarilo sa zmazať.",
+		"accountsUnreadable": "Účty sa nepodarilo načítať.",
 		"roleAdmin": "Správca",
 		"thisIsYou": "Vy",
 		"confirmDeleteAgain": "Nedá sa vrátiť. Naozaj zmazať všetko, čo patrí {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Plánovaná údržba sa zatiaľ nikdy nevykonala.",
+			"unreadable": "Záznam o poslednej naplánovanej údržbe sa nepodarilo načítať.",
 			"done": "Plánovaná údržba {at}: dokončená ({duration} / {backups} záloh / {deleted} zmazaných spamov).",
 			"finishedWithError": "Plánovaná údržba {at}: jedna fáza zlyhala ({duration} / {detail}).",
 			"notReached": "Plánovaná údržba {at}: skončila skôr, než sa dostala k mazaniu spamu.",

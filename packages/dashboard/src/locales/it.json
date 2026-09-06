@@ -412,6 +412,7 @@
 		"deleteAccount": "Elimina l'account",
 		"confirmDelete": "Eliminare {email}? Le sue caselle, la posta e i backup se ne vanno con lui.",
 		"deleteFailed": "Impossibile eliminare.",
+		"accountsUnreadable": "Non è stato possibile caricare gli account.",
 		"roleAdmin": "Amministratore",
 		"thisIsYou": "Tu",
 		"confirmDeleteAgain": "Non è reversibile. Eliminare davvero tutto ciò che appartiene a {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "La manutenzione pianificata non è mai stata eseguita.",
+			"unreadable": "Non è stato possibile leggere il registro dell'ultima manutenzione programmata.",
 			"done": "Manutenzione pianificata {at}: completata ({duration} / {backups} backup / {deleted} spam eliminati).",
 			"finishedWithError": "Manutenzione pianificata {at}: una fase non è riuscita ({duration} / {detail}).",
 			"notReached": "Manutenzione pianificata {at}: si è conclusa prima di arrivare alla pulizia dello spam.",

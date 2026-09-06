@@ -412,6 +412,7 @@
 		"deleteAccount": "Tanggalin ang account",
 		"confirmDelete": "Burahin ang {email}? Kasama nang mawawala ang mga mailbox, mail at backup nila.",
 		"deleteFailed": "Hindi natanggal.",
+		"accountsUnreadable": "Hindi ma-load ang mga account.",
 		"roleAdmin": "Administrador",
 		"thisIsYou": "Ikaw",
 		"confirmDeleteAgain": "Hindi na ito maibabalik. Talagang burahin ang lahat ng kay {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Hindi pa kailanman tumakbo ang naka-iskedyul na maintenance.",
+			"unreadable": "Hindi mabasa ang tala ng huling nakatakdang maintenance.",
 			"done": "Nakatakdang pagpapanatili {at}: tapos na ({duration} / {backups} na-back up / {deleted} spam na natanggal).",
 			"finishedWithError": "Nakatakdang pagpapanatili {at}: may yugtong nabigo ({duration} / {detail}).",
 			"notReached": "Naka-iskedyul na maintenance {at}: natapos bago pa marating ang paglilinis ng spam.",

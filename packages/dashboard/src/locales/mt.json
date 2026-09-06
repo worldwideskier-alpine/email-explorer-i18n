@@ -412,6 +412,7 @@
 		"deleteAccount": "Ħassar il-kont",
 		"confirmDelete": "Tħassar {email}? Il-kaxxi postali, il-posta u l-backups tagħhom imorru magħhom.",
 		"deleteFailed": "Ma setax jitħassar.",
+		"accountsUnreadable": "Il-kontijiet ma setgħux jitgħabbew.",
 		"roleAdmin": "Amministratur",
 		"thisIsYou": "Int",
 		"confirmDeleteAgain": "Dan ma jistax jitreġġa' lura. Verament tħassar kollox ta' {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Il-manutenzjoni skedata qatt ma ġiet imħaddma.",
+			"unreadable": "Ir-rekord tal-aħħar manutenzjoni skedata ma setax jinqara.",
 			"done": "Manutenzjoni skedata {at}: lesta ({duration} / {backups} backups / {deleted} spam imħassar).",
 			"finishedWithError": "Manutenzjoni skedata {at}: pass falla ({duration} / {detail}).",
 			"notReached": "Manutenzjoni skedata {at}: intemmet qabel ma waslet għat-tindif tal-ispam.",

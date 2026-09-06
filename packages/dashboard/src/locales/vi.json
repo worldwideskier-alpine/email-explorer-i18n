@@ -412,6 +412,7 @@
 		"deleteAccount": "Xoá tài khoản",
 		"confirmDelete": "Xóa {email}? Hộp thư, thư và bản sao lưu của họ cũng mất theo.",
 		"deleteFailed": "Không xoá được.",
+		"accountsUnreadable": "Không thể tải các tài khoản.",
 		"roleAdmin": "Quản trị viên",
 		"thisIsYou": "Bạn",
 		"confirmDeleteAgain": "Không thể hoàn tác. Thật sự xóa mọi thứ của {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Bảo trì theo lịch chưa từng chạy.",
+			"unreadable": "Không thể đọc bản ghi của lần bảo trì định kỳ gần nhất.",
 			"done": "Bảo trì theo lịch {at}: hoàn tất ({duration} / {backups} bản sao lưu / đã xóa {deleted} thư rác).",
 			"finishedWithError": "Bảo trì theo lịch {at}: một bước đã thất bại ({duration} / {detail}).",
 			"notReached": "Bảo trì theo lịch {at}: đã kết thúc trước khi đến bước dọn thư rác.",

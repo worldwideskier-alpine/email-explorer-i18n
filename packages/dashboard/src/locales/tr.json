@@ -412,6 +412,7 @@
 		"deleteAccount": "Hesabı sil",
 		"confirmDelete": "{email} silinsin mi? Posta kutuları, postaları ve yedekleri de gider.",
 		"deleteFailed": "Silinemedi.",
+		"accountsUnreadable": "Hesaplar yüklenemedi.",
 		"roleAdmin": "Yönetici",
 		"thisIsYou": "Siz",
 		"confirmDeleteAgain": "Bu geri alınamaz. {email} hesabına ait her şey gerçekten silinsin mi?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Zamanlanmış bakım henüz hiç çalışmadı.",
+			"unreadable": "Son planlı bakımın kaydı okunamadı.",
 			"done": "Zamanlanmış bakım {at}: tamamlandı ({duration} / {backups} yedek / {deleted} istenmeyen posta silindi).",
 			"finishedWithError": "Zamanlanmış bakım {at}: bir aşama başarısız oldu ({duration} / {detail}).",
 			"notReached": "Zamanlanmış bakım {at}: istenmeyen posta temizliğine ulaşmadan sona erdi.",

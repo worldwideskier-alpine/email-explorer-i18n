@@ -412,6 +412,7 @@
 		"deleteAccount": "Dzēst kontu",
 		"confirmDelete": "Dzēst {email}? Viņu pastkastes, pasts un rezerves kopijas aiziet līdzi.",
 		"deleteFailed": "Neizdevās izdzēst.",
+		"accountsUnreadable": "Neizdevās ielādēt kontus.",
 		"roleAdmin": "Administrators",
 		"thisIsYou": "Jūs",
 		"confirmDeleteAgain": "To nevar atsaukt. Vai tiešām dzēst visu, kas pieder {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Plānotā apkope vēl nekad nav veikta.",
+			"unreadable": "Neizdevās nolasīt pēdējās plānotās apkopes ierakstu.",
 			"done": "Plānotā apkope {at}: pabeigta ({duration} / {backups} dublējumi / dzēsti {deleted} mēstules).",
 			"finishedWithError": "Plānotā apkope {at}: viens posms neizdevās ({duration} / {detail}).",
 			"notReached": "Plānotā apkope {at}: beidzās, nesasniedzot mēstuļu tīrīšanu.",

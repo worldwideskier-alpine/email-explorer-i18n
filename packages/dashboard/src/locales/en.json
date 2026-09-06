@@ -412,6 +412,7 @@
 		"deleteAccount": "Delete account",
 		"confirmDelete": "Delete {email}? Their mailboxes, mail and backups all go with them.",
 		"deleteFailed": "Could not delete.",
+		"accountsUnreadable": "Could not load the accounts.",
 		"roleAdmin": "Administrator",
 		"thisIsYou": "You",
 		"confirmDeleteAgain": "This cannot be undone. Really delete everything belonging to {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "The scheduled maintenance has never run.",
+			"unreadable": "Could not read the record of the last scheduled maintenance.",
 			"done": "Scheduled maintenance {at}: finished ({duration} / {backups} backed up / {deleted} spam deleted).",
 			"finishedWithError": "Scheduled maintenance {at}: a pass failed ({duration} / {detail}).",
 			"notReached": "Scheduled maintenance {at}: it ended before reaching the spam purge.",

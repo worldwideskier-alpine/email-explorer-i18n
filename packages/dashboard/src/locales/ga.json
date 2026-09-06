@@ -412,6 +412,7 @@
 		"deleteAccount": "Scrios an cuntas",
 		"confirmDelete": "{email} a scriosadh? Imíonn a mboscaí poist, a bpost agus a gcúltacaí leo.",
 		"deleteFailed": "Níorbh fhéidir é a scriosadh.",
+		"accountsUnreadable": "Níorbh fhéidir na cuntais a lódáil.",
 		"roleAdmin": "Riarthóir",
 		"thisIsYou": "Tusa",
 		"confirmDeleteAgain": "Ní féidir é seo a chur ar ceal. Gach rud le {email} a scriosadh i ndáiríre?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Níor ritheadh an chothabháil sceidealta riamh.",
+			"unreadable": "Níorbh fhéidir taifead an chothabhála sceidealta is déanaí a léamh.",
 			"done": "Cothabháil sceidealta {at}: críochnaithe ({duration} / {backups} cúltaca / {deleted} turscar scriosta).",
 			"finishedWithError": "Cothabháil sceidealta {at}: theip ar chéim ({duration} / {detail}).",
 			"notReached": "Cothabháil sceidealta {at}: chríochnaigh sí sular shroich sí glanadh an turscair.",

@@ -412,6 +412,7 @@
 		"deleteAccount": "Ta bort kontot",
 		"confirmDelete": "Radera {email}? Brevlådorna, posten och säkerhetskopiorna följer med.",
 		"deleteFailed": "Kunde inte ta bort.",
+		"accountsUnreadable": "Kontona kunde inte läsas in.",
 		"roleAdmin": "Administratör",
 		"thisIsYou": "Du",
 		"confirmDeleteAgain": "Detta går inte att ångra. Ska verkligen allt som tillhör {email} raderas?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Det schemalagda underhållet har aldrig körts.",
+			"unreadable": "Posten för det senaste schemalagda underhållet kunde inte läsas.",
 			"done": "Schemalagt underhåll {at}: slutfört ({duration} / {backups} säkerhetskopior / {deleted} skräppost raderad).",
 			"finishedWithError": "Schemalagt underhåll {at}: ett steg misslyckades ({duration} / {detail}).",
 			"notReached": "Schemalagt underhåll {at}: det slutade innan det nådde skräppostrensningen.",

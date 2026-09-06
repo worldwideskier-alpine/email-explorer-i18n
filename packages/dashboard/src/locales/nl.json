@@ -412,6 +412,7 @@
 		"deleteAccount": "Account verwijderen",
 		"confirmDelete": "{email} verwijderen? De postbussen, post en back-ups gaan mee.",
 		"deleteFailed": "Verwijderen mislukt.",
+		"accountsUnreadable": "De accounts konden niet worden geladen.",
 		"roleAdmin": "Beheerder",
 		"thisIsYou": "U",
 		"confirmDeleteAgain": "Dit kan niet ongedaan worden gemaakt. Echt alles van {email} verwijderen?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Het geplande onderhoud is nog nooit uitgevoerd.",
+			"unreadable": "Het record van het laatste geplande onderhoud kon niet worden gelezen.",
 			"done": "Gepland onderhoud {at}: voltooid ({duration} / {backups} back-ups / {deleted} spam verwijderd).",
 			"finishedWithError": "Gepland onderhoud {at}: een fase is mislukt ({duration} / {detail}).",
 			"notReached": "Gepland onderhoud {at}: het eindigde voordat het de spamopruiming bereikte.",

@@ -412,6 +412,7 @@
 		"deleteAccount": "Stizzar il conto",
 		"confirmDelete": "Stizzar {email}? Sias chaschas da posta, sia posta e sias copias da segirezza van cun el.",
 		"deleteFailed": "Betg pussaivel da stizzar.",
+		"accountsUnreadable": "Ils contos n'han betg pudì vegnir chargiads.",
 		"roleAdmin": "Administratur",
 		"thisIsYou": "Vus",
 		"confirmDeleteAgain": "Quai na po betg vegnir revocà. Propi stizzar tut quai che tutga a {email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "La mantegnientscha planisada n'è anc mai vegnida exequida.",
+			"unreadable": "L'endataziun da l'ultima mantegnida planisada n'ha betg pudì vegnir legida.",
 			"done": "Mantegniment planisà {at}: terminà ({duration} / {backups} copias da segirezza / {deleted} spam stizzads).",
 			"finishedWithError": "Mantegniment planisà {at}: ina fasa è fallida ({duration} / {detail}).",
 			"notReached": "Mantegnientscha planisada {at}: ella è finida avant ch'ella ha cuntanschì la mundada da spam.",

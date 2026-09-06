@@ -412,6 +412,7 @@
 		"deleteAccount": "מחיקת חשבון",
 		"confirmDelete": "למחוק את {email}? תיבות הדואר, הדואר והגיבויים נמחקים איתו.",
 		"deleteFailed": "לא ניתן היה למחוק.",
+		"accountsUnreadable": "לא ניתן היה לטעון את החשבונות.",
 		"roleAdmin": "מנהל",
 		"thisIsYou": "את/ה",
 		"confirmDeleteAgain": "אי אפשר לבטל. באמת למחוק את כל מה ששייך ל־{email}?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "התחזוקה המתוזמנת מעולם לא רצה.",
+			"unreadable": "לא ניתן היה לקרוא את רישום התחזוקה המתוזמנת האחרונה.",
 			"done": "תחזוקה מתוזמנת {at}: הסתיימה ({duration} / {backups} גיבויים / {deleted} דואר זבל נמחק).",
 			"finishedWithError": "תחזוקה מתוזמנת {at}: אחד השלבים נכשל ({duration} / {detail}).",
 			"notReached": "תחזוקה מתוזמנת {at}: הסתיימה לפני שהגיעה לניקוי דואר הזבל.",

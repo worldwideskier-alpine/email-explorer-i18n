@@ -412,6 +412,7 @@
 		"deleteAccount": "Fiók törlése",
 		"confirmDelete": "Törli a következőt: {email}? A postafiókjai, levelei és mentései is elvesznek.",
 		"deleteFailed": "Nem sikerült törölni.",
+		"accountsUnreadable": "A fiókokat nem sikerült betölteni.",
 		"roleAdmin": "Rendszergazda",
 		"thisIsYou": "Ön",
 		"confirmDeleteAgain": "Ez nem vonható vissza. Tényleg töröljük {email} minden adatát?",
@@ -425,6 +426,7 @@
 		},
 		"maintenance": {
 			"never": "Az ütemezett karbantartás még soha nem futott le.",
+			"unreadable": "A legutóbbi ütemezett karbantartás bejegyzését nem sikerült beolvasni.",
 			"done": "Ütemezett karbantartás {at}: befejeződött ({duration} / {backups} mentés / {deleted} levélszemét törölve).",
 			"finishedWithError": "Ütemezett karbantartás {at}: az egyik lépés hibára futott ({duration} / {detail}).",
 			"notReached": "Ütemezett karbantartás {at}: véget ért, mielőtt elérte volna a levélszemét törlését.",
