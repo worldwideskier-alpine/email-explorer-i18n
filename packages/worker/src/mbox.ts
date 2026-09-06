@@ -284,12 +284,30 @@ async function synthesizeMessage(
 		}
 
 		const bytes = new Uint8Array(await object.arrayBuffer());
-		// An inline image is stored as one and was exported as an attachment
-		// with no Content-ID, so every `cid:` in the restored body pointed at
-		// nothing. The row has carried both fields the whole time.
-		const inline = attachment.disposition === "inline";
+		const type = safeMediaType(attachment.mimetype);
+		/*
+		 * An inline image is stored as one and was exported as an attachment
+		 * with no Content-ID, so every `cid:` in the restored body pointed at
+		 * nothing. The row has carried both fields the whole time.
+		 *
+		 * But `inline` is not free to write. A reader returns a text part as an
+		 * attachment only when it is marked `attachment`: postal-mime folds an
+		 * inline text/*, and message/rfc822 with it, into the body instead --
+		 * measured, `attachments: 0` and the content spliced into both `text`
+		 * and `html`. Writing it therefore costs those attachments their
+		 * existence on the way back, in the file that is the last copy.
+		 *
+		 * So `inline` where it buys something and cannot cost anything: a
+		 * non-text part that a `cid:` can actually refer to. Everything else
+		 * keeps the disposition that survives, which is what every part had
+		 * before Content-ID was written at all.
+		 */
+		const inline =
+			attachment.disposition === "inline" &&
+			!!attachment.content_id &&
+			!/^(?:text|message)\//.test(type);
 		parts.push(
-			`Content-Type: ${safeMediaType(attachment.mimetype)}`,
+			`Content-Type: ${type}`,
 			`Content-Disposition: ${inline ? "inline" : "attachment"}; filename=${quotedFilename(plainName)}`,
 		);
 		if (attachment.content_id) {
