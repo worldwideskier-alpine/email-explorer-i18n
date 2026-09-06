@@ -136,6 +136,33 @@ const RENDER_BYTES = 24 * 1024 * 1024;
 const ATTACHMENT_GROWTH = 7 / 3;
 
 /**
+ * How many bytes a string weighs once it is encoded.
+ *
+ * `String.length` counts UTF-16 code units, and this budget is in bytes. Every
+ * character of a Japanese body is one unit and three bytes, so a six-megabyte
+ * body was costed at two: eleven of them fit a budget meant to hold eight, and
+ * the isolate sees the three again. A bound that is wrong by three on exactly
+ * the mail this deployment carries is not a bound.
+ *
+ * Counted rather than encoded, because encoding it to measure it would make a
+ * copy of every body -- the cost this is here to stay under.
+ */
+function utf8Length(value: string): number {
+	let bytes = 0;
+	for (let at = 0; at < value.length; at++) {
+		const code = value.charCodeAt(at);
+		if (code < 0x80) bytes += 1;
+		else if (code < 0x800) bytes += 2;
+		else if (code >= 0xd800 && code <= 0xdbff) {
+			// A surrogate pair is one character in four bytes, and two units.
+			bytes += 4;
+			at++;
+		} else bytes += 3;
+	}
+	return bytes;
+}
+
+/**
  * What a message costs to render, before rendering it.
  *
  * Estimated from what the row already carries -- `attachments.size` and the
@@ -153,7 +180,7 @@ export function renderCost(email: {
 		const size = Number(one?.size);
 		return sum + (Number.isFinite(size) && size > 0 ? size : 0);
 	}, 0);
-	const body = typeof email.body === "string" ? email.body.length : 0;
+	const body = typeof email.body === "string" ? utf8Length(email.body) : 0;
 	// Headers, the mbox wrapper, and a body that is not there on a received
 	// message because the raw one is used instead.
 	return 64 * 1024 + body + Math.ceil(attached * ATTACHMENT_GROWTH);

@@ -54,7 +54,8 @@ export interface MaintenanceProgress {
 	of: number;
 	/** Messages written into this mailbox's archive so far. */
 	messages: number;
-	at: string;
+	/** Absent on a record written before this field existed. */
+	at?: string;
 }
 
 export interface MaintenanceRecord {
