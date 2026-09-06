@@ -179,6 +179,132 @@ describe("archiving a message that has no raw form", () => {
 		}
 	});
 
+	/**
+	 * The name is the sender's text, and it goes into a quoted parameter.
+	 *
+	 * postal-mime hands back filenames holding quotes from ordinary mail. The
+	 * name was interpolated straight in, so one closed the string early and
+	 * `a"; name="x.txt` came back as an attachment called `a` with the rest
+	 * read as a second parameter. What is archived has to be what was sent.
+	 */
+	it("keeps a filename that contains a quote", async () => {
+		const id = `sent-${crypto.randomUUID()}`;
+		const awkward = 'a"; name="x.txt';
+		await env.BUCKET.put(`attachments/${id}/att-1/${awkward}`, attached);
+
+		const one = { ...email(id) };
+		one.attachments = [{ ...one.attachments[0], filename: awkward }];
+		const entry = text(await renderMboxEntry(env, one as never, "Sent"));
+		const parsed = await PostalMime.parse(
+			entry.slice(entry.indexOf("\r\n") + 2),
+		);
+
+		expect(parsed.attachments.map((a) => a.filename)).toEqual([awkward]);
+	});
+
+	/**
+	 * And a name holding a line ending cannot write lines of its own. RFC 2231
+	 * percent-encoding lets one through the parser, and from there it was going
+	 * straight into a header and into the note's prose.
+	 */
+	it("does not let a filename inject lines into the archive", async () => {
+		const id = `sent-${crypto.randomUUID()}`;
+		const injecting = "x\r\nX-Injected: yes\r\nContent-Type: text/evil";
+
+		const one = { ...email(id) };
+		one.attachments = [{ ...one.attachments[0], filename: injecting }];
+		// Deliberately not stored, so the note's prose carries the name too.
+		const entry = text(await renderMboxEntry(env, one as never, "Sent"));
+
+		/*
+		 * The words still appear -- inside the quoted parameter, and inside the
+		 * note, where they are the name and not instructions. What must not
+		 * exist is a *line* of them, so that is what is asserted: "the text is
+		 * absent" would be a stronger claim than the fix makes, and a weaker
+		 * test than the fix needs.
+		 */
+		for (const line of entry.split("\r\n")) {
+			expect(line.startsWith("X-Injected")).toBe(false);
+			expect(line.startsWith("Content-Type: text/evil")).toBe(false);
+		}
+		const parsed = await PostalMime.parse(
+			entry.slice(entry.indexOf("\r\n") + 2),
+		);
+		expect(
+			parsed.headers.find((h) => h.key.toLowerCase() === "x-injected"),
+		).toBeUndefined();
+	});
+
+	// The type is the sender's text as well.
+	it("does not let a content type inject lines either", async () => {
+		const id = `sent-${crypto.randomUUID()}`;
+		await env.BUCKET.put(`attachments/${id}/att-1/note.bin`, attached);
+
+		const one = { ...email(id) };
+		one.attachments = [
+			{ ...one.attachments[0], mimetype: "text/plain\r\nX-Injected: yes" },
+		];
+		const entry = text(await renderMboxEntry(env, one as never, "Sent"));
+
+		for (const line of entry.split("\r\n")) {
+			expect(line.startsWith("X-Injected")).toBe(false);
+		}
+	});
+
+	/**
+	 * The note comes back as something, through this fork's own restore.
+	 *
+	 * An inline text part is not what the import reads: it takes the parsed
+	 * HTML body and the parsed attachments, and postal-mime folds an inline
+	 * note into neither -- so the message was restored with no attachment and
+	 * no word about one. A mark that only exists while nobody looks is the
+	 * silence it was meant to replace.
+	 */
+	it("leaves the note where a restore will find it", async () => {
+		const id = `sent-${crypto.randomUUID()}`;
+		// Deliberately not stored.
+
+		const entry = text(await renderMboxEntry(env, email(id) as never, "Sent"));
+		const parsed = await PostalMime.parse(
+			entry.slice(entry.indexOf("\r\n") + 2),
+		);
+
+		expect(parsed.attachments.length).toBe(1);
+		const note = parsed.attachments[0];
+		expect(note?.filename).toBe("note.bin.missing.txt");
+		const body =
+			typeof note?.content === "string"
+				? note.content
+				: new TextDecoder().decode(note?.content as ArrayBuffer);
+		expect(body).toContain("could not be read");
+	});
+
+	/**
+	 * A name that is not ASCII keeps its suffix inside the encoding.
+	 *
+	 * `${encodeHeader(name)}.missing.txt` puts text after an encoded word, and
+	 * text after an encoded word is not part of it: a conforming reader shows
+	 * `=?UTF-8?B?5paH5pu4LnBkZg==?=.missing.txt` as those characters. The whole
+	 * name has to be encoded together.
+	 *
+	 * There was no test with a name outside ASCII at all, so nothing here could
+	 * tell the two apart -- the fixture's `note.bin` encodes to itself.
+	 */
+	it("names the note properly when the filename is not ASCII", async () => {
+		const id = `sent-${crypto.randomUUID()}`;
+		// Deliberately not stored, so the note is what comes back.
+
+		const one = { ...email(id) };
+		one.attachments = [{ ...one.attachments[0], filename: "文書.pdf" }];
+		const entry = text(await renderMboxEntry(env, one as never, "Sent"));
+		const parsed = await PostalMime.parse(
+			entry.slice(entry.indexOf("\r\n") + 2),
+		);
+
+		expect(parsed.attachments[0]?.filename).toBe("文書.pdf.missing.txt");
+		expect(entry).not.toContain("?=.missing.txt");
+	});
+
 	// A message with a raw form still comes from the raw form, untouched.
 	it("prefers the raw message when there is one", async () => {
 		const id = `recv-${crypto.randomUUID()}`;

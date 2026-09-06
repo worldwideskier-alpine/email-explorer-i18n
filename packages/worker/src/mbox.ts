@@ -63,6 +63,26 @@ function encodeHeader(value: string): string {
  */
 const BASE64_LINE_BYTES = 57;
 
+/**
+ * A filename as a `filename="..."` parameter, quotes included.
+ *
+ * The name comes from the message, which means it comes from whoever sent it.
+ * It was interpolated straight into the parameter: a name holding a quote --
+ * postal-mime hands those back from ordinary mail -- closed the string early,
+ * so `a"; name="x.txt` was archived as a part whose filename is `a`, with the
+ * rest read as another parameter. A name holding a line ending ends the header
+ * and writes whatever follows into the message.
+ *
+ * encodeHeader answers either an encoded word, which is base64 and punctuation
+ * a quoted string holds as it stands, or the value unchanged when it is plain
+ * ASCII -- and plain ASCII is exactly where a quote or a backslash survives to
+ * be escaped here. The line endings go first, so neither route can carry one.
+ */
+function quotedFilename(value: string): string {
+	const oneLine = value.replace(/[\r\n]+/g, " ");
+	return `"${encodeHeader(oneLine).replace(/[\\"]/g, (ch) => `\\${ch}`)}"`;
+}
+
 function base64Lines(bytes: Uint8Array): string {
 	const lines: string[] = [];
 	for (let at = 0; at < bytes.length; at += BASE64_LINE_BYTES) {
@@ -190,7 +210,11 @@ async function synthesizeMessage(
 		const object = await env.BUCKET.get(
 			`attachments/${email.id}/${attachment.id}/${attachment.filename}`,
 		);
-		const named = encodeHeader(attachment.filename || attachment.id);
+		// One line, for the note's prose as much as for its headers.
+		const plainName = (attachment.filename || attachment.id).replace(
+			/[\r\n]+/g,
+			" ",
+		);
 		parts.push(`--${boundary}`);
 
 		/*
@@ -207,18 +231,32 @@ async function synthesizeMessage(
 		if (!object) {
 			parts.push(
 				'Content-Type: text/plain; charset="utf-8"',
-				`Content-Disposition: inline; filename="${named}.missing.txt"`,
+				/*
+				 * A file rather than an inline note, so that it survives being
+				 * restored. Reading an archive back through this fork's own
+				 * import takes the parsed HTML body and the parsed attachments;
+				 * an inline text part is neither, so it was folded into the
+				 * plain-text body and dropped, and the message came back with
+				 * no attachment and nothing to say why.
+				 *
+				 * The suffix goes on before the encoding, not after: text after
+				 * an encoded word is not part of it, and a conforming reader
+				 * shows `=?UTF-8?B?...?=.missing.txt` literally.
+				 */
+				`Content-Disposition: attachment; filename=${quotedFilename(`${plainName}.missing.txt`)}`,
 				"X-Email-Explorer-Attachment-Missing: 1",
 				"",
-				`[attachment ${attachment.id} (${attachment.filename}) could not be read]`,
+				`[attachment ${attachment.id} (${plainName}) could not be read]`,
 			);
 			continue;
 		}
 
 		const bytes = new Uint8Array(await object.arrayBuffer());
 		parts.push(
-			`Content-Type: ${attachment.mimetype || "application/octet-stream"}`,
-			`Content-Disposition: attachment; filename="${named}"`,
+			// The type is the sender's text too, and headerSafe is what keeps a
+			// line ending in it from ending the header.
+			`Content-Type: ${headerSafe(attachment.mimetype || "application/octet-stream")}`,
+			`Content-Disposition: attachment; filename=${quotedFilename(plainName)}`,
 			"Content-Transfer-Encoding: base64",
 			"",
 			base64Lines(bytes),
