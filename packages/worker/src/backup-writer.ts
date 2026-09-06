@@ -7,6 +7,12 @@
  * large a mailbox can be backed up at all -- exactly the mailbox for which a
  * backup matters most. Multipart has no such ceiling: parts go out as they
  * fill, and only one part is held at a time.
+ *
+ * The renders are concurrent, so what is held at once is that part plus the
+ * messages currently being built -- bounded by their own size and not only by
+ * their number; see renderBatches. Going over is not an exception this code
+ * can catch: the isolate is killed, which is the fault the concurrency was
+ * added to fix, arriving from the other side and on the largest mailboxes.
  */
 
 import { backupKey, backupKeyPrefix, keysToRotate } from "./auto-backup";
@@ -73,6 +79,93 @@ const PROGRESS_EVERY = 250;
  * a lower ceiling there costs speed rather than correctness.
  */
 const RENDER_CONCURRENCY = 12;
+
+/**
+ * And how many bytes of message may be in flight at once.
+ *
+ * A count alone is not a memory bound. Mail here is mostly small and twelve of
+ * it is nothing, but a mailbox holding twelve twenty-megabyte attachments in a
+ * row would build them all at the same time -- and each render holds the
+ * source, the escaped copy and the joined copy at once, so the isolate sees
+ * several times that again. Over the limit there is no exception to catch:
+ * the invocation is killed with nothing recorded, which is the exact fault
+ * this file has spent three commits chasing.
+ *
+ * Eight megabytes of source, which is a comfortable multiple of ordinary mail
+ * and a fraction of what one large message costs. Serial rendering held one
+ * message; this holds a few small ones or one big one, and never twelve big
+ * ones.
+ */
+const RENDER_BYTES = 8 * 1024 * 1024;
+
+/**
+ * What an attachment weighs in memory while its message is being built.
+ *
+ * Two different paths and the larger of them is the bound. A received message
+ * is held as the raw .eml it arrived as, in which the attachment is already
+ * base64 -- four bytes for every three. One this fork composed has no raw
+ * form, so `synthesizeMessage` fetches the attachment *and* base64s it, and
+ * holds both: the bytes plus four thirds of them again.
+ *
+ * Seven thirds is the second of those. An estimate that is only right about
+ * the smaller path is not a ceiling, and a ceiling is what this is for.
+ */
+const ATTACHMENT_GROWTH = 7 / 3;
+
+/**
+ * What a message costs to render, before rendering it.
+ *
+ * Estimated from what the row already carries -- `attachments.size` and the
+ * body text -- because asking R2 how large the raw message is would be the
+ * round trip per message that batching exists to remove. Attachments are the
+ * only term that varies by orders of magnitude, so an estimate built on them
+ * is wrong about small messages by a few kilobytes and right about the ones
+ * that matter.
+ */
+export function renderCost(email: {
+	body?: unknown;
+	attachments?: { size?: unknown }[];
+}): number {
+	const attached = (email.attachments ?? []).reduce((sum, one) => {
+		const size = Number(one?.size);
+		return sum + (Number.isFinite(size) && size > 0 ? size : 0);
+	}, 0);
+	const body = typeof email.body === "string" ? email.body.length : 0;
+	// Headers, the mbox wrapper, and a body that is not there on a received
+	// message because the raw one is used instead.
+	return 64 * 1024 + body + Math.ceil(attached * ATTACHMENT_GROWTH);
+}
+
+/**
+ * The groups of a page that may be rendered at the same time.
+ *
+ * Split on either bound, and never empty: a message larger than the whole
+ * budget is rendered on its own rather than not at all, which is what the
+ * serial loop did with every message and remains the honest floor.
+ */
+export function renderBatches<
+	T extends { body?: unknown; attachments?: { size?: unknown }[] },
+>(page: T[]): T[][] {
+	const batches: T[][] = [];
+	let batch: T[] = [];
+	let cost = 0;
+
+	for (const email of page) {
+		const next = renderCost(email);
+		const full =
+			batch.length >= RENDER_CONCURRENCY || cost + next > RENDER_BYTES;
+		if (batch.length > 0 && full) {
+			batches.push(batch);
+			batch = [];
+			cost = 0;
+		}
+		batch.push(email);
+		cost += next;
+	}
+
+	if (batch.length > 0) batches.push(batch);
+	return batches;
+}
 
 export interface BackupResult {
 	key: string;
@@ -176,9 +269,9 @@ export async function writeMailboxBackup(
 				ids.slice(from, from + READ_BATCH),
 			);
 
-			for (let at = 0; at < page.length; at += RENDER_CONCURRENCY) {
+			for (const batch of renderBatches(page)) {
 				const rendered = await Promise.all(
-					page.slice(at, at + RENDER_CONCURRENCY).map((email) => {
+					batch.map((email) => {
 						const folderId = String(
 							(email as { folder_id?: string }).folder_id ?? "inbox",
 						);
