@@ -1,5 +1,12 @@
 <template>
-  <header class="flex items-center gap-2 px-4 sm:px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95 sticky top-0 z-10">
+  <!-- Wraps below sm, and the search box is what goes to the second line.
+       Everything on one line at 320px left the search field 0 pixels wide:
+       the menu button, the two links and the language control are all the
+       size they are, and the field was the only thing that could give, so it
+       gave everything. Nothing scrolled sideways -- it was simply gone. Two
+       lines is what reflow is for, and it is not only the narrowest phone
+       that gains: at 375px the field was 63px. -->
+  <header class="flex flex-wrap items-center gap-2 px-4 sm:px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95 sticky top-0 z-10">
     <button
       @click="uiStore.toggleSidebar()"
       class="md:hidden flex-shrink-0 p-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200"
@@ -9,7 +16,7 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
       </svg>
     </button>
-    <div class="relative flex-1 min-w-0 max-w-xl">
+    <div class="relative order-last w-full min-w-0 sm:order-none sm:w-auto sm:flex-1 sm:max-w-xl">
       <span class="absolute inset-y-0 start-0 flex items-center ps-4">
         <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -23,10 +30,16 @@
         class="w-full ps-12 pe-4 py-3 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-xl text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
       />
     </div>
-    <div class="flex items-center gap-1 sm:gap-2 ms-auto ps-1 sm:ps-6 flex-shrink-0">
+    <!-- Shrinkable, not `flex-shrink-0`. Refusing to shrink made this group
+         push the header past the viewport at 320px, and the whole page with
+         it: every signed-in screen scrolled sideways by 16px. The two links
+         hold their size (they are an icon each below md); the language
+         control is the one that gives. It shares its line with the menu
+         button only, now that the search box takes one of its own. -->
+    <div class="flex items-center gap-1 sm:gap-2 ms-auto ps-1 sm:ps-6 min-w-0">
       <router-link
         to="/"
-        class="flex items-center gap-2 px-2 sm:px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 font-medium"
+        class="flex flex-shrink-0 items-center gap-2 px-2 sm:px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200 font-medium"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
