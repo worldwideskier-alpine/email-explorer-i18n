@@ -148,6 +148,13 @@ fork's work. This fork ships by being forked.
   looks like from outside, since its mail is meant to come back. Nothing can
   tell those two apart from the bucket, so deleting them is a separate press
   with that said on the screen.
+  The row also carries the attachment's **charset**, which postal-mime does
+  not give: it hands back a bare `text/plain` with the parameters gone, so a
+  Shift_JIS file was indistinguishable from a UTF-8 one from ingest onwards.
+  `attachment-charset.ts` reads the declaration back out of the raw message
+  while ingestion still has it, pairing the parser's attachments with the
+  parts of the message — and recording nothing at all when those two readings
+  disagree, because a wrong charset is a worse answer than no charset.
 - **The second-stage spam check runs in the Durable Object**, not in the
   `email()` handler, and that is about geography rather than storage. A Worker
   runs at the data centre that received the message and Email Routing's MX
