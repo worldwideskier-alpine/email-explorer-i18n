@@ -106,11 +106,16 @@ fork's work. This fork ships by being forked.
   Root owns no mailbox, is left out of the `GetMailboxes` administrator view,
   and its screen does not list anyone's mailboxes: what an administrator does
   with their own addresses is not root's business.
-- **Mailbox ownership.** A grant in `user_mailboxes` says who a mailbox
-  belongs to. Administrators currently *also* see every mailbox by skipping
-  the check, which is why the mailboxes in daily use had no grant rows at all;
-  `legacy-grants.ts` backfills them once, so that bypass can be removed later
-  without every mailbox vanishing from every screen at once.
+- **Mailbox ownership.** A grant says who a mailbox belongs to, and it is the
+  only thing that grants access: the middleware in `fetch()` and every
+  mailbox-scoped route ask `personHoldsMailbox`, and the mailbox list filters
+  by the same grants. The administrator bypass this replaced — an account
+  carrying `is_admin` skipped the check and reached every mailbox — is gone,
+  and `legacy-admin-flag.test.ts` holds that the flag buys nothing, because
+  the column is still written and `if (session.isAdmin)` would compile
+  anywhere in the request path. The mailboxes in daily use predate the grant
+  model and had no rows at all; `legacy-grants.ts` backfilled them once, which
+  is what made removing the bypass survivable.
 - **The daily cron.** One `scheduled()` handler, and the order inside it
   matters: `scheduled-run.ts` backs every mailbox up *first* and deletes old
   spam *second*, so a message the purge removes is already in that run's
