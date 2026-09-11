@@ -24,6 +24,11 @@
            to it, which answers "did my backup run" but not "did the run
            finish": a pass that never started and a pass that ran and found
            nothing to do leave the same absence on every mailbox. -->
+      <!-- gray-600 rather than the gray-500 the same line takes inside a card.
+           These two sit on the page itself, and the page is gray-100 in light
+           mode, not white: measured, gray-500 lands at 4.39:1 there against a
+           threshold of 4.5, where on white it is 4.84 and fine. The dark half
+           is unchanged; it measured clean. -->
       <div v-if="!maintenanceLoading" class="mb-6 text-sm">
         <!-- A request that failed says so. Falling through to "it has never
              run" would be this screen's own failure mode: a confident
@@ -31,13 +36,13 @@
         <p v-if="maintenanceUnreadable" class="text-amber-700 dark:text-amber-400 font-semibold">
           {{ t("root.maintenance.unreadable") }}
         </p>
-        <p v-else-if="!maintenance" class="text-gray-500 dark:text-gray-400">
+        <p v-else-if="!maintenance" class="text-gray-600 dark:text-gray-400">
           {{ t("root.maintenance.never") }}
         </p>
         <!-- `finishedAt` alone is not "it went well": it is set on the failure
              paths too, so a night the purge crashed rendered as this calm grey
              line claiming 0 messages deleted. See maintenanceFinishedCleanly. -->
-        <p v-else-if="finishedCleanly" class="text-gray-500 dark:text-gray-400">
+        <p v-else-if="finishedCleanly" class="text-gray-600 dark:text-gray-400">
           {{ t("root.maintenance.done", {
             at: formatFullDate(maintenance.startedAt),
             duration: finishedDuration,

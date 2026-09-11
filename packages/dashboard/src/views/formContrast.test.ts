@@ -1,15 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 /**
- * index.html pins the page to a dark palette unconditionally
- * (`<body class="bg-gray-900 text-gray-100">`), while individual cards use the
- * `bg-white dark:bg-gray-800` pattern and follow the viewer's colour scheme.
+ * index.html used to pin the page to a dark palette unconditionally
+ * (`<body class="bg-gray-900 text-gray-100">`), while individual cards used
+ * the `bg-white dark:bg-gray-800` pattern and followed the viewer's colour
+ * scheme.
  *
- * So in light mode a card turns white but text still inherits gray-100 from
- * the body. Anything that doesn't set its own light-mode colour renders
+ * So in light mode a card turned white but text still inherited gray-100 from
+ * the body. Anything that didn't set its own light-mode colour rendered
  * near-white on white -- invisible. That is what happened to the admin panel's
  * "new user" form: the address typed into it could not be seen, and the form
  * looked broken rather than merely hard to read.
+ *
+ * The body carries both halves now, so the inheritance is no longer the
+ * hazard it was. This stays because the rule it holds is still the right one:
+ * a control somebody types into should say what colour that text is rather
+ * than inherit it from whatever encloses it this month. What the body does is
+ * not this file's to depend on.
  *
  * Computed colours can't be checked here (jsdom doesn't run Tailwind), so this
  * asserts the source-level invariant instead: every form control a person
