@@ -1,4 +1,5 @@
 import type PostalMime from "postal-mime";
+import { charsetsForAttachments, typeWithCharset } from "./attachment-charset";
 import { plainTextToHtml } from "./plain-text-to-html";
 import { notifyNewEmail } from "./push-notify";
 import { formatAddressList } from "./recipients";
@@ -43,8 +44,16 @@ export async function ingestEmailIntoMailbox(
 		await env.BUCKET.put(key, JSON.stringify({}));
 	}
 
-	if (overrides.rawEmail) {
-		await env.BUCKET.put(`raw/${messageId}.eml`, overrides.rawEmail);
+	// Kept as bytes rather than decoded: the part headers this is read for are
+	// ASCII, but the body around them is whatever the sender sent.
+	const raw = overrides.rawEmail
+		? overrides.rawEmail instanceof Uint8Array
+			? overrides.rawEmail
+			: new Uint8Array(overrides.rawEmail)
+		: null;
+
+	if (raw) {
+		await env.BUCKET.put(`raw/${messageId}.eml`, raw);
 	}
 
 	const ns = env.MAILBOX;
@@ -53,7 +62,17 @@ export async function ingestEmailIntoMailbox(
 
 	const attachmentData = [];
 	if (parsedEmail.attachments) {
-		for (const att of parsedEmail.attachments) {
+		// What the parser dropped. postal-mime gives a bare `text/plain` with
+		// the parameters gone, so a Shift_JIS attachment became indistinguishable
+		// from a UTF-8 one the moment the row was written -- and every reader
+		// afterwards rebuilds the type from that row. The message itself still
+		// says, so it is read back out of the copy being stored a few lines
+		// above. See attachment-charset.ts.
+		const charsets = raw
+			? charsetsForAttachments(raw, parsedEmail.attachments)
+			: [];
+
+		for (const [index, att] of parsedEmail.attachments.entries()) {
 			const attachmentId = crypto.randomUUID();
 			// One name for the key and the row. They were `att.filename` and
 			// `att.filename || "untitled"`, so an attachment that arrived
@@ -67,7 +86,7 @@ export async function ingestEmailIntoMailbox(
 				id: attachmentId,
 				email_id: messageId,
 				filename,
-				mimetype: att.mimeType,
+				mimetype: typeWithCharset(att.mimeType, charsets[index] ?? null),
 				size:
 					typeof att.content === "string"
 						? att.content.length

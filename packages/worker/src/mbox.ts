@@ -103,7 +103,7 @@ function quotedFilename(value: string): string {
  * put any charset on any part -- including a wrong one over a Shift_JIS body,
  * which is the corruption this file spends its length trying to avoid.
  */
-function splitParameters(value: string): string[] {
+export function splitParameters(value: string): string[] {
 	const out: string[] = [];
 	let current = "";
 	let quoted = false;
@@ -146,12 +146,12 @@ function splitParameters(value: string): string[] {
  * inside a leaf are read, and losing it is the same class of loss this file
  * exists to prevent.
  *
- * What this does not reach: received mail has no charset by the time it gets
- * here. postal-mime hands back a bare `mimeType` and the parameters are not on
- * the object at all, so the row records `text/plain` and the charset is gone
- * at ingest -- long before this. The archive of a *received* Shift_JIS message
- * is its raw copy, which still has it; a forwarded one is rebuilt from the row
- * and does not. Keeping the charset here is right and is not that fix.
+ * Received mail used to arrive here with no charset to keep: postal-mime hands
+ * back a bare `mimeType` with the parameters not on the object at all, so the
+ * row said `text/plain` and the encoding was gone at ingest, long before this.
+ * `attachment-charset.ts` reads it back out of the stored raw message while
+ * ingestion still has it, so the row now carries what the sender declared and
+ * there is something here to keep.
  */
 export function safeMediaType(value: string | null | undefined): string {
 	const [rawType, ...params] = splitParameters(value ?? "");
