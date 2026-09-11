@@ -432,6 +432,24 @@
 			"notReached": "Naka-iskedyul na maintenance {at}: natapos bago pa marating ang paglilinis ng spam.",
 			"killedInBackup": "Nakatakdang pagpapanatili {at}: naputol habang nagba-backup ({detail}).",
 			"unfinished": "Naka-iskedyul na maintenance {at}: narating ang paglilinis ng spam, ngunit walang talaan na natapos ito."
+		},
+		"attachments": {
+			"title": "Mga natirang attachment",
+			"explain": "Sinusuri ang imbakan para sa mga file ng attachment na walang mensaheng tumuturo sa kanila. Walang mail na ipinapakita rito.",
+			"scan": "Suriin",
+			"working": "Ginagawa…",
+			"summary": "Nasuri ang {objects} file ng attachment ({size}).",
+			"clean": "Walang natira.",
+			"misnamed": "Nakatago sa pangalang hindi tugma: {count} ({size}). Hindi mabubuksan mula sa mensahe.",
+			"repair": "Ayusin ang mga pangalan",
+			"repaired": "Naayos ang {count}. May {remaining} pa.",
+			"unclaimed": "Walang mensaheng nag-aangkin: {count} ({size}).",
+			"unclaimedWarning": "Kung may mailbox na binura ngunit itinago ang mail nito, kabilang dito ang mga attachment niyon. Hindi na maibabalik ang pagbura.",
+			"purge": "Burahin",
+			"purged": "Nabura ang {count} ({size}). May {remaining} pa.",
+			"confirmPurge": "Permanenteng buburahin ang {count} file ng attachment na walang nag-aangkin. Hindi na maibabalik. Ituloy?",
+			"unreadable": "Hindi mabasa ang kalagayan ng imbakan.",
+			"failed": "Hindi ito naisagawa."
 		}
 	}
 }

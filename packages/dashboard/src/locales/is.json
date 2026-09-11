@@ -432,6 +432,24 @@
 			"notReached": "Áætlað viðhald {at}: lauk áður en það komst að ruslpóstshreinsuninni.",
 			"killedInBackup": "Áætlað viðhald {at}: rofnaði meðan á afritun stóð ({detail}).",
 			"unfinished": "Áætlað viðhald {at}: komst að ruslpóstshreinsuninni en engin skráning er um að því hafi lokið."
+		},
+		"attachments": {
+			"title": "Viðhengi sem urðu eftir",
+			"explain": "Kannar geymsluna eftir viðhengisskrám sem ekkert skeyti vísar á. Póstur er ekki sýndur hér.",
+			"scan": "Kanna",
+			"working": "Í vinnslu…",
+			"summary": "{objects} viðhengisskrár ({size}) kannaðar.",
+			"clean": "Ekkert varð eftir.",
+			"misnamed": "Vistaðar undir nafni sem stemmir ekki: {count} ({size}). Ekki hægt að opna þær úr skeytinu.",
+			"repair": "Lagfæra nöfnin",
+			"repaired": "{count} lagfærð. {remaining} eftir.",
+			"unclaimed": "Ekkert skeyti gerir tilkall til þeirra: {count} ({size}).",
+			"unclaimedWarning": "Hafi pósthólfi verið eytt en pósturinn geymdur teljast viðhengi þess líka hér. Eyðing verður ekki afturkölluð.",
+			"purge": "Eyða",
+			"purged": "{count} ({size}) eytt. {remaining} eftir.",
+			"confirmPurge": "{count} viðhengisskrám sem ekkert skeyti gerir tilkall til verður eytt varanlega. Verður ekki afturkallað. Halda áfram?",
+			"unreadable": "Ekki tókst að lesa stöðu geymslunnar.",
+			"failed": "Ekki tókst að keyra þetta."
 		}
 	}
 }

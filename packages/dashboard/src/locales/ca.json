@@ -432,6 +432,24 @@
 			"notReached": "Manteniment programat {at}: ha acabat abans d'arribar a la neteja de correu brossa.",
 			"killedInBackup": "Manteniment programat {at}: s'ha interromput durant les còpies de seguretat ({detail}).",
 			"unfinished": "Manteniment programat {at}: ha arribat a la neteja de correu brossa, però no hi ha registre que finalitzés."
+		},
+		"attachments": {
+			"title": "Adjunts sobrants",
+			"explain": "Comprova si al magatzem hi ha fitxers adjunts que cap missatge no referencia. Aquí no es mostra cap correu.",
+			"scan": "Comprova",
+			"working": "Treballant…",
+			"summary": "S'han comprovat {objects} fitxers adjunts ({size}).",
+			"clean": "No hi ha res sobrant.",
+			"misnamed": "Desats amb un nom que no coincideix: {count} ({size}). No es poden obrir des del missatge.",
+			"repair": "Corregeix els noms",
+			"repaired": "Corregits {count}. En queden {remaining}.",
+			"unclaimed": "Cap missatge no els reclama: {count} ({size}).",
+			"unclaimedWarning": "Si s'ha esborrat una bústia conservant-ne el correu, els seus adjunts també es compten aquí. L'esborrat no es pot desfer.",
+			"purge": "Esborra",
+			"purged": "Esborrats {count} ({size}). En queden {remaining}.",
+			"confirmPurge": "S'esborraran definitivament {count} fitxers adjunts que cap missatge no reclama. No es pot desfer. Voleu continuar?",
+			"unreadable": "No s'ha pogut llegir l'estat del magatzem.",
+			"failed": "No s'ha pogut executar."
 		}
 	}
 }

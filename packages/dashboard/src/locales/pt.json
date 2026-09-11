@@ -432,6 +432,24 @@
 			"notReached": "Manutenção agendada {at}: terminou antes de chegar à limpeza de spam.",
 			"killedInBackup": "Manutenção agendada {at}: foi interrompida durante os backups ({detail}).",
 			"unfinished": "Manutenção agendada {at}: chegou à limpeza de spam, mas não há registo de que tenha terminado."
+		},
+		"attachments": {
+			"title": "Anexos que sobraram",
+			"explain": "Verifica no armazenamento se há ficheiros de anexo a que nenhuma mensagem aponta. Aqui não se mostra correio.",
+			"scan": "Verificar",
+			"working": "A executar…",
+			"summary": "Verificados {objects} ficheiros de anexo ({size}).",
+			"clean": "Não sobrou nada.",
+			"misnamed": "Guardados com um nome que não corresponde: {count} ({size}). Não se abrem a partir da mensagem.",
+			"repair": "Corrigir os nomes",
+			"repaired": "Corrigidos {count}. Faltam {remaining}.",
+			"unclaimed": "Nenhuma mensagem os reclama: {count} ({size}).",
+			"unclaimedWarning": "Se uma caixa foi eliminada mantendo o correio, os anexos dela também contam aqui. A eliminação não pode ser desfeita.",
+			"purge": "Eliminar",
+			"purged": "Eliminados {count} ({size}). Faltam {remaining}.",
+			"confirmPurge": "Serão eliminados definitivamente {count} ficheiros de anexo que nenhuma mensagem reclama. Não pode ser desfeito. Continuar?",
+			"unreadable": "Não foi possível ler o estado do armazenamento.",
+			"failed": "Não foi possível executar."
 		}
 	}
 }

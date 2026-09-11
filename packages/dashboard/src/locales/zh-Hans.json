@@ -432,6 +432,24 @@
 			"notReached": "定期维护 {at}：未到达垃圾邮件清理就结束了。",
 			"killedInBackup": "定期维护 {at}：在备份过程中被中断（{detail}）。",
 			"unfinished": "定期维护 {at}：已到达垃圾邮件清理，但没有完成的记录。"
+		},
+		"attachments": {
+			"title": "残留的附件",
+			"explain": "检查存储中是否有任何邮件都未指向的附件文件。此处不显示邮件内容。",
+			"scan": "检查",
+			"working": "处理中…",
+			"summary": "已检查 {objects} 个附件文件（{size}）。",
+			"clean": "没有残留。",
+			"misnamed": "以不相符的名称存放：{count} 个（{size}）。无法从邮件中打开。",
+			"repair": "修正名称",
+			"repaired": "已修正 {count} 个。还剩 {remaining} 个。",
+			"unclaimed": "没有任何邮件认领：{count} 个（{size}）。",
+			"unclaimedWarning": "如果删除邮箱时保留了其邮件，那些附件也计入此处。删除后无法恢复。",
+			"purge": "删除",
+			"purged": "已删除 {count} 个（{size}）。还剩 {remaining} 个。",
+			"confirmPurge": "将永久删除 {count} 个没有任何邮件认领的附件文件。无法恢复。是否继续？",
+			"unreadable": "无法读取存储的状态。",
+			"failed": "无法执行。"
 		}
 	}
 }

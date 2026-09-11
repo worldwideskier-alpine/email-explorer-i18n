@@ -432,6 +432,24 @@
 			"notReached": "Planirano održavanje {at}: završilo je prije nego što je stiglo do čišćenja neželjene pošte.",
 			"killedInBackup": "Planirano održavanje {at}: prekinuto tokom izrade sigurnosne kopije ({detail}).",
 			"unfinished": "Planirano održavanje {at}: stiglo je do čišćenja neželjene pošte, ali nema zapisa o završetku."
+		},
+		"attachments": {
+			"title": "Zaostali prilozi",
+			"explain": "Provjerava pohranu na datoteke priloga na koje ne pokazuje nijedna poruka. Sadržaj pošte se ovdje ne prikazuje.",
+			"scan": "Provjeri",
+			"working": "U toku…",
+			"summary": "Provjereno {objects} datoteka priloga ({size}).",
+			"clean": "Ništa nije zaostalo.",
+			"misnamed": "Pohranjeno pod imenom koje se ne poklapa: {count} ({size}). Ne mogu se otvoriti iz poruke.",
+			"repair": "Popravi imena",
+			"repaired": "Popravljeno {count}. Ostalo {remaining}.",
+			"unclaimed": "Nijedna poruka ih ne prisvaja: {count} ({size}).",
+			"unclaimedWarning": "Ako je poštansko sanduče obrisano uz zadržavanje pošte, i njegovi prilozi se ovdje broje. Brisanje se ne može poništiti.",
+			"purge": "Obriši",
+			"purged": "Obrisano {count} ({size}). Ostalo {remaining}.",
+			"confirmPurge": "Trajno će biti obrisano {count} datoteka priloga koje nijedna poruka ne prisvaja. Ne može se poništiti. Nastaviti?",
+			"unreadable": "Stanje pohrane nije moglo biti pročitano.",
+			"failed": "To nije moglo biti izvršeno."
 		}
 	}
 }

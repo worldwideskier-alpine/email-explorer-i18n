@@ -155,6 +155,71 @@
         </ul>
       </div>
 
+      <!-- Storage housekeeping, which is root's for the same reason the
+           nightly record is: the bucket belongs to the deployment rather than
+           to a mailbox, and an administrator told "there are objects here
+           nothing can reach" could do nothing about it. Counts only -- this
+           screen never names a file, a mailbox or an address. -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-200 dark:border-gray-700 mt-6">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white">{{ t("root.attachments.title") }}</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ t("root.attachments.explain") }}</p>
+
+        <button
+          @click="scanAttachments"
+          :disabled="sweeping"
+          class="mt-4 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600"
+        >
+          {{ sweeping ? t("root.attachments.working") : t("root.attachments.scan") }}
+        </button>
+
+        <!-- A failed request says so rather than falling through to "nothing
+             to clean up", which is the one sentence it must not borrow. -->
+        <p v-if="sweepUnreadable" class="mt-3 text-sm text-amber-700 dark:text-amber-400 font-semibold">
+          {{ t("root.attachments.unreadable") }}
+        </p>
+        <div v-else-if="sweep" class="mt-3 text-sm">
+          <p class="text-gray-600 dark:text-gray-400">
+            {{ t("root.attachments.summary", { objects: sweep.objects, size: formatBytes(sweep.bytes) }) }}
+          </p>
+
+          <p v-if="sweep.misnamed === 0 && sweep.unclaimed === 0" class="mt-2 text-gray-500 dark:text-gray-400">
+            {{ t("root.attachments.clean") }}
+          </p>
+
+          <!-- Repairable: the message is still there and can be opened, and
+               only the name these bytes are filed under is wrong. -->
+          <div v-if="sweep.misnamed > 0" class="mt-4">
+            <p class="text-amber-700 dark:text-amber-400 font-semibold">
+              {{ t("root.attachments.misnamed", { count: sweep.misnamed, size: formatBytes(sweep.misnamedBytes) }) }}
+            </p>
+            <button
+              @click="repairAttachments"
+              :disabled="sweeping"
+              class="mt-2 px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {{ t("root.attachments.repair") }}
+            </button>
+          </div>
+
+          <!-- The destructive one, and the only thing on this screen that can
+               take something somebody still wants: an unlisted mailbox's mail
+               reads exactly like a deletion's leftovers. -->
+          <div v-if="sweep.unclaimed > 0" class="mt-4">
+            <p class="text-amber-700 dark:text-amber-400 font-semibold">
+              {{ t("root.attachments.unclaimed", { count: sweep.unclaimed, size: formatBytes(sweep.unclaimedBytes) }) }}
+            </p>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t("root.attachments.unclaimedWarning") }}</p>
+            <button
+              @click="purgeAttachments"
+              :disabled="sweeping"
+              class="mt-2 px-4 py-2 text-sm text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-50"
+            >
+              {{ t("root.attachments.purge") }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <p v-if="message" class="mt-4 text-sm text-green-600 dark:text-green-400">{{ message }}</p>
       <p v-if="error" class="mt-4 text-sm text-red-600 dark:text-red-400">{{ error }}</p>
     </div>
@@ -170,6 +235,7 @@ import { useDateFormat } from "@/composables/useDateFormat";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 import { type AccountRole, useAuthStore } from "@/stores/auth";
+import { formatBytes } from "@/utils/attachments";
 import {
 	type MaintenanceRecord,
 	maintenanceDeleted,
@@ -252,6 +318,98 @@ const stoppedLine = computed(() =>
 const trailingDetail = computed(() =>
 	maintenanceTrailingDetail(stoppedLine.value, maintenance.value),
 );
+
+/** Counts by state, and nothing that says whose mail any of it is. */
+interface AttachmentSweep {
+	objects: number;
+	bytes: number;
+	matched: number;
+	misnamed: number;
+	misnamedBytes: number;
+	unclaimed: number;
+	unclaimedBytes: number;
+	unreadable: number;
+}
+
+const sweep = ref<AttachmentSweep | null>(null);
+const sweeping = ref(false);
+const sweepUnreadable = ref(false);
+
+/**
+ * Not run on load, unlike the two requests above.
+ *
+ * It walks every attachment object in the bucket and asks every mailbox what
+ * it holds, which is a real amount of work for a screen whose job is the
+ * account list. Opening this page should not do it; pressing the button
+ * should.
+ */
+async function scanAttachments() {
+	sweeping.value = true;
+	sweepUnreadable.value = false;
+	try {
+		sweep.value = (await api.sweepAttachments()).data ?? null;
+	} catch {
+		sweep.value = null;
+		sweepUnreadable.value = true;
+	} finally {
+		sweeping.value = false;
+	}
+}
+
+/**
+ * Both actions end by surveying again, so what the screen shows is what the
+ * bucket is now rather than what it was before the button was pressed. Each
+ * call is also capped, and `remaining` is how the cap is said out loud: press
+ * again.
+ */
+async function repairAttachments() {
+	message.value = "";
+	error.value = "";
+	sweeping.value = true;
+	try {
+		const result = (await api.repairAttachments()).data;
+		message.value = () =>
+			t("root.attachments.repaired", {
+				count: result?.repaired ?? 0,
+				remaining: result?.remaining ?? 0,
+			});
+	} catch {
+		error.value = () => t("root.attachments.failed");
+	} finally {
+		sweeping.value = false;
+	}
+	await scanAttachments();
+}
+
+async function purgeAttachments() {
+	if (!sweep.value) return;
+	// Asked once, in the words that say what cannot be told apart. The screen
+	// has already printed the warning; this is the press that cannot be undone.
+	if (
+		!window.confirm(
+			t("root.attachments.confirmPurge", { count: sweep.value.unclaimed }),
+		)
+	) {
+		return;
+	}
+	message.value = "";
+	error.value = "";
+	sweeping.value = true;
+	try {
+		const result = (await api.purgeAttachments()).data;
+		message.value = () =>
+			t("root.attachments.purged", {
+				count: result?.deleted ?? 0,
+				size: formatBytes(result?.bytes ?? 0),
+				remaining: result?.remaining ?? 0,
+			});
+	} catch {
+		error.value = () => t("root.attachments.failed");
+	} finally {
+		sweeping.value = false;
+	}
+	await scanAttachments();
+}
 
 /**
  * Two requests, and neither may answer for the other.

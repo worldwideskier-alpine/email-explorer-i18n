@@ -432,6 +432,24 @@
 			"notReached": "Mirëmbajtje e planifikuar {at}: përfundoi para se të arrinte te pastrimi i spam-it.",
 			"killedInBackup": "Mirëmbajtja e planifikuar {at}: u ndërpre gjatë kopjeve rezervë ({detail}).",
 			"unfinished": "Mirëmbajtje e planifikuar {at}: arriti te pastrimi i spam-it, por nuk ka asnjë shënim se përfundoi."
+		},
+		"attachments": {
+			"title": "Bashkëngjitje të mbetura",
+			"explain": "Kontrollon depon për skedarë bashkëngjitjesh që asnjë mesazh nuk i tregon. Këtu nuk shfaqet asnjë postë.",
+			"scan": "Kontrollo",
+			"working": "Duke punuar…",
+			"summary": "U kontrolluan {objects} skedarë bashkëngjitjesh ({size}).",
+			"clean": "Nuk ka mbetur asgjë.",
+			"misnamed": "Të ruajtura me një emër që nuk përputhet: {count} ({size}). Nga mesazhi nuk hapen.",
+			"repair": "Rregullo emrat",
+			"repaired": "U rregulluan {count}. Mbeten {remaining}.",
+			"unclaimed": "Asnjë mesazh nuk i kërkon: {count} ({size}).",
+			"unclaimedWarning": "Nëse një kuti postare u fshi duke ruajtur postën e saj, edhe bashkëngjitjet e saj numërohen këtu. Fshirja nuk kthehet mbrapsht.",
+			"purge": "Fshi",
+			"purged": "U fshinë {count} ({size}). Mbeten {remaining}.",
+			"confirmPurge": "Do të fshihen përgjithmonë {count} skedarë bashkëngjitjesh që asnjë mesazh nuk i kërkon. Nuk kthehet mbrapsht. Të vazhdohet?",
+			"unreadable": "Gjendja e depos nuk u lexua dot.",
+			"failed": "Kjo nuk u krye dot."
 		}
 	}
 }

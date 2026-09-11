@@ -432,6 +432,24 @@
 			"notReached": "Cothabháil sceidealta {at}: chríochnaigh sí sular shroich sí glanadh an turscair.",
 			"killedInBackup": "Cothabháil sceidealta {at}: gearradh siar é le linn na gcúltacaí ({detail}).",
 			"unfinished": "Cothabháil sceidealta {at}: shroich sí glanadh an turscair, ach níl aon taifead ann gur chríochnaigh sí."
+		},
+		"attachments": {
+			"title": "Iatáin fágtha",
+			"explain": "Seiceálann an stóras le haghaidh comhad iatáin nach dtagraíonn aon teachtaireacht dóibh. Ní thaispeántar aon phost anseo.",
+			"scan": "Seiceáil",
+			"working": "Ar siúl…",
+			"summary": "Seiceáladh {objects} comhad iatáin ({size}).",
+			"clean": "Níl aon rud fágtha.",
+			"misnamed": "Sábháilte faoi ainm nach réitíonn: {count} ({size}). Ní féidir iad a oscailt ón teachtaireacht.",
+			"repair": "Ceartaigh na hainmneacha",
+			"repaired": "Ceartaíodh {count}. {remaining} fágtha.",
+			"unclaimed": "Níl aon teachtaireacht á n-éileamh: {count} ({size}).",
+			"unclaimedWarning": "Má scriosadh bosca poist agus a chuid poist coinnithe, cuirtear a iatáin san áireamh anseo freisin. Ní féidir an scriosadh a chur ar ceal.",
+			"purge": "Scrios",
+			"purged": "Scriosadh {count} ({size}). {remaining} fágtha.",
+			"confirmPurge": "Scriosfar go buan {count} comhad iatáin nach n-éilíonn aon teachtaireacht. Ní féidir é a chur ar ceal. Ar aghaidh?",
+			"unreadable": "Níorbh fhéidir staid an stórais a léamh.",
+			"failed": "Níorbh fhéidir é sin a rith."
 		}
 	}
 }

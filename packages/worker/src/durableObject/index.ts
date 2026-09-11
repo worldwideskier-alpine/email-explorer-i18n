@@ -1241,6 +1241,29 @@ export class MailboxDO extends DurableObject<Env> {
 	}
 
 	/**
+	 * Every attachment this mailbox claims, as the three parts its R2 key is
+	 * built from. What the sweep in attachment-sweep.ts compares the bucket
+	 * against: an object no row here names is reachable from nothing.
+	 *
+	 * The filename comes back as stored rather than as a finished key, because
+	 * the row is the truth about the name and the key is assembled the same way
+	 * in half a dozen places. Deciding here what the key should be would add a
+	 * seventh.
+	 */
+	async listAttachmentRows(): Promise<
+		{ emailId: string; attachmentId: string; filename: string }[]
+	> {
+		const rows = this.ctx.storage.sql
+			.exec("SELECT id, email_id, filename FROM attachments")
+			.toArray();
+		return rows.map((row) => ({
+			emailId: String(row.email_id),
+			attachmentId: String(row.id),
+			filename: String(row.filename),
+		}));
+	}
+
+	/**
 	 * Ids only, oldest first -- the export streams one message at a time and
 	 * fetches each body as it goes, so that a mailbox of any size costs one
 	 * message worth of memory rather than all of them at once.

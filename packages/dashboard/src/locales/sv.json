@@ -432,6 +432,24 @@
 			"notReached": "Schemalagt underhåll {at}: det slutade innan det nådde skräppostrensningen.",
 			"killedInBackup": "Schemalagt underhåll {at}: avbröts under säkerhetskopieringen ({detail}).",
 			"unfinished": "Schemalagt underhåll {at}: det nådde skräppostrensningen, men det finns ingen notering om att det blev klart."
+		},
+		"attachments": {
+			"title": "Kvarlämnade bilagor",
+			"explain": "Kontrollerar lagret efter bilagefiler som inget meddelande pekar på. Ingen post visas här.",
+			"scan": "Kontrollera",
+			"working": "Arbetar…",
+			"summary": "{objects} bilagefiler ({size}) kontrollerade.",
+			"clean": "Inget är kvar.",
+			"misnamed": "Sparade under ett namn som inte stämmer: {count} ({size}). De går inte att öppna från meddelandet.",
+			"repair": "Rätta namnen",
+			"repaired": "Rättade {count}. {remaining} kvar.",
+			"unclaimed": "Inget meddelande gör anspråk på dem: {count} ({size}).",
+			"unclaimedWarning": "Om en brevlåda raderats med posten bevarad räknas dess bilagor också här. Radering kan inte ångras.",
+			"purge": "Radera",
+			"purged": "Raderade {count} ({size}). {remaining} kvar.",
+			"confirmPurge": "{count} bilagefiler som inget meddelande gör anspråk på raderas permanent. Kan inte ångras. Fortsätta?",
+			"unreadable": "Lagrets tillstånd kunde inte läsas.",
+			"failed": "Det gick inte att köra."
 		}
 	}
 }

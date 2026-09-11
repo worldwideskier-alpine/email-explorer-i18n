@@ -432,6 +432,24 @@
 			"notReached": "Plānotā apkope {at}: beidzās, nesasniedzot mēstuļu tīrīšanu.",
 			"killedInBackup": "Plānotā apkope {at}: pārtraukta dublēšanas laikā ({detail}).",
 			"unfinished": "Plānotā apkope {at}: sasniedza mēstuļu tīrīšanu, bet ieraksta par pabeigšanu nav."
+		},
+		"attachments": {
+			"title": "Palikušie pielikumi",
+			"explain": "Pārbauda krātuvi, vai tajā nav pielikumu failu, uz kuriem nenorāda neviena vēstule. Pasta saturs šeit netiek rādīts.",
+			"scan": "Pārbaudīt",
+			"working": "Notiek…",
+			"summary": "Pārbaudīti {objects} pielikumu faili ({size}).",
+			"clean": "Nekas nav palicis.",
+			"misnamed": "Saglabāti ar vārdu, kas nesakrīt: {count} ({size}). No vēstules tos atvērt nevar.",
+			"repair": "Izlabot vārdus",
+			"repaired": "Izlaboti {count}. Atlikuši {remaining}.",
+			"unclaimed": "Neviena vēstule uz tiem nepretendē: {count} ({size}).",
+			"unclaimedWarning": "Ja pastkaste dzēsta, saglabājot tās pastu, arī tās pielikumi tiek skaitīti šeit. Dzēšanu atsaukt nevar.",
+			"purge": "Dzēst",
+			"purged": "Izdzēsti {count} ({size}). Atlikuši {remaining}.",
+			"confirmPurge": "Neatgriezeniski tiks dzēsti {count} pielikumu faili, uz kuriem nepretendē neviena vēstule. Atsaukt nevar. Turpināt?",
+			"unreadable": "Krātuves stāvokli neizdevās nolasīt.",
+			"failed": "To neizdevās izpildīt."
 		}
 	}
 }

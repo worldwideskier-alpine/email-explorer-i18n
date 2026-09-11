@@ -432,6 +432,24 @@
 			"notReached": "Gepland onderhoud {at}: het eindigde voordat het de spamopruiming bereikte.",
 			"killedInBackup": "Geplande onderhoud {at}: afgebroken tijdens de back-ups ({detail}).",
 			"unfinished": "Gepland onderhoud {at}: het bereikte de spamopruiming, maar er is niets vastgelegd over de voltooiing."
+		},
+		"attachments": {
+			"title": "Achtergebleven bijlagen",
+			"explain": "Controleert de opslag op bijlagebestanden waar geen enkel bericht naar wijst. Hier wordt geen post getoond.",
+			"scan": "Controleren",
+			"working": "Bezig…",
+			"summary": "{objects} bijlagebestanden ({size}) gecontroleerd.",
+			"clean": "Er is niets achtergebleven.",
+			"misnamed": "Opgeslagen onder een naam die niet klopt: {count} ({size}). Vanuit het bericht niet te openen.",
+			"repair": "Namen rechtzetten",
+			"repaired": "{count} rechtgezet. Nog {remaining}.",
+			"unclaimed": "Door geen enkel bericht opgeëist: {count} ({size}).",
+			"unclaimedWarning": "Is een postbus verwijderd met behoud van de post, dan tellen de bijlagen daarvan hier ook mee. Verwijderen kan niet ongedaan worden gemaakt.",
+			"purge": "Verwijderen",
+			"purged": "{count} ({size}) verwijderd. Nog {remaining}.",
+			"confirmPurge": "{count} bijlagebestanden die geen enkel bericht opeist, worden definitief verwijderd. Dit kan niet ongedaan worden gemaakt. Doorgaan?",
+			"unreadable": "De staat van de opslag kon niet gelezen worden.",
+			"failed": "Dit kon niet worden uitgevoerd."
 		}
 	}
 }

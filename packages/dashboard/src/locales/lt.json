@@ -432,6 +432,24 @@
 			"notReached": "Suplanuota priežiūra {at}: baigėsi nepasiekusi šlamšto valymo.",
 			"killedInBackup": "Suplanuota priežiūra {at}: nutrūko kuriant atsargines kopijas ({detail}).",
 			"unfinished": "Suplanuota priežiūra {at}: pasiekė šlamšto valymą, bet įrašo apie pabaigą nėra."
+		},
+		"attachments": {
+			"title": "Likę priedai",
+			"explain": "Patikrina saugykloje priedų failus, į kuriuos nerodo nė vienas laiškas. Pašto turinys čia nerodomas.",
+			"scan": "Tikrinti",
+			"working": "Vykdoma…",
+			"summary": "Patikrinta {objects} priedų failų ({size}).",
+			"clean": "Nieko neliko.",
+			"misnamed": "Įrašyta nesutampančiu vardu: {count} ({size}). Iš laiško jų atidaryti negalima.",
+			"repair": "Pataisyti vardus",
+			"repaired": "Pataisyta {count}. Liko {remaining}.",
+			"unclaimed": "Nė vienas laiškas jų nereikalauja: {count} ({size}).",
+			"unclaimedWarning": "Jei pašto dėžutė ištrinta paliekant jos laiškus, jos priedai taip pat skaičiuojami čia. Ištrynimo atšaukti negalima.",
+			"purge": "Ištrinti",
+			"purged": "Ištrinta {count} ({size}). Liko {remaining}.",
+			"confirmPurge": "Visam laikui bus ištrinta {count} priedų failų, kurių nereikalauja nė vienas laiškas. Atšaukti negalima. Tęsti?",
+			"unreadable": "Nepavyko perskaityti saugyklos būsenos.",
+			"failed": "Nepavyko įvykdyti."
 		}
 	}
 }

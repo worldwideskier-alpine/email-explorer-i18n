@@ -432,6 +432,24 @@
 			"notReached": "Manutenzione pianificata {at}: si è conclusa prima di arrivare alla pulizia dello spam.",
 			"killedInBackup": "Manutenzione pianificata {at}: interrotta durante i backup ({detail}).",
 			"unfinished": "Manutenzione pianificata {at}: è arrivata alla pulizia dello spam, ma non risulta conclusa."
+		},
+		"attachments": {
+			"title": "Allegati rimasti",
+			"explain": "Controlla nell'archivio i file allegati a cui nessun messaggio punta. Qui non viene mostrata alcuna posta.",
+			"scan": "Controlla",
+			"working": "In corso…",
+			"summary": "Controllati {objects} file allegati ({size}).",
+			"clean": "Non è rimasto nulla.",
+			"misnamed": "Archiviati con un nome che non corrisponde: {count} ({size}). Dal messaggio non si aprono.",
+			"repair": "Correggi i nomi",
+			"repaired": "Corretti {count}. Ne restano {remaining}.",
+			"unclaimed": "Nessun messaggio li rivendica: {count} ({size}).",
+			"unclaimedWarning": "Se una casella è stata eliminata conservandone la posta, i suoi allegati rientrano qui. L'eliminazione non è reversibile.",
+			"purge": "Elimina",
+			"purged": "Eliminati {count} ({size}). Ne restano {remaining}.",
+			"confirmPurge": "Verranno eliminati definitivamente {count} file allegati che nessun messaggio rivendica. Non è reversibile. Continuare?",
+			"unreadable": "Non è stato possibile leggere lo stato dell'archivio.",
+			"failed": "Non è stato possibile eseguire."
 		}
 	}
 }

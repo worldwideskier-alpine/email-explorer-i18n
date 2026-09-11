@@ -432,6 +432,24 @@
 			"notReached": "定期維護 {at}：未去到垃圾郵件清理就結束咗。",
 			"killedInBackup": "定期維護 {at}：喺備份途中畀截斷咗（{detail}）。",
 			"unfinished": "定期維護 {at}：去到咗垃圾郵件清理，但冇完成嘅紀錄。"
+		},
+		"attachments": {
+			"title": "剩低嘅附件",
+			"explain": "檢查倉庫入面有冇附件檔案係冇任何郵件指住嘅。呢度唔會顯示郵件內容。",
+			"scan": "檢查",
+			"working": "處理緊…",
+			"summary": "檢查咗 {objects} 個附件檔案（{size}）。",
+			"clean": "冇嘢剩低。",
+			"misnamed": "用咗唔啱嘅名擺住：{count} 個（{size}）。喺郵件度開唔到。",
+			"repair": "改返個名",
+			"repaired": "改好咗 {count} 個。仲有 {remaining} 個。",
+			"unclaimed": "冇任何郵件認領：{count} 個（{size}）。",
+			"unclaimedWarning": "如果刪咗信箱但保留咗佢啲郵件，嗰啲附件都會計喺呢度。刪咗就返唔到轉頭。",
+			"purge": "刪除",
+			"purged": "刪咗 {count} 個（{size}）。仲有 {remaining} 個。",
+			"confirmPurge": "會永久刪除 {count} 個冇任何郵件認領嘅附件檔案。返唔到轉頭。要繼續嗎？",
+			"unreadable": "讀唔到倉庫嘅狀態。",
+			"failed": "執行唔到。"
 		}
 	}
 }

@@ -432,6 +432,24 @@
 			"notReached": "Pemeliharaan terjadwal {at}: berakhir sebelum sampai ke pembersihan spam.",
 			"killedInBackup": "Pemeliharaan terjadwal {at}: terputus saat pencadangan ({detail}).",
 			"unfinished": "Pemeliharaan terjadwal {at}: sampai ke pembersihan spam, tetapi tidak ada catatan bahwa ia selesai."
+		},
+		"attachments": {
+			"title": "Lampiran yang tertinggal",
+			"explain": "Memeriksa penyimpanan untuk berkas lampiran yang tidak ditunjuk oleh pesan mana pun. Isi surat tidak ditampilkan di sini.",
+			"scan": "Periksa",
+			"working": "Sedang berjalan…",
+			"summary": "{objects} berkas lampiran ({size}) diperiksa.",
+			"clean": "Tidak ada yang tertinggal.",
+			"misnamed": "Tersimpan dengan nama yang tidak cocok: {count} ({size}). Tidak dapat dibuka dari pesannya.",
+			"repair": "Perbaiki namanya",
+			"repaired": "{count} diperbaiki. Sisa {remaining}.",
+			"unclaimed": "Tidak diklaim pesan mana pun: {count} ({size}).",
+			"unclaimedWarning": "Jika sebuah kotak surat dihapus dengan suratnya tetap disimpan, lampirannya ikut terhitung di sini. Penghapusan tidak dapat dibatalkan.",
+			"purge": "Hapus",
+			"purged": "{count} ({size}) dihapus. Sisa {remaining}.",
+			"confirmPurge": "{count} berkas lampiran yang tidak diklaim pesan mana pun akan dihapus permanen. Tidak dapat dibatalkan. Lanjutkan?",
+			"unreadable": "Keadaan penyimpanan tidak dapat dibaca.",
+			"failed": "Tidak dapat dijalankan."
 		}
 	}
 }

@@ -432,6 +432,24 @@
 			"notReached": "Ütemezett karbantartás {at}: véget ért, mielőtt elérte volna a levélszemét törlését.",
 			"killedInBackup": "Ütemezett karbantartás {at}: a mentés közben megszakadt ({detail}).",
 			"unfinished": "Ütemezett karbantartás {at}: elérte a levélszemét törlését, de a befejezésről nincs bejegyzés."
+		},
+		"attachments": {
+			"title": "Ottmaradt mellékletek",
+			"explain": "Megnézi a tárolóban, van-e olyan mellékletfájl, amelyre egyetlen üzenet sem mutat. Levél tartalma itt nem jelenik meg.",
+			"scan": "Ellenőrzés",
+			"working": "Folyamatban…",
+			"summary": "{objects} mellékletfájl ({size}) ellenőrizve.",
+			"clean": "Semmi sem maradt ott.",
+			"misnamed": "Nem egyező néven eltárolva: {count} ({size}). Az üzenetből nem nyithatók meg.",
+			"repair": "Nevek helyrehozása",
+			"repaired": "{count} helyrehozva. Maradt {remaining}.",
+			"unclaimed": "Egyetlen üzenet sem tart rájuk igényt: {count} ({size}).",
+			"unclaimedWarning": "Ha egy postafiókot a leveleinek megtartásával töröltek, annak mellékletei is ide számítanak. A törlés nem vonható vissza.",
+			"purge": "Törlés",
+			"purged": "Törölve {count} ({size}). Maradt {remaining}.",
+			"confirmPurge": "Véglegesen törlünk {count} mellékletfájlt, amelyre egyetlen üzenet sem tart igényt. Nem vonható vissza. Folytatja?",
+			"unreadable": "A tároló állapota nem volt olvasható.",
+			"failed": "Ezt nem sikerült végrehajtani."
 		}
 	}
 }

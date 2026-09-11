@@ -432,6 +432,24 @@
 			"notReached": "예약된 유지 관리 {at}: 스팸 삭제에 도달하지 못한 채 끝났습니다.",
 			"killedInBackup": "예약된 유지 관리 {at}: 백업 도중에 중단되었습니다({detail}).",
 			"unfinished": "예약된 유지 관리 {at}: 스팸 삭제까지 진행했지만 완료 기록이 없습니다."
+		},
+		"attachments": {
+			"title": "남은 첨부 파일",
+			"explain": "어떤 메일도 가리키지 않는 첨부 파일이 저장소에 남아 있는지 확인합니다. 메일 내용은 여기에 표시되지 않습니다.",
+			"scan": "확인",
+			"working": "처리 중…",
+			"summary": "첨부 파일 {objects}개({size})를 확인했습니다.",
+			"clean": "남은 것이 없습니다.",
+			"misnamed": "기록과 이름이 어긋난 것: {count}개({size}). 메일에서 열 수 없는 상태입니다.",
+			"repair": "이름 바로잡기",
+			"repaired": "{count}개를 바로잡았습니다. {remaining}개 남았습니다.",
+			"unclaimed": "어떤 메일도 가리키지 않는 것: {count}개({size}).",
+			"unclaimedWarning": "메일함을 메일은 남긴 채 삭제한 경우, 그 첨부 파일도 여기에 포함됩니다. 삭제하면 되돌릴 수 없습니다.",
+			"purge": "삭제",
+			"purged": "{count}개({size})를 삭제했습니다. {remaining}개 남았습니다.",
+			"confirmPurge": "어떤 메일도 가리키지 않는 첨부 파일 {count}개를 완전히 삭제합니다. 되돌릴 수 없습니다. 계속할까요?",
+			"unreadable": "저장소 상태를 읽지 못했습니다.",
+			"failed": "실행하지 못했습니다."
 		}
 	}
 }

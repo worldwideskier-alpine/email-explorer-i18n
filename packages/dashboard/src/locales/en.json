@@ -432,6 +432,24 @@
 			"notReached": "Scheduled maintenance {at}: it ended before reaching the spam purge.",
 			"killedInBackup": "Scheduled maintenance {at}: it was cut off during the backups ({detail}).",
 			"unfinished": "Scheduled maintenance {at}: it reached the spam purge, but there is no record of it finishing."
+		},
+		"attachments": {
+			"title": "Leftover attachments",
+			"explain": "Checks the store for attachment files no message points at. No mail is shown here.",
+			"scan": "Check",
+			"working": "Working…",
+			"summary": "Checked {objects} attachment files ({size}).",
+			"clean": "Nothing is left over.",
+			"misnamed": "Filed under a name that disagrees: {count} ({size}). These cannot be opened from the message.",
+			"repair": "Fix the names",
+			"repaired": "Fixed {count}. {remaining} left.",
+			"unclaimed": "Claimed by no message: {count} ({size}).",
+			"unclaimedWarning": "If a mailbox was deleted with its mail kept, its attachments are counted here too. Deleting cannot be undone.",
+			"purge": "Delete",
+			"purged": "Deleted {count} ({size}). {remaining} left.",
+			"confirmPurge": "Permanently delete {count} attachment files no message claims. This cannot be undone. Continue?",
+			"unreadable": "The store could not be read.",
+			"failed": "That could not be run."
 		}
 	}
 }

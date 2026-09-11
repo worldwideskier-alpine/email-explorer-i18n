@@ -432,6 +432,24 @@
 			"notReached": "Planlagt vedligeholdelse {at}: sluttede, før den nåede spamoprydningen.",
 			"killedInBackup": "Planlagt vedligeholdelse {at}: afbrudt under sikkerhedskopieringen ({detail}).",
 			"unfinished": "Planlagt vedligeholdelse {at}: nåede spamoprydningen, men der er ingen registrering af, at den blev færdig."
+		},
+		"attachments": {
+			"title": "Efterladte vedhæftninger",
+			"explain": "Undersøger lageret for vedhæftede filer, som ingen besked peger på. Der vises ingen post her.",
+			"scan": "Undersøg",
+			"working": "Arbejder…",
+			"summary": "Undersøgte {objects} vedhæftede filer ({size}).",
+			"clean": "Der er intet tilbage.",
+			"misnamed": "Gemt under et navn, der ikke passer: {count} ({size}). De kan ikke åbnes fra beskeden.",
+			"repair": "Ret navnene",
+			"repaired": "Rettede {count}. {remaining} tilbage.",
+			"unclaimed": "Ingen besked gør krav på dem: {count} ({size}).",
+			"unclaimedWarning": "Hvis en postkasse er slettet med posten bevaret, tælles dens vedhæftninger også med her. Sletning kan ikke fortrydes.",
+			"purge": "Slet",
+			"purged": "Slettede {count} ({size}). {remaining} tilbage.",
+			"confirmPurge": "{count} vedhæftede filer, som ingen besked gør krav på, slettes permanent. Det kan ikke fortrydes. Fortsæt?",
+			"unreadable": "Lagerets tilstand kunne ikke læses.",
+			"failed": "Det kunne ikke udføres."
 		}
 	}
 }

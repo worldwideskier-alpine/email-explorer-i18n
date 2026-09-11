@@ -50,9 +50,12 @@ import { PostForwardEmail, PostReplyEmail } from "./routes/reply-forward";
 import {
 	DeleteAccount,
 	GetAccounts,
+	GetAttachmentSweep,
 	GetMaintenance,
 	PostAccount,
 	PostAccountPassword,
+	PostAttachmentPurge,
+	PostAttachmentRepair,
 } from "./routes/root";
 import { runScheduledMaintenance } from "./scheduled-run";
 import { slugify } from "./slugify";
@@ -2332,6 +2335,9 @@ openapi.get("/api/v1/root/maintenance", GetMaintenance);
 openapi.post("/api/v1/root/accounts", PostAccount);
 openapi.post("/api/v1/root/accounts/:userId/password", PostAccountPassword);
 openapi.delete("/api/v1/root/accounts/:personId", DeleteAccount);
+openapi.get("/api/v1/root/attachments", GetAttachmentSweep);
+openapi.post("/api/v1/root/attachments/repair", PostAttachmentRepair);
+openapi.post("/api/v1/root/attachments/purge", PostAttachmentPurge);
 openapi.post("/api/v1/admin/mailboxes/:mailboxId/import", PostImportEmail);
 
 // Push notification endpoints

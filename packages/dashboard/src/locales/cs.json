@@ -432,6 +432,24 @@
 			"notReached": "Plánovaná údržba {at}: skončila dříve, než se dostala k mazání spamu.",
 			"killedInBackup": "Plánovaná údržba {at}: přerušena během zálohování ({detail}).",
 			"unfinished": "Plánovaná údržba {at}: dostala se k mazání spamu, ale záznam o dokončení chybí."
+		},
+		"attachments": {
+			"title": "Zbylé přílohy",
+			"explain": "Prověří úložiště na soubory příloh, na které neukazuje žádná zpráva. Obsah pošty se zde nezobrazuje.",
+			"scan": "Prověřit",
+			"working": "Probíhá…",
+			"summary": "Prověřeno {objects} souborů příloh ({size}).",
+			"clean": "Nic nezbylo.",
+			"misnamed": "Uloženo pod názvem, který nesouhlasí: {count} ({size}). Ze zprávy je nelze otevřít.",
+			"repair": "Opravit názvy",
+			"repaired": "Opraveno {count}. Zbývá {remaining}.",
+			"unclaimed": "Žádná zpráva se k nim nehlásí: {count} ({size}).",
+			"unclaimedWarning": "Pokud byla schránka smazána se zachovanou poštou, počítají se sem i její přílohy. Smazání nelze vzít zpět.",
+			"purge": "Smazat",
+			"purged": "Smazáno {count} ({size}). Zbývá {remaining}.",
+			"confirmPurge": "Trvale se smaže {count} souborů příloh, ke kterým se nehlásí žádná zpráva. Nelze vzít zpět. Pokračovat?",
+			"unreadable": "Stav úložiště se nepodařilo přečíst.",
+			"failed": "Nepodařilo se to provést."
 		}
 	}
 }
