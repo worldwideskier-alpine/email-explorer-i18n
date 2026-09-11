@@ -66,12 +66,12 @@
              role -- the role belongs to the person, so every address you sign
              in with carries it, and that is the whole of succession here. -->
         <form @submit.prevent="createAccount" class="flex flex-wrap items-end gap-4">
-          <div>
+          <div class="w-full sm:w-auto">
             <label for="newRole" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("root.create.roleLabel") }}</label>
             <select
               id="newRole"
               v-model="newRole"
-              class="mt-1 w-72 max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
+              class="mt-1 w-72 min-w-0 max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
             >
               <option value="admin">{{ t("root.roleAdmin") }}</option>
               <option value="root">{{ t("root.roleRoot") }}</option>
@@ -80,7 +80,7 @@
               {{ newRole === "root" ? t("root.create.roleRootHint") : t("root.create.roleAdminHint") }}
             </p>
           </div>
-          <div>
+          <div class="w-full sm:w-auto">
             <label for="newEmail" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("admin.registerUser.emailLabel") }}</label>
             <input
               id="newEmail"
@@ -90,7 +90,7 @@
               class="mt-1 w-72 max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
             />
           </div>
-          <div>
+          <div class="w-full sm:w-auto">
             <label for="newPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("admin.registerUser.passwordLabel") }}</label>
             <input
               id="newPassword"

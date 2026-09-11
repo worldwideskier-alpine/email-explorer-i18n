@@ -16,10 +16,12 @@ import { describe, expect, it } from "vitest";
  *
  * Measured in a browser against the built stylesheet, in the container chain
  * the real page puts around it (main > card > header): one line at 320, 360,
- * 375, 390, 414, 640, 768 and 1280, with the buttons coming out at 28, 31,
- * 33, 35, 38, 40, 40 and 40px -- 320 being the one that is one line and still
- * 14px wider than the card, for the reason the count test gives. With the old
- * classes it was two lines at every one of those but 1280. Layout is not
+ * 375, 390, 414, 640, 768 and 1280, with the buttons coming out at 27, 31,
+ * 33, 35, 37, 40, 40 and 40px and nothing hanging past the card at any of
+ * them. With the old classes it was two lines at every one of those but 1280.
+ * 320 used to be one line and 14px wider than the card; the padding below
+ * `sm` came down to `p-0.5` for WCAG 1.4.10, which `reflow320.test.ts`
+ * records, and that is where the 27 comes from. Layout is not
  * something vitest can see, so what is held here is the arrangement that
  * produced those numbers.
  *
@@ -66,14 +68,14 @@ describe("the actions on an open message", () => {
 	 * two halves of one v-if/v-else and only ever one is rendered.
 	 *
 	 * The count is pinned because it is the whole budget. An action cannot go
-	 * below 28px -- 20px of icon and the padding that keeps it from touching
-	 * its neighbour -- so nine of them need 268px, which a viewport has from
-	 * about 334px up. Narrower than that, a 320px phone, the row is clipped by
-	 * the card rather than wrapped: the lesser of the two, and the reason the
-	 * floor is worth knowing. A tenth action moves that floor to about 370px,
-	 * which is inside the phones people actually carry, and nothing else in
-	 * the arrangement would say so. An action added here is a measurement,
-	 * not an edit.
+	 * below 24px -- 20px of icon and the 2px either side that keeps it from
+	 * touching its neighbour -- so nine of them and the gaps between need
+	 * 232px of row, which is a viewport of about 298px once the page's padding
+	 * and the card's are taken off. That leaves 320px with a little room. A
+	 * tenth action costs 26px and puts the floor back above 320, where the row
+	 * is clipped by the card rather than wrapped -- the lesser of the two, but
+	 * a WCAG 1.4.10 failure all the same, and nothing else in the arrangement
+	 * would say so. An action added here is a measurement, not an edit.
 	 */
 	it("is nine actions wide", () => {
 		const controls = actionRow.match(/<(?:button|router-link)\b/g) ?? [];

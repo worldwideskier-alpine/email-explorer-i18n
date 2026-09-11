@@ -1,10 +1,10 @@
 <template>
-  <label :class="floating ? 'fixed top-4 end-4 z-40' : 'ms-1 sm:ms-2'">
+  <label :class="floating ? 'fixed top-4 end-4 z-40' : 'ms-1 sm:ms-2 min-w-0'">
     <span class="sr-only">{{ t("header.language") }}</span>
     <select
       :value="locale"
       @change="onChange"
-      class="text-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg px-2 py-2 max-w-[11rem] focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      class="text-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg px-2 py-2 w-full min-w-0 max-w-[11rem] focus:outline-none focus:ring-2 focus:ring-indigo-500"
     >
       <optgroup
         v-for="group in groups"

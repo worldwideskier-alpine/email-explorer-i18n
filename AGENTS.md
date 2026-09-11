@@ -186,6 +186,20 @@ fork's work. This fork ships by being forked.
   passes or fails by what is behind it. `whiteOnColour.test.ts` holds the
   first from the source, carrying the measured ratios and refusing a colour
   nobody has measured.
+- **Narrow screens.** The dashboard is measured at 320 CSS pixels, which is
+  WCAG 2.2 SC 1.4.10's own figure and also a phone. Eleven findings the first
+  time: every signed-in screen scrolled sideways by 16px, `/account` and
+  `/admin` by 52, `/root` by 9, and 4px of the email card was cut off by a box
+  that hides its overflow. All of them were a row that would not shrink -- a
+  `flex-shrink-0` on the group at the end of a header, or a `w-72` field in a
+  content-width wrapper. Worse, and invisible to an audit that only looks for
+  sideways scrolling: the header's search box was squeezed to nothing. The row
+  fitted, so nothing complained; the field was simply the only thing that
+  could give. The header wraps below `sm` now and the search box takes the
+  second line. When you change a row that holds a heading and some controls,
+  measure the *controls*, not only the page: a zero-width one loses
+  functionality without moving the page a pixel. `reflow320.test.ts` carries
+  the measurements and holds the places that were told they may shrink.
 
 ## Working here
 

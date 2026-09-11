@@ -293,7 +293,7 @@
             accept=".mbox,message/rfc822,application/mbox,text/plain"
             :disabled="restoring"
             @change="onRestoreFileChosen"
-            class="text-sm text-gray-700 dark:text-gray-300 file:me-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-gray-800 dark:file:bg-gray-200 file:text-white dark:file:text-gray-900 file:font-medium file:cursor-pointer disabled:opacity-60"
+            class="w-full min-w-0 text-sm text-gray-700 dark:text-gray-300 file:me-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-gray-800 dark:file:bg-gray-200 file:text-white dark:file:text-gray-900 file:font-medium file:cursor-pointer disabled:opacity-60"
           />
           <button
             type="button"
