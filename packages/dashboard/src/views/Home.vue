@@ -13,9 +13,13 @@
                only thing it could ever say is "administrator", to everybody
                who can read it. -->
         </div>
+        <!-- green-700 rather than green-600, which is the one colour in this
+             app white text did not survive: measured 3.22:1 against 4.5, in
+             both themes, because Tailwind 4's palette is lighter than the
+             hex-era one this was written against. 700 measures 4.95. -->
         <button
           @click="openCreateMailboxModal"
-          class="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+          class="px-4 py-2 text-sm font-medium text-white bg-green-700 border border-green-700 rounded-lg hover:bg-green-800 transition-colors flex items-center gap-2"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

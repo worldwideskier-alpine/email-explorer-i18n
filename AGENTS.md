@@ -164,12 +164,21 @@ fork's work. This fork ships by being forked.
   `spam-check-location.test.ts` holds the arrangement -- partly structurally,
   because both sides run in one isolate under the test pool and the difference
   is only visible in production.
-- **Dashboard theming.** `index.html` fixes the body to a dark palette
-  (`bg-gray-900 text-gray-100`) while cards use `bg-white dark:bg-gray-800`
-  and follow the viewer's colour scheme. In light mode a card is white but
-  text still inherits gray-100, so anything without its own unprefixed text
-  colour renders near-white on white. `formContrast.test.ts` enforces that
-  for form controls; the wider inconsistency is still there.
+- **Dashboard theming.** `index.html` carries the only page background and it
+  has both halves (`bg-gray-100 text-gray-900 dark:bg-gray-900
+  dark:text-gray-100`); cards use `bg-white dark:bg-gray-800` and follow the
+  viewer. It used to pin the body dark unconditionally, which made every
+  card's text near-white on white in light mode — that is fixed, and the
+  docblocks in `formContrast.test.ts` still describe the old state.
+  Measured since, in Chromium, over thirteen screens in both schemes (194
+  text nodes each): everything clears WCAG AA. Two did not, and neither was
+  a light/dark slip. `text-white` on `bg-green-600` was 3.22:1 — Tailwind 4's
+  palette is lighter than the hex era these buttons were written in, so a
+  shade that used to pass no longer does. And `text-gray-500` reads 4.84 on a
+  white card but 4.39 on the page itself, which is gray-100: the same class
+  passes or fails by what is behind it. `whiteOnColour.test.ts` holds the
+  first from the source, carrying the measured ratios and refusing a colour
+  nobody has measured.
 
 ## Working here
 
