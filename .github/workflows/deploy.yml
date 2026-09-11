@@ -59,6 +59,15 @@ jobs:
       R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME }}
       VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
       ACCOUNT_RECOVERY_FROM: ${{ vars.ACCOUNT_RECOVERY_FROM }}
+      # Where this deployment answers, so the last step can ask it what it is
+      # serving. A secret rather than a repository variable, and not because
+      # an address is confidential: GitHub redacts a secret's value wherever
+      # it turns up in a log, and the logs of a public repository are public.
+      # A variable would be printed in the env block of every step that
+      # carries it. As a secret it also redacts the line wrangler prints when
+      # it deploys, which published the address on every run until now.
+      # Optional, like the variables above: without it the check is skipped.
+      PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v6
@@ -80,6 +89,16 @@ jobs:
         # here is not a reason to stop; the deploy below fails loudly if the
         # bucket really is missing.
         run: npx wrangler r2 bucket create "${R2_BUCKET_NAME:-email-explorer-ja}" || true
+      # Before the deploy, not after: wrangler prints the address it deployed
+      # to, and a value the runner has not been told to hide is a value it
+      # cannot hide retroactively. The address itself is a secret and so is
+      # redacted already; this covers the host on its own, which is what a
+      # redirect or an error page would show.
+      - name: Keep the address out of the log
+        if: env.PRODUCTION_URL != ''
+        run: |
+          host="${PRODUCTION_URL#https://}"
+          echo "::add-mask::${host%%/*}"
       - name: Deploy Worker
         run: pnpm run deploy-dev-worker
       # RESEND_API_KEY is no longer pushed from here. It is set on the admin
@@ -92,3 +111,16 @@ jobs:
         run: printf '%s' "$VAPID_PRIVATE_KEY" | npx wrangler secret put VAPID_PRIVATE_KEY
         env:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+      # Setting a secret publishes a version of its own, so the id printed by
+      # the deploy step above is not the one left running. This prints the one
+      # that is. Informational: the deploy has already happened, and a hiccup
+      # reading it back is not a reason to call the run failed.
+      - name: Report the version that is live
+        working-directory: packages/worker/dev
+        run: timeout 90 npx wrangler deployments status || echo "could not read the live version back"
+      # And the question the rest of it cannot answer: is the deployment
+      # serving this build? An accepted upload is not a served one. See
+      # scripts/deployment-check.mjs.
+      - name: Check the deployment serves this build
+        if: env.PRODUCTION_URL != ''
+        run: node packages/worker/scripts/check-deployment.mjs
