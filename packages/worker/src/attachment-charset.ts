@@ -79,10 +79,6 @@ function charsetOf(params: string[]): string | null {
 	return null;
 }
 
-function hasName(params: string[]): boolean {
-	return params.some((param) => /^\s*(?:file)?name\*?\s*=/i.test(param));
-}
-
 /**
  * Every MIME part of the message, in the order they appear.
  *
@@ -102,7 +98,6 @@ export function declaredParts(message: Uint8Array): DeclaredPart[] {
 	let inHeaders = true;
 	let type = "";
 	let charset: string | null = null;
-	let named = false;
 	let disposition = "";
 	let seenHeader = false;
 
@@ -111,14 +106,22 @@ export function declaredParts(message: Uint8Array): DeclaredPart[] {
 		parts.push({
 			type,
 			charset,
+			// postal-mime's rule, copied rather than guessed at: a part with
+			// `Content-Disposition: attachment` is a file whatever its type,
+			// `text/plain` and `text/html` are the message's own text otherwise
+			// -- a `name=` parameter does not change that -- and everything else
+			// is a file, `text/calendar` and `text/csv` included. See
+			// isInlineTextNode in postal-mime. Guessing at this cost both
+			// directions: a named body part was counted as a file, and a
+			// nameless calendar invite was not counted at all, and either
+			// disagreement throws the whole message's charsets away.
 			attachmentLike:
-				disposition.startsWith("attachment") ||
-				named ||
-				(disposition.startsWith("inline") && named),
+				!type.startsWith("multipart/") &&
+				(disposition.startsWith("attachment") ||
+					(type !== "text/plain" && type !== "text/html")),
 		});
 		type = "";
 		charset = null;
-		named = false;
 		disposition = "";
 		seenHeader = false;
 	};
@@ -160,10 +163,8 @@ export function declaredParts(message: Uint8Array): DeclaredPart[] {
 				if (wantsType) {
 					type = (head ?? "").trim().toLowerCase();
 					charset = charsetOf(params);
-					if (hasName(params)) named = true;
 				} else {
 					disposition = (head ?? "").trim().toLowerCase();
-					if (hasName(params)) named = true;
 				}
 			}
 			at = next;
@@ -212,17 +213,52 @@ export function charsetsForAttachments(
 }
 
 /**
+ * Whether these bytes are already UTF-8.
+ *
+ * Decoded strictly and thrown away: the question is only whether the bytes
+ * *could* be read as UTF-8, and `fatal` makes the decoder say so instead of
+ * quietly substituting U+FFFD.
+ */
+export function isUtf8(content: Uint8Array): boolean {
+	try {
+		// `ignoreBOM` only decides whether a leading U+FEFF is kept in the
+		// output, which nothing here looks at; this runtime's types require it.
+		new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(content);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+/**
  * The type to store for an attachment.
  *
  * Only `text/…` carries a charset: on anything else the parameter means
  * nothing, and inventing one would be a claim about somebody's file that
  * nothing checked.
+ *
+ * And only when the stored bytes are not already UTF-8. That is not caution
+ * for its own sake -- postal-mime re-encodes some parts before handing them
+ * over. A `text/calendar; charset=Shift_JIS` invite arrives here as UTF-8
+ * ("Enforce into unicode", in its own words), and writing the sender's charset
+ * over those bytes would turn a file that read correctly into one that does
+ * not: this change's own failure mode, pointed the other way. Reading the
+ * bytes decides it rather than a list of types, because the list would go
+ * stale the next time the parser learns a new one.
+ *
+ * Nothing is lost by the test. A charset only matters when the bytes cannot
+ * be read as UTF-8, and bytes that can are read as UTF-8 by everything
+ * downstream with or without the label.
  */
 export function typeWithCharset(
 	mimeType: string | undefined,
 	charset: string | null,
+	content?: Uint8Array | string | null,
 ): string {
 	const bare = (mimeType ?? "").trim();
 	if (!charset || !/^text\//i.test(bare)) return bare;
+	// A string has already been decoded by somebody, so it is text, not bytes.
+	if (typeof content === "string") return bare;
+	if (content && isUtf8(content)) return bare;
 	return `${bare}; charset=${charset}`;
 }
