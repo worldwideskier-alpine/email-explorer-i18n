@@ -241,6 +241,13 @@ variable is published on every run. The first run of the Email Routing
 workflow published the mail domain exactly that way, through an input that
 looked careful because it kept the domain out of the file.
 
+And it is not only what a step is *given* that gets published -- it is what
+the tools it runs decide to print. `wrangler deployments status` names the
+account that published a version, so adding that step put a personal address
+into a public log on its first run; its output is now filtered by the shape of
+an address rather than by any particular value. Before adding a step that
+prints a tool's output, read one run of it.
+
 Reply and forward call the real Resend API. Without outbound network that
 request returns 500 no matter what is in it; the tests stub `api.resend.com`
 through the pool's `outboundService`. Check the request the page sent rather
