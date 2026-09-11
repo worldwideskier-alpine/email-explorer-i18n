@@ -49,6 +49,18 @@ secret.
 | `CLOUDFLARE_ACCOUNT_ID` | From step 2. |
 | `VAPID_PRIVATE_KEY` | The private half from step 3, the whole JSON object. |
 
+Two more are optional, and both are addresses rather than credentials. They
+are secrets anyway, for one reason: GitHub replaces a secret's value with
+`***` wherever it appears in a log, and a public repository's Actions logs
+are public. Kept as repository variables they would be printed on every run —
+which is what used to happen to the deployed address, in the line wrangler
+prints when it finishes.
+
+| Secret | What it is |
+|---|---|
+| `PRODUCTION_URL` | Where your deployment answers, e.g. `https://your-worker.your-subdomain.workers.dev`. The deploy then asks it what it is serving and fails the run if that is not the build it just made. Without it that check is skipped. |
+| `EMAIL_ROUTING_ZONE` | The domain your mail arrives on. Used only by the **Cloudflare Email Routing status** workflow, which is read-only and run by hand. Without it that workflow tells you to set it. |
+
 ## 5. Set the repository variables
 
 **Settings → Secrets and variables → Actions → Variables**. All four are
@@ -75,6 +87,13 @@ Worker, and uploads the VAPID private key as a Worker secret.
 
 The deploy log opens with a line per setting saying whether your value or the
 default was used — check it the first time.
+
+It closes, if you set `PRODUCTION_URL`, by fetching your deployment and
+comparing what it serves against what was just built: the entry script's name
+in the page, then that file's bytes, then that a deep path still falls back to
+the page and that an API path is answered by the Worker rather than by the
+page being served in its place. An accepted upload is not a served one, and
+the difference is otherwise invisible from here.
 
 ## 7. Point your mail at it
 

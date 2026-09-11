@@ -223,6 +223,24 @@ browser session -- `curl -s localhost:8787/ | grep -o 'index-[A-Za-z0-9_-]*\.js'
 against the file the build just produced. A stale bundle makes a verification
 run agree with whatever you expected, whichever way you expected it.
 
+The deploy workflow now asks production the same question, in its last step:
+the entry script's name in the served page, that file's bytes by hash, the
+SPA fallback on a deep path, and an API path answered by the Worker rather
+than by the page being served in its place. So "the bundle I measured is the
+bundle that is live" is something the log says rather than something to
+assume. It needs the `PRODUCTION_URL` secret; without it the step is skipped
+and says so. The step before it prints the version that is actually running,
+which is *not* the id the deploy step prints -- uploading the VAPID secret
+publishes a version of its own, after it.
+
+Production URLs and the mail domain are secrets rather than repository
+variables, and not out of squeamishness: this repository is public, its
+Actions logs are public, and the runner prints every step's environment and
+rendered script. A secret's value is replaced with `***` in all of that; a
+variable is published on every run. The first run of the Email Routing
+workflow published the mail domain exactly that way, through an input that
+looked careful because it kept the domain out of the file.
+
 Reply and forward call the real Resend API. Without outbound network that
 request returns 500 no matter what is in it; the tests stub `api.resend.com`
 through the pool's `outboundService`. Check the request the page sent rather
