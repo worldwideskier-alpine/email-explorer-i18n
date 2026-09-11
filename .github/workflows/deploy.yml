@@ -115,9 +115,19 @@ jobs:
       # the deploy step above is not the one left running. This prints the one
       # that is. Informational: the deploy has already happened, and a hiccup
       # reading it back is not a reason to call the run failed.
+      #
+      # Every address is struck out of the output. wrangler names the account
+      # that published a version, and the first run of this step put that
+      # address into a public log -- which the rest of this commit's sibling
+      # was written to stop happening. Struck out by shape rather than by
+      # value, because the value is not known here and a redaction that has to
+      # be configured is one that will one day not be.
       - name: Report the version that is live
         working-directory: packages/worker/dev
-        run: timeout 90 npx wrangler deployments status || echo "could not read the live version back"
+        run: |
+          timeout 90 npx wrangler deployments status 2>&1 \
+            | sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/(address withheld)/g' \
+            || echo "could not read the live version back"
       # And the question the rest of it cannot answer: is the deployment
       # serving this build? An accepted upload is not a served one. See
       # scripts/deployment-check.mjs.
