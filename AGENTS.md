@@ -129,6 +129,20 @@ fork's work. This fork ships by being forked.
   tonight is first tomorrow rather than never; and the pass reports progress as
   it goes into `MaintenanceRecord.backupProgress`, which is the only thing a
   killed run leaves behind. `backup-pass-progress.test.ts` holds all three.
+- **An attachment object is reachable only through its row.** Every writer
+  names one `attachments/{emailId}/{attachmentId}/{filename}` and every reader
+  — download, archive, delete — rebuilds that name from the row, so an object
+  the rows do not name cannot be opened, will not go into an archive, and
+  outlives the message it belonged to. `attachment-sweep.ts` is root's screen
+  for that, and the two states it separates are not the same thing:
+  **misnamed** means a live row names this attachment under another name (the
+  ingest defect that wrote `.../null` while recording `untitled`), and those
+  are *moved*, because deleting them destroys somebody's attachment;
+  **unclaimed** means no row names it at all, which is what a deletion that
+  stopped halfway leaves — and also what a mailbox deleted *without* `purge`
+  looks like from outside, since its mail is meant to come back. Nothing can
+  tell those two apart from the bucket, so deleting them is a separate press
+  with that said on the screen.
 - **The second-stage spam check runs in the Durable Object**, not in the
   `email()` handler, and that is about geography rather than storage. A Worker
   runs at the data centre that received the message and Email Routing's MX

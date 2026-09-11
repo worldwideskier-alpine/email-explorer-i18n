@@ -432,6 +432,24 @@
 			"notReached": "Ajastettu ylläpito {at}: päättyi ennen kuin ehti roskapostin siivoukseen.",
 			"killedInBackup": "Ajastettu ylläpito {at}: keskeytyi varmuuskopioinnin aikana ({detail}).",
 			"unfinished": "Ajastettu ylläpito {at}: ehti roskapostin siivoukseen, mutta valmistumisesta ei ole merkintää."
+		},
+		"attachments": {
+			"title": "Jäljelle jääneet liitteet",
+			"explain": "Tarkistaa varastosta liitetiedostot, joihin mikään viesti ei viittaa. Postin sisältöä ei näytetä täällä.",
+			"scan": "Tarkista",
+			"working": "Suoritetaan…",
+			"summary": "Tarkistettiin {objects} liitetiedostoa ({size}).",
+			"clean": "Mitään ei jäänyt jäljelle.",
+			"misnamed": "Tallennettu nimellä, joka ei täsmää: {count} ({size}). Niitä ei voi avata viestistä.",
+			"repair": "Korjaa nimet",
+			"repaired": "Korjattiin {count}. Jäljellä {remaining}.",
+			"unclaimed": "Mikään viesti ei omista niitä: {count} ({size}).",
+			"unclaimedWarning": "Jos postilaatikko poistettiin posti säilyttäen, sen liitteet lasketaan myös tähän. Poistoa ei voi perua.",
+			"purge": "Poista",
+			"purged": "Poistettiin {count} ({size}). Jäljellä {remaining}.",
+			"confirmPurge": "Poistetaan pysyvästi {count} liitetiedostoa, joita mikään viesti ei omista. Tätä ei voi perua. Jatketaanko?",
+			"unreadable": "Varaston tilaa ei voitu lukea.",
+			"failed": "Tätä ei voitu suorittaa."
 		}
 	}
 }

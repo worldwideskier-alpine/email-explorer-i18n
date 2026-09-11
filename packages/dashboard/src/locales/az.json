@@ -432,6 +432,24 @@
 			"notReached": "Planlı texniki iş {at}: spam təmizlənməsinə çatmadan bitib.",
 			"killedInBackup": "Planlı baxım {at}: ehtiyat nüsxə çıxarılarkən yarımçıq kəsildi ({detail}).",
 			"unfinished": "Planlı texniki iş {at}: spam təmizlənməsinə çatdı, lakin tamamlanma qeydi yoxdur."
+		},
+		"attachments": {
+			"title": "Qalıq qoşmalar",
+			"explain": "Anbarda heç bir məktubun göstərmədiyi qoşma fayllarını yoxlayır. Burada məktub məzmunu göstərilmir.",
+			"scan": "Yoxla",
+			"working": "İcra olunur…",
+			"summary": "{objects} qoşma faylı ({size}) yoxlanıldı.",
+			"misnamed": "Qeydlə uyuşmayan adla saxlanılıb: {count} ({size}). Məktubdan açmaq mümkün deyil.",
+			"clean": "Qalıq yoxdur.",
+			"repair": "Adları düzəlt",
+			"repaired": "{count} düzəldildi. {remaining} qaldı.",
+			"unclaimed": "Heç bir məktubun sahiblənmədiyi: {count} ({size}).",
+			"unclaimedWarning": "Poçt qutusu məktubları saxlanılmaqla silinibsə, onun qoşmaları da buraya daxildir. Silmə geri qaytarıla bilməz.",
+			"purge": "Sil",
+			"purged": "{count} ({size}) silindi. {remaining} qaldı.",
+			"confirmPurge": "Heç bir məktubun sahiblənmədiyi {count} qoşma faylı həmişəlik silinəcək. Geri qaytarmaq olmaz. Davam edilsin?",
+			"unreadable": "Anbarın vəziyyəti oxunmadı.",
+			"failed": "Bu icra oluna bilmədi."
 		}
 	}
 }

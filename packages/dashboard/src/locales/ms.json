@@ -432,6 +432,24 @@
 			"notReached": "Penyelenggaraan berjadual {at}: berakhir sebelum sampai ke pembersihan spam.",
 			"killedInBackup": "Penyelenggaraan berjadual {at}: terputus semasa sandaran ({detail}).",
 			"unfinished": "Penyelenggaraan berjadual {at}: sampai ke pembersihan spam, tetapi tiada rekod bahawa ia selesai."
+		},
+		"attachments": {
+			"title": "Lampiran yang tertinggal",
+			"explain": "Memeriksa simpanan untuk fail lampiran yang tidak dirujuk oleh sebarang mesej. Kandungan mel tidak dipaparkan di sini.",
+			"scan": "Periksa",
+			"working": "Sedang berjalan…",
+			"summary": "{objects} fail lampiran ({size}) telah diperiksa.",
+			"clean": "Tiada apa-apa yang tertinggal.",
+			"misnamed": "Disimpan dengan nama yang tidak sepadan: {count} ({size}). Tidak boleh dibuka daripada mesej.",
+			"repair": "Betulkan nama",
+			"repaired": "{count} dibetulkan. {remaining} lagi.",
+			"unclaimed": "Tiada mesej menuntutnya: {count} ({size}).",
+			"unclaimedWarning": "Jika peti mel dipadam dengan melnya dikekalkan, lampirannya turut dikira di sini. Pemadaman tidak boleh dibatalkan.",
+			"purge": "Padam",
+			"purged": "{count} ({size}) dipadam. {remaining} lagi.",
+			"confirmPurge": "{count} fail lampiran yang tidak dituntut sebarang mesej akan dipadam secara kekal. Tidak boleh dibatalkan. Teruskan?",
+			"unreadable": "Keadaan simpanan tidak dapat dibaca.",
+			"failed": "Ini tidak dapat dijalankan."
 		}
 	}
 }

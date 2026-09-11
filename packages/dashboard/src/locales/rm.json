@@ -432,6 +432,24 @@
 			"notReached": "Mantegnientscha planisada {at}: ella è finida avant ch'ella ha cuntanschì la mundada da spam.",
 			"killedInBackup": "Mantegniment planisà {at}: interrut durant las copias da segirezza ({detail}).",
 			"unfinished": "Mantegnientscha planisada {at}: ella ha cuntanschì la mundada da spam, ma i n'exista nagin protocol ch'ella saja finida."
+		},
+		"attachments": {
+			"title": "Agiuntas restadas",
+			"explain": "Controllescha il magazin per datotecas d'agiunta che naginas messadras na mussan. Naginas posta vegn mussada qua.",
+			"scan": "Controllar",
+			"working": "En lavur…",
+			"summary": "{objects} datotecas d'agiunta ({size}) controlladas.",
+			"clean": "Nagut è restà.",
+			"misnamed": "Memorisadas sut in num che na correspunda betg: {count} ({size}). Ellas na pon betg vegnir avertas da la messadra.",
+			"repair": "Curreger ils nums",
+			"repaired": "{count} curregids. {remaining} restan.",
+			"unclaimed": "Naginas messadras las pretenda: {count} ({size}).",
+			"unclaimedWarning": "Sche ina chascha da posta è vegnida stizzada cun la posta mantegnida, vegnan sias agiuntas era quintadas qua. Il stizzar na po betg vegnir revocà.",
+			"purge": "Stizzar",
+			"purged": "{count} ({size}) stizzadas. {remaining} restan.",
+			"confirmPurge": "{count} datotecas d'agiunta che naginas messadras pretenda vegnan stizzadas definitivamain. Na po betg vegnir revocà. Cuntinuar?",
+			"unreadable": "Il status dal magazin n'ha betg pudì vegnir legì.",
+			"failed": "Quai n'ha betg pudì vegnir exequì."
 		}
 	}
 }

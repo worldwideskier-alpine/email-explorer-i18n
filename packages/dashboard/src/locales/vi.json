@@ -432,6 +432,24 @@
 			"notReached": "Bảo trì theo lịch {at}: đã kết thúc trước khi đến bước dọn thư rác.",
 			"killedInBackup": "Bảo trì theo lịch {at}: bị ngắt giữa chừng khi sao lưu ({detail}).",
 			"unfinished": "Bảo trì theo lịch {at}: đã đến bước dọn thư rác, nhưng không có ghi nhận là đã hoàn tất."
+		},
+		"attachments": {
+			"title": "Tệp đính kèm còn sót",
+			"explain": "Kiểm tra kho xem có tệp đính kèm nào không được thư nào trỏ tới. Nội dung thư không được hiển thị ở đây.",
+			"scan": "Kiểm tra",
+			"working": "Đang chạy…",
+			"summary": "Đã kiểm tra {objects} tệp đính kèm ({size}).",
+			"clean": "Không còn sót gì.",
+			"misnamed": "Lưu dưới tên không khớp: {count} ({size}). Không mở được từ thư.",
+			"repair": "Sửa tên",
+			"repaired": "Đã sửa {count}. Còn {remaining}.",
+			"unclaimed": "Không thư nào nhận: {count} ({size}).",
+			"unclaimedWarning": "Nếu một hộp thư bị xoá mà vẫn giữ thư của nó, các tệp đính kèm của hộp đó cũng được tính ở đây. Xoá rồi không lấy lại được.",
+			"purge": "Xoá",
+			"purged": "Đã xoá {count} ({size}). Còn {remaining}.",
+			"confirmPurge": "Sẽ xoá vĩnh viễn {count} tệp đính kèm không thư nào nhận. Không lấy lại được. Tiếp tục?",
+			"unreadable": "Không đọc được trạng thái của kho.",
+			"failed": "Không chạy được."
 		}
 	}
 }

@@ -18,6 +18,11 @@ import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
 import { personSettingsKey } from "../app-settings";
+import {
+	deleteUnclaimedAttachments,
+	repairMisnamedAttachments,
+	surveyAttachments,
+} from "../attachment-sweep";
 import { destroyMailboxCompletely } from "../mailbox-destroy";
 import { readMaintenanceRecord } from "../maintenance-record";
 import { roleOf } from "../roles";
@@ -140,6 +145,122 @@ export class GetMaintenance extends OpenAPIRoute {
 		if (session instanceof Response) return session;
 
 		return c.json(await readMaintenanceRecord(c.env));
+	}
+}
+
+const AttachmentSweepSchema = z.object({
+	objects: z.number(),
+	bytes: z.number(),
+	matched: z.number(),
+	misnamed: z.number(),
+	misnamedBytes: z.number(),
+	unclaimed: z.number(),
+	unclaimedBytes: z.number(),
+	unreadable: z.number(),
+});
+
+/**
+ * What is in the bucket that no message points at.
+ *
+ * On root for the same reason the maintenance record is: the bucket is the
+ * deployment's, not a mailbox's, and an administrator seeing "there are
+ * objects here nothing can reach" could do nothing about it. It is also the
+ * one place a failed nightly purge leaves its mess, and root is where that
+ * run already reports.
+ *
+ * Counts and byte totals, and deliberately nothing else. This route reads
+ * every mailbox's attachment rows to do its job, and a filename is a fact
+ * about somebody's mail -- the rule in this file is that root's screen never
+ * shows one. Numbers are enough to decide with, which is all root needs.
+ */
+export class GetAttachmentSweep extends OpenAPIRoute {
+	schema = {
+		summary: "Attachment objects against the mail that claims them (root)",
+		operationId: "sweepAttachments",
+		tags: ["Root"],
+		responses: {
+			"200": {
+				description: "Counts by state",
+				...contentJson(AttachmentSweepSchema),
+			},
+			...forbidden,
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = requireRoot(c);
+		if (session instanceof Response) return session;
+
+		return c.json(await surveyAttachments(c.env));
+	}
+}
+
+/**
+ * Moves objects whose name disagrees with their row onto the row's name.
+ *
+ * This is the repair, and it loses nothing: the attachment goes from
+ * unreachable to reachable, and the message it belongs to is untouched.
+ */
+export class PostAttachmentRepair extends OpenAPIRoute {
+	schema = {
+		summary: "Rename attachment objects onto the name their row gives (root)",
+		operationId: "repairAttachments",
+		tags: ["Root"],
+		responses: {
+			"200": {
+				description: "What was moved",
+				...contentJson(
+					z.object({
+						repaired: z.number(),
+						duplicates: z.number(),
+						remaining: z.number(),
+					}),
+				),
+			},
+			...forbidden,
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = requireRoot(c);
+		if (session instanceof Response) return session;
+
+		return c.json(await repairMisnamedAttachments(c.env));
+	}
+}
+
+/**
+ * Deletes objects nothing claims.
+ *
+ * The destructive half, kept apart from the repair on purpose: see
+ * deleteUnclaimedAttachments for what it cannot tell apart, and the screen for
+ * how that is put to the person pressing it.
+ */
+export class PostAttachmentPurge extends OpenAPIRoute {
+	schema = {
+		summary: "Delete attachment objects no message claims (root only)",
+		operationId: "purgeAttachments",
+		tags: ["Root"],
+		responses: {
+			"200": {
+				description: "What was deleted",
+				...contentJson(
+					z.object({
+						deleted: z.number(),
+						bytes: z.number(),
+						remaining: z.number(),
+					}),
+				),
+			},
+			...forbidden,
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = requireRoot(c);
+		if (session instanceof Response) return session;
+
+		return c.json(await deleteUnclaimedAttachments(c.env));
 	}
 }
 

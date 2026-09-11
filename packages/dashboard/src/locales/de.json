@@ -432,6 +432,24 @@
 			"notReached": "Geplante Wartung {at}: endete, bevor sie die Spam-Löschung erreichte.",
 			"killedInBackup": "Geplante Wartung {at}: während der Sicherung abgebrochen ({detail}).",
 			"unfinished": "Geplante Wartung {at}: erreichte die Spam-Löschung, aber ein Abschluss ist nicht verzeichnet."
+		},
+		"attachments": {
+			"title": "Übrig gebliebene Anhänge",
+			"explain": "Prüft den Speicher auf Anhangsdateien, auf die keine Nachricht zeigt. Post wird hier nicht angezeigt.",
+			"scan": "Prüfen",
+			"working": "Läuft…",
+			"summary": "{objects} Anhangsdateien ({size}) geprüft.",
+			"clean": "Es ist nichts übrig geblieben.",
+			"misnamed": "Unter einem abweichenden Namen abgelegt: {count} ({size}). Aus der Nachricht heraus nicht zu öffnen.",
+			"repair": "Namen richtigstellen",
+			"repaired": "{count} richtiggestellt. {remaining} übrig.",
+			"unclaimed": "Von keiner Nachricht beansprucht: {count} ({size}).",
+			"unclaimedWarning": "Wurde ein Postfach gelöscht und seine Post behalten, zählen dessen Anhänge hier mit. Das Löschen lässt sich nicht rückgängig machen.",
+			"purge": "Löschen",
+			"purged": "{count} ({size}) gelöscht. {remaining} übrig.",
+			"confirmPurge": "{count} Anhangsdateien, die keine Nachricht beansprucht, werden endgültig gelöscht. Das lässt sich nicht rückgängig machen. Fortfahren?",
+			"unreadable": "Der Zustand des Speichers konnte nicht gelesen werden.",
+			"failed": "Das konnte nicht ausgeführt werden."
 		}
 	}
 }

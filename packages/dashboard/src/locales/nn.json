@@ -432,6 +432,24 @@
 			"notReached": "Planlagt vedlikehald {at}: det slutta før det nådde oppryddinga av søppelpost.",
 			"killedInBackup": "Planlagt vedlikehald {at}: avbrote under tryggingskopieringa ({detail}).",
 			"unfinished": "Planlagt vedlikehald {at}: det nådde oppryddinga av søppelpost, men det finst inga registrering av at det vart ferdig."
+		},
+		"attachments": {
+			"title": "Etterlatne vedlegg",
+			"explain": "Sjekkar lageret for vedleggsfiler som ingen melding peikar på. Ingen post vert vist her.",
+			"scan": "Sjekk",
+			"working": "Arbeider…",
+			"summary": "Sjekka {objects} vedleggsfiler ({size}).",
+			"clean": "Ingenting er att.",
+			"misnamed": "Lagra under eit namn som ikkje stemmer: {count} ({size}). Dei kan ikkje opnast frå meldinga.",
+			"repair": "Rett namna",
+			"repaired": "Retta {count}. {remaining} att.",
+			"unclaimed": "Ingen melding gjer krav på dei: {count} ({size}).",
+			"unclaimedWarning": "Er ein postkasse sletta med posten teken vare på, blir vedlegga hans talde her òg. Sletting kan ikkje angrast.",
+			"purge": "Slett",
+			"purged": "Sletta {count} ({size}). {remaining} att.",
+			"confirmPurge": "{count} vedleggsfiler som ingen melding gjer krav på, blir sletta for godt. Kan ikkje angrast. Halde fram?",
+			"unreadable": "Tilstanden til lageret kunne ikkje lesast.",
+			"failed": "Dette kunne ikkje køyrast."
 		}
 	}
 }

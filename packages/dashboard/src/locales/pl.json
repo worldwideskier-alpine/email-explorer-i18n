@@ -432,6 +432,24 @@
 			"notReached": "Zaplanowana konserwacja {at}: zakończyła się, zanim dotarła do czyszczenia spamu.",
 			"killedInBackup": "Zaplanowana konserwacja {at}: przerwana podczas tworzenia kopii zapasowych ({detail}).",
 			"unfinished": "Zaplanowana konserwacja {at}: dotarła do czyszczenia spamu, ale nie ma zapisu o jej zakończeniu."
+		},
+		"attachments": {
+			"title": "Pozostałe załączniki",
+			"explain": "Sprawdza magazyn pod kątem plików załączników, na które nie wskazuje żadna wiadomość. Treść poczty nie jest tu pokazywana.",
+			"scan": "Sprawdź",
+			"working": "W toku…",
+			"summary": "Sprawdzono {objects} plików załączników ({size}).",
+			"clean": "Nic nie zostało.",
+			"misnamed": "Zapisane pod nazwą, która się nie zgadza: {count} ({size}). Z wiadomości nie da się ich otworzyć.",
+			"repair": "Popraw nazwy",
+			"repaired": "Poprawiono {count}. Pozostało {remaining}.",
+			"unclaimed": "Żadna wiadomość się do nich nie przyznaje: {count} ({size}).",
+			"unclaimedWarning": "Jeśli skrzynkę usunięto z zachowaniem poczty, jej załączniki też liczą się tutaj. Usunięcia nie da się cofnąć.",
+			"purge": "Usuń",
+			"purged": "Usunięto {count} ({size}). Pozostało {remaining}.",
+			"confirmPurge": "Trwale usuniętych zostanie {count} plików załączników, do których nie przyznaje się żadna wiadomość. Nie da się tego cofnąć. Kontynuować?",
+			"unreadable": "Nie udało się odczytać stanu magazynu.",
+			"failed": "Nie udało się tego wykonać."
 		}
 	}
 }

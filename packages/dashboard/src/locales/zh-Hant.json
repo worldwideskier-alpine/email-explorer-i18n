@@ -432,6 +432,24 @@
 			"notReached": "定期維護 {at}：未到達垃圾郵件清理就結束了。",
 			"killedInBackup": "定期維護 {at}：在備份過程中被中斷（{detail}）。",
 			"unfinished": "定期維護 {at}：已到達垃圾郵件清理，但沒有完成的紀錄。"
+		},
+		"attachments": {
+			"title": "殘留的附件",
+			"explain": "檢查儲存中是否有任何郵件都未指向的附件檔案。此處不顯示郵件內容。",
+			"scan": "檢查",
+			"working": "處理中…",
+			"summary": "已檢查 {objects} 個附件檔案（{size}）。",
+			"clean": "沒有殘留。",
+			"misnamed": "以不相符的名稱存放：{count} 個（{size}）。無法從郵件中開啟。",
+			"repair": "修正名稱",
+			"repaired": "已修正 {count} 個。還剩 {remaining} 個。",
+			"unclaimed": "沒有任何郵件認領：{count} 個（{size}）。",
+			"unclaimedWarning": "若刪除信箱時保留了其郵件，那些附件也會計入此處。刪除後無法復原。",
+			"purge": "刪除",
+			"purged": "已刪除 {count} 個（{size}）。還剩 {remaining} 個。",
+			"confirmPurge": "將永久刪除 {count} 個沒有任何郵件認領的附件檔案。無法復原。是否繼續？",
+			"unreadable": "無法讀取儲存的狀態。",
+			"failed": "無法執行。"
 		}
 	}
 }

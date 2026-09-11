@@ -432,6 +432,24 @@
 			"notReached": "Mantenimiento programado {at}: terminó antes de llegar a la limpieza de spam.",
 			"killedInBackup": "Mantenimiento programado {at}: se interrumpió durante las copias de seguridad ({detail}).",
 			"unfinished": "Mantenimiento programado {at}: llegó a la limpieza de spam, pero no consta que finalizara."
+		},
+		"attachments": {
+			"title": "Adjuntos sobrantes",
+			"explain": "Comprueba si en el almacén hay archivos adjuntos a los que no apunta ningún mensaje. Aquí no se muestra correo.",
+			"scan": "Comprobar",
+			"working": "Trabajando…",
+			"summary": "Se comprobaron {objects} archivos adjuntos ({size}).",
+			"clean": "No sobra nada.",
+			"misnamed": "Guardados con un nombre que no coincide: {count} ({size}). No se pueden abrir desde el mensaje.",
+			"repair": "Corregir los nombres",
+			"repaired": "Corregidos {count}. Quedan {remaining}.",
+			"unclaimed": "Ningún mensaje los reclama: {count} ({size}).",
+			"unclaimedWarning": "Si se borró un buzón conservando su correo, sus adjuntos también se cuentan aquí. El borrado no se puede deshacer.",
+			"purge": "Borrar",
+			"purged": "Se borraron {count} ({size}). Quedan {remaining}.",
+			"confirmPurge": "Se borrarán definitivamente {count} archivos adjuntos que ningún mensaje reclama. No se puede deshacer. ¿Continuar?",
+			"unreadable": "No se pudo leer el estado del almacén.",
+			"failed": "No se pudo ejecutar."
 		}
 	}
 }

@@ -432,6 +432,24 @@
 			"notReached": "Maintenance planifiée {at} : elle s'est arrêtée avant d'atteindre la purge du spam.",
 			"killedInBackup": "Maintenance planifiée {at} : interrompue pendant les sauvegardes ({detail}).",
 			"unfinished": "Maintenance planifiée {at} : elle a atteint la purge du spam, mais rien n'indique qu'elle se soit terminée."
+		},
+		"attachments": {
+			"title": "Pièces jointes restantes",
+			"explain": "Vérifie si le stockage contient des fichiers de pièces jointes qu'aucun message ne désigne. Aucun courrier n'est affiché ici.",
+			"scan": "Vérifier",
+			"working": "En cours…",
+			"summary": "{objects} fichiers de pièces jointes vérifiés ({size}).",
+			"clean": "Il ne reste rien.",
+			"misnamed": "Enregistrés sous un nom qui ne correspond pas : {count} ({size}). Impossible de les ouvrir depuis le message.",
+			"repair": "Corriger les noms",
+			"repaired": "{count} corrigés. Il en reste {remaining}.",
+			"unclaimed": "Revendiqués par aucun message : {count} ({size}).",
+			"unclaimedWarning": "Si une boîte a été supprimée en conservant son courrier, ses pièces jointes comptent ici aussi. La suppression est irréversible.",
+			"purge": "Supprimer",
+			"purged": "{count} supprimés ({size}). Il en reste {remaining}.",
+			"confirmPurge": "Suppression définitive de {count} fichiers de pièces jointes qu'aucun message ne revendique. C'est irréversible. Continuer ?",
+			"unreadable": "L'état du stockage n'a pas pu être lu.",
+			"failed": "L'opération n'a pas pu être exécutée."
 		}
 	}
 }

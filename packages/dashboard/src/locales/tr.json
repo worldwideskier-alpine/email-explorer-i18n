@@ -432,6 +432,24 @@
 			"notReached": "Zamanlanmış bakım {at}: istenmeyen posta temizliğine ulaşmadan sona erdi.",
 			"killedInBackup": "Zamanlanmış bakım {at}: yedekleme sırasında yarıda kesildi ({detail}).",
 			"unfinished": "Zamanlanmış bakım {at}: istenmeyen posta temizliğine ulaştı, ancak tamamlandığına dair kayıt yok."
+		},
+		"attachments": {
+			"title": "Artakalan ekler",
+			"explain": "Depoda hiçbir iletinin işaret etmediği ek dosyaları olup olmadığını denetler. Posta içeriği burada gösterilmez.",
+			"scan": "Denetle",
+			"working": "Sürüyor…",
+			"summary": "{objects} ek dosyası ({size}) denetlendi.",
+			"clean": "Artakalan yok.",
+			"misnamed": "Uyuşmayan bir adla saklanmış: {count} ({size}). İletiden açılamazlar.",
+			"repair": "Adları düzelt",
+			"repaired": "{count} düzeltildi. {remaining} kaldı.",
+			"unclaimed": "Hiçbir iletinin sahiplenmediği: {count} ({size}).",
+			"unclaimedWarning": "Bir posta kutusu, postası korunarak silindiyse onun ekleri de buraya sayılır. Silme geri alınamaz.",
+			"purge": "Sil",
+			"purged": "{count} ({size}) silindi. {remaining} kaldı.",
+			"confirmPurge": "Hiçbir iletinin sahiplenmediği {count} ek dosyası kalıcı olarak silinecek. Geri alınamaz. Sürdürülsün mü?",
+			"unreadable": "Deponun durumu okunamadı.",
+			"failed": "Bu çalıştırılamadı."
 		}
 	}
 }

@@ -432,6 +432,24 @@
 			"notReached": "Geplangten Ënnerhalt {at}: en ass eriwwer, ier en bei d'Spam-Läschung koum.",
 			"killedInBackup": "Geplangten Ënnerhalt {at}: während der Sécherung ofgebrach ({detail}).",
 			"unfinished": "Geplangten Ënnerhalt {at}: en ass bei d'Spam-Läschung komm, mä en Ofschloss ass net festgehalen."
+		},
+		"attachments": {
+			"title": "Iwwreg Unhäng",
+			"explain": "Kuckt am Späicher no Unhang-Fichieren, op déi keng Noriicht weist. Post gëtt hei net ugewisen.",
+			"scan": "Nokucken",
+			"working": "Leeft…",
+			"summary": "{objects} Unhang-Fichieren ({size}) nogekuckt.",
+			"clean": "Et ass näischt iwwreg.",
+			"misnamed": "Ënner engem Numm ofgeluecht, deen net stëmmt: {count} ({size}). Aus der Noriicht net opzemaachen.",
+			"repair": "Nimm riichtstellen",
+			"repaired": "{count} riichtgestallt. {remaining} iwwreg.",
+			"unclaimed": "Vu kenger Noriicht ugefrot: {count} ({size}).",
+			"unclaimedWarning": "Gouf eng Boîte geläscht an d'Post behalen, ginn hir Unhäng hei matgezielt. D'Läsche léisst sech net réckgängeg maachen.",
+			"purge": "Läschen",
+			"purged": "{count} ({size}) geläscht. {remaining} iwwreg.",
+			"confirmPurge": "{count} Unhang-Fichieren, déi keng Noriicht ufreet, ginn endgülteg geläscht. Net réckgängeg ze maachen. Virufueren?",
+			"unreadable": "De Zoustand vum Späicher konnt net gelies ginn.",
+			"failed": "Dat konnt net ausgefouert ginn."
 		}
 	}
 }

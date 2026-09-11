@@ -258,6 +258,13 @@ export default {
 		apiClient.post(`/api/v1/root/accounts/${userId}/password`, { password }),
 	deletePerson: (personId: string) =>
 		apiClient.delete(`/api/v1/root/accounts/${personId}`),
+	// The bucket against the mail that claims it: counts only, no filename.
+	// The repair moves objects onto the name their row gives and loses
+	// nothing; the purge deletes what nothing claims and is a separate press
+	// for that reason. See attachment-sweep.ts in the Worker.
+	sweepAttachments: () => apiClient.get("/api/v1/root/attachments"),
+	repairAttachments: () => apiClient.post("/api/v1/root/attachments/repair"),
+	purgeAttachments: () => apiClient.post("/api/v1/root/attachments/purge"),
 
 	// Your own logins: the addresses you sign in with. Adding one adds it to
 	// you, not to somebody else, and the list holds yours alone.

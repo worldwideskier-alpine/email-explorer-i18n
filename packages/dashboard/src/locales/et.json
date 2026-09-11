@@ -432,6 +432,24 @@
 			"notReached": "Plaaniline hooldus {at}: lõppes enne rämpsposti puhastuseni jõudmist.",
 			"killedInBackup": "Plaanitud hooldus {at}: katkes varunduse ajal ({detail}).",
 			"unfinished": "Plaaniline hooldus {at}: jõudis rämpsposti puhastuseni, kuid lõpetamise kohta kirje puudub."
+		},
+		"attachments": {
+			"title": "Ülejäänud manused",
+			"explain": "Kontrollib hoidlat manusfailide suhtes, millele ükski kiri ei osuta. Posti sisu siin ei näidata.",
+			"scan": "Kontrolli",
+			"working": "Töötab…",
+			"summary": "Kontrolliti {objects} manusfaili ({size}).",
+			"clean": "Midagi pole üle jäänud.",
+			"misnamed": "Salvestatud nime alla, mis ei klapi: {count} ({size}). Kirjast neid avada ei saa.",
+			"repair": "Paranda nimed",
+			"repaired": "Parandatud {count}. Jäänud {remaining}.",
+			"unclaimed": "Ükski kiri ei nõua neid endale: {count} ({size}).",
+			"unclaimedWarning": "Kui postkast kustutati kirju alles jättes, loetakse ka selle manused siia. Kustutamist ei saa tagasi võtta.",
+			"purge": "Kustuta",
+			"purged": "Kustutatud {count} ({size}). Jäänud {remaining}.",
+			"confirmPurge": "Jäädavalt kustutatakse {count} manusfaili, mida ükski kiri endale ei nõua. Tagasi võtta ei saa. Kas jätkata?",
+			"unreadable": "Hoidla seisundit ei õnnestunud lugeda.",
+			"failed": "Seda ei õnnestunud käivitada."
 		}
 	}
 }

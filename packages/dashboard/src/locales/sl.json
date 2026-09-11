@@ -432,6 +432,24 @@
 			"notReached": "Načrtovano vzdrževanje {at}: končalo se je, preden je prišlo do čiščenja neželene pošte.",
 			"killedInBackup": "Načrtovano vzdrževanje {at}: prekinjeno med varnostnim kopiranjem ({detail}).",
 			"unfinished": "Načrtovano vzdrževanje {at}: prišlo je do čiščenja neželene pošte, vendar ni zapisa, da bi se končalo."
+		},
+		"attachments": {
+			"title": "Preostale priponke",
+			"explain": "Preveri shrambo za datoteke priponk, na katere ne kaže nobeno sporočilo. Vsebina pošte se tu ne prikazuje.",
+			"scan": "Preveri",
+			"working": "Poteka…",
+			"summary": "Preverjenih {objects} datotek priponk ({size}).",
+			"clean": "Nič ni ostalo.",
+			"misnamed": "Shranjene pod imenom, ki se ne ujema: {count} ({size}). Iz sporočila jih ni mogoče odpreti.",
+			"repair": "Popravi imena",
+			"repaired": "Popravljenih {count}. Ostaja {remaining}.",
+			"unclaimed": "Nobeno sporočilo si jih ne lasti: {count} ({size}).",
+			"unclaimedWarning": "Če je bil poštni predal izbrisan z ohranjeno pošto, se sem štejejo tudi njegove priponke. Brisanja ni mogoče razveljaviti.",
+			"purge": "Izbriši",
+			"purged": "Izbrisanih {count} ({size}). Ostaja {remaining}.",
+			"confirmPurge": "Trajno bo izbrisanih {count} datotek priponk, ki si jih ne lasti nobeno sporočilo. Ni mogoče razveljaviti. Nadaljujem?",
+			"unreadable": "Stanja shrambe ni bilo mogoče prebrati.",
+			"failed": "Tega ni bilo mogoče izvesti."
 		}
 	}
 }

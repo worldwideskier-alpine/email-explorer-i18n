@@ -432,6 +432,24 @@
 			"notReached": "Manutenzjoni skedata {at}: intemmet qabel ma waslet għat-tindif tal-ispam.",
 			"killedInBackup": "Manutenzjoni skedata {at}: waqfet waqt il-backups ({detail}).",
 			"unfinished": "Manutenzjoni skedata {at}: waslet għat-tindif tal-ispam, imma m'hemmx rekord li ntemmet."
+		},
+		"attachments": {
+			"title": "Mehmużin li baqgħu",
+			"explain": "Jiċċekkja l-maħżen għal fajls ta' mehmużin li l-ebda messaġġ ma jipponta lejhom. Hawn ma jintwera l-ebda posta.",
+			"scan": "Iċċekkja",
+			"working": "Għaddej…",
+			"summary": "Ġew iċċekkjati {objects} fajls ta' mehmużin ({size}).",
+			"clean": "Ma baqa' xejn.",
+			"misnamed": "Maħżuna b'isem li ma jaqbilx: {count} ({size}). Mill-messaġġ ma jinfetħux.",
+			"repair": "Irranġa l-ismijiet",
+			"repaired": "Ġew irranġati {count}. Fadal {remaining}.",
+			"unclaimed": "L-ebda messaġġ ma jitlobhom: {count} ({size}).",
+			"unclaimedWarning": "Jekk kaxxa tal-posta tħassret bil-posta tagħha miżmuma, il-mehmużin tagħha jgħoddu hawn ukoll. It-tħassir ma jistax jitreġġa' lura.",
+			"purge": "Ħassar",
+			"purged": "Tħassru {count} ({size}). Fadal {remaining}.",
+			"confirmPurge": "Se jitħassru għal dejjem {count} fajls ta' mehmużin li l-ebda messaġġ ma jitlobhom. Ma jistax jitreġġa' lura. Tkompli?",
+			"unreadable": "L-istat tal-maħżen ma setax jinqara.",
+			"failed": "Dan ma setax jitħaddem."
 		}
 	}
 }
