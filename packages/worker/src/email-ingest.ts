@@ -86,7 +86,11 @@ export async function ingestEmailIntoMailbox(
 				id: attachmentId,
 				email_id: messageId,
 				filename,
-				mimetype: typeWithCharset(att.mimeType, charsets[index] ?? null),
+				mimetype: typeWithCharset(
+					att.mimeType,
+					charsets[index] ?? null,
+					att.content as Uint8Array | string | null,
+				),
 				size:
 					typeof att.content === "string"
 						? att.content.length

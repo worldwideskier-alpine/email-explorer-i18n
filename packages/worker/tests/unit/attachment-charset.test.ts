@@ -99,7 +99,75 @@ describe("reading the parts of a message", () => {
 	});
 });
 
+describe("telling a file from the message's own text", () => {
+	/**
+	 * postal-mime's rule, which this has to match exactly: a disposition of
+	 * "attachment" makes any part a file, `text/plain` and `text/html` are the
+	 * message's text otherwise -- a `name=` does not change that -- and every
+	 * other type is a file. Guessing at it was wrong in both directions, and
+	 * either direction throws away the charsets of the whole message.
+	 */
+	it("follows the parser rather than the presence of a name", () => {
+		const shapes = bytes(
+			[
+				'Content-Type: multipart/mixed; boundary="b"',
+				"",
+				"--b",
+				'Content-Type: text/plain; charset="utf-8"; name="message.txt"',
+				"",
+				"body with a name on it",
+				"--b",
+				"Content-Type: text/csv; charset=EUC-JP",
+				"",
+				"a,b",
+				"--b",
+				"Content-Type: text/html; charset=Shift_JIS",
+				"Content-Disposition: attachment; filename=page.html",
+				"",
+				"<p>x</p>",
+				"--b--",
+			].join("\r\n"),
+		);
+		expect(
+			declaredParts(shapes).map((p) => `${p.type}/${p.attachmentLike}`),
+		).toEqual([
+			"multipart/mixed/false",
+			"text/plain/false",
+			"text/csv/true",
+			"text/html/true",
+		]);
+	});
+});
+
 describe("what gets stored as the type", () => {
+	/**
+	 * The bytes decide. postal-mime re-encodes `text/calendar` to UTF-8 before
+	 * handing it over, so the sender's charset describes bytes that are no
+	 * longer there; writing it down would make a readable file unreadable.
+	 */
+	it("does not label bytes that are already UTF-8", () => {
+		const utf8 = new TextEncoder().encode("日本語");
+		const sjis = new Uint8Array([0x93, 0x7a, 0x96, 0x7b, 0x8c, 0xea]);
+		expect(typeWithCharset("text/calendar", "Shift_JIS", utf8)).toBe(
+			"text/calendar",
+		);
+		expect(typeWithCharset("text/plain", "Shift_JIS", sjis)).toBe(
+			"text/plain; charset=Shift_JIS",
+		);
+		// Already a string is already decoded: there are no bytes to describe.
+		expect(typeWithCharset("text/plain", "Shift_JIS", "decoded")).toBe(
+			"text/plain",
+		);
+		// Pure ASCII reads the same either way, so the label buys nothing.
+		expect(
+			typeWithCharset(
+				"text/plain",
+				"Shift_JIS",
+				new TextEncoder().encode("ab"),
+			),
+		).toBe("text/plain");
+	});
+
 	it("adds the charset to text and nothing else", () => {
 		expect(typeWithCharset("text/plain", "Shift_JIS")).toBe(
 			"text/plain; charset=Shift_JIS",

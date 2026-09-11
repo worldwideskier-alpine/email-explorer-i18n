@@ -226,6 +226,88 @@ describe("the encoding a text attachment arrived in", () => {
 		expect(list[0]?.mimetype).toBe("text/plain");
 	});
 
+	/**
+	 * A calendar invite is re-encoded before it reaches here.
+	 *
+	 * postal-mime decodes `text/calendar` and re-encodes it as UTF-8 ("Enforce
+	 * into unicode", in its own words) -- so the bytes stored are no longer the
+	 * bytes that arrived, and writing the sender's Shift_JIS over them would
+	 * make a file that read correctly unreadable. This change's own failure
+	 * mode, pointed the other way, and found by review rather than by me.
+	 */
+	it("is not written over bytes the parser already converted", async () => {
+		await receive(
+			message(
+				part(
+					["Content-Type: text/calendar; charset=Shift_JIS"],
+					"invite.ics",
+					SHIFT_JIS,
+				),
+			),
+		);
+		const { list } = await attachments();
+		expect(list[0]?.mimetype).toBe("text/calendar");
+	});
+
+	/**
+	 * A part with a name but no disposition is the message's own text to
+	 * postal-mime, not a file -- `text/plain` and `text/html` are body unless a
+	 * disposition says otherwise. Counting it as a file made the two readings
+	 * disagree, and a disagreement throws away the charset of every attachment
+	 * in the message, including the real one beside it.
+	 */
+	it("is still found when a body part carries a name", async () => {
+		await receive(
+			[
+				"From: sender@legit.com",
+				`To: ${mailboxId}`,
+				"Subject: a named body part",
+				'Content-Type: multipart/mixed; boundary="b"',
+				"",
+				"--b",
+				'Content-Type: text/plain; charset="utf-8"; name="message.txt"',
+				"",
+				"see attached",
+				...part(
+					["Content-Type: text/plain; charset=Shift_JIS"],
+					"note.txt",
+					SHIFT_JIS,
+				),
+				"--b--",
+			].join("\r\n"),
+		);
+		const { list } = await attachments();
+		expect(list).toHaveLength(1);
+		expect(list[0]?.mimetype).toBe("text/plain; charset=Shift_JIS");
+	});
+
+	// And a type that is a file by its type alone, with nothing else to say so:
+	// no disposition, no name. postal-mime calls it an attachment; so must this.
+	it("is found on a part that is a file only by its type", async () => {
+		await receive(
+			[
+				"From: sender@legit.com",
+				`To: ${mailboxId}`,
+				"Subject: a bare csv part",
+				'Content-Type: multipart/mixed; boundary="b"',
+				"",
+				"--b",
+				'Content-Type: text/plain; charset="utf-8"',
+				"",
+				"see attached",
+				"--b",
+				"Content-Type: text/csv; charset=Shift_JIS",
+				"Content-Transfer-Encoding: base64",
+				"",
+				base64(SHIFT_JIS),
+				"--b--",
+			].join("\r\n"),
+		);
+		const { list } = await attachments();
+		expect(list).toHaveLength(1);
+		expect(list[0]?.mimetype).toBe("text/csv; charset=Shift_JIS");
+	});
+
 	// Nothing declared is nothing recorded: the row says what it always said.
 	it("is left alone when the part declared none", async () => {
 		await receive(
