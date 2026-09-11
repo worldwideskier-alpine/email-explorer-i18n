@@ -600,42 +600,22 @@ export class MailboxDO extends DurableObject<Env> {
 		return true;
 	}
 
-	/**
-	 * Auth operation: grant or withdraw administrator rights.
+	/*
+	 * `setUserAdmin` used to sit here: grant or withdraw the `is_admin` flag,
+	 * refusing to remove the last administrator so that nobody could lock the
+	 * deployment out of its own administration.
 	 *
-	 * Refuses to remove the last administrator. Without that check a single
-	 * mis-click leaves nobody able to administer the deployment, and there is
-	 * no way back in: rights can only be granted by an administrator.
+	 * It is gone because the flag no longer decides anything. Who may reach a
+	 * mailbox is whether their person holds it, and who may reach root's
+	 * screen is the role in `app_roles` -- neither reads this column, and no
+	 * route has called this since the screen that did was removed. What was
+	 * left was a method that could still write a flag, carrying a guarantee
+	 * ("never the last one") about a rule that no longer exists. The column
+	 * itself stays: `register` still writes it and the login response still
+	 * carries it, and dropping a column from a live deployment's users is a
+	 * migration with nothing to gain. `legacy-admin-flag.test.ts` holds the
+	 * part that matters -- that having it on buys nothing.
 	 */
-	async setUserAdmin(
-		userId: string,
-		isAdmin: boolean,
-	): Promise<"ok" | "not-found" | "last-admin"> {
-		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-
-		const user = this.#qb
-			.select("users")
-			.fields(["is_admin"])
-			.where("id = ?", userId)
-			.one().results;
-		if (!user) return "not-found";
-
-		if (!isAdmin && user.is_admin === 1) {
-			const admins = this.ctx.storage.sql
-				.exec("SELECT COUNT(*) AS count FROM users WHERE is_admin = 1")
-				.toArray();
-			if (Number(admins[0]?.count ?? 0) <= 1) return "last-admin";
-		}
-
-		this.#qb
-			.update({
-				tableName: "users",
-				data: { is_admin: isAdmin ? 1 : 0, updated_at: Date.now() },
-				where: { conditions: "id = ?", params: [userId] },
-			})
-			.execute();
-		return "ok";
-	}
 
 	/** The person holding the root role, or null when there is none yet. */
 	async getRootPersonId(): Promise<string | null> {
