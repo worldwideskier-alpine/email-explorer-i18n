@@ -41,10 +41,12 @@
             <h2 class="text-lg font-medium text-gray-900 dark:text-white">{{ t("settings.pushTitle") }}</h2>
             <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("settings.pushDescription") }}</p>
           </div>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" :checked="pushEnabled" :disabled="pushLoading" @change="togglePush" class="sr-only peer" />
-            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-indigo-600 peer-disabled:opacity-50"></div>
-          </label>
+          <ToggleSwitch
+            :on="pushEnabled"
+            :disabled="pushLoading"
+            :label="t('settings.pushTitle')"
+            @toggle="togglePush"
+          />
         </div>
         <p v-if="pushError" class="text-sm text-red-600 dark:text-red-400">{{ pushError }}</p>
       </div>
@@ -320,10 +322,12 @@
             <h3 class="text-base font-medium text-gray-900 dark:text-white">{{ t("settings.deletionLockTitle") }}</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("settings.deletionLockDescription") }}</p>
           </div>
-          <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-            <input type="checkbox" :checked="deletionLocked" :disabled="lockLoading" @change="toggleDeletionLock" class="sr-only peer" />
-            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-indigo-600 peer-disabled:opacity-50"></div>
-          </label>
+          <ToggleSwitch
+            :on="deletionLocked"
+            :disabled="lockLoading"
+            :label="t('settings.deletionLockTitle')"
+            @toggle="toggleDeletionLock"
+          />
         </div>
 
         <div class="rounded-md border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/10 p-4">
@@ -376,6 +380,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import RichTextEditor from "@/components/RichTextEditor.vue";
+import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import { useDateFormat } from "@/composables/useDateFormat";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";

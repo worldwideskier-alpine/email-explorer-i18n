@@ -18,8 +18,11 @@ import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
 import {
+	forgetPersonDeletionLock,
+	isPersonDeletionLocked,
 	personSettingsKey,
 	readPersonDeletionLock,
+	readPersonDeletionLocks,
 	setPersonDeletionLock,
 } from "../app-settings";
 import {
@@ -288,18 +291,16 @@ export class GetAccounts extends OpenAPIRoute {
 		const rootPersonId = await authDO(c.env).getRootPersonId();
 		const people = await authDO(c.env).listPeople();
 
-		// One read per person, in parallel: the lock lives beside their
-		// sending key rather than in the account rows, because the rows are
-		// the auth store and this is not an authentication fact.
-		const locks = await Promise.all(
-			people.map((person) => readPersonDeletionLock(c.env, person.personId)),
-		);
+		// One read for all of them. The locks are not an authentication fact,
+		// so they are not in the account rows; they are also not per-person
+		// objects, which would have made this list one subrequest per person.
+		const locks = await readPersonDeletionLocks(c.env);
 
 		return c.json(
-			people.map((person, index) => ({
+			people.map((person) => ({
 				...person,
 				role: roleOf(person.personId, rootPersonId),
-				deletionLocked: locks[index],
+				deletionLocked: isPersonDeletionLocked(locks, person.personId),
 			})),
 		);
 	}
@@ -531,6 +532,16 @@ export class DeleteAccount extends OpenAPIRoute {
 			return c.json({ error: "Cannot delete the root account" }, 409);
 		}
 
+		// Whether they exist is decided before whether they are locked, and
+		// the order is not cosmetic: an absent lock reads as locked, so asking
+		// the lock first answered "this person is protected from deletion"
+		// about a person who was never there -- an id with a typo in it came
+		// back 423 while the lock route next door said 404 for the same id.
+		const people = await authDO(c.env).listPeople();
+		if (!people.some((person) => person.personId === personId)) {
+			return c.json({ error: "Not found" }, 404);
+		}
+
 		// The lock is checked here rather than only on the screen: the screen
 		// hides the button, and a request typed by hand does not go through
 		// the screen. Same boundary as the mailbox lock, same status.
@@ -557,6 +568,8 @@ export class DeleteAccount extends OpenAPIRoute {
 		// leaving it behind after the account is gone leaves something nobody
 		// owns that can still send mail.
 		await c.env.BUCKET.delete(personSettingsKey(personId));
+		// And their entry in the lock map, so it holds only people who exist.
+		await forgetPersonDeletionLock(c.env, personId);
 
 		return c.json({
 			status: "deleted",

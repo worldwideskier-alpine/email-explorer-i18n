@@ -1,4 +1,4 @@
-import { SELF } from "cloudflare:test";
+import { env, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 
 /**
@@ -147,6 +147,21 @@ describe("the lock on a person", () => {
 		);
 	});
 
+	/**
+	 * An absent lock reads as locked, so asking the lock before asking whether
+	 * the person exists answered "this person is protected from deletion"
+	 * about somebody who was never there. A typo in an id came back 423 while
+	 * the lock route next door answered 404 for the same id, and the 404 this
+	 * route documents could not be reached at all.
+	 */
+	it("does not call a person who is not there protected", async () => {
+		const res = await as(rootToken)(
+			"http://local.test/api/v1/root/accounts/no-such-person",
+			{ method: "DELETE" },
+		);
+		expect(res.status).toBe(404);
+	});
+
 	it("can be put back on, and refuses again", async () => {
 		expect((await setLock(rootToken, owner.personId, false)).status).toBe(200);
 		expect((await setLock(rootToken, owner.personId, true)).status).toBe(200);
@@ -156,6 +171,42 @@ describe("the lock on a person", () => {
 			{ method: "DELETE" },
 		);
 		expect(res.status).toBe(423);
+	});
+});
+
+describe("where it is kept", () => {
+	/**
+	 * Not in the person's settings object, which is where their Resend key
+	 * lives. R2 has no read-modify-write that excludes another writer, so a
+	 * lock being moved at the same moment a key was being saved would have
+	 * written back an object without the key -- and the person would stop
+	 * being able to send mail, with nothing anywhere to say why. Unrelated
+	 * writes do not belong in one object.
+	 */
+	it("is not in the object that holds the person's sending key", async () => {
+		const bucket = (env as unknown as { BUCKET: R2Bucket }).BUCKET;
+		expect((await setLock(rootToken, owner.personId, false)).status).toBe(200);
+
+		expect(
+			await bucket.head(
+				`settings/person/${encodeURIComponent(owner.personId)}.json`,
+			),
+		).toBeNull();
+		expect(await bucket.head("settings/person-locks.json")).not.toBeNull();
+	});
+
+	it("forgets a person who has been deleted", async () => {
+		const bucket = (env as unknown as { BUCKET: R2Bucket }).BUCKET;
+		await setLock(rootToken, owner.personId, false);
+		await as(rootToken)(
+			`http://local.test/api/v1/root/accounts/${owner.personId}`,
+			{ method: "DELETE" },
+		);
+
+		const locks = await (await bucket.get("settings/person-locks.json"))?.json<
+			Record<string, boolean>
+		>();
+		expect(locks ?? {}).not.toHaveProperty(owner.personId);
 	});
 });
 
