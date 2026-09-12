@@ -417,6 +417,12 @@
 		"thisIsYou": "U",
 		"confirmDeleteAgain": "Dit kan niet ongedaan worden gemaakt. Echt alles van {email} verwijderen?",
 		"deleted": "{email} verwijderd.",
+		"lock": {
+			"label": "Verwijderslot",
+			"lockedHint": "Vergrendeld: kan niet worden verwijderd",
+			"confirmUnlock": "Het verwijderslot van {email} wordt opgeheven. Daarna kunnen dit account en al zijn post worden verwijderd. Doorgaan?",
+			"failed": "Het slot kon niet worden gewijzigd."
+		},
 		"create": {
 			"title": "Een account toevoegen",
 			"roleLabel": "Soort",

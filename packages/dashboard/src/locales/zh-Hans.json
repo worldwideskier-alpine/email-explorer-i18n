@@ -417,6 +417,12 @@
 		"thisIsYou": "你",
 		"confirmDeleteAgain": "无法撤销。确定要删除 {email} 的全部内容吗？",
 		"deleted": "已删除 {email}。",
+		"lock": {
+			"label": "删除锁",
+			"lockedHint": "已锁定：无法删除",
+			"confirmUnlock": "将解除 {email} 的删除锁。解除后，该账户及其所有邮件都可以删除。是否继续？",
+			"failed": "无法更改锁定状态。"
+		},
 		"create": {
 			"title": "添加帐户",
 			"roleLabel": "类别",

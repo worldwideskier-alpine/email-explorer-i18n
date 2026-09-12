@@ -417,6 +417,12 @@
 		"thisIsYou": "Vy",
 		"confirmDeleteAgain": "Nelze vrátit zpět. Opravdu smazat vše, co patří {email}?",
 		"deleted": "{email} smazán.",
+		"lock": {
+			"label": "Zámek smazání",
+			"lockedHint": "Uzamčeno: nelze smazat",
+			"confirmUnlock": "Zámek smazání pro {email} bude odemčen. Poté bude možné tento účet i veškerou jeho poštu smazat. Pokračovat?",
+			"failed": "Zámek se nepodařilo změnit."
+		},
 		"create": {
 			"title": "Přidat účet",
 			"roleLabel": "Druh",

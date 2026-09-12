@@ -417,6 +417,12 @@
 		"thisIsYou": "Tu",
 		"confirmDeleteAgain": "Non è reversibile. Eliminare davvero tutto ciò che appartiene a {email}?",
 		"deleted": "{email} eliminato.",
+		"lock": {
+			"label": "Blocco eliminazione",
+			"lockedHint": "Bloccato: non eliminabile",
+			"confirmUnlock": "Il blocco eliminazione di {email} verrà rimosso. Dopo lo sblocco, questo account e tutta la sua posta potranno essere eliminati. Continuare?",
+			"failed": "Non è stato possibile modificare il blocco."
+		},
 		"create": {
 			"title": "Aggiungi un account",
 			"roleLabel": "Tipo",

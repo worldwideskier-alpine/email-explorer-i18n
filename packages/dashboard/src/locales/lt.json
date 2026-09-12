@@ -417,6 +417,12 @@
 		"thisIsYou": "Jūs",
 		"confirmDeleteAgain": "To nebeatšauksite. Tikrai ištrinti viską, kas priklauso {email}?",
 		"deleted": "{email} ištrintas.",
+		"lock": {
+			"label": "Ištrynimo užraktas",
+			"lockedHint": "Užrakinta: ištrinti negalima",
+			"confirmUnlock": "{email} ištrynimo užraktas bus panaikintas. Po to šią paskyrą ir visą jos paštą bus galima ištrinti. Tęsti?",
+			"failed": "Nepavyko pakeisti užrakto."
+		},
 		"create": {
 			"title": "Pridėti paskyrą",
 			"roleLabel": "Rūšis",

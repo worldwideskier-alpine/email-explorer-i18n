@@ -142,15 +142,44 @@
                   {{ person.role === "root" ? t("root.roleRoot") : t("root.roleAdmin") }}
                 </p>
               </div>
-              <div class="flex flex-wrap items-center gap-2">
-                <button
-                  v-if="person.role !== 'root'"
-                  @click="removePerson(person)"
-                  :disabled="busy"
-                  class="px-3 py-1.5 text-sm text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-50"
-                >
-                  {{ t("root.deleteAccount") }}
-                </button>
+              <!-- The lock, then the delete, in that order and never both.
+                   Deleting a person is the largest irreversible act here, and
+                   it sat one touch from the refresh link. It is the same
+                   two-step a mailbox has had all along; see
+                   isPersonDeletionLocked in the Worker. -->
+              <div class="flex flex-wrap items-center gap-3">
+                <template v-if="person.role !== 'root'">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <span class="text-xs text-gray-600 dark:text-gray-400">{{ t("root.lock.label") }}</span>
+                    <span class="relative inline-flex items-center flex-shrink-0">
+                      <input
+                        type="checkbox"
+                        :checked="person.deletionLocked"
+                        :disabled="busy"
+                        @change="toggleLock(person)"
+                        class="sr-only peer"
+                      />
+                      <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-indigo-600 peer-disabled:opacity-50"></span>
+                    </span>
+                  </label>
+                  <span
+                    v-if="person.deletionLocked"
+                    class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5"
+                  >
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    {{ t("root.lock.lockedHint") }}
+                  </span>
+                  <button
+                    v-else
+                    @click="removePerson(person)"
+                    :disabled="busy"
+                    class="px-3 py-1.5 text-sm text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-50"
+                  >
+                    {{ t("root.deleteAccount") }}
+                  </button>
+                </template>
                 <span v-else class="text-xs text-gray-500 dark:text-gray-400">
                   {{ t("root.thisIsYou") }}
                 </span>
@@ -257,6 +286,8 @@ interface Person {
 	emails: string[];
 	role: AccountRole;
 	createdAt: number;
+	/** Protected from deletion. Absent means protected; see the Worker. */
+	deletionLocked: boolean;
 }
 
 const { t } = useI18n();
@@ -436,7 +467,15 @@ async function load() {
 	loading.value = true;
 	accountsUnreadable.value = false;
 	try {
-		accounts.value = (await api.listAccounts()).data ?? [];
+		// `deletionLocked !== false` rather than a plain read, matching the
+		// Worker: a row from a deployment that predates the lock has no flag,
+		// and the only safe reading of an absent one is "protected".
+		accounts.value = ((await api.listAccounts()).data ?? []).map(
+			(person: Person) => ({
+				...person,
+				deletionLocked: person.deletionLocked !== false,
+			}),
+		);
 	} catch {
 		accounts.value = [];
 		accountsUnreadable.value = true;
@@ -482,6 +521,42 @@ async function createAccount() {
 		error.value = () => t("admin.registerUser.failedToCreate");
 	} finally {
 		busy.value = false;
+	}
+}
+
+/**
+ * Turns one person's deletion lock on or off.
+ *
+ * Unlocking asks first, and locking does not: one direction arms the button
+ * that cannot be undone, the other disarms it, and a confirmation on the safe
+ * direction only teaches people to dismiss confirmations.
+ *
+ * The row is reloaded from the Worker rather than assumed: the checkbox
+ * showing a state the server does not hold is exactly how a lock stops
+ * meaning anything.
+ */
+async function toggleLock(person: Person) {
+	const next = !person.deletionLocked;
+	if (!next) {
+		const who = person.emails.join(", ");
+		if (!window.confirm(t("root.lock.confirmUnlock", { email: who }))) {
+			// Nothing was sent, but the checkbox has already drawn itself in
+			// the new position; reloading puts it back where the truth is.
+			await load();
+			return;
+		}
+	}
+
+	busy.value = true;
+	message.value = "";
+	error.value = "";
+	try {
+		await api.setPersonDeletionLock(person.personId, next);
+	} catch {
+		error.value = () => t("root.lock.failed");
+	} finally {
+		busy.value = false;
+		await load();
 	}
 }
 

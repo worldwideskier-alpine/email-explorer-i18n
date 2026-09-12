@@ -417,6 +417,12 @@
 		"thisIsYou": "Tusa",
 		"confirmDeleteAgain": "Ní féidir é seo a chur ar ceal. Gach rud le {email} a scriosadh i ndáiríre?",
 		"deleted": "{email} scriosta.",
+		"lock": {
+			"label": "Glas scriosta",
+			"lockedHint": "Faoi ghlas: ní féidir é a scriosadh",
+			"confirmUnlock": "Bainfear an glas scriosta de {email}. Ina dhiaidh sin, is féidir an cuntas seo agus a chuid ríomhphoist go léir a scriosadh. Ar aghaidh?",
+			"failed": "Níorbh fhéidir an glas a athrú."
+		},
 		"create": {
 			"title": "Cuir cuntas leis",
 			"roleLabel": "Cineál",

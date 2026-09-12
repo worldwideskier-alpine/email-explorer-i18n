@@ -417,6 +417,12 @@
 		"thisIsYou": "Vus",
 		"confirmDeleteAgain": "Quai na po betg vegnir revocà. Propi stizzar tut quai che tutga a {email}?",
 		"deleted": "{email} stizzà.",
+		"lock": {
+			"label": "Serra da stizzar",
+			"lockedHint": "Serrà: na po betg vegnir stizzà",
+			"confirmUnlock": "La serra da stizzar per {email} vegn allontanada. Suenter po quest conto e tut sia posta vegnir stizzada. Cuntinuar?",
+			"failed": "La serra na pudeva betg vegnir midada."
+		},
 		"create": {
 			"title": "Agiuntar in conto",
 			"roleLabel": "Gener",

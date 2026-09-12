@@ -417,6 +417,12 @@
 		"thisIsYou": "Vous",
 		"confirmDeleteAgain": "C'est irréversible. Supprimer vraiment tout ce qui appartient à {email} ?",
 		"deleted": "{email} supprimé.",
+		"lock": {
+			"label": "Verrou de suppression",
+			"lockedHint": "Verrouillé : suppression impossible",
+			"confirmUnlock": "Le verrou de suppression de {email} va être retiré. Une fois déverrouillé, ce compte et tout son courrier pourront être supprimés. Continuer ?",
+			"failed": "Le verrou n'a pas pu être modifié."
+		},
 		"create": {
 			"title": "Ajouter un compte",
 			"roleLabel": "Type",

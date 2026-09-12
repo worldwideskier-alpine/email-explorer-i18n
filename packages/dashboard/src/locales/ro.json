@@ -417,6 +417,12 @@
 		"thisIsYou": "Tu",
 		"confirmDeleteAgain": "Nu se poate anula. Chiar ștergi tot ce îi aparține lui {email}?",
 		"deleted": "{email} șters.",
+		"lock": {
+			"label": "Blocare la ștergere",
+			"lockedHint": "Blocat: nu poate fi șters",
+			"confirmUnlock": "Blocarea la ștergere pentru {email} va fi eliminată. După aceea, acest cont și toată corespondența sa pot fi șterse. Continuați?",
+			"failed": "Blocarea nu a putut fi modificată."
+		},
 		"create": {
 			"title": "Adaugă un cont",
 			"roleLabel": "Fel",

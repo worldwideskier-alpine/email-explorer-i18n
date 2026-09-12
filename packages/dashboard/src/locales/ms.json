@@ -417,6 +417,12 @@
 		"thisIsYou": "Anda",
 		"confirmDeleteAgain": "Ini tidak boleh dibatalkan. Benar-benar padam segala milik {email}?",
 		"deleted": "{email} dipadam.",
+		"lock": {
+			"label": "Kunci pemadaman",
+			"lockedHint": "Berkunci: tidak boleh dipadam",
+			"confirmUnlock": "Kunci pemadaman bagi {email} akan dibuka. Selepas itu, akaun ini dan semua melnya boleh dipadam. Teruskan?",
+			"failed": "Kunci tidak dapat diubah."
+		},
 		"create": {
 			"title": "Tambah akaun",
 			"roleLabel": "Jenis",

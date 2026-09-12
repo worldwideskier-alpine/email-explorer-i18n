@@ -417,6 +417,12 @@
 		"thisIsYou": "Ju",
 		"confirmDeleteAgain": "Kjo nuk kthehet. Vërtet të fshihet gjithçka e {email}?",
 		"deleted": "{email} u fshi.",
+		"lock": {
+			"label": "Kyçja e fshirjes",
+			"lockedHint": "I kyçur: nuk mund të fshihet",
+			"confirmUnlock": "Kyçja e fshirjes për {email} do të hiqet. Pas kësaj, kjo llogari dhe e gjithë posta e saj mund të fshihen. Të vazhdohet?",
+			"failed": "Kyçja nuk mund të ndryshohej."
+		},
 		"create": {
 			"title": "Shtoni një llogari",
 			"roleLabel": "Lloji",

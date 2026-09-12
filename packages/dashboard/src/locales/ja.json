@@ -417,6 +417,12 @@
 		"thisIsYou": "自分",
 		"confirmDeleteAgain": "取り消せません。本当に {email} のすべてを削除しますか。",
 		"deleted": "{email} を削除しました。",
+		"lock": {
+			"label": "削除ロック",
+			"lockedHint": "ロック中は削除できません",
+			"confirmUnlock": "{email} の削除ロックを解除します。解除すると、このアカウントとそのメールをすべて削除できるようになります。よろしいですか。",
+			"failed": "削除ロックを変更できませんでした。"
+		},
 		"create": {
 			"title": "アカウントを追加",
 			"roleLabel": "種別",

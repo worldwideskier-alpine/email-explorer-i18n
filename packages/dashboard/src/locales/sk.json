@@ -417,6 +417,12 @@
 		"thisIsYou": "Vy",
 		"confirmDeleteAgain": "Nedá sa vrátiť. Naozaj zmazať všetko, čo patrí {email}?",
 		"deleted": "{email} zmazaný.",
+		"lock": {
+			"label": "Zámok odstránenia",
+			"lockedHint": "Uzamknuté: nedá sa odstrániť",
+			"confirmUnlock": "Zámok odstránenia pre {email} bude odomknutý. Potom bude možné odstrániť tento účet aj všetku jeho poštu. Pokračovať?",
+			"failed": "Zámok sa nepodarilo zmeniť."
+		},
 		"create": {
 			"title": "Pridať účet",
 			"roleLabel": "Druh",

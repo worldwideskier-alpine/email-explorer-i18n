@@ -417,6 +417,12 @@
 		"thisIsYou": "Dir",
 		"confirmDeleteAgain": "Dat léisst sech net réckgängeg maachen. Wierklech alles vum {email} läschen?",
 		"deleted": "{email} geläscht.",
+		"lock": {
+			"label": "Läschspär",
+			"lockedHint": "Gespaart: kann net geläscht ginn",
+			"confirmUnlock": "D'Läschspär fir {email} gëtt opgehuewen. Duerno kënnen dëse Kont a seng ganz Post geläscht ginn. Weiderfueren?",
+			"failed": "D'Spär konnt net geännert ginn."
+		},
 		"create": {
 			"title": "E Kont dobäisetzen",
 			"roleLabel": "Zort",

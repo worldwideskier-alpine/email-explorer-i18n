@@ -417,6 +417,12 @@
 		"thisIsYou": "나",
 		"confirmDeleteAgain": "되돌릴 수 없습니다. 정말 {email} 의 모든 것을 삭제할까요?",
 		"deleted": "{email} 을(를) 삭제했습니다.",
+		"lock": {
+			"label": "삭제 잠금",
+			"lockedHint": "잠김: 삭제할 수 없습니다",
+			"confirmUnlock": "{email}의 삭제 잠금을 해제합니다. 해제하면 이 계정과 모든 메일을 삭제할 수 있게 됩니다. 계속할까요?",
+			"failed": "잠금을 변경하지 못했습니다."
+		},
 		"create": {
 			"title": "계정 추가",
 			"roleLabel": "종류",

@@ -417,6 +417,12 @@
 		"thisIsYou": "Bạn",
 		"confirmDeleteAgain": "Không thể hoàn tác. Thật sự xóa mọi thứ của {email}?",
 		"deleted": "Đã xóa {email}.",
+		"lock": {
+			"label": "Khóa xóa",
+			"lockedHint": "Đã khóa: không thể xóa",
+			"confirmUnlock": "Khóa xóa của {email} sẽ được gỡ. Sau đó, tài khoản này và toàn bộ thư của nó có thể bị xóa. Tiếp tục?",
+			"failed": "Không thể thay đổi khóa."
+		},
 		"create": {
 			"title": "Thêm một tài khoản",
 			"roleLabel": "Loại",

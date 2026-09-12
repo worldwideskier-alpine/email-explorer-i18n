@@ -172,6 +172,24 @@ describe("what root does with accounts", () => {
 		).toBe(401);
 	});
 
+	/**
+	 * Deleting a person is two acts now: the lock is on by default and the
+	 * route refuses 423 while it is. These tests are about what the deletion
+	 * does once it is allowed to happen; the lock itself is held in
+	 * person-deletion-lock.test.ts.
+	 */
+	async function unlock(personId: string): Promise<void> {
+		const res = await as(root)(
+			`http://local.test/api/v1/root/accounts/${personId}/lock`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ locked: false }),
+			},
+		);
+		expect(res.status).toBe(200);
+	}
+
 	/** Root manages people, so the thing it deletes is a person. */
 	async function personIdOf(email: string): Promise<string> {
 		const people = await (
@@ -190,8 +208,10 @@ describe("what root does with accounts", () => {
 			await personIdOf("leaver@example.com"),
 		);
 
+		const leaverId = await personIdOf("leaver@example.com");
+		await unlock(leaverId);
 		const res = await as(root)(
-			`http://local.test/api/v1/root/accounts/${await personIdOf("leaver@example.com")}`,
+			`http://local.test/api/v1/root/accounts/${leaverId}`,
 			{ method: "DELETE" },
 		);
 		expect(res.status).toBe(200);
@@ -233,10 +253,11 @@ describe("what root does with accounts", () => {
 			"archived",
 		);
 
-		await as(root)(
-			`http://local.test/api/v1/root/accounts/${await personIdOf("leaver@example.com")}`,
-			{ method: "DELETE" },
-		);
+		const personId = await personIdOf("leaver@example.com");
+		await unlock(personId);
+		await as(root)(`http://local.test/api/v1/root/accounts/${personId}`, {
+			method: "DELETE",
+		});
 
 		expect(await bucket.head(`mailboxes/${mailboxId}.json`)).toBeNull();
 		const archives = await bucket.list({
@@ -267,10 +288,13 @@ describe("what root does with accounts", () => {
 		)?.json<{ deletionLocked?: boolean }>();
 		expect(settings?.deletionLocked).toBe(true);
 
-		await as(root)(
-			`http://local.test/api/v1/root/accounts/${await personIdOf("leaver@example.com")}`,
-			{ method: "DELETE" },
-		);
+		// The person's own lock is a different lock and is turned off here; it
+		// is the mailbox's that this test is about, and it stays on.
+		const personId = await personIdOf("leaver@example.com");
+		await unlock(personId);
+		await as(root)(`http://local.test/api/v1/root/accounts/${personId}`, {
+			method: "DELETE",
+		});
 		expect(await bucket.head(`mailboxes/${mailboxId}.json`)).toBeNull();
 	});
 

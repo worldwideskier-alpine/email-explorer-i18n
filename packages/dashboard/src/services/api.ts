@@ -256,6 +256,11 @@ export default {
 		apiClient.post("/api/v1/root/accounts", { email, password, role }),
 	setAccountPassword: (userId: string, password: string) =>
 		apiClient.post(`/api/v1/root/accounts/${userId}/password`, { password }),
+	// The lock that makes deleting a person two acts instead of one. The
+	// Worker refuses the delete below with 423 while it is on, so hiding the
+	// button is the courtesy and this is the guard.
+	setPersonDeletionLock: (personId: string, locked: boolean) =>
+		apiClient.post(`/api/v1/root/accounts/${personId}/lock`, { locked }),
 	deletePerson: (personId: string) =>
 		apiClient.delete(`/api/v1/root/accounts/${personId}`),
 	// The bucket against the mail that claims it: counts only, no filename.

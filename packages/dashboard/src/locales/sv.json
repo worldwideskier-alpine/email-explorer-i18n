@@ -417,6 +417,12 @@
 		"thisIsYou": "Du",
 		"confirmDeleteAgain": "Detta går inte att ångra. Ska verkligen allt som tillhör {email} raderas?",
 		"deleted": "{email} raderad.",
+		"lock": {
+			"label": "Raderingslås",
+			"lockedHint": "Låst: kan inte raderas",
+			"confirmUnlock": "Raderingslåset för {email} tas bort. Därefter kan detta konto och all dess post raderas. Vill du fortsätta?",
+			"failed": "Låset kunde inte ändras."
+		},
 		"create": {
 			"title": "Lägg till ett konto",
 			"roleLabel": "Slag",

@@ -417,6 +417,12 @@
 		"thisIsYou": "Anda",
 		"confirmDeleteAgain": "Ini tidak bisa dibatalkan. Benar-benar hapus semua milik {email}?",
 		"deleted": "{email} dihapus.",
+		"lock": {
+			"label": "Kunci penghapusan",
+			"lockedHint": "Terkunci: tidak dapat dihapus",
+			"confirmUnlock": "Kunci penghapusan untuk {email} akan dilepas. Setelah itu, akun ini dan seluruh surelnya dapat dihapus. Lanjutkan?",
+			"failed": "Kunci tidak dapat diubah."
+		},
 		"create": {
 			"title": "Tambahkan akun",
 			"roleLabel": "Jenis",
