@@ -149,19 +149,15 @@
                    isPersonDeletionLocked in the Worker. -->
               <div class="flex flex-wrap items-center gap-3">
                 <template v-if="person.role !== 'root'">
-                  <label class="flex items-center gap-2 cursor-pointer">
+                  <div class="flex items-center gap-2">
                     <span class="text-xs text-gray-600 dark:text-gray-400">{{ t("root.lock.label") }}</span>
-                    <span class="relative inline-flex items-center flex-shrink-0">
-                      <input
-                        type="checkbox"
-                        :checked="person.deletionLocked"
-                        :disabled="busy"
-                        @change="toggleLock(person)"
-                        class="sr-only peer"
-                      />
-                      <span class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:after:border-gray-600 peer-checked:bg-indigo-600 peer-disabled:opacity-50"></span>
-                    </span>
-                  </label>
+                    <ToggleSwitch
+                      :on="person.deletionLocked"
+                      :disabled="busy"
+                      :label="t('root.lock.label')"
+                      @toggle="toggleLock(person)"
+                    />
+                  </div>
                   <span
                     v-if="person.deletionLocked"
                     class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5"
@@ -265,6 +261,7 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
+import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import { useDateFormat } from "@/composables/useDateFormat";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
@@ -531,20 +528,17 @@ async function createAccount() {
  * that cannot be undone, the other disarms it, and a confirmation on the safe
  * direction only teaches people to dismiss confirmations.
  *
- * The row is reloaded from the Worker rather than assumed: the checkbox
- * showing a state the server does not hold is exactly how a lock stops
- * meaning anything.
+ * The row is reloaded from the Worker rather than assumed: a switch showing a
+ * state the server does not hold is exactly how a lock stops meaning
+ * anything. Dismissing the question needs no reload at all -- the switch is
+ * drawn from `person.deletionLocked`, which nothing has touched. That is the
+ * whole reason it is a `ToggleSwitch` and not a checkbox; see that component.
  */
 async function toggleLock(person: Person) {
 	const next = !person.deletionLocked;
 	if (!next) {
 		const who = person.emails.join(", ");
-		if (!window.confirm(t("root.lock.confirmUnlock", { email: who }))) {
-			// Nothing was sent, but the checkbox has already drawn itself in
-			// the new position; reloading puts it back where the truth is.
-			await load();
-			return;
-		}
+		if (!window.confirm(t("root.lock.confirmUnlock", { email: who }))) return;
 	}
 
 	busy.value = true;

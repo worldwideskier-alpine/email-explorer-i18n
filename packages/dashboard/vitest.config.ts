@@ -1,7 +1,15 @@
 import { fileURLToPath, URL } from "node:url";
+import vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+	// So a test can mount a component rather than read its source. Most of
+	// the tests here read `?raw` and are unaffected -- the raw query is
+	// answered before any plugin sees the file -- but the ones that cannot be
+	// written that way are the ones that matter: a checkbox that would not
+	// follow its own data looked perfectly correct in the source, and only a
+	// real DOM disagreed. See components/toggleSwitch.test.ts.
+	plugins: [vue()],
 	resolve: {
 		alias: {
 			"@": fileURLToPath(new URL("./src", import.meta.url)),

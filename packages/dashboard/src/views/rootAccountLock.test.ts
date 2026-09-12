@@ -64,12 +64,21 @@ describe("the lock itself", () => {
 		expect(body.match(/window\.confirm/g) ?? []).toHaveLength(1);
 	});
 
-	it("shows what the server holds, not what was clicked", () => {
-		const start = source.indexOf("async function toggleLock");
-		const body = source.slice(start, source.indexOf("\n}", start));
-		// Including when the question is dismissed: the checkbox has already
-		// drawn itself in the new position by then.
-		expect(body.match(/await load\(\)/g) ?? []).toHaveLength(2);
+	/**
+	 * This test used to count `await load()` in the handler and call that
+	 * "shows what the server holds". It passed while the screen was wrong:
+	 * the switch was a checkbox, the browser owned its position, and no
+	 * amount of reloading moved it back -- Vue writes a DOM property only
+	 * when the bound value changed, and dismissing the question changes
+	 * nothing. Counting calls in the source cannot see that. What can is a
+	 * mounted component, which is where the behaviour is held now
+	 * (components/toggleSwitch.test.ts); what is left here is the one thing
+	 * this file can honestly check, which is that the screen uses it.
+	 */
+	it("draws the switch from the data, with no state of its own", () => {
+		expect(source).toContain("<ToggleSwitch");
+		expect(source).toContain(':on="person.deletionLocked"');
+		expect(source).not.toMatch(/<input[^>]*:checked=/);
 	});
 
 	it("reads a row with no flag on it as locked", () => {

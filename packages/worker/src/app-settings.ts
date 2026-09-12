@@ -39,11 +39,6 @@ function personKey(personId: string): string {
 
 interface AppSettings {
 	resendApiKey?: string;
-	/**
-	 * Whether this person is protected from deletion. Absent means protected;
-	 * see isPersonDeletionLocked.
-	 */
-	deletionLocked?: boolean;
 }
 
 /** Where the key in use came from, for the admin screen to show. */
@@ -130,6 +125,30 @@ export function personSettingsKey(personId: string): string {
 }
 
 /**
+ * Every person's deletion lock, in one object of its own.
+ *
+ * Not in the person's settings object beside their sending key, which is
+ * where this started. Two reasons, and the first is the one that matters:
+ * R2 has no read-modify-write that excludes another writer, so a lock being
+ * turned off at the same moment a key is being saved would have written back
+ * an object without the key, and the person would stop being able to send
+ * mail with nothing to say why. Sharing an object makes unrelated writes each
+ * other's problem.
+ *
+ * The second is the account list, which needs every person's lock at once.
+ * Per-person objects made that one subrequest per person -- fine for two
+ * people, a broken screen at fifty, and a 500 for the whole list the first
+ * time one of those reads failed.
+ *
+ * It is root's own bookkeeping rather than anybody's settings, so it reads
+ * as what it is here.
+ */
+const LOCKS_KEY = "settings/person-locks.json";
+
+/** personId -> whether deletion is blocked. Absent means locked; see below. */
+type PersonLocks = Record<string, boolean>;
+
+/**
  * Whether a person is protected from deletion.
  *
  * The same rule a mailbox has, for the same reason (see isDeletionLocked in
@@ -150,30 +169,66 @@ export function personSettingsKey(personId: string): string {
  * on this screen could honestly claim to do.
  */
 export function isPersonDeletionLocked(
-	settings: { deletionLocked?: boolean } | null | undefined,
+	locks: PersonLocks | null | undefined,
+	personId: string,
 ): boolean {
-	return settings?.deletionLocked !== false;
+	return locks?.[personId] !== false;
 }
 
-/** Whether the stored person is protected. Unreadable settings read locked. */
+/**
+ * Every lock, in one read.
+ *
+ * A read that fails gives an empty map, which reads as "everyone locked".
+ * That is the safe direction and it keeps one bad read off the account list:
+ * letting it throw made a transient R2 failure into a screen that says the
+ * accounts cannot be read at all.
+ */
+export async function readPersonDeletionLocks(
+	env: Pick<Env, "BUCKET">,
+): Promise<PersonLocks> {
+	try {
+		const obj = await env.BUCKET.get(LOCKS_KEY);
+		if (!obj) return {};
+		return (await obj.json<PersonLocks>()) ?? {};
+	} catch {
+		return {};
+	}
+}
+
+/** Whether this one person is protected. Unreadable locks read locked. */
 export async function readPersonDeletionLock(
 	env: Pick<Env, "BUCKET">,
 	personId: string,
 ): Promise<boolean> {
-	return isPersonDeletionLocked(await readAt(env, personKey(personId)));
+	return isPersonDeletionLocked(await readPersonDeletionLocks(env), personId);
 }
 
 /**
- * Turns the lock on or off, leaving everything else in the object alone --
- * a person's sending key lives here too, and unlocking must not cost it.
+ * Turns one person's lock on or off.
+ *
+ * Read-modify-write of the map, which two locks moved at the same instant
+ * could still lose one half of. That is root alone, on one screen, with the
+ * button disabled until the round trip returns, and the loser of such a race
+ * is a flag that the reload immediately shows as it really is. What was not
+ * acceptable was the same race costing somebody their sending key.
  */
 export async function setPersonDeletionLock(
 	env: Pick<Env, "BUCKET">,
 	personId: string,
 	locked: boolean,
 ): Promise<void> {
-	const key = personKey(personId);
-	const settings = await readAt(env, key);
-	settings.deletionLocked = locked;
-	await env.BUCKET.put(key, JSON.stringify(settings));
+	const locks = await readPersonDeletionLocks(env);
+	locks[personId] = locked;
+	await env.BUCKET.put(LOCKS_KEY, JSON.stringify(locks));
+}
+
+/** Drops a deleted person's entry, so the map holds only people who exist. */
+export async function forgetPersonDeletionLock(
+	env: Pick<Env, "BUCKET">,
+	personId: string,
+): Promise<void> {
+	const locks = await readPersonDeletionLocks(env);
+	if (!(personId in locks)) return;
+	delete locks[personId];
+	await env.BUCKET.put(LOCKS_KEY, JSON.stringify(locks));
 }
