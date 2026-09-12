@@ -417,6 +417,12 @@
 		"thisIsYou": "Ikaw",
 		"confirmDeleteAgain": "Hindi na ito maibabalik. Talagang burahin ang lahat ng kay {email}?",
 		"deleted": "Nabura ang {email}.",
+		"lock": {
+			"label": "Lock sa pagbura",
+			"lockedHint": "Naka-lock: hindi mabubura",
+			"confirmUnlock": "Aalisin ang lock sa pagbura para sa {email}. Pagkatapos nito, mabubura ang account na ito at lahat ng mail nito. Magpatuloy?",
+			"failed": "Hindi nabago ang lock."
+		},
 		"create": {
 			"title": "Magdagdag ng account",
 			"roleLabel": "Uri",

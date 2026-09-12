@@ -417,6 +417,12 @@
 		"thisIsYou": "You",
 		"confirmDeleteAgain": "This cannot be undone. Really delete everything belonging to {email}?",
 		"deleted": "Deleted {email}.",
+		"lock": {
+			"label": "Deletion lock",
+			"lockedHint": "Locked: cannot be deleted",
+			"confirmUnlock": "The deletion lock on {email} will be removed. Once unlocked, this account and all of its mail can be deleted. Continue?",
+			"failed": "The lock could not be changed."
+		},
 		"create": {
 			"title": "Add an account",
 			"roleLabel": "Kind",

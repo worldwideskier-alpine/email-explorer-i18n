@@ -17,7 +17,11 @@
 import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
-import { personSettingsKey } from "../app-settings";
+import {
+	personSettingsKey,
+	readPersonDeletionLock,
+	setPersonDeletionLock,
+} from "../app-settings";
 import {
 	deleteUnclaimedAttachments,
 	repairMisnamedAttachments,
@@ -51,6 +55,8 @@ const PersonSchema = z.object({
 	emails: z.array(z.string()),
 	role: z.enum(["root", "admin"]),
 	createdAt: z.number(),
+	/** Protected from deletion; see isPersonDeletionLocked. */
+	deletionLocked: z.boolean(),
 });
 
 const forbidden = {
@@ -282,10 +288,18 @@ export class GetAccounts extends OpenAPIRoute {
 		const rootPersonId = await authDO(c.env).getRootPersonId();
 		const people = await authDO(c.env).listPeople();
 
+		// One read per person, in parallel: the lock lives beside their
+		// sending key rather than in the account rows, because the rows are
+		// the auth store and this is not an authentication fact.
+		const locks = await Promise.all(
+			people.map((person) => readPersonDeletionLock(c.env, person.personId)),
+		);
+
 		return c.json(
-			people.map((person) => ({
+			people.map((person, index) => ({
 				...person,
 				role: roleOf(person.personId, rootPersonId),
+				deletionLocked: locks[index],
 			})),
 		);
 	}
@@ -405,6 +419,60 @@ export class PostAccountPassword extends OpenAPIRoute {
 }
 
 /**
+ * Turns a person's deletion lock on or off.
+ *
+ * The lock is not a permission -- root can turn it off and delete a second
+ * later, which is the point. It makes deleting a person two acts instead of
+ * one, so that the act that cannot be undone cannot be the one that happens
+ * by accident. See isPersonDeletionLocked for why that is worth a round trip.
+ *
+ * Root's own person is refused. There is no route that deletes it either, so
+ * a lock there would protect against nothing and only suggest otherwise.
+ */
+export class PostAccountLock extends OpenAPIRoute {
+	schema = {
+		summary: "Protect a person from deletion, or stop protecting (root)",
+		operationId: "setPersonDeletionLock",
+		tags: ["Root"],
+		request: {
+			params: z.object({ personId: z.string() }),
+			body: contentJson(z.object({ locked: z.boolean() })),
+		},
+		responses: {
+			"200": { description: "Set", ...contentJson(SuccessResponseSchema) },
+			"404": { description: "Not found", ...contentJson(ErrorResponseSchema) },
+			"409": {
+				description: "Root has no deletion lock",
+				...contentJson(ErrorResponseSchema),
+			},
+			...forbidden,
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = requireRoot(c);
+		if (session instanceof Response) return session;
+
+		const data = await this.getValidatedData<typeof this.schema>();
+		const { personId } = data.params;
+
+		if (personId === session.personId) {
+			return c.json({ error: "The root account cannot be deleted" }, 409);
+		}
+
+		// Writing a lock for a person who is not there would leave an object
+		// nobody owns, and would answer "done" to a mistake.
+		const people = await authDO(c.env).listPeople();
+		if (!people.some((person) => person.personId === personId)) {
+			return c.json({ error: "Not found" }, 404);
+		}
+
+		await setPersonDeletionLock(c.env, personId, data.body.locked);
+		return c.json({ status: data.body.locked ? "locked" : "unlocked" });
+	}
+}
+
+/**
  * Deletes a person and everything that was theirs.
  *
  * All of it: every login, every session, every mailbox they held, the
@@ -412,6 +480,11 @@ export class PostAccountPassword extends OpenAPIRoute {
  * nightly archive. The deletion lock on a mailbox does not stop it -- that
  * lock protects an administrator from their own mis-click, and is not a
  * defence against the person running the deployment.
+ *
+ * The person's own lock does stop it, and is refused with 423 until root
+ * turns it off. That one is not a permission either: root holds both ends of
+ * it. It is there so that the largest irreversible act in this application
+ * takes two deliberate steps rather than one touch.
  *
  * This used to keep the mailboxes, on the reasoning that mail outlives
  * whoever read it. Between colleagues that is right. Here root is the person
@@ -437,6 +510,10 @@ export class DeleteAccount extends OpenAPIRoute {
 				description: "Root cannot be deleted",
 				...contentJson(ErrorResponseSchema),
 			},
+			"423": {
+				description: "Person is protected from deletion",
+				...contentJson(ErrorResponseSchema),
+			},
 			...forbidden,
 		},
 	};
@@ -452,6 +529,13 @@ export class DeleteAccount extends OpenAPIRoute {
 		// is not recreatable from inside the application.
 		if (personId === session.personId) {
 			return c.json({ error: "Cannot delete the root account" }, 409);
+		}
+
+		// The lock is checked here rather than only on the screen: the screen
+		// hides the button, and a request typed by hand does not go through
+		// the screen. Same boundary as the mailbox lock, same status.
+		if (await readPersonDeletionLock(c.env, personId)) {
+			return c.json({ error: "Person is protected from deletion" }, 423);
 		}
 
 		const result = await authDO(c.env).deletePerson(personId);

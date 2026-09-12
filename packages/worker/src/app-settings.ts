@@ -39,6 +39,11 @@ function personKey(personId: string): string {
 
 interface AppSettings {
 	resendApiKey?: string;
+	/**
+	 * Whether this person is protected from deletion. Absent means protected;
+	 * see isPersonDeletionLocked.
+	 */
+	deletionLocked?: boolean;
 }
 
 /** Where the key in use came from, for the admin screen to show. */
@@ -122,4 +127,53 @@ export async function setResendApiKey(
 /** Everything a person's key is stored under, for deleting them. */
 export function personSettingsKey(personId: string): string {
 	return personKey(personId);
+}
+
+/**
+ * Whether a person is protected from deletion.
+ *
+ * The same rule a mailbox has, for the same reason (see isDeletionLocked in
+ * mailbox-settings.ts): an absent flag means protected. Every person stored
+ * before this existed has no flag, and the alternative reading would leave
+ * every one of them deletable in one click on the day this deploys -- which
+ * is the state this is here to end.
+ *
+ * Deleting a person is the largest single act in this application. It takes
+ * their logins, their mailboxes, the mail in them, the raw copies, the
+ * attachments and every nightly archive, and nothing brings any of it back.
+ * A button that does that sits one mis-touch away from the refresh link, on a
+ * phone, next to the row for somebody else. So it is two deliberate acts now:
+ * turn the lock off, then delete.
+ *
+ * What this is not: it is not a defence against root, who can unlock anything
+ * here. It defends root from their own hand, which is the only thing a lock
+ * on this screen could honestly claim to do.
+ */
+export function isPersonDeletionLocked(
+	settings: { deletionLocked?: boolean } | null | undefined,
+): boolean {
+	return settings?.deletionLocked !== false;
+}
+
+/** Whether the stored person is protected. Unreadable settings read locked. */
+export async function readPersonDeletionLock(
+	env: Pick<Env, "BUCKET">,
+	personId: string,
+): Promise<boolean> {
+	return isPersonDeletionLocked(await readAt(env, personKey(personId)));
+}
+
+/**
+ * Turns the lock on or off, leaving everything else in the object alone --
+ * a person's sending key lives here too, and unlocking must not cost it.
+ */
+export async function setPersonDeletionLock(
+	env: Pick<Env, "BUCKET">,
+	personId: string,
+	locked: boolean,
+): Promise<void> {
+	const key = personKey(personId);
+	const settings = await readAt(env, key);
+	settings.deletionLocked = locked;
+	await env.BUCKET.put(key, JSON.stringify(settings));
 }

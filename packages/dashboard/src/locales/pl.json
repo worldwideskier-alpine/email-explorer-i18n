@@ -417,6 +417,12 @@
 		"thisIsYou": "Ty",
 		"confirmDeleteAgain": "Tego nie da się cofnąć. Naprawdę usunąć wszystko, co należy do {email}?",
 		"deleted": "Usunięto {email}.",
+		"lock": {
+			"label": "Blokada usuwania",
+			"lockedHint": "Zablokowane: nie można usunąć",
+			"confirmUnlock": "Blokada usuwania dla {email} zostanie zdjęta. Potem to konto i całą jego pocztę będzie można usunąć. Kontynuować?",
+			"failed": "Nie udało się zmienić blokady."
+		},
 		"create": {
 			"title": "Dodaj konto",
 			"roleLabel": "Rodzaj",

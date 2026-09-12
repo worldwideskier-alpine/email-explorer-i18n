@@ -417,6 +417,12 @@
 		"thisIsYou": "Deg",
 		"confirmDeleteAgain": "Dette kan ikke angres. Skal virkelig alt som tilhører {email} slettes?",
 		"deleted": "{email} slettet.",
+		"lock": {
+			"label": "Slettelås",
+			"lockedHint": "Låst: kan ikke slettes",
+			"confirmUnlock": "Slettelåsen for {email} fjernes. Etterpå kan denne kontoen og all posten slettes. Vil du fortsette?",
+			"failed": "Låsen kunne ikke endres."
+		},
 		"create": {
 			"title": "Legg til en konto",
 			"roleLabel": "Slag",

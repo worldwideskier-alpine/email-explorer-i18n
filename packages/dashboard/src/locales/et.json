@@ -417,6 +417,12 @@
 		"thisIsYou": "Teie",
 		"confirmDeleteAgain": "Seda ei saa tagasi võtta. Kas kustutada tõesti kõik, mis kuulub kontole {email}?",
 		"deleted": "{email} kustutatud.",
+		"lock": {
+			"label": "Kustutamislukk",
+			"lockedHint": "Lukus: ei saa kustutada",
+			"confirmUnlock": "{email} kustutamislukk eemaldatakse. Pärast seda saab selle konto ja kogu tema posti kustutada. Kas jätkata?",
+			"failed": "Lukku ei õnnestunud muuta."
+		},
 		"create": {
 			"title": "Lisa konto",
 			"roleLabel": "Liik",

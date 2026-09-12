@@ -101,11 +101,26 @@ fork's work. This fork ships by being forked.
   comes into being -- `claimRoot` is called from registration and is reachable
   from no route. An endpoint that named a root, however well guarded, would
   read as "somebody may take the tier above them" on every deployment of this
-  that exists. After that the role only moves by root handing it on
-  (`transferRoot`), which is both the handover and the recovery path.
+  that exists. The role does not move afterwards either: `transferRoot` is
+  gone, and succession is root adding a second address to **their own
+  person** (`PostAccount` with `role: "root"`), a spare rather than a second
+  root. On software with customers, a button that hands the role on is a
+  button that gives a customer the deployment.
   Root owns no mailbox, is left out of the `GetMailboxes` administrator view,
   and its screen does not list anyone's mailboxes: what an administrator does
   with their own addresses is not root's business.
+- **Deletion locks, both of them.** A mailbox has one (`isDeletionLocked`,
+  `mailbox-settings.ts`) and a person has one (`isPersonDeletionLocked`,
+  `app-settings.ts`); both default to *on*, including for anything stored
+  before they existed, because the only safe reading of an absent flag is
+  "protected". Neither is a permission — whoever can delete can also unlock —
+  and describing them as security would be the wrong claim. What they buy is
+  that an act nothing undoes takes two deliberate steps instead of one touch,
+  which is what "delete this person" needed: it takes their logins, their
+  mailboxes, the mail in them, the raw copies, the attachments and every
+  nightly archive. Both are enforced in the Worker with 423, not on the
+  screen: the screen hides the button, and a request typed by hand does not go
+  through the screen.
 - **Mailbox ownership.** A grant says who a mailbox belongs to, and it is the
   only thing that grants access: the middleware in `fetch()` and every
   mailbox-scoped route ask `personHoldsMailbox`, and the mailbox list filters

@@ -417,6 +417,12 @@
 		"thisIsYou": "Siz",
 		"confirmDeleteAgain": "Bu geri alınamaz. {email} hesabına ait her şey gerçekten silinsin mi?",
 		"deleted": "{email} silindi.",
+		"lock": {
+			"label": "Silme kilidi",
+			"lockedHint": "Kilitli: silinemez",
+			"confirmUnlock": "{email} için silme kilidi kaldırılacak. Kilit kalktıktan sonra bu hesap ve tüm postası silinebilir. Devam edilsin mi?",
+			"failed": "Kilit değiştirilemedi."
+		},
 		"create": {
 			"title": "Hesap ekle",
 			"roleLabel": "Tür",

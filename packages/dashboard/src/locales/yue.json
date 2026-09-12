@@ -417,6 +417,12 @@
 		"thisIsYou": "你",
 		"confirmDeleteAgain": "冇得還原。真係要刪除 {email} 嘅所有嘢？",
 		"deleted": "已刪除 {email}。",
+		"lock": {
+			"label": "刪除鎖",
+			"lockedHint": "已鎖上：唔可以刪除",
+			"confirmUnlock": "會解除 {email} 嘅刪除鎖。解除之後，呢個帳戶同埋所有郵件都可以刪除。繼續？",
+			"failed": "改唔到個鎖。"
+		},
 		"create": {
 			"title": "新增帳戶",
 			"roleLabel": "類別",

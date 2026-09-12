@@ -417,6 +417,12 @@
 		"thisIsYou": "Int",
 		"confirmDeleteAgain": "Dan ma jistax jitreġġa' lura. Verament tħassar kollox ta' {email}?",
 		"deleted": "{email} tħassar.",
+		"lock": {
+			"label": "Serratura tat-tħassir",
+			"lockedHint": "Msakkar: ma jistax jitħassar",
+			"confirmUnlock": "Is-serratura tat-tħassir ta' {email} se titneħħa. Wara dan, dan il-kont u l-posta kollha tiegħu jistgħu jitħassru. Tkompli?",
+			"failed": "Is-serratura ma setgħetx tinbidel."
+		},
 		"create": {
 			"title": "Żid kont",
 			"roleLabel": "Xorta",

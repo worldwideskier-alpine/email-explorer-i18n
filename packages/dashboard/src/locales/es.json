@@ -417,6 +417,12 @@
 		"thisIsYou": "Tú",
 		"confirmDeleteAgain": "Esto no se puede deshacer. ¿Eliminar de verdad todo lo de {email}?",
 		"deleted": "Se eliminó {email}.",
+		"lock": {
+			"label": "Bloqueo de eliminación",
+			"lockedHint": "Bloqueado: no se puede eliminar",
+			"confirmUnlock": "Se quitará el bloqueo de eliminación de {email}. Una vez desbloqueado, esta cuenta y todo su correo podrán eliminarse. ¿Continuar?",
+			"failed": "No se pudo cambiar el bloqueo."
+		},
 		"create": {
 			"title": "Añadir una cuenta",
 			"roleLabel": "Tipo",

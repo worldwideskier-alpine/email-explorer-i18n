@@ -53,6 +53,7 @@ import {
 	GetAttachmentSweep,
 	GetMaintenance,
 	PostAccount,
+	PostAccountLock,
 	PostAccountPassword,
 	PostAttachmentPurge,
 	PostAttachmentRepair,
@@ -2334,6 +2335,7 @@ openapi.get("/api/v1/root/accounts", GetAccounts);
 openapi.get("/api/v1/root/maintenance", GetMaintenance);
 openapi.post("/api/v1/root/accounts", PostAccount);
 openapi.post("/api/v1/root/accounts/:userId/password", PostAccountPassword);
+openapi.post("/api/v1/root/accounts/:personId/lock", PostAccountLock);
 openapi.delete("/api/v1/root/accounts/:personId", DeleteAccount);
 openapi.get("/api/v1/root/attachments", GetAttachmentSweep);
 openapi.post("/api/v1/root/attachments/repair", PostAttachmentRepair);

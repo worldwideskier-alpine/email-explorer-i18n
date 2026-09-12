@@ -417,6 +417,12 @@
 		"thisIsYou": "Jūs",
 		"confirmDeleteAgain": "To nevar atsaukt. Vai tiešām dzēst visu, kas pieder {email}?",
 		"deleted": "{email} izdzēsts.",
+		"lock": {
+			"label": "Dzēšanas slēdzene",
+			"lockedHint": "Aizslēgts: nevar dzēst",
+			"confirmUnlock": "{email} dzēšanas slēdzene tiks noņemta. Pēc tam šo kontu un visu tā pastu varēs izdzēst. Turpināt?",
+			"failed": "Slēdzeni neizdevās mainīt."
+		},
 		"create": {
 			"title": "Pievienot kontu",
 			"roleLabel": "Veids",

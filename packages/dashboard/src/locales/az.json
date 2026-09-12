@@ -417,6 +417,12 @@
 		"thisIsYou": "Siz",
 		"confirmDeleteAgain": "Bunu geri qaytarmaq olmaz. {email} ilə bağlı hər şey doğrudan silinsin?",
 		"deleted": "{email} silindi.",
+		"lock": {
+			"label": "Silinmə kilidi",
+			"lockedHint": "Kilidli: silinə bilməz",
+			"confirmUnlock": "{email} üçün silinmə kilidi açılacaq. Açıldıqdan sonra bu hesab və bütün məktubları silinə bilər. Davam edilsin?",
+			"failed": "Kilid dəyişdirilə bilmədi."
+		},
 		"create": {
 			"title": "Hesab əlavə et",
 			"roleLabel": "Növ",

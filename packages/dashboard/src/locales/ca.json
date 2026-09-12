@@ -417,6 +417,12 @@
 		"thisIsYou": "Vós",
 		"confirmDeleteAgain": "Això no es pot desfer. Voleu suprimir realment tot el de {email}?",
 		"deleted": "S'ha suprimit {email}.",
+		"lock": {
+			"label": "Bloqueig de supressió",
+			"lockedHint": "Bloquejat: no es pot suprimir",
+			"confirmUnlock": "Se suprimirà el bloqueig de supressió de {email}. Un cop desbloquejat, aquest compte i tot el seu correu es podran suprimir. Voleu continuar?",
+			"failed": "No s'ha pogut canviar el bloqueig."
+		},
 		"create": {
 			"title": "Afegeix un compte",
 			"roleLabel": "Tipus",

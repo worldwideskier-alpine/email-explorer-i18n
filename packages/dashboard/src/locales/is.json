@@ -417,6 +417,12 @@
 		"thisIsYou": "Þú",
 		"confirmDeleteAgain": "Þessu verður ekki snúið við. Á virkilega að eyða öllu sem tilheyrir {email}?",
 		"deleted": "{email} eytt.",
+		"lock": {
+			"label": "Eyðingarlás",
+			"lockedHint": "Læst: ekki hægt að eyða",
+			"confirmUnlock": "Eyðingarlásinn á {email} verður fjarlægður. Eftir það er hægt að eyða þessum aðgangi og öllum pósti hans. Halda áfram?",
+			"failed": "Ekki tókst að breyta lásnum."
+		},
 		"create": {
 			"title": "Bæta við reikningi",
 			"roleLabel": "Tegund",

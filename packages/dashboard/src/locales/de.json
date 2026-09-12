@@ -417,6 +417,12 @@
 		"thisIsYou": "Sie",
 		"confirmDeleteAgain": "Das lässt sich nicht rückgängig machen. Wirklich alles von {email} löschen?",
 		"deleted": "{email} gelöscht.",
+		"lock": {
+			"label": "Löschsperre",
+			"lockedHint": "Gesperrt: Löschen nicht möglich",
+			"confirmUnlock": "Die Löschsperre für {email} wird aufgehoben. Danach können dieses Konto und die gesamte Post gelöscht werden. Fortfahren?",
+			"failed": "Die Sperre konnte nicht geändert werden."
+		},
 		"create": {
 			"title": "Konto hinzufügen",
 			"roleLabel": "Art",

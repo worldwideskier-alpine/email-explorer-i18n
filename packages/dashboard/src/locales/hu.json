@@ -417,6 +417,12 @@
 		"thisIsYou": "Ön",
 		"confirmDeleteAgain": "Ez nem vonható vissza. Tényleg töröljük {email} minden adatát?",
 		"deleted": "{email} törölve.",
+		"lock": {
+			"label": "Törlési zár",
+			"lockedHint": "Zárolva: nem törölhető",
+			"confirmUnlock": "A(z) {email} törlési zárja feloldásra kerül. Ezután ez a fiók és az összes levele törölhető lesz. Folytatja?",
+			"failed": "A zárat nem sikerült módosítani."
+		},
 		"create": {
 			"title": "Fiók hozzáadása",
 			"roleLabel": "Fajta",

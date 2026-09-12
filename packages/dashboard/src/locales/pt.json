@@ -417,6 +417,12 @@
 		"thisIsYou": "Você",
 		"confirmDeleteAgain": "Isto não se pode desfazer. Eliminar mesmo tudo o que pertence a {email}?",
 		"deleted": "{email} eliminado.",
+		"lock": {
+			"label": "Bloqueio de exclusão",
+			"lockedHint": "Bloqueado: não pode ser excluído",
+			"confirmUnlock": "O bloqueio de exclusão de {email} será removido. Depois disso, esta conta e todo o seu correio poderão ser excluídos. Continuar?",
+			"failed": "Não foi possível alterar o bloqueio."
+		},
 		"create": {
 			"title": "Adicionar uma conta",
 			"roleLabel": "Tipo",

@@ -417,6 +417,12 @@
 		"thisIsYou": "Vi",
 		"confirmDeleteAgain": "Tega ni mogoče razveljaviti. Res izbrišem vse, kar pripada {email}?",
 		"deleted": "{email} izbrisan.",
+		"lock": {
+			"label": "Zaklep brisanja",
+			"lockedHint": "Zaklenjeno: ni mogoče izbrisati",
+			"confirmUnlock": "Zaklep brisanja za {email} bo odstranjen. Nato je mogoče izbrisati ta račun in vso njegovo pošto. Nadaljujem?",
+			"failed": "Zaklepa ni bilo mogoče spremeniti."
+		},
 		"create": {
 			"title": "Dodaj račun",
 			"roleLabel": "Vrsta",

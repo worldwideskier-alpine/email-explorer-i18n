@@ -417,6 +417,12 @@
 		"thisIsYou": "Vi",
 		"confirmDeleteAgain": "Ovo se ne može poništiti. Zaista obrisati sve što pripada {email}?",
 		"deleted": "{email} je obrisan.",
+		"lock": {
+			"label": "Zaključavanje brisanja",
+			"lockedHint": "Zaključano: brisanje nije moguće",
+			"confirmUnlock": "Zaključavanje brisanja za {email} bit će uklonjeno. Nakon toga ovaj račun i sva njegova pošta mogu se obrisati. Nastaviti?",
+			"failed": "Zaključavanje nije moguće promijeniti."
+		},
 		"create": {
 			"title": "Dodaj račun",
 			"roleLabel": "Vrsta",

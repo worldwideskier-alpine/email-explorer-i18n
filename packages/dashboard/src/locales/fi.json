@@ -417,6 +417,12 @@
 		"thisIsYou": "Sinä",
 		"confirmDeleteAgain": "Tätä ei voi perua. Poistetaanko todella kaikki, mikä kuuluu tilille {email}?",
 		"deleted": "{email} poistettu.",
+		"lock": {
+			"label": "Poistolukko",
+			"lockedHint": "Lukittu: ei voi poistaa",
+			"confirmUnlock": "Kohteen {email} poistolukko avataan. Sen jälkeen tämä tili ja kaikki sen posti voidaan poistaa. Jatketaanko?",
+			"failed": "Lukkoa ei voitu muuttaa."
+		},
 		"create": {
 			"title": "Lisää tili",
 			"roleLabel": "Laji",
