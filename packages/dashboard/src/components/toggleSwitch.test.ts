@@ -113,6 +113,41 @@ describe("a switch", () => {
 		// A button inside a form would submit it.
 		expect(button.getAttribute("type")).toBe("button");
 	});
+
+	/**
+	 * The other way to name it, and the better one where there are visible
+	 * words: a `<label for>` names the control *and* clicks it, which an
+	 * `aria-label` does neither of. The first attempt at making the words
+	 * clickable again used `@click` on a bare `<span>`, which served a
+	 * pointer and nobody else.
+	 */
+	it("can be named and operated by a label outside it", async () => {
+		const on = ref(true);
+		const clicks = ref(0);
+		createApp({
+			setup: () => () => [
+				h("label", { for: "the-switch" }, "Deletion lock"),
+				h(ToggleSwitch, {
+					id: "the-switch",
+					on: on.value,
+					onToggle: () => {
+						clicks.value += 1;
+					},
+				}),
+			],
+		}).mount(host);
+		await nextTick();
+
+		const button = host.querySelector("button") as HTMLButtonElement;
+		const label = host.querySelector("label") as HTMLLabelElement;
+		expect(label.control).toBe(button);
+		expect(button.labels?.[0]).toBe(label);
+
+		// One press on the words, one toggle -- not two.
+		label.click();
+		await nextTick();
+		expect(clicks.value).toBe(1);
+	});
 });
 
 describe("no screen binds a checkbox to state it does not own", () => {

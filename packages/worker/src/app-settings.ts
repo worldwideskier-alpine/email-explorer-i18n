@@ -266,8 +266,10 @@ export async function setPersonDeletionLock(
 /**
  * Drops a deleted person's entry, so the map holds only people who exist.
  *
- * Also throws rather than guessing, for the same reason -- and because
- * "nothing to remove" and "could not look" must not both come back as done.
+ * Throws rather than guessing, like the setter: "nothing to remove" and
+ * "could not look" must not both come back as done, and a write on a guessed
+ * `{}` would drop everybody else. Callers that run after the deletion has
+ * already happened want the quiet one below instead.
  */
 export async function forgetPersonDeletionLock(
 	env: Pick<Env, "BUCKET">,
@@ -277,4 +279,32 @@ export async function forgetPersonDeletionLock(
 	if (!(personId in locks)) return;
 	delete locks[personId];
 	await env.BUCKET.put(LOCKS_KEY, JSON.stringify(locks));
+}
+
+/**
+ * The same, for the one place that must not fail: after the person is gone.
+ *
+ * By the time the account deletion reaches this, the logins, the mailboxes,
+ * the mail, the archives and the sending key have all gone and none of it
+ * comes back. Letting a hiccup here throw would answer "could not delete" to
+ * a deletion that succeeded completely, and the obvious retry then says 404 --
+ * leaving root with two contradictory answers and no way to tell which
+ * happened. That is a worse thing to be wrong about than a leftover entry.
+ *
+ * And the leftover costs nothing: it is keyed by a person id that will never
+ * be issued again, and the map is only ever read for people who exist. It is
+ * untidiness, not a fact anybody acts on. Logged rather than swallowed, so it
+ * is visible in the Worker's own logs if it ever happens.
+ */
+export async function forgetPersonDeletionLockQuietly(
+	env: Pick<Env, "BUCKET">,
+	personId: string,
+): Promise<void> {
+	try {
+		await forgetPersonDeletionLock(env, personId);
+	} catch (error) {
+		console.error(
+			`could not drop the deletion lock entry for a deleted person: ${error}`,
+		);
+	}
 }

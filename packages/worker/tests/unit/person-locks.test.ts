@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
 	forgetPersonDeletionLock,
+	forgetPersonDeletionLockQuietly,
 	isPersonDeletionLocked,
 	readPersonDeletionLocks,
 	setPersonDeletionLock,
@@ -127,6 +128,28 @@ describe("a write on top of a read that did not work", () => {
 				somebody: false,
 			});
 		}
+	});
+
+	/**
+	 * Except in the one place that runs after the person is already gone.
+	 *
+	 * Throwing there answers "could not delete" to a deletion that took the
+	 * logins, the mailboxes, the mail, the archives and the sending key and
+	 * finished. The retry then says 404, and root has two answers with no way
+	 * to tell which happened. A leftover entry keyed by an id that will never
+	 * be issued again is the cheaper of the two by a long way.
+	 */
+	it("is forgiven when the person has already been deleted", async () => {
+		const { env, put } = bucketThatFailsToRead();
+		const complaint = vi.spyOn(console, "error").mockImplementation(() => {});
+
+		await expect(
+			forgetPersonDeletionLockQuietly(env, "somebody"),
+		).resolves.toBeUndefined();
+		expect(put).not.toHaveBeenCalled();
+		// Forgiven is not the same as unnoticed.
+		expect(complaint).toHaveBeenCalledOnce();
+		complaint.mockRestore();
 	});
 
 	it("keeps everyone else's entry when the read does work", async () => {

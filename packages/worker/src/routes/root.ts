@@ -18,7 +18,7 @@ import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
 import {
-	forgetPersonDeletionLock,
+	forgetPersonDeletionLockQuietly,
 	isPersonDeletionLocked,
 	personSettingsKey,
 	readPersonDeletionLock,
@@ -569,7 +569,11 @@ export class DeleteAccount extends OpenAPIRoute {
 		// owns that can still send mail.
 		await c.env.BUCKET.delete(personSettingsKey(personId));
 		// And their entry in the lock map, so it holds only people who exist.
-		await forgetPersonDeletionLock(c.env, personId);
+		// Quietly: everything above is already gone and none of it comes back,
+		// so a hiccup in the bookkeeping must not answer "could not delete" to
+		// a deletion that worked -- the retry would then say 404 and root
+		// would have two answers and no way to tell which one happened.
+		await forgetPersonDeletionLockQuietly(c.env, personId);
 
 		return c.json({
 			status: "deleted",
