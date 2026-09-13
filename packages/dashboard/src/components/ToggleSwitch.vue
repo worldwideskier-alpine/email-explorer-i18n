@@ -2,6 +2,7 @@
   <button
     type="button"
     role="switch"
+    :id="id"
     :aria-checked="on"
     :aria-label="label"
     :disabled="disabled"
@@ -52,8 +53,16 @@ defineProps<{
 	/** Drawn from this, always. Not copied into any state of its own. */
 	on: boolean;
 	disabled?: boolean;
-	/** Accessible name; the visible text sits outside this component. */
+	/**
+	 * Accessible name, for a caller whose visible text is not a `<label>` --
+	 * a heading, say. Where there *is* one, give it `id` instead and point the
+	 * label's `for` at it: the words then name the switch and click it, which
+	 * an `aria-label` does neither of, and a keyboard reaches one control
+	 * rather than two.
+	 */
 	label?: string;
+	/** For a `<label for>` outside to attach itself to. */
+	id?: string;
 }>();
 
 const emit = defineEmits<{ toggle: [] }>();

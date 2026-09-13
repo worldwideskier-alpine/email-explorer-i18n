@@ -150,20 +150,20 @@
               <div class="flex flex-wrap items-center gap-3">
                 <template v-if="person.role !== 'root'">
                   <div class="flex items-center gap-2">
-                    <!-- Clickable as well as the switch, which is what the
-                         `<label>` here used to give and a plain `<div>` took
-                         away: the words are the larger target of the two, and
-                         on a phone they are the one a thumb finds. The switch
-                         is a sibling, so a press on it does not arrive here
-                         twice. -->
-                    <span
-                      @click="busy || toggleLock(person)"
+                    <!-- A real `<label for>`, which is what was here before
+                         the switch became a button and what a `@click` on a
+                         span is not: the words name the control to a screen
+                         reader, and the browser forwards a press on them to
+                         it. The words are the larger target of the two, and
+                         on a phone they are the one a thumb finds. -->
+                    <label
+                      :for="`lock-${person.personId}`"
                       class="text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none"
-                    >{{ t("root.lock.label") }}</span>
+                    >{{ t("root.lock.label") }}</label>
                     <ToggleSwitch
+                      :id="`lock-${person.personId}`"
                       :on="person.deletionLocked"
                       :disabled="busy"
-                      :label="t('root.lock.label')"
                       @toggle="toggleLock(person)"
                     />
                   </div>

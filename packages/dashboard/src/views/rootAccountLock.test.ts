@@ -81,16 +81,27 @@ describe("the lock itself", () => {
 		expect(source).not.toMatch(/<input[^>]*:checked=/);
 	});
 
-	it("is reached by its words as well as by the switch", () => {
-		// A `<label>` used to give this for nothing, and replacing the
-		// checkbox with a button took it away: the 44x24 track became the only
-		// target, and the words beside it -- the bigger one, and the one a
-		// thumb finds -- did nothing.
-		const label = source.indexOf('t("root.lock.label")');
-		expect(label).toBeGreaterThan(-1);
-		const around = source.slice(Math.max(0, label - 400), label);
-		expect(around).toContain("toggleLock(person)");
+	it("is named and reached by its words, through a real label", () => {
+		// Replacing the checkbox with a button took the `<label>` away: the
+		// 44x24 track became the only target, and the words beside it -- the
+		// bigger one, and the one a thumb finds -- did nothing. A `@click` on
+		// a span put that back for a pointer and for nobody else; `for` names
+		// the switch as well as pressing it.
+		const at = source.indexOf('t("root.lock.label")');
+		expect(at).toBeGreaterThan(-1);
+		const around = source.slice(Math.max(0, at - 400), at);
+		expect(around).toMatch(/<label\s+:for="`lock-\$\{person\.personId\}`"/);
 		expect(around).toContain("cursor-pointer");
+		// The id the label points at has to be the one the switch carries.
+		// Matched as a pattern rather than a string, so the interpolation in
+		// the markup is not an interpolation in this file.
+		expect(source).toMatch(/:id="`lock-\$\{person\.personId\}`"/);
+		// And not two names for one control: `for` beats aria-label anyway,
+		// and the pair disagreeing is how "label in name" gets broken.
+		const switchTag = source.slice(source.indexOf("<ToggleSwitch"));
+		expect(switchTag.slice(0, switchTag.indexOf("/>"))).not.toContain(
+			":label=",
+		);
 	});
 
 	it("reads a row with no flag on it as locked", () => {
