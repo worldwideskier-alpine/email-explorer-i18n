@@ -37,6 +37,17 @@ function personKey(personId: string): string {
 	return `settings/person/${encodeURIComponent(personId)}.json`;
 }
 
+/**
+ * A person's own settings. One field so far.
+ *
+ * An object written between the day deletion locks arrived and the day they
+ * moved out of here also carries a `deletionLocked`, which nothing reads: it
+ * is not declared, and the read-modify-write below carries it along
+ * untouched. Left alone on purpose -- deleting it would be a migration run
+ * for a field that decides nothing, and the locks themselves reverted to
+ * "locked" when they moved, which is the safe direction. Do not resurrect
+ * the name here; the locks live in LOCKS_KEY.
+ */
 interface AppSettings {
 	resendApiKey?: string;
 }
@@ -176,20 +187,46 @@ export function isPersonDeletionLocked(
 }
 
 /**
+ * The map as it stands, or a throw. What a *writer* has to use.
+ *
+ * A writer that cannot see the map must not write one. The forgiving read
+ * below turns any failure into `{}`, and a read-modify-write on top of that
+ * would put back an object holding one person and nothing else -- every other
+ * unlock silently discarded, and the route answering 200 as if it had worked.
+ * That is the same shape of loss this storage was split out to prevent, so
+ * the failure is allowed through here and the write does not happen.
+ *
+ * Two cases are not failures. No object at all is the first write. An object
+ * that will not parse holds nothing that could be preserved, so overwriting
+ * it loses nothing -- and refusing would leave root unable to move any lock
+ * until somebody edited R2 by hand.
+ */
+async function readLocksToWrite(
+	env: Pick<Env, "BUCKET">,
+): Promise<PersonLocks> {
+	const obj = await env.BUCKET.get(LOCKS_KEY);
+	if (!obj) return {};
+	try {
+		return (await obj.json<PersonLocks>()) ?? {};
+	} catch {
+		return {};
+	}
+}
+
+/**
  * Every lock, in one read.
  *
  * A read that fails gives an empty map, which reads as "everyone locked".
  * That is the safe direction and it keeps one bad read off the account list:
  * letting it throw made a transient R2 failure into a screen that says the
- * accounts cannot be read at all.
+ * accounts cannot be read at all. Only the reading side may be this
+ * forgiving; see readLocksToWrite.
  */
 export async function readPersonDeletionLocks(
 	env: Pick<Env, "BUCKET">,
 ): Promise<PersonLocks> {
 	try {
-		const obj = await env.BUCKET.get(LOCKS_KEY);
-		if (!obj) return {};
-		return (await obj.json<PersonLocks>()) ?? {};
+		return await readLocksToWrite(env);
 	} catch {
 		return {};
 	}
@@ -211,23 +248,32 @@ export async function readPersonDeletionLock(
  * button disabled until the round trip returns, and the loser of such a race
  * is a flag that the reload immediately shows as it really is. What was not
  * acceptable was the same race costing somebody their sending key.
+ *
+ * A read that fails takes the write with it rather than writing a map with
+ * one person in it. Root sees "the lock could not be changed", which is what
+ * happened, and nothing is lost.
  */
 export async function setPersonDeletionLock(
 	env: Pick<Env, "BUCKET">,
 	personId: string,
 	locked: boolean,
 ): Promise<void> {
-	const locks = await readPersonDeletionLocks(env);
+	const locks = await readLocksToWrite(env);
 	locks[personId] = locked;
 	await env.BUCKET.put(LOCKS_KEY, JSON.stringify(locks));
 }
 
-/** Drops a deleted person's entry, so the map holds only people who exist. */
+/**
+ * Drops a deleted person's entry, so the map holds only people who exist.
+ *
+ * Also throws rather than guessing, for the same reason -- and because
+ * "nothing to remove" and "could not look" must not both come back as done.
+ */
 export async function forgetPersonDeletionLock(
 	env: Pick<Env, "BUCKET">,
 	personId: string,
 ): Promise<void> {
-	const locks = await readPersonDeletionLocks(env);
+	const locks = await readLocksToWrite(env);
 	if (!(personId in locks)) return;
 	delete locks[personId];
 	await env.BUCKET.put(LOCKS_KEY, JSON.stringify(locks));
