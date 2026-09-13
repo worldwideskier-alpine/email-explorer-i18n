@@ -115,11 +115,18 @@ describe("a switch", () => {
 	});
 
 	/**
-	 * The other way to name it, and the better one where there are visible
-	 * words: a `<label for>` names the control *and* clicks it, which an
-	 * `aria-label` does neither of. The first attempt at making the words
-	 * clickable again used `@click` on a bare `<span>`, which served a
-	 * pointer and nobody else.
+	 * And the other half of naming it: a `<label for>` outside, which is what
+	 * makes the visible words clickable. The first attempt at restoring that
+	 * used `@click` on a bare `<span>`, which served a pointer and nobody
+	 * else.
+	 *
+	 * Both are given, not one. Measured in Chromium over the accessibility
+	 * tree: a label alone does name the switch (`relatedElement`), but
+	 * HTML-AAM does not require an engine to do that for a `<button>`
+	 * (w3c/html-aam#357), and `role="switch"` takes no name from content. With
+	 * both, `aria-label` is the one taken (`attribute`) -- so they are a
+	 * fallback rather than a duplicate, and dropping the `aria-label` on the
+	 * belief that the label outranks it had the precedence backwards.
 	 */
 	it("can be named and operated by a label outside it", async () => {
 		const on = ref(true);
@@ -129,6 +136,7 @@ describe("a switch", () => {
 				h("label", { for: "the-switch" }, "Deletion lock"),
 				h(ToggleSwitch, {
 					id: "the-switch",
+					label: "Deletion lock",
 					on: on.value,
 					onToggle: () => {
 						clicks.value += 1;
@@ -142,6 +150,8 @@ describe("a switch", () => {
 		const label = host.querySelector("label") as HTMLLabelElement;
 		expect(label.control).toBe(button);
 		expect(button.labels?.[0]).toBe(label);
+		// The name is there outright as well, and says the same words.
+		expect(button.getAttribute("aria-label")).toBe(label.textContent);
 
 		// One press on the words, one toggle -- not two.
 		label.click();

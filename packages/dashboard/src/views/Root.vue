@@ -164,6 +164,7 @@
                       :id="`lock-${person.personId}`"
                       :on="person.deletionLocked"
                       :disabled="busy"
+                      :label="t('root.lock.label')"
                       @toggle="toggleLock(person)"
                     />
                   </div>
