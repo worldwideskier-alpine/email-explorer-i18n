@@ -150,7 +150,16 @@
               <div class="flex flex-wrap items-center gap-3">
                 <template v-if="person.role !== 'root'">
                   <div class="flex items-center gap-2">
-                    <span class="text-xs text-gray-600 dark:text-gray-400">{{ t("root.lock.label") }}</span>
+                    <!-- Clickable as well as the switch, which is what the
+                         `<label>` here used to give and a plain `<div>` took
+                         away: the words are the larger target of the two, and
+                         on a phone they are the one a thumb finds. The switch
+                         is a sibling, so a press on it does not arrive here
+                         twice. -->
+                    <span
+                      @click="busy || toggleLock(person)"
+                      class="text-xs text-gray-600 dark:text-gray-400 cursor-pointer select-none"
+                    >{{ t("root.lock.label") }}</span>
                     <ToggleSwitch
                       :on="person.deletionLocked"
                       :disabled="busy"

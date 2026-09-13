@@ -126,14 +126,21 @@ fork's work. This fork ships by being forked.
   The person locks live in one object of their own (`settings/person-locks.json`),
   not beside anybody's Resend key: R2 has no read-modify-write that excludes
   another writer, so sharing an object would have let a lock being moved
-  clobber a key being saved.
-- **Switches.** `ToggleSwitch.vue`, everywhere, and never `<input
-  type=checkbox :checked="…">`. The browser owns a checkbox's `checked` and
-  flips it before any handler runs, while Vue writes a DOM property back only
-  when the *bound* value changed -- so dismissing a confirmation left the
-  switch showing the click rather than the data. `toggleSwitch.test.ts` mounts
-  it for real, because the fault was invisible in the source and a source-text
-  assertion about it passed while a screen was wrong.
+  clobber a key being saved. Reads of that map swallow failure and answer
+  "everyone locked" (safe, and it keeps one bad read off the account list);
+  **writes must not** -- a read-modify-write on a swallowed `{}` puts back a
+  map holding one person and answers 200, which is the same loss with a
+  cheerful face. `readLocksToWrite` throws; the forgiving read wraps it.
+- **Switches.** Never `<input type=checkbox :checked="…">`: the browser owns a
+  checkbox's `checked` and flips it before any handler runs, while Vue writes
+  a DOM property back only when the *bound* value changed -- so dismissing a
+  confirmation left the switch showing the click rather than the data. Use
+  `ToggleSwitch.vue`, which is a `role="switch"` button with no state of its
+  own. `v-model` switches are *not* affected and several remain: that
+  directive writes `el.checked` from the model on every update. Both halves
+  measured rather than reasoned about; `toggleSwitch.test.ts` mounts for real,
+  because the fault was invisible in the source and a source-text assertion
+  about it passed while a screen was wrong.
 - **Mailbox ownership.** A grant says who a mailbox belongs to, and it is the
   only thing that grants access: the middleware in `fetch()` and every
   mailbox-scoped route ask `personHoldsMailbox`, and the mailbox list filters

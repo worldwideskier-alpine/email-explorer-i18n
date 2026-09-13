@@ -81,6 +81,18 @@ describe("the lock itself", () => {
 		expect(source).not.toMatch(/<input[^>]*:checked=/);
 	});
 
+	it("is reached by its words as well as by the switch", () => {
+		// A `<label>` used to give this for nothing, and replacing the
+		// checkbox with a button took it away: the 44x24 track became the only
+		// target, and the words beside it -- the bigger one, and the one a
+		// thumb finds -- did nothing.
+		const label = source.indexOf('t("root.lock.label")');
+		expect(label).toBeGreaterThan(-1);
+		const around = source.slice(Math.max(0, label - 400), label);
+		expect(around).toContain("toggleLock(person)");
+		expect(around).toContain("cursor-pointer");
+	});
+
 	it("reads a row with no flag on it as locked", () => {
 		// A deployment that predates the lock has no flag stored, and the
 		// dashboard may briefly be newer than the Worker mid-deploy. Either

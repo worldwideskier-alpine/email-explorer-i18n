@@ -115,29 +115,36 @@ describe("a switch", () => {
 	});
 });
 
-describe("every switch on the site", () => {
+describe("no screen binds a checkbox to state it does not own", () => {
 	/**
-	 * Held here because the fault was not in this component -- it was in the
-	 * three screens that each drew their own. One of them is enough to bring
-	 * it back.
+	 * The fault was not in this component -- it was in the screens that each
+	 * drew their own switch, and one of them is enough to bring it back. So
+	 * the sweep is over every `.vue` file there is, not the two directories
+	 * that happened to hold the three.
+	 *
+	 * What it looks for is `:checked` bound to something outside the element.
+	 * `v-model` is deliberately not included: it writes `el.checked` from the
+	 * model on every update rather than only when the bound value changed, so
+	 * putting the model back does put the box back. Measured, not assumed --
+	 * the earlier version of this test claimed more than it checked, and
+	 * widening the claim to cover `v-model` would be the same mistake with a
+	 * bigger net.
 	 */
-	it("is this component, and not a bound checkbox", () => {
-		const sources = {
-			...(import.meta.glob("../views/*.vue", {
-				query: "?raw",
-				import: "default",
-				eager: true,
-			}) as Record<string, string>),
-			...(import.meta.glob("./*.vue", {
-				query: "?raw",
-				import: "default",
-				eager: true,
-			}) as Record<string, string>),
-		};
+	it("anywhere under src", () => {
+		const sources = import.meta.glob("../**/*.vue", {
+			query: "?raw",
+			import: "default",
+			eager: true,
+		}) as Record<string, string>;
+
+		// The sweep is worthless if the glob has stopped matching anything.
+		expect(Object.keys(sources).length).toBeGreaterThan(10);
+		expect(Object.keys(sources)).toContain("../App.vue");
+		expect(Object.keys(sources)).toContain("../views/Settings.vue");
 
 		const offenders = Object.entries(sources)
 			// This file's own comment quotes the shape it replaced.
-			.filter(([path]) => path !== "./ToggleSwitch.vue")
+			.filter(([path]) => !path.endsWith("/ToggleSwitch.vue"))
 			.filter(([, source]) => /<input[^>]*:checked=/.test(source))
 			.map(([path]) => path);
 		expect(offenders).toEqual([]);

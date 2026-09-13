@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+	forgetPersonDeletionLock,
 	isPersonDeletionLocked,
 	readPersonDeletionLocks,
+	setPersonDeletionLock,
 } from "../../src/app-settings";
 
 /**
@@ -62,5 +64,88 @@ describe("a read that does not work", () => {
 			bucketThat(() => Promise.resolve(null)),
 		);
 		expect(locks).toEqual({});
+	});
+});
+
+/**
+ * The other half, and the one that bites: writing on top of a read that
+ * failed. The forgiving read answers `{}`, and a read-modify-write on `{}`
+ * puts back a map holding the one person being changed -- every other
+ * unlock discarded, and the route answering 200 as though it had worked.
+ *
+ * Nobody becomes deletable that way (an unlock needs an explicit `false`, and
+ * what is lost is exactly those), so it is lost work rather than lost
+ * protection. It is still root's decisions thrown away silently, and the
+ * split into its own object was made to stop precisely this shape of loss.
+ */
+describe("a write on top of a read that did not work", () => {
+	const bucketThatFailsToRead = () => {
+		const put = vi.fn(() => Promise.resolve());
+		return {
+			env: {
+				BUCKET: {
+					get: () => Promise.reject(new Error("R2 said no")),
+					put,
+				},
+			} as unknown as Parameters<typeof setPersonDeletionLock>[0],
+			put,
+		};
+	};
+
+	it("does not happen at all", async () => {
+		const { env, put } = bucketThatFailsToRead();
+		await expect(
+			setPersonDeletionLock(env, "somebody", false),
+		).rejects.toThrow();
+		expect(put).not.toHaveBeenCalled();
+	});
+
+	it("does not happen when forgetting a person either", async () => {
+		const { env, put } = bucketThatFailsToRead();
+		await expect(forgetPersonDeletionLock(env, "somebody")).rejects.toThrow();
+		expect(put).not.toHaveBeenCalled();
+	});
+
+	/**
+	 * The two cases that are not failures: nothing stored yet is the first
+	 * write, and an object that will not parse holds nothing worth keeping --
+	 * refusing there would leave root unable to move any lock until somebody
+	 * edited the bucket by hand.
+	 */
+	it("still writes when there is nothing stored, or nothing readable", async () => {
+		for (const get of [
+			() => Promise.resolve(null),
+			() => Promise.resolve({ json: () => Promise.reject(new Error("bad")) }),
+		]) {
+			const put = vi.fn(() => Promise.resolve());
+			const env = { BUCKET: { get, put } } as unknown as Parameters<
+				typeof setPersonDeletionLock
+			>[0];
+			await setPersonDeletionLock(env, "somebody", false);
+			expect(put).toHaveBeenCalledOnce();
+			expect(JSON.parse(put.mock.calls[0][1] as unknown as string)).toEqual({
+				somebody: false,
+			});
+		}
+	});
+
+	it("keeps everyone else's entry when the read does work", async () => {
+		const put = vi.fn(() => Promise.resolve());
+		const env = {
+			BUCKET: {
+				get: () =>
+					Promise.resolve({
+						json: () => Promise.resolve({ other: false, third: true }),
+					}),
+				put,
+			},
+		} as unknown as Parameters<typeof setPersonDeletionLock>[0];
+
+		await setPersonDeletionLock(env, "somebody", false);
+		expect(JSON.parse(put.mock.calls[0][1] as unknown as string)).toEqual({
+			other: false,
+			third: true,
+			somebody: false,
+		});
 	});
 });
