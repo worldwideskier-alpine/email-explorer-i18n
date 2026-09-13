@@ -54,14 +54,30 @@ defineProps<{
 	on: boolean;
 	disabled?: boolean;
 	/**
-	 * Accessible name, for a caller whose visible text is not a `<label>` --
-	 * a heading, say. Where there *is* one, give it `id` instead and point the
-	 * label's `for` at it: the words then name the switch and click it, which
-	 * an `aria-label` does neither of, and a keyboard reaches one control
-	 * rather than two.
+	 * The accessible name. Always give one, even where there are visible
+	 * words in a `<label for>` pointed at `id`: give both.
+	 *
+	 * They do not fight. Measured in Chromium over the accessibility tree:
+	 * with a `<label for>` alone the name comes from it (`relatedElement`);
+	 * with both, `aria-label` is taken (`attribute`) and the label is
+	 * superseded. So the pair is a fallback, not a conflict -- as long as the
+	 * two read the same words, which here they do because both come from one
+	 * translation key.
+	 *
+	 * Why bother with the fallback: naming a `<button>` from a `<label>` is
+	 * not something HTML-AAM defines (w3c/html-aam#357), and `role="switch"`
+	 * takes no name from its own content -- there is none here anyway. Where
+	 * an engine does not apply it, a switch with only a label announces with
+	 * no name at all, identically on every row. This was briefly dropped on
+	 * the reasoning that `for` outranks `aria-label`; the measurement above
+	 * says the opposite, and it was put back.
 	 */
 	label?: string;
-	/** For a `<label for>` outside to attach itself to. */
+	/**
+	 * For a `<label for>` outside to attach itself to -- which is what makes
+	 * the visible words clickable, and the larger of the two targets on a
+	 * phone. Naming is `label`'s job; this is the pointer's.
+	 */
 	id?: string;
 }>();
 

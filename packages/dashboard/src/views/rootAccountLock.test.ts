@@ -96,11 +96,21 @@ describe("the lock itself", () => {
 		// Matched as a pattern rather than a string, so the interpolation in
 		// the markup is not an interpolation in this file.
 		expect(source).toMatch(/:id="`lock-\$\{person\.personId\}`"/);
-		// And not two names for one control: `for` beats aria-label anyway,
-		// and the pair disagreeing is how "label in name" gets broken.
+
+		// And the name is still given outright. This was dropped once, on the
+		// reasoning that the `<label>` outranks `aria-label` and the pair
+		// would be a duplicate; measured in Chromium, it is the other way
+		// round -- `aria-label` is taken and the label superseded -- so the
+		// pair is a fallback for engines that do not name a button from a
+		// label at all, which HTML-AAM does not require them to.
 		const switchTag = source.slice(source.indexOf("<ToggleSwitch"));
-		expect(switchTag.slice(0, switchTag.indexOf("/>"))).not.toContain(
-			":label=",
+		expect(switchTag.slice(0, switchTag.indexOf("/>"))).toContain(
+			`:label="t('root.lock.label')"`,
+		);
+		// One key behind both, so the spoken name and the visible words are
+		// the same words however an engine picks between them.
+		expect(source).toMatch(
+			/<label[^>]*>\{\{ t\("root\.lock\.label"\) \}\}<\/label>/,
 		);
 	});
 
