@@ -75,8 +75,13 @@ const fullHtml = computed(
  *
  * `allow-popups` is what lets a link in a message open one at all; without it
  * a link with nowhere else to go navigates the frame, and the message is
- * replaced by whatever the destination does -- which, for anything that sends
- * `X-Frame-Options`, is a browser error page where the mail used to be.
+ * replaced by a browser error page. Two separate things produce that page and
+ * the first one is ours: this application's own `Content-Security-Policy` says
+ * `frame-src 'self' blob:`, and a `srcdoc` frame inherits it, so Chromium
+ * refuses the navigation outright ("Refused to frame ... because it violates
+ * ... frame-src") whatever the destination is. `X-Frame-Options` from the
+ * destination does the same thing a moment later. Measured both ways against
+ * the real policy; the CSP is what makes it every link rather than most.
  *
  * `allow-popups-to-escape-sandbox` is what makes the tab it opens a *normal*
  * one. Measured in Chromium: without the flag the opened page inherits this
@@ -99,7 +104,16 @@ const onLoad = () => {
 		return;
 	}
 
-	linkifyPlainUrls(doc);
+	// Order matters, and so does the guard. The sweep is what stands between a
+	// link and the message disappearing, and it used to run only if the pass
+	// before it returned -- so any fault in linkifying, on any engine, took
+	// the protection with it silently. Linkifying is a convenience; this is
+	// not, so it runs either way.
+	try {
+		linkifyPlainUrls(doc);
+	} catch (error) {
+		console.error(`could not linkify the bare URLs in a message: ${error}`);
+	}
 	sendLinksToANewTab(doc);
 };
 </script>

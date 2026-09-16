@@ -6,6 +6,7 @@ import {
 	assetMismatch,
 	assetsReferencedBy,
 	builtAssets,
+	staleServedPage,
 } from "../../scripts/deployment-check.mjs";
 
 /**
@@ -123,5 +124,41 @@ describe("whether an answer came from the Worker", () => {
 	it("does not count the Worker falling over", () => {
 		expect(answeredByTheWorker(500, "application/json")).toBe(false);
 		expect(answeredByTheWorker(200, null)).toBe(false);
+	});
+});
+
+describe("whether a browser will come back for the page", () => {
+	/**
+	 * The page is the only place the new asset names are written, so a
+	 * browser holding an old copy is a browser on an old build however
+	 * thoroughly the deploy succeeded.
+	 */
+	it('accepts the ways of saying "ask again"', () => {
+		expect(staleServedPage("no-cache")).toBeNull();
+		expect(staleServedPage("public, max-age=0, must-revalidate")).toBeNull();
+		expect(staleServedPage("no-store")).toBeNull();
+		// Whatever case and spacing the edge chooses to send it in.
+		expect(staleServedPage("Public,  Max-Age=0,  Must-Revalidate")).toBeNull();
+	});
+
+	/**
+	 * `must-revalidate` is about what to do once the copy is stale, not about
+	 * when it becomes stale. Ten minutes of max-age is ten minutes in which a
+	 * deployed fix does not exist for that browser, revalidation or not -- and
+	 * this is the shape a well-meant "let's cache the page a bit" would take.
+	 */
+	it("is not talked round by must-revalidate on a long max-age", () => {
+		const message = staleServedPage("public, max-age=600, must-revalidate");
+		expect(message).toContain("without asking");
+		expect(staleServedPage("max-age=31536000, immutable")).toContain(
+			"without asking",
+		);
+	});
+
+	it("counts no header at all as the worst case", () => {
+		// With nothing said, a cache is free to invent a lifetime.
+		expect(staleServedPage("")).toContain("no Cache-Control");
+		expect(staleServedPage(null)).toContain("no Cache-Control");
+		expect(staleServedPage(undefined)).toContain("no Cache-Control");
 	});
 });

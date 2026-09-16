@@ -64,9 +64,20 @@ describe("the frame that shows a message body", () => {
 	 * DOM and every image is fetched anyway. It was removed rather than left in
 	 * place looking like protection, and this says so, so that nobody puts it
 	 * back and trusts the stripping less because of it.
+	 *
+	 * Asked of the markup rather than of the file. It was the whole file, and
+	 * that turned out to forbid *writing down* what the policy does -- the
+	 * comment explaining that the page's own CSP is what blocks a link from
+	 * navigating the frame tripped it. A rule against a `<meta>` element
+	 * should not be a rule against naming the thing.
 	 */
 	it("does not pretend a frame policy is holding anything up", () => {
-		expect(iframe).not.toContain("Content-Security-Policy");
+		expect(iframe).not.toMatch(/http-equiv/i);
+		const srcdoc = /const fullHtml = computed\(([\s\S]*?)\n\);/.exec(
+			iframe,
+		)?.[1];
+		expect(srcdoc).toBeTruthy();
+		expect(srcdoc).not.toContain("Content-Security-Policy");
 	});
 
 	/**
@@ -115,6 +126,27 @@ describe("the frame that shows a message body", () => {
 		expect(onLoad).toContain("sendLinksToANewTab(doc)");
 		expect(iframe).not.toContain("window.open");
 		expect(iframe).not.toContain('addEventListener("click"');
+	});
+
+	/**
+	 * And it runs whatever else does not. Linkifying bare URLs is a
+	 * convenience; the sweep is the only thing standing between a link and the
+	 * message being replaced by an error page, so it must not sit downstream
+	 * of a pass that could throw. One bad regular expression on one engine
+	 * would otherwise take the protection away silently, on that engine only.
+	 */
+	it("does not put the sweep behind anything that can throw", () => {
+		const onLoad = /const onLoad = \(\) => \{([\s\S]*?)\n\};/.exec(
+			iframe,
+		)?.[1] as string;
+		const guarded = /\btry \{([\s\S]*?)\} catch/.exec(onLoad)?.[1];
+		expect(guarded).toBeTruthy();
+		expect(guarded).toContain("linkifyPlainUrls(doc)");
+		expect(guarded).not.toContain("sendLinksToANewTab");
+		// After the guard, not inside it.
+		expect(onLoad.indexOf("sendLinksToANewTab")).toBeGreaterThan(
+			onLoad.indexOf("} catch"),
+		);
 	});
 
 	// Both only under the flag: an ordinary message still shows its pictures.

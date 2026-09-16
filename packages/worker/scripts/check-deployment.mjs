@@ -19,6 +19,7 @@ import {
 	answeredByTheWorker,
 	assetMismatch,
 	builtAssets,
+	staleServedPage,
 } from "./deployment-check.mjs";
 
 const ASSETS = fileURLToPath(new URL("../dashboard/assets", import.meta.url));
@@ -50,6 +51,7 @@ async function inspect() {
 		return {
 			status: response.status,
 			type: response.headers.get("content-type") ?? "",
+			cacheControl: response.headers.get("cache-control") ?? "",
 			body:
 				as === "bytes"
 					? new Uint8Array(await response.arrayBuffer())
@@ -64,6 +66,16 @@ async function inspect() {
 		const mismatch = assetMismatch(built, page.body);
 		if (mismatch) problems.push(mismatch);
 		else console.log("the page loads the build that was just uploaded");
+
+		// And that a browser will come back for it. The page is the only
+		// place the new asset names are written, so a cached one is a
+		// deployment that has not happened yet.
+		const stale = staleServedPage(page.cacheControl);
+		if (stale) problems.push(stale);
+		else
+			console.log(
+				`the page is asked for again every time (${page.cacheControl})`,
+			);
 	}
 
 	const script = await get(`/assets/${built.js}`, "bytes");

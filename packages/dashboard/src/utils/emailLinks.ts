@@ -95,7 +95,7 @@ export function sendLinksToANewTab(doc: Document): void {
  * `'` is left out of the set on purpose: it is legal in a URI and is far more
  * often an apostrophe in the sentence after one.
  */
-const URL_PATTERN = String.raw`https?:\/\/[A-Za-z0-9\-._~:/?#[\]@!$&()*+,;=%]+`;
+const URL_PATTERN = String.raw`https?:\/\/[A-Za-z0-9\-._~:/?#\[\]@!$&()*+,;=%]+`;
 // Trailing characters that are almost never actually part of the URL --
 // closing punctuation the sender's prose put right after it (Japanese and
 // ASCII), or a bare trailing slash-less sentence terminator.

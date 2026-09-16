@@ -82,3 +82,42 @@ export function assetMismatch(built, html) {
 export function answeredByTheWorker(status, contentType) {
 	return status < 500 && /application\/json/i.test(contentType ?? "");
 }
+
+/**
+ * Why the page may be stored but never used without asking first.
+ *
+ * Everything under /assets/ is named with a hash of its contents, so it can
+ * be kept forever. index.html cannot: its name never changes while its
+ * contents do, and its contents are the only place the new asset names are
+ * written. A page held in a cache for an hour is an hour in which a deployed
+ * fix does not exist as far as that browser is concerned.
+ *
+ * This is a guard rather than a repair. Measured against the local runtime,
+ * the assets handler already answers the page with `max-age=0`, and the
+ * deployment's own `_headers` now says `no-cache` outright; what has actually
+ * cost this project a fix is the case no header reaches -- a page kept on a
+ * home screen, resumed rather than loaded, which asks for nothing for days.
+ * That is handled in the dashboard (services/appUpdate.ts). What is held here
+ * is that the header does not quietly become a long one later.
+ *
+ * So `no-cache` or `no-store` or `max-age=0`: any of the three means the
+ * browser comes back and asks. `must-revalidate` on its own is not enough --
+ * it only says what to do once the age is up, so `max-age=600,
+ * must-revalidate` is still ten minutes of the old page. A missing header is
+ * the worst of the lot, because then the cache invents a lifetime of its own.
+ *
+ * Returns what is wrong with the header, or null when it is fine.
+ */
+export function staleServedPage(cacheControl) {
+	const value = (cacheControl ?? "").trim();
+	if (!value) return "the page is served with no Cache-Control at all";
+	const directives = value.toLowerCase().split(/\s*,\s*/);
+	if (directives.includes("no-cache") || directives.includes("no-store")) {
+		return null;
+	}
+	const maxAge = directives
+		.map((directive) => /^max-age=(\d+)$/.exec(directive)?.[1])
+		.find((seconds) => seconds !== undefined);
+	if (maxAge === "0") return null;
+	return `the page is served with "${value}", so a browser may use an old one without asking`;
+}
