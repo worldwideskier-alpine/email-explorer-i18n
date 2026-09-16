@@ -51,10 +51,11 @@ describe("the frame that shows a message body", () => {
 		expect(srcdocSource).toContain("renderedBody.value");
 		expect(srcdocSource).not.toContain("props.body");
 
-		// And the load handler is not where any of it happens.
-		const onLoad = /const onLoad = \(\) => \{([\s\S]*?)\n\};/.exec(iframe)?.[1];
-		expect(onLoad).toBeTruthy();
-		expect(onLoad).not.toContain("stripRemoteContent");
+		// And there is no afterwards to do it in: the component has no load
+		// handler and no ref to reach the frame's document with.
+		expect(iframe).not.toContain("onLoad");
+		expect(iframe).not.toContain("contentDocument");
+		expect(iframe).not.toMatch(/@load/);
 	});
 
 	/**
@@ -114,45 +115,52 @@ describe("the frame that shows a message body", () => {
 	});
 
 	/**
-	 * And where a link is sent is decided for every link in the body, by the
-	 * pass utils/emailLinks.test.ts holds -- not by a click handler, which is
-	 * what this replaced. `window.open` from a handler is a popup a browser
-	 * may refuse, and by then the handler has already cancelled the
-	 * navigation, so the link does nothing; and a middle click, a long press
-	 * and "open in new tab" never reached the handler in the first place.
+	 * Where a link goes is decided on the string, before the frame is given
+	 * it -- not in a load handler, and not on a click.
+	 *
+	 * The load handler is the one that cost a deploy. A frame does not fire
+	 * `load` until every image in it has arrived, and a marketing message
+	 * carries twenty of them; measured in Chromium, three seconds into a
+	 * message with one slow picture the text was on screen and tappable, the
+	 * frame had not fired `load`, and the links still read `target=""`.
+	 * Tapping one then reproduced the reported grey panel exactly -- on the
+	 * build that was supposed to have fixed it.
+	 *
+	 * A click handler is no better and was what came before: `window.open`
+	 * from one is a popup a browser may refuse, and by then the handler has
+	 * already cancelled the navigation, so the link does nothing at all; and
+	 * a middle click, a long press and "open in new tab" never reach it.
 	 */
-	it("decides where a link goes on the link, not on a click", () => {
-		const onLoad = /const onLoad = \(\) => \{([\s\S]*?)\n\};/.exec(iframe)?.[1];
-		expect(onLoad).toContain("sendLinksToANewTab(doc)");
+	it("decides where a link goes before the frame can be tapped", () => {
+		const body = /const renderedBody = computed\(([\s\S]*?)\n\);/.exec(
+			iframe,
+		)?.[1];
+		expect(body).toBeTruthy();
+		expect(body).toContain("prepareLinks(");
+		// The two ways of being too late.
 		expect(iframe).not.toContain("window.open");
 		expect(iframe).not.toContain('addEventListener("click"');
+		expect(iframe).not.toContain("addEventListener");
 	});
 
 	/**
-	 * And it runs whatever else does not. Linkifying bare URLs is a
-	 * convenience; the sweep is the only thing standing between a link and the
-	 * message being replaced by an error page, so it must not sit downstream
-	 * of a pass that could throw. One bad regular expression on one engine
-	 * would otherwise take the protection away silently, on that engine only.
+	 * The spam folder's half of the same timing. While this waited for
+	 * `load`, a phishing message's links were live and tappable for as long
+	 * as its images took to arrive -- and its images are on the sender's own
+	 * servers, so the sender chooses how long that is.
 	 */
-	it("does not put the sweep behind anything that can throw", () => {
-		const onLoad = /const onLoad = \(\) => \{([\s\S]*?)\n\};/.exec(
+	it("makes a spam message inert on the same string, not later", () => {
+		const body = /const renderedBody = computed\(([\s\S]*?)\n\);/.exec(
 			iframe,
 		)?.[1] as string;
-		const guarded = /\btry \{([\s\S]*?)\} catch/.exec(onLoad)?.[1];
-		expect(guarded).toBeTruthy();
-		expect(guarded).toContain("linkifyPlainUrls(doc)");
-		expect(guarded).not.toContain("sendLinksToANewTab");
-		// After the guard, not inside it.
-		expect(onLoad.indexOf("sendLinksToANewTab")).toBeGreaterThan(
-			onLoad.indexOf("} catch"),
-		);
+		expect(body).toContain("disable: props.disableLinks");
 	});
 
 	// Both only under the flag: an ordinary message still shows its pictures.
 	it("leaves a message outside the spam folder alone", () => {
-		expect(iframe).toContain("props.blockRemoteContent ? stripRemoteContent");
-		expect(iframe).toContain("props.blockRemoteContent");
+		expect(iframe).toMatch(
+			/props\.blockRemoteContent\s*\?\s*stripRemoteContent\(props\.body\)\s*:\s*props\.body/,
+		);
 	});
 });
 
