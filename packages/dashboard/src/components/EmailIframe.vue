@@ -2,7 +2,7 @@
   <iframe
     ref="iframe"
     class="w-full h-full border-0"
-    sandbox="allow-same-origin allow-popups allow-top-navigation-by-user-activation"
+    sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
     :srcdoc="fullHtml"
     @load="onLoad"
   ></iframe>
@@ -10,6 +10,11 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import {
+	linkifyPlainUrls,
+	neutralizeLinks,
+	sendLinksToANewTab,
+} from "@/utils/emailLinks";
 import { stripRemoteContent } from "@/utils/remoteContent";
 
 const props = defineProps<{
@@ -65,91 +70,26 @@ const fullHtml = computed(
   `,
 );
 
-const URL_PATTERN = String.raw`https?:\/\/[^\s<>"']+`;
-// Trailing characters that are almost never actually part of the URL --
-// closing punctuation the sender's prose put right after it (Japanese and
-// ASCII), or a bare trailing slash-less sentence terminator.
-const TRAILING_PUNCTUATION = /[.,;:!?)\]}、。）」』】]+$/;
-
 /**
- * Plain-text emails are stored as an escaped `<pre>` block (see
- * plain-text-to-html.ts) with bare URLs as plain text, and even genuine
- * HTML emails sometimes include a bare URL outside any `<a>`. Walk text
- * nodes (skipping ones already inside a link, script, or style) and wrap
- * URL-looking substrings in real `<a>` elements so they're clickable.
+ * Why this frame may open tabs but may not do anything else.
+ *
+ * `allow-popups` is what lets a link in a message open one at all; without it
+ * a link with nowhere else to go navigates the frame, and the message is
+ * replaced by whatever the destination does -- which, for anything that sends
+ * `X-Frame-Options`, is a browser error page where the mail used to be.
+ *
+ * `allow-popups-to-escape-sandbox` is what makes the tab it opens a *normal*
+ * one. Measured in Chromium: without the flag the opened page inherits this
+ * frame's sandbox, so it loads with no scripts and an opaque origin -- the
+ * probe page reported "scripts did NOT run" -- and most sites are simply
+ * broken in that state. With it, the same page reported its own origin.
+ *
+ * `allow-top-navigation-by-user-activation` used to be here and is gone. It
+ * let a message replace this whole application with a page of the sender's
+ * choosing, which is the shape of a phishing page, and now that every link
+ * that leaves is given `target="_blank"` (see utils/emailLinks.ts) nothing
+ * asks for it. Scripts are still not allowed, and neither are forms.
  */
-function linkifyPlainUrls(doc: Document) {
-	if (!doc.body) return;
-
-	const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, {
-		acceptNode(node) {
-			const parent = (node as Text).parentElement;
-			if (!parent || parent.closest("a, script, style")) {
-				return NodeFilter.FILTER_REJECT;
-			}
-			return new RegExp(URL_PATTERN).test(node.textContent || "")
-				? NodeFilter.FILTER_ACCEPT
-				: NodeFilter.FILTER_REJECT;
-		},
-	});
-
-	const textNodes: Text[] = [];
-	let current = walker.nextNode();
-	while (current) {
-		textNodes.push(current as Text);
-		current = walker.nextNode();
-	}
-
-	for (const textNode of textNodes) {
-		const text = textNode.textContent || "";
-		const frag = doc.createDocumentFragment();
-		let lastIndex = 0;
-
-		for (const match of text.matchAll(new RegExp(URL_PATTERN, "g"))) {
-			let url = match[0];
-			const trailing = url.match(TRAILING_PUNCTUATION)?.[0] || "";
-			url = url.slice(0, url.length - trailing.length);
-			if (!url) continue;
-
-			const start = match.index as number;
-			frag.appendChild(doc.createTextNode(text.slice(lastIndex, start)));
-			const a = doc.createElement("a");
-			a.href = url;
-			a.textContent = url;
-			a.target = "_blank";
-			a.rel = "noopener noreferrer";
-			frag.appendChild(a);
-			lastIndex = start + url.length;
-		}
-
-		if (lastIndex === 0) continue;
-		frag.appendChild(doc.createTextNode(text.slice(lastIndex)));
-		textNode.replaceWith(frag);
-	}
-}
-
-/**
- * Strips every real `<a>` tag's href (and target) so it can't navigate
- * anywhere by any means -- left-click, middle-click, or "open in new tab"
- * from the context menu, none of which a JS click handler alone can stop.
- * The link text stays visible, just inert and visually de-emphasized.
- */
-function neutralizeLinks(doc: Document) {
-	if (!doc.body) return;
-	for (const anchor of doc.body.querySelectorAll("a")) {
-		anchor.removeAttribute("href");
-		anchor.removeAttribute("target");
-		anchor.style.color = "inherit";
-		anchor.style.textDecoration = "none";
-		anchor.style.cursor = "text";
-		anchor.title = "";
-	}
-}
-
-// The iframe has no allow-scripts, so links in the email body default to
-// navigating the iframe itself rather than the top-level page. Force them
-// to open in a new tab instead, since many login/tracking links refuse to
-// render inside a frame at all (X-Frame-Options).
 const onLoad = () => {
 	const doc = iframe.value?.contentDocument;
 	if (!doc) return;
@@ -160,13 +100,6 @@ const onLoad = () => {
 	}
 
 	linkifyPlainUrls(doc);
-
-	doc.addEventListener("click", (event) => {
-		const anchor = (event.target as HTMLElement | null)?.closest?.("a");
-		if (anchor?.href) {
-			event.preventDefault();
-			window.open(anchor.href, "_blank", "noopener,noreferrer");
-		}
-	});
+	sendLinksToANewTab(doc);
 };
 </script>
