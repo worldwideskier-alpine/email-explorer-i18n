@@ -25,3 +25,26 @@
   # None of these are used, and saying so stops a compromised page from
   # asking for them.
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+
+# The page names the build, and the build is what a fix arrives in, so the
+# page is the one file that must never be answered from a cache without
+# asking. Its name never changes while its contents do, which is the opposite
+# of everything under /assets/, where the name carries a hash of the contents.
+#
+# Stated rather than fixed: measured against the local runtime, the assets
+# handler already answers the page with `public, max-age=0, must-revalidate`,
+# which has the same effect. This says so on purpose instead of relying on a
+# default nobody chose, and the deploy checks it (staleServedPage in
+# packages/worker/scripts/deployment-check.mjs) so that a later `max-age` on
+# the page is caught at the deploy rather than found on a phone.
+#
+# `no-cache` is not "do not store" -- the copy is kept and revalidated, so an
+# unchanged page costs a 304 rather than a download.
+#
+# And note what this does *not* fix, since it was the actual fault: a page on
+# somebody's home screen is resumed rather than loaded, so it asks for nothing
+# at all, whatever this file says. See src/services/appUpdate.ts.
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
