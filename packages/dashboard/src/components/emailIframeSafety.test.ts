@@ -69,6 +69,54 @@ describe("the frame that shows a message body", () => {
 		expect(iframe).not.toContain("Content-Security-Policy");
 	});
 
+	/**
+	 * The two flags a link's behaviour rests on, and the one that is gone.
+	 *
+	 * Measured in Chromium, against a destination sending `X-Frame-Options:
+	 * DENY`, with the sandbox as it was written here:
+	 *
+	 *   - A tab opened by the frame inherited this sandbox. The probe page it
+	 *     opened reported "scripts did NOT run" and had an opaque origin --
+	 *     which is most sites rendered blank. Adding
+	 *     `allow-popups-to-escape-sandbox` made the same page report its own
+	 *     origin.
+	 *   - `allow-top-navigation-by-user-activation` let a message replace this
+	 *     whole application. Nothing needs it now that every outbound link is
+	 *     given `target="_blank"`, and what it permits is the shape of a
+	 *     phishing page, so it was taken away.
+	 *
+	 * `allow-scripts` has never been here and must not arrive: with
+	 * `allow-same-origin` beside it the pair hands a message full run of this
+	 * origin, and the two together are what a sandbox exists to keep apart.
+	 */
+	it("may open a tab, may not take the window, may not run code", () => {
+		const sandbox = /sandbox="([^"]*)"/.exec(iframe)?.[1];
+		expect(sandbox).toBeTruthy();
+		const flags = (sandbox as string).split(/\s+/);
+
+		expect(flags).toContain("allow-popups");
+		expect(flags).toContain("allow-popups-to-escape-sandbox");
+		expect(flags).not.toContain("allow-top-navigation-by-user-activation");
+		expect(flags).not.toContain("allow-top-navigation");
+		expect(flags).not.toContain("allow-scripts");
+		expect(flags).not.toContain("allow-forms");
+	});
+
+	/**
+	 * And where a link is sent is decided for every link in the body, by the
+	 * pass utils/emailLinks.test.ts holds -- not by a click handler, which is
+	 * what this replaced. `window.open` from a handler is a popup a browser
+	 * may refuse, and by then the handler has already cancelled the
+	 * navigation, so the link does nothing; and a middle click, a long press
+	 * and "open in new tab" never reached the handler in the first place.
+	 */
+	it("decides where a link goes on the link, not on a click", () => {
+		const onLoad = /const onLoad = \(\) => \{([\s\S]*?)\n\};/.exec(iframe)?.[1];
+		expect(onLoad).toContain("sendLinksToANewTab(doc)");
+		expect(iframe).not.toContain("window.open");
+		expect(iframe).not.toContain('addEventListener("click"');
+	});
+
 	// Both only under the flag: an ordinary message still shows its pictures.
 	it("leaves a message outside the spam folder alone", () => {
 		expect(iframe).toContain("props.blockRemoteContent ? stripRemoteContent");
