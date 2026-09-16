@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
 	linkifyPlainUrls,
 	neutralizeLinks,
+	prepareLinks,
 	sendLinksToANewTab,
 } from "./emailLinks";
 
@@ -21,6 +22,11 @@ import {
  * a state where pressing it could load anything into this frame. A handler
  * cannot make that claim -- a middle click, a long press and "open in new
  * tab" all go around one.
+ *
+ * And it has to be a property of the body *as the parser receives it*, which
+ * is what the last group in this file is about and what two deploys got
+ * wrong. Applying it in the frame's `load` handler is too late by however
+ * long the sender's slowest image takes.
  *
  * Built with createHTMLDocument rather than DOMParser so the document has a
  * real base URL, which is what a relative href in a message resolves against.
@@ -173,7 +179,7 @@ describe("a message in the spam folder", () => {
 	/**
 	 * The opposite requirement, and it has to stay the opposite: here the
 	 * point is that nothing can be reached at all, so the sweep above must not
-	 * be what runs. EmailIframe.vue returns before it.
+	 * be what runs. prepareLinks picks between them.
 	 */
 	it("has nothing left to press", () => {
 		const doc = bodyOf(
@@ -188,5 +194,65 @@ describe("a message in the spam folder", () => {
 		}
 		// The words stay: a message one is deciding about has to be readable.
 		expect(doc.body.textContent).toContain("銀行");
+	});
+});
+
+describe("what the frame is actually handed", () => {
+	/**
+	 * The contract that matters, and the one the first two attempts got
+	 * wrong: this is asked of the *markup*, because the markup is what the
+	 * parser turns into a tappable page. Both earlier versions were correct
+	 * about what a link should do and applied it in the frame's `load`
+	 * handler -- which does not run until every image in the message has
+	 * arrived. Measured in Chromium: three seconds into a message with one
+	 * slow picture, the text was readable and tappable and the links had not
+	 * been touched. There is no amount of "later" that is early enough.
+	 */
+	it("carries the target in the markup, before anything is parsed", () => {
+		const out = prepareLinks(
+			'<p>配信設定の変更は<a href="https://example.com/unsub">こちら</a></p>' +
+				'<img src="https://example.com/slow.png">',
+		);
+		expect(out).toMatch(
+			/<a href="https:\/\/example\.com\/unsub" target="_blank" rel="noopener noreferrer">/,
+		);
+		// And the picture that would have held the load event back is
+		// untouched -- this is not a reason to stop showing pictures.
+		expect(out).toContain('<img src="https://example.com/slow.png">');
+	});
+
+	it("does the same for a bare URL it had to make a link of", () => {
+		const out = prepareLinks("<pre>詳しくは https://example.com/a です</pre>");
+		expect(out).toContain('target="_blank"');
+		expect(out).toContain('rel="noopener noreferrer"');
+		expect(out).toContain('href="https://example.com/a"');
+	});
+
+	it("hands the spam folder a body with no href left in it", () => {
+		const out = prepareLinks(
+			'<a href="https://phish.example/">銀行</a>' +
+				'<map name="m"><area href="https://phish.example/a"></map>',
+			{ disable: true },
+		);
+		expect(out).not.toContain("phish.example");
+		expect(out).toContain("銀行");
+	});
+
+	/**
+	 * A message's `<style>` is parsed into the head, and a body returned
+	 * without it is a message that has lost its layout. Same reason
+	 * stripRemoteContent returns both.
+	 */
+	it("keeps what the parser sorted into the head", () => {
+		const out = prepareLinks(
+			'<style>.b { color: red }</style><p class="b">hello</p>',
+		);
+		expect(out).toContain(".b { color: red }");
+		expect(out).toContain("hello");
+	});
+
+	it("does not fall over on a body that is not really html", () => {
+		expect(prepareLinks("")).toBe("");
+		expect(prepareLinks("<p>unclosed")).toContain("unclosed");
 	});
 });

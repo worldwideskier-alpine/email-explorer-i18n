@@ -1,20 +1,14 @@
 <template>
   <iframe
-    ref="iframe"
     class="w-full h-full border-0"
     sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
     :srcdoc="fullHtml"
-    @load="onLoad"
   ></iframe>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import {
-	linkifyPlainUrls,
-	neutralizeLinks,
-	sendLinksToANewTab,
-} from "@/utils/emailLinks";
+import { computed } from "vue";
+import { prepareLinks } from "@/utils/emailLinks";
 import { stripRemoteContent } from "@/utils/remoteContent";
 
 const props = defineProps<{
@@ -32,18 +26,32 @@ const props = defineProps<{
 	blockRemoteContent?: boolean;
 }>();
 
-const iframe = ref<HTMLIFrameElement | null>(null);
-
 /**
- * The body as the frame will receive it.
+ * The body as the frame will receive it: everything decided here, on the
+ * string, and nothing left for afterwards.
  *
- * This has to happen here, on the string, and not in the load handler below:
- * by the time a frame has loaded, everything in it has already been fetched.
- * Removing an image then would remove only the picture, not the request.
+ * Remote content has to be taken out before the parser sees it, because by
+ * the time a frame has loaded, everything in it has already been fetched --
+ * removing an image then removes the picture and not the request.
+ *
+ * Links are here for the same kind of reason, learned the hard way. They were
+ * rewritten in a `load` handler, and a frame does not fire `load` until every
+ * image in it has arrived: measured at three seconds into a message with one
+ * slow picture, the text was on screen and tappable and the links had not
+ * been touched yet. Tapping one then navigated the frame, the page's own
+ * `frame-src 'self'` refused it, and the message was replaced by a grey
+ * "This content is blocked". A message is tappable from the first paint, so
+ * anything that decides what a tap does has to be true from the first paint.
+ *
+ * There is no load handler left at all now, and no template ref to reach the
+ * frame's document with. See utils/emailLinks.ts.
  */
-const renderedBody = computed(() =>
-	props.blockRemoteContent ? stripRemoteContent(props.body) : props.body,
-);
+const renderedBody = computed(() => {
+	const body = props.blockRemoteContent
+		? stripRemoteContent(props.body)
+		: props.body;
+	return prepareLinks(body, { disable: props.disableLinks });
+});
 
 const fullHtml = computed(
 	() => `
@@ -71,49 +79,21 @@ const fullHtml = computed(
 );
 
 /**
- * Why this frame may open tabs but may not do anything else.
+ * Why this frame may open tabs and may do nothing else.
  *
- * `allow-popups` is what lets a link in a message open one at all; without it
- * a link with nowhere else to go navigates the frame, and the message is
- * replaced by a browser error page. Two separate things produce that page and
- * the first one is ours: this application's own `Content-Security-Policy` says
- * `frame-src 'self' blob:`, and a `srcdoc` frame inherits it, so Chromium
- * refuses the navigation outright ("Refused to frame ... because it violates
- * ... frame-src") whatever the destination is. `X-Frame-Options` from the
- * destination does the same thing a moment later. Measured both ways against
- * the real policy; the CSP is what makes it every link rather than most.
+ * `allow-popups` is what lets a link open one at all. Without it a sandboxed
+ * frame does not merely fail to open a tab -- `target="_blank"` is forced
+ * back into the frame itself, which is the fault above with extra steps.
  *
- * `allow-popups-to-escape-sandbox` is what makes the tab it opens a *normal*
- * one. Measured in Chromium: without the flag the opened page inherits this
- * frame's sandbox, so it loads with no scripts and an opaque origin -- the
- * probe page reported "scripts did NOT run" -- and most sites are simply
- * broken in that state. With it, the same page reported its own origin.
+ * `allow-popups-to-escape-sandbox` is what makes the tab it opens a normal
+ * one. Measured: without the flag the opened page inherits this frame's
+ * sandbox and loads with no scripts and an opaque origin (the probe page
+ * reported "scripts did NOT run"); with it, the same page reported its own
+ * origin.
  *
- * `allow-top-navigation-by-user-activation` used to be here and is gone. It
+ * `allow-top-navigation-by-user-activation` used to be here and is gone: it
  * let a message replace this whole application with a page of the sender's
- * choosing, which is the shape of a phishing page, and now that every link
- * that leaves is given `target="_blank"` (see utils/emailLinks.ts) nothing
- * asks for it. Scripts are still not allowed, and neither are forms.
+ * choosing, and nothing asks for it now that every outbound link is given
+ * `target="_blank"`. Scripts are not allowed, and neither are forms.
  */
-const onLoad = () => {
-	const doc = iframe.value?.contentDocument;
-	if (!doc) return;
-
-	if (props.disableLinks) {
-		neutralizeLinks(doc);
-		return;
-	}
-
-	// Order matters, and so does the guard. The sweep is what stands between a
-	// link and the message disappearing, and it used to run only if the pass
-	// before it returned -- so any fault in linkifying, on any engine, took
-	// the protection with it silently. Linkifying is a convenience; this is
-	// not, so it runs either way.
-	try {
-		linkifyPlainUrls(doc);
-	} catch (error) {
-		console.error(`could not linkify the bare URLs in a message: ${error}`);
-	}
-	sendLinksToANewTab(doc);
-};
 </script>

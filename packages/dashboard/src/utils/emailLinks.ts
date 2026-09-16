@@ -1,29 +1,39 @@
 /**
- * What becomes of the links in a message body once the frame has parsed it.
+ * What becomes of the links in a message body, decided before the frame ever
+ * sees it.
  *
- * These three passes used to live inside EmailIframe.vue, where nothing could
- * reach them: the component's tests read its source as text, and a pass that
- * rewrites a DOM cannot be checked by reading the words that describe it. The
- * fault that moved them out was invisible for exactly that reason -- the
- * source said links open in a new tab, and the screen said otherwise.
+ * Three things had to be true, and the third is the one that took three
+ * attempts. All measured in Chromium against a destination that sends
+ * `X-Frame-Options: DENY`, with the application's own CSP on the page.
  *
- * What the screen said, measured in Chromium against a destination that sends
- * `X-Frame-Options: DENY`, which is most of them:
+ *   1. A sender's own `<a href="...">` carries no target, so a click navigates
+ *      *the frame*. The message is then replaced by a browser error page --
+ *      and the refusal is ours before it is the destination's: the page says
+ *      `frame-src 'self' blob:` and a `srcdoc` frame inherits it, so Chromium
+ *      answers "Refused to frame ... frame-src" for every external link
+ *      whatever the destination does. That grey panel is what "press the link
+ *      and it breaks" was.
  *
- *   - A sender's own `<a href="...">` carries no target. Clicking it navigates
- *     *the frame*, the destination refuses to be framed, and the message is
- *     replaced by `chrome-error://chromewebdata/` -- a grey panel with a torn
- *     page on it where the mail used to be. This is what "the link breaks it"
- *     looked like.
- *   - A link that does open a new tab opened a *sandboxed* one: the frame's
- *     sandbox is inherited by anything it opens unless the frame is given
- *     `allow-popups-to-escape-sandbox`, so the destination loaded with no
- *     scripts and an opaque origin. The probe page reported "scripts did NOT
- *     run"; with the flag added it reported its real origin. A modern site
- *     opened that way is a second kind of broken.
+ *   2. A link that does open a new tab opened a *sandboxed* one: the frame's
+ *      sandbox is inherited by anything it opens unless the frame carries
+ *      `allow-popups-to-escape-sandbox`, so the destination loaded with no
+ *      scripts and an opaque origin -- the probe page reported "scripts did
+ *      NOT run", and with the flag it reported its real origin. That flag is
+ *      on the element in EmailIframe.vue.
  *
- * So both halves are needed and they are in two different places: the sandbox
- * flag is on the element in EmailIframe.vue, and the target is here.
+ *   3. **It has to be true from the first paint.** This ran in the frame's
+ *      `load` handler, and a frame does not fire `load` until every image in
+ *      it has arrived. A marketing message carries twenty, one of them a
+ *      tracking pixel on a host that may never answer at all. Measured: three
+ *      seconds in, the text was on screen and tappable, the frame had not
+ *      fired `load`, and the link still read `target=""`. Tapping it then
+ *      produced exactly the reported grey panel -- on the build that was
+ *      supposed to have fixed it.
+ *
+ * So none of this waits for a load any more. It happens on the string, on the
+ * way in, which is the same reason stripRemoteContent gives for living where
+ * it does: what the parser is handed is the only thing that is true before
+ * the first tap.
  */
 
 /**
@@ -179,4 +189,33 @@ export function neutralizeLinks(doc: Document): void {
 			element.title = "";
 		}
 	}
+}
+
+/**
+ * The whole of it, on the string the frame will be handed.
+ *
+ * One parse, because there is no reason to do three. The order is the order
+ * it has to be: bare URLs become links first, then every link in the body --
+ * the sender's and the ones just made -- is told where to open.
+ *
+ * `disable` is the spam folder, where the requirement is the opposite one and
+ * the timing matters just as much: while this waited for the frame's `load`,
+ * a phishing message's links were live and tappable for as long as its images
+ * took to arrive, which is the one message where that is least acceptable.
+ *
+ * Head and body are both returned for the reason stripRemoteContent gives:
+ * a message's `<style>` is parsed into the head and belongs to how it looks.
+ */
+export function prepareLinks(
+	html: string,
+	{ disable = false }: { disable?: boolean } = {},
+): string {
+	const doc = new DOMParser().parseFromString(html, "text/html");
+	if (disable) {
+		neutralizeLinks(doc);
+	} else {
+		linkifyPlainUrls(doc);
+		sendLinksToANewTab(doc);
+	}
+	return `${doc.head.innerHTML}${doc.body.innerHTML}`;
 }
