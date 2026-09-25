@@ -14,13 +14,13 @@
  */
 
 import {
-	LINK_RULES,
+	EVERY_LINK_OPENS_A_TAB_OR_NOTHING,
 	linkifyPlainUrls,
 	NOTHING_HAS_A_DESTINATION,
 } from "./emailLinks";
 import {
 	ANIMATIONS,
-	animationOf,
+	animatedAttributeOf,
 	applyRules,
 	type FrameRule,
 	rulesHold,
@@ -124,7 +124,7 @@ const WHAT_BOTH_READINGS_CANNOT_SEE_ALIKE: readonly FrameRule[] = [
 	{
 		find: (doc) =>
 			Array.from(doc.querySelectorAll(ANIMATIONS)).filter((element) =>
-				ANIMATED_ATTRIBUTES_REFUSED.has(animationOf(element).attribute),
+				ANIMATED_ATTRIBUTES_REFUSED.has(animatedAttributeOf(element)),
 			),
 		fix: (element) => element.remove(),
 	},
@@ -150,7 +150,11 @@ function rulesFor(options: FrameOptions): {
 			...WHAT_BOTH_READINGS_CANNOT_SEE_ALIKE,
 			...(options.blockRemoteContent ? REMOTE_CONTENT_RULES : []),
 		],
-		links: options.disableLinks ? [NOTHING_HAS_A_DESTINATION] : LINK_RULES,
+		links: [
+			options.disableLinks
+				? NOTHING_HAS_A_DESTINATION
+				: EVERY_LINK_OPENS_A_TAB_OR_NOTHING,
+		],
 	};
 }
 

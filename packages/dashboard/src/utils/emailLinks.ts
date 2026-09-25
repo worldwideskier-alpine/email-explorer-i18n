@@ -131,8 +131,10 @@ function linksIn(doc: Document): Element[] {
 	);
 }
 
+const NO_WAY_BACK = "noopener noreferrer";
+
 /**
- * A link that goes somewhere opens a tab of its own.
+ * Every link either opens a tab of its own or does nothing at all.
  *
  * The tab is an attribute rather than a click handler, which is what this
  * replaced. A handler can only answer a left click: a middle click, a long
@@ -150,42 +152,36 @@ function linksIn(doc: Document): Element[] {
  * opened had `window.opener`. Nothing could be done with it -- measured,
  * navigating the frame through it threw -- but that was the browser's doing,
  * not this rule's.
+ *
+ * "Nothing" takes the destination away and leaves the words.
+ *
+ * One rule, although it has two outcomes. It was two for a round, so that
+ * `fix` would not ask linkOpens again, and measured that way the whole frame
+ * took about 7% longer on a message of 900 links: the second rule found every
+ * link over again, on every pass and every check. Asking linkOpens again
+ * costs only for the links that were found, and nearly all of them take the
+ * `https://` shortcut.
  */
-const NO_WAY_BACK = "noopener noreferrer";
-
-export const LINKS_THAT_GO_SOMEWHERE_OPEN_A_TAB: FrameRule = {
+export const EVERY_LINK_OPENS_A_TAB_OR_NOTHING: FrameRule = {
 	find: (doc) =>
-		linksIn(doc).filter(
-			(element) =>
-				linkOpens(destinationOf(element) as string) &&
-				(element.getAttribute("target") !== "_blank" ||
-					element.getAttribute("rel") !== NO_WAY_BACK),
+		linksIn(doc).filter((element) =>
+			linkOpens(destinationOf(element) as string)
+				? element.getAttribute("target") !== "_blank" ||
+					element.getAttribute("rel") !== NO_WAY_BACK
+				: true,
 		),
 	fix(element) {
-		// setAttribute rather than `.target =`: on an SVG `<a>` that property
-		// is a read-only SVGAnimatedString and assigning throws.
-		element.setAttribute("target", "_blank");
-		element.setAttribute("rel", NO_WAY_BACK);
+		if (linkOpens(destinationOf(element) as string)) {
+			// setAttribute rather than `.target =`: on an SVG `<a>` that
+			// property is a read-only SVGAnimatedString and assigning throws.
+			element.setAttribute("target", "_blank");
+			element.setAttribute("rel", NO_WAY_BACK);
+		} else {
+			removeDestination(element);
+			element.removeAttribute("target");
+		}
 	},
 };
-
-/** A link that goes nowhere loses its destination and keeps its words. */
-export const LINKS_THAT_GO_NOWHERE_DO_NOTHING: FrameRule = {
-	find: (doc) =>
-		linksIn(doc).filter(
-			(element) => !linkOpens(destinationOf(element) as string),
-		),
-	fix(element) {
-		removeDestination(element);
-		element.removeAttribute("target");
-	},
-};
-
-/** Every link either opens a tab of its own or does nothing at all. */
-export const LINK_RULES: readonly FrameRule[] = [
-	LINKS_THAT_GO_SOMEWHERE_OPEN_A_TAB,
-	LINKS_THAT_GO_NOWHERE_DO_NOTHING,
-];
 
 /**
  * A bare URL, spelled as the characters a URI is actually made of.
@@ -239,7 +235,8 @@ const HAS_URL = new RegExp(URL_PATTERN);
  * Where they open is not decided here. It used to be -- this set `target` on
  * the links it made -- and that left the sender's own links as the only ones
  * without it, which is precisely the set that broke. One pass decides that
- * now, for every link in the body (LINK_RULES), and it runs after this one.
+ * now, for every link in the body (EVERY_LINK_OPENS_A_TAB_OR_NOTHING), and it
+ * runs after this one.
  */
 export function linkifyPlainUrls(doc: Document): void {
 	if (!doc.body) return;
