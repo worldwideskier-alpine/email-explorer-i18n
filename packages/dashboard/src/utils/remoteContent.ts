@@ -93,7 +93,7 @@ const URL_ATTRIBUTES = [
  * closes for the sender. Measured: `style="background:url(https://...`, with
  * no `)`, fetched from the spam folder in all three spellings, when this
  * pattern was also what decided whether CSS fetched and it asked for the `)`.
- * EXTERNAL_URL decides that now, and CSS the rewrite cannot mend is dropped
+ * FETCHES decides that now, and CSS the rewrite cannot mend is dropped
  * whole, so matching to the end is what keeps the rest of such a style rather
  * than what keeps the address out. A quoted address that is not closed falls
  * through to the last spelling, which runs to the next `)` or the end.
@@ -101,8 +101,9 @@ const URL_ATTRIBUTES = [
 const CSS_URL = /url\(\s*(?:"[^"]*"\s*\)|'[^']*'\s*\)|[^)]*(?:\)|$))/gi;
 
 /**
- * An `url(` that does not point into the message, for the question of
- * whether CSS fetches anything.
+ * Whatever in CSS fetches something -- one list, for the question of whether
+ * it does: an `url(` that does not point into the message, `image-set(`, and
+ * `@import`.
  *
  * `url(#gradient)` fetches nothing, and rewriting it took an SVG's own
  * gradient away. But which `url(` a browser sees depends on comments and
@@ -113,8 +114,15 @@ const CSS_URL = /url\(\s*(?:"[^"]*"\s*\)|'[^']*'\s*\)|[^)]*(?:\)|$))/gi;
  * is looked at on its own, wherever it is, and CSS counts as fetching nothing
  * only if each one is followed by `#`. The one a browser reads is among them,
  * whichever it turns out to be.
+ *
+ * "Followed" skips only what CSS skips there: space, tab and the three line
+ * breaks. `\s` skipped the no-break space and U+3000 as well, so
+ * `url(&nbsp;#x)` passed as a reference into the message, while the browser
+ * read a relative address and fetched it -- measured, from this application's
+ * own origin, which is harmless only because the page's `base-uri 'self'`
+ * keeps a message's `<base>` from pointing it anywhere else.
  */
-const EXTERNAL_URL = /url\((?!\s*(?:["']#|#))/i;
+const FETCHES = /url\((?![ \t\n\r\f]*["']?#)|image-set\(|@import/i;
 
 /**
  * `image-set()`, which takes bare strings as well as `url()` -- so
@@ -140,14 +148,17 @@ const CSS_IMPORT = /@import[^;}]*;?/gi;
  * outright would leave `background-image: ;`, which a browser drops as
  * malformed -- the same result by a less honest route.
  *
- * Every address goes, `url(#...)` included. This runs only on CSS that
- * fetches something, and a gradient beside a tracker is lost with it.
+ * With `keepFragments`, an `url()` that fetches nothing stays -- judged by
+ * FETCHES on the match itself, so a match that swallowed a second `url(`
+ * goes. Without it, every address goes, `url(#...)` included.
  */
-function stripCssFetches(css: string): string {
+function stripCssFetches(css: string, keepFragments: boolean): string {
 	return css
 		.replace(CSS_IMPORT, "")
 		.replace(CSS_IMAGE_SET, "none")
-		.replace(CSS_URL, "none");
+		.replace(CSS_URL, (match) =>
+			keepFragments && !FETCHES.test(match) ? match : "none",
+		);
 }
 
 /**
@@ -185,31 +196,52 @@ export function decodeCssEscapes(css: string): string {
 	);
 }
 
-function fetchesAsWritten(css: string): boolean {
-	return (
-		EXTERNAL_URL.test(css) || /image-set\(/i.test(css) || /@import/i.test(css)
-	);
-}
-
 /** Whether CSS fetches anything, read as written or as a browser reads it. */
 function cssFetches(css: string): boolean {
-	if (fetchesAsWritten(css)) return true;
-	return css.includes("\\") && fetchesAsWritten(decodeCssEscapes(css));
+	if (FETCHES.test(css)) return true;
+	return css.includes("\\") && FETCHES.test(decodeCssEscapes(css));
 }
 
 /**
  * CSS with nothing left in it that fetches, or null when there is no such
  * thing short of dropping it.
  *
- * The ordinary case is the rewrite above. The other is a fetch that appears
- * only once the escapes are read -- a sender spelling `url(` so that a filter
- * will not see it -- and that CSS is dropped whole rather than decoded and
- * written back: decoding changes the meaning of an escape that was there for
- * a reason, such as a quote inside a string.
+ * Three tries, each taken only if cssFetches -- which pairs nothing up --
+ * finds nothing in the result, so no try has to be right about which `url(`
+ * a browser will read. The first keeps `url(#...)`: a gradient or a clip
+ * beside a tracker, or beside `url(http://...)` mentioned in a comment,
+ * survives, where rewriting every address took them all away. It judges
+ * each match as written, so an address hidden behind `url(#` and spelled in
+ * escapes -- `/*url(#*\/background:u\rl(...)` -- is kept by it and found by
+ * the check; the second try takes every address, and that one with it. The
+ * last drops the CSS whole: a fetch that appears only once the escapes are
+ * read -- a sender spelling `url(` so that a filter will not see it -- is not
+ * decoded and written back, because decoding changes the meaning of an escape
+ * that was there for a reason, such as a quote inside a string.
  */
 function cssWithoutFetches(css: string): string | null {
-	const rewritten = stripCssFetches(css);
-	return cssFetches(rewritten) ? null : rewritten;
+	for (const keepFragments of [true, false]) {
+		const rewritten = stripCssFetches(css, keepFragments);
+		if (!cssFetches(rewritten)) return rewritten;
+	}
+	return null;
+}
+
+/**
+ * The stylesheet a `<style>` makes: its own text, and not its descendants'.
+ *
+ * Inside `<svg>` the parser gives a `<style>` child elements, and a browser
+ * builds the sheet from the style's direct text only -- measured, Chromium
+ * read `.a{background:url(<g>#x) </g>https://...)}` as
+ * `url("https://...")` and fetched it. `textContent` includes the `<g>`'s
+ * text, so the check read `url(#x) https://...)` and let it through; and
+ * `u<g>x</g>rl(` hid an `url(` from it altogether.
+ */
+function sheetOf(style: Element): string {
+	return Array.from(style.childNodes)
+		.filter((node): node is Text => node.nodeType === Node.TEXT_NODE)
+		.map((node) => node.data)
+		.join("");
 }
 
 const all = (doc: Document, selector: string) =>
@@ -254,11 +286,10 @@ export const REMOTE_CONTENT_RULES: readonly FrameRule[] = [
 	},
 	{
 		find: (doc) =>
-			all(doc, "style").filter((element) =>
-				cssFetches(element.textContent ?? ""),
-			),
+			all(doc, "style").filter((element) => cssFetches(sheetOf(element))),
 		fix(element) {
-			element.textContent = cssWithoutFetches(element.textContent ?? "") ?? "";
+			// Written back as text alone, which takes the children with it.
+			element.textContent = cssWithoutFetches(sheetOf(element)) ?? "";
 		},
 	},
 	{

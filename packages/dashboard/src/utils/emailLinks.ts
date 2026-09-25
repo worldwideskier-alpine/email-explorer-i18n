@@ -164,11 +164,11 @@ const NO_WAY_BACK = "noopener noreferrer";
  */
 export const EVERY_LINK_OPENS_A_TAB_OR_NOTHING: FrameRule = {
 	find: (doc) =>
-		linksIn(doc).filter((element) =>
-			linkOpens(destinationOf(element) as string)
-				? element.getAttribute("target") !== "_blank" ||
-					element.getAttribute("rel") !== NO_WAY_BACK
-				: true,
+		linksIn(doc).filter(
+			(element) =>
+				!linkOpens(destinationOf(element) as string) ||
+				element.getAttribute("target") !== "_blank" ||
+				element.getAttribute("rel") !== NO_WAY_BACK,
 		),
 	fix(element) {
 		if (linkOpens(destinationOf(element) as string)) {
