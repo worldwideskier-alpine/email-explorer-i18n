@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+	LINK_RULES,
 	linkifyPlainUrls,
-	neutralizeLinks,
-	sendLinksToANewTab,
+	NOTHING_HAS_A_DESTINATION,
 } from "./emailLinks";
+import { applyRules } from "./frameRules";
 
 /**
  * A link in a message must never take the message away.
@@ -57,7 +58,7 @@ describe("where a link goes", () => {
 		);
 		expect(link(doc).target).toBe("");
 
-		sendLinksToANewTab(doc);
+		applyRules(doc, LINK_RULES);
 
 		expect(link(doc).target).toBe("_blank");
 		// What window.open(..., "noopener,noreferrer") was asking for, kept:
@@ -67,7 +68,7 @@ describe("where a link goes", () => {
 
 	it("overrules a link that asks for this very frame", () => {
 		const doc = bodyOf('<a href="https://example.com/" target="_self">x</a>');
-		sendLinksToANewTab(doc);
+		applyRules(doc, LINK_RULES);
 		expect(link(doc).target).toBe("_blank");
 	});
 
@@ -79,8 +80,22 @@ describe("where a link goes", () => {
 	 */
 	it("overrules a link that asks for the whole window", () => {
 		const doc = bodyOf('<a href="https://example.com/" target="_top">x</a>');
-		sendLinksToANewTab(doc);
+		applyRules(doc, LINK_RULES);
 		expect(link(doc).target).toBe("_blank");
+	});
+
+	/**
+	 * A sender's own `target="_blank"` was taken as done, and its `rel` with
+	 * it -- `rel="opener"` gave the new tab a handle on this window.
+	 */
+	it("overrules the rel a link that already opens a tab came with", () => {
+		for (const rel of ["opener", "noopener", "noopener noreferrer opener"]) {
+			const doc = bodyOf(
+				`<a href="https://example.com/" target="_blank" rel="${rel}">x</a>`,
+			);
+			applyRules(doc, LINK_RULES);
+			expect(link(doc).getAttribute("rel"), rel).toBe("noopener noreferrer");
+		}
 	});
 
 	it("covers an image map, which is a link with another name", () => {
@@ -88,7 +103,7 @@ describe("where a link goes", () => {
 			'<img src="b.png" usemap="#m"><map name="m">' +
 				'<area shape="rect" coords="0,0,9,9" href="https://example.com/a"></map>',
 		);
-		sendLinksToANewTab(doc);
+		applyRules(doc, LINK_RULES);
 		const area = link(doc, "area") as unknown as HTMLAreaElement;
 		expect(area.target).toBe("_blank");
 		expect(area.rel).toBe("noopener noreferrer");
@@ -101,7 +116,7 @@ describe("where a link goes", () => {
 	 */
 	it("sends a relative link out too, since it resolves to this app", () => {
 		const doc = bodyOf('<a href="/inbox">x</a>');
-		sendLinksToANewTab(doc);
+		applyRules(doc, LINK_RULES);
 		expect(link(doc).target).toBe("_blank");
 	});
 
@@ -114,7 +129,7 @@ describe("where a link goes", () => {
 	it("sends a relative link out even where nothing resolves it", () => {
 		const doc = document.implementation.createHTMLDocument("no base");
 		doc.body.innerHTML = '<a href="/inbox">x</a>';
-		sendLinksToANewTab(doc);
+		applyRules(doc, LINK_RULES);
 		expect(link(doc).getAttribute("target")).toBe("_blank");
 	});
 
@@ -130,7 +145,7 @@ describe("where a link goes", () => {
 	it("takes away a link that could only mean this page", () => {
 		for (const href of ["#", "", "#footer", "  #top  "]) {
 			const doc = bodyOf(`<a href="${href}" target="_self">下へ</a>`);
-			sendLinksToANewTab(doc);
+			applyRules(doc, LINK_RULES);
 			expect(link(doc).hasAttribute("href"), JSON.stringify(href)).toBe(false);
 			expect(link(doc).hasAttribute("target")).toBe(false);
 			expect(link(doc).textContent).toBe("下へ");
@@ -146,7 +161,7 @@ describe("where a link goes", () => {
 	it("reads the whitespace in an address as the browser does", () => {
 		for (const href of ["\u3000", "\u00a0#top"]) {
 			const doc = bodyOf(`<a href="${href}">x</a>`);
-			sendLinksToANewTab(doc);
+			applyRules(doc, LINK_RULES);
 			expect(link(doc).getAttribute("target"), JSON.stringify(href)).toBe(
 				"_blank",
 			);
@@ -165,7 +180,7 @@ describe("where a link goes", () => {
 			"vbscript:x",
 		]) {
 			const doc = bodyOf(`<a href="${href}" target="_blank">x</a>`);
-			sendLinksToANewTab(doc);
+			applyRules(doc, LINK_RULES);
 			expect(link(doc).hasAttribute("href"), href).toBe(false);
 			expect(link(doc).hasAttribute("target"), href).toBe(false);
 		}
@@ -184,7 +199,7 @@ describe("where a link goes", () => {
 			'<a href="mailto:info@example.com">mail</a><a href="tel:+81000">tel</a>' +
 				'<a href="about:blank">a</a><a href="data:text/html,x">d</a><a href="ftp://example.com/x">f</a>',
 		);
-		sendLinksToANewTab(doc);
+		applyRules(doc, LINK_RULES);
 		for (const anchor of doc.body.querySelectorAll("a")) {
 			expect(
 				anchor.getAttribute("target"),
@@ -203,7 +218,7 @@ describe("where a link goes", () => {
 		const doc = bodyOf(
 			'<link rel="stylesheet" href="https://cdn.example/mail.css"><p>x</p>',
 		);
-		sendLinksToANewTab(doc);
+		applyRules(doc, LINK_RULES);
 		const sheet = doc.querySelector("link") as HTMLLinkElement;
 		expect(sheet.getAttribute("rel")).toBe("stylesheet");
 		expect(sheet.hasAttribute("target")).toBe(false);
@@ -211,7 +226,7 @@ describe("where a link goes", () => {
 
 	it("does not fall over on a body with nothing in it", () => {
 		const doc = bodyOf("");
-		expect(() => sendLinksToANewTab(doc)).not.toThrow();
+		expect(() => applyRules(doc, LINK_RULES)).not.toThrow();
 	});
 });
 
@@ -221,7 +236,7 @@ describe("a bare URL in the text", () => {
 			"<pre>詳しくは https://example.com/a をご覧ください</pre>",
 		);
 		linkifyPlainUrls(doc);
-		sendLinksToANewTab(doc);
+		applyRules(doc, LINK_RULES);
 
 		const anchor = link(doc);
 		expect(anchor.getAttribute("href")).toBe("https://example.com/a");
@@ -278,14 +293,14 @@ describe("a message in the spam folder", () => {
 	/**
 	 * The opposite requirement, and it has to stay the opposite: here the
 	 * point is that nothing can be reached at all, so the sweep above must not
-	 * be what runs. prepareLinks picks between them.
+	 * be what runs. prepareFrame picks between them.
 	 */
 	it("has nothing left to press", () => {
 		const doc = bodyOf(
 			'<a href="https://phish.example/" target="_blank">銀行</a>' +
 				'<map name="m"><area href="https://phish.example/a"></map>',
 		);
-		neutralizeLinks(doc);
+		applyRules(doc, [NOTHING_HAS_A_DESTINATION]);
 
 		for (const element of doc.body.querySelectorAll("a, area")) {
 			expect(element.hasAttribute("href")).toBe(false);

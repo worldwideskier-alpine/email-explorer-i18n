@@ -14,11 +14,17 @@
  */
 
 import {
-	EVERY_LINK_OPENS_A_TAB_OR_NOTHING,
+	LINK_RULES,
 	linkifyPlainUrls,
 	NOTHING_HAS_A_DESTINATION,
 } from "./emailLinks";
-import { applyRules, type FrameRule, rulesHold } from "./frameRules";
+import {
+	ANIMATIONS,
+	animationOf,
+	applyRules,
+	type FrameRule,
+	rulesHold,
+} from "./frameRules";
 import { REMOTE_CONTENT_RULES } from "./remoteContent";
 
 /**
@@ -100,18 +106,6 @@ const SHADOW_ROOT_ATTRIBUTES = ["shadowrootmode", "shadowroot"];
  */
 const ANIMATED_ATTRIBUTES_REFUSED = new Set(["href", "xlink:href", "target"]);
 
-/**
- * The SVG animation elements, by the attribute that makes them one. Found by
- * the selector engine: walking every element of a large message and asking
- * each cost as much as a parse, three times over.
- */
-const ANIMATIONS = "[attributeName]";
-
-function animatesSomethingRefused(element: Element): boolean {
-	const name = element.getAttribute("attributeName")?.trim();
-	return name !== undefined && ANIMATED_ATTRIBUTES_REFUSED.has(name);
-}
-
 /** What no message needs and every other rule here would otherwise miss. */
 const WHAT_BOTH_READINGS_CANNOT_SEE_ALIKE: readonly FrameRule[] = [
 	{
@@ -129,8 +123,8 @@ const WHAT_BOTH_READINGS_CANNOT_SEE_ALIKE: readonly FrameRule[] = [
 	},
 	{
 		find: (doc) =>
-			Array.from(doc.querySelectorAll(ANIMATIONS)).filter(
-				animatesSomethingRefused,
+			Array.from(doc.querySelectorAll(ANIMATIONS)).filter((element) =>
+				ANIMATED_ATTRIBUTES_REFUSED.has(animationOf(element).attribute),
 			),
 		fix: (element) => element.remove(),
 	},
@@ -149,16 +143,14 @@ export interface FrameOptions {
  */
 function rulesFor(options: FrameOptions): {
 	before: readonly FrameRule[];
-	links: FrameRule;
+	links: readonly FrameRule[];
 } {
 	return {
 		before: [
 			...WHAT_BOTH_READINGS_CANNOT_SEE_ALIKE,
 			...(options.blockRemoteContent ? REMOTE_CONTENT_RULES : []),
 		],
-		links: options.disableLinks
-			? NOTHING_HAS_A_DESTINATION
-			: EVERY_LINK_OPENS_A_TAB_OR_NOTHING,
+		links: options.disableLinks ? [NOTHING_HAS_A_DESTINATION] : LINK_RULES,
 	};
 }
 
@@ -231,7 +223,7 @@ function wordsOf(doc: Document): string {
  */
 export function prepareFrame(body: string, options: FrameOptions = {}): string {
 	const { before, links } = rulesFor(options);
-	const every = [...before, links];
+	const every = [...before, ...links];
 	let html = frameDocument(body);
 	for (let round = 0; round < ROUNDS; round++) {
 		const doc = parse(html);
@@ -244,7 +236,7 @@ export function prepareFrame(body: string, options: FrameOptions = {}): string {
 				console.error(`could not linkify the bare URLs in a message: ${error}`);
 			}
 		}
-		applyRules(doc, [links]);
+		applyRules(doc, links);
 		html = serialize(doc);
 	}
 	const last = parse(html);

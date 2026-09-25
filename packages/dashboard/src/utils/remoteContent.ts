@@ -27,7 +27,12 @@
  * mends and the check of the frame's own reading asks to come back empty.
  */
 
-import { type FrameRule, removeDestination } from "./frameRules";
+import {
+	ANIMATIONS,
+	animationOf,
+	type FrameRule,
+	removeDestination,
+} from "./frameRules";
 
 /**
  * Attributes that name something to load, on whatever element carries them.
@@ -55,8 +60,13 @@ const FETCHING_ATTRIBUTES = [
  * `<feImage>` is here on the same reading of the SVG spec; Chromium was
  * measured not fetching one, WebKit was not measured, and removing it costs a
  * spam message nothing.
+ *
+ * A selector, so the selector engine finds them rather than every element
+ * with an `href` being asked its name. `feImage` keeps its capital: an HTML
+ * document matches type selectors without regard to case only on HTML
+ * elements, and this is an SVG one.
  */
-const HREF_LOADS = new Set(["link", "image", "use", "feimage"]);
+const HREF_LOADS = "link[*|href], image[*|href], use[*|href], feImage[*|href]";
 
 /**
  * SVG attributes whose value is CSS and may be `url(...)`: measured, `mask=`,
@@ -76,8 +86,17 @@ const URL_ATTRIBUTES = [
 	"marker-end",
 ];
 
-/** `url("...")`, `url('...')` and `url(...)` in any CSS this body carries. */
-const CSS_URL = /url\(\s*(?:"[^"]*"|'[^']*'|[^)]*)\s*\)/gi;
+/**
+ * `url("...")`, `url('...')` and `url(...)` in any CSS this body carries --
+ * and each of them left open at the end of the CSS, which a browser closes for
+ * the sender. Measured: `style="background:url(https://...`, with no `)`,
+ * fetched from the spam folder in all three spellings, because this pattern
+ * asked for the `)` and so never saw it.
+ *
+ * What is inside is captured, once per spelling, for fetchesNothing.
+ */
+const CSS_URL =
+	/url\(\s*(?:"([^"]*)(?:"|$)|'([^']*)(?:'|$)|([^)]*))\s*(?:\)|$)/gi;
 
 /**
  * `image-set()`, which takes bare strings as well as `url()` -- so
@@ -85,13 +104,29 @@ const CSS_URL = /url\(\s*(?:"[^"]*"|'[^']*'|[^)]*)\s*\)/gi;
  * never see. Matched whole, one level of nesting allowed, so a wrapped
  * `image-set(url(a.png) 1x)` goes with it rather than leaving a fragment.
  */
-const CSS_IMAGE_SET = /(?:-webkit-)?image-set\((?:[^()]|\([^()]*\))*\)/gi;
+const CSS_IMAGE_SET =
+	/(?:-webkit-)?image-set\((?:[^()]|\([^()]*(?:\)|$))*(?:\)|$)/gi;
 
 /**
  * `@import`, which fetches a stylesheet without an `url()` around the address
  * -- `@import "https://..."` is legal on its own.
  */
 const CSS_IMPORT = /@import[^;}]*;?/gi;
+
+/**
+ * `url(#gradient)` names something in the message itself and fetches nothing;
+ * rewriting it to `none` took an SVG's own gradient away for no gain.
+ */
+function fetchesNothing(
+	match: string,
+	double?: string,
+	single?: string,
+	bare?: string,
+): string {
+	return (double ?? single ?? bare ?? "").trim().startsWith("#")
+		? match
+		: "none";
+}
 
 /**
  * Rewrites a CSS declaration block or stylesheet so nothing in it loads.
@@ -106,7 +141,7 @@ function stripCssFetches(css: string): string {
 	return css
 		.replace(CSS_IMPORT, "")
 		.replace(CSS_IMAGE_SET, "none")
-		.replace(CSS_URL, "none");
+		.replace(CSS_URL, fetchesNothing);
 }
 
 /**
@@ -167,16 +202,6 @@ function cssWithoutFetches(css: string): string | null {
 	return cssFetches(rewritten) ? null : rewritten;
 }
 
-/** Whether an attribute holding CSS reaches outside the message. */
-function namesAnExternalUrl(value: string): boolean {
-	const read = decodeCssEscapes(value);
-	if (/image-set\(/i.test(read)) return true;
-	for (const match of read.matchAll(/url\(\s*['"]?\s*([^'")]*)/gi)) {
-		if (!match[1].trim().startsWith("#")) return true;
-	}
-	return false;
-}
-
 const all = (doc: Document, selector: string) =>
 	Array.from(doc.querySelectorAll(selector));
 
@@ -203,10 +228,7 @@ export const REMOTE_CONTENT_RULES: readonly FrameRule[] = [
 	{
 		// SVG predates `href` on these and still accepts `xlink:href`, which
 		// removeAttribute("href") alone does not touch.
-		find: (doc) =>
-			all(doc, "[*|href]").filter((element) =>
-				HREF_LOADS.has(element.localName.toLowerCase()),
-			),
+		find: (doc) => all(doc, HREF_LOADS),
 		fix: removeDestination,
 	},
 	{
@@ -234,12 +256,12 @@ export const REMOTE_CONTENT_RULES: readonly FrameRule[] = [
 			all(doc, URL_ATTRIBUTES.map((name) => `[${name}]`).join(", ")).filter(
 				(element) =>
 					URL_ATTRIBUTES.some((name) =>
-						namesAnExternalUrl(element.getAttribute(name) ?? ""),
+						cssFetches(element.getAttribute(name) ?? ""),
 					),
 			),
 		fix(element) {
 			for (const name of URL_ATTRIBUTES) {
-				if (namesAnExternalUrl(element.getAttribute(name) ?? "")) {
+				if (cssFetches(element.getAttribute(name) ?? "")) {
 					element.removeAttribute(name);
 				}
 			}
@@ -247,13 +269,14 @@ export const REMOTE_CONTENT_RULES: readonly FrameRule[] = [
 	},
 	{
 		// The same attributes, given a value by an animation after the markup
-		// is read -- the way an SVG link was given its destination.
+		// is read -- the way an SVG link was given its destination. Only one
+		// that would give them an address: a fill fading from red to blue
+		// fetches nothing, and was being taken away with the rest.
 		find: (doc) =>
-			all(doc, "[attributeName]").filter((element) =>
-				URL_ATTRIBUTES.includes(
-					element.getAttribute("attributeName")?.trim() ?? "",
-				),
-			),
+			all(doc, ANIMATIONS).filter((element) => {
+				const { attribute, values } = animationOf(element);
+				return URL_ATTRIBUTES.includes(attribute) && values.some(cssFetches);
+			}),
 		fix: (element) => element.remove(),
 	},
 ];
