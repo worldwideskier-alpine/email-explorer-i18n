@@ -2,13 +2,13 @@
   <iframe
     class="w-full h-full border-0"
     sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-    :srcdoc="fullHtml"
+    :srcdoc="srcdoc"
   ></iframe>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { prepareLinks } from "@/utils/emailLinks";
+import { prepareFrame } from "@/utils/emailLinks";
 import { stripRemoteContent } from "@/utils/remoteContent";
 
 const props = defineProps<{
@@ -27,7 +27,7 @@ const props = defineProps<{
 }>();
 
 /**
- * The body as the frame will receive it: everything decided here, on the
+ * The document as the frame will receive it: everything decided here, on the
  * string, and nothing left for afterwards.
  *
  * Remote content has to be taken out before the parser sees it, because by
@@ -43,40 +43,15 @@ const props = defineProps<{
  * "This content is blocked". A message is tappable from the first paint, so
  * anything that decides what a tap does has to be true from the first paint.
  *
- * There is no load handler left at all now, and no template ref to reach the
- * frame's document with. See utils/emailLinks.ts.
+ * prepareFrame builds the whole document, not only the body, because what it
+ * checks has to be the exact string the frame parses. See utils/emailLinks.ts.
  */
-const renderedBody = computed(() => {
+const srcdoc = computed(() => {
 	const body = props.blockRemoteContent
 		? stripRemoteContent(props.body)
 		: props.body;
-	return prepareLinks(body, { disable: props.disableLinks });
+	return prepareFrame(body, { disable: props.disableLinks });
 });
-
-const fullHtml = computed(
-	() => `
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <style>
-          body {
-            background-color: #f8f8f8;
-            color: #333;
-            font-family: sans-serif;
-            padding: 1rem;
-          }
-          a {
-            color: #2563eb;
-            text-decoration: underline;
-          }
-        </style>
-      </head>
-      <body>
-        ${renderedBody.value}
-      </body>
-    </html>
-  `,
-);
 
 /**
  * Why this frame may open tabs and may do nothing else.

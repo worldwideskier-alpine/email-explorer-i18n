@@ -46,13 +46,42 @@
  * frame's content alone. What is left is http and https, which is the whole
  * of the problem.
  */
-function leavesTheApp(element: HTMLAnchorElement | HTMLAreaElement): boolean {
-	const written = element.getAttribute("href")?.trim() ?? "";
+const XLINK = "http://www.w3.org/1999/xlink";
+
+/**
+ * Where an element says it goes, whatever kind of element it is.
+ *
+ * Read from the attribute, not from `.href`. On an HTML anchor `.href` is the
+ * resolved string; on an SVG `<a>` it is an SVGAnimatedString, and on a
+ * MathML element it does not exist -- so a test against `.href` quietly
+ * answered "stays here" for both, and an SVG button in a message navigated
+ * the frame. SVG may also spell it `xlink:href`, which the plain attribute
+ * does not see.
+ */
+function destinationOf(element: Element): string | null {
+	return element.getAttribute("href") ?? element.getAttributeNS(XLINK, "href");
+}
+
+/**
+ * Any base will do for telling a relative address from an absolute one, and
+ * using a fixed one keeps the answer from depending on the document it was
+ * asked in. It was `.href`, which resolves against the document's base: the
+ * application's own address in a browser, `about:blank` in a document built
+ * without one, and whatever a `<base>` in the message says in between.
+ */
+const ANY_BASE = "https://relative.invalid/";
+
+function leavesTheApp(element: Element): boolean {
+	const written = destinationOf(element)?.trim() ?? "";
 	if (!written || written.startsWith("#")) return false;
-	// The resolved form, not the written one: a relative href in a message
-	// resolves against this application's own address, and opening *that* in
-	// the frame would put the app inside itself.
-	return /^https?:\/\//i.test(element.href);
+	try {
+		// The URL parser, not a pattern, decides the scheme: it is the one
+		// that strips the tabs and newlines out of `java\tscript:` before
+		// the browser does, so it is the one that agrees with the browser.
+		return /^https?:$/.test(new URL(written, ANY_BASE).protocol);
+	} catch {
+		return false;
+	}
 }
 
 /**
@@ -76,13 +105,17 @@ function leavesTheApp(element: HTMLAnchorElement | HTMLAreaElement): boolean {
  */
 export function sendLinksToANewTab(doc: Document): void {
 	if (!doc.body) return;
-	const links = doc.body.querySelectorAll<HTMLAnchorElement | HTMLAreaElement>(
-		"a[href], area[href]",
-	);
-	for (const link of links) {
-		if (!leavesTheApp(link)) continue;
-		link.target = "_blank";
-		link.rel = "noopener noreferrer";
+	// Every element, not `a` and `area`: a MathML `<a>` with an href is not a
+	// link where it stands, and becomes an HTML one when the frame parses
+	// the markup again -- measured, through a nested-form construct. An
+	// attribute set here survives that; a check against the element's kind
+	// does not. On anything that is not a link, `target` does nothing.
+	for (const element of doc.querySelectorAll("*")) {
+		if (!leavesTheApp(element)) continue;
+		// setAttribute rather than `.target =`: on an SVG `<a>` that property
+		// is a read-only SVGAnimatedString and assigning to it throws.
+		element.setAttribute("target", "_blank");
+		element.setAttribute("rel", "noopener noreferrer");
 	}
 }
 
@@ -172,15 +205,23 @@ export function linkifyPlainUrls(doc: Document): void {
 }
 
 /**
- * Strips every real `<a>` tag's href (and target) so it can't navigate
- * anywhere by any means -- left-click, middle-click, or "open in new tab"
- * from the context menu, none of which a JS click handler alone can stop.
- * The link text stays visible, just inert and visually de-emphasized.
+ * Takes away every destination in the body, so nothing can navigate anywhere
+ * by any means -- left click, middle click, long press, or "open in new tab",
+ * none of which a click handler alone could stop. The words stay visible,
+ * inert and de-emphasised.
+ *
+ * Every element and both spellings. It was `a` and `area`, `href` only, and
+ * an SVG `<a xlink:href="...">` in a phishing message kept its destination:
+ * measured, clicking it navigated the frame to the phishing address. What is
+ * left in the spam folder after this is checked again once the frame's own
+ * parse of it is known; see prepareFrame.
  */
 export function neutralizeLinks(doc: Document): void {
 	if (!doc.body) return;
-	for (const element of doc.body.querySelectorAll("a, area")) {
+	for (const element of doc.querySelectorAll("*")) {
+		if (destinationOf(element) === null) continue;
 		element.removeAttribute("href");
+		element.removeAttributeNS(XLINK, "href");
 		element.removeAttribute("target");
 		if (element instanceof HTMLElement) {
 			element.style.color = "inherit";
@@ -192,30 +233,132 @@ export function neutralizeLinks(doc: Document): void {
 }
 
 /**
- * The whole of it, on the string the frame will be handed.
+ * The document the frame parses, as one string.
  *
- * One parse, because there is no reason to do three. The order is the order
- * it has to be: bare URLs become links first, then every link in the body --
- * the sender's and the ones just made -- is told where to open.
+ * It lives here rather than in the component because it is also what
+ * prepareFrame checks: a check of anything other than the exact string the
+ * frame will be handed is a check of something else.
  *
- * `disable` is the spam folder, where the requirement is the opposite one and
- * the timing matters just as much: while this waited for the frame's `load`,
- * a phishing message's links were live and tappable for as long as its images
- * took to arrive, which is the one message where that is least acceptable.
- *
- * Head and body are both returned for the reason stripRemoteContent gives:
- * a message's `<style>` is parsed into the head and belongs to how it looks.
+ * The doctype is new, and changes nothing for the frame -- measured, a
+ * `srcdoc` document is in no-quirks mode with or without one, because the
+ * spec says so for srcdoc. What it changes is the check. DOMParser applies no
+ * such rule: without a doctype it parsed in quirks mode (measured,
+ * `BackCompat`), which builds a different tree around a `<table>` inside a
+ * `<p>`, so the tree that was inspected was not the tree that was shown.
  */
-export function prepareLinks(
-	html: string,
+export function frameDocument(body: string): string {
+	return `<!doctype html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body {
+            background-color: #f8f8f8;
+            color: #333;
+            font-family: sans-serif;
+            padding: 1rem;
+          }
+          a {
+            color: #2563eb;
+            text-decoration: underline;
+          }
+        </style>
+      </head>
+      <body>
+        ${body}
+      </body>
+    </html>
+  `;
+}
+
+const parse = (html: string) =>
+	new DOMParser().parseFromString(html, "text/html");
+
+const serialize = (doc: Document) =>
+	`<!doctype html>${doc.documentElement.outerHTML}`;
+
+/**
+ * Whether the tree the frame will build is the one that was asked for: in
+ * the spam folder, nothing with a destination at all; anywhere else, nothing
+ * that leaves without saying where to open.
+ */
+function isSafe(doc: Document, disable: boolean): boolean {
+	for (const element of doc.querySelectorAll("*")) {
+		if (disable) {
+			if (destinationOf(element) !== null) return false;
+		} else if (
+			leavesTheApp(element) &&
+			element.getAttribute("target") !== "_blank"
+		) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/** Enough rounds for a mutation to settle; the ordinary case needs one. */
+const ROUNDS = 3;
+
+/**
+ * The string the frame is handed: the body with every link decided, checked
+ * against the frame's own reading of it.
+ *
+ * **Parsed as the frame will parse it.** The body goes into the frame's
+ * document first and that whole document is parsed, so whatever the parser
+ * does with a message's own `<html>`, `<head>` and `<body>` tags happens here
+ * exactly as it will there. The previous version parsed the body on its own
+ * and returned `head.innerHTML + body.innerHTML`, which threw away the
+ * attributes on the message's `<body>` -- measured, a newsletter written as
+ * `<body style="background:#000" bgcolor="#000000">` with white text came
+ * out on this frame's light grey, unreadable, and `dir="rtl"` went with it.
+ * In the frame the parser merges those attributes onto the body it already
+ * has, and now that happens here too, and is serialised with it.
+ *
+ * **Checked by parsing the result again.** Parse, rewrite, serialise, parse
+ * is two readings of the markup, and they can disagree: that is the whole
+ * family of mutation tricks sanitisers are bypassed with. Measured against
+ * the real pipeline with nine known shapes, one got through -- a
+ * nested-`<form>` construct that leaves an `<a>` in the MathML namespace on
+ * the first reading and makes it an HTML link on the second, where it had no
+ * target and navigated the frame. So the output is not trusted because the
+ * rewrite ran; it is trusted when the frame's reading of it passes. If it
+ * does not, the rewrite runs on that reading and the result is read again.
+ *
+ * **And if it never settles, the words only.** A message whose markup keeps
+ * changing under reparsing is not an ordinary message, and showing its text
+ * without any markup cannot be reparsed into anything.
+ *
+ * Linkifying is guarded because it is a convenience and the rest is not. It
+ * once ran unguarded ahead of everything else, and a throw from it -- one
+ * engine's quirk is enough -- took the whole message off the screen:
+ * measured, no frame at all, just a Vue render error.
+ */
+export function prepareFrame(
+	body: string,
 	{ disable = false }: { disable?: boolean } = {},
 ): string {
-	const doc = new DOMParser().parseFromString(html, "text/html");
-	if (disable) {
-		neutralizeLinks(doc);
-	} else {
-		linkifyPlainUrls(doc);
-		sendLinksToANewTab(doc);
+	let html = frameDocument(body);
+	for (let round = 0; round < ROUNDS; round++) {
+		const doc = parse(html);
+		if (round > 0 && isSafe(doc, disable)) return html;
+		if (round === 0 && !disable) {
+			try {
+				linkifyPlainUrls(doc);
+			} catch (error) {
+				console.error(`could not linkify the bare URLs in a message: ${error}`);
+			}
+		}
+		if (disable) neutralizeLinks(doc);
+		else sendLinksToANewTab(doc);
+		html = serialize(doc);
 	}
-	return `${doc.head.innerHTML}${doc.body.innerHTML}`;
+	const last = parse(html);
+	if (isSafe(last, disable)) return html;
+
+	console.warn("a message's markup did not settle; showing its text only");
+	const words = (last.body?.textContent ?? "")
+		.replaceAll("&", "&amp;")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;");
+	return frameDocument(`<pre style="white-space: pre-wrap">${words}</pre>`);
 }

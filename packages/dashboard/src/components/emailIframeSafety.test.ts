@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { frameDocument } from "@/utils/emailLinks";
 
 /**
  * The frame is wired the way the spam folder needs it.
@@ -34,6 +35,27 @@ const views = import.meta.glob("../views/*.vue", {
 const iframe = read(components, "EmailIframe.vue");
 const detail = read(views, "EmailDetail.vue");
 
+/**
+ * The body of the one computed that builds what the frame is given, and
+ * nothing past it.
+ *
+ * Bounded by that computed's own `});`. The pattern this replaced ended at
+ * `\n);`, which the computed it was looking for never had -- so it ran on
+ * lazily into the next computed, and a call moved out of the right one into
+ * the wrong one still passed. Checked here, not assumed: whatever this
+ * returns must not contain a second `computed(`.
+ */
+function srcdocComputed(): string {
+	const found = /const srcdoc = computed\(\(\) => \{([\s\S]*?)\n\}\);/.exec(
+		iframe,
+	)?.[1];
+	if (!found) throw new Error("the srcdoc computed was not found");
+	if (found.includes("computed(")) {
+		throw new Error("the srcdoc match ran past its own computed");
+	}
+	return found;
+}
+
 describe("the frame that shows a message body", () => {
 	/**
 	 * The whole point. `srcdoc` is what the frame parses, and parsing is when
@@ -44,12 +66,12 @@ describe("the frame that shows a message body", () => {
 	it("strips the body before the frame is given it, not after", () => {
 		expect(iframe).toContain("stripRemoteContent");
 
-		const srcdocSource = /const fullHtml = computed\(([\s\S]*?)\n\);/.exec(
-			iframe,
-		)?.[1];
-		expect(srcdocSource).toBeTruthy();
-		expect(srcdocSource).toContain("renderedBody.value");
-		expect(srcdocSource).not.toContain("props.body");
+		// The frame is handed this computed and nothing else, and the raw
+		// body reaches it only through the flag's other branch.
+		expect(iframe).toContain(':srcdoc="srcdoc"');
+		expect(srcdocComputed()).toMatch(
+			/props\.blockRemoteContent\s*\?\s*stripRemoteContent\(props\.body\)\s*:\s*props\.body/,
+		);
 
 		// And there is no afterwards to do it in: the component has no load
 		// handler and no ref to reach the frame's document with.
@@ -74,11 +96,11 @@ describe("the frame that shows a message body", () => {
 	 */
 	it("does not pretend a frame policy is holding anything up", () => {
 		expect(iframe).not.toMatch(/http-equiv/i);
-		const srcdoc = /const fullHtml = computed\(([\s\S]*?)\n\);/.exec(
-			iframe,
-		)?.[1];
-		expect(srcdoc).toBeTruthy();
-		expect(srcdoc).not.toContain("Content-Security-Policy");
+		// The frame's own markup is built in utils/emailLinks.ts now, so it is
+		// asked there -- of what it produces, not of how it is written.
+		const empty = frameDocument("");
+		expect(empty).not.toMatch(/http-equiv/i);
+		expect(empty).not.toContain("Content-Security-Policy");
 	});
 
 	/**
@@ -132,11 +154,7 @@ describe("the frame that shows a message body", () => {
 	 * a middle click, a long press and "open in new tab" never reach it.
 	 */
 	it("decides where a link goes before the frame can be tapped", () => {
-		const body = /const renderedBody = computed\(([\s\S]*?)\n\);/.exec(
-			iframe,
-		)?.[1];
-		expect(body).toBeTruthy();
-		expect(body).toContain("prepareLinks(");
+		expect(srcdocComputed()).toContain("prepareFrame(");
 		// The two ways of being too late.
 		expect(iframe).not.toContain("window.open");
 		expect(iframe).not.toContain('addEventListener("click"');
@@ -150,10 +168,7 @@ describe("the frame that shows a message body", () => {
 	 * servers, so the sender chooses how long that is.
 	 */
 	it("makes a spam message inert on the same string, not later", () => {
-		const body = /const renderedBody = computed\(([\s\S]*?)\n\);/.exec(
-			iframe,
-		)?.[1] as string;
-		expect(body).toContain("disable: props.disableLinks");
+		expect(srcdocComputed()).toContain("disable: props.disableLinks");
 	});
 
 	// Both only under the flag: an ordinary message still shows its pictures.
