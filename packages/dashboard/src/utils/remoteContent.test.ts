@@ -420,45 +420,131 @@ describe("SVG attributes that take url()", () => {
  * address behind one. A pattern pairs an `url(` with the wrong `)` when a
  * comment or a string sits between them; measured, each of these fetched
  * from the spam folder while the match the rule looked at began with `#`.
+ *
+ * Each case also says what has to be left once the address is gone, because
+ * "no address and an element still there" is just as true of CSS dropped
+ * whole -- measured, these tests passed with every such stylesheet emptied.
  */
 describe("an address hidden behind url(#", () => {
 	const hidden = [
 		[
 			"a comment in a style attribute",
-			'<div style="/*url(#*/background:url(https://tracker.example/1.gif)">x</div>',
+			'<div style="color:red;/*url(#*/background:url(https://tracker.example/1.gif)">x</div>',
+			"color:red",
+		],
+		[
+			"a comment, with the address in escapes",
+			'<div style="color:red;/*url(#*/background:u\\rl(https://tracker.example/10.gif)">x</div>',
+			"color:red",
 		],
 		[
 			"a comment in an SVG style",
-			'<svg><rect width="9" height="9" style="/*url(#*/fill:url(https://tracker.example/2.svg#m)"/></svg>',
+			'<svg><rect width="9" height="9" style="color:red;/*url(#*/fill:url(https://tracker.example/2.svg#m)"/></svg>',
+			"color:red",
 		],
 		[
 			"a string in a style attribute",
-			`<div style="content:'url(&quot;#';background:url(https://tracker.example/3.gif)">x</div>`,
+			`<div style="color:red;content:'url(&quot;#';background:url(https://tracker.example/3.gif)">x</div>`,
+			"color:red",
 		],
 		[
 			"a string in a style element",
-			`<style>.a{content:"url('#"}.b{background:url(https://tracker.example/4.gif)}</style><div class="b">x</div>`,
+			`<style>.k{color:red}.a{content:"url('#"}.b{background:url(https://tracker.example/4.gif)}</style><div class="b">x</div>`,
+			".k{color:red}",
 		],
 		[
 			"a string ended by a newline",
-			'<style>.a{fill:url("#g\n);}.b{background:url(https://tracker.example/5.gif)}</style><div class="b">x</div>',
+			'<style>.k{color:red}.a{fill:url("#g\n);}.b{background:url(https://tracker.example/5.gif)}</style><div class="b">x</div>',
+			".k{color:red}",
 		],
 		[
 			"an animation's list of values",
 			'<svg><rect width="9" height="9"><animate attributeName="mask" values="url(#a;url(https://tracker.example/6.svg#m)" dur="1s"/></rect></svg>',
+			"<rect",
 		],
 		[
 			"a comment in an SVG attribute",
 			'<svg><rect width="9" height="9" mask="/*url(#*/url(https://tracker.example/7.svg#m)"/></svg>',
+			"<rect",
 		],
 	];
-	for (const [label, html] of hidden) {
+	for (const [label, html, kept] of hidden) {
 		it(`is found behind ${label}`, () => {
 			const out = spamBody(html);
 			expect(out).not.toContain("tracker.example");
-			// Mended, not given up on: the text-only last resort has no
-			// address in it either.
-			expect(out).toMatch(/<div|<rect/);
+			expect(out).toContain(kept);
 		});
 	}
+});
+
+/**
+ * A `<style>` inside `<svg>` may have child elements, and the browser builds
+ * the sheet from the style's own text only. Measured in Chromium: both of
+ * these fetched, because the check read the children's text as well.
+ */
+describe("a <style> with elements in it", () => {
+	for (const [label, css] of [
+		[
+			"splitting url(#x) from its address",
+			"url(<g>#x) </g>https://tracker.example/8.gif)",
+		],
+		[
+			"splitting the word url itself",
+			"u<g>x</g>rl(https://tracker.example/9.gif)",
+		],
+	]) {
+		it(`is read as the browser reads it, ${label}`, () => {
+			const out = spamBody(
+				`<svg><style>.k{color:red}.a{background:${css}}</style></svg><div class="a">x</div>`,
+			);
+			expect(out).not.toContain("tracker.example");
+			expect(out).toContain(".k{color:red}");
+		});
+	}
+});
+
+/**
+ * CSS skips space, tab and line breaks after `url(`, and nothing else. A
+ * no-break space or U+3000 before `#` makes a relative address, which the
+ * browser fetched -- measured, from this application's own origin.
+ */
+describe("a space CSS does not skip", () => {
+	for (const space of [" ", "　"]) {
+		it(`is not taken for one, ${JSON.stringify(space)}`, () => {
+			const style = spamBody(
+				`<div style="color:red;background:url(${space}#x)">x</div>`,
+			);
+			expect(style).not.toContain(`url(${space}`);
+			expect(style).toContain("color:red");
+			const mask = spamBody(
+				`<svg><rect width="9" height="9" mask="url(${space}#m)"/></svg>`,
+			);
+			expect(mask).not.toContain(`url(${space}`);
+			expect(mask).toContain("<rect");
+		});
+	}
+});
+
+/**
+ * Where the CSS has to be rewritten, a reference into the message still
+ * stays. Rewriting every address took a whole sheet's gradients and clips
+ * away for one `url(http://...)` mentioned in a comment.
+ */
+describe("a reference into the message, beside something that fetches", () => {
+	it("stays when the other is only mentioned in a comment", () => {
+		const out = spamBody(
+			"<style>/* see url(http://x.example/) */ .g{fill:url(#grad)} .c{clip-path:url(#clip)}</style><p>x</p>",
+		);
+		expect(out).not.toContain("x.example");
+		expect(out).toContain(".g{fill:url(#grad)}");
+		expect(out).toContain(".c{clip-path:url(#clip)}");
+	});
+
+	it("stays beside a tracker in the same style", () => {
+		const out = spamBody(
+			'<svg><rect width="9" height="9" style="fill:url(#g);background:url(https://tracker.example/a.gif)"/></svg>',
+		);
+		expect(out).not.toContain("tracker.example");
+		expect(out).toContain("fill:url(#g)");
+	});
 });
