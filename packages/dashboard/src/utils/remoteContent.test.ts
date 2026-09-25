@@ -145,6 +145,32 @@ describe("the CSS a spam message carries", () => {
 		}
 	});
 
+	/**
+	 * CSS closes what the sender left open at its end, so `url(` with no `)`
+	 * is still an address. Measured: all three spellings fetched from the
+	 * spam folder, because the pattern waited for a `)` that never came.
+	 */
+	it("catches an address the CSS never closes", () => {
+		for (const value of [
+			"url(https://tracker.example/a.png",
+			`url("https://tracker.example/a.png`,
+			"url('https://tracker.example/a.png",
+			'image-set("https://tracker.example/a.png" 1x',
+			"image-set(url(https://tracker.example/a.png",
+		]) {
+			const attribute = spamBody(
+				`<div style="color:red;background:${value.replaceAll('"', "&quot;")}">x</div>`,
+			);
+			expect(attribute, value).not.toContain("tracker.example");
+			expect(attribute, value).toContain("<div");
+			const element = spamBody(
+				`<style>.a{color:red;background:${value}</style><div class="a">x</div>`,
+			);
+			expect(element, value).not.toContain("tracker.example");
+			expect(element, value).toContain('<div class="a">');
+		}
+	});
+
 	it("reaches inside a style block, where mail puts most of its styling", () => {
 		const out = spamBody(
 			"<style>.hero { background: url(https://tracker.example/hero.png) no-repeat; }</style><div class='hero'>x</div>",
@@ -325,6 +351,50 @@ describe("SVG attributes that take url()", () => {
 			'<svg><defs><linearGradient id="g"></linearGradient></defs><rect fill="url(#g)" width="9" height="9"/></svg>',
 		);
 		expect(out).toContain('fill="url(#g)"');
+	});
+
+	/**
+	 * Read as CSS the same way in a style, and kept the same way: rewriting
+	 * `url(#g)` to `none` took an SVG's own gradient away and fetched nothing
+	 * less.
+	 */
+	it("leaves a reference inside the message in CSS too", () => {
+		const attribute = spamBody(
+			'<svg><rect style="fill:url(#g);stroke:url( \'#s\' )" width="9" height="9"/></svg>',
+		);
+		expect(attribute).toContain("fill:url(#g)");
+		expect(attribute).toContain("stroke:url( '#s' )");
+		const element = spamBody(
+			'<style>.a{fill:url("#g")}</style><svg><rect class="a" width="9" height="9"/></svg>',
+		);
+		expect(element).toContain('fill:url("#g")');
+	});
+
+	/**
+	 * An animation of one of these is taken away only when it would give it
+	 * an address. A colour changing is not a fetch.
+	 */
+	it("leaves an animation that sets no address", () => {
+		const out = spamBody(
+			'<svg><rect width="9" height="9"><animate attributeName="fill" from="red" to="blue" dur="1s"/>' +
+				'<animate attributeName="stroke" values="red;url(#g);blue" dur="1s"/></rect></svg>',
+		);
+		expect(out).toContain('attributeName="fill"');
+		expect(out).toContain('attributeName="stroke"');
+	});
+
+	it("takes away one that sets an address in any of its values", () => {
+		for (const values of [
+			'values="red;url(https://tracker.example/m.svg#m)"',
+			'from="url(https://tracker.example/m.svg#m)" to="red"',
+			'by="url(https://tracker.example/m.svg#m)"',
+		]) {
+			const out = spamBody(
+				`<svg><rect width="9" height="9"><animate attributeName="fill" ${values} dur="1s"/></rect></svg>`,
+			);
+			expect(out, values).not.toContain("tracker.example");
+			expect(out, values).toContain("<rect");
+		}
 	});
 
 	it("does not let an animation put one back", () => {

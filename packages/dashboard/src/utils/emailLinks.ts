@@ -18,7 +18,6 @@
  */
 
 import {
-	applyRules,
 	destinationOf,
 	type FrameRule,
 	MATHML,
@@ -133,7 +132,7 @@ function linksIn(doc: Document): Element[] {
 }
 
 /**
- * Every link either opens a tab of its own or does nothing at all.
+ * A link that goes somewhere opens a tab of its own.
  *
  * The tab is an attribute rather than a click handler, which is what this
  * replaced. A handler can only answer a left click: a middle click, a long
@@ -142,35 +141,51 @@ function linksIn(doc: Document): Element[] {
  * browser may refuse, at which point the handler has already cancelled the
  * navigation and the link does nothing at all. `target="_blank"` is the
  * browser's own path, is not popup-blocked, and holds for every one of those
- * ways of pressing it. `rel` asks for what `window.open(..., "noopener,
- * noreferrer")` did: no handle back to this window, and no Referer.
+ * ways of pressing it.
  *
- * "Nothing" takes the destination away and leaves the words.
+ * `rel` asks for what `window.open(..., "noopener, noreferrer")` did: no
+ * handle back to this window, and no Referer. It is part of what is checked,
+ * not only what is written: a sender's own `target="_blank" rel="opener"` was
+ * left as it came, because only the target was asked about, and the tab it
+ * opened had `window.opener`. Nothing could be done with it -- measured,
+ * navigating the frame through it threw -- but that was the browser's doing,
+ * not this rule's.
  */
-export const EVERY_LINK_OPENS_A_TAB_OR_NOTHING: FrameRule = {
+const NO_WAY_BACK = "noopener noreferrer";
+
+export const LINKS_THAT_GO_SOMEWHERE_OPEN_A_TAB: FrameRule = {
 	find: (doc) =>
-		linksIn(doc).filter((element) =>
-			linkOpens(destinationOf(element) as string)
-				? element.getAttribute("target") !== "_blank"
-				: true,
+		linksIn(doc).filter(
+			(element) =>
+				linkOpens(destinationOf(element) as string) &&
+				(element.getAttribute("target") !== "_blank" ||
+					element.getAttribute("rel") !== NO_WAY_BACK),
 		),
 	fix(element) {
-		if (linkOpens(destinationOf(element) as string)) {
-			// setAttribute rather than `.target =`: on an SVG `<a>` that
-			// property is a read-only SVGAnimatedString and assigning throws.
-			element.setAttribute("target", "_blank");
-			element.setAttribute("rel", "noopener noreferrer");
-		} else {
-			removeDestination(element);
-			element.removeAttribute("target");
-		}
+		// setAttribute rather than `.target =`: on an SVG `<a>` that property
+		// is a read-only SVGAnimatedString and assigning throws.
+		element.setAttribute("target", "_blank");
+		element.setAttribute("rel", NO_WAY_BACK);
 	},
 };
 
-/** The rule above, applied on its own; for tests of the rule. */
-export function sendLinksToANewTab(doc: Document): void {
-	applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
-}
+/** A link that goes nowhere loses its destination and keeps its words. */
+export const LINKS_THAT_GO_NOWHERE_DO_NOTHING: FrameRule = {
+	find: (doc) =>
+		linksIn(doc).filter(
+			(element) => !linkOpens(destinationOf(element) as string),
+		),
+	fix(element) {
+		removeDestination(element);
+		element.removeAttribute("target");
+	},
+};
+
+/** Every link either opens a tab of its own or does nothing at all. */
+export const LINK_RULES: readonly FrameRule[] = [
+	LINKS_THAT_GO_SOMEWHERE_OPEN_A_TAB,
+	LINKS_THAT_GO_NOWHERE_DO_NOTHING,
+];
 
 /**
  * A bare URL, spelled as the characters a URI is actually made of.
@@ -203,6 +218,9 @@ const TRAILING_PUNCTUATION = /[.,;:!?)\]}、。）」』】]+$/;
  * serialised as a tag and comes back from the frame's parse as the literal
  * characters `<a href=...>` -- measured, in a `<textarea>`, as
  * `see <a href="https://example.com/x" target="_blank" ...>` on screen.
+ *
+ * `iframe` is here for linkify on its own. In a message it never gets that
+ * far: nested documents are removed before linkify runs (messageFrame.ts).
  */
 const NOT_LINKIFIED =
 	"a, script, style, textarea, title, xmp, iframe, noembed, noframes, plaintext";
@@ -221,7 +239,7 @@ const HAS_URL = new RegExp(URL_PATTERN);
  * Where they open is not decided here. It used to be -- this set `target` on
  * the links it made -- and that left the sender's own links as the only ones
  * without it, which is precisely the set that broke. One pass decides that
- * now, for every link in the body, and it runs after this one.
+ * now, for every link in the body (LINK_RULES), and it runs after this one.
  */
 export function linkifyPlainUrls(doc: Document): void {
 	if (!doc.body) return;
@@ -297,8 +315,3 @@ export const NOTHING_HAS_A_DESTINATION: FrameRule = {
 		}
 	},
 };
-
-/** The rule above, applied on its own; for tests of the rule. */
-export function neutralizeLinks(doc: Document): void {
-	applyRules(doc, [NOTHING_HAS_A_DESTINATION]);
-}
