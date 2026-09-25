@@ -17,23 +17,13 @@
  *     untouched.
  */
 
-const XLINK = "http://www.w3.org/1999/xlink";
-
-/**
- * Where an element says it goes, whatever kind of element it is.
- *
- * Read from the attribute, not from `.href`. On an HTML anchor `.href` is the
- * resolved string; on an SVG `<a>` it is an SVGAnimatedString, and on a
- * MathML element it does not exist -- so a test against `.href` quietly
- * answered "stays here" for both, and an SVG button in a message navigated
- * the frame. SVG may also spell it `xlink:href`, which the plain attribute
- * does not see.
- */
-export function destinationOf(element: Element): string | null {
-	return element.getAttribute("href") ?? element.getAttributeNS(XLINK, "href");
-}
-
-const MATHML = "http://www.w3.org/1998/Math/MathML";
+import {
+	applyRules,
+	destinationOf,
+	type FrameRule,
+	MATHML,
+	removeDestination,
+} from "./frameRules";
 
 /**
  * Whether pressing this element can navigate anything.
@@ -62,7 +52,26 @@ export function isLink(element: Element): boolean {
  * `href` in any namespace -- the plain one and SVG's `xlink:href` both --
  * which is what finds a MathML link. isLink decides among them.
  */
-export const LINK_CANDIDATES = "a, area, [*|href]";
+const LINK_CANDIDATES = "a, area, [*|href]";
+
+/**
+ * An address as the URL parser will read it, not as `String.trim` would.
+ *
+ * The parser strips only C0 controls and the ASCII space from the ends, and
+ * tabs and newlines from anywhere. `trim` strips far more -- the ideographic
+ * space, the no-break space -- so `href="　"` read as empty here and as the
+ * relative path `%E3%80%80` in the browser: no target was added, and
+ * pressing it navigated the frame to this application's own address and took
+ * the message away. Measured, and the same for `href=" #top"`.
+ */
+function asTheUrlParserReadsIt(written: string): string {
+	// Every code point up to U+0020 is a C0 control or the space.
+	let start = 0;
+	let end = written.length;
+	while (start < end && written.charCodeAt(start) <= 0x20) start++;
+	while (end > start && written.charCodeAt(end - 1) <= 0x20) end--;
+	return written.slice(start, end).replace(/[\t\n\r]/g, "");
+}
 
 /**
  * Any base will do for telling what scheme an address has, and a fixed one
@@ -75,68 +84,92 @@ const ANY_BASE = "https://relative.invalid/";
 
 const HTTP_PREFIX = /^https?:\/\//i;
 
-/** The schemes that must never be given a tab of their own to run in. */
+/** The schemes that must never be given anywhere to run. */
 const SCRIPT_SCHEMES = new Set(["javascript:", "vbscript:"]);
 
 /**
- * Whether a click on this has to open somewhere other than the frame.
+ * What pressing a link with this destination must do: open a tab of its own,
+ * or nothing.
  *
- * Everything with a destination does, except two kinds. A bare `#section` is
- * a jump within the message and stays where it is -- in a new tab it would
- * open `about:srcdoc`, a blank page. And a script URL gets no tab at all: in
- * the frame it is inert, because the frame runs no scripts.
+ * Nothing, for three kinds, and each was measured taking the message away:
  *
- * This was "http and https", on the reasoning that other schemes leave the
- * frame alone. Measured, they do not: `about:blank` replaced the message with
- * a blank page, and `data:`, `ftp:` and even `mailto:` ended in the same grey
- * "This content is blocked" as any external link, `frame-src` refusing the
- * navigation before anything could hand it to a mail program. The click
- * handler this replaced had opened every scheme in a new tab; narrowing it
- * to two was a regression, not a refinement.
+ *   - An empty href, or one that is only a `#fragment`. A `srcdoc` document
+ *     resolves those against the page that holds it, not against itself, so
+ *     `href="#"` -- common in marketing templates -- and `#section` both meant
+ *     this application's own address, and pressing either navigated the frame
+ *     there, where the page's `frame-ancestors 'none'` refused it. They were
+ *     left alone here on the belief that they jump within the message; they
+ *     cannot, with or without help -- rewritten to `about:srcdoc#section` the
+ *     message stayed but did not move, because a frame with no scripts has no
+ *     way to scroll itself to a fragment.
+ *   - A script URL. The frame runs none, but a sender's own `target="_blank"`
+ *     on one survived, and the only thing that stopped the unsandboxed tab
+ *     from running it was the page's CSP ("Refused to run the JavaScript
+ *     URL"). Nothing here should rest on one layer that is not its own.
+ *   - An address the URL parser cannot read, which no browser follows.
+ *
+ * Everything else opens a tab. That was once "http and https", and
+ * `about:blank`, `data:`, `ftp:` and `mailto:` all took the message away.
  */
-export function opensElsewhere(element: Element): boolean {
-	const written = destinationOf(element)?.trim() ?? "";
-	if (!written || written.startsWith("#")) return false;
+export function linkOpens(destination: string): boolean {
+	const read = asTheUrlParserReadsIt(destination);
+	if (!read || read.startsWith("#")) return false;
 	// Nearly every link in a message is spelled like this, and a string that
 	// begins with it has that scheme whatever follows -- so the answer is
-	// known without asking the URL parser, which was most of the cost of
-	// this rule on a large message (measured, some 5 ms per pass over 900
-	// links).
-	if (HTTP_PREFIX.test(written)) return true;
+	// known without asking the URL parser, which was most of the cost of this
+	// rule on a large message (measured, some 5 ms per pass over 900 links).
+	if (HTTP_PREFIX.test(read)) return true;
 	try {
-		// The URL parser decides the scheme, not a pattern: it strips the
-		// tab out of `java\tscript:` exactly as the browser will.
-		return !SCRIPT_SCHEMES.has(new URL(written, ANY_BASE).protocol);
+		return !SCRIPT_SCHEMES.has(new URL(read, ANY_BASE).protocol);
 	} catch {
-		// Not parseable is not navigable; the browser will not go there.
 		return false;
 	}
 }
 
+function linksIn(doc: Document): Element[] {
+	return Array.from(doc.querySelectorAll(LINK_CANDIDATES)).filter(
+		(element) => isLink(element) && destinationOf(element) !== null,
+	);
+}
+
 /**
- * Every link that goes somewhere opens a tab of its own.
+ * Every link either opens a tab of its own or does nothing at all.
  *
- * Done as an attribute rather than as a click handler, which is what this
+ * The tab is an attribute rather than a click handler, which is what this
  * replaced. A handler can only answer a left click: a middle click, a long
  * press, "open in new tab" from the context menu and a keyboard activation
  * all go around it -- and `window.open` from a handler is a popup, which a
  * browser may refuse, at which point the handler has already cancelled the
  * navigation and the link does nothing at all. `target="_blank"` is the
  * browser's own path, is not popup-blocked, and holds for every one of those
- * ways of pressing it.
+ * ways of pressing it. `rel` asks for what `window.open(..., "noopener,
+ * noreferrer")` did: no handle back to this window, and no Referer.
  *
- * `rel` is set to what `window.open(..., "noopener,noreferrer")` was asking
- * for, so nothing about what the destination is told changes: no reference
- * back to this window, and no Referer header.
+ * "Nothing" takes the destination away and leaves the words.
  */
+export const EVERY_LINK_OPENS_A_TAB_OR_NOTHING: FrameRule = {
+	find: (doc) =>
+		linksIn(doc).filter((element) =>
+			linkOpens(destinationOf(element) as string)
+				? element.getAttribute("target") !== "_blank"
+				: true,
+		),
+	fix(element) {
+		if (linkOpens(destinationOf(element) as string)) {
+			// setAttribute rather than `.target =`: on an SVG `<a>` that
+			// property is a read-only SVGAnimatedString and assigning throws.
+			element.setAttribute("target", "_blank");
+			element.setAttribute("rel", "noopener noreferrer");
+		} else {
+			removeDestination(element);
+			element.removeAttribute("target");
+		}
+	},
+};
+
+/** The rule above, applied on its own; for tests of the rule. */
 export function sendLinksToANewTab(doc: Document): void {
-	for (const element of doc.querySelectorAll(LINK_CANDIDATES)) {
-		if (!isLink(element) || !opensElsewhere(element)) continue;
-		// setAttribute rather than `.target =`: on an SVG `<a>` that property
-		// is a read-only SVGAnimatedString and assigning to it throws.
-		element.setAttribute("target", "_blank");
-		element.setAttribute("rel", "noopener noreferrer");
-	}
+	applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 }
 
 /**
@@ -164,6 +197,16 @@ const URL_PATTERN = String.raw`https?:\/\/[A-Za-z0-9\-._~:/?#\[\]@!$&()*+,;=%]+`
 // ASCII), or a bare trailing slash-less sentence terminator.
 const TRAILING_PUNCTUATION = /[.,;:!?)\]}、。）」』】]+$/;
 
+/**
+ * Where a URL is left as text. Inside a link it is one already. The rest hold
+ * text that the parser never reads as markup, so an `<a>` added inside one is
+ * serialised as a tag and comes back from the frame's parse as the literal
+ * characters `<a href=...>` -- measured, in a `<textarea>`, as
+ * `see <a href="https://example.com/x" target="_blank" ...>` on screen.
+ */
+const NOT_LINKIFIED =
+	"a, script, style, textarea, title, xmp, iframe, noembed, noframes, plaintext";
+
 /** Built once; without the `g` flag `test` keeps no state between calls. */
 const HAS_URL = new RegExp(URL_PATTERN);
 
@@ -171,7 +214,8 @@ const HAS_URL = new RegExp(URL_PATTERN);
  * Plain-text emails are stored as an escaped `<pre>` block (see
  * plain-text-to-html.ts) with bare URLs as plain text, and even genuine
  * HTML emails sometimes include a bare URL outside any `<a>`. Walk text
- * nodes (skipping ones already inside a link, script, or style) and wrap
+ * nodes (skipping ones already inside a link, and ones whose container the
+ * parser reads as text; see NOT_LINKIFIED) and wrap
  * URL-looking substrings in real `<a>` elements so they're clickable.
  *
  * Where they open is not decided here. It used to be -- this set `target` on
@@ -191,7 +235,7 @@ export function linkifyPlainUrls(doc: Document): void {
 				return NodeFilter.FILTER_REJECT;
 			}
 			const parent = (node as Text).parentElement;
-			return !parent || parent.closest("a, script, style")
+			return !parent || parent.closest(NOT_LINKIFIED)
 				? NodeFilter.FILTER_REJECT
 				: NodeFilter.FILTER_ACCEPT;
 		},
@@ -231,21 +275,19 @@ export function linkifyPlainUrls(doc: Document): void {
 }
 
 /**
- * Takes away every destination in the body, so nothing can navigate anywhere
- * by any means -- left click, middle click, long press, or "open in new tab",
- * none of which a click handler alone could stop. The words stay visible,
- * inert and de-emphasised.
+ * The spam folder's rule: nothing has a destination at all, so nothing can
+ * navigate anywhere by any means -- left click, middle click, long press, or
+ * "open in new tab", none of which a click handler alone could stop. The
+ * words stay visible, inert and de-emphasised.
  *
  * Every element and both spellings. It was `a` and `area`, `href` only, and
  * an SVG `<a xlink:href="...">` in a phishing message kept its destination:
- * measured, clicking it navigated the frame to the phishing address. What is
- * left in the spam folder after this is checked again once the frame's own
- * parse of it is known; see prepareFrame in messageFrame.ts.
+ * measured, clicking it navigated the frame to the phishing address.
  */
-export function neutralizeLinks(doc: Document): void {
-	for (const element of doc.querySelectorAll("[*|href]")) {
-		element.removeAttribute("href");
-		element.removeAttributeNS(XLINK, "href");
+export const NOTHING_HAS_A_DESTINATION: FrameRule = {
+	find: (doc) => Array.from(doc.querySelectorAll("[*|href]")),
+	fix(element) {
+		removeDestination(element);
 		element.removeAttribute("target");
 		if (element instanceof HTMLElement) {
 			element.style.color = "inherit";
@@ -253,5 +295,10 @@ export function neutralizeLinks(doc: Document): void {
 			element.style.cursor = "text";
 			element.title = "";
 		}
-	}
+	},
+};
+
+/** The rule above, applied on its own; for tests of the rule. */
+export function neutralizeLinks(doc: Document): void {
+	applyRules(doc, [NOTHING_HAS_A_DESTINATION]);
 }

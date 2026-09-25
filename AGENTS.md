@@ -225,9 +225,18 @@ fork's work. This fork ships by being forked.
   and SMIL animations of `href`/`target`. Each of those was measured letting
   a link or a spam-folder pixel through. Destinations are read from the
   attribute (`href` or `xlink:href`), never from `.href`, which is not a
-  string on SVG and does not exist on MathML; and every scheme but a
-  `#fragment` or a script URL opens a new tab -- `mailto:` and `about:blank`
-  in the frame were measured taking the message away too.
+  string on SVG and does not exist on MathML. Every link either opens a new
+  tab or has its destination taken away: `mailto:` and `about:blank` in the
+  frame were measured taking the message away, and so were `href="#"`, `""`
+  and `#section` -- a `srcdoc` document resolves those against the page, not
+  itself, and no in-message jump is possible without scripts. Addresses are
+  read as the URL parser reads them (`trim` strips more). Every rule is one
+  `FrameRule` (`utils/frameRules.ts`): the rewrite mends what `find` returns
+  and the check asks it to return nothing, so the two cannot drift. In the
+  spam folder, CSS is matched after its escapes are decoded (`u\rl(` fetched
+  otherwise) and SVG attributes that take `url()` are read as CSS. A policy of
+  the frame's own does not help: a `<meta>` CSP in the `srcdoc` and the
+  iframe's `csp` attribute were both measured holding nothing back.
 - **Dashboard theming.** `index.html` carries the only page background and it
   has both halves (`bg-gray-100 text-gray-900 dark:bg-gray-900
   dark:text-gray-100`); cards use `bg-white dark:bg-gray-800` and follow the

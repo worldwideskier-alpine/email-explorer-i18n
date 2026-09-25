@@ -22,7 +22,12 @@
  *
  * And it is the only thing doing it: see the note at the foot of this file
  * for why the frame has no policy of its own to fall back on.
+ *
+ * Each rule here is a FrameRule (frameRules.ts): one `find` that the rewrite
+ * mends and the check of the frame's own reading asks to come back empty.
  */
+
+import { type FrameRule, removeDestination } from "./frameRules";
 
 /**
  * Attributes that name something to load, on whatever element carries them.
@@ -47,8 +52,29 @@ const FETCHING_ATTRIBUTES = [
  * On `<a>` it is a destination and stays -- a reader may still want to see
  * where a link points, and links are dealt with separately. On a stylesheet
  * link, or on SVG's `<image>` and `<use>`, it is fetched on sight.
+ * `<feImage>` is here on the same reading of the SVG spec; Chromium was
+ * measured not fetching one, WebKit was not measured, and removing it costs a
+ * spam message nothing.
  */
-const HREF_LOADS = new Set(["LINK", "IMAGE", "USE"]);
+const HREF_LOADS = new Set(["link", "image", "use", "feimage"]);
+
+/**
+ * SVG attributes whose value is CSS and may be `url(...)`: measured, `mask=`,
+ * `filter=`, `clip-path=` and `cursor=` each fetched from the spam folder,
+ * because only `style` was being read as CSS. A reference inside the message
+ * itself -- `url(#gradient)` -- fetches nothing and stays.
+ */
+const URL_ATTRIBUTES = [
+	"mask",
+	"filter",
+	"clip-path",
+	"cursor",
+	"fill",
+	"stroke",
+	"marker-start",
+	"marker-mid",
+	"marker-end",
+];
 
 /** `url("...")`, `url('...')` and `url(...)` in any CSS this body carries. */
 const CSS_URL = /url\(\s*(?:"[^"]*"|'[^']*'|[^)]*)\s*\)/gi;
@@ -83,129 +109,176 @@ function stripCssFetches(css: string): string {
 		.replace(CSS_URL, "none");
 }
 
-/** A stylesheet link fetches on sight; a meta refresh navigates with no click. */
-const REMOVED_OUTRIGHT = 'link, meta[http-equiv="refresh" i]';
-
-const XLINK = "http://www.w3.org/1999/xlink";
-
 /**
- * Every element either pass below has anything to do with, found by the
- * selector engine: one with a fetching attribute, one of the elements whose
- * `href` loads, or one with a `style` to rewrite. Asking each of the
- * thousands of elements in a large message in turn was the whole cost of
- * this pass (measured, some 6 ms of removeAttribute calls that found
- * nothing), and the answer is the same set.
- */
-const MAY_FETCH = [
-	...FETCHING_ATTRIBUTES.map((attribute) => `[${attribute}]`),
-	...[...HREF_LOADS].map((tag) => tag.toLowerCase()),
-	"[style]",
-].join(", ");
-
-/**
- * Takes every automatic fetch out of a parsed document, in place.
+ * CSS with its escapes read the way CSS reads them.
  *
- * Works on the document rather than on a string so that it can run inside
- * the frame's own parse (prepareFrame, messageFrame.ts). It used to be the
- * string version below, called first, and that returned the head and body of
- * a separate parse -- which threw away the message's `<body>` attributes,
- * so a spam message written on a black background came out as white text on
- * the frame's light grey. On the frame's document the `<body>` element is one
- * of the elements walked here, so a `background` attribute on it goes the
- * way any other does and its colour and direction stay.
+ * `u\rl(` is the `url(` function to a browser, and so are `u\72 l(` and
+ * `@\69mport` to theirs -- CSS lets any character of an identifier be written
+ * as `\` and the character, or `\` and its code in hex. Measured: all four
+ * spellings fetched from the spam folder, because the patterns above were
+ * matched against the characters as written. This is CSS Syntax's "consume an
+ * escaped code point", so the patterns can be matched against what the
+ * browser will see.
  *
- * The document DOMParser returns has no browsing context, so building it
- * loads nothing, which is the one property this cannot do without.
+ * Written out rather than borrowed from the browser: Chromium's own CSS
+ * parser does resolve these (measured, `u\rl(x)` comes back as `url("x")`),
+ * but jsdom's does not -- it drops the declaration outright -- so a rule that
+ * leaned on it would pass its tests for the wrong reason.
  */
-export function stripRemoteContentFrom(doc: Document): void {
-	// A stylesheet link is a fetch with nothing to show for it here, and a
-	// meta refresh navigates the frame to an address of the sender's choosing
-	// with no click at all -- which reports the open just as well as a pixel.
-	for (const el of Array.from(doc.querySelectorAll(REMOVED_OUTRIGHT))) {
-		el.remove();
-	}
+export function decodeCssEscapes(css: string): string {
+	return css.replace(
+		/\\(?:([0-9a-fA-F]{1,6})(?:\r\n|[ \t\n\r\f])?|([\s\S]))/g,
+		(_, hex: string | undefined, other: string | undefined) => {
+			if (hex !== undefined) {
+				const code = Number.parseInt(hex, 16);
+				const invalid =
+					code === 0 || code > 0x10ffff || (code >= 0xd800 && code <= 0xdfff);
+				return invalid ? "�" : String.fromCodePoint(code);
+			}
+			// A backslash before a newline continues a string and is not an
+			// escape anywhere else; dropping it is the reading that finds more.
+			return other === "\n" || other === "\r" || other === "\f"
+				? ""
+				: (other as string);
+		},
+	);
+}
 
-	for (const el of Array.from(doc.querySelectorAll(MAY_FETCH))) {
-		for (const attribute of FETCHING_ATTRIBUTES) {
-			el.removeAttribute(attribute);
-		}
-		if (HREF_LOADS.has(el.tagName.toUpperCase())) {
-			el.removeAttribute("href");
-			// SVG predates `href` on these elements and still accepts the
-			// namespaced spelling, which removeAttribute("href") does not touch.
-			el.removeAttributeNS(XLINK, "href");
-		}
-
-		const style = el.getAttribute("style");
-		if (style) el.setAttribute("style", stripCssFetches(style));
-	}
-
-	for (const el of Array.from(doc.querySelectorAll("style"))) {
-		el.textContent = stripCssFetches(el.textContent ?? "");
-	}
+/** Whether CSS fetches anything, read as written or as a browser reads it. */
+function cssFetches(css: string): boolean {
+	if (stripCssFetches(css) !== css) return true;
+	if (!css.includes("\\")) return false;
+	const read = decodeCssEscapes(css);
+	return stripCssFetches(read) !== read;
 }
 
 /**
- * Whether anything in a parsed document would still be fetched -- asked of
- * the frame's own reading of the markup after the pass above, which is the
- * only reading that decides what goes out.
+ * CSS with nothing left in it that fetches, or null when there is no such
+ * thing short of dropping it.
  *
- * The same rules as the pass, stated as a question: what the pass would
- * remove or rewrite, this reports.
+ * The ordinary case is the rewrite above. The other is a fetch that appears
+ * only once the escapes are read -- a sender spelling `url(` so that a filter
+ * will not see it -- and that CSS is dropped whole rather than decoded and
+ * written back: decoding changes the meaning of an escape that was there for
+ * a reason, such as a quote inside a string.
  */
-export function fetchesSomething(doc: Document): boolean {
-	if (doc.querySelector(REMOVED_OUTRIGHT)) return true;
-	for (const el of Array.from(doc.querySelectorAll(MAY_FETCH))) {
-		if (FETCHING_ATTRIBUTES.some((attribute) => el.hasAttribute(attribute))) {
-			return true;
-		}
-		if (
-			HREF_LOADS.has(el.tagName.toUpperCase()) &&
-			(el.hasAttribute("href") || el.hasAttributeNS(XLINK, "href"))
-		) {
-			return true;
-		}
-		const style = el.getAttribute("style");
-		if (style && stripCssFetches(style) !== style) return true;
-	}
-	for (const el of Array.from(doc.querySelectorAll("style"))) {
-		const css = el.textContent ?? "";
-		if (stripCssFetches(css) !== css) return true;
+function cssWithoutFetches(css: string): string | null {
+	const rewritten = stripCssFetches(css);
+	return cssFetches(rewritten) ? null : rewritten;
+}
+
+/** Whether an attribute holding CSS reaches outside the message. */
+function namesAnExternalUrl(value: string): boolean {
+	const read = decodeCssEscapes(value);
+	if (/image-set\(/i.test(read)) return true;
+	for (const match of read.matchAll(/url\(\s*['"]?\s*([^'")]*)/gi)) {
+		if (!match[1].trim().startsWith("#")) return true;
 	}
 	return false;
 }
 
+const all = (doc: Document, selector: string) =>
+	Array.from(doc.querySelectorAll(selector));
+
 /**
- * The same pass on a string, for tests that want to ask about markup
- * directly. The message frame does not use it: it runs the pass inside its
- * one parse of the whole frame document (see stripRemoteContentFrom). This
- * returns a fragment's head and body, which is right for a fragment and was
- * wrong for a message, whose `<body>` attributes it drops.
+ * Everything that makes displaying a message fetch something, one rule per
+ * way of doing it. The order matters only for the first: an element removed
+ * outright needs nothing else done to it.
  */
-export function stripRemoteContent(html: string): string {
-	if (!html) return "";
-	const doc = new DOMParser().parseFromString(html, "text/html");
-	stripRemoteContentFrom(doc);
-	return `${doc.head.innerHTML}${doc.body.innerHTML}`;
-}
+export const REMOTE_CONTENT_RULES: readonly FrameRule[] = [
+	{
+		// A stylesheet link is a fetch with nothing to show for it here, and a
+		// meta refresh navigates the frame to an address of the sender's
+		// choosing with no click -- which reports the open as well as a pixel.
+		find: (doc) => all(doc, 'link, meta[http-equiv="refresh" i]'),
+		fix: (element) => element.remove(),
+	},
+	{
+		find: (doc) =>
+			all(doc, FETCHING_ATTRIBUTES.map((name) => `[${name}]`).join(", ")),
+		fix(element) {
+			for (const name of FETCHING_ATTRIBUTES) element.removeAttribute(name);
+		},
+	},
+	{
+		// SVG predates `href` on these and still accepts `xlink:href`, which
+		// removeAttribute("href") alone does not touch.
+		find: (doc) =>
+			all(doc, "[*|href]").filter((element) =>
+				HREF_LOADS.has(element.localName.toLowerCase()),
+			),
+		fix: removeDestination,
+	},
+	{
+		find: (doc) =>
+			all(doc, "[style]").filter((element) =>
+				cssFetches(element.getAttribute("style") ?? ""),
+			),
+		fix(element) {
+			const css = cssWithoutFetches(element.getAttribute("style") ?? "");
+			if (css === null) element.removeAttribute("style");
+			else element.setAttribute("style", css);
+		},
+	},
+	{
+		find: (doc) =>
+			all(doc, "style").filter((element) =>
+				cssFetches(element.textContent ?? ""),
+			),
+		fix(element) {
+			element.textContent = cssWithoutFetches(element.textContent ?? "") ?? "";
+		},
+	},
+	{
+		find: (doc) =>
+			all(doc, URL_ATTRIBUTES.map((name) => `[${name}]`).join(", ")).filter(
+				(element) =>
+					URL_ATTRIBUTES.some((name) =>
+						namesAnExternalUrl(element.getAttribute(name) ?? ""),
+					),
+			),
+		fix(element) {
+			for (const name of URL_ATTRIBUTES) {
+				if (namesAnExternalUrl(element.getAttribute(name) ?? "")) {
+					element.removeAttribute(name);
+				}
+			}
+		},
+	},
+	{
+		// The same attributes, given a value by an animation after the markup
+		// is read -- the way an SVG link was given its destination.
+		find: (doc) =>
+			all(doc, "[attributeName]").filter((element) =>
+				URL_ATTRIBUTES.includes(
+					element.getAttribute("attributeName")?.trim() ?? "",
+				),
+			),
+		fix: (element) => element.remove(),
+	},
+];
 
 /*
  * A note on the second layer that isn't here.
  *
- * The obvious belt to put behind this is a Content-Security-Policy of the
- * frame's own -- `img-src 'none'` and the rest -- which would catch anything
- * the passes above have not heard of. It was written, and then it was
- * measured: a `<meta http-equiv="Content-Security-Policy">` inside a `srcdoc`
- * document is **not enforced**. The element parses and is there in the DOM,
- * and every image in the body is fetched anyway. Chromium 1194, checked both
- * in this app and on a bare page with nothing else on it.
+ * The obvious belt to put behind this is a policy of the frame's own --
+ * `img-src 'none'` and the rest -- which would catch anything the rules above
+ * have not heard of. Two ways of giving the frame one were measured in
+ * Chromium 1194 against the same payloads (a plain image, an escaped CSS
+ * `url()`, an SVG filter image), and neither held a single fetch back: a
+ * `<meta http-equiv="Content-Security-Policy">` first in the `srcdoc`
+ * document's head, and the iframe's own `csp` attribute. Both fetched exactly
+ * what a frame with neither fetched. The frame has no response to attach a
+ * header to, and it inherits the page's policy, which has to allow images
+ * because the inbox displays them.
  *
- * So it was taken out rather than left in place looking like protection. The
- * frame carries no header of its own -- it has no response to attach one to
- * -- and it inherits the page's policy, which has to allow images because the
- * inbox displays them.
+ * The one arrangement that would carry a policy of its own is serving the
+ * message from a Worker route with its own header -- which this application
+ * cannot do as things stand, because its requests authenticate with a header
+ * that a frame's `src` does not carry.
  *
- * Which means the passes above are not a belt, they are the whole thing, and
- * they are load-bearing. Anything added to a message body that can name an
- * address has to be added to them too; nothing else will stop it.
+ * So the rules above are not a belt, they are the whole thing, and they are
+ * load-bearing. Anything that can name an address has to be added to them,
+ * and the check of the frame's reading is what finds one added to the
+ * rewrite and not the check -- they are the same rule now.
  */

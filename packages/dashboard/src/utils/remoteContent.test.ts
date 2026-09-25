@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { stripRemoteContent } from "./remoteContent";
+import { prepareFrame } from "./messageFrame";
+import { decodeCssEscapes } from "./remoteContent";
 
 /**
  * Everything here is asked of the *string*, not of a rendered frame.
@@ -8,7 +9,21 @@ import { stripRemoteContent } from "./remoteContent";
  * address still in it has already been fetched by the time any later pass
  * could remove it, so "the markup carries no address" is the only form of the
  * question whose answer arrives in time.
+ *
+ * Asked through prepareFrame, which is how the spam folder reaches these
+ * rules, and of the frame's own reading of what it returns. These tests used
+ * to call a string version of the pass that nothing in production used any
+ * more -- it parsed separately and returned head and body, so they passed
+ * against a path the frame never took.
  */
+
+/** A spam message's body, as the frame will read it. */
+function spamBody(html: string): string {
+	return new DOMParser().parseFromString(
+		prepareFrame(html, { blockRemoteContent: true }),
+		"text/html",
+	).body.innerHTML;
+}
 
 /** What a browser would go and get, spelled every way this has to survive. */
 const fetchesSomething = (html: string) =>
@@ -16,7 +31,7 @@ const fetchesSomething = (html: string) =>
 
 describe("what a spam message is allowed to load", () => {
 	it("takes the address off an image", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			'<p>hello</p><img src="https://tracker.example/pixel.gif" alt="">',
 		);
 		expect(fetchesSomething(out)).toBe(false);
@@ -30,14 +45,14 @@ describe("what a spam message is allowed to load", () => {
 	 */
 	it("takes it off an image nobody can see either", () => {
 		expect(
-			stripRemoteContent(
+			spamBody(
 				'<img src="https://tracker.example/o.gif?id=deadbeef" width="1" height="1" style="display:none">',
 			),
 		).not.toContain("tracker.example");
 	});
 
 	it("leaves the element behind so its alt text still says what was there", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			'<img src="https://tracker.example/logo.png" alt="SAISON">',
 		);
 		expect(out).toContain("<img");
@@ -45,7 +60,7 @@ describe("what a spam message is allowed to load", () => {
 	});
 
 	it("takes every candidate out of a srcset, not just the first", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			'<img src="https://a.example/1.png" srcset="https://b.example/2.png 2x, https://c.example/3.png 3x">',
 		);
 		expect(fetchesSomething(out)).toBe(false);
@@ -53,14 +68,14 @@ describe("what a spam message is allowed to load", () => {
 
 	// Older than CSS, still honoured, and still a request.
 	it("knows the attributes that predate CSS", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			'<table background="https://tracker.example/bg.png"><tr><td><img lowsrc="https://tracker.example/low.gif"></td></tr></table>',
 		);
 		expect(fetchesSomething(out)).toBe(false);
 	});
 
 	it("silences the things that play by themselves", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			'<video poster="https://tracker.example/p.jpg" src="https://tracker.example/v.mp4"></video>' +
 				'<audio><source src="https://tracker.example/a.mp3"></audio>' +
 				'<object data="https://tracker.example/o.swf"></object>',
@@ -69,7 +84,7 @@ describe("what a spam message is allowed to load", () => {
 	});
 
 	it("drops a stylesheet link, which is a fetch with nothing to show", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			'<link rel="stylesheet" href="https://tracker.example/mail.css"><p>hi</p>',
 		);
 		expect(fetchesSomething(out)).toBe(false);
@@ -82,7 +97,7 @@ describe("what a spam message is allowed to load", () => {
 	 * as well as a pixel does.
 	 */
 	it("drops a meta refresh", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			'<meta http-equiv="refresh" content="0;url=https://tracker.example/opened"><p>hi</p>',
 		);
 		expect(fetchesSomething(out)).toBe(false);
@@ -90,7 +105,7 @@ describe("what a spam message is allowed to load", () => {
 	});
 
 	it("keeps SVG from fetching through either spelling of href", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			'<svg><image href="https://tracker.example/a.png"></image>' +
 				'<image xlink:href="https://tracker.example/b.png"></image>' +
 				'<use href="https://tracker.example/s.svg#i"></use></svg>',
@@ -99,15 +114,15 @@ describe("what a spam message is allowed to load", () => {
 	});
 
 	it("does not spare an inline attachment either", () => {
-		expect(
-			stripRemoteContent('<img src="cid:logo@example" alt="logo">'),
-		).not.toContain("cid:");
+		expect(spamBody('<img src="cid:logo@example" alt="logo">')).not.toContain(
+			"cid:",
+		);
 	});
 });
 
 describe("the CSS a spam message carries", () => {
 	it("turns a background image into no background image", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			'<div style="background-image: url(https://tracker.example/bg.png); color: red">x</div>',
 		);
 		expect(fetchesSomething(out)).toBe(false);
@@ -125,15 +140,13 @@ describe("the CSS a spam message carries", () => {
 			"url( 'https://tracker.example/a.png' )",
 		]) {
 			expect(
-				fetchesSomething(
-					stripRemoteContent(`<div style="background: ${value}">x</div>`),
-				),
+				fetchesSomething(spamBody(`<div style="background: ${value}">x</div>`)),
 			).toBe(false);
 		}
 	});
 
 	it("reaches inside a style block, where mail puts most of its styling", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			"<style>.hero { background: url(https://tracker.example/hero.png) no-repeat; }</style><div class='hero'>x</div>",
 		);
 		expect(fetchesSomething(out)).toBe(false);
@@ -145,7 +158,7 @@ describe("the CSS a spam message carries", () => {
 	 * pass that rewrites addresses never sees it.
 	 */
 	it("drops an @import, address and all", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			`<style>@import "https://tracker.example/mail.css"; p { margin: 0 }</style><p>x</p>`,
 		);
 		expect(fetchesSomething(out)).toBe(false);
@@ -159,9 +172,7 @@ describe("the CSS a spam message carries", () => {
 	 * silent second cost for asking not to be tracked.
 	 */
 	it("keeps a stylesheet the parser moved into the head", () => {
-		const out = stripRemoteContent(
-			"<style>p { margin-top: 0 }</style><p>hello</p>",
-		);
+		const out = spamBody("<style>p { margin-top: 0 }</style><p>hello</p>");
 		expect(out).toContain("margin-top: 0");
 		expect(out).toContain("hello");
 		expect(out.indexOf("margin-top")).toBeLessThan(out.indexOf("hello"));
@@ -175,12 +186,12 @@ describe("what is left alone", () => {
 	// a reader may want to look at.
 	it("leaves an anchor's destination readable", () => {
 		expect(
-			stripRemoteContent('<a href="https://phish.example/login">sign in</a>'),
+			spamBody('<a href="https://phish.example/login">sign in</a>'),
 		).toContain("https://phish.example/login");
 	});
 
 	it("leaves the words of the message exactly as they were", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			"<p>ご請求金額のお知らせ</p><blockquote>元のメール</blockquote>",
 		);
 		expect(out).toContain("ご請求金額のお知らせ");
@@ -188,28 +199,28 @@ describe("what is left alone", () => {
 	});
 
 	it("copes with an empty body", () => {
-		expect(stripRemoteContent("")).toBe("");
+		expect(spamBody("").trim()).toBe("");
 	});
 });
 
 /**
- * These are here because this function is the only thing standing between a
+ * These are here because these rules are the only thing standing between a
  * spam message and its sender's server. A frame policy would have caught what
- * a rewrite is worst at, and a `<meta http-equiv="Content-Security-Policy">`
- * in a `srcdoc` document turns out not to be enforced at all -- written,
- * measured, and removed rather than left looking like protection. So the
- * spellings a regular expression is likeliest to miss get their own cases.
+ * a rewrite is worst at, and neither way of giving a `srcdoc` frame one held
+ * a fetch back when measured -- a `<meta http-equiv="Content-Security-Policy">`
+ * first in its head, or the iframe's `csp` attribute. So the spellings a
+ * regular expression is likeliest to miss get their own cases.
  */
 describe("the spellings a rewrite is worst at", () => {
 	it("catches an image-set that names its addresses as bare strings", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			`<div style='background-image: image-set("https://tracker.example/a.png" 1x, "https://tracker.example/b.png" 2x)'>x</div>`,
 		);
 		expect(fetchesSomething(out)).toBe(false);
 	});
 
 	it("catches one wrapped around url(), without leaving the wrapper behind", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			'<div style="background-image: -webkit-image-set(url(https://tracker.example/a.png) 1x)">x</div>',
 		);
 		expect(fetchesSomething(out)).toBe(false);
@@ -217,10 +228,117 @@ describe("the spellings a rewrite is worst at", () => {
 	});
 
 	it("catches an @import that puts its address inside url()", () => {
-		const out = stripRemoteContent(
+		const out = spamBody(
 			"<style>@import url(https://tracker.example/mail.css); p{margin:0}</style>",
 		);
 		expect(fetchesSomething(out)).toBe(false);
 		expect(out).not.toContain("@import");
+	});
+});
+
+/**
+ * CSS lets any character of a name be written as an escape, and a browser
+ * reads the escape. Measured: every one of these fetched from the spam
+ * folder while the patterns matched only what was written.
+ */
+describe("CSS that spells its fetch in escapes", () => {
+	const hidden = [
+		[
+			"an escaped letter in url(",
+			"background:u\\rl(https://tracker.example/1.gif)",
+		],
+		[
+			"a hex escape in url(",
+			"background:u\\72 l(https://tracker.example/2.gif)",
+		],
+		[
+			"a capital hex escape",
+			"background:\\55 RL(https://tracker.example/3.gif)",
+		],
+		[
+			"an escaped image-set(",
+			'background:im\\61ge-set("https://tracker.example/4.gif" 1x)',
+		],
+	];
+	for (const [label, css] of hidden) {
+		it(`sees through ${label} in a style attribute`, () => {
+			const out = spamBody(
+				`<div style="${css.replaceAll('"', "&quot;")}">x</div>`,
+			);
+			expect(out).not.toContain("tracker.example");
+			// Mended, not given up on: the last resort would also have no
+			// address in it, and no <div> either.
+			expect(out).toContain("<div");
+		});
+		it(`sees through ${label} in a style element`, () => {
+			const out = spamBody(`<style>.a{${css}}</style><div class="a">x</div>`);
+			expect(out).not.toContain("tracker.example");
+			expect(out).toContain('<div class="a">');
+		});
+	}
+
+	it("sees through an escaped @import", () => {
+		const out = spamBody(
+			'<style>@\\69mport "https://tracker.example/i.css"; p{margin:0}</style><p>x</p>',
+		);
+		expect(out).not.toContain("tracker.example");
+	});
+
+	/**
+	 * And leaves the escapes that are there for a reason. Japanese mail names
+	 * its fonts this way constantly; dropping the rule would change how every
+	 * such message looks for no gain.
+	 */
+	it("keeps an escaped font name that fetches nothing", () => {
+		const css = 'font-family:"\\30E1\\30A4\\30EA\\30AA";color:red';
+		const out = spamBody(`<p style='${css}'>本文</p>`);
+		expect(out).toContain("\\30E1\\30A4\\30EA\\30AA");
+		expect(out).toContain("color:red");
+	});
+
+	it("reads escapes the way CSS Syntax says to", () => {
+		expect(decodeCssEscapes("u\\rl(")).toBe("url(");
+		expect(decodeCssEscapes("u\\72 l(")).toBe("url(");
+		expect(decodeCssEscapes("\\30E1\\30A4")).toBe("メイ");
+		expect(decodeCssEscapes("a\\0 b")).toBe("a\uFFFDb");
+		expect(decodeCssEscapes("no escapes")).toBe("no escapes");
+	});
+});
+
+/**
+ * SVG attributes are CSS too. Measured: `mask=`, `filter=`, `clip-path=` and
+ * `cursor=` fetched from the spam folder, because only `style` was read.
+ */
+describe("SVG attributes that take url()", () => {
+	it("takes an outside address off each of them", () => {
+		const out = spamBody(
+			'<svg><rect mask="url(https://tracker.example/m.svg#m)" filter="url(https://tracker.example/f.svg#f)"' +
+				' clip-path="url(https://tracker.example/c.svg#c)" cursor="url(https://tracker.example/c.png), auto"' +
+				' marker-end="u\\rl(https://tracker.example/k.svg#k)" width="9" height="9"/></svg>',
+		);
+		expect(out).not.toContain("tracker.example");
+		expect(out).toContain("<rect");
+	});
+
+	it("leaves a reference to something inside the message", () => {
+		const out = spamBody(
+			'<svg><defs><linearGradient id="g"></linearGradient></defs><rect fill="url(#g)" width="9" height="9"/></svg>',
+		);
+		expect(out).toContain('fill="url(#g)"');
+	});
+
+	it("does not let an animation put one back", () => {
+		const out = spamBody(
+			'<svg><rect width="9" height="9"><set attributeName="mask" to="url(https://tracker.example/m.svg#m)"/></rect></svg>',
+		);
+		expect(out).not.toContain("tracker.example");
+	});
+
+	it("takes the address off an feImage, in either spelling", () => {
+		const out = spamBody(
+			'<svg><filter id="f"><feImage href="https://tracker.example/a.gif"/>' +
+				'<feImage xlink:href="https://tracker.example/b.gif"/></filter></svg>',
+		);
+		expect(out).not.toContain("tracker.example");
 	});
 });
