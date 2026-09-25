@@ -206,6 +206,20 @@ fork's work. This fork ships by being forked.
   `spam-check-location.test.ts` holds the arrangement -- partly structurally,
   because both sides run in one isolate under the test pool and the difference
   is only visible in production.
+- **The message frame is decided on the string.** A message is shown in a
+  sandboxed `srcdoc` iframe, and everything about what it may do is settled
+  in the markup before the frame parses it (`prepareFrame`,
+  `utils/emailLinks.ts`) -- never in a `load` handler. The frame fires `load`
+  only once every image has arrived, and a message is tappable long before:
+  measured, a link rewritten in `load` was still untouched 2.5 seconds into a
+  message with one slow picture, and tapping it navigated the frame into the
+  page's own `frame-src 'self'` and a grey "This content is blocked". That
+  cost two deploys. The markup is then checked by parsing it *again*, the way
+  the frame will, because two readings of HTML can disagree -- one known
+  nested-`<form>` shape turned a MathML `<a>` into a live HTML link on the
+  second reading. Destinations are read from the attribute (`href` or
+  `xlink:href`, any element), never from `.href`, which is not a string on
+  SVG and does not exist on MathML.
 - **Dashboard theming.** `index.html` carries the only page background and it
   has both halves (`bg-gray-100 text-gray-900 dark:bg-gray-900
   dark:text-gray-100`); cards use `bg-white dark:bg-gray-800` and follow the
