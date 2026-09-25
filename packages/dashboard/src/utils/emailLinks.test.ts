@@ -118,12 +118,57 @@ describe("where a link goes", () => {
 		expect(link(doc).getAttribute("target")).toBe("_blank");
 	});
 
-	it("leaves a jump within the message where it is", () => {
-		// `_blank` on this would open about:srcdoc in a tab: a blank page.
-		const doc = bodyOf('<a href="#footer">下へ</a>');
-		sendLinksToANewTab(doc);
-		expect(link(doc).target).toBe("");
-		expect(link(doc).rel).toBe("");
+	/**
+	 * This test used to say a `#fragment` "stays where it is", and that was
+	 * wrong. A `srcdoc` document resolves `#` and `""` against the page that
+	 * holds it, so they meant this application's own address -- measured,
+	 * pressing `href="#"`, `href=""` or `#section` navigated the frame there
+	 * and the message was gone. No jump within the message is possible either
+	 * (rewritten to `about:srcdoc#section` it stayed put), so the link is
+	 * taken away and its words kept.
+	 */
+	it("takes away a link that could only mean this page", () => {
+		for (const href of ["#", "", "#footer", "  #top  "]) {
+			const doc = bodyOf(`<a href="${href}" target="_self">下へ</a>`);
+			sendLinksToANewTab(doc);
+			expect(link(doc).hasAttribute("href"), JSON.stringify(href)).toBe(false);
+			expect(link(doc).hasAttribute("target")).toBe(false);
+			expect(link(doc).textContent).toBe("下へ");
+		}
+	});
+
+	/**
+	 * Read as the URL parser reads it. `trim` took the ideographic space and
+	 * the no-break space away too, so these read as empty or as a fragment;
+	 * the browser read them as relative paths, and pressing one took the
+	 * message away.
+	 */
+	it("reads the whitespace in an address as the browser does", () => {
+		for (const href of ["\u3000", "\u00a0#top"]) {
+			const doc = bodyOf(`<a href="${href}">x</a>`);
+			sendLinksToANewTab(doc);
+			expect(link(doc).getAttribute("target"), JSON.stringify(href)).toBe(
+				"_blank",
+			);
+		}
+	});
+
+	/**
+	 * A sender's own `target="_blank"` on a script URL survived, and only the
+	 * page's CSP stood between it and running in an unsandboxed tab. It is
+	 * taken away whole now.
+	 */
+	it("takes a script URL away, and whatever target it came with", () => {
+		for (const href of [
+			"javascript:alert(1)",
+			"java\tscript:alert(1)",
+			"vbscript:x",
+		]) {
+			const doc = bodyOf(`<a href="${href}" target="_blank">x</a>`);
+			sendLinksToANewTab(doc);
+			expect(link(doc).hasAttribute("href"), href).toBe(false);
+			expect(link(doc).hasAttribute("target"), href).toBe(false);
+		}
 	});
 
 	/**
@@ -205,6 +250,19 @@ describe("a bare URL in the text", () => {
 		expect(link(doc).getAttribute("href")).toBe("https://example.com/a");
 		expect(link(doc).textContent).toBe("https://example.com/a");
 		expect(doc.body.textContent).toContain("）です。");
+	});
+
+	/**
+	 * Measured: a URL in a `<textarea>` was wrapped in an `<a>`, and the frame
+	 * read the serialised tag back as text -- `see <a href="..." ...>` on
+	 * screen. The same holds for every container the parser reads as text.
+	 */
+	it("leaves a URL alone where the parser reads text, not markup", () => {
+		for (const tag of ["textarea", "title", "xmp", "noembed", "noframes"]) {
+			const doc = bodyOf(`<${tag}>see https://example.com/x</${tag}>`);
+			linkifyPlainUrls(doc);
+			expect(doc.querySelectorAll("a"), tag).toHaveLength(0);
+		}
 	});
 
 	it("leaves a URL that is already a link alone", () => {

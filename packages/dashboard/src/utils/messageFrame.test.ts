@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MATHML, XLINK } from "./frameRules";
 import { frameDocument, prepareFrame } from "./messageFrame";
 
 /**
@@ -13,22 +14,22 @@ import { frameDocument, prepareFrame } from "./messageFrame";
  * `spam` mirrors the component, which sets both flags for the spam folder.
  */
 
-const XLINK = "http://www.w3.org/1999/xlink";
-const MATHML = "http://www.w3.org/1998/Math/MathML";
-
 const framed = (body: string, spam = false) =>
 	new DOMParser().parseFromString(
 		prepareFrame(body, { disableLinks: spam, blockRemoteContent: spam }),
 		"text/html",
 	);
 
+// Written out here rather than imported: the property below is meant to be
+// stated independently of the code it checks.
 const destinationOf = (element: Element) =>
 	element.getAttribute("href") ?? element.getAttributeNS(XLINK, "href");
 
 /**
  * The property the frame has to have, stated independently of the code: in
- * the spam folder nothing has a destination; elsewhere every link that goes
- * anywhere but a `#fragment` or a script URL opens a tab.
+ * the spam folder nothing has a destination; elsewhere every link that has
+ * one opens a tab, and nothing that could only mean this page -- empty, a
+ * `#fragment` -- or a script URL keeps one at all.
  */
 function linksAreSafe(doc: Document, spam: boolean): boolean {
 	return [...doc.querySelectorAll("*")].every((element) => {
@@ -39,9 +40,21 @@ function linksAreSafe(doc: Document, spam: boolean): boolean {
 			element.localName === "a" ||
 			element.localName === "area" ||
 			element.namespaceURI === MATHML;
-		if (!isLink || to.trim() === "" || to.trim().startsWith("#")) return true;
-		const scheme = new URL(to, "https://any.invalid/").protocol;
-		if (scheme === "javascript:" || scheme === "vbscript:") return true;
+		if (!isLink) return true;
+		// What the URL parser strips from the ends: U+0000 to U+0020.
+		let start = 0;
+		let end = to.length;
+		while (start < end && to.charCodeAt(start) <= 0x20) start++;
+		while (end > start && to.charCodeAt(end - 1) <= 0x20) end--;
+		const read = to.slice(start, end);
+		if (read === "" || read.startsWith("#")) return false;
+		let scheme: string;
+		try {
+			scheme = new URL(read, "https://any.invalid/").protocol;
+		} catch {
+			return false;
+		}
+		if (scheme === "javascript:" || scheme === "vbscript:") return false;
 		return element.getAttribute("target") === "_blank";
 	});
 }
@@ -100,6 +113,36 @@ describe("what the frame is handed", () => {
 			t: null,
 			f: null,
 		});
+		// And the three that open nothing have nothing left to open.
+		for (const a of doc.querySelectorAll("a")) {
+			if (["j", "t", "f"].includes(a.textContent ?? "")) {
+				expect(a.hasAttribute("href"), a.textContent ?? "").toBe(false);
+			}
+		}
+		expect(linksAreSafe(doc, false)).toBe(true);
+	});
+
+	/**
+	 * `href="#"` is in half the marketing templates there are, and pressing
+	 * it took the message away: measured, the frame navigated to this page's
+	 * own address and `frame-ancestors 'none'` refused it. So did `""`, a
+	 * table-of-contents `#section`, an ideographic space and a no-break space.
+	 */
+	it("leaves nothing that could only mean this page", () => {
+		const doc = framed(
+			'<p>本文</p><a href="#">a</a><a href="">b</a><a href="#sec2">c</a>' +
+				'<a href="\u3000">d</a><a href="\u00a0#top">e</a><h2 id="sec2">sec2</h2>',
+		);
+		expect(linksAreSafe(doc, false)).toBe(true);
+		expect(doc.body.textContent).toContain("本文");
+		expect(notTheFallback(doc)).toBe(true);
+	});
+
+	it("shows a URL in a textarea as the words it is", () => {
+		const doc = framed("<textarea>see https://example.com/x</textarea>");
+		expect(doc.querySelector("textarea")?.value).toBe(
+			"see https://example.com/x",
+		);
 	});
 
 	it("leaves a message's <link> as it was written", () => {

@@ -14,14 +14,12 @@
  */
 
 import {
-	isLink,
-	LINK_CANDIDATES,
+	EVERY_LINK_OPENS_A_TAB_OR_NOTHING,
 	linkifyPlainUrls,
-	neutralizeLinks,
-	opensElsewhere,
-	sendLinksToANewTab,
+	NOTHING_HAS_A_DESTINATION,
 } from "./emailLinks";
-import { fetchesSomething, stripRemoteContentFrom } from "./remoteContent";
+import { applyRules, type FrameRule, rulesHold } from "./frameRules";
+import { REMOTE_CONTENT_RULES } from "./remoteContent";
 
 /**
  * The document the frame parses, as one string.
@@ -114,20 +112,29 @@ function animatesSomethingRefused(element: Element): boolean {
 	return name !== undefined && ANIMATED_ATTRIBUTES_REFUSED.has(name);
 }
 
-/** Takes out what no message needs and every rule here would otherwise miss. */
-function defuse(doc: Document): void {
-	for (const element of Array.from(doc.querySelectorAll(NESTED_DOCUMENTS))) {
-		element.remove();
-	}
-	for (const template of doc.querySelectorAll("template")) {
-		for (const attribute of SHADOW_ROOT_ATTRIBUTES) {
-			template.removeAttribute(attribute);
-		}
-	}
-	for (const element of Array.from(doc.querySelectorAll(ANIMATIONS))) {
-		if (animatesSomethingRefused(element)) element.remove();
-	}
-}
+/** What no message needs and every other rule here would otherwise miss. */
+const WHAT_BOTH_READINGS_CANNOT_SEE_ALIKE: readonly FrameRule[] = [
+	{
+		find: (doc) => Array.from(doc.querySelectorAll(NESTED_DOCUMENTS)),
+		fix: (element) => element.remove(),
+	},
+	{
+		find: (doc) =>
+			Array.from(doc.querySelectorAll("template")).filter((template) =>
+				SHADOW_ROOT_ATTRIBUTES.some((name) => template.hasAttribute(name)),
+			),
+		fix(template) {
+			for (const name of SHADOW_ROOT_ATTRIBUTES) template.removeAttribute(name);
+		},
+	},
+	{
+		find: (doc) =>
+			Array.from(doc.querySelectorAll(ANIMATIONS)).filter(
+				animatesSomethingRefused,
+			),
+		fix: (element) => element.remove(),
+	},
+];
 
 export interface FrameOptions {
 	/** The spam folder: nothing may be pressed at all. */
@@ -137,35 +144,22 @@ export interface FrameOptions {
 }
 
 /**
- * Whether the tree the frame will build is the one that was asked for. Every
- * clause is one of the rules above, asked of the frame's reading.
+ * The rules a message is held to, in the order they are applied. Links come
+ * last because linkifying, which runs just before them, adds links.
  */
-function isSafe(doc: Document, options: FrameOptions): boolean {
-	if (doc.querySelector(NESTED_DOCUMENTS)) return false;
-	for (const template of doc.querySelectorAll("template")) {
-		if (SHADOW_ROOT_ATTRIBUTES.some((a) => template.hasAttribute(a))) {
-			return false;
-		}
-	}
-	for (const element of doc.querySelectorAll(ANIMATIONS)) {
-		if (animatesSomethingRefused(element)) return false;
-	}
-	if (options.disableLinks) {
-		// Anything with a destination at all, in either spelling.
-		if (doc.querySelector("[*|href]")) return false;
-	} else {
-		for (const element of doc.querySelectorAll(LINK_CANDIDATES)) {
-			if (
-				isLink(element) &&
-				opensElsewhere(element) &&
-				element.getAttribute("target") !== "_blank"
-			) {
-				return false;
-			}
-		}
-	}
-	if (options.blockRemoteContent && fetchesSomething(doc)) return false;
-	return true;
+function rulesFor(options: FrameOptions): {
+	before: readonly FrameRule[];
+	links: FrameRule;
+} {
+	return {
+		before: [
+			...WHAT_BOTH_READINGS_CANNOT_SEE_ALIKE,
+			...(options.blockRemoteContent ? REMOTE_CONTENT_RULES : []),
+		],
+		links: options.disableLinks
+			? NOTHING_HAS_A_DESTINATION
+			: EVERY_LINK_OPENS_A_TAB_OR_NOTHING,
+	};
 }
 
 const parse = (html: string) =>
@@ -201,6 +195,11 @@ function wordsOf(doc: Document): string {
 /**
  * The string the frame is handed.
  *
+ * **Every rule is one definition, used twice.** Each is a FrameRule: the
+ * rewrite mends what its `find` returns, and the check below asks the same
+ * `find` of the frame's reading. The rewrite and the check used to be written
+ * separately and kept in step by hand.
+ *
  * **Parsed as the frame will parse it.** The body goes into the frame's
  * document and that whole document is parsed, so whatever the parser does
  * with a message's own `<html>`, `<head>` and `<body>` tags happens here as it
@@ -215,7 +214,7 @@ function wordsOf(doc: Document): string {
  * **Checked by parsing the result again.** Parse, rewrite, serialise, parse is
  * two readings of the markup, and they can disagree -- one nested-`<form>`
  * shape turned a MathML `<a>` into a live HTML link on the second reading. So
- * the output is trusted when the frame's reading of it passes isSafe; if it
+ * the output is trusted when every rule holds on the frame's reading of it; if it
  * does not, the rules run on that reading and it is read again. That check
  * is not made conditional on how the markup looks: predicting which input
  * will read differently the second time is exactly what the tricks for it
@@ -231,12 +230,13 @@ function wordsOf(doc: Document): string {
  * and running it again would never settle.
  */
 export function prepareFrame(body: string, options: FrameOptions = {}): string {
+	const { before, links } = rulesFor(options);
+	const every = [...before, links];
 	let html = frameDocument(body);
 	for (let round = 0; round < ROUNDS; round++) {
 		const doc = parse(html);
-		if (round > 0 && isSafe(doc, options)) return html;
-		defuse(doc);
-		if (options.blockRemoteContent) stripRemoteContentFrom(doc);
+		if (round > 0 && rulesHold(doc, every)) return html;
+		applyRules(doc, before);
 		if (round === 0 && !options.disableLinks) {
 			try {
 				linkifyPlainUrls(doc);
@@ -244,12 +244,11 @@ export function prepareFrame(body: string, options: FrameOptions = {}): string {
 				console.error(`could not linkify the bare URLs in a message: ${error}`);
 			}
 		}
-		if (options.disableLinks) neutralizeLinks(doc);
-		else sendLinksToANewTab(doc);
+		applyRules(doc, [links]);
 		html = serialize(doc);
 	}
 	const last = parse(html);
-	if (isSafe(last, options)) return html;
+	if (rulesHold(last, every)) return html;
 
 	console.warn("a message's markup did not settle; showing its text only");
 	return frameDocument(
