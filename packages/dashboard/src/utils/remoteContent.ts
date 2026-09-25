@@ -93,12 +93,14 @@ const URL_ATTRIBUTES = [
  * closes for the sender. Measured: `style="background:url(https://...`, with
  * no `)`, fetched from the spam folder in all three spellings, when this
  * pattern was also what decided whether CSS fetched and it asked for the `)`.
- * FETCHES decides that now, and CSS the rewrite cannot mend is dropped
+ * cssFetches decides that now, and CSS the rewrite cannot mend is dropped
  * whole, so matching to the end is what keeps the rest of such a style rather
  * than what keeps the address out. A quoted address that is not closed falls
- * through to the last spelling, which runs to the next `)` or the end.
+ * through to the last spelling, which runs to the next `)` or the end. The
+ * space it skips is CSS's, as in FETCHES.
  */
-const CSS_URL = /url\(\s*(?:"[^"]*"\s*\)|'[^']*'\s*\)|[^)]*(?:\)|$))/gi;
+const CSS_URL =
+	/url\([ \t\n\r\f]*(?:"[^"]*"[ \t\n\r\f]*\)|'[^']*'[ \t\n\r\f]*\)|[^)]*(?:\)|$))/gi;
 
 /**
  * Whatever in CSS fetches something -- one list, for the question of whether
@@ -138,29 +140,6 @@ const CSS_IMAGE_SET =
  * -- `@import "https://..."` is legal on its own.
  */
 const CSS_IMPORT = /@import[^;}]*;?/gi;
-
-/**
- * Rewrites a CSS declaration block or stylesheet so nothing in it loads.
- *
- * Addresses become `none` rather than being deleted, which leaves valid CSS
- * saying the thing that was wanted here anyway: `background-image: none` is
- * exactly what a body with no background image should say. Deleting the value
- * outright would leave `background-image: ;`, which a browser drops as
- * malformed -- the same result by a less honest route.
- *
- * An `url()` that fetches nothing stays: a gradient or a clip beside a
- * tracker, or beside `url(http://...)` mentioned in a comment, survives,
- * where rewriting every address took them all away. Each match is judged by
- * cssFetches on its own text, escapes read, so a match that swallowed a
- * second `url(` goes -- and so does one whose second is spelled in escapes,
- * `/*url(#*\/background:u\rl(...)`.
- */
-function stripCssFetches(css: string): string {
-	return css
-		.replace(CSS_IMPORT, "")
-		.replace(CSS_IMAGE_SET, "none")
-		.replace(CSS_URL, (match) => (cssFetches(match) ? "none" : match));
-}
 
 /**
  * CSS with its escapes read the way CSS reads them.
@@ -207,11 +186,24 @@ function cssFetches(css: string): boolean {
  * CSS with nothing left in it that fetches, or null when there is no such
  * thing short of dropping it.
  *
+ * Addresses become `none` rather than being deleted, which leaves valid CSS
+ * saying the thing that was wanted here anyway: `background-image: none` is
+ * exactly what a body with no background image should say. Deleting the value
+ * outright would leave `background-image: ;`, which a browser drops as
+ * malformed -- the same result by a less honest route.
+ *
+ * An `url()` that fetches nothing stays: a gradient or a clip beside a
+ * tracker, or beside `url(http://...)` mentioned in a comment, survives,
+ * where rewriting every address took them all away. Each match is judged by
+ * cssFetches on its own text, escapes read, so a match that swallowed a
+ * second `url(` goes -- and so does one whose second is spelled in escapes,
+ * `/*url(#*\/background:u\rl(...)`.
+ *
  * The rewrite is taken only if cssFetches -- which pairs nothing up -- finds
- * nothing in the result, so the rewrite never has to be right about which
- * `url(` a browser will read. What it cannot mend is a fetch that exists only
- * once the escapes are read and lies outside every `url(` as written -- a
- * sender spelling `u\rl(` so that a filter will not see it -- and that CSS is
+ * nothing in the result, so it never has to be right about which `url(` a
+ * browser will read. What it cannot mend is a fetch that exists only once
+ * the escapes are read and lies outside every `url(` as written -- a sender
+ * spelling `u\rl(` so that a filter will not see it -- and that CSS is
  * dropped whole rather than decoded and written back: decoding changes the
  * meaning of an escape that was there for a reason, such as a quote inside a
  * string.
@@ -219,13 +211,19 @@ function cssFetches(css: string): boolean {
  * Why patterns and not a CSS tokenizer: nothing here has to read CSS the way
  * a browser does, only to find every place one might see an address -- and
  * that over-reads on purpose. Where the patterns and the browser disagree,
- * what it costs is a style taken away that fetched nothing (measured:
- * `url(#a\)...` drops the style it is in), not a fetch. A tokenizer would
- * keep more such styles, and would be a second reading of CSS that has to
- * match the browser's own, error recovery included, to be safe.
+ * what it costs is appearance, not a fetch. Measured: `url(#a\)u\rl(...)`,
+ * which the browser reads as one reference into the message, drops the style
+ * it is in; and a match that begins inside a comment and runs past its `*\/`
+ * takes the `*\/` with it, so whatever follows is commented out. Both are
+ * CSS written to hide an address. A tokenizer would keep more of such
+ * styles, and would be a second reading of CSS that has to match the
+ * browser's own, error recovery included, to be safe.
  */
 function cssWithoutFetches(css: string): string | null {
-	const rewritten = stripCssFetches(css);
+	const rewritten = css
+		.replace(CSS_IMPORT, "")
+		.replace(CSS_IMAGE_SET, "none")
+		.replace(CSS_URL, (match) => (cssFetches(match) ? "none" : match));
 	return cssFetches(rewritten) ? null : rewritten;
 }
 
