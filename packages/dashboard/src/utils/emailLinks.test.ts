@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-	LINK_RULES,
+	EVERY_LINK_OPENS_A_TAB_OR_NOTHING,
 	linkifyPlainUrls,
 	NOTHING_HAS_A_DESTINATION,
 } from "./emailLinks";
@@ -58,7 +58,7 @@ describe("where a link goes", () => {
 		);
 		expect(link(doc).target).toBe("");
 
-		applyRules(doc, LINK_RULES);
+		applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 
 		expect(link(doc).target).toBe("_blank");
 		// What window.open(..., "noopener,noreferrer") was asking for, kept:
@@ -68,7 +68,7 @@ describe("where a link goes", () => {
 
 	it("overrules a link that asks for this very frame", () => {
 		const doc = bodyOf('<a href="https://example.com/" target="_self">x</a>');
-		applyRules(doc, LINK_RULES);
+		applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 		expect(link(doc).target).toBe("_blank");
 	});
 
@@ -80,7 +80,7 @@ describe("where a link goes", () => {
 	 */
 	it("overrules a link that asks for the whole window", () => {
 		const doc = bodyOf('<a href="https://example.com/" target="_top">x</a>');
-		applyRules(doc, LINK_RULES);
+		applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 		expect(link(doc).target).toBe("_blank");
 	});
 
@@ -93,7 +93,7 @@ describe("where a link goes", () => {
 			const doc = bodyOf(
 				`<a href="https://example.com/" target="_blank" rel="${rel}">x</a>`,
 			);
-			applyRules(doc, LINK_RULES);
+			applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 			expect(link(doc).getAttribute("rel"), rel).toBe("noopener noreferrer");
 		}
 	});
@@ -103,7 +103,7 @@ describe("where a link goes", () => {
 			'<img src="b.png" usemap="#m"><map name="m">' +
 				'<area shape="rect" coords="0,0,9,9" href="https://example.com/a"></map>',
 		);
-		applyRules(doc, LINK_RULES);
+		applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 		const area = link(doc, "area") as unknown as HTMLAreaElement;
 		expect(area.target).toBe("_blank");
 		expect(area.rel).toBe("noopener noreferrer");
@@ -116,7 +116,7 @@ describe("where a link goes", () => {
 	 */
 	it("sends a relative link out too, since it resolves to this app", () => {
 		const doc = bodyOf('<a href="/inbox">x</a>');
-		applyRules(doc, LINK_RULES);
+		applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 		expect(link(doc).target).toBe("_blank");
 	});
 
@@ -129,7 +129,7 @@ describe("where a link goes", () => {
 	it("sends a relative link out even where nothing resolves it", () => {
 		const doc = document.implementation.createHTMLDocument("no base");
 		doc.body.innerHTML = '<a href="/inbox">x</a>';
-		applyRules(doc, LINK_RULES);
+		applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 		expect(link(doc).getAttribute("target")).toBe("_blank");
 	});
 
@@ -145,7 +145,7 @@ describe("where a link goes", () => {
 	it("takes away a link that could only mean this page", () => {
 		for (const href of ["#", "", "#footer", "  #top  "]) {
 			const doc = bodyOf(`<a href="${href}" target="_self">下へ</a>`);
-			applyRules(doc, LINK_RULES);
+			applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 			expect(link(doc).hasAttribute("href"), JSON.stringify(href)).toBe(false);
 			expect(link(doc).hasAttribute("target")).toBe(false);
 			expect(link(doc).textContent).toBe("下へ");
@@ -161,7 +161,7 @@ describe("where a link goes", () => {
 	it("reads the whitespace in an address as the browser does", () => {
 		for (const href of ["\u3000", "\u00a0#top"]) {
 			const doc = bodyOf(`<a href="${href}">x</a>`);
-			applyRules(doc, LINK_RULES);
+			applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 			expect(link(doc).getAttribute("target"), JSON.stringify(href)).toBe(
 				"_blank",
 			);
@@ -180,7 +180,7 @@ describe("where a link goes", () => {
 			"vbscript:x",
 		]) {
 			const doc = bodyOf(`<a href="${href}" target="_blank">x</a>`);
-			applyRules(doc, LINK_RULES);
+			applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 			expect(link(doc).hasAttribute("href"), href).toBe(false);
 			expect(link(doc).hasAttribute("target"), href).toBe(false);
 		}
@@ -199,7 +199,7 @@ describe("where a link goes", () => {
 			'<a href="mailto:info@example.com">mail</a><a href="tel:+81000">tel</a>' +
 				'<a href="about:blank">a</a><a href="data:text/html,x">d</a><a href="ftp://example.com/x">f</a>',
 		);
-		applyRules(doc, LINK_RULES);
+		applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 		for (const anchor of doc.body.querySelectorAll("a")) {
 			expect(
 				anchor.getAttribute("target"),
@@ -218,7 +218,7 @@ describe("where a link goes", () => {
 		const doc = bodyOf(
 			'<link rel="stylesheet" href="https://cdn.example/mail.css"><p>x</p>',
 		);
-		applyRules(doc, LINK_RULES);
+		applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 		const sheet = doc.querySelector("link") as HTMLLinkElement;
 		expect(sheet.getAttribute("rel")).toBe("stylesheet");
 		expect(sheet.hasAttribute("target")).toBe(false);
@@ -226,7 +226,9 @@ describe("where a link goes", () => {
 
 	it("does not fall over on a body with nothing in it", () => {
 		const doc = bodyOf("");
-		expect(() => applyRules(doc, LINK_RULES)).not.toThrow();
+		expect(() =>
+			applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]),
+		).not.toThrow();
 	});
 });
 
@@ -236,7 +238,7 @@ describe("a bare URL in the text", () => {
 			"<pre>詳しくは https://example.com/a をご覧ください</pre>",
 		);
 		linkifyPlainUrls(doc);
-		applyRules(doc, LINK_RULES);
+		applyRules(doc, [EVERY_LINK_OPENS_A_TAB_OR_NOTHING]);
 
 		const anchor = link(doc);
 		expect(anchor.getAttribute("href")).toBe("https://example.com/a");

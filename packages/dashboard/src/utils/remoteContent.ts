@@ -29,7 +29,8 @@
 
 import {
 	ANIMATIONS,
-	animationOf,
+	animatedAttributeOf,
+	animationValuesOf,
 	type FrameRule,
 	removeDestination,
 } from "./frameRules";
@@ -87,16 +88,33 @@ const URL_ATTRIBUTES = [
 ];
 
 /**
- * `url("...")`, `url('...')` and `url(...)` in any CSS this body carries --
- * and each of them left open at the end of the CSS, which a browser closes for
- * the sender. Measured: `style="background:url(https://...`, with no `)`,
- * fetched from the spam folder in all three spellings, because this pattern
- * asked for the `)` and so never saw it.
- *
- * What is inside is captured, once per spelling, for fetchesNothing.
+ * `url("...")`, `url('...')` and `url(...)` in any CSS this body carries, for
+ * the rewrite -- and one left open at the end of the CSS, which a browser
+ * closes for the sender. Measured: `style="background:url(https://...`, with
+ * no `)`, fetched from the spam folder in all three spellings, when this
+ * pattern was also what decided whether CSS fetched and it asked for the `)`.
+ * EXTERNAL_URL decides that now, and CSS the rewrite cannot mend is dropped
+ * whole, so matching to the end is what keeps the rest of such a style rather
+ * than what keeps the address out. A quoted address that is not closed falls
+ * through to the last spelling, which runs to the next `)` or the end.
  */
-const CSS_URL =
-	/url\(\s*(?:"([^"]*)(?:"|$)|'([^']*)(?:'|$)|([^)]*))\s*(?:\)|$)/gi;
+const CSS_URL = /url\(\s*(?:"[^"]*"\s*\)|'[^']*'\s*\)|[^)]*(?:\)|$))/gi;
+
+/**
+ * An `url(` that does not point into the message, for the question of
+ * whether CSS fetches anything.
+ *
+ * `url(#gradient)` fetches nothing, and rewriting it took an SVG's own
+ * gradient away. But which `url(` a browser sees depends on comments and
+ * strings, and a pattern cannot read those: measured, `/*url(#*\/` in a
+ * comment, `'url("#'` in a string and `url(#a;url(...)` in an animation's
+ * list each hid a real address behind a match that began with `#`, and the
+ * spam folder fetched it. So nothing is paired up. Every `url(` in the text
+ * is looked at on its own, wherever it is, and CSS counts as fetching nothing
+ * only if each one is followed by `#`. The one a browser reads is among them,
+ * whichever it turns out to be.
+ */
+const EXTERNAL_URL = /url\((?!\s*(?:["']#|#))/i;
 
 /**
  * `image-set()`, which takes bare strings as well as `url()` -- so
@@ -114,21 +132,6 @@ const CSS_IMAGE_SET =
 const CSS_IMPORT = /@import[^;}]*;?/gi;
 
 /**
- * `url(#gradient)` names something in the message itself and fetches nothing;
- * rewriting it to `none` took an SVG's own gradient away for no gain.
- */
-function fetchesNothing(
-	match: string,
-	double?: string,
-	single?: string,
-	bare?: string,
-): string {
-	return (double ?? single ?? bare ?? "").trim().startsWith("#")
-		? match
-		: "none";
-}
-
-/**
  * Rewrites a CSS declaration block or stylesheet so nothing in it loads.
  *
  * Addresses become `none` rather than being deleted, which leaves valid CSS
@@ -136,12 +139,15 @@ function fetchesNothing(
  * exactly what a body with no background image should say. Deleting the value
  * outright would leave `background-image: ;`, which a browser drops as
  * malformed -- the same result by a less honest route.
+ *
+ * Every address goes, `url(#...)` included. This runs only on CSS that
+ * fetches something, and a gradient beside a tracker is lost with it.
  */
 function stripCssFetches(css: string): string {
 	return css
 		.replace(CSS_IMPORT, "")
 		.replace(CSS_IMAGE_SET, "none")
-		.replace(CSS_URL, fetchesNothing);
+		.replace(CSS_URL, "none");
 }
 
 /**
@@ -179,12 +185,16 @@ export function decodeCssEscapes(css: string): string {
 	);
 }
 
+function fetchesAsWritten(css: string): boolean {
+	return (
+		EXTERNAL_URL.test(css) || /image-set\(/i.test(css) || /@import/i.test(css)
+	);
+}
+
 /** Whether CSS fetches anything, read as written or as a browser reads it. */
 function cssFetches(css: string): boolean {
-	if (stripCssFetches(css) !== css) return true;
-	if (!css.includes("\\")) return false;
-	const read = decodeCssEscapes(css);
-	return stripCssFetches(read) !== read;
+	if (fetchesAsWritten(css)) return true;
+	return css.includes("\\") && fetchesAsWritten(decodeCssEscapes(css));
 }
 
 /**
@@ -273,10 +283,11 @@ export const REMOTE_CONTENT_RULES: readonly FrameRule[] = [
 		// that would give them an address: a fill fading from red to blue
 		// fetches nothing, and was being taken away with the rest.
 		find: (doc) =>
-			all(doc, ANIMATIONS).filter((element) => {
-				const { attribute, values } = animationOf(element);
-				return URL_ATTRIBUTES.includes(attribute) && values.some(cssFetches);
-			}),
+			all(doc, ANIMATIONS).filter(
+				(element) =>
+					URL_ATTRIBUTES.includes(animatedAttributeOf(element)) &&
+					animationValuesOf(element).some(cssFetches),
+			),
 		fix: (element) => element.remove(),
 	},
 ];

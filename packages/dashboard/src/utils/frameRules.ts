@@ -14,12 +14,6 @@
 export const XLINK = "http://www.w3.org/1999/xlink";
 export const MATHML = "http://www.w3.org/1998/Math/MathML";
 
-/**
- * `fix` must not decide anything `find` has not already decided: it is only
- * ever handed what `find` returned. A rule with two outcomes is two rules --
- * otherwise `fix` has to work the verdict out again, which is both a second
- * copy of the question and a second time paying for it.
- */
 export interface FrameRule {
 	find(doc: Document): Element[];
 	fix(element: Element): void;
@@ -55,22 +49,23 @@ export function removeDestination(element: Element): void {
 export const ANIMATIONS = "[attributeName]";
 
 /**
- * What an SVG animation changes, and every value it can set it to.
+ * What an SVG animation changes.
  *
  * One reading of an animation for every rule that has an opinion about one.
- * There were two, in two files, each with its own trim and its own list, and
- * a refused attribute added to one would not have been refused by the other.
- * The values are all four places an animation can say one: `to`, `from`,
- * `by`, and the `;`-separated `values`.
+ * There were two, in two files, each with its own trim, and a refused
+ * attribute added to one would not have been refused by the other.
  */
-export function animationOf(element: Element): {
-	attribute: string;
-	values: string[];
-} {
-	return {
-		attribute: element.getAttribute("attributeName")?.trim() ?? "",
-		values: ["to", "from", "by", "values"]
-			.map((name) => element.getAttribute(name))
-			.filter((value): value is string => value !== null),
-	};
+export function animatedAttributeOf(element: Element): string {
+	return element.getAttribute("attributeName")?.trim() ?? "";
+}
+
+/**
+ * Every value an SVG animation can set, from all four places it can say one:
+ * `to`, `from`, `by`, and the `;`-separated `values` -- which is read whole,
+ * so that nothing depends on splitting it the way SMIL does.
+ */
+export function animationValuesOf(element: Element): string[] {
+	return ["to", "from", "by", "values"]
+		.map((name) => element.getAttribute(name))
+		.filter((value): value is string => value !== null);
 }

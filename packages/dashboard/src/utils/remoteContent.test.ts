@@ -162,11 +162,13 @@ describe("the CSS a spam message carries", () => {
 				`<div style="color:red;background:${value.replaceAll('"', "&quot;")}">x</div>`,
 			);
 			expect(attribute, value).not.toContain("tracker.example");
-			expect(attribute, value).toContain("<div");
+			// Mended rather than dropped: what else the style says stays.
+			expect(attribute, value).toContain("color:red");
 			const element = spamBody(
 				`<style>.a{color:red;background:${value}</style><div class="a">x</div>`,
 			);
 			expect(element, value).not.toContain("tracker.example");
+			expect(element, value).toContain("color:red");
 			expect(element, value).toContain('<div class="a">');
 		}
 	});
@@ -411,4 +413,52 @@ describe("SVG attributes that take url()", () => {
 		);
 		expect(out).not.toContain("tracker.example");
 	});
+});
+
+/**
+ * `url(#...)` fetches nothing and is kept -- and every way of hiding a real
+ * address behind one. A pattern pairs an `url(` with the wrong `)` when a
+ * comment or a string sits between them; measured, each of these fetched
+ * from the spam folder while the match the rule looked at began with `#`.
+ */
+describe("an address hidden behind url(#", () => {
+	const hidden = [
+		[
+			"a comment in a style attribute",
+			'<div style="/*url(#*/background:url(https://tracker.example/1.gif)">x</div>',
+		],
+		[
+			"a comment in an SVG style",
+			'<svg><rect width="9" height="9" style="/*url(#*/fill:url(https://tracker.example/2.svg#m)"/></svg>',
+		],
+		[
+			"a string in a style attribute",
+			`<div style="content:'url(&quot;#';background:url(https://tracker.example/3.gif)">x</div>`,
+		],
+		[
+			"a string in a style element",
+			`<style>.a{content:"url('#"}.b{background:url(https://tracker.example/4.gif)}</style><div class="b">x</div>`,
+		],
+		[
+			"a string ended by a newline",
+			'<style>.a{fill:url("#g\n);}.b{background:url(https://tracker.example/5.gif)}</style><div class="b">x</div>',
+		],
+		[
+			"an animation's list of values",
+			'<svg><rect width="9" height="9"><animate attributeName="mask" values="url(#a;url(https://tracker.example/6.svg#m)" dur="1s"/></rect></svg>',
+		],
+		[
+			"a comment in an SVG attribute",
+			'<svg><rect width="9" height="9" mask="/*url(#*/url(https://tracker.example/7.svg#m)"/></svg>',
+		],
+	];
+	for (const [label, html] of hidden) {
+		it(`is found behind ${label}`, () => {
+			const out = spamBody(html);
+			expect(out).not.toContain("tracker.example");
+			// Mended, not given up on: the text-only last resort has no
+			// address in it either.
+			expect(out).toMatch(/<div|<rect/);
+		});
+	}
 });
