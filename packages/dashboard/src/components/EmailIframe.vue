@@ -8,8 +8,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { prepareFrame } from "@/utils/emailLinks";
-import { stripRemoteContent } from "@/utils/remoteContent";
+import { prepareFrame } from "@/utils/messageFrame";
 
 const props = defineProps<{
 	body: string;
@@ -43,15 +42,16 @@ const props = defineProps<{
  * "This content is blocked". A message is tappable from the first paint, so
  * anything that decides what a tap does has to be true from the first paint.
  *
- * prepareFrame builds the whole document, not only the body, because what it
- * checks has to be the exact string the frame parses. See utils/emailLinks.ts.
+ * Both happen in one call, on one parse of the whole frame document, and are
+ * checked against the frame's own reading of the result. See
+ * utils/messageFrame.ts.
  */
-const srcdoc = computed(() => {
-	const body = props.blockRemoteContent
-		? stripRemoteContent(props.body)
-		: props.body;
-	return prepareFrame(body, { disable: props.disableLinks });
-});
+const srcdoc = computed(() =>
+	prepareFrame(props.body, {
+		disableLinks: props.disableLinks,
+		blockRemoteContent: props.blockRemoteContent,
+	}),
+);
 
 /**
  * Why this frame may open tabs and may do nothing else.
