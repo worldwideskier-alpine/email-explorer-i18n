@@ -209,17 +209,25 @@ fork's work. This fork ships by being forked.
 - **The message frame is decided on the string.** A message is shown in a
   sandboxed `srcdoc` iframe, and everything about what it may do is settled
   in the markup before the frame parses it (`prepareFrame`,
-  `utils/emailLinks.ts`) -- never in a `load` handler. The frame fires `load`
-  only once every image has arrived, and a message is tappable long before:
-  measured, a link rewritten in `load` was still untouched 2.5 seconds into a
-  message with one slow picture, and tapping it navigated the frame into the
-  page's own `frame-src 'self'` and a grey "This content is blocked". That
-  cost two deploys. The markup is then checked by parsing it *again*, the way
-  the frame will, because two readings of HTML can disagree -- one known
-  nested-`<form>` shape turned a MathML `<a>` into a live HTML link on the
-  second reading. Destinations are read from the attribute (`href` or
-  `xlink:href`, any element), never from `.href`, which is not a string on
-  SVG and does not exist on MathML.
+  `utils/messageFrame.ts`) -- never in a `load` handler. The frame fires
+  `load` only once every image has arrived, and a message is tappable long
+  before: measured, a link rewritten in `load` was still untouched 2.5
+  seconds into a message with one slow picture, and tapping it navigated the
+  frame into the page's own `frame-src 'self'` and a grey "This content is
+  blocked". That cost two deploys. Links, remote content (spam folder) and
+  everything else happen on **one parse of the whole frame document**, so
+  the parser merges a message's `<body>` attributes as the frame's will; the
+  result is then checked by parsing it *again*, the way the frame will,
+  because two readings of HTML can disagree. What the two readings cannot
+  see alike is taken out rather than chased: nested documents (`<iframe
+  srcdoc>` inherits the sandbox, popups-escape included), declarative shadow
+  roots (the frame's parser attaches `shadowrootmode`, DOMParser does not)
+  and SMIL animations of `href`/`target`. Each of those was measured letting
+  a link or a spam-folder pixel through. Destinations are read from the
+  attribute (`href` or `xlink:href`), never from `.href`, which is not a
+  string on SVG and does not exist on MathML; and every scheme but a
+  `#fragment` or a script URL opens a new tab -- `mailto:` and `about:blank`
+  in the frame were measured taking the message away too.
 - **Dashboard theming.** `index.html` carries the only page background and it
   has both halves (`bg-gray-100 text-gray-900 dark:bg-gray-900
   dark:text-gray-100`); cards use `bg-white dark:bg-gray-800` and follow the

@@ -83,35 +83,49 @@ function stripCssFetches(css: string): string {
 		.replace(CSS_URL, "none");
 }
 
+/** A stylesheet link fetches on sight; a meta refresh navigates with no click. */
+const REMOVED_OUTRIGHT = 'link, meta[http-equiv="refresh" i]';
+
+const XLINK = "http://www.w3.org/1999/xlink";
+
 /**
- * The body with every automatic fetch removed, ready to be put in front of a
- * reader.
- *
- * Parsed as a whole document rather than through an element's innerHTML: the
- * document DOMParser returns has no browsing context, so building it loads
- * nothing, which is the one property this function cannot do without.
- *
- * The parser puts a leading `<style>` -- and mail is full of them, Outlook
- * puts one in every message it sends -- in `<head>`, so both halves are
- * serialised back out in the order they were written. Returning the body
- * alone would silently throw the message's stylesheet away and leave it
- * looking broken.
+ * Every element either pass below has anything to do with, found by the
+ * selector engine: one with a fetching attribute, one of the elements whose
+ * `href` loads, or one with a `style` to rewrite. Asking each of the
+ * thousands of elements in a large message in turn was the whole cost of
+ * this pass (measured, some 6 ms of removeAttribute calls that found
+ * nothing), and the answer is the same set.
  */
-export function stripRemoteContent(html: string): string {
-	if (!html) return "";
+const MAY_FETCH = [
+	...FETCHING_ATTRIBUTES.map((attribute) => `[${attribute}]`),
+	...[...HREF_LOADS].map((tag) => tag.toLowerCase()),
+	"[style]",
+].join(", ");
 
-	const doc = new DOMParser().parseFromString(html, "text/html");
-
+/**
+ * Takes every automatic fetch out of a parsed document, in place.
+ *
+ * Works on the document rather than on a string so that it can run inside
+ * the frame's own parse (prepareFrame, messageFrame.ts). It used to be the
+ * string version below, called first, and that returned the head and body of
+ * a separate parse -- which threw away the message's `<body>` attributes,
+ * so a spam message written on a black background came out as white text on
+ * the frame's light grey. On the frame's document the `<body>` element is one
+ * of the elements walked here, so a `background` attribute on it goes the
+ * way any other does and its colour and direction stay.
+ *
+ * The document DOMParser returns has no browsing context, so building it
+ * loads nothing, which is the one property this cannot do without.
+ */
+export function stripRemoteContentFrom(doc: Document): void {
 	// A stylesheet link is a fetch with nothing to show for it here, and a
 	// meta refresh navigates the frame to an address of the sender's choosing
 	// with no click at all -- which reports the open just as well as a pixel.
-	for (const el of Array.from(
-		doc.querySelectorAll('link, meta[http-equiv="refresh" i]'),
-	)) {
+	for (const el of Array.from(doc.querySelectorAll(REMOVED_OUTRIGHT))) {
 		el.remove();
 	}
 
-	for (const el of Array.from(doc.querySelectorAll("*"))) {
+	for (const el of Array.from(doc.querySelectorAll(MAY_FETCH))) {
 		for (const attribute of FETCHING_ATTRIBUTES) {
 			el.removeAttribute(attribute);
 		}
@@ -119,7 +133,7 @@ export function stripRemoteContent(html: string): string {
 			el.removeAttribute("href");
 			// SVG predates `href` on these elements and still accepts the
 			// namespaced spelling, which removeAttribute("href") does not touch.
-			el.removeAttributeNS("http://www.w3.org/1999/xlink", "href");
+			el.removeAttributeNS(XLINK, "href");
 		}
 
 		const style = el.getAttribute("style");
@@ -129,7 +143,49 @@ export function stripRemoteContent(html: string): string {
 	for (const el of Array.from(doc.querySelectorAll("style"))) {
 		el.textContent = stripCssFetches(el.textContent ?? "");
 	}
+}
 
+/**
+ * Whether anything in a parsed document would still be fetched -- asked of
+ * the frame's own reading of the markup after the pass above, which is the
+ * only reading that decides what goes out.
+ *
+ * The same rules as the pass, stated as a question: what the pass would
+ * remove or rewrite, this reports.
+ */
+export function fetchesSomething(doc: Document): boolean {
+	if (doc.querySelector(REMOVED_OUTRIGHT)) return true;
+	for (const el of Array.from(doc.querySelectorAll(MAY_FETCH))) {
+		if (FETCHING_ATTRIBUTES.some((attribute) => el.hasAttribute(attribute))) {
+			return true;
+		}
+		if (
+			HREF_LOADS.has(el.tagName.toUpperCase()) &&
+			(el.hasAttribute("href") || el.hasAttributeNS(XLINK, "href"))
+		) {
+			return true;
+		}
+		const style = el.getAttribute("style");
+		if (style && stripCssFetches(style) !== style) return true;
+	}
+	for (const el of Array.from(doc.querySelectorAll("style"))) {
+		const css = el.textContent ?? "";
+		if (stripCssFetches(css) !== css) return true;
+	}
+	return false;
+}
+
+/**
+ * The same pass on a string, for tests that want to ask about markup
+ * directly. The message frame does not use it: it runs the pass inside its
+ * one parse of the whole frame document (see stripRemoteContentFrom). This
+ * returns a fragment's head and body, which is right for a fragment and was
+ * wrong for a message, whose `<body>` attributes it drops.
+ */
+export function stripRemoteContent(html: string): string {
+	if (!html) return "";
+	const doc = new DOMParser().parseFromString(html, "text/html");
+	stripRemoteContentFrom(doc);
 	return `${doc.head.innerHTML}${doc.body.innerHTML}`;
 }
 

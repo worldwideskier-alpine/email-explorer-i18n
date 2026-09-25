@@ -1,51 +1,22 @@
 /**
- * What becomes of the links in a message body, decided before the frame ever
- * sees it.
+ * What a link in a message may do, decided on the markup before the frame
+ * ever parses it. The frame itself -- the document it is handed, and the
+ * check that the frame's own reading of it holds -- is messageFrame.ts.
  *
- * Three things had to be true, and the third is the one that took three
- * attempts. All measured in Chromium against a destination that sends
- * `X-Frame-Options: DENY`, with the application's own CSP on the page.
+ * Measured in Chromium, with the application's own CSP on the page:
  *
- *   1. A sender's own `<a href="...">` carries no target, so a click navigates
- *      *the frame*. The message is then replaced by a browser error page --
- *      and the refusal is ours before it is the destination's: the page says
- *      `frame-src 'self' blob:` and a `srcdoc` frame inherits it, so Chromium
- *      answers "Refused to frame ... frame-src" for every external link
- *      whatever the destination does. That grey panel is what "press the link
- *      and it breaks" was.
- *
- *   2. A link that does open a new tab opened a *sandboxed* one: the frame's
- *      sandbox is inherited by anything it opens unless the frame carries
- *      `allow-popups-to-escape-sandbox`, so the destination loaded with no
- *      scripts and an opaque origin -- the probe page reported "scripts did
- *      NOT run", and with the flag it reported its real origin. That flag is
- *      on the element in EmailIframe.vue.
- *
- *   3. **It has to be true from the first paint.** This ran in the frame's
- *      `load` handler, and a frame does not fire `load` until every image in
- *      it has arrived. A marketing message carries twenty, one of them a
- *      tracking pixel on a host that may never answer at all. Measured: three
- *      seconds in, the text was on screen and tappable, the frame had not
- *      fired `load`, and the link still read `target=""`. Tapping it then
- *      produced exactly the reported grey panel -- on the build that was
- *      supposed to have fixed it.
- *
- * So none of this waits for a load any more. It happens on the string, on the
- * way in, which is the same reason stripRemoteContent gives for living where
- * it does: what the parser is handed is the only thing that is true before
- * the first tap.
+ *   - A link with no target navigates *the frame*, and the message is
+ *     replaced by a browser error page. The refusal is ours before it is the
+ *     destination's: the page says `frame-src 'self' blob:` and a `srcdoc`
+ *     frame inherits it, so every external link ends in "This content is
+ *     blocked" whatever the destination does. That grey panel is what "press
+ *     the link and it breaks" was.
+ *   - It has to be true from the first paint. This once ran in the frame's
+ *     `load` handler, which waits for every image; three seconds into a
+ *     message with one slow picture the text was tappable and the links
+ *     untouched.
  */
 
-/**
- * Whether a click on this would leave the application, and so must not be
- * allowed to happen inside the frame.
- *
- * A bare `#section` is a jump within the message and stays where it is --
- * sending it to a new tab would open `about:srcdoc` in one, which is a blank
- * page. `mailto:` and `tel:` are handed to the operating system and leave the
- * frame's content alone. What is left is http and https, which is the whole
- * of the problem.
- */
 const XLINK = "http://www.w3.org/1999/xlink";
 
 /**
@@ -58,28 +29,86 @@ const XLINK = "http://www.w3.org/1999/xlink";
  * the frame. SVG may also spell it `xlink:href`, which the plain attribute
  * does not see.
  */
-function destinationOf(element: Element): string | null {
+export function destinationOf(element: Element): string | null {
 	return element.getAttribute("href") ?? element.getAttributeNS(XLINK, "href");
 }
 
+const MATHML = "http://www.w3.org/1998/Math/MathML";
+
 /**
- * Any base will do for telling a relative address from an absolute one, and
- * using a fixed one keeps the answer from depending on the document it was
- * asked in. It was `.href`, which resolves against the document's base: the
- * application's own address in a browser, `about:blank` in a document built
- * without one, and whatever a `<base>` in the message says in between.
+ * Whether pressing this element can navigate anything.
+ *
+ * `a` and `area`, in whatever namespace -- a type selector matches SVG's and
+ * MathML's `<a>` as well as HTML's, which matters because a nested-`<form>`
+ * construct turns a MathML `<a>` into an HTML one when the frame reads the
+ * markup again. And any MathML element with a destination, because WebKit
+ * makes those links.
+ *
+ * Nothing else. This used to be every element, and it wrote `target` and
+ * `rel` onto a `<link rel="stylesheet">` too, turning it into `rel="noopener
+ * noreferrer"`. That cost nothing only by accident -- the page's
+ * `style-src 'self'` had already refused the sheet, measured -- and a rule
+ * that is harmless by accident is one edit away from not being.
+ */
+export function isLink(element: Element): boolean {
+	const name = element.localName;
+	if (name === "a" || name === "area") return true;
+	return element.namespaceURI === MATHML && destinationOf(element) !== null;
+}
+
+/**
+ * Every element that could be a link, found by the selector engine rather
+ * than by walking the whole document and asking each one. `[*|href]` is an
+ * `href` in any namespace -- the plain one and SVG's `xlink:href` both --
+ * which is what finds a MathML link. isLink decides among them.
+ */
+export const LINK_CANDIDATES = "a, area, [*|href]";
+
+/**
+ * Any base will do for telling what scheme an address has, and a fixed one
+ * keeps the answer from depending on the document it was asked in: `.href`
+ * resolved against the application's own address in a browser, `about:blank`
+ * in a document built without one, and whatever a `<base>` in the message
+ * said in between.
  */
 const ANY_BASE = "https://relative.invalid/";
 
-function leavesTheApp(element: Element): boolean {
+const HTTP_PREFIX = /^https?:\/\//i;
+
+/** The schemes that must never be given a tab of their own to run in. */
+const SCRIPT_SCHEMES = new Set(["javascript:", "vbscript:"]);
+
+/**
+ * Whether a click on this has to open somewhere other than the frame.
+ *
+ * Everything with a destination does, except two kinds. A bare `#section` is
+ * a jump within the message and stays where it is -- in a new tab it would
+ * open `about:srcdoc`, a blank page. And a script URL gets no tab at all: in
+ * the frame it is inert, because the frame runs no scripts.
+ *
+ * This was "http and https", on the reasoning that other schemes leave the
+ * frame alone. Measured, they do not: `about:blank` replaced the message with
+ * a blank page, and `data:`, `ftp:` and even `mailto:` ended in the same grey
+ * "This content is blocked" as any external link, `frame-src` refusing the
+ * navigation before anything could hand it to a mail program. The click
+ * handler this replaced had opened every scheme in a new tab; narrowing it
+ * to two was a regression, not a refinement.
+ */
+export function opensElsewhere(element: Element): boolean {
 	const written = destinationOf(element)?.trim() ?? "";
 	if (!written || written.startsWith("#")) return false;
+	// Nearly every link in a message is spelled like this, and a string that
+	// begins with it has that scheme whatever follows -- so the answer is
+	// known without asking the URL parser, which was most of the cost of
+	// this rule on a large message (measured, some 5 ms per pass over 900
+	// links).
+	if (HTTP_PREFIX.test(written)) return true;
 	try {
-		// The URL parser, not a pattern, decides the scheme: it is the one
-		// that strips the tabs and newlines out of `java\tscript:` before
-		// the browser does, so it is the one that agrees with the browser.
-		return /^https?:$/.test(new URL(written, ANY_BASE).protocol);
+		// The URL parser decides the scheme, not a pattern: it strips the
+		// tab out of `java\tscript:` exactly as the browser will.
+		return !SCRIPT_SCHEMES.has(new URL(written, ANY_BASE).protocol);
 	} catch {
+		// Not parseable is not navigable; the browser will not go there.
 		return false;
 	}
 }
@@ -96,22 +125,13 @@ function leavesTheApp(element: Element): boolean {
  * browser's own path, is not popup-blocked, and holds for every one of those
  * ways of pressing it.
  *
- * `<area>` is included because an image map is still a link, and Japanese
- * marketing mail is full of them.
- *
  * `rel` is set to what `window.open(..., "noopener,noreferrer")` was asking
  * for, so nothing about what the destination is told changes: no reference
  * back to this window, and no Referer header.
  */
 export function sendLinksToANewTab(doc: Document): void {
-	if (!doc.body) return;
-	// Every element, not `a` and `area`: a MathML `<a>` with an href is not a
-	// link where it stands, and becomes an HTML one when the frame parses
-	// the markup again -- measured, through a nested-form construct. An
-	// attribute set here survives that; a check against the element's kind
-	// does not. On anything that is not a link, `target` does nothing.
-	for (const element of doc.querySelectorAll("*")) {
-		if (!leavesTheApp(element)) continue;
+	for (const element of doc.querySelectorAll(LINK_CANDIDATES)) {
+		if (!isLink(element) || !opensElsewhere(element)) continue;
 		// setAttribute rather than `.target =`: on an SVG `<a>` that property
 		// is a read-only SVGAnimatedString and assigning to it throws.
 		element.setAttribute("target", "_blank");
@@ -144,6 +164,9 @@ const URL_PATTERN = String.raw`https?:\/\/[A-Za-z0-9\-._~:/?#\[\]@!$&()*+,;=%]+`
 // ASCII), or a bare trailing slash-less sentence terminator.
 const TRAILING_PUNCTUATION = /[.,;:!?)\]}、。）」』】]+$/;
 
+/** Built once; without the `g` flag `test` keeps no state between calls. */
+const HAS_URL = new RegExp(URL_PATTERN);
+
 /**
  * Plain-text emails are stored as an escaped `<pre>` block (see
  * plain-text-to-html.ts) with bare URLs as plain text, and even genuine
@@ -161,13 +184,16 @@ export function linkifyPlainUrls(doc: Document): void {
 
 	const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, {
 		acceptNode(node) {
-			const parent = (node as Text).parentElement;
-			if (!parent || parent.closest("a, script, style")) {
+			// The pattern first: most text in a message has no URL in it, and
+			// that answer is cheaper than walking up to find out whether the
+			// text is already inside a link.
+			if (!HAS_URL.test(node.textContent || "")) {
 				return NodeFilter.FILTER_REJECT;
 			}
-			return new RegExp(URL_PATTERN).test(node.textContent || "")
-				? NodeFilter.FILTER_ACCEPT
-				: NodeFilter.FILTER_REJECT;
+			const parent = (node as Text).parentElement;
+			return !parent || parent.closest("a, script, style")
+				? NodeFilter.FILTER_REJECT
+				: NodeFilter.FILTER_ACCEPT;
 		},
 	});
 
@@ -214,12 +240,10 @@ export function linkifyPlainUrls(doc: Document): void {
  * an SVG `<a xlink:href="...">` in a phishing message kept its destination:
  * measured, clicking it navigated the frame to the phishing address. What is
  * left in the spam folder after this is checked again once the frame's own
- * parse of it is known; see prepareFrame.
+ * parse of it is known; see prepareFrame in messageFrame.ts.
  */
 export function neutralizeLinks(doc: Document): void {
-	if (!doc.body) return;
-	for (const element of doc.querySelectorAll("*")) {
-		if (destinationOf(element) === null) continue;
+	for (const element of doc.querySelectorAll("[*|href]")) {
 		element.removeAttribute("href");
 		element.removeAttributeNS(XLINK, "href");
 		element.removeAttribute("target");
@@ -230,135 +254,4 @@ export function neutralizeLinks(doc: Document): void {
 			element.title = "";
 		}
 	}
-}
-
-/**
- * The document the frame parses, as one string.
- *
- * It lives here rather than in the component because it is also what
- * prepareFrame checks: a check of anything other than the exact string the
- * frame will be handed is a check of something else.
- *
- * The doctype is new, and changes nothing for the frame -- measured, a
- * `srcdoc` document is in no-quirks mode with or without one, because the
- * spec says so for srcdoc. What it changes is the check. DOMParser applies no
- * such rule: without a doctype it parsed in quirks mode (measured,
- * `BackCompat`), which builds a different tree around a `<table>` inside a
- * `<p>`, so the tree that was inspected was not the tree that was shown.
- */
-export function frameDocument(body: string): string {
-	return `<!doctype html>
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <style>
-          body {
-            background-color: #f8f8f8;
-            color: #333;
-            font-family: sans-serif;
-            padding: 1rem;
-          }
-          a {
-            color: #2563eb;
-            text-decoration: underline;
-          }
-        </style>
-      </head>
-      <body>
-        ${body}
-      </body>
-    </html>
-  `;
-}
-
-const parse = (html: string) =>
-	new DOMParser().parseFromString(html, "text/html");
-
-const serialize = (doc: Document) =>
-	`<!doctype html>${doc.documentElement.outerHTML}`;
-
-/**
- * Whether the tree the frame will build is the one that was asked for: in
- * the spam folder, nothing with a destination at all; anywhere else, nothing
- * that leaves without saying where to open.
- */
-function isSafe(doc: Document, disable: boolean): boolean {
-	for (const element of doc.querySelectorAll("*")) {
-		if (disable) {
-			if (destinationOf(element) !== null) return false;
-		} else if (
-			leavesTheApp(element) &&
-			element.getAttribute("target") !== "_blank"
-		) {
-			return false;
-		}
-	}
-	return true;
-}
-
-/** Enough rounds for a mutation to settle; the ordinary case needs one. */
-const ROUNDS = 3;
-
-/**
- * The string the frame is handed: the body with every link decided, checked
- * against the frame's own reading of it.
- *
- * **Parsed as the frame will parse it.** The body goes into the frame's
- * document first and that whole document is parsed, so whatever the parser
- * does with a message's own `<html>`, `<head>` and `<body>` tags happens here
- * exactly as it will there. The previous version parsed the body on its own
- * and returned `head.innerHTML + body.innerHTML`, which threw away the
- * attributes on the message's `<body>` -- measured, a newsletter written as
- * `<body style="background:#000" bgcolor="#000000">` with white text came
- * out on this frame's light grey, unreadable, and `dir="rtl"` went with it.
- * In the frame the parser merges those attributes onto the body it already
- * has, and now that happens here too, and is serialised with it.
- *
- * **Checked by parsing the result again.** Parse, rewrite, serialise, parse
- * is two readings of the markup, and they can disagree: that is the whole
- * family of mutation tricks sanitisers are bypassed with. Measured against
- * the real pipeline with nine known shapes, one got through -- a
- * nested-`<form>` construct that leaves an `<a>` in the MathML namespace on
- * the first reading and makes it an HTML link on the second, where it had no
- * target and navigated the frame. So the output is not trusted because the
- * rewrite ran; it is trusted when the frame's reading of it passes. If it
- * does not, the rewrite runs on that reading and the result is read again.
- *
- * **And if it never settles, the words only.** A message whose markup keeps
- * changing under reparsing is not an ordinary message, and showing its text
- * without any markup cannot be reparsed into anything.
- *
- * Linkifying is guarded because it is a convenience and the rest is not. It
- * once ran unguarded ahead of everything else, and a throw from it -- one
- * engine's quirk is enough -- took the whole message off the screen:
- * measured, no frame at all, just a Vue render error.
- */
-export function prepareFrame(
-	body: string,
-	{ disable = false }: { disable?: boolean } = {},
-): string {
-	let html = frameDocument(body);
-	for (let round = 0; round < ROUNDS; round++) {
-		const doc = parse(html);
-		if (round > 0 && isSafe(doc, disable)) return html;
-		if (round === 0 && !disable) {
-			try {
-				linkifyPlainUrls(doc);
-			} catch (error) {
-				console.error(`could not linkify the bare URLs in a message: ${error}`);
-			}
-		}
-		if (disable) neutralizeLinks(doc);
-		else sendLinksToANewTab(doc);
-		html = serialize(doc);
-	}
-	const last = parse(html);
-	if (isSafe(last, disable)) return html;
-
-	console.warn("a message's markup did not settle; showing its text only");
-	const words = (last.body?.textContent ?? "")
-		.replaceAll("&", "&amp;")
-		.replaceAll("<", "&lt;")
-		.replaceAll(">", "&gt;");
-	return frameDocument(`<pre style="white-space: pre-wrap">${words}</pre>`);
 }

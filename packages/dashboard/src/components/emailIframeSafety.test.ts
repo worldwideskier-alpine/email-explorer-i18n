@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { frameDocument } from "@/utils/emailLinks";
+import { frameDocument } from "@/utils/messageFrame";
 
 /**
  * The frame is wired the way the spam folder needs it.
@@ -39,16 +39,13 @@ const detail = read(views, "EmailDetail.vue");
  * The body of the one computed that builds what the frame is given, and
  * nothing past it.
  *
- * Bounded by that computed's own `});`. The pattern this replaced ended at
- * `\n);`, which the computed it was looking for never had -- so it ran on
- * lazily into the next computed, and a call moved out of the right one into
- * the wrong one still passed. Checked here, not assumed: whatever this
- * returns must not contain a second `computed(`.
+ * An earlier pattern ended at a closing the computed it looked for did not
+ * have, so it ran on lazily into the next computed, and a call moved out of
+ * the right one into the wrong one still passed. Checked here, not assumed:
+ * whatever this returns must not contain a second `computed(`.
  */
 function srcdocComputed(): string {
-	const found = /const srcdoc = computed\(\(\) => \{([\s\S]*?)\n\}\);/.exec(
-		iframe,
-	)?.[1];
+	const found = /const srcdoc = computed\(([\s\S]*?)\n\);/.exec(iframe)?.[1];
 	if (!found) throw new Error("the srcdoc computed was not found");
 	if (found.includes("computed(")) {
 		throw new Error("the srcdoc match ran past its own computed");
@@ -64,13 +61,13 @@ describe("the frame that shows a message body", () => {
 	 * the pixel already reported and the picture merely gone.
 	 */
 	it("strips the body before the frame is given it, not after", () => {
-		expect(iframe).toContain("stripRemoteContent");
-
-		// The frame is handed this computed and nothing else, and the raw
-		// body reaches it only through the flag's other branch.
+		// The frame is handed this computed and nothing else, and the flag
+		// goes into the same call that builds the document -- where the strip
+		// runs on the one parse, before anything is serialised
+		// (messageFrame.test.ts holds that nothing is left to fetch).
 		expect(iframe).toContain(':srcdoc="srcdoc"');
-		expect(srcdocComputed()).toMatch(
-			/props\.blockRemoteContent\s*\?\s*stripRemoteContent\(props\.body\)\s*:\s*props\.body/,
+		expect(srcdocComputed()).toContain(
+			"blockRemoteContent: props.blockRemoteContent",
 		);
 
 		// And there is no afterwards to do it in: the component has no load
@@ -96,7 +93,7 @@ describe("the frame that shows a message body", () => {
 	 */
 	it("does not pretend a frame policy is holding anything up", () => {
 		expect(iframe).not.toMatch(/http-equiv/i);
-		// The frame's own markup is built in utils/emailLinks.ts now, so it is
+		// The frame's own markup is built in utils/messageFrame.ts now, so it is
 		// asked there -- of what it produces, not of how it is written.
 		const empty = frameDocument("");
 		expect(empty).not.toMatch(/http-equiv/i);
@@ -168,14 +165,17 @@ describe("the frame that shows a message body", () => {
 	 * servers, so the sender chooses how long that is.
 	 */
 	it("makes a spam message inert on the same string, not later", () => {
-		expect(srcdocComputed()).toContain("disable: props.disableLinks");
+		expect(srcdocComputed()).toContain("disableLinks: props.disableLinks");
 	});
 
 	// Both only under the flag: an ordinary message still shows its pictures.
 	it("leaves a message outside the spam folder alone", () => {
-		expect(iframe).toMatch(
-			/props\.blockRemoteContent\s*\?\s*stripRemoteContent\(props\.body\)\s*:\s*props\.body/,
+		// The flag is passed through as it arrives, not forced on; that an
+		// ordinary message keeps its pictures is messageFrame.test.ts's.
+		expect(srcdocComputed()).toContain(
+			"blockRemoteContent: props.blockRemoteContent",
 		);
+		expect(srcdocComputed()).not.toMatch(/blockRemoteContent:\s*true/);
 	});
 });
 
