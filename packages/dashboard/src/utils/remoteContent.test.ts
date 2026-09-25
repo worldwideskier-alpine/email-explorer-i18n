@@ -17,12 +17,17 @@ import { decodeCssEscapes } from "./remoteContent";
  * against a path the frame never took.
  */
 
-/** A spam message's body, as the frame will read it. */
-function spamBody(html: string): string {
+/** A spam message, as the frame will read it. */
+function spamDocument(html: string): Document {
 	return new DOMParser().parseFromString(
 		prepareFrame(html, { blockRemoteContent: true }),
 		"text/html",
-	).body.innerHTML;
+	);
+}
+
+/** Its body, serialised -- which writes U+00A0 as `&nbsp;`. */
+function spamBody(html: string): string {
+	return spamDocument(html).body.innerHTML;
 }
 
 /** What a browser would go and get, spelled every way this has to survive. */
@@ -509,18 +514,21 @@ describe("a <style> with elements in it", () => {
  * browser fetched -- measured, from this application's own origin.
  */
 describe("a space CSS does not skip", () => {
-	for (const space of [" ", "　"]) {
+	// Read from the attributes, not from serialised markup: innerHTML writes
+	// U+00A0 as `&nbsp;`, so a search of it for the character itself passed
+	// with the fix taken out -- measured, for this half of the test.
+	for (const space of ["\u00a0", "\u3000"]) {
 		it(`is not taken for one, ${JSON.stringify(space)}`, () => {
-			const style = spamBody(
+			const div = spamDocument(
 				`<div style="color:red;background:url(${space}#x)">x</div>`,
-			);
-			expect(style).not.toContain(`url(${space}`);
-			expect(style).toContain("color:red");
-			const mask = spamBody(
+			).querySelector("div");
+			expect(div?.getAttribute("style")).not.toContain(`url(${space}`);
+			expect(div?.getAttribute("style")).toContain("color:red");
+			const rect = spamDocument(
 				`<svg><rect width="9" height="9" mask="url(${space}#m)"/></svg>`,
-			);
-			expect(mask).not.toContain(`url(${space}`);
-			expect(mask).toContain("<rect");
+			).querySelector("rect");
+			expect(rect).not.toBeNull();
+			expect(rect?.hasAttribute("mask")).toBe(false);
 		});
 	}
 });

@@ -148,17 +148,18 @@ const CSS_IMPORT = /@import[^;}]*;?/gi;
  * outright would leave `background-image: ;`, which a browser drops as
  * malformed -- the same result by a less honest route.
  *
- * With `keepFragments`, an `url()` that fetches nothing stays -- judged by
- * FETCHES on the match itself, so a match that swallowed a second `url(`
- * goes. Without it, every address goes, `url(#...)` included.
+ * An `url()` that fetches nothing stays: a gradient or a clip beside a
+ * tracker, or beside `url(http://...)` mentioned in a comment, survives,
+ * where rewriting every address took them all away. Each match is judged by
+ * cssFetches on its own text, escapes read, so a match that swallowed a
+ * second `url(` goes -- and so does one whose second is spelled in escapes,
+ * `/*url(#*\/background:u\rl(...)`.
  */
-function stripCssFetches(css: string, keepFragments: boolean): string {
+function stripCssFetches(css: string): string {
 	return css
 		.replace(CSS_IMPORT, "")
 		.replace(CSS_IMAGE_SET, "none")
-		.replace(CSS_URL, (match) =>
-			keepFragments && !FETCHES.test(match) ? match : "none",
-		);
+		.replace(CSS_URL, (match) => (cssFetches(match) ? "none" : match));
 }
 
 /**
@@ -206,25 +207,26 @@ function cssFetches(css: string): boolean {
  * CSS with nothing left in it that fetches, or null when there is no such
  * thing short of dropping it.
  *
- * Three tries, each taken only if cssFetches -- which pairs nothing up --
- * finds nothing in the result, so no try has to be right about which `url(`
- * a browser will read. The first keeps `url(#...)`: a gradient or a clip
- * beside a tracker, or beside `url(http://...)` mentioned in a comment,
- * survives, where rewriting every address took them all away. It judges
- * each match as written, so an address hidden behind `url(#` and spelled in
- * escapes -- `/*url(#*\/background:u\rl(...)` -- is kept by it and found by
- * the check; the second try takes every address, and that one with it. The
- * last drops the CSS whole: a fetch that appears only once the escapes are
- * read -- a sender spelling `url(` so that a filter will not see it -- is not
- * decoded and written back, because decoding changes the meaning of an escape
- * that was there for a reason, such as a quote inside a string.
+ * The rewrite is taken only if cssFetches -- which pairs nothing up -- finds
+ * nothing in the result, so the rewrite never has to be right about which
+ * `url(` a browser will read. What it cannot mend is a fetch that exists only
+ * once the escapes are read and lies outside every `url(` as written -- a
+ * sender spelling `u\rl(` so that a filter will not see it -- and that CSS is
+ * dropped whole rather than decoded and written back: decoding changes the
+ * meaning of an escape that was there for a reason, such as a quote inside a
+ * string.
+ *
+ * Why patterns and not a CSS tokenizer: nothing here has to read CSS the way
+ * a browser does, only to find every place one might see an address -- and
+ * that over-reads on purpose. Where the patterns and the browser disagree,
+ * what it costs is a style taken away that fetched nothing (measured:
+ * `url(#a\)...` drops the style it is in), not a fetch. A tokenizer would
+ * keep more such styles, and would be a second reading of CSS that has to
+ * match the browser's own, error recovery included, to be safe.
  */
 function cssWithoutFetches(css: string): string | null {
-	for (const keepFragments of [true, false]) {
-		const rewritten = stripCssFetches(css, keepFragments);
-		if (!cssFetches(rewritten)) return rewritten;
-	}
-	return null;
+	const rewritten = stripCssFetches(css);
+	return cssFetches(rewritten) ? null : rewritten;
 }
 
 /**
