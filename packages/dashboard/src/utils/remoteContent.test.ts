@@ -522,8 +522,9 @@ describe("a space CSS does not skip", () => {
 			const div = spamDocument(
 				`<div style="color:red;background:url(${space}#x)">x</div>`,
 			).querySelector("div");
-			expect(div?.getAttribute("style")).not.toContain(`url(${space}`);
-			expect(div?.getAttribute("style")).toContain("color:red");
+			const style = div?.getAttribute("style") ?? "";
+			expect(style).not.toContain(`url(${space}`);
+			expect(style).toContain("color:red");
 			const rect = spamDocument(
 				`<svg><rect width="9" height="9" mask="url(${space}#m)"/></svg>`,
 			).querySelector("rect");
@@ -546,6 +547,19 @@ describe("a reference into the message, beside something that fetches", () => {
 		expect(out).not.toContain("x.example");
 		expect(out).toContain(".g{fill:url(#grad)}");
 		expect(out).toContain(".c{clip-path:url(#clip)}");
+	});
+
+	/**
+	 * And beside one hidden behind `url(#` in escapes, which the rewrite used
+	 * to reach only on a second pass that took every address -- this one
+	 * included.
+	 */
+	it("stays beside a tracker hidden in escapes", () => {
+		const out = spamBody(
+			'<svg><rect width="9" height="9" style="fill:url(#g);/*url(#*/background:u\\rl(https://tracker.example/b.gif)"/></svg>',
+		);
+		expect(out).not.toContain("tracker.example");
+		expect(out).toContain("fill:url(#g)");
 	});
 
 	it("stays beside a tracker in the same style", () => {
