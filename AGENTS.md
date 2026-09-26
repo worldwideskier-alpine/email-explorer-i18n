@@ -181,6 +181,17 @@ fork's work. This fork ships by being forked.
   all of this, and also that an original (`raw/{id}.eml`, named by id alone)
   is read or deleted only through the mailbox whose message it is, and that
   mail is sent only as the mailbox in the path.
+  Holding a deleted mailbox is not enough to act on it: the gate in `fetch()`
+  answers 404 for a mailbox with no settings object, and so does the import
+  route, which sits outside the gate. Anything that wrote a settings object
+  for a deleted mailbox -- a spam verdict, a restore, ingest's old
+  auto-create -- brought it back from nothing, backup count at the minimum.
+- **One spelling per address.** Mailbox addresses and sign-in addresses are
+  trimmed and lowercased on the way in, and sign-in looks up without case
+  (rows from before are still found by either spelling). Stored as typed, a
+  capitalised copy of somebody else's mailbox was a second mailbox that could
+  send as the first, and a capitalised mailbox received nothing, since inbound
+  mail is filed by the lowercased envelope recipient.
 - **The daily cron.** One `scheduled()` handler, and the order inside it
   matters: `scheduled-run.ts` backs every mailbox up *first* and deletes old
   spam *second*, so a message the purge removes is already in that run's
@@ -190,7 +201,9 @@ fork's work. This fork ships by being forked.
   (the backup failed, was cut off, or a weekly or monthly one was not due).
   So for a mailbox with backups on, the purge deletes only what arrived before
   the newest archive in the bucket (`newestArchiveAt`), and nothing while
-  there is none; `spam-purge.test.ts` holds it.
+  there is none; `spam-purge.test.ts` holds it. "Arrived" is `received_at`,
+  stamped at ingest, never `date`: a restored message carries its own date,
+  years back, and by that it counted as archived when no archive held it.
 - **The nightly run has to survive being cut off**, because it was not. On
   2026-09-04 the whole record was `{"startedAt":"2026-09-03T18:14:09.407Z"}`:
   `scheduled-run.ts` writes `backups` whether the pass returns *or throws*, so

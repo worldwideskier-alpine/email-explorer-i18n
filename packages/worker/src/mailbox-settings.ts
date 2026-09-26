@@ -82,6 +82,12 @@ export function mergeMailboxSettings(
 		Object.hasOwn(incoming, "deletionLocked") ? incoming : existing,
 	);
 
+	// Written only by spam verdicts (recordSenderVerdict), never by a save.
+	// The settings screen sends back everything it loaded, so taking these
+	// from it undid every verdict given since the screen was opened -- in
+	// another tab, or on a phone.
+	merged.senderRules = existing?.senderRules;
+
 	merged.autoBackup = mergeAutoBackup(
 		existing?.autoBackup,
 		incoming?.autoBackup,
@@ -247,7 +253,10 @@ export async function recordSenderVerdict(
 ): Promise<MailboxSettings> {
 	const key = `mailboxes/${mailboxId}.json`;
 	const obj = await env.BUCKET.get(key);
-	const settings: MailboxSettings = obj ? await obj.json() : {};
+	// No settings object means the mailbox was deleted. Writing one here would
+	// bring it back from nothing but these rules.
+	if (!obj) return {};
+	const settings: MailboxSettings = await obj.json();
 
 	const normalized = normalizeAddress(fromAddress);
 	const existingAllow: string[] = settings.senderRules?.allow || [];

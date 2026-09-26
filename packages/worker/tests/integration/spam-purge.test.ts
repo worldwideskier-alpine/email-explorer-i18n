@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env, runInDurableObject } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { runScheduledSpamPurge } from "../../src/spam-purge-run";
 import {
@@ -210,6 +210,23 @@ describe("deleting old mail out of the spam folder", () => {
  * arrive and expire between two of them. Each case below is one where a
  * message would have been deleted with no copy anywhere.
  */
+/**
+ * When a message arrived, as the mailbox recorded it. Ingest stamps the real
+ * clock; these tests run the purge at a fixed NOW, so the arrival is set to
+ * match the story each test tells.
+ */
+async function arrivedAt(id: string, iso: string) {
+	// @ts-expect-error test binding
+	const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+	await runInDurableObject(stub, async (_i, state) => {
+		state.storage.sql.exec(
+			"UPDATE emails SET received_at = ? WHERE id = ?",
+			iso,
+			id,
+		);
+	});
+}
+
 describe("deleting old spam when backups are on", () => {
 	const bucket = () => (env as unknown as { BUCKET: R2Bucket }).BUCKET;
 	const archive = (stamp: string) =>
@@ -249,9 +266,20 @@ describe("deleting old spam when backups are on", () => {
 	it("deletes what arrived before the newest archive and keeps what came after", async () => {
 		await archive("2026-07-15T18-00-00-000Z");
 		await archive("2026-08-10T18-00-00-000Z");
-		await place("In the archive", "spam", "2026-08-01T00:00:00.000Z");
-		await place("After the archive", "spam", "2026-08-20T00:00:00.000Z");
-		await place("Recent", "spam", "2026-08-31T00:00:00.000Z");
+		const inArchive = await place(
+			"In the archive",
+			"spam",
+			"2026-08-01T00:00:00.000Z",
+		);
+		await arrivedAt(inArchive, "2026-08-01T00:00:00.000Z");
+		const after = await place(
+			"After the archive",
+			"spam",
+			"2026-08-20T00:00:00.000Z",
+		);
+		await arrivedAt(after, "2026-08-20T00:00:00.000Z");
+		const recent = await place("Recent", "spam", "2026-08-31T00:00:00.000Z");
+		await arrivedAt(recent, "2026-08-31T00:00:00.000Z");
 		await setRetention({ enabled: true, days: 7 });
 
 		const summary = await runScheduledSpamPurge(env as never, NOW);
@@ -269,10 +297,87 @@ describe("deleting old spam when backups are on", () => {
 			await archive(`2026-06-${d}T18-00-00-000Z`);
 		}
 		await archive("2026-08-25T18-00-00-000Z");
-		await place("Covered", "spam", "2026-08-20T00:00:00.000Z");
+		const covered = await place("Covered", "spam", "2026-08-20T00:00:00.000Z");
+		await arrivedAt(covered, "2026-08-20T00:00:00.000Z");
 		await setRetention({ enabled: true, days: 7 });
 
 		expect((await runScheduledSpamPurge(env as never, NOW)).deleted).toBe(1);
+	});
+
+	/**
+	 * A restored message carries its own old date. Old by that date is not
+	 * the same as archived: it arrived after the newest archive, so no archive
+	 * holds it yet. Compared by date, it was deleted with no copy anywhere.
+	 */
+	it("keeps a restored message with an old date until an archive holds it", async () => {
+		await archive("2026-08-25T18-00-00-000Z");
+		const restored = await place(
+			"Restored",
+			"spam",
+			"2025-01-01T00:00:00.000Z",
+		);
+		await arrivedAt(restored, "2026-08-30T00:00:00.000Z");
+		await setRetention({ enabled: true, days: 7 });
+
+		expect((await runScheduledSpamPurge(env as never, NOW)).deleted).toBe(0);
+		expect(await subjectsIn("spam")).toEqual(["Restored"]);
+	});
+
+	/**
+	 * The purge lists its messages and then deletes them one at a time. One
+	 * rescued from spam in between is in the inbox now, and stays there.
+	 */
+	it("leaves a message rescued while the purge is running", async () => {
+		await archive("2026-08-25T18-00-00-000Z");
+		const rescued = await place("Rescued", "spam", "2026-08-01T00:00:00.000Z");
+		await arrivedAt(rescued, "2026-08-01T00:00:00.000Z");
+		await setRetention({ enabled: true, days: 7 });
+
+		// The mailbox answers the purge's listing, and the message is moved to
+		// the inbox straight after -- the reader said "not spam" meanwhile.
+		// @ts-expect-error test binding
+		const ns = env.MAILBOX;
+		const racing = new Proxy(ns, {
+			get(target, property) {
+				if (property !== "get") {
+					const member = Reflect.get(target, property);
+					return typeof member === "function" ? member.bind(target) : member;
+				}
+				return (id: DurableObjectId) => {
+					const stub = target.get(id);
+					return new Proxy(stub, {
+						get(s, p) {
+							if (p !== "listSpamEmailDates") return Reflect.get(s, p);
+							return async () => {
+								const listed = await s.listSpamEmailDates();
+								await s.moveEmail(rescued, "inbox");
+								return listed;
+							};
+						},
+					});
+				};
+			},
+		});
+
+		const summary = await runScheduledSpamPurge(
+			{ ...(env as object), MAILBOX: racing } as never,
+			NOW,
+		);
+		expect(summary).toMatchObject({ ran: 1, failed: 0, deleted: 0 });
+		expect(await subjectsIn("inbox")).toContain("Rescued");
+	});
+
+	it("does not delete a message that has left the spam folder", async () => {
+		await archive("2026-08-25T18-00-00-000Z");
+		const rescued = await place("Rescued", "spam", "2026-08-01T00:00:00.000Z");
+		await arrivedAt(rescued, "2026-08-01T00:00:00.000Z");
+		// @ts-expect-error test binding
+		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+		expect(await stub.deleteEmail(rescued, "spam")).not.toBeNull();
+		const again = await place("Moved", "spam", "2026-08-01T00:00:00.000Z");
+		await stub.moveEmail(again, "inbox");
+		expect(await stub.deleteEmail(again, "spam")).toBeNull();
+		expect(await subjectsIn("inbox")).toContain("Moved");
 	});
 
 	it("still deletes by date alone when backups are off", async () => {

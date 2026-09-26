@@ -43,6 +43,9 @@ interface EmailData {
 	thread_id?: string | null;
 }
 
+/** The most results one search returns. */
+const SEARCH_LIMIT = 500;
+
 interface AttachmentData {
 	id: string;
 	email_id: string;
@@ -122,6 +125,37 @@ export class MailboxDO extends DurableObject<Env> {
 		return result.results?.is_admin === 1;
 	}
 
+	/**
+	 * Sign-in addresses have one spelling: trimmed and lowercased on the way
+	 * in, and looked up without case. They used to be stored as typed and
+	 * matched exactly, so `Alice@x` could not sign in as `alice@x`, and two
+	 * accounts could differ only by case -- while the per-address login limit,
+	 * keyed on the lowercased address, was shared between them: a successful
+	 * login to the look-alike reset the count of guesses at the real one.
+	 */
+	#takenBy(email: string, exceptUserId?: string): boolean {
+		return (
+			this.ctx.storage.sql
+				.exec(
+					"SELECT 1 FROM users WHERE email = ? COLLATE NOCASE AND id != ?",
+					email,
+					exceptUserId ?? "",
+				)
+				.toArray().length > 0
+		);
+	}
+
+	/** The account for an address; an exact spelling first, for rows from before. */
+	#userRowByEmail(email: string): Record<string, SqlStorageValue> | undefined {
+		return this.ctx.storage.sql
+			.exec(
+				"SELECT * FROM users WHERE email = ? COLLATE NOCASE ORDER BY (email = ?) DESC LIMIT 1",
+				email.trim(),
+				email.trim(),
+			)
+			.toArray()[0];
+	}
+
 	// Auth operation: register a user
 	async register(
 		email: string,
@@ -131,9 +165,13 @@ export class MailboxDO extends DurableObject<Env> {
 	): Promise<User> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
+		email = email.trim().toLowerCase();
 		const userId = crypto.randomUUID();
 		const passwordHash = await hashPassword(password);
 		const now = Date.now();
+		if (this.#takenBy(email)) {
+			throw new Error("UNIQUE constraint failed: users.email");
+		}
 
 		// A login belongs to somebody. Registering makes a new person, because
 		// that is what registering is: somebody who was not here before. The
@@ -185,12 +223,16 @@ export class MailboxDO extends DurableObject<Env> {
 	): Promise<User | "closed"> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
+		email = email.trim().toLowerCase();
 		const passwordHash = await hashPassword(password);
 
 		const count = Number(
 			this.ctx.storage.sql.exec("SELECT COUNT(*) AS n FROM users").one().n,
 		);
 		if (onlyFirst && count > 0) return "closed";
+		if (this.#takenBy(email)) {
+			throw new Error("UNIQUE constraint failed: users.email");
+		}
 		const isFirstUser = count === 0;
 
 		const userId = crypto.randomUUID();
@@ -237,15 +279,8 @@ export class MailboxDO extends DurableObject<Env> {
 	async login(email: string, password: string): Promise<Session | null> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
-		const result = this.#qb
-			.select("users")
-			.fields(["id", "email", "password_hash", "is_admin"])
-			.where("email = ?", email)
-			.one();
-
-		if (!result.results) return null;
-
-		const user = result.results;
+		const user = this.#userRowByEmail(email);
+		if (!user) return null;
 		const { valid, needsRehash } = await verifyPassword(
 			password,
 			String(user.password_hash),
@@ -274,6 +309,16 @@ export class MailboxDO extends DurableObject<Env> {
 				})
 				.execute();
 		}
+
+		// A session is otherwise removed only when it is presented after it
+		// expired, and a browser that was cleared never presents it again --
+		// so the table, and the push rows bound to its sessions, grew for
+		// ever. Every sign-in sweeps what has lapsed.
+		this.ctx.storage.sql.exec(
+			"DELETE FROM push_subscriptions WHERE session_id IN (SELECT id FROM sessions WHERE expires_at < ?)",
+			now,
+		);
+		this.ctx.storage.sql.exec("DELETE FROM sessions WHERE expires_at < ?", now);
 
 		this.#qb
 			.insert({
@@ -513,7 +558,6 @@ export class MailboxDO extends DurableObject<Env> {
 		}
 	}
 
-	// Auth operation: get all users (admin only)
 	/** Every login belonging to one person. */
 	async listPersonLoginIds(personId: string): Promise<string[]> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
@@ -602,17 +646,8 @@ export class MailboxDO extends DurableObject<Env> {
 	async getUserByEmail(email: string): Promise<User | null> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
-		const result = this.#qb
-			.select("users")
-			.fields(["id", "email", "is_admin", "created_at", "updated_at"])
-			.where("email = ?", email)
-			.execute();
-
-		if (!result.results || result.results.length === 0) {
-			return null;
-		}
-
-		const user = result.results[0];
+		const user = this.#userRowByEmail(email);
+		if (!user) return null;
 		return {
 			id: String(user.id),
 			email: String(user.email),
@@ -687,6 +722,8 @@ export class MailboxDO extends DurableObject<Env> {
 	async updateUserEmail(userId: string, newEmail: string): Promise<boolean> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
+		newEmail = newEmail.trim().toLowerCase();
+		if (this.#takenBy(newEmail, userId)) return false;
 		try {
 			this.ctx.storage.sql.exec(
 				"UPDATE users SET email = ?, updated_at = ? WHERE id = ?",
@@ -1295,7 +1332,22 @@ export class MailboxDO extends DurableObject<Env> {
 		return this.getEmail(id);
 	}
 
-	async deleteEmail(id: string) {
+	/**
+	 * Removes a message and returns its attachment rows, for the caller to
+	 * remove the objects they name.
+	 *
+	 * `onlyIn` makes the removal conditional on the folder, and answers null
+	 * when the message is not there. The spam purge lists its messages first
+	 * and deletes them one call at a time; a message rescued from spam in
+	 * between used to be deleted from the inbox all the same.
+	 */
+	async deleteEmail(id: string, onlyIn?: string) {
+		if (onlyIn !== undefined) {
+			const here = this.ctx.storage.sql
+				.exec("SELECT 1 FROM emails WHERE id = ? AND folder_id = ?", id, onlyIn)
+				.toArray();
+			if (here.length === 0) return null;
+		}
 		const attachments = this.#qb
 			.select("attachments")
 			.fields(["id", "filename"])
@@ -1354,11 +1406,6 @@ export class MailboxDO extends DurableObject<Env> {
 	}
 
 	/**
-	 * Ids only, oldest first -- the export streams one message at a time and
-	 * fetches each body as it goes, so that a mailbox of any size costs one
-	 * message worth of memory rather than all of them at once.
-	 */
-	/**
 	 * The spam folder's messages with their stored dates, for the scheduled
 	 * purge to decide which are past their retention.
 	 *
@@ -1368,17 +1415,26 @@ export class MailboxDO extends DurableObject<Env> {
 	 * sorts nowhere near where it belongs -- and comparing those as text would
 	 * pick the wrong messages to delete. See expiredSpamIds.
 	 */
-	async listSpamEmailDates(): Promise<{ id: string; date: string | null }[]> {
+	async listSpamEmailDates(): Promise<
+		{ id: string; date: string | null; receivedAt: string | null }[]
+	> {
 		const rows = this.ctx.storage.sql
-			.exec("SELECT id, date FROM emails WHERE folder_id = 'spam'")
+			.exec("SELECT id, date, received_at FROM emails WHERE folder_id = 'spam'")
 			.toArray();
+		const text = (value: unknown) =>
+			value === null || value === undefined ? null : String(value);
 		return rows.map((row) => ({
 			id: String(row.id),
-			date:
-				row.date === null || row.date === undefined ? null : String(row.date),
+			date: text(row.date),
+			receivedAt: text(row.received_at),
 		}));
 	}
 
+	/**
+	 * Ids only, oldest first -- the export streams one message at a time and
+	 * fetches each body as it goes, so that a mailbox of any size costs one
+	 * message worth of memory rather than all of them at once.
+	 */
 	async listEmailIdsByDate(): Promise<string[]> {
 		const rows = this.ctx.storage.sql
 			.exec("SELECT id FROM emails ORDER BY date ASC")
@@ -1571,17 +1627,32 @@ export class MailboxDO extends DurableObject<Env> {
 		}
 	}
 
+	/**
+	 * Renames a folder the user made. Answers undefined for a folder that does
+	 * not exist or is one of the fixed ones (inbox, spam, trash...), which
+	 * delete already refused, and "taken" for a name another folder has: that
+	 * was a UNIQUE failure escaping as a 500.
+	 */
 	async updateFolder(id: string, name: string) {
-		this.#qb
-			.update({
-				tableName: "folders",
-				data: { name },
-				where: {
-					conditions: "id = ?",
-					params: [id],
-				},
-			})
-			.execute();
+		const folder = this.ctx.storage.sql
+			.exec("SELECT is_deletable FROM folders WHERE id = ?", id)
+			.toArray()[0];
+		if (!folder || folder.is_deletable === 0) return undefined;
+		try {
+			this.#qb
+				.update({
+					tableName: "folders",
+					data: { name },
+					where: {
+						conditions: "id = ?",
+						params: [id],
+					},
+				})
+				.execute();
+		} catch (e) {
+			if (String(e).includes("UNIQUE")) return "taken" as const;
+			throw e;
+		}
 		const query = this.#qb
 			.select("folders")
 			.fields(["id", "name"])
@@ -1600,6 +1671,15 @@ export class MailboxDO extends DurableObject<Env> {
 		if (!folder.results || folder.results.is_deletable === 0) {
 			return false;
 		}
+
+		// The schema cascades a folder's deletion to its messages, and a
+		// message removed that way leaves its original and attachments in the
+		// bucket with nothing naming them. A folder with mail in it is not
+		// deleted; the mail has to be moved out first.
+		const holdsMail = this.ctx.storage.sql
+			.exec("SELECT 1 FROM emails WHERE folder_id = ? LIMIT 1", id)
+			.toArray();
+		if (holdsMail.length > 0) return "not-empty" as const;
 
 		this.#qb
 			.delete({
@@ -1620,15 +1700,21 @@ export class MailboxDO extends DurableObject<Env> {
 		return result.results || [];
 	}
 
+	/** Null when the address is already a contact (email is UNIQUE). */
 	async createContact(contact: { name?: string; email: string }) {
-		const result = this.#qb
-			.insert({
-				tableName: "contacts",
-				data: contact,
-				returning: ["id", "name", "email"],
-			})
-			.execute();
-		return result.results;
+		try {
+			const result = this.#qb
+				.insert({
+					tableName: "contacts",
+					data: contact,
+					returning: ["id", "name", "email"],
+				})
+				.execute();
+			return result.results;
+		} catch (e) {
+			if (String(e).includes("UNIQUE")) return null;
+			throw e;
+		}
 	}
 
 	async updateContact(id: number, contact: { name?: string; email?: string }) {
@@ -1650,17 +1736,13 @@ export class MailboxDO extends DurableObject<Env> {
 		return result.results;
 	}
 
+	/** Whether there was such a contact to delete. */
 	async deleteContact(id: number) {
-		this.#qb
-			.delete({
-				tableName: "contacts",
-				where: {
-					conditions: "id = ?",
-					params: [id],
-				},
-			})
-			.execute();
-		return true;
+		const cursor = this.ctx.storage.sql.exec(
+			"DELETE FROM contacts WHERE id = ?",
+			id,
+		);
+		return cursor.rowsWritten > 0;
 	}
 
 	async moveEmail(id: string, folderId: string) {
@@ -1719,12 +1801,17 @@ export class MailboxDO extends DurableObject<Env> {
 		if (folder && !folderId) return [];
 		if (folderId) qb = qb.where("folder_id = ?", folderId);
 
+		// What was typed is looked for as typed: `%` and `_` in it were LIKE
+		// wildcards, so "100%" matched every message containing "100".
+		const like = (text: string) =>
+			`%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+
 		if (from) {
-			qb = qb.where("sender LIKE ?", `%${from}%`);
+			qb = qb.where("sender LIKE ? ESCAPE '\\'", like(from));
 		}
 
 		if (to) {
-			qb = qb.where("recipient LIKE ?", `%${to}%`);
+			qb = qb.where("recipient LIKE ? ESCAPE '\\'", like(to));
 		}
 
 		if (date_start) {
@@ -1735,12 +1822,15 @@ export class MailboxDO extends DurableObject<Env> {
 			qb = qb.where("date <= ?", date_end);
 		}
 
-		qb = qb.where("(subject LIKE ? OR body LIKE ?)", [
-			`%${query}%`,
-			`%${query}%`,
+		qb = qb.where("(subject LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\')", [
+			like(query),
+			like(query),
 		]);
 
-		const result = qb.execute();
+		// Newest first and bounded: it used to return every match, which for a
+		// short query on a large mailbox is the whole mailbox, bodies scanned
+		// and all, in one response.
+		const result = qb.orderBy("date DESC").limit(SEARCH_LIMIT).execute();
 
 		return (
 			result.results?.map((email) => ({
@@ -1759,7 +1849,11 @@ export class MailboxDO extends DurableObject<Env> {
 		this.#qb
 			.insert({
 				tableName: "emails",
-				data: { ...email, folder_id: folder },
+				data: {
+					...email,
+					folder_id: folder,
+					received_at: new Date().toISOString(),
+				},
 			})
 			.execute();
 

@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env, runInDurableObject } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { runScheduledMaintenance } from "../../src/scheduled-run";
 import {
@@ -51,6 +51,7 @@ async function place(subject: string, folder: string, date: string) {
 		},
 	);
 	expect(res.status, `importing ${subject}`).toBe(201);
+	return (await res.json<{ id: string }>()).id;
 }
 
 describe("the daily maintenance pass", () => {
@@ -60,7 +61,22 @@ describe("the daily maintenance pass", () => {
 	});
 
 	it("backs the message up before deleting it", async () => {
-		await place("Doomed spam", "spam", "2026-07-01T00:00:00.000Z");
+		const doomed = await place(
+			"Doomed spam",
+			"spam",
+			"2026-07-01T00:00:00.000Z",
+		);
+		// Arrived well before tonight's run, as mail that old did. Ingest
+		// stamps the real clock and the run here is at a fixed NOW.
+		// @ts-expect-error test binding
+		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+		await runInDurableObject(stub, async (_i, state) => {
+			state.storage.sql.exec(
+				"UPDATE emails SET received_at = ? WHERE id = ?",
+				"2026-07-01T00:00:00.000Z",
+				doomed,
+			);
+		});
 		await authenticatedFetch(
 			`http://local.test/api/v1/mailboxes/${mailboxId}`,
 			{
