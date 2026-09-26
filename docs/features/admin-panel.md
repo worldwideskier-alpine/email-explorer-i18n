@@ -1,461 +1,120 @@
-# Admin Panel Guide
+# Admin and Root Screens
 
-> **This guide describes upstream's model, not this fork's.** Granting and
-> revoking mailbox access, the Owner/Admin/Write/Read roles and promoting
-> users to administrator do not exist here. In this fork the first account to
-> register is **root**, which creates and deletes accounts on `/root`; every
-> other person holds the mailboxes they create, and nobody else's, and on
-> `/admin` manages their own sign-in addresses and Resend key. See
-> [Roles](../../README.md#roles) in the README.
+This fork has two management screens, and neither of them looks into anybody
+else's mail.
 
-The Admin Panel is a powerful tool for administrators to manage users and control access to mailboxes. This guide will help you understand and use all administrative features.
+- **`/admin`** is every administrator's own screen: the addresses they sign in
+  with, and the Resend key their mail is sent through.
+- **`/root`** is the screen of the person who runs the deployment: who has an
+  account, and the housekeeping only the deployment's owner may do.
 
-## Accessing the Admin Panel
+There is no screen that grants one person access to another person's mailbox.
+A mailbox belongs to whoever created it, and that grant is the only thing that
+gives access to it. See [Roles](../../README.md#roles) in the README.
 
-### Prerequisites
+## Who is who
 
-- You must be logged in as an administrator
-- Only administrators can see and access the Admin Panel
+| Role | How you get it | What it is for |
+|---|---|---|
+| **Root** (shown as *Owner*) | The first account ever registered on the deployment. Nothing else makes one. | Creating and deleting accounts. Root owns no mailbox and is not shown anybody's. |
+| **Administrator** | An account root creates. | Their own mailboxes, their own sign-in addresses, their own sending key. |
 
-### Opening the Admin Panel
+Registration closes behind the first account. Everybody after that is created
+by root, on `/root`.
 
-1. Log in to Email Explorer
-2. Look for the **"Admin Panel"** button in the top navigation bar
-3. Click to open the Admin Panel
+## `/admin` — your own account
 
-**Note**: If you don't see the Admin Panel button, you're not logged in as an administrator.
+Open it from the **Admin Panel** link on the mailbox list. Root is sent to
+`/root` instead; it has no mailboxes and sends no mail of its own.
 
-## Overview
+### Addresses you sign in with
 
-The Admin Panel is organized into main sections:
+Every address listed is the same account: the same mailboxes, the same
+settings. Losing one still leaves the others, which is the point of having
+more than one.
 
-1. **User Management** - Create and view users
-2. **Access Management** - Grant and revoke mailbox access
-3. **Users List** - View all registered users
+- **Add another login**: an address, a password for it, and **your current
+  password**. The current password is asked for because a login outlasts the
+  session it was added from -- somebody who had only borrowed your session
+  could otherwise add a way back in that resetting your password does not
+  remove.
+- **Remove**: also asks for your current password. Your last address cannot
+  be removed; it is marked *Your only way in*.
 
-## Creating New Users
+### Outbound mail API key
 
-As an administrator, you can create accounts for other users.
+Sending goes through [Resend](https://resend.com), with **your** key: the mail
+of your mailboxes is billed to you, not to anybody else on the deployment.
 
-### Step-by-Step Process
+- The status line says which key is in use: one set on this screen, one from
+  the deployment (a `RESEND_API_KEY` Worker secret), or none -- in which case
+  mail cannot be sent, and the compose screen says so.
+- Saving replaces the stored key; removing it falls back to the deployment's,
+  if there is one.
+- The key is stored in the deployment's R2 bucket and is never shown again
+  after it is saved. Anyone holding the Cloudflare account can read R2.
 
-1. Open the **Admin Panel**
-2. Locate the **"Register New User"** section at the top
-3. Fill in the form:
-   - **Email Address**: The user's email address (becomes their username)
-   - **Password**: Initial password (minimum 8 characters)
-4. Click **"Create User"**
+## `/root` — the deployment
 
-### After Creating a User
+### Accounts
 
-- The new user appears in the Users List immediately
-- The user can log in with the credentials you provided
-- New users are **not** administrators by default
-- The user list refreshes automatically
+The list shows each person with their sign-in addresses and role. No mailbox
+and no mail is listed: what an administrator does with their own mail is not
+root's business.
 
-### Best Practices
+**Add an account** has a *Kind*:
 
-- **Use Strong Passwords**: Even for initial passwords
-- **Communicate Securely**: Share credentials through secure channels
-- **Recommend Password Changes**: Users should change their password after first login (when feature is available)
+- **Administrator** creates a new person with that address and password.
+- **Owner** adds the address to root's own account: a spare way in.
+  It asks for root's current password, for the same reason `/admin` does. It
+  is a spare, not a second root: the role does not move, and there is no
+  button that hands it to somebody else.
 
-## Viewing Users
+### Deleting a person
 
-### Users List
+Deleting a person takes everything of theirs: their logins, their mailboxes,
+the mail in them, the stored originals, the attachments, and every nightly
+backup. Nothing brings any of it back.
 
-The Users List shows all registered users in the system.
+So every person has a **deletion lock**, on by default. While it is on, the
+delete button is not shown, and the Worker refuses the deletion even if it is
+asked directly. Turning the lock off asks for confirmation; deleting asks
+twice more. A mailbox somebody else also holds is left alone.
 
-**Information Displayed**:
-- **Email**: User's email address/username
-- **Role**: Either "Admin" or "User"
-- **Created**: When the account was created
-- **Actions**: Management options for each user
+### Scheduled maintenance
 
-### Refreshing the List
+One line says how the last nightly run went: backups first, then the spam
+purge. A run cut off partway says where it was when it stopped -- which
+mailbox, and how far into it -- because that is the only thing such a run
+leaves behind.
 
-Click the **"Refresh"** button to reload the users list and see the latest changes.
+### Leftover attachments
 
-## Managing Mailbox Access
+**Check** looks through the stored attachment files for ones no message
+points at. It shows counts and sizes, never file names or contents.
 
-One of the most important admin features is controlling which users can access which mailboxes.
-
-### Opening Access Management
-
-1. Find the user in the Users List
-2. Click **"Manage Access"** next to their name
-3. A modal window opens showing access management options
-
-### Granting Mailbox Access
-
-To give a user access to a mailbox:
-
-1. Open the **Manage Access** modal for the user
-2. In the **"Grant Mailbox Access"** section:
-   - **Mailbox ID**: Enter the mailbox email address (e.g., `john@company.com`)
-   - **Role**: Select the appropriate permission level
-3. Click **"Grant Access"**
-4. A success message confirms the access was granted
-
-### Revoking Mailbox Access
-
-To remove a user's access to a mailbox:
-
-1. Open the **Manage Access** modal for the user
-2. In the **"Revoke Mailbox Access"** section:
-   - **Mailbox ID**: Enter the mailbox email address to revoke
-3. Click **"Revoke Access"**
-4. Confirm the action when prompted
-5. A success message confirms the access was revoked
-
-## User Roles
-
-Email Explorer uses a role-based permission system. There are two types of roles:
-
-### Account Roles
-
-**Administrator**
-- Full system access
-- Can access the Admin Panel
-- Can create and manage users
-- Can grant and revoke mailbox access
-- Can access any mailbox (if granted)
-
-**User** (Regular User)
-- Can only access assigned mailboxes
-- Cannot access Admin Panel
-- Cannot create users
-- Cannot manage permissions
-
-### Mailbox Permission Roles
-
-When granting mailbox access, you assign one of four permission levels:
-
-#### Owner
-**Full Control of the Mailbox**
-- Can read, send, and delete emails
-- Can create and manage folders
-- Can manage mailbox settings
-- Can delete the mailbox
-- Highest level of access
-
-**When to Use**: For the mailbox owner or primary user
-
-#### Admin
-**Manage Settings and Users**
-- Can read and send emails
-- Can create and manage folders
-- Can manage mailbox settings
-- Can grant/revoke access for other users
-- **Cannot** delete the mailbox
-
-**When to Use**: For trusted users who help manage the mailbox
-
-#### Write
-**Send and Manage Emails**
-- Can read and send emails
-- Can create and manage folders
-- Can organize emails
-- Limited settings access
-- **Cannot** delete mailbox or manage users
-
-**When to Use**: For team members who need to send emails from the mailbox
-
-#### Read
-**View-Only Access**
-- Can only view emails
-- **Cannot** send emails
-- **Cannot** create folders
-- **Cannot** modify settings
-- Read-only access to everything
-
-**When to Use**: For auditors, supervisors, or users who only need to monitor emails
-
-## Role Selection Guide
-
-Choose the right role based on what the user needs to do:
-
-| Task | Owner | Admin | Write | Read |
-|------|-------|-------|-------|------|
-| Read emails | ✅ | ✅ | ✅ | ✅ |
-| Send emails | ✅ | ✅ | ✅ | ❌ |
-| Create folders | ✅ | ✅ | ✅ | ❌ |
-| Manage contacts | ✅ | ✅ | ✅ | ❌ |
-| Mailbox settings | ✅ | ✅ | Limited | ❌ |
-| Grant/revoke access | ✅ | ✅ | ❌ | ❌ |
-| Delete mailbox | ✅ | ❌ | ❌ | ❌ |
-
-## Common Scenarios
-
-### Scenario 1: New Employee Needs Email Access
-
-**Situation**: A new employee joins and needs access to a team mailbox.
-
-**Steps**:
-1. Create a new user account for them
-2. Grant them **Write** access to the team mailbox
-3. They can now read and send emails from that mailbox
-
-### Scenario 2: Manager Needs to Monitor Emails
-
-**Situation**: A manager needs to review emails but not send them.
-
-**Steps**:
-1. Create a user account if they don't have one
-2. Grant them **Read** access to the mailbox
-3. They can view all emails but cannot send or modify
-
-### Scenario 3: Assistant Manages Executive's Email
-
-**Situation**: An assistant needs full control over an executive's mailbox.
-
-**Steps**:
-1. Create a user account for the assistant
-2. Grant them **Admin** access to the executive's mailbox
-3. They can manage emails, folders, and settings (but cannot delete the mailbox)
-
-### Scenario 4: Contractor Needs Temporary Access
-
-**Situation**: A contractor needs access for a project.
-
-**Steps**:
-1. Create a user account
-2. Grant appropriate access (probably **Write** or **Read**)
-3. When project ends: **Revoke** their access
-4. Their user account remains but they can no longer access the mailbox
-
-### Scenario 5: User Changes Roles
-
-**Situation**: A user's responsibilities change and they need different permissions.
-
-**Steps**:
-1. Revoke their current access
-2. Grant new access with the appropriate role
-3. **Note**: You must revoke before granting a new role
-
-## Admin Panel Interface
-
-### Layout
-
-```
-┌─────────────────────────────────────────────┐
-│  Admin Panel            [← Back to Home]    │
-│  Manage users and mailbox access            │
-├─────────────────────────────────────────────┤
-│  Register New User                          │
-│  ┌──────────────┬─────────────────────┐    │
-│  │ Email        │ Password            │    │
-│  └──────────────┴─────────────────────┘    │
-│  [Create User]                              │
-├─────────────────────────────────────────────┤
-│  Users                        [Refresh]     │
-│  ┌─────────────────────────────────────┐   │
-│  │ Email     │ Role  │ Created │ Actions│   │
-│  │ admin@... │ Admin │ Nov 15  │ Manage │   │
-│  │ user@...  │ User  │ Nov 20  │ Manage │   │
-│  └─────────────────────────────────────┘   │
-└─────────────────────────────────────────────┘
-```
-
-### Access Management Modal
-
-```
-┌──────────────────────────────────────┐
-│  Manage Access for user@example.com  │  [X]
-├──────────────────────────────────────┤
-│  Grant Mailbox Access                │
-│  ┌───────────────┬────────────────┐  │
-│  │ Mailbox ID    │ Role           │  │
-│  │ team@co.com   │ [Write ▼]      │  │
-│  └───────────────┴────────────────┘  │
-│  [Grant Access]  [Revoke Access]     │
-│                                       │
-│  Role Descriptions:                  │
-│  • Owner: Full control               │
-│  • Admin: Manage settings & users    │
-│  • Write: Send and manage emails     │
-│  • Read: View emails only            │
-└──────────────────────────────────────┘
-```
-
-## Success and Error Messages
-
-### Success Messages
-
-- ✅ **"User created successfully!"** - User account was created
-- ✅ **"Access granted successfully!"** - Mailbox access was granted
-- ✅ **"Access revoked successfully!"** - Mailbox access was removed
-- ✅ **"Users list refreshed"** - List updated with latest data
-
-### Error Messages
-
-- ❌ **"Failed to create user"** - User creation failed (check if email already exists)
-- ❌ **"Failed to grant access"** - Access grant failed (check mailbox ID)
-- ❌ **"Failed to revoke access"** - Revoke failed (user may not have access)
-- ❌ **"Admin privileges required"** - You're not an administrator
+- **Filed under a name that disagrees**: a message has the attachment, but it
+  was stored under another name, so the message cannot open it. **Fix the
+  names** moves them where the message looks.
+- **Claimed by no message**: what a deletion that stopped halfway leaves --
+  and also what the mail of a mailbox deleted *without* purging looks like,
+  since that mail is meant to come back if the address is recreated. Nothing
+  can tell the two apart from the store, so **Delete** is a separate press,
+  and it cannot be undone.
 
 ## Troubleshooting
 
-### Can't See Admin Panel Button
+**"Registration is closed."** Somebody has already registered, and they are
+root. Ask them to create your account.
 
-**Problem**: The Admin Panel button doesn't appear.
+**`/admin` sends me to `/root`.** You are root. Root's spare addresses are
+added on `/root`.
 
-**Causes**:
-- You're not logged in as an administrator
-- Your session expired
+**"No Resend API key is configured."** Set yours on `/admin`.
 
-**Solution**: 
-- Verify you're logged in
-- Check with another administrator to confirm your admin status
-- Log out and log back in
+**The delete button is missing on `/root`.** That person's deletion lock is on.
 
-### "Admin privileges required" Error
+## Related documentation
 
-**Problem**: You get this error when trying to access admin features.
-
-**Cause**: Your account is not an administrator.
-
-**Solution**: Contact an existing administrator to grant you admin privileges.
-
-### User Creation Fails
-
-**Problem**: Creating a new user returns an error.
-
-**Common Causes**:
-- Email address already exists (users must have unique emails)
-- Password is too short (must be at least 8 characters)
-- Network connection issues
-
-**Solutions**:
-- Check if the email is already registered (look in Users List)
-- Ensure password meets requirements
-- Try again or refresh the page
-
-### Access Grant Fails
-
-**Problem**: Granting mailbox access returns an error.
-
-**Common Causes**:
-- Invalid mailbox ID format
-- Network issues
-- User already has access with a different role
-
-**Solutions**:
-- Double-check the mailbox email address format
-- Try revoking existing access first, then granting new access
-- Refresh and try again
-
-### Modal Won't Close
-
-**Problem**: The Access Management modal won't close.
-
-**Solution**:
-- Click the X button in the top-right corner
-- Click outside the modal (on the dark background)
-- Press the Escape key
-- Refresh the page if needed
-
-## Security Best Practices
-
-### For Administrators
-
-1. **Principle of Least Privilege**
-   - Only grant the minimum access level needed
-   - Start with Read access and increase if necessary
-   - Review and revoke unused access regularly
-
-2. **Regular Access Audits**
-   - Periodically review who has access to which mailboxes
-   - Remove access for departed employees immediately
-   - Check for any unusual access patterns
-
-3. **Strong Passwords**
-   - Use strong initial passwords when creating accounts
-   - Encourage users to change their passwords
-   - Never share administrator credentials
-
-4. **Documentation**
-   - Keep a record of why access was granted
-   - Document role assignments
-   - Note when access should be reviewed or revoked
-
-5. **Secure Communication**
-   - Share credentials through secure channels only
-   - Never send passwords via unencrypted email
-   - Use temporary passwords when possible
-
-## Frequently Asked Questions
-
-### Can I make someone else an administrator?
-
-Not currently through the UI. Administrator status is set when the account is created (first user only) or through backend configuration.
-
-### Can I delete a user account?
-
-User deletion is not currently available through the Admin Panel. Users can be created but not deleted via the UI.
-
-### Can I see what mailboxes a user has access to?
-
-Not directly in the current version. You manage access by user, so you know what you've granted, but there's no "view all access" feature yet.
-
-### What happens when I revoke access?
-
-The user immediately loses access to that mailbox. They won't be able to read or send emails from it. Their user account remains active.
-
-### Can a user have different roles on different mailboxes?
-
-Yes! A user can be:
-- Owner of their personal mailbox
-- Admin of a team mailbox
-- Read-only on a department mailbox
-Each mailbox access is independent.
-
-### How many users can I create?
-
-There's no hard limit. You can create as many users as your deployment can handle.
-
-### Can users request access themselves?
-
-No, users cannot request or grant themselves access. All access must be granted by an administrator.
-
-### What if I accidentally revoke the wrong access?
-
-Simply grant access again with the appropriate role. Access can be revoked and re-granted as needed.
-
-## Tips and Tricks
-
-### Efficient User Management
-
-- **Create users in batches**: Create all new users at once, then grant access
-- **Use consistent naming**: Consider a standard format for user emails
-- **Test with Read access**: Grant Read access first, then upgrade if needed
-
-### Organizing Access
-
-- **Start restrictive**: Begin with minimal access and increase as needed
-- **Document externally**: Keep a spreadsheet of who has access to what
-- **Regular reviews**: Schedule quarterly access reviews
-
-### Communication
-
-- **Welcome messages**: Send new users a welcome email with their credentials
-- **Role explanations**: Explain to users what their role allows them to do
-- **Change notifications**: Inform users when their access changes
-
-## Next Steps
-
-Now that you understand the Admin Panel:
-
-1. **Create Your First User**: Try creating a test user account
-2. **Grant Test Access**: Practice granting and revoking access
-3. **Review Roles**: Make sure you understand the permission levels
-4. **Set Up Your Team**: Create accounts for your team members
-
-## Related Documentation
-
-- [Authentication Guide](./authentication.md) - Understanding user accounts and login
-- [Reply & Forward](./reply-forward.md) - Features available to all users
-- [Rich Text Editor](./rich-text-editor.md) - Email composition features
-
----
-
-**Questions?** This guide covered all admin features. If you need help, refer to the troubleshooting section or contact support.
+- [Authentication](authentication.md)
+- [Deploying your own](../deploying-your-own.md)

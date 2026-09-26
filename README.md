@@ -97,7 +97,7 @@ GitHub Actions の消費分数を抑えるため、`main` への push で走る�
 | **Deploy to Cloudflare** | `main` への push（`docs/**`・`README.md`・`LICENSE`・`.editorconfig` のみの変更を除く）、Pull Request、手動 | lint → build → テスト → デプロイ |
 | **Cloudflare Email Routing status** | 手動のみ | Email Routing の設定を読み出すだけ（変更は行わない） |
 
-Pull Request では Deploy to Cloudflare の `build-and-check` ジョブだけが走り、デプロイは `main` への push のときだけ行われます。以前あった Build ワークフローは、この `build-and-check` と同じ lint → build → テストを二重に回していたので削除しました。
+Pull Request では Deploy to Cloudflare の `build-and-check` ジョブだけが走り、デプロイは `main` への push か、`main` での手動実行のときだけ行われます。以前あった Build ワークフローは、この `build-and-check` と同じ lint → build → テストを二重に回していたので削除しました。
 
 上流のnpmリリース自動化（Release / Changeset Check）は削除しました。本フォークはCloudflareへのデプロイで配布しており、`email-explorer` のnpmパッケージ名は上流のものだからです。
 
@@ -348,7 +348,11 @@ repository, set its repository variables and secrets, and push. Every push to
 
 ### Configuration
 
-Email Explorer uses a factory function pattern for configuration. Edit `src/index.ts`:
+Email Explorer uses a factory function pattern for configuration. A
+deployment's options live in `packages/worker/dev/index.ts` (in your fork,
+your copy of it); the per-deployment values -- Worker name, bucket, VAPID key,
+recovery sender -- are set in GitHub instead, see
+[Deploying your own](docs/deploying-your-own.md):
 
 ```typescript
 // Recommended: Smart Mode (Default)
@@ -555,7 +559,7 @@ Not implemented yet, roughly in the order they would be useful:
 - JavaScript must be enabled
 - Cookies must be enabled for authentication
 
-Please report any issues on our [GitHub Issues](https://github.com/G4brym/email-explorer/issues) page.
+Please report any issues on this fork's [GitHub Issues](https://github.com/worldwideskier-alpine/email-explorer-i18n/issues) page.
 
 ## Security
 
@@ -603,7 +607,7 @@ For security vulnerabilities, please email security issues privately rather than
 We welcome contributions from the community! Here's how you can help:
 
 **🐛 Bug Reports**
-- Use the [GitHub Issues](https://github.com/G4brym/email-explorer/issues) page
+- Use this fork's [GitHub Issues](https://github.com/worldwideskier-alpine/email-explorer-i18n/issues) page
 - Include reproduction steps
 - Specify your environment (browser, Cloudflare setup)
 
@@ -628,18 +632,22 @@ We welcome contributions from the community! Here's how you can help:
 **Development Setup:**
 ```bash
 # Clone the repository
-git clone https://github.com/G4brym/email-explorer.git
-cd email-explorer
+git clone https://github.com/worldwideskier-alpine/email-explorer-i18n.git
+cd email-explorer-i18n
 
 # Install dependencies
 pnpm install
 
-# Run tests
-pnpm --filter email-explorer test
+# Lint, and both test suites (what CI runs)
+pnpm lint
+pnpm test
 
-# Start development
-pnpm --filter email-explorer dev
-pnpm --filter dashboard dev
+# Run the whole thing locally: build, then this deployment's Worker
+pnpm build
+cd packages/worker/dev && npx wrangler dev
+
+# Or the dashboard alone, with hot reload
+pnpm --filter email-explorer-dashboard dev
 ```
 
 ## Support
