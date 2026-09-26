@@ -5,8 +5,10 @@ file. You fork it, set a handful of values as GitHub repository variables and
 secrets, and every push to `main` deploys your own instance to your own
 Cloudflare account.
 
-Nothing you configure lives in a tracked file, so pulling later updates from
-this repository never collides with your settings.
+What you configure lives in GitHub's settings rather than in a tracked file,
+so pulling later updates from this repository never collides with it. (One
+exception, if you want the "forgot password" flow off rather than on: see
+step 5.)
 
 ## What you need
 
@@ -29,6 +31,11 @@ Edit, Workers R2 Storage Edit and Workers KV Storage Edit on your account.
 
 Note your **Account ID** as well; it is on the right of any zone's overview
 page.
+
+The read-only **Cloudflare Email Routing status** workflow needs three more,
+on your mail domain's zone: Zone Read, Email Routing Rules Read and Email
+Routing Addresses Read. Without them it fails and says which queries were
+refused; nothing else uses them.
 
 ## 3. Generate a push-notification key pair
 
@@ -60,6 +67,7 @@ prints when it finishes.
 |---|---|
 | `PRODUCTION_URL` | Where your deployment answers, e.g. `https://your-worker.your-subdomain.workers.dev`. The deploy then asks it what it is serving and fails the run if that is not the build it just made. Without it that check is skipped. |
 | `EMAIL_ROUTING_ZONE` | The domain your mail arrives on. Used only by the **Cloudflare Email Routing status** workflow, which is read-only and run by hand. Without it that workflow tells you to set it. |
+| `ACCOUNT_RECOVERY_FROM` | The address password-reset mail is sent from; see step 5. Set it here rather than as a variable: a variable is printed in the deploy log, in every step's environment and in the bindings wrangler lists. If both exist, this one is used. |
 
 ## 5. Set the repository variables
 
@@ -74,7 +82,7 @@ repository's names.
 | `WORKER_NAME` | Your Worker's name. Lowercase letters, digits and dashes. Also decides its `*.workers.dev` address. |
 | `R2_BUCKET_NAME` | The R2 bucket holding mail and attachments. Same naming rules. Created for you on the first deploy. |
 | `VAPID_PUBLIC_KEY` | The public half from step 3. |
-| `ACCOUNT_RECOVERY_FROM` | The address password-reset mail is sent from, on your Resend-verified domain. Nobody reads replies to it. |
+| `ACCOUNT_RECOVERY_FROM` | The address password-reset mail is sent from, on your Resend-verified domain. Nobody reads replies to it. Prefer the secret of the same name (step 4), which keeps it out of the public log; a variable still works. |
 
 Set `ACCOUNT_RECOVERY_FROM`. Left unset, the "forgot password" flow does not
 stay off: it falls back to the address written in
@@ -97,31 +105,44 @@ tab, so the first push deploys nothing until you have.
 The deploy log opens with a line per setting saying whether your value or the
 default was used — check it the first time.
 
+The Cloudflare token is handed only to the steps that run wrangler, not to
+the whole job, and the actions the workflow uses are pinned to commits.
+
 It closes, if you set `PRODUCTION_URL`, by fetching your deployment and
 comparing what it serves against what was just built: the entry script's name
 in the page, then that file's bytes, then that a deep path still falls back to
 the page and that an API path is answered by the Worker rather than by the
 page being served in its place. An accepted upload is not a served one, and
-the difference is otherwise invisible from here.
+the difference is otherwise invisible from here. It waits up to about a
+minute for Cloudflare to start serving the new build before calling it wrong.
 
-## 7. Point your mail at it
+## 7. Register, and make the accounts
+
+Open your Worker's URL. The **first** account to register becomes root, and
+registration closes behind it. Root owns no mailbox and sends no mail of its
+own: on `/root` it makes everybody else's accounts, and can add a second
+address to its own (a spare way in, not a second root).
+
+Each account root makes then signs in, creates its mailboxes, and on `/admin`
+pastes its Resend API key. The key is stored in your R2 bucket rather than in
+a GitHub secret, so rotating it is not a redeploy, and each person's mail goes
+through their own key. Root has no `/admin`; mail sent for root itself -- its
+password reset -- goes through the `RESEND_API_KEY` Worker secret if you set
+one, and otherwise cannot be sent. Give root a spare address (on `/root`,
+*Kind*: **Owner**) so that losing one password
+does not lock root out; setting a login's password without mail is an API
+route (`POST /api/v1/root/accounts/:userId/password`, root only) that the
+screen does not offer yet.
+
+## 8. Point your mail at it
 
 In the Cloudflare dashboard, **Email → Email Routing → Routes**, add a custom
 address and set its action to **Send to a Worker**, choosing the Worker you
 just deployed.
 
-Mail is only accepted for a mailbox that already exists, so create the mailbox
-in the app first. Anything addressed elsewhere is rejected at the door rather
-than filed somewhere nobody watches.
-
-## 8. Register, and set the outbound key
-
-Open your Worker's URL. The **first** account to register becomes root, and
-registration closes behind it. Root makes everybody else's accounts, on
-`/root`; each of them then creates their own mailboxes.
-
-Then, on `/admin`, paste your Resend API key. It is stored in your R2 bucket
-rather than in a GitHub secret, so rotating it is not a redeploy.
+Mail is only accepted for a mailbox that already exists, which is why this
+comes after step 7. Anything addressed elsewhere is rejected at the door
+rather than filed somewhere nobody watches.
 
 ## Keeping up to date
 

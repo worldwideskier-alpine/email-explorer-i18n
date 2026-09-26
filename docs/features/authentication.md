@@ -6,7 +6,7 @@ Email Explorer uses a secure authentication system to protect your emails and da
 
 ### First User Registration
 
-When Email Explorer is first deployed, the system is in "smart mode" - the first person to register automatically becomes an administrator.
+When Email Explorer is first deployed, nobody has an account, and the first person to register becomes **root** -- the account that runs the deployment. Registration closes behind them.
 
 **To create the first account:**
 
