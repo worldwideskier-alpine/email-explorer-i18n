@@ -456,6 +456,13 @@
 			"confirmPurge": "Serão eliminados definitivamente {count} ficheiros de anexo que nenhuma mensagem reclama. Não pode ser desfeito. Continuar?",
 			"unreadable": "Não foi possível ler o estado do armazenamento.",
 			"failed": "Não foi possível executar."
+		},
+		"recovery": {
+			"title": "Remetente da redefinição de senha",
+			"description": "Os e-mails de redefinição de senha e de alteração de endereço são enviados a partir deste endereço. O domínio tem de estar verificado no Resend.",
+			"current": "A enviar a partir de {address}.",
+			"off": "Não definido: «Esqueci-me da senha» está desativado.",
+			"byDeployment": "Está em uso a definição própria da implementação, que tem prioridade sobre esta."
 		}
 	}
 }

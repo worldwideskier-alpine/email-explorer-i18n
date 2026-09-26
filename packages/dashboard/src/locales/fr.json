@@ -456,6 +456,13 @@
 			"confirmPurge": "Suppression définitive de {count} fichiers de pièces jointes qu'aucun message ne revendique. C'est irréversible. Continuer ?",
 			"unreadable": "L'état du stockage n'a pas pu être lu.",
 			"failed": "L'opération n'a pas pu être exécutée."
+		},
+		"recovery": {
+			"title": "Expéditeur de réinitialisation du mot de passe",
+			"description": "Les e-mails de réinitialisation du mot de passe et de changement d'adresse sont envoyés depuis cette adresse. Son domaine doit être vérifié dans Resend.",
+			"current": "Envoi depuis {address}.",
+			"off": "Non défini : « Mot de passe oublié » est désactivé.",
+			"byDeployment": "Le réglage propre au déploiement est utilisé et prévaut sur celui-ci."
 		}
 	}
 }

@@ -56,11 +56,13 @@ import {
 	GetAccounts,
 	GetAttachmentSweep,
 	GetMaintenance,
+	GetRecoverySender,
 	PostAccount,
 	PostAccountLock,
 	PostAccountPassword,
 	PostAttachmentPurge,
 	PostAttachmentRepair,
+	PutRecoverySender,
 } from "./routes/root";
 import { runScheduledMaintenance } from "./scheduled-run";
 import { slugify } from "./slugify";
@@ -2030,7 +2032,7 @@ class PostForgotPassword extends OpenAPIRoute {
 	};
 
 	async handle(c: AppContext) {
-		const fromEmail = recoveryFromEmail(c.env);
+		const fromEmail = await recoveryFromEmail(c.env);
 		if (!fromEmail) {
 			return c.json({ error: "Account recovery is not enabled" }, 503);
 		}
@@ -2143,7 +2145,7 @@ class PostResetPassword extends OpenAPIRoute {
 	};
 
 	async handle(c: AppContext) {
-		const fromEmail = recoveryFromEmail(c.env);
+		const fromEmail = await recoveryFromEmail(c.env);
 		if (!fromEmail) {
 			return c.json({ error: "Account recovery is not enabled" }, 503);
 		}
@@ -2331,7 +2333,8 @@ class GetAppSettings extends OpenAPIRoute {
 
 		// Account recovery is on exactly when a from-address is configured,
 		// from either source. See recoveryFromEmail.
-		const accountRecoveryEnabled = recoveryFromEmail(c.env) !== undefined;
+		const accountRecoveryEnabled =
+			(await recoveryFromEmail(c.env)) !== undefined;
 
 		return c.json({
 			auth: {
@@ -2454,6 +2457,8 @@ openapi.post("/api/v1/root/accounts", PostAccount);
 openapi.post("/api/v1/root/accounts/:userId/password", PostAccountPassword);
 openapi.post("/api/v1/root/accounts/:personId/lock", PostAccountLock);
 openapi.delete("/api/v1/root/accounts/:personId", DeleteAccount);
+openapi.get("/api/v1/root/settings/account-recovery", GetRecoverySender);
+openapi.put("/api/v1/root/settings/account-recovery", PutRecoverySender);
 openapi.get("/api/v1/root/attachments", GetAttachmentSweep);
 openapi.post("/api/v1/root/attachments/repair", PostAttachmentRepair);
 openapi.post("/api/v1/root/attachments/purge", PostAttachmentPurge);

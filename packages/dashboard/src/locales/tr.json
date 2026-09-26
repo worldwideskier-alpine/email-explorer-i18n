@@ -456,6 +456,13 @@
 			"confirmPurge": "Hiçbir iletinin sahiplenmediği {count} ek dosyası kalıcı olarak silinecek. Geri alınamaz. Sürdürülsün mü?",
 			"unreadable": "Deponun durumu okunamadı.",
 			"failed": "Bu çalıştırılamadı."
+		},
+		"recovery": {
+			"title": "Parola sıfırlama göndereni",
+			"description": "Parola sıfırlama ve adres değişikliği e-postaları bu adresten gönderilir. Alan adının Resend'de doğrulanmış olması gerekir.",
+			"current": "{address} adresinden gönderiliyor.",
+			"off": "Ayarlanmamış: “Parolamı unuttum” kapalı.",
+			"byDeployment": "Dağıtımın kendi ayarı kullanılıyor ve bu ayardan önceliklidir."
 		}
 	}
 }

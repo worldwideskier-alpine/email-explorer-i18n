@@ -327,10 +327,21 @@ export default {
 			role,
 			currentPassword,
 		}),
-	setAccountPassword: (userId: string, password: string) =>
+	// Root's own password as well: setting somebody's is taking their account.
+	setAccountPassword: (
+		userId: string,
+		password: string,
+		currentPassword: string,
+	) =>
 		apiClient.post(`/api/v1/root/accounts/${seg(userId)}/password`, {
 			password,
+			currentPassword,
 		}),
+	getRecoverySender: () =>
+		apiClient.get("/api/v1/root/settings/account-recovery"),
+	// "" clears it, which turns "forgot password" off.
+	setRecoverySender: (fromEmail: string) =>
+		apiClient.put("/api/v1/root/settings/account-recovery", { fromEmail }),
 	// The lock that makes deleting a person two acts instead of one. The
 	// Worker refuses the delete below with 423 while it is on, so hiding the
 	// button is the courtesy and this is the guard.

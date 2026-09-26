@@ -141,13 +141,47 @@ describe("what root does with accounts", () => {
 			{
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ password: "brand-new-password" }),
+				body: JSON.stringify({
+					password: "brand-new-password",
+					currentPassword: "password123",
+				}),
 			},
 		);
 		expect(res.status).toBe(200);
 		expect(
 			(await signIn("hanako@example.com", "brand-new-password")).id,
 		).toBeTruthy();
+	});
+
+	/**
+	 * Setting somebody's password is taking their account. A root session
+	 * alone -- left open, or copied -- was enough to do it to anyone.
+	 */
+	it("asks for root's own password before setting anybody's", async () => {
+		const userId = await createUser("hanako@example.com", true);
+		const attempt = (body: object) =>
+			as(root)(`http://local.test/api/v1/root/accounts/${userId}/password`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ password: "brand-new-password", ...body }),
+			});
+		expect((await attempt({})).status).toBe(400);
+		expect((await attempt({ currentPassword: "wrong-password" })).status).toBe(
+			403,
+		);
+		expect((await signIn("hanako@example.com")).id).toBeTruthy();
+	});
+
+	/** Each login's id, which the password is set against. */
+	it("lists each person's logins by id", async () => {
+		const userId = await createUser("hanako@example.com", true);
+		const people = await (
+			await as(root)("http://local.test/api/v1/root/accounts")
+		).json<{ logins: { id: string; email: string }[] }[]>();
+		expect(people.flatMap((p) => p.logins)).toContainEqual({
+			id: userId,
+			email: "hanako@example.com",
+		});
 	});
 
 	// A reset that leaves the old sessions alive resets nothing.
@@ -163,7 +197,10 @@ describe("what root does with accounts", () => {
 			{
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ password: "brand-new-password" }),
+				body: JSON.stringify({
+					password: "brand-new-password",
+					currentPassword: "password123",
+				}),
 			},
 		);
 

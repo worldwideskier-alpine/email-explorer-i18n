@@ -456,6 +456,13 @@
 			"confirmPurge": "{count} Anhangsdateien, die keine Nachricht beansprucht, werden endgültig gelöscht. Das lässt sich nicht rückgängig machen. Fortfahren?",
 			"unreadable": "Der Zustand des Speichers konnte nicht gelesen werden.",
 			"failed": "Das konnte nicht ausgeführt werden."
+		},
+		"recovery": {
+			"title": "Absender für Passwort-Zurücksetzung",
+			"description": "E-Mails zum Zurücksetzen des Passworts und zur Adressänderung werden von dieser Adresse gesendet. Ihre Domain muss in Resend verifiziert sein.",
+			"current": "Gesendet wird von {address}.",
+			"off": "Nicht festgelegt: „Passwort vergessen“ ist deaktiviert.",
+			"byDeployment": "Die eigene Einstellung der Bereitstellung wird verwendet und hat Vorrang vor dieser."
 		}
 	}
 }

@@ -456,6 +456,13 @@
 			"confirmPurge": "{count} bilagefiler som inget meddelande gör anspråk på raderas permanent. Kan inte ångras. Fortsätta?",
 			"unreadable": "Lagrets tillstånd kunde inte läsas.",
 			"failed": "Det gick inte att köra."
+		},
+		"recovery": {
+			"title": "Avsändare för återställning av lösenord",
+			"description": "E-post för återställning av lösenord och adressändring skickas från den här adressen. Domänen måste vara verifierad i Resend.",
+			"current": "Skickar från {address}.",
+			"off": "Inte angivet: ”Glömt lösenord” är avstängt.",
+			"byDeployment": "Driftsättningens egen inställning används och går före den här."
 		}
 	}
 }

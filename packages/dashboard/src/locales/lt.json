@@ -456,6 +456,13 @@
 			"confirmPurge": "Visam laikui bus ištrinta {count} priedų failų, kurių nereikalauja nė vienas laiškas. Atšaukti negalima. Tęsti?",
 			"unreadable": "Nepavyko perskaityti saugyklos būsenos.",
 			"failed": "Nepavyko įvykdyti."
+		},
+		"recovery": {
+			"title": "Slaptažodžio atkūrimo siuntėjas",
+			"description": "Slaptažodžio atkūrimo ir adreso keitimo laiškai siunčiami iš šio adreso. Jo domenas turi būti patvirtintas „Resend“.",
+			"current": "Siunčiama iš {address}.",
+			"off": "Nenustatyta: „Pamiršau slaptažodį“ išjungta.",
+			"byDeployment": "Naudojamas paties diegimo nustatymas, kuris turi pirmenybę prieš šį."
 		}
 	}
 }

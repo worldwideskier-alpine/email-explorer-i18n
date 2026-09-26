@@ -456,6 +456,13 @@
 			"confirmPurge": "{count} datotecas d'agiunta che naginas messadras pretenda vegnan stizzadas definitivamain. Na po betg vegnir revocà. Cuntinuar?",
 			"unreadable": "Il status dal magazin n'ha betg pudì vegnir legì.",
 			"failed": "Quai n'ha betg pudì vegnir exequì."
+		},
+		"recovery": {
+			"title": "Speditur per reinizialisar il pled-clav",
+			"description": "Ils e-mails per reinizialisar il pled-clav e per midar l'adressa vegnan tramess da questa adressa. Ses domain sto esser verifitgà en Resend.",
+			"current": "Vegn tramess da {address}.",
+			"off": "Betg definì: «Emblidà il pled-clav» è deactivà.",
+			"byDeployment": "La cumposiziun agena da l'installaziun vegn duvrada ed ha la precedenza envers questa."
 		}
 	}
 }

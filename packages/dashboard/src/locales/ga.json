@@ -456,6 +456,13 @@
 			"confirmPurge": "Scriosfar go buan {count} comhad iatáin nach n-éilíonn aon teachtaireacht. Ní féidir é a chur ar ceal. Ar aghaidh?",
 			"unreadable": "Níorbh fhéidir staid an stórais a léamh.",
 			"failed": "Níorbh fhéidir é sin a rith."
+		},
+		"recovery": {
+			"title": "Seoltóir athshocrú pasfhocail",
+			"description": "Seoltar ríomhphoist athshocraithe pasfhocail agus athraithe seoladh ón seoladh seo. Caithfidh a fhearann a bheith fíoraithe in Resend.",
+			"current": "Á sheoladh ó {address}.",
+			"off": "Gan socrú: tá “Dearmad ar phasfhocal” múchta.",
+			"byDeployment": "Tá socrú féin an imscartha in úsáid agus tá tosaíocht aige ar an gceann seo."
 		}
 	}
 }

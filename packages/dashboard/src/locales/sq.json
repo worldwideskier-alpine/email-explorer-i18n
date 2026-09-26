@@ -456,6 +456,13 @@
 			"confirmPurge": "Do të fshihen përgjithmonë {count} skedarë bashkëngjitjesh që asnjë mesazh nuk i kërkon. Nuk kthehet mbrapsht. Të vazhdohet?",
 			"unreadable": "Gjendja e depos nuk u lexua dot.",
 			"failed": "Kjo nuk u krye dot."
+		},
+		"recovery": {
+			"title": "Dërguesi i rivendosjes së fjalëkalimit",
+			"description": "Email-et për rivendosjen e fjalëkalimit dhe ndryshimin e adresës dërgohen nga kjo adresë. Domeni i saj duhet të jetë i verifikuar në Resend.",
+			"current": "Dërgohet nga {address}.",
+			"off": "E pacaktuar: “Harrova fjalëkalimin” është i çaktivizuar.",
+			"byDeployment": "Përdoret cilësimi i vetë instalimit, i cili ka përparësi mbi këtë."
 		}
 	}
 }

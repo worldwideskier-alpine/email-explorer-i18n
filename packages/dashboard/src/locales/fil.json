@@ -456,6 +456,13 @@
 			"confirmPurge": "Permanenteng buburahin ang {count} file ng attachment na walang nag-aangkin. Hindi na maibabalik. Ituloy?",
 			"unreadable": "Hindi mabasa ang kalagayan ng imbakan.",
 			"failed": "Hindi ito naisagawa."
+		},
+		"recovery": {
+			"title": "Nagpapadala ng pag-reset ng password",
+			"description": "Ipinapadala mula sa address na ito ang mga email ng pag-reset ng password at pagpapalit ng address. Dapat na-verify sa Resend ang domain nito.",
+			"current": "Ipinapadala mula sa {address}.",
+			"off": "Hindi nakatakda: naka-off ang “Nakalimutan ang password”.",
+			"byDeployment": "Ang sariling setting ng deployment ang ginagamit at inuuna ito kaysa rito."
 		}
 	}
 }

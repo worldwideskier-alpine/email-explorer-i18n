@@ -456,6 +456,13 @@
 			"confirmPurge": "Sẽ xoá vĩnh viễn {count} tệp đính kèm không thư nào nhận. Không lấy lại được. Tiếp tục?",
 			"unreadable": "Không đọc được trạng thái của kho.",
 			"failed": "Không chạy được."
+		},
+		"recovery": {
+			"title": "Người gửi thư đặt lại mật khẩu",
+			"description": "Thư đặt lại mật khẩu và đổi địa chỉ được gửi từ địa chỉ này. Tên miền của nó phải được xác minh trong Resend.",
+			"current": "Đang gửi từ {address}.",
+			"off": "Chưa đặt: “Quên mật khẩu” đang tắt.",
+			"byDeployment": "Đang dùng thiết lập riêng của bản triển khai, và thiết lập đó được ưu tiên hơn thiết lập này."
 		}
 	}
 }

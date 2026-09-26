@@ -456,6 +456,13 @@
 			"confirmPurge": "Trajno će biti obrisano {count} datoteka priloga koje nijedna poruka ne prisvaja. Ne može se poništiti. Nastaviti?",
 			"unreadable": "Stanje skladišta nije moglo biti pročitano.",
 			"failed": "To nije moglo biti izvršeno."
+		},
+		"recovery": {
+			"title": "Pošiljalac za ponovno postavljanje lozinke",
+			"description": "Mejlovi za ponovno postavljanje lozinke i promjenu adrese šalju se s ove adrese. Njen domen mora biti potvrđen u Resendu.",
+			"current": "Šalje se s {address}.",
+			"off": "Nije postavljeno: „Zaboravljena lozinka” je isključeno.",
+			"byDeployment": "Koristi se sopstvena postavka instalacije, koja ima prednost nad ovom."
 		}
 	}
 }

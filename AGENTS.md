@@ -34,10 +34,13 @@ set"** and the default stands. A deployment that configures nothing -- this
 one -- deploys byte-for-byte what it did before. `deployment-config.test.ts`
 holds that property.
 
-`ACCOUNT_RECOVERY_FROM` is the one that also exists as an
-`EmailExplorer({ accountRecovery })` option, and **the variable wins**. Source
-code is what a fork inherits; the variable is what the fork itself sets. See
-`src/deployment-config.ts`.
+`ACCOUNT_RECOVERY_FROM` is the odd one out: it is normally **set on `/root`**
+and kept in the bucket (`settings/account-recovery.json`), and nothing in
+the source names one. It used to be a string in `dev/index.ts`, which every
+fork inherited -- a fork that set nothing sent its resets as this
+deployment's address and they never arrived. The order is the variable, then
+`/root`, then an `EmailExplorer({ accountRecovery })` option; with none,
+"forgot password" is off. See `src/deployment-config.ts`.
 
 User-facing setup lives in `docs/deploying-your-own.md`.
 

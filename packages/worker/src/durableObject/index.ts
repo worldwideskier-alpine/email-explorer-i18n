@@ -615,28 +615,42 @@ export class MailboxDO extends DurableObject<Env> {
 	 * is a single act that takes all of it.
 	 */
 	async listPeople(): Promise<
-		Array<{ personId: string; emails: string[]; createdAt: number }>
+		Array<{
+			personId: string;
+			emails: string[];
+			logins: { id: string; email: string }[];
+			createdAt: number;
+		}>
 	> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
 		const rows = this.ctx.storage.sql
 			.exec(
-				"SELECT person_id, email, created_at FROM users ORDER BY created_at",
+				"SELECT id, person_id, email, created_at FROM users ORDER BY created_at",
 			)
 			.toArray();
 
 		const byPerson = new Map<
 			string,
-			{ personId: string; emails: string[]; createdAt: number }
+			{
+				personId: string;
+				emails: string[];
+				logins: { id: string; email: string }[];
+				createdAt: number;
+			}
 		>();
 		for (const row of rows) {
 			const personId = String(row.person_id);
+			const login = { id: String(row.id), email: String(row.email) };
 			const entry = byPerson.get(personId);
-			if (entry) entry.emails.push(String(row.email));
-			else
+			if (entry) {
+				entry.emails.push(login.email);
+				entry.logins.push(login);
+			} else
 				byPerson.set(personId, {
 					personId,
-					emails: [String(row.email)],
+					emails: [login.email],
+					logins: [login],
 					createdAt: Number(row.created_at),
 				});
 		}

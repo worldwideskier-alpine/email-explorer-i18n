@@ -96,3 +96,16 @@ export async function createDummyMailbox() {
 		);
 	}
 }
+
+/**
+ * Turns the "forgot password" flow on the way root does, by saving a sender
+ * on /root. It used to be on for every test because dev/index.ts named one;
+ * that address is gone from the source, so tests that need recovery ask.
+ */
+export async function enableAccountRecovery(
+	fromEmail = "noreply@example.com",
+): Promise<void> {
+	const { RECOVERY_SENDER_KEY } = await import("../../src/deployment-config");
+	// @ts-expect-error
+	await env.BUCKET.put(RECOVERY_SENDER_KEY, JSON.stringify({ fromEmail }));
+}

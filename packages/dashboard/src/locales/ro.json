@@ -456,6 +456,13 @@
 			"confirmPurge": "Se vor șterge definitiv {count} fișiere de atașament pe care nu le revendică niciun mesaj. Nu se poate anula. Continuați?",
 			"unreadable": "Starea depozitului nu a putut fi citită.",
 			"failed": "Nu s-a putut executa."
+		},
+		"recovery": {
+			"title": "Expeditor pentru resetarea parolei",
+			"description": "E-mailurile de resetare a parolei și de schimbare a adresei sunt trimise de la această adresă. Domeniul trebuie să fie verificat în Resend.",
+			"current": "Se trimite de la {address}.",
+			"off": "Nesetat: „Am uitat parola” este dezactivat.",
+			"byDeployment": "Se folosește setarea proprie a implementării, care are prioritate față de aceasta."
 		}
 	}
 }

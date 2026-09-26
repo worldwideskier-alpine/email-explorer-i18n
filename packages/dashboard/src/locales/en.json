@@ -456,6 +456,13 @@
 			"confirmPurge": "Permanently delete {count} attachment files no message claims. This cannot be undone. Continue?",
 			"unreadable": "The store could not be read.",
 			"failed": "That could not be run."
+		},
+		"recovery": {
+			"title": "Password reset sender",
+			"description": "Password-reset and address-change emails are sent from this address. Its domain must be verified in Resend.",
+			"current": "Sending from {address}.",
+			"off": "Not set: “Forgot password” is off.",
+			"byDeployment": "The deployment's own setting is in use and takes precedence over this one."
 		}
 	}
 }

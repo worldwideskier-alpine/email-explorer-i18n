@@ -456,6 +456,13 @@
 			"confirmPurge": "Se borrarán definitivamente {count} archivos adjuntos que ningún mensaje reclama. No se puede deshacer. ¿Continuar?",
 			"unreadable": "No se pudo leer el estado del almacén.",
 			"failed": "No se pudo ejecutar."
+		},
+		"recovery": {
+			"title": "Remitente del restablecimiento de contraseña",
+			"description": "Los correos de restablecimiento de contraseña y de cambio de dirección se envían desde esta dirección. Su dominio debe estar verificado en Resend.",
+			"current": "Se envía desde {address}.",
+			"off": "Sin configurar: «Olvidé mi contraseña» está desactivado.",
+			"byDeployment": "Se usa la configuración propia del despliegue, que tiene prioridad sobre esta."
 		}
 	}
 }

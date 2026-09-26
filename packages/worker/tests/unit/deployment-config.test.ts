@@ -187,13 +187,29 @@ describe("where the recovery sender comes from", () => {
 	const code = {
 		config: { accountRecovery: { fromEmail: "code@example.com" } },
 	};
-
-	it("is off when neither source has one", () => {
-		expect(recoveryFromEmail({} as never)).toBeUndefined();
+	/** A bucket holding what root saved on /root. */
+	const screen = (fromEmail: string) => ({
+		BUCKET: {
+			get: async () => ({ json: async () => ({ fromEmail }) }),
+		},
 	});
 
-	it("uses the one in code when that is all there is", () => {
-		expect(recoveryFromEmail(code as never)).toBe("code@example.com");
+	it("is off when no source has one", async () => {
+		expect(await recoveryFromEmail({} as never)).toBeUndefined();
+	});
+
+	it("uses the one in code when that is all there is", async () => {
+		expect(await recoveryFromEmail(code as never)).toBe("code@example.com");
+	});
+
+	/** The one meant to be used: set on the deployed site, not in source. */
+	it("prefers what root saved over the one in code", async () => {
+		expect(
+			await recoveryFromEmail({
+				...code,
+				...screen("screen@example.com"),
+			} as never),
+		).toBe("screen@example.com");
 	});
 
 	/**
@@ -202,21 +218,40 @@ describe("where the recovery sender comes from", () => {
 	 * sets. If code won, every fork would try to send its password resets as
 	 * an address on a domain it does not own.
 	 */
-	it("prefers the deployment's own variable over the one in code", () => {
+	it("prefers the deployment's own variable over both", async () => {
 		expect(
-			recoveryFromEmail({
+			await recoveryFromEmail({
 				...code,
+				...screen("screen@example.com"),
 				ACCOUNT_RECOVERY_FROM: "noreply@fork.example",
 			} as never),
 		).toBe("noreply@fork.example");
 	});
 
 	// wrangler.jsonc carries the key with an empty value so a fork has
-	// somewhere to put its own; empty must not shadow the one in code.
-	it("ignores a blank variable", () => {
+	// somewhere to put its own; empty must not shadow the others.
+	it("ignores a blank variable", async () => {
 		expect(
-			recoveryFromEmail({ ...code, ACCOUNT_RECOVERY_FROM: "  " } as never),
+			await recoveryFromEmail({
+				...code,
+				ACCOUNT_RECOVERY_FROM: "  ",
+			} as never),
 		).toBe("code@example.com");
+	});
+
+	/** An unreadable stored value turns the flow off rather than sending as nothing. */
+	it("reads a stored value that will not parse as unset", async () => {
+		expect(
+			await recoveryFromEmail({
+				BUCKET: {
+					get: async () => ({
+						json: async () => {
+							throw new Error("bad");
+						},
+					}),
+				},
+			} as never),
+		).toBeUndefined();
 	});
 });
 

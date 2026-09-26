@@ -456,6 +456,13 @@
 			"confirmPurge": "{count} berkas lampiran yang tidak diklaim pesan mana pun akan dihapus permanen. Tidak dapat dibatalkan. Lanjutkan?",
 			"unreadable": "Keadaan penyimpanan tidak dapat dibaca.",
 			"failed": "Tidak dapat dijalankan."
+		},
+		"recovery": {
+			"title": "Pengirim reset kata sandi",
+			"description": "Email reset kata sandi dan perubahan alamat dikirim dari alamat ini. Domainnya harus sudah diverifikasi di Resend.",
+			"current": "Dikirim dari {address}.",
+			"off": "Belum diatur: “Lupa kata sandi” nonaktif.",
+			"byDeployment": "Pengaturan milik deployment sendiri yang dipakai dan lebih diutamakan daripada ini."
 		}
 	}
 }

@@ -1,6 +1,10 @@
 import { env, runInDurableObject, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { hashPassword } from "../../src/password";
+import { enableAccountRecovery } from "./utils";
+
+// Reset and address-change mail need a sender, which root sets on /root.
+beforeEach(() => enableAccountRecovery());
 
 /**
  * Limits and firsts that have to hold when requests arrive together.

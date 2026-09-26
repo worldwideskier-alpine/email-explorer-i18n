@@ -67,7 +67,7 @@ prints when it finishes.
 |---|---|
 | `PRODUCTION_URL` | Where your deployment answers, e.g. `https://your-worker.your-subdomain.workers.dev`. The deploy then asks it what it is serving and fails the run if that is not the build it just made. Without it that check is skipped. |
 | `EMAIL_ROUTING_ZONE` | The domain your mail arrives on. Used only by the **Cloudflare Email Routing status** workflow, which is read-only and run by hand. Without it that workflow tells you to set it. |
-| `ACCOUNT_RECOVERY_FROM` | The address password-reset mail is sent from; see step 5. Set it here rather than as a variable: a variable is printed in the deploy log, in every step's environment and in the bindings wrangler lists. If both exist, this one is used. |
+| `ACCOUNT_RECOVERY_FROM` | Only if you want the password-reset sender fixed by the deployment rather than set on `/root` (step 7). Set it here rather than as a variable: a variable is printed in the deploy log, in every step's environment and in the bindings wrangler lists. If both exist, this one is used. |
 
 ## 5. Set the repository variables
 
@@ -82,15 +82,14 @@ repository's names.
 | `WORKER_NAME` | Your Worker's name. Lowercase letters, digits and dashes. Also decides its `*.workers.dev` address. |
 | `R2_BUCKET_NAME` | The R2 bucket holding mail and attachments. Same naming rules. Created for you on the first deploy. |
 | `VAPID_PUBLIC_KEY` | The public half from step 3. |
-| `ACCOUNT_RECOVERY_FROM` | The address password-reset mail is sent from, on your Resend-verified domain. Nobody reads replies to it. Prefer the secret of the same name (step 4), which keeps it out of the public log; a variable still works. |
+| `ACCOUNT_RECOVERY_FROM` | Usually left unset: the password-reset sender is set on `/root` (step 7). Set it only to fix it from the deployment, in which case it wins over `/root` and `/root` says so. Prefer the secret of the same name (step 4), which keeps it out of the public log. |
 
-Set `ACCOUNT_RECOVERY_FROM`. Left unset, the "forgot password" flow does not
-stay off: it falls back to the address written in
-`packages/worker/dev/index.ts`, which is this repository's own, on a domain
-your Resend account cannot send from. The page then says a reset mail was sent
-(it says the same for every address, on purpose) and nothing arrives. To turn
-the flow off instead, remove the `accountRecovery` option from your copy of
-that file.
+Nothing in the source names a password-reset sender any more, so a new
+deployment starts with "forgot password" off, and it stays off until root
+sets a sender on `/root` (or you set the variable above). It used to be a
+string in `packages/worker/dev/index.ts`, which every fork inherited: a fork
+that set nothing sent its resets as this repository's address, and they
+never arrived.
 
 ## 6. Deploy
 
@@ -129,10 +128,14 @@ a GitHub secret, so rotating it is not a redeploy, and each person's mail goes
 through their own key. Root has no `/admin`; mail sent for root itself -- its
 password reset -- goes through the `RESEND_API_KEY` Worker secret if you set
 one, and otherwise cannot be sent. Give root a spare address (on `/root`,
-*Kind*: **Owner**) so that losing one password
-does not lock root out; setting a login's password without mail is an API
-route (`POST /api/v1/root/accounts/:userId/password`, root only) that the
-screen does not offer yet.
+*Kind*: **Owner**) instead: signed in with either, root can set the other's
+password on `/root` (**Change password** beside each address, with root's
+own current password), no mail involved. The same button is how root gets
+an administrator back in who has lost their password.
+
+Also on `/root`, set the **password reset sender**: the address "forgot
+password" and address-change mail is sent from, on a domain verified in
+Resend. Until it is set, "forgot password" is off.
 
 ## 8. Point your mail at it
 

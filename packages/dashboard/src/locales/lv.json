@@ -456,6 +456,13 @@
 			"confirmPurge": "Neatgriezeniski tiks dzēsti {count} pielikumu faili, uz kuriem nepretendē neviena vēstule. Atsaukt nevar. Turpināt?",
 			"unreadable": "Krātuves stāvokli neizdevās nolasīt.",
 			"failed": "To neizdevās izpildīt."
+		},
+		"recovery": {
+			"title": "Paroles atiestatīšanas sūtītājs",
+			"description": "Paroles atiestatīšanas un adreses maiņas e-pasti tiek sūtīti no šīs adreses. Tās domēnam jābūt verificētam Resend.",
+			"current": "Sūta no {address}.",
+			"off": "Nav iestatīts: “Aizmirsu paroli” ir izslēgts.",
+			"byDeployment": "Tiek izmantots paša izvietojuma iestatījums, un tam ir priekšroka pār šo."
 		}
 	}
 }

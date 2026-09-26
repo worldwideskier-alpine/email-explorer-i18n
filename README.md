@@ -72,7 +72,7 @@
 | Variable | `WORKER_NAME` | Worker 名。公開URLもこれで決まります |
 | Variable | `R2_BUCKET_NAME` | メールと添付を置く R2 バケット名 |
 | Variable | `VAPID_PUBLIC_KEY` | プッシュ通知の公開鍵 |
-| Variable | `ACCOUNT_RECOVERY_FROM` | パスワード再設定メールの差出人 |
+| Variable | `ACCOUNT_RECOVERY_FROM` | パスワード再設定メールの差出人（通常は未設定のまま、デプロイ後に `/root` で設定します） |
 
 Resend の API キーだけはここに含みません。**管理画面（`/admin`）で設定します**（後述）。
 
@@ -409,12 +409,13 @@ export default EmailExplorer({
 |--------|------|---------|-------------|
 | `auth.enabled` | boolean | `true` | Enable/disable authentication |
 | `auth.registerEnabled` | boolean | `undefined` (smart mode) | Control user registration |
-| `accountRecovery.fromEmail` | string | `undefined` (disabled) | Enable password recovery via email |
+| `accountRecovery.fromEmail` | string | `undefined` | A password-reset sender in code. Normally not used: root sets the sender on `/root` |
 
 **Account Recovery:**
 - When configured, users can reset forgotten passwords via email
 - The `fromEmail` address must be on a domain your Resend account can send from
-- The `ACCOUNT_RECOVERY_FROM` repository variable, when set, takes precedence over this option
+- Normally the sender is set by root on `/root`; with none anywhere, "forgot password" is off
+- The `ACCOUNT_RECOVERY_FROM` repository variable or secret, when set, takes precedence over `/root`, which takes precedence over this option
 - See [Account Recovery Guide](docs/features/account-recovery.md) for more details
 
 ### First-Time Setup
@@ -552,7 +553,7 @@ Not implemented yet, roughly in the order they would be useful:
 - Single mailbox per user account (multiple access supported)
 
 **Optional Features:**
-- Password reset via email requires `accountRecovery.fromEmail` configuration
+- Password reset via email requires a sender, set by root on `/root`
 
 **Browser Compatibility:**
 - Modern browsers required (Chrome 90+, Firefox 88+, Safari 14+)

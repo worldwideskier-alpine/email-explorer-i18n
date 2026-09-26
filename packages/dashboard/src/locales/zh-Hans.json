@@ -456,6 +456,13 @@
 			"confirmPurge": "将永久删除 {count} 个没有任何邮件认领的附件文件。无法恢复。是否继续？",
 			"unreadable": "无法读取存储的状态。",
 			"failed": "无法执行。"
+		},
+		"recovery": {
+			"title": "密码重置发件人",
+			"description": "密码重置和地址变更邮件从此地址发送。其域名必须已在 Resend 中验证。",
+			"current": "正在从 {address} 发送。",
+			"off": "未设置：“忘记密码”已关闭。",
+			"byDeployment": "正在使用部署自身的设置，它优先于此设置。"
 		}
 	}
 }

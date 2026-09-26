@@ -145,12 +145,59 @@
         <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
           <li v-for="person in accounts" :key="person.personId" class="px-6 py-4">
             <div class="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p
-                  v-for="email in person.emails"
-                  :key="email"
-                  class="text-sm font-medium text-gray-900 dark:text-white break-all"
-                >{{ email }}</p>
+              <div class="min-w-0">
+                <!-- Each login with its own "change password": the way back in
+                     for somebody who has lost theirs, root's own spare
+                     included, without any mail. It asks for root's password,
+                     because setting somebody's password is taking their
+                     account. -->
+                <div v-for="login in loginsOf(person)" :key="login.id" class="mb-1">
+                  <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white break-all">{{ login.email }}</p>
+                    <button
+                      v-if="login.id"
+                      type="button"
+                      @click="openPasswordFor(login.id)"
+                      class="text-xs text-indigo-700 dark:text-indigo-300 hover:underline"
+                    >{{ t("account.changePassword.title") }}</button>
+                  </div>
+                  <form
+                    v-if="passwordFor === login.id"
+                    @submit.prevent="setPassword(login.id)"
+                    class="mt-2 flex flex-wrap items-end gap-2"
+                  >
+                    <div>
+                      <label :for="`pw-new-${login.id}`" class="block text-xs text-gray-600 dark:text-gray-400">{{ t("account.changePassword.newPassword") }}</label>
+                      <input
+                        :id="`pw-new-${login.id}`"
+                        v-model="passwordNew"
+                        type="password"
+                        minlength="8"
+                        required
+                        autocomplete="new-password"
+                        class="mt-1 w-full max-w-[14rem] px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label :for="`pw-own-${login.id}`" class="block text-xs text-gray-600 dark:text-gray-400">{{ t("account.currentPassword") }}</label>
+                      <input
+                        :id="`pw-own-${login.id}`"
+                        v-model="passwordOwn"
+                        type="password"
+                        required
+                        autocomplete="current-password"
+                        class="mt-1 w-full max-w-[14rem] px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      :disabled="busy"
+                      class="px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                    >{{ t("account.changePassword.submit") }}</button>
+                  </form>
+                  <p v-if="passwordResultFor === login.id && passwordResult" class="mt-1 text-xs text-green-700 dark:text-green-400">{{ passwordResult }}</p>
+                  <p v-if="passwordResultFor === login.id && passwordError" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ passwordError }}</p>
+                </div>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {{ person.role === "root" ? t("root.roleRoot") : t("root.roleAdmin") }}
                 </p>
@@ -206,6 +253,44 @@
             </div>
           </li>
         </ul>
+      </div>
+
+      <!-- Where password-reset mail comes from. It was a string in the
+           source, which every fork inherited -- so a fork sent its resets as
+           this deployment's address and they never arrived. Set here, it is
+           this deployment's own. -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-200 dark:border-gray-700 mt-6">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white">{{ t("root.recovery.title") }}</h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ t("root.recovery.description") }}</p>
+        <p v-if="recovery" class="mt-3 text-sm" :class="recovery.enabled ? 'text-gray-700 dark:text-gray-300' : 'text-amber-700 dark:text-amber-400 font-semibold'">
+          <template v-if="recovery.setByDeployment">{{ t("root.recovery.byDeployment") }}</template>
+          <template v-else-if="recovery.fromEmail">{{ t("root.recovery.current", { address: recovery.fromEmail }) }}</template>
+          <template v-else>{{ t("root.recovery.off") }}</template>
+        </p>
+        <form @submit.prevent="saveRecovery" class="mt-3 flex flex-wrap items-center gap-2">
+          <label for="recoveryFrom" class="sr-only">{{ t("root.recovery.title") }}</label>
+          <input
+            id="recoveryFrom"
+            v-model="recoveryInput"
+            type="email"
+            placeholder="noreply@example.com"
+            class="w-full max-w-xs px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          <button
+            type="submit"
+            :disabled="recoverySaving || !recoveryInput.trim()"
+            class="px-4 py-2 text-sm bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+          >{{ t("admin.resend.submit") }}</button>
+          <button
+            v-if="recovery?.fromEmail"
+            type="button"
+            @click="clearRecovery"
+            :disabled="recoverySaving"
+            class="px-4 py-2 text-sm text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 rounded-md hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-50"
+          >{{ t("admin.resend.remove") }}</button>
+        </form>
+        <p v-if="recoveryMessage" class="mt-2 text-sm text-green-700 dark:text-green-400">{{ recoveryMessage }}</p>
+        <p v-if="recoveryError" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">{{ recoveryError }}</p>
       </div>
 
       <!-- Storage housekeeping, which is root's for the same reason the
@@ -305,6 +390,8 @@ import {
 interface Person {
 	personId: string;
 	emails: string[];
+	/** The same addresses with the ids a password is set against. */
+	logins?: { id: string; email: string }[];
 	role: AccountRole;
 	createdAt: number;
 	/** Protected from deletion. Absent means protected; see the Worker. */
@@ -376,6 +463,86 @@ const stoppedLine = computed(() =>
 const trailingDetail = computed(() =>
 	maintenanceTrailingDetail(stoppedLine.value, maintenance.value),
 );
+
+/** Each login, with its id when the Worker gave one. */
+const loginsOf = (person: Person) =>
+	person.logins ?? person.emails.map((email) => ({ id: "", email }));
+
+const passwordFor = ref<string | null>(null);
+const passwordNew = ref("");
+const passwordOwn = ref("");
+const passwordResultFor = ref<string | null>(null);
+const passwordResult = useLocalizedMessage();
+const passwordError = useLocalizedMessage();
+
+function openPasswordFor(userId: string) {
+	passwordFor.value = passwordFor.value === userId ? null : userId;
+	passwordNew.value = "";
+	passwordOwn.value = "";
+	passwordResult.value = "";
+	passwordError.value = "";
+}
+
+async function setPassword(userId: string) {
+	busy.value = true;
+	passwordResultFor.value = userId;
+	passwordResult.value = "";
+	passwordError.value = "";
+	try {
+		await api.setAccountPassword(userId, passwordNew.value, passwordOwn.value);
+		passwordFor.value = null;
+		passwordResult.value = () => t("account.changePassword.done");
+	} catch (e: any) {
+		const fromApi = e?.response?.data?.error;
+		passwordError.value = () =>
+			translateApiError(fromApi, t("account.changePassword.failed"));
+	} finally {
+		passwordNew.value = "";
+		passwordOwn.value = "";
+		busy.value = false;
+	}
+}
+
+interface RecoverySender {
+	fromEmail: string | null;
+	setByDeployment: boolean;
+	enabled: boolean;
+}
+const recovery = ref<RecoverySender | null>(null);
+const recoveryInput = ref("");
+const recoverySaving = ref(false);
+const recoveryMessage = useLocalizedMessage();
+const recoveryError = useLocalizedMessage();
+
+async function loadRecovery() {
+	try {
+		recovery.value = (await api.getRecoverySender()).data ?? null;
+		recoveryInput.value = recovery.value?.fromEmail ?? "";
+	} catch {
+		recovery.value = null;
+	}
+}
+
+async function writeRecovery(fromEmail: string, done: string) {
+	recoverySaving.value = true;
+	recoveryMessage.value = "";
+	recoveryError.value = "";
+	try {
+		recovery.value = (await api.setRecoverySender(fromEmail)).data ?? null;
+		recoveryInput.value = recovery.value?.fromEmail ?? "";
+		recoveryMessage.value = () => t(done);
+	} catch (e: any) {
+		const fromApi = e?.response?.data?.error;
+		recoveryError.value = () =>
+			translateApiError(fromApi, t("admin.resend.failed"));
+	} finally {
+		recoverySaving.value = false;
+	}
+}
+
+const saveRecovery = () =>
+	writeRecovery(recoveryInput.value.trim(), "admin.resend.saved");
+const clearRecovery = () => writeRecovery("", "admin.resend.removed");
 
 /** Counts by state, and nothing that says whose mail any of it is. */
 interface AttachmentSweep {
@@ -620,5 +787,8 @@ async function logout() {
 	router.push("/login");
 }
 
-onMounted(load);
+onMounted(() => {
+	load();
+	loadRecovery();
+});
 </script>

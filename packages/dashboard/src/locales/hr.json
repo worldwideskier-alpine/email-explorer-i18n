@@ -456,6 +456,13 @@
 			"confirmPurge": "Trajno će se obrisati {count} datoteka privitaka koje nijedna poruka ne prisvaja. Ne može se poništiti. Nastaviti?",
 			"unreadable": "Stanje spremišta nije se moglo pročitati.",
 			"failed": "To se nije moglo izvršiti."
+		},
+		"recovery": {
+			"title": "Pošiljatelj ponovnog postavljanja lozinke",
+			"description": "E-poruke za ponovno postavljanje lozinke i promjenu adrese šalju se s ove adrese. Njezina domena mora biti potvrđena u Resendu.",
+			"current": "Šalje se s {address}.",
+			"off": "Nije postavljeno: „Zaboravljena lozinka” je isključeno.",
+			"byDeployment": "Koristi se vlastita postavka implementacije, koja ima prednost pred ovom."
 		}
 	}
 }

@@ -456,6 +456,13 @@
 			"confirmPurge": "{count} Unhang-Fichieren, déi keng Noriicht ufreet, ginn endgülteg geläscht. Net réckgängeg ze maachen. Virufueren?",
 			"unreadable": "De Zoustand vum Späicher konnt net gelies ginn.",
 			"failed": "Dat konnt net ausgefouert ginn."
+		},
+		"recovery": {
+			"title": "Ofsender fir d'Passwuert-Zrécksetzung",
+			"description": "E-Maile fir d'Passwuert zréckzesetzen an d'Adress ze änneren gi vun dëser Adress geschéckt. Hiren Domain muss bei Resend verifizéiert sinn.",
+			"current": "Et gëtt vun {address} geschéckt.",
+			"off": "Net festgeluecht: „Passwuert vergiess“ ass ausgeschalt.",
+			"byDeployment": "Déi eege Astellung vum Deployment gëtt benotzt an huet Virrang virun dëser."
 		}
 	}
 }

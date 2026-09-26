@@ -47,6 +47,8 @@ const TABLE: Record<string, Access> = {
 	"GET /api/v1/root/attachments": "root",
 	"POST /api/v1/root/attachments/repair": "root",
 	"POST /api/v1/root/attachments/purge": "root",
+	"GET /api/v1/root/settings/account-recovery": "root",
+	"PUT /api/v1/root/settings/account-recovery": "root",
 
 	"POST /api/v1/admin/mailboxes/:mailboxId/import": "holder",
 	"GET /api/v1/mailboxes/:mailboxId": "holder",

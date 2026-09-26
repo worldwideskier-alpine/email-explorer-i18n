@@ -456,6 +456,13 @@
 			"confirmPurge": "Se jitħassru għal dejjem {count} fajls ta' mehmużin li l-ebda messaġġ ma jitlobhom. Ma jistax jitreġġa' lura. Tkompli?",
 			"unreadable": "L-istat tal-maħżen ma setax jinqara.",
 			"failed": "Dan ma setax jitħaddem."
+		},
+		"recovery": {
+			"title": "Mittent tar-reset tal-password",
+			"description": "L-emails tar-reset tal-password u tal-bidla tal-indirizz jintbagħtu minn dan l-indirizz. Id-dominju tiegħu jrid ikun ivverifikat f’Resend.",
+			"current": "Qed jintbagħat minn {address}.",
+			"off": "Mhux issettjat: “Insejt il-password” mitfi.",
+			"byDeployment": "L-issettjar tal-istallazzjoni nfisha qed jintuża u għandu prijorità fuq dan."
 		}
 	}
 }

@@ -456,6 +456,13 @@
 			"confirmPurge": "Véglegesen törlünk {count} mellékletfájlt, amelyre egyetlen üzenet sem tart igényt. Nem vonható vissza. Folytatja?",
 			"unreadable": "A tároló állapota nem volt olvasható.",
 			"failed": "Ezt nem sikerült végrehajtani."
+		},
+		"recovery": {
+			"title": "Jelszó-visszaállítás feladója",
+			"description": "A jelszó-visszaállító és címmódosító e-mailek erről a címről mennek ki. A domainjének hitelesítve kell lennie a Resendben.",
+			"current": "Küldés innen: {address}.",
+			"off": "Nincs beállítva: az „Elfelejtett jelszó” ki van kapcsolva.",
+			"byDeployment": "A telepítés saját beállítása van érvényben, és elsőbbséget élvez ezzel szemben."
 		}
 	}
 }
