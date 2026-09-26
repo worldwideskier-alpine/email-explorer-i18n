@@ -111,8 +111,7 @@ const CSS_SPACE = "[ \\t\\n\\r\\f]";
  * cssFetches decides that now, and CSS the rewrite cannot mend is dropped
  * whole, so matching to the end is what keeps the rest of such a style rather
  * than what keeps the address out. A quoted address that is not closed falls
- * through to the last spelling, which runs to the next `)` or the end --
- * except inside a comment, where rewriteUrls cuts it at the comment's end.
+ * through to the last spelling, which runs to the next `)` or the end.
  *
  * The space it skips is CSS_SPACE, as in FETCHES, and that is what makes a
  * no-break space before a quote end the match where the browser ends it:
@@ -132,16 +131,17 @@ const CSS_URL = new RegExp(
  * it does: an `url(` that does not point into the message, `image-set(`, and
  * `@import`.
  *
- * `url(#gradient)` fetches nothing, and rewriting it took an SVG's own
- * gradient away. But which `url(` a browser sees depends on comments and
- * strings, and a pattern cannot read those: measured, `/*url(#*\/` in a
- * comment, `'url("#'` in a string and `url(#a;url(...)` in an animation's
- * list each hid a real address from a check that paired an `url(` with the
- * next `)` and saw only `url(#`, and the spam folder fetched it. So nothing
- * is paired up. Every `url(` in the text
- * is looked at on its own, wherever it is, and CSS counts as fetching nothing
- * only if each one is followed by `#`. The one a browser reads is among them,
- * whichever it turns out to be. "Followed" skips CSS_SPACE and nothing else.
+ * `url(#gradient)` fetches nothing, so CSS whose every `url(` is one is left
+ * as it is -- an SVG's own gradient stays. But which `url(` a browser sees
+ * depends on comments and strings, and a pattern cannot read those:
+ * measured, `/*url(#*\/` in a comment, `'url("#'` in a string and
+ * `url(#a;url(...)` in an animation's list each hid a real address from a
+ * check that paired an `url(` with the next `)` and saw only `url(#`, and
+ * the spam folder fetched it. So nothing is paired up. Every `url(` in the
+ * text is looked at on its own, wherever it is, and CSS counts as fetching
+ * nothing only if each one is followed by `#`. The one a browser reads is
+ * among them, whichever it turns out to be. "Followed" skips CSS_SPACE and
+ * nothing else.
  */
 const FETCHES = new RegExp(
 	`url\\((?!${CSS_SPACE}*["']?#)|image-set\\(|@import`,
@@ -211,83 +211,45 @@ function cssFetches(css: string): boolean {
 }
 
 /**
- * Every `url()` in CSS rewritten to `none`, except one that fetches nothing.
- *
- * Addresses become `none` rather than being deleted, which leaves valid CSS
- * saying the thing that was wanted here anyway: `background-image: none` is
- * exactly what a body with no background image should say. Deleting the value
- * outright would leave `background-image: ;`, which a browser drops as
- * malformed -- the same result by a less honest route.
- *
- * An `url()` that fetches nothing stays: a gradient or a clip beside a
- * tracker, or beside `url(http://...)` mentioned in a comment, survives,
- * where rewriting every address took them all away. Each match is judged by
- * cssFetches on its own text, escapes read, so a match that swallowed a
- * second `url(` goes, spelled in escapes or not.
- *
- * `inComments` cuts a match at `*\/` when its `url(` is inside a comment.
- * An `url(` left open in one -- `/* TODO url( *\/` -- otherwise runs on to
- * the next `)`, taking the `*\/`, every rule up to that `)` and whatever
- * `url(#...)` was among them, and leaves the rest of the sheet in a comment
- * that never closes; measured, the browser kept all of it. Only inside a
- * comment: an url token does not end at `*\/`, and cutting
- * `url(https://.../a*\/b'.gif)` there left `*\/b'.gif)` behind, whose quote
- * then swallowed the declarations after it. "Inside" is read by the last
- * `/*` and `*\/` before the match, strings not considered -- which only
- * decides where a match ends, never whether anything fetches.
- */
-function rewriteUrls(css: string, inComments: boolean): string {
-	const pattern = new RegExp(CSS_URL.source, "gi");
-	let rewritten = "";
-	let from = 0;
-	for (let found = pattern.exec(css); found; found = pattern.exec(css)) {
-		let match = found[0];
-		const at = found.index;
-		if (inComments && css.lastIndexOf("/*", at) > css.lastIndexOf("*/", at)) {
-			const end = match.indexOf("*/");
-			if (end !== -1) match = match.slice(0, end);
-		}
-		rewritten += css.slice(from, at) + (cssFetches(match) ? "none" : match);
-		from = at + match.length;
-		pattern.lastIndex = from;
-	}
-	return rewritten + css.slice(from);
-}
-
-/**
  * CSS with nothing left in it that fetches, or null when there is no such
  * thing short of dropping it.
  *
- * Each try is taken only if cssFetches -- which pairs nothing up -- finds
- * nothing in the result, so no try has to be right about which `url(` a
- * browser will read. The first reads comments; the second does not, and is
- * for an address hidden behind `url(#` in a comment and spelled in escapes
- * -- `/*url(#*\/background:u\rl(...)` -- which the first cuts at the `*\/`,
- * leaving the `u\rl(` outside every match. What neither can mend is a fetch
- * that exists only once the escapes are read and lies outside every `url(`
- * as written -- a sender spelling `u\rl(` so that a filter will not see it
- * -- and that CSS is dropped whole rather than decoded and written back:
- * decoding changes the meaning of an escape that was there for a reason,
- * such as a quote inside a string.
+ * Only CSS that fetches gets here; CSS that does not is left as it was.
+ * Every address in it becomes `none`, `url(#...)` included, which leaves
+ * valid CSS saying the thing that was wanted here anyway: `background-image:
+ * none` is exactly what a body with no background image should say. Deleting
+ * the value outright would leave `background-image: ;`, which a browser
+ * drops as malformed -- the same result by a less honest route.
  *
- * Why patterns and not a CSS tokenizer: nothing here has to read CSS the way
- * a browser does, only to find every place one might see an address -- and
- * that over-reads on purpose. Where the patterns and the browser disagree,
- * what it costs is appearance, not a fetch. Measured, against Chromium's own
- * reading of the same CSS: `url(#a\)u\rl(...)` is a bad url to the browser,
- * which drops that one declaration and keeps the rest of the style; this
- * drops the whole style. It is CSS written to hide an address, and it
- * happens only in the spam folder, where these rules run. A tokenizer would
- * keep more of such styles, and would be a second reading of CSS that has to
- * match the browser's own, error recovery included, to be safe.
+ * The rewrite is taken only if cssFetches -- which pairs nothing up -- finds
+ * nothing in the result, so it never has to be right about which `url(` a
+ * browser will read. What it cannot mend is a fetch that exists only once
+ * the escapes are read and lies outside every `url(` as written -- a sender
+ * spelling `u\rl(` so that a filter will not see it -- and that CSS is
+ * dropped whole rather than decoded and written back: decoding changes the
+ * meaning of an escape that was there for a reason, such as a quote inside a
+ * string.
+ *
+ * This deliberately does not try to keep the look of the CSS it rewrites.
+ * It used to: it kept `url(#...)` beside an address, cut matches at the end
+ * of a comment, and tried a second rewrite when the first failed. Each of
+ * those read CSS a little more the way a browser does, and each was found
+ * reading some other CSS wrongly -- one of them leaked, measured, and the
+ * last made the rewrite take time quadratic in the length of the CSS, which
+ * a crafted spam message could turn into seconds of a frozen tab. Safety
+ * never rested on any of it: it rests on cssFetches over-reading and on the
+ * result being checked. What a pattern cannot tell apart costs appearance in
+ * the spam folder -- a gradient beside a tracker, or the rules after an
+ * `url(` left open in a comment -- and that is the whole of the cost. Keeping
+ * more would mean a CSS tokenizer that matches the browser's own, error
+ * recovery included, which is more than the spam folder's looks are worth.
  */
 function cssWithoutFetches(css: string): string | null {
-	const rest = css.replace(CSS_IMPORT, "").replace(CSS_IMAGE_SET, "none");
-	for (const inComments of [true, false]) {
-		const rewritten = rewriteUrls(rest, inComments);
-		if (!cssFetches(rewritten)) return rewritten;
-	}
-	return null;
+	const rewritten = css
+		.replace(CSS_IMPORT, "")
+		.replace(CSS_IMAGE_SET, "none")
+		.replace(CSS_URL, "none");
+	return cssFetches(rewritten) ? null : rewritten;
 }
 
 /**

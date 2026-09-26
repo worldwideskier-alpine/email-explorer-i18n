@@ -562,32 +562,17 @@ describe("a space CSS does not skip", () => {
 });
 
 /**
- * Where the CSS has to be rewritten, a reference into the message still
- * stays. Rewriting every address took a whole sheet's gradients and clips
- * away for one `url(http://...)` mentioned in a comment.
+ * Where CSS fetches, every address in it goes, `url(#...)` included -- the
+ * rewrite does not try to keep the look of the spam it mends (see
+ * cssWithoutFetches). These hold what it does have to get right.
  */
-describe("a reference into the message, beside something that fetches", () => {
-	it("stays when the other is only mentioned in a comment", () => {
-		const out = spamBody(
-			"<style>/* see url(http://x.example/) */ .g{fill:url(#grad)} .c{clip-path:url(#clip)}</style><p>x</p>",
-		);
-		expect(out).not.toContain("x.example");
-		expect(out).toContain(".g{fill:url(#grad)}");
-		expect(out).toContain(".c{clip-path:url(#clip)}");
-	});
-
+describe("CSS that has to be rewritten", () => {
 	/**
-	 * An `url(` left open inside a comment used to run on to the next `)`,
-	 * which took the rules after it and their references with it, and left
-	 * the rest of the sheet in a comment that never closed. The browser kept
-	 * all of it.
+	 * An url token does not end at `*\/`: a rewrite that cut the match there
+	 * left `*\/b'.gif)` behind, and its quote opened a string that swallowed
+	 * the declarations after it.
 	 */
-	/**
-	 * Only in a comment, though. An url token does not end at `*\/`: cut
-	 * there, `url(https://.../a*\/b'.gif)` left `*\/b'.gif)` behind, and its
-	 * quote opened a string that swallowed the declarations after it.
-	 */
-	it("does not cut an address at a `*/` outside a comment", () => {
+	it("takes an address with `*/` in it whole", () => {
 		const div = spamDocument(
 			`<div style="background:url(https://tracker.example/a*/b'.gif);color:red">x</div>`,
 		).querySelector("div");
@@ -596,32 +581,39 @@ describe("a reference into the message, beside something that fetches", () => {
 		expect(style).toContain("background:none;color:red");
 	});
 
-	it("stays when the other is an url( left open in a comment", () => {
-		const out = spamBody(
-			"<style>/* TODO url( */ .a{color:red} .b{fill:url(#g)}</style><p>x</p>",
-		);
-		expect(out).toContain("*/ .a{color:red} .b{fill:url(#g)}");
-	});
-
-	/**
-	 * And beside one hidden behind `url(#` in a string and spelled in
-	 * escapes. Each match is judged with its escapes read; judged as written,
-	 * the match was kept, the check found the address, and the whole style --
-	 * this reference with it -- was dropped.
-	 */
-	it("stays beside a tracker hidden in escapes", () => {
+	it("finds an address hidden behind `url(#` in a string and in escapes", () => {
 		const out = spamBody(
 			`<svg><rect width="9" height="9" style="fill:url(#g);content:'url(#';background:u\\rl(https://tracker.example/b.gif)"/></svg>`,
 		);
 		expect(out).not.toContain("tracker.example");
-		expect(out).toContain("fill:url(#g)");
+		expect(out).toContain("<rect");
 	});
+});
 
-	it("stays beside a tracker in the same style", () => {
-		const out = spamBody(
-			'<svg><rect width="9" height="9" style="fill:url(#g);background:url(https://tracker.example/a.gif)"/></svg>',
-		);
-		expect(out).not.toContain("tracker.example");
-		expect(out).toContain("fill:url(#g)");
-	});
+/**
+ * A spam message is written by whoever sent it, so how long the rewrite takes
+ * is theirs to choose too. A rewrite that looked back through the whole
+ * sheet for every `url(` took, by the reviewer's measurement, 8.7 seconds on
+ * 700KB of CSS -- a frozen tab for opening one message. Linear, it is a
+ * fraction of a second; the bound is loose on purpose, so that only the
+ * difference between the two shapes can fail it.
+ */
+describe("a large stylesheet", () => {
+	for (const [label, css] of [
+		[
+			"many references and one tracker",
+			`${"a{background:url(#g)} ".repeat(32000)}b{background:url(https://tracker.example/x)}`,
+		],
+		[
+			"many urls left open in comments",
+			`${"/* url( */ ".repeat(32000)}a{color:red}`,
+		],
+	]) {
+		it(`is rewritten in time proportional to its length: ${label}`, () => {
+			const started = performance.now();
+			const out = spamBody(`<style>${css}</style><p>x</p>`);
+			expect(performance.now() - started).toBeLessThan(3000);
+			expect(out).not.toContain("tracker.example");
+		});
+	}
 });
