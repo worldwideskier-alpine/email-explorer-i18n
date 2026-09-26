@@ -52,6 +52,20 @@ jobs:
               "https://api.cloudflare.com/client/v4/$1"
           }
 
+          # Prints one answer through the filter in $2 and remembers whether
+          # the API said it succeeded. The run used to go green with every
+          # query below answering success:false -- a token without the Email
+          # Routing read permissions looks exactly like that.
+          failed=0
+          show() {
+            local answer
+            answer=$(api "$1")
+            echo "$answer" | jq "$2"
+            if ! echo "$answer" | jq -e '.success == true' > /dev/null; then
+              failed=1
+            fi
+          }
+
           echo "=== zone lookup ==="
           zones=$(api "zones?name=$ZONE")
           echo "$zones" | jq '{success, errors}'
@@ -64,26 +78,34 @@ jobs:
 
           echo
           echo "=== Email Routing enabled? ==="
-          api "zones/$zone_id/email/routing" \
-            | jq '{success, errors, enabled: .result.enabled, status: .result.status, name: .result.name}'
+          show "zones/$zone_id/email/routing" \
+            '{success, errors, enabled: .result.enabled, status: .result.status, name: .result.name}'
 
           echo
           echo "=== Catch-all rule ==="
-          api "zones/$zone_id/email/routing/rules/catch_all" \
-            | jq '{success, errors, enabled: .result.enabled,
-                   matchers: .result.matchers, actions: .result.actions}'
+          show "zones/$zone_id/email/routing/rules/catch_all" \
+            '{success, errors, enabled: .result.enabled,
+              matchers: .result.matchers, actions: .result.actions}'
 
           echo
           echo "=== Individual routing rules ==="
-          api "zones/$zone_id/email/routing/rules?per_page=50" \
-            | jq '{success, errors,
-                   rules: [.result[]? | {name, enabled,
-                                         matchers: [.matchers[]? | {type, field, value}],
-                                         actions:  [.actions[]?  | {type, value}]}]}'
+          show "zones/$zone_id/email/routing/rules?per_page=50" \
+            '{success, errors,
+              rules: [.result[]? | {name, enabled,
+                                    matchers: [.matchers[]? | {type, field, value}],
+                                    actions:  [.actions[]?  | {type, value}]}]}'
 
           echo
           echo "=== Destination addresses (where forwarding rules can point) ==="
           account_id="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
-          api "accounts/$account_id/email/routing/addresses?per_page=50" \
-            | jq '{success, errors,
-                   addresses: [.result[]? | {email, verified}]}'
+          show "accounts/$account_id/email/routing/addresses?per_page=50" \
+            '{success, errors,
+              addresses: [.result[]? | {email, verified}]}'
+
+          if [ "$failed" -ne 0 ]; then
+            echo
+            echo "At least one query above was refused (success: false). The"
+            echo "token needs Zone Read, Email Routing Rules Read and Email"
+            echo "Routing Addresses Read; see docs/deploying-your-own.md."
+            exit 1
+          fi

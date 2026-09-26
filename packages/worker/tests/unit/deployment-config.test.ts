@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+// The file the deploy actually edits. The cases above it run on a copy of
+// its shape; these run on it, so a key renamed or moved there fails here
+// rather than in the deploy.
+import REAL from "../../dev/wrangler.jsonc?raw";
 // @ts-expect-error -- plain JS on purpose: this module also runs under node
 // from the deploy workflow, where there is nothing to compile it.
 import {
@@ -213,5 +217,26 @@ describe("where the recovery sender comes from", () => {
 		expect(
 			recoveryFromEmail({ ...code, ACCOUNT_RECOVERY_FROM: "  " } as never),
 		).toBe("code@example.com");
+	});
+});
+
+describe("the real dev/wrangler.jsonc", () => {
+	it("comes out byte for byte the same when nothing is set", () => {
+		const { source } = applyDeploymentConfig(REAL, {
+			WORKER_NAME: "",
+			R2_BUCKET_NAME: "",
+			VAPID_PUBLIC_KEY: "",
+			ACCOUNT_RECOVERY_FROM: "",
+		});
+		expect(source).toBe(REAL);
+	});
+
+	it("takes every one of a fork's values", () => {
+		const { source } = applyDeploymentConfig(REAL, FORK);
+		expect(source).toContain('"name": "email-explorer-fork"');
+		expect(source).toContain('"bucket_name": "fork-mail"');
+		expect(source).toContain('"VAPID_PUBLIC_KEY": "BGforkkey"');
+		expect(source).toContain('"ACCOUNT_RECOVERY_FROM": "noreply@fork.example"');
+		expect(source).not.toBe(REAL);
 	});
 });

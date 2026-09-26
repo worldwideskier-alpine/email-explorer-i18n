@@ -19,7 +19,9 @@ describe("API Integration Tests", () => {
 			const body = await response.json<any[]>();
 
 			expect(response.status).toBe(200);
-			expect(Array.isArray(body)).toBe(true);
+			// Empty, not merely a list: one holding somebody else's mailboxes
+			// would have passed `Array.isArray`.
+			expect(body).toEqual([]);
 		});
 
 		it("should get a list with one mailbox", async () => {
@@ -540,6 +542,13 @@ describe("API Integration Tests", () => {
 				},
 			);
 			expect(response.status).toBe(204);
+			// Gone, not merely answered for.
+			const folders = await (
+				await authenticatedFetch(
+					`http://local.test/api/v1/mailboxes/${mailboxId}/folders`,
+				)
+			).json<{ id: string }[]>();
+			expect(folders.map((f) => f.id)).not.toContain(folderId);
 		});
 
 		it("should return 409 when creating a folder that already exists", async () => {
@@ -678,6 +687,12 @@ describe("API Integration Tests", () => {
 				},
 			);
 			expect(response.status).toBe(204);
+			const contacts = await (
+				await authenticatedFetch(
+					`http://local.test/api/v1/mailboxes/${mailboxId}/contacts`,
+				)
+			).json<{ id: number }[]>();
+			expect(contacts.map((c) => c.id)).not.toContain(contactId);
 		});
 	});
 

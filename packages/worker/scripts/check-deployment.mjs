@@ -23,7 +23,12 @@ import {
 } from "./deployment-check.mjs";
 
 const ASSETS = fileURLToPath(new URL("../dashboard/assets", import.meta.url));
-const ATTEMPTS = 5;
+// About a minute. Twelve seconds was not always enough: on 2026-09-26 one
+// deploy was still serving the previous page after five tries three seconds
+// apart and failed the run, and the same commit re-run a minute later passed
+// on the first try. What is being waited for is Cloudflare's edge, not this
+// build.
+const ATTEMPTS = 20;
 const PAUSE_MS = 3000;
 
 const base = (process.env.PRODUCTION_URL ?? "").trim().replace(/\/+$/, "");

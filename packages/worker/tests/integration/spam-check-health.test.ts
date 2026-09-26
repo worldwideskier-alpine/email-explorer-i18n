@@ -309,7 +309,9 @@ describe("the second-stage check reports whether it is working", () => {
 		// The word is kept: a word the API does not use is what identifies the
 		// refusal as somebody else's.
 		expect(foreign.lastFailureDetail).toBe("403 forbidden");
-	});
+		// Two refusals, each retried on the real backoff: about 3.6 seconds
+		// measured, under a default limit of 5 that a busy runner eats into.
+	}, 15_000);
 
 	/**
 	 * Where a check that worked was answered, which nothing recorded until now.
