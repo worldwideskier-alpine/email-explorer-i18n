@@ -19,10 +19,19 @@
     </div>
     <ul v-if="emails.length > 0" class="divide-y divide-gray-100 dark:divide-gray-700/50">
       <li v-for="email in emails" :key="email.id" class="group relative transition-all duration-200" :class="{ 'bg-indigo-50/30 dark:bg-indigo-900/10': !email.read, 'hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-purple-50/30 dark:hover:from-indigo-900/10 dark:hover:to-purple-900/10': true }">
+        <!-- `custom`, so the row decides before any navigation happens: with
+             a plain router-link the link navigated first and this handler
+             ran second, so opening a draft also opened the message screen
+             behind the composer, marking the draft read. -->
         <router-link
+          custom
+          v-slot="{ href, navigate }"
           :to="{ name: 'EmailDetail', params: { id: email.id }, query: { fromFolder: folderId } }"
+        >
+        <a
+          :href="href"
           class="block px-6 py-4"
-          @click="handleRowClick($event, email)"
+          @click="handleRowClick($event, email, navigate)"
         >
           <div class="flex items-start justify-between gap-4">
             <div class="flex-grow overflow-hidden min-w-0">
@@ -56,12 +65,12 @@
                   v-if="folderId !== 'draft'"
                   @click.prevent="handleSpamVerdict(email)"
                   class="p-2 rounded-lg transition-all duration-200"
-                  :class="isSpamFolder
+                  :class="isSpamRow(email)
                     ? 'text-gray-400 hover:text-green-600 dark:text-gray-500 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-gray-700/50'
                     : 'text-gray-400 hover:text-orange-600 dark:text-gray-500 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-gray-700/50'"
-                  :title="isSpamFolder ? t('emailList.markNotSpam') : t('emailList.markSpam')"
+                  :title="isSpamRow(email) ? t('emailList.markNotSpam') : t('emailList.markSpam')"
                 >
-                  <svg v-if="isSpamFolder" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg v-if="isSpamRow(email)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                   <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,6 +85,7 @@
               </div>
             </div>
           </div>
+        </a>
         </router-link>
       </li>
     </ul>
@@ -228,21 +238,31 @@ const toggleStarStatus = (email: Email) => {
 	});
 };
 
-const isSpamFolder = computed(() => folderId.value === "spam");
-
 // In the spam folder the button means "this isn't spam" and sends the message
 // back to the inbox; everywhere else it files the message as spam. Either way
 // the sender is remembered, so future mail from them is routed the same way.
+//
+// Which of the two is read from the row: the folder on screen can be wrong
+// about where its rows came from while a switch is loading, and "not spam"
+// on an inbox row recorded its sender as trusted.
+const isSpamRow = (email: Email) =>
+	(email.folder_id ?? folderId.value) === "spam";
+
 const handleSpamVerdict = (email: Email) => {
 	emailStore.setEmailSpamVerdict(
 		route.params.mailboxId as string,
 		email.id,
-		isSpamFolder.value ? "not-spam" : "spam",
+		isSpamRow(email) ? "not-spam" : "spam",
 	);
 };
 
-const handleRowClick = async (event: MouseEvent, email: Email) => {
-	if (folderId.value !== "draft") {
+const handleRowClick = async (
+	event: MouseEvent,
+	email: Email,
+	navigate: (e?: MouseEvent) => unknown,
+) => {
+	if ((email.folder_id ?? folderId.value) !== "draft") {
+		navigate(event);
 		return;
 	}
 	event.preventDefault();

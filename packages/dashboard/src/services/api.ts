@@ -34,6 +34,23 @@ const OWN_401_HANDLING = [
 	"/api/v1/auth/login",
 	"/api/v1/auth/reset-password",
 	"/api/v1/auth/confirm-email-change",
+	// Asked by checkAuth and logout, which deal with a stale session
+	// themselves -- and are asked on the first navigation of every page.
+	"/api/v1/auth/me",
+	"/api/v1/auth/logout",
+];
+
+/**
+ * Pages that are for people without a session. A stale session stored in the
+ * browser used to send these to /login -- the reset link opened from an email
+ * among them, token and all, so the link could not be used.
+ */
+const PUBLIC_PAGES = [
+	"/login",
+	"/register",
+	"/forgot-password",
+	"/reset-password",
+	"/confirm-email-change",
 ];
 
 // Response interceptor: a 401 anywhere else means the session is gone.
@@ -47,7 +64,7 @@ apiClient.interceptors.response.use(
 		if (error.response?.status === 401 && !handledByCaller) {
 			// Clear auth and redirect to login
 			localStorage.removeItem("session");
-			if (window.location.pathname !== "/login") {
+			if (!PUBLIC_PAGES.includes(window.location.pathname)) {
 				window.location.href = "/login";
 			}
 		}

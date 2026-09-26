@@ -423,7 +423,10 @@ watch(isComposeModalOpen, (isOpen) => {
 			// stored fields are comma-separated lists, so a message with
 			// several recipients contributes several addresses here.
 			const self = currentMailbox.value?.email;
-			const isOther = (address: string) => address !== self;
+			// Without case: an address written `Me@Example.com` in the original
+			// is still this mailbox, and was left in To, replying to itself.
+			const isOther = (address: string) =>
+				address.trim().toLowerCase() !== (self ?? "").trim().toLowerCase();
 			const toList = [
 				original.sender,
 				...splitAddresses(original.recipient || ""),
@@ -593,8 +596,14 @@ const send = async () => {
 			await emailStore.sendEmail(mailboxId, emailData);
 		}
 
+		// The mail has gone. Failing to tidy away its draft afterwards is not
+		// a failed send: reported as one, the modal stayed open saying so and
+		// the obvious next press sent it a second time. The draft is left
+		// behind instead, to be deleted by hand.
 		if (draftId.value) {
-			await api.deleteEmail(mailboxId, draftId.value);
+			await api.deleteEmail(mailboxId, draftId.value).catch((e) => {
+				console.error("Sent, but the draft could not be removed:", e);
+			});
 		}
 
 		to.value = "";
