@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env, runInDurableObject } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { BackupProgress } from "../../src/backup-run";
 import { runScheduledBackups } from "../../src/backup-run";
@@ -403,4 +403,51 @@ describe("reading a page at a time", () => {
 		expect(written.messages).toBe(30);
 		expect(peak).toBeGreaterThan(1);
 	}, 30_000);
+});
+
+describe("progress inside one mailbox", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createDummyMailbox();
+	});
+
+	/**
+	 * Every so many messages the writer says how far it has got. Nothing
+	 * filled a mailbox past the real interval (250), so this was never run:
+	 * the interval is taken as an argument here and made small.
+	 */
+	it("is reported as the archive is written, not only at the end", async () => {
+		// Straight into the mailbox: the writer checks once per page of 100,
+		// so this needs more than a page, and 150 imports take a while.
+		// @ts-expect-error test binding
+		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+		await runInDurableObject(stub, async (_i, state) => {
+			for (let i = 0; i < 150; i++) {
+				state.storage.sql.exec(
+					`INSERT INTO emails (id, folder_id, subject, sender, recipient, date, body)
+					 VALUES (?, 'inbox', ?, 'a@example.org', ?, ?, '<p>x</p>')`,
+					`row-${String(i).padStart(3, "0")}`,
+					`message ${i}`,
+					mailboxId,
+					new Date(Date.UTC(2026, 0, 1, 0, 0, i)).toISOString(),
+				);
+			}
+		});
+		const reported: number[] = [];
+
+		const written = await writeMailboxBackup(
+			env as never,
+			mailboxId,
+			new Date(),
+			3,
+			async (messages) => {
+				reported.push(messages);
+			},
+			100,
+		);
+
+		expect(written.messages).toBe(150);
+		// After the first page, while the second is still to come.
+		expect(reported).toEqual([100]);
+	});
 });

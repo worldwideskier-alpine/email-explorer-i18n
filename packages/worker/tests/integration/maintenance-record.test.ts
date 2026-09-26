@@ -160,11 +160,50 @@ describe("what the nightly run writes down about itself", () => {
 		expect(res.status).toBe(403);
 	});
 
-	// Counts and timestamps only. Root manages who may sign in and is not a
-	// second pair of eyes on the mail, so nothing here may name a mailbox.
-	it("names no mailbox", async () => {
-		await runScheduledMaintenance(env as never, NOW);
-		const stored = await bucket().get(MAINTENANCE_KEY);
-		expect(await (stored as R2ObjectBody).text()).not.toContain(mailboxId);
+	/**
+	 * Counts, timestamps, and which mailbox the backup pass had reached --
+	 * that last on purpose: it is how a run cut off inside one mailbox is told
+	 * from one that never reached the back of the list (MaintenanceProgress).
+	 * Nothing of the mail itself: root manages who may sign in and is not a
+	 * second pair of eyes on it.
+	 *
+	 * This used to hold that the record names no mailbox, which it does by
+	 * design, and it passed only because no backup was due.
+	 */
+	it("names nothing in the mail, with a backup due and mail to back up", async () => {
+		const subject = "Private subject line";
+		const sender = "private.sender@example.org";
+		const raw = `From: ${sender}\r\nTo: ${mailboxId}\r\nSubject: ${subject}\r\n\r\nprivate body`;
+		const imported = await authenticatedFetch(
+			`http://local.test/api/v1/admin/mailboxes/${mailboxId}/import`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ folder: "inbox", rawEmailBase64: btoa(raw) }),
+			},
+		);
+		const { id } = await imported.json<{ id: string }>();
+		await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}`,
+			{
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					settings: {
+						autoBackup: { enabled: true, frequency: "daily", keep: 3 },
+					},
+				}),
+			},
+		);
+
+		const summary = await runScheduledMaintenance(env as never, NOW);
+		expect(summary.backups?.ran).toBe(1);
+
+		const text = await (
+			(await bucket().get(MAINTENANCE_KEY)) as R2ObjectBody
+		).text();
+		for (const secret of [subject, sender, id, "private body"]) {
+			expect(text).not.toContain(secret);
+		}
 	});
 });

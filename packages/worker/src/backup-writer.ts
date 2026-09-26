@@ -307,6 +307,8 @@ export async function writeMailboxBackup(
 	 * the backup down with it; the caller swallows its failures.
 	 */
 	onProgress?: (messages: number) => Promise<void>,
+	/** How many messages between reports. A test passes a small one. */
+	progressEvery: number = PROGRESS_EVERY,
 ): Promise<BackupResult> {
 	const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 	const ids = await stub.listEmailIdsByDate();
@@ -366,7 +368,7 @@ export async function writeMailboxBackup(
 				}
 			}
 
-			if (onProgress && messages - reported >= PROGRESS_EVERY) {
+			if (onProgress && messages - reported >= progressEvery) {
 				reported = messages;
 				await onProgress(messages).catch(() => {});
 			}

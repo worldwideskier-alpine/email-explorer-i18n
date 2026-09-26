@@ -82,7 +82,11 @@ fork's work. This fork ships by being forked.
   recipient (`event.to`), never by the `To:` header, and rejects anything
   addressed to a mailbox that does not exist. Trusting the header let anyone
   create a mailbox by sending mail to one.
-- **The auth gate.** `fetch()` validates the session before Hono routes
+- **The auth gate.** `route-access.test.ts` holds one table of every route
+  the Worker registers -- public, any session, mailbox holder, root -- and
+  asks each the same questions. A new route fails it until it is put in the
+  table, which is the point: its gate is decided on purpose.
+  `fetch()` validates the session before Hono routes
   anything. `PUBLIC_ROUTES` is the exact-match allowlist of what may be
   reached without one — exact, because a prefix match silently makes every
   future path starting with a public one public too. Static assets never
@@ -367,6 +371,12 @@ Check which bundle is actually being served before concluding anything from a
 browser session -- `curl -s localhost:8787/ | grep -o 'index-[A-Za-z0-9_-]*\.js'`
 against the file the build just produced. A stale bundle makes a verification
 run agree with whatever you expected, whichever way you expected it.
+
+The Cloudflare token is given only to the steps that run wrangler, not to
+the job, and the actions are pinned to commits; `workflowGuards.test.ts`
+holds both. The check below waits up to about a minute for the new build to
+be served: twelve seconds once was not enough, and a run failed on a deploy
+that was fine.
 
 The deploy workflow now asks production the same question, in its last step:
 the entry script's name in the served page, that file's bytes by hash, the

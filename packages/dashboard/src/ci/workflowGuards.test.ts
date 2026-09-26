@@ -81,4 +81,37 @@ describe("the deploy workflow", () => {
 		expect(check).toBeTruthy();
 		expect(check).not.toContain("secrets.");
 	});
+
+	/**
+	 * The token goes to the steps that run wrangler and to nothing else. Set
+	 * on the job, every step had it -- third-party actions and every install
+	 * and build script included.
+	 */
+	it("hands the Cloudflare token only to the steps that use it", () => {
+		const job = deploy?.slice(deploy.indexOf("\n  deploy:")) ?? "";
+		const jobEnv = job.slice(
+			job.indexOf("    env:"),
+			job.indexOf("    steps:"),
+		);
+		expect(jobEnv).toBeTruthy();
+		expect(jobEnv).not.toContain("CLOUDFLARE_API_TOKEN");
+
+		const steps = job.split(/\n {6}- /).slice(1);
+		const holding = steps.filter((step) =>
+			step.includes("secrets.CLOUDFLARE_API_TOKEN"),
+		);
+		expect(holding.length).toBeGreaterThan(0);
+		for (const step of holding) {
+			expect(step, step.split("\n")[0]).toMatch(/wrangler|deploy-dev-worker/);
+		}
+	});
+
+	/** A tag can be moved to code nobody here has read; a commit cannot. */
+	it("runs actions pinned to a commit", () => {
+		for (const [path, source] of Object.entries(workflows)) {
+			for (const [, action] of source.matchAll(/uses:\s*(\S+)/g)) {
+				expect(action, path).toMatch(/@[0-9a-f]{40}$/);
+			}
+		}
+	});
 });
