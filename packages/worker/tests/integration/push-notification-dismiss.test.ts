@@ -1,4 +1,8 @@
-import { env, runInDurableObject } from "cloudflare:test";
+import {
+	createExecutionContext,
+	env,
+	runInDurableObject,
+} from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
 	authenticatedFetch,
@@ -43,19 +47,21 @@ async function subscriptionCount(): Promise<number> {
 	return subs.length;
 }
 
-async function insertEmail(id: string, read = false) {
+/** An inbox message whose new-mail notification went out, unless told not. */
+async function insertEmail(id: string, read = false, notified = true) {
 	// @ts-expect-error
 	const doId = env.MAILBOX.idFromName(mailboxId);
 	// @ts-expect-error
 	const doStub = env.MAILBOX.get(doId);
 	await runInDurableObject(doStub, async (_instance, state) => {
 		state.storage.sql.exec(
-			`INSERT INTO emails (id, folder_id, subject, sender, recipient, date, body, read)
-			 VALUES (?, 'inbox', 'Test Subject', 'sender@example.com', ?, ?, '<p>Body</p>', ?)`,
+			`INSERT INTO emails (id, folder_id, subject, sender, recipient, date, body, read, notified)
+			 VALUES (?, 'inbox', 'Test Subject', 'sender@example.com', ?, ?, '<p>Body</p>', ?, ?)`,
 			id,
 			mailboxId,
 			new Date().toISOString(),
 			read ? 1 : 0,
+			notified ? 1 : 0,
 		);
 	});
 }
@@ -93,6 +99,110 @@ describe("Push notification dismissal on read", () => {
 		// which only happens if the dismiss push was actually sent — proving
 		// PutEmail triggered the cross-device dismissal.
 		expect(await subscriptionCount()).toBe(0);
+	});
+
+	it("sends nothing for a message no device was told about", async () => {
+		const { p256dh, auth } = await generateTestSubscriptionKeys();
+		await authenticatedFetch("http://local.test/api/v1/push/subscribe", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ endpoint: PUSH_ENDPOINT, keys: { p256dh, auth } }),
+		});
+
+		const emailId = crypto.randomUUID();
+		await insertEmail(emailId, false, false);
+
+		const response = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${emailId}`,
+			{
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ read: true }),
+			},
+		);
+		expect(response.status).toBe(200);
+		expect(await subscriptionCount()).toBe(1);
+	});
+
+	/**
+	 * Dismissing it once is the whole job. Reading, unreading and reading
+	 * again used to send one every time.
+	 */
+	it("dismisses a notification once", async () => {
+		const emailId = crypto.randomUUID();
+		await insertEmail(emailId, false);
+		const read = (value: boolean) =>
+			authenticatedFetch(
+				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${emailId}`,
+				{
+					method: "PUT",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ read: value }),
+				},
+			);
+		// Read before any device subscribed: the flag is spent here.
+		expect((await read(true)).status).toBe(200);
+		await read(false);
+
+		const { p256dh, auth } = await generateTestSubscriptionKeys();
+		await authenticatedFetch("http://local.test/api/v1/push/subscribe", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ endpoint: PUSH_ENDPOINT, keys: { p256dh, auth } }),
+		});
+		expect((await read(true)).status).toBe(200);
+		expect(await subscriptionCount()).toBe(1);
+	});
+
+	/**
+	 * Delivery marks what it announced. Without the mark, nothing received
+	 * would ever be dismissed.
+	 */
+	it("marks mail it announced, and only that", async () => {
+		const { p256dh, auth } = await generateTestSubscriptionKeys();
+		await authenticatedFetch("http://local.test/api/v1/push/subscribe", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ endpoint: PUSH_ENDPOINT, keys: { p256dh, auth } }),
+		});
+		const worker = await import("../../dev/index");
+		const deliver = async (subject: string) => {
+			const bytes = new TextEncoder().encode(
+				`From: a@example.org\r\nTo: ${mailboxId}\r\nSubject: ${subject}\r\n\r\nbody`,
+			);
+			await worker.default.email(
+				{
+					raw: new ReadableStream({
+						start(c) {
+							c.enqueue(bytes);
+							c.close();
+						},
+					}),
+					rawSize: bytes.length,
+					to: mailboxId,
+					setReject: () => {},
+				},
+				env,
+				createExecutionContext(),
+			);
+		};
+		await deliver("announced");
+		// The mocked endpoint answered 410, so the subscription is gone and
+		// the next message reaches no device.
+		expect(await subscriptionCount()).toBe(0);
+		await deliver("unannounced");
+
+		// @ts-expect-error
+		const doStub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+		const flags = await runInDurableObject(doStub, async (_i, state) =>
+			state.storage.sql
+				.exec("SELECT subject, notified FROM emails ORDER BY subject")
+				.toArray(),
+		);
+		expect(flags).toEqual([
+			{ subject: "announced", notified: 1 },
+			{ subject: "unannounced", notified: 0 },
+		]);
 	});
 
 	it("does not send a push when only starred status changes", async () => {

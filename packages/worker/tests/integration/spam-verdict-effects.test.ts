@@ -47,16 +47,18 @@ async function subscribe() {
 	});
 }
 
-async function insertUnreadInboxEmail(id: string) {
+/** An unread inbox message whose new-mail notification went out. */
+async function insertUnreadInboxEmail(id: string, notified = true) {
 	// @ts-expect-error
 	const doStub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 	await runInDurableObject(doStub, async (_i, state) => {
 		state.storage.sql.exec(
-			`INSERT INTO emails (id, folder_id, subject, sender, recipient, date, body, read)
-			 VALUES (?, 'inbox', '未読メール', 'spammer@example.com', ?, ?, '<p>b</p>', 0)`,
+			`INSERT INTO emails (id, folder_id, subject, sender, recipient, date, body, read, notified)
+			 VALUES (?, 'inbox', '未読メール', 'spammer@example.com', ?, ?, '<p>b</p>', 0, ?)`,
 			id,
 			mailboxId,
 			new Date().toISOString(),
+			notified ? 1 : 0,
 		);
 	});
 }
@@ -180,6 +182,35 @@ describe("Deleting an email", () => {
 		expect(res.status).toBe(204);
 
 		expect(await subscriptionCount()).toBe(0);
+	});
+
+	/**
+	 * A dismissal is a push that shows nothing, and a browser may answer
+	 * those by dropping the subscription. Mail that was never announced --
+	 * spam, a restore, anything from before the device subscribed -- has
+	 * nothing on any device to dismiss.
+	 */
+	it("sends nothing for a message that was never announced", async () => {
+		const binned = crypto.randomUUID();
+		const deleted = crypto.randomUUID();
+		const filed = crypto.randomUUID();
+		for (const id of [binned, deleted, filed]) {
+			await insertUnreadInboxEmail(id, false);
+		}
+		await subscribe();
+
+		expect((await moveTo(binned, "trash")).status).toBe(200);
+		expect(
+			(
+				await authenticatedFetch(
+					`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${deleted}`,
+					{ method: "DELETE" },
+				)
+			).status,
+		).toBe(204);
+		expect((await setVerdict(filed, "spam")).status).toBe(200);
+
+		expect(await subscriptionCount()).toBe(1);
 	});
 
 	it("leaves the notification alone when merely filing to another folder", async () => {

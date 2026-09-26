@@ -1,5 +1,6 @@
 import type PostalMime from "postal-mime";
 import { charsetsForAttachments, typeWithCharset } from "./attachment-charset";
+import { storableFilename } from "./attachment-name";
 import { plainTextToHtml } from "./plain-text-to-html";
 import { notifyNewEmail } from "./push-notify";
 import { formatAddressList } from "./recipients";
@@ -74,7 +75,7 @@ export async function ingestEmailIntoMailbox(
 			// without a name was stored under ".../undefined" and looked for
 			// under ".../untitled" -- present in the bucket and unreadable by
 			// everything that goes through the row, the archive included.
-			const filename = att.filename || "untitled";
+			const filename = storableFilename(att.filename);
 			const attKey = `attachments/${messageId}/${attachmentId}/${filename}`;
 			await env.BUCKET.put(attKey, att.content);
 			attachmentData.push({
@@ -117,13 +118,8 @@ export async function ingestEmailIntoMailbox(
 			// decide which mailbox the message lands in -- that is the envelope
 			// recipient, settled before this is called -- it is only what gets
 			// shown and replied to.
-			recipient:
-				formatAddressList(
-					parsedEmail.to?.map((address) => address.address ?? ""),
-				) || mailboxId,
-			cc: formatAddressList(
-				parsedEmail.cc?.map((address) => address.address ?? ""),
-			),
+			recipient: formatAddressList(addressesOf(parsedEmail.to)) || mailboxId,
+			cc: formatAddressList(addressesOf(parsedEmail.cc)),
 			date: storedDate(overrides.date),
 			body:
 				parsedEmail.html ||
@@ -132,6 +128,11 @@ export async function ingestEmailIntoMailbox(
 			email_references:
 				emailReferences.length > 0 ? JSON.stringify(emailReferences) : null,
 			thread_id: emailReferences[0] || inReplyTo || messageId,
+			// What a reply names as its parent. The row id is ours and means
+			// nothing to the sender's client.
+			message_id: parsedEmail.messageId
+				? stripBrackets(parsedEmail.messageId.trim())
+				: null,
 		},
 		attachmentData,
 	);
@@ -144,14 +145,38 @@ export async function ingestEmailIntoMailbox(
 	}
 
 	if (overrides.notify && folder !== "spam") {
-		await notifyNewEmail(env, mailboxId, {
+		const announced = await notifyNewEmail(env, mailboxId, {
 			id: messageId,
 			sender: parsedEmail.from?.address || "",
 			subject: parsedEmail.subject || "",
 		});
+		// Only an announced message is worth dismissing later.
+		if (announced) await stub.markNotified(messageId).catch(() => {});
 	}
 
 	return messageId;
+}
+
+/**
+ * Every address in a To: or Cc: list, the members of a group included.
+ *
+ * `Team: a@x, b@x;` is one entry to the parser, with the members under
+ * `group` and no address of its own, so reading `address` alone dropped
+ * everyone in it -- and "reply all" with them.
+ */
+export function addressesOf(
+	list:
+		| readonly {
+				address?: string;
+				group?: readonly { address?: string }[];
+		  }[]
+		| undefined,
+): string[] {
+	return (list ?? []).flatMap((entry) =>
+		entry.group
+			? entry.group.map((member) => member.address ?? "")
+			: [entry.address ?? ""],
+	);
 }
 
 /**

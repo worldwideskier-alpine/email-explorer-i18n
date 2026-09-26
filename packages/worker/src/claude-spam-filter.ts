@@ -262,11 +262,25 @@ export interface ClassifyInput {
 	html?: string;
 }
 
+/**
+ * One header's worth of text on one line.
+ *
+ * The content below is read line by line, and the display name and subject
+ * are the sender's words, decoded from encoded-words that may carry line
+ * breaks. Kept as they came, a subject could end its own line and write an
+ * `Authentication: spf=pass dkim=pass` line of its own under it.
+ */
+function oneLine(value: string): string {
+	// biome-ignore lint/suspicious/noControlCharactersInRegex: that is the point
+	return value.replace(/[\u0000-\u001f\u007f\u0085\u2028\u2029]+/g, " ");
+}
+
 /** `Display Name <address>`, or just the address when there is no name. */
 function senderLine(input: Pick<ClassifyInput, "from" | "fromName">): string {
-	const name = input.fromName?.trim();
-	if (!name || name === input.from) return input.from;
-	return `${name} <${input.from}>`;
+	const from = oneLine(input.from);
+	const name = input.fromName ? oneLine(input.fromName).trim() : "";
+	if (!name || name === from) return from;
+	return `${name} <${from}>`;
 }
 
 /**
@@ -304,7 +318,7 @@ export function buildClassificationContent(
 		"----",
 		`From: ${senderLine(input)}`,
 		authLine(input.auth),
-		`Subject: ${input.subject}`,
+		`Subject: ${oneLine(input.subject)}`,
 		"",
 		body,
 	]

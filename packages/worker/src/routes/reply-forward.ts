@@ -1,6 +1,7 @@
 import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
+import { storableFilename } from "../attachment-name";
 import { base64ToBytes } from "../base64";
 import { sendsAsMailbox } from "../mailbox-access";
 import { plainTextToHtml } from "../plain-text-to-html";
@@ -102,15 +103,8 @@ export class PostReplyEmail extends OpenAPIRoute {
 			return c.json({ error: "Original email not found" }, 404);
 		}
 
-		// Build threading information
-		const in_reply_to = originalEmail.id;
-		const references = originalEmail.email_references
-			? [
-					...JSON.parse(originalEmail.email_references as string),
-					originalEmail.id,
-				]
-			: [originalEmail.id];
-		const thread_id = originalEmail.thread_id || originalEmail.id;
+		const { in_reply_to, references, thread_id } =
+			replyThreading(originalEmail);
 
 		try {
 			await sendEmail(
@@ -128,7 +122,7 @@ export class PostReplyEmail extends OpenAPIRoute {
 						content: att.content,
 						type: att.type,
 					})),
-					inReplyTo: in_reply_to,
+					inReplyTo: in_reply_to ?? undefined,
 					references: references,
 				},
 				// Sent by whoever holds this mailbox, and billed to their key.
@@ -144,13 +138,15 @@ export class PostReplyEmail extends OpenAPIRoute {
 		if (attachments) {
 			for (const att of attachments) {
 				const attachmentId = crypto.randomUUID();
-				const key = `attachments/${messageId}/${attachmentId}/${att.filename}`;
+				// The same name for key and row; see attachment-name.ts.
+				const filename = storableFilename(att.filename);
+				const key = `attachments/${messageId}/${attachmentId}/${filename}`;
 				const decoded = base64ToBytes(att.content);
 				await c.env.BUCKET.put(key, decoded);
 				attachmentData.push({
 					id: attachmentId,
 					email_id: messageId,
-					filename: att.filename,
+					filename,
 					mimetype: att.type,
 					size: decoded.length,
 					content_id: att.contentId || null,
@@ -171,7 +167,7 @@ export class PostReplyEmail extends OpenAPIRoute {
 				date: new Date().toISOString(),
 				body: html || (text ? plainTextToHtml(text) : ""),
 				in_reply_to: in_reply_to,
-				email_references: JSON.stringify(references),
+				email_references: references.length ? JSON.stringify(references) : null,
 				thread_id: thread_id,
 			},
 			attachmentData,
@@ -266,13 +262,15 @@ export class PostForwardEmail extends OpenAPIRoute {
 		if (attachments) {
 			for (const att of attachments) {
 				const attachmentId = crypto.randomUUID();
-				const key = `attachments/${messageId}/${attachmentId}/${att.filename}`;
+				// The same name for key and row; see attachment-name.ts.
+				const filename = storableFilename(att.filename);
+				const key = `attachments/${messageId}/${attachmentId}/${filename}`;
 				const decoded = base64ToBytes(att.content);
 				await c.env.BUCKET.put(key, decoded);
 				attachmentData.push({
 					id: attachmentId,
 					email_id: messageId,
-					filename: att.filename,
+					filename,
 					mimetype: att.type,
 					size: decoded.length,
 					content_id: att.contentId || null,
@@ -301,4 +299,51 @@ export class PostForwardEmail extends OpenAPIRoute {
 
 		return c.json({ id: messageId, status: "sent" }, 201);
 	}
+}
+
+/**
+ * What a reply says it answers, in the headers the other side's client
+ * threads by.
+ *
+ * In-Reply-To and References name Message-IDs, and the only one a stored
+ * message has is the sender's (`message_id`). These used to carry the row's
+ * own id: a name no client has ever seen, so the reply started a thread of
+ * its own on the other side -- and an internal id went out in every reply.
+ * A message with no Message-ID of its own (mail sent from here, or stored
+ * before it was kept) gives no In-Reply-To rather than a made-up one, and
+ * references left over from those rows are dropped the same way: every
+ * real Message-ID has an "@", and none of ours do.
+ *
+ * `thread_id` stays ours, since only this mailbox reads it.
+ */
+export function replyThreading(parent: {
+	id: string;
+	message_id?: string | null;
+	email_references?: string | null;
+	thread_id?: string | null;
+}): {
+	in_reply_to: string | null;
+	references: string[];
+	thread_id: string;
+} {
+	const isMessageId = (value: unknown): value is string =>
+		typeof value === "string" && value.includes("@");
+	let earlier: unknown[] = [];
+	try {
+		const parsed = JSON.parse(parent.email_references ?? "[]");
+		if (Array.isArray(parsed)) earlier = parsed;
+	} catch {
+		// A row whose references cannot be read still gets its reply threaded
+		// by In-Reply-To.
+	}
+	const in_reply_to = isMessageId(parent.message_id) ? parent.message_id : null;
+	const references = earlier.filter(isMessageId);
+	if (in_reply_to && !references.includes(in_reply_to)) {
+		references.push(in_reply_to);
+	}
+	return {
+		in_reply_to,
+		references,
+		thread_id: parent.thread_id || parent.id,
+	};
 }

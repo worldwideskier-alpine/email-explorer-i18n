@@ -116,8 +116,15 @@ export async function purgeMailboxSpam(
 					const at = Date.parse(email.receivedAt ?? "");
 					return Number.isFinite(at) && at < archivedBefore;
 				});
+	// Expiry runs from when the message became spam. Its own date is only
+	// the fallback for a row that predates the column, which is what expiry
+	// used to count from -- so an old message filed as spam today was gone
+	// by the next night.
 	const expired = expiredSpamIds(
-		archived,
+		archived.map((email) => ({
+			id: email.id,
+			date: email.spamSince ?? email.date,
+		})),
 		retentionCutoff(days, now.getTime()),
 	);
 

@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import PostalMime from "postal-mime";
 import { z } from "zod";
 import { getResendKeySource, setResendApiKey } from "./app-settings";
+import { storableFilename } from "./attachment-name";
 import { backupKeyPrefix } from "./auto-backup";
 import { listBackups } from "./backup-writer";
 import { base64ToBytes } from "./base64";
@@ -829,13 +830,15 @@ class PostEmail extends OpenAPIRoute {
 		if (attachments) {
 			for (const att of attachments) {
 				const attachmentId = crypto.randomUUID();
-				const key = `attachments/${messageId}/${attachmentId}/${att.filename}`;
+				// The same name for key and row; see attachment-name.ts.
+				const filename = storableFilename(att.filename);
+				const key = `attachments/${messageId}/${attachmentId}/${filename}`;
 				const decoded = base64ToBytes(att.content);
 				await c.env.BUCKET.put(key, decoded);
 				attachmentData.push({
 					id: attachmentId,
 					email_id: messageId,
-					filename: att.filename,
+					filename,
 					mimetype: att.type,
 					size: decoded.length,
 					content_id: att.contentId || null,
@@ -949,7 +952,7 @@ class PutEmail extends OpenAPIRoute {
 			return c.json({ error: "Email not found" }, 404);
 		}
 
-		if (read === true) {
+		if (read === true && (await stub.takeNotified(id))) {
 			await dismissEmailNotification(c.env, mailboxId, id);
 		}
 
@@ -995,6 +998,7 @@ class DeleteEmail extends OpenAPIRoute {
 			return c.json({ error: "Not found" }, 404);
 		}
 
+		const announced = await stub.takeNotified(id);
 		const attachments = (await stub.deleteEmail(id)) ?? [];
 
 		if (attachments.length > 0) {
@@ -1007,7 +1011,7 @@ class DeleteEmail extends OpenAPIRoute {
 
 		// The message is gone for good, so a notification pointing at it would
 		// only lead nowhere. Clear it from every device.
-		await dismissEmailNotification(c.env, mailboxId, id);
+		if (announced) await dismissEmailNotification(c.env, mailboxId, id);
 
 		return c.body(null, 204);
 	}
@@ -1069,7 +1073,10 @@ class PostMoveEmail extends OpenAPIRoute {
 		// Binning or filing something as spam means the user has dealt with it,
 		// so the notification should go even though the mail stays unread.
 		// Other destinations (archive, custom folders) are left alone for now.
-		if (folderId === "trash" || folderId === "spam") {
+		if (
+			(folderId === "trash" || folderId === "spam") &&
+			(await stub.takeNotified(id))
+		) {
 			await dismissEmailNotification(c.env, mailboxId, id);
 		}
 
@@ -1117,7 +1124,7 @@ class PostEmailSpamVerdict extends OpenAPIRoute {
 		await recordSenderVerdict(c.env, mailboxId, email.sender, senderVerdict);
 		await stub.moveEmail(id, senderVerdict);
 
-		if (verdict === "spam") {
+		if (verdict === "spam" && (await stub.takeNotified(id))) {
 			// The mail has been dealt with, so drop the notification still
 			// sitting on the phone. Read state is deliberately left alone: it
 			// stays unread in the spam folder.

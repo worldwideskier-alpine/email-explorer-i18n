@@ -51,7 +51,22 @@ async function place(subject: string, folder: string, date: string) {
 		},
 	);
 	expect(res.status, `importing ${subject}`).toBe(201);
-	return (await res.json<{ id: string }>()).id;
+	const { id } = await res.json<{ id: string }>();
+	if (folder === "spam") {
+		// In spam since its date, as a message that old would have been. The
+		// import itself files it as spam as of now, which is when a restore
+		// puts it there.
+		// @ts-expect-error test binding
+		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+		await runInDurableObject(stub, async (_i, state) => {
+			state.storage.sql.exec(
+				"UPDATE emails SET spam_since = ? WHERE id = ?",
+				date,
+				id,
+			);
+		});
+	}
+	return id;
 }
 
 async function subjectsIn(folder: string): Promise<string[]> {
@@ -101,6 +116,35 @@ describe("deleting old mail out of the spam folder", () => {
 
 		expect(summary.deleted).toBe(1);
 		expect(await subjectsIn("spam")).toEqual(["Recent spam"]);
+	});
+
+	/**
+	 * Retention runs from when a message became spam. Counted from its date,
+	 * an old message filed as spam today was gone by the next night -- with
+	 * backups off, before anyone could notice the mistake and take it back.
+	 */
+	it("counts from when a message was filed as spam, not from its date", async () => {
+		const filed = await place(
+			"Old, filed today",
+			"inbox",
+			"2026-01-01T00:00:00.000Z",
+		);
+		const moved = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${filed}/move`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ folderId: "spam" }),
+			},
+		);
+		expect(moved.status).toBe(200);
+		await setRetention({ enabled: true, days: 30 });
+
+		// Filed on the real clock, which is after NOW; either way, not 30 days
+		// before it.
+		await runScheduledSpamPurge(env as never, NOW);
+
+		expect(await subjectsIn("spam")).toEqual(["Old, filed today"]);
 	});
 
 	/**

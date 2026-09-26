@@ -7,6 +7,9 @@ import {
 	testAuthBeforeAll,
 } from "./utils";
 
+/** What the original's sender called it, which is what a reply must name. */
+const ORIGINAL_MESSAGE_ID = "original-1@mail.example.org";
+
 describe("Reply & Forward Functionality Integration Tests", () => {
 	let originalEmailId: string;
 
@@ -25,11 +28,12 @@ describe("Reply & Forward Functionality Integration Tests", () => {
 
 		await runInDurableObject(doStub, async (_instance, state) => {
 			state.storage.sql.exec(
-				`INSERT INTO emails (id, folder_id, subject, sender, recipient, date, body)
-				 VALUES (?, 'sent', 'Original Email', ?, 'recipient@example.com', ?, '<p>This is the original email body</p>')`,
+				`INSERT INTO emails (id, folder_id, subject, sender, recipient, date, body, message_id)
+				 VALUES (?, 'inbox', 'Original Email', 'recipient@example.com', ?, ?, '<p>This is the original email body</p>', ?)`,
 				originalEmailId,
 				mailboxId,
 				new Date().toISOString(),
+				ORIGINAL_MESSAGE_ID,
 			);
 		});
 	});
@@ -64,12 +68,90 @@ describe("Reply & Forward Functionality Integration Tests", () => {
 			);
 			const sentEmailBody = await sentEmail.json<any>();
 
-			expect(sentEmailBody.in_reply_to).toBe(originalEmailId);
+			// The sender's Message-ID, not our row id: only the first means
+			// anything to the other side's client.
+			expect(sentEmailBody.in_reply_to).toBe(ORIGINAL_MESSAGE_ID);
 			expect(sentEmailBody.thread_id).toBe(originalEmailId);
-			expect(sentEmailBody.email_references).toBeDefined();
+			expect(JSON.parse(sentEmailBody.email_references)).toEqual([
+				ORIGINAL_MESSAGE_ID,
+			]);
+		});
 
-			const references = JSON.parse(sentEmailBody.email_references);
-			expect(references).toContain(originalEmailId);
+		it("sends the original's Message-ID, and no id of ours", async () => {
+			const response = await authenticatedFetch(
+				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${originalEmailId}/reply`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						to: "recipient@example.com",
+						from: mailboxId,
+						subject: "Re: ECHO_RESEND_REQUEST",
+						text: "reply",
+						html: "<p>reply</p>",
+					}),
+				},
+			);
+			// The stub hands the request back as the failure message.
+			const sent = JSON.parse(
+				(await response.json<{ error: string }>()).error.replace(
+					/^Resend API error: 500 /,
+					"",
+				),
+			);
+			expect(sent.headers).toEqual({
+				"In-Reply-To": `<${ORIGINAL_MESSAGE_ID}>`,
+				References: `<${ORIGINAL_MESSAGE_ID}>`,
+			});
+			expect(JSON.stringify(sent)).not.toContain(originalEmailId);
+		});
+
+		/**
+		 * Mail sent from here has no Message-ID we know -- Resend assigns it and
+		 * does not say -- so a reply to it names none rather than a made-up one.
+		 * The references still carry the thread back to the original.
+		 */
+		it("keeps the thread when replying to mail sent from here", async () => {
+			const first = await (
+				await authenticatedFetch(
+					`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${originalEmailId}/reply`,
+					{
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							to: "recipient@example.com",
+							from: mailboxId,
+							subject: "Re: Original Email",
+							html: "<p>one</p>",
+						}),
+					},
+				)
+			).json<{ id: string }>();
+			const second = await (
+				await authenticatedFetch(
+					`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${first.id}/reply`,
+					{
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							to: "recipient@example.com",
+							from: mailboxId,
+							subject: "Re: Original Email",
+							html: "<p>two</p>",
+						}),
+					},
+				)
+			).json<{ id: string }>();
+			const stored = await (
+				await authenticatedFetch(
+					`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${second.id}`,
+				)
+			).json<any>();
+			expect(stored.in_reply_to).toBeNull();
+			expect(JSON.parse(stored.email_references)).toEqual([
+				ORIGINAL_MESSAGE_ID,
+			]);
+			expect(stored.thread_id).toBe(originalEmailId);
 		});
 
 		it("should build references chain for nested replies", async () => {
@@ -122,11 +204,14 @@ describe("Reply & Forward Functionality Integration Tests", () => {
 			);
 			const secondReplyEmailBody = await secondReplyEmail.json<any>();
 
-			expect(secondReplyEmailBody.in_reply_to).toBe(firstReplyId);
+			// The first reply was sent from here, so it has no Message-ID of
+			// its own to name; the chain still reaches the original.
+			expect(secondReplyEmailBody.in_reply_to).toBeNull();
+			expect(firstReplyEmailBody.thread_id).toBe(originalEmailId);
 
 			const references = JSON.parse(secondReplyEmailBody.email_references);
-			expect(references).toContain(originalEmailId);
-			expect(references).toContain(firstReplyId);
+			expect(references).toEqual([ORIGINAL_MESSAGE_ID]);
+			expect(references).not.toContain(firstReplyId);
 		});
 
 		it("should reject reply to non-existent email", async () => {
@@ -360,8 +445,8 @@ describe("Reply & Forward Functionality Integration Tests", () => {
 			// Find the reply email
 			const replyEmail = emails.find((e) => e.subject === "Re: Original Email");
 			expect(replyEmail).toBeDefined();
-			expect(replyEmail.in_reply_to).toBeDefined();
-			expect(replyEmail.thread_id).toBeDefined();
+			expect(replyEmail.in_reply_to).toBe(ORIGINAL_MESSAGE_ID);
+			expect(replyEmail.thread_id).toBe(originalEmailId);
 		});
 	});
 
@@ -515,8 +600,12 @@ describe("Reply & Forward Functionality Integration Tests", () => {
 			);
 			const lastReplyBody = await lastReply.json<any>();
 
+			// Every hop but the first was sent from here, and none of those
+			// has a Message-ID anyone else knows; no row id stands in for one.
 			const references = JSON.parse(lastReplyBody.email_references);
-			expect(references.length).toBeGreaterThanOrEqual(5);
+			expect(references).toEqual([ORIGINAL_MESSAGE_ID]);
+			for (const id of replyIds) expect(references).not.toContain(id);
+			expect(lastReplyBody.thread_id).toBe(originalEmailId);
 		});
 	});
 });
