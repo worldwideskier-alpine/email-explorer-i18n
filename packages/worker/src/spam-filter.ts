@@ -2,9 +2,10 @@ import type { Header } from "postal-mime";
 
 /**
  * Decides inbox vs. spam purely from the SPF/DKIM/DMARC verdicts Cloudflare
- * Email Routing (or any upstream relay) recorded in the Authentication-Results
- * header (RFC 8601) before the message reached this Worker. No network calls,
- * no cost, no added latency - just reading what was already verified.
+ * Email Routing recorded in its Authentication-Results header (RFC 8601)
+ * before the message reached this Worker -- its own, and no other: see
+ * joinAuthResults. No network calls, no cost, no added latency - just
+ * reading what was already verified.
  *
  * A message is filed as spam when nothing authenticated it AND the From
  * domain's own published policy says the sending host is not one of theirs.
@@ -164,15 +165,39 @@ export interface AuthSummary {
 }
 
 /**
- * The Authentication-Results header the receiving relay wrote: the topmost.
+ * The name Cloudflare Email Routing writes at the start of its
+ * Authentication-Results header (the authserv-id, RFC 8601 section 2.5).
+ * Read off a message received on a live deployment, not assumed:
+ * `Authentication-Results: mx.cloudflare.net;` above its results.
+ */
+export const RELAY_AUTHSERV_ID = "mx.cloudflare.net";
+
+/**
+ * The Authentication-Results header the receiving relay wrote: the topmost,
+ * and only if the relay's own name is on it.
  *
  * A relay adds its header above everything already in the message (RFC 8601
  * section 5), so the top one is Cloudflare's own. Every header was read
  * together before, and anybody can put an `Authentication-Results:
  * x; dkim=pass` in the message they send -- which then authenticated it.
+ * The name is checked as well so that a message reaching here without the
+ * relay's header is read as carrying no results, rather than as carrying
+ * whatever its sender wrote at the top.
+ *
+ * A header under another name counts as absent, which files the message by
+ * the rules for "no header": the inbox, never spam. So if Cloudflare ever
+ * renames itself, this goes quiet rather than wrong.
  */
 function joinAuthResults(headers: Header[]): string {
-	return headers.find((h) => h.key === "authentication-results")?.value ?? "";
+	const top = headers.find((h) => h.key === "authentication-results")?.value;
+	if (!top) return "";
+	return authservIdOf(top) === RELAY_AUTHSERV_ID ? top : "";
+}
+
+/** The authserv-id: before the first `;`, less comments and any version. */
+function authservIdOf(authResults: string): string {
+	const [first] = resultSections(authResults);
+	return first.bare.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
 }
 
 /**

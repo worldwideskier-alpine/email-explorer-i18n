@@ -93,7 +93,7 @@ describe("Original message source", () => {
 				Subject: "Inbound source test",
 				"Content-Type": "text/plain",
 				"Authentication-Results":
-					"mx.example.com; spf=pass; dkim=pass; dmarc=pass",
+					"mx.cloudflare.net; spf=pass; dkim=pass; dmarc=pass",
 			},
 			"Inbound body",
 		);
@@ -138,7 +138,7 @@ describe("Original message source", () => {
 					Subject: "Backfill target",
 					"Content-Type": "text/plain",
 					"Authentication-Results":
-						"mx.example.com; spf=pass; dkim=pass; dmarc=pass",
+						"mx.cloudflare.net; spf=pass; dkim=pass; dmarc=pass",
 				},
 				"Original body",
 			);

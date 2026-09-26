@@ -26,9 +26,13 @@ const header = (value: string): Header[] => [
  * The message that prompted all of this, reduced to its headers: a display
  * name naming a Japanese card issuer, over an address on a throwaway domain
  * that authenticates perfectly well because the sender owns it.
+ *
+ * Taken first from the ARC copy of the header, which Cloudflare writes as
+ * `i=1; mx.cloudflare.net; ...`. Its own Authentication-Results carries the
+ * same results without the `i=1;`, and that is the header the filter reads.
  */
 const IMPERSONATION_AUTH =
-	"i=1; mx.cloudflare.net; dkim=fail (verification failed) header.i=mail.saisoncard@mfdpfdyn.info header.s=mail header.b=ggbj5O4E; " +
+	"mx.cloudflare.net; dkim=fail (verification failed) header.i=mail.saisoncard@mfdpfdyn.info header.s=mail header.b=ggbj5O4E; " +
 	"dmarc=pass header.from=mfdpfdyn.info policy.dmarc=none; " +
 	"spf=pass (domain of postmaster@mfdpfdyn.info designates 150.5.145.134 as permitted sender) smtp.helo=mfdpfdyn.info; " +
 	"spf=pass (domain of mail.saisoncard@mfdpfdyn.info designates 150.5.145.134 as permitted sender) smtp.mailfrom=mail.saisoncard@mfdpfdyn.info; " +
@@ -49,7 +53,7 @@ describe("summarizeAuthResults", () => {
 		expect(
 			summarizeAuthResults(
 				header(
-					"mx.google.com; dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=example.com; spf=pass smtp.mailfrom=example.com",
+					"mx.cloudflare.net; dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=example.com; spf=pass smtp.mailfrom=example.com",
 				),
 			).dmarcPolicy,
 		).toBe("reject");
@@ -61,7 +65,7 @@ describe("summarizeAuthResults", () => {
 		expect(
 			summarizeAuthResults(
 				header(
-					"mx.example.com; dmarc=pass header.from=example.com; spf=pass smtp.helo=example.com",
+					"mx.cloudflare.net; dmarc=pass header.from=example.com; spf=pass smtp.helo=example.com",
 				),
 			).dmarcPolicy,
 		).toBeUndefined();
@@ -79,7 +83,7 @@ describe("summarizeAuthResults", () => {
 		expect(
 			summarizeAuthResults(
 				header(
-					"mx.example.com; spf=none smtp.helo=host.invalid; spf=fail smtp.mailfrom=no-reply@example.com; " +
+					"mx.cloudflare.net; spf=none smtp.helo=host.invalid; spf=fail smtp.mailfrom=no-reply@example.com; " +
 						"dkim=fail header.i=@old.example.com; dkim=pass header.i=@example.com",
 				),
 			),

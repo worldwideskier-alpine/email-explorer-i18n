@@ -63,7 +63,7 @@ describe("Inbound spam routing (SPF/DKIM/DMARC)", () => {
 				Subject: "Legit passing email",
 				"Content-Type": "text/plain",
 				"Authentication-Results":
-					"mx.example.com; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com",
+					"mx.cloudflare.net; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com",
 			},
 			"Hello",
 		);
@@ -81,7 +81,7 @@ describe("Inbound spam routing (SPF/DKIM/DMARC)", () => {
 				Subject: "Dmarc fail email",
 				"Content-Type": "text/plain",
 				"Authentication-Results":
-					"mx.example.com; spf=pass smtp.mailfrom=spoofed.com; dkim=pass header.i=@other.com; dmarc=fail header.from=spoofed.com",
+					"mx.cloudflare.net; spf=pass smtp.mailfrom=spoofed.com; dkim=pass header.i=@other.com; dmarc=fail header.from=spoofed.com",
 			},
 			"Hello",
 		);
@@ -99,7 +99,7 @@ describe("Inbound spam routing (SPF/DKIM/DMARC)", () => {
 				Subject: "Spf and dkim fail email",
 				"Content-Type": "text/plain",
 				"Authentication-Results":
-					"mx.example.com; spf=fail smtp.mailfrom=spoofed.com; dkim=fail header.i=@other.com",
+					"mx.cloudflare.net; spf=fail smtp.mailfrom=spoofed.com; dkim=fail header.i=@other.com",
 			},
 			"Hello",
 		);
@@ -107,6 +107,54 @@ describe("Inbound spam routing (SPF/DKIM/DMARC)", () => {
 		await simulateReceiveEmail(rawEmail);
 
 		expect(await folderOf("Spf and dkim fail email")).toBe("spam");
+	});
+
+	/**
+	 * Header order as Cloudflare delivers it, from a live message: the ARC
+	 * copy (`i=1; mx.cloudflare.net;`) sits above the relay's own header,
+	 * folded across lines. Read through the real parser, the relay's header
+	 * is the one that decides.
+	 */
+	it("reads the relay's own header below its ARC copy", async () => {
+		const raw = [
+			"Received: from host.invalid by cloudflare-email.net",
+			"ARC-Authentication-Results: i=1; mx.cloudflare.net;",
+			"\tdkim=pass header.d=spoofed.com; dmarc=pass header.from=spoofed.com",
+			"Authentication-Results: mx.cloudflare.net;",
+			"\tdkim=none;",
+			"\tdmarc=fail header.from=spoofed.com policy.dmarc=reject;",
+			"\tspf=fail (mx.cloudflare.net: domain of x@spoofed.com does not designate 203.0.113.9)",
+			"\t smtp.mailfrom=x@spoofed.com",
+			"From: sender@spoofed.com",
+			`To: ${mailboxId}`,
+			"Subject: Relay header below ARC",
+			"Content-Type: text/plain",
+			"",
+			"Hello",
+		].join("\r\n");
+
+		await simulateReceiveEmail(raw);
+
+		expect(await folderOf("Relay header below ARC")).toBe("spam");
+	});
+
+	/** Without the relay's header, the sender's is not read in its place. */
+	it("reads nothing from a header another name wrote", async () => {
+		const rawEmail = buildRawEmail(
+			{
+				From: "sender@spoofed.com",
+				To: mailboxId,
+				Subject: "Header under another name",
+				"Content-Type": "text/plain",
+				"Authentication-Results":
+					"mx.other.example; spf=fail smtp.mailfrom=spoofed.com; dmarc=fail header.from=spoofed.com",
+			},
+			"Hello",
+		);
+
+		await simulateReceiveEmail(rawEmail);
+
+		expect(await folderOf("Header under another name")).toBe("inbox");
 	});
 
 	it("keeps an email with no Authentication-Results header in the inbox (fail-open)", async () => {

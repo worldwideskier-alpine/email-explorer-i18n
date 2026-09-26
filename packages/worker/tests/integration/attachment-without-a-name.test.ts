@@ -26,7 +26,7 @@ import {
  */
 
 const PASSING_AUTH =
-	"mx.test; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
+	"mx.cloudflare.net; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
 
 const payload = "the bytes nobody could name";
 
