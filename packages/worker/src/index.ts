@@ -1398,6 +1398,12 @@ class PostContact extends OpenAPIRoute {
 	}
 }
 
+/**
+ * A contact's id as the path carries it: digits only. `parseInt` read
+ * `12abc` as 12, so a mangled path changed or deleted somebody's contact.
+ */
+const ContactIdParam = z.string().regex(/^[1-9][0-9]{0,14}$/);
+
 class PutContact extends OpenAPIRoute {
 	schema = {
 		summary: "Update a contact",
@@ -1406,7 +1412,7 @@ class PutContact extends OpenAPIRoute {
 		request: {
 			params: z.object({
 				mailboxId: z.string(),
-				id: z.string(),
+				id: ContactIdParam,
 			}),
 			body: contentJson(UpdateContactRequestSchema),
 		},
@@ -1431,7 +1437,7 @@ class PutContact extends OpenAPIRoute {
 		const doId = ns.idFromName(mailboxId);
 		const stub = ns.get(doId);
 
-		const updatedContact = await stub.updateContact(Number.parseInt(id, 10), {
+		const updatedContact = await stub.updateContact(Number(id), {
 			name,
 			email,
 		});
@@ -1452,7 +1458,7 @@ class DeleteContact extends OpenAPIRoute {
 		request: {
 			params: z.object({
 				mailboxId: z.string(),
-				id: z.string(),
+				id: ContactIdParam,
 			}),
 		},
 		responses: {
@@ -1477,7 +1483,7 @@ class DeleteContact extends OpenAPIRoute {
 
 		// Awaited: unawaited, every delete answered 204 before it had run --
 		// for an id that did not exist too -- and a failure went nowhere.
-		if (!(await stub.deleteContact(Number.parseInt(id, 10)))) {
+		if (!(await stub.deleteContact(Number(id)))) {
 			return c.json({ error: "Not found" }, 404);
 		}
 
