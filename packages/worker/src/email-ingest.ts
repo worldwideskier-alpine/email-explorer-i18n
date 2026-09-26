@@ -124,7 +124,7 @@ export async function ingestEmailIntoMailbox(
 			cc: formatAddressList(
 				parsedEmail.cc?.map((address) => address.address ?? ""),
 			),
-			date: overrides.date || new Date().toISOString(),
+			date: storedDate(overrides.date),
 			body:
 				parsedEmail.html ||
 				(parsedEmail.text ? plainTextToHtml(parsedEmail.text) : ""),
@@ -152,4 +152,20 @@ export async function ingestEmailIntoMailbox(
 	}
 
 	return messageId;
+}
+
+/**
+ * The date column as ISO UTC, which is what received mail already has.
+ *
+ * A restore passes the imported message's own date, and that was stored as
+ * sent: `Tue, 3 Sep 2024 ...` sorts above every ISO date, because the column
+ * is compared as text ('T' > '2') -- so the message sat at the top of its
+ * folder for good, fell outside every date-bounded search, and went into the
+ * archive out of order. A date that cannot be read is kept as it came rather
+ * than replaced with today's.
+ */
+export function storedDate(given: string | undefined): string {
+	if (!given) return new Date().toISOString();
+	const at = Date.parse(given);
+	return Number.isFinite(at) ? new Date(at).toISOString() : given;
 }

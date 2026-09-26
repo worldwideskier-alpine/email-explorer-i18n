@@ -124,7 +124,16 @@ async function inspect() {
 // deployment still on the old build, and that is one state, not four.
 let problems = [];
 for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
-	problems = await inspect();
+	// A request that fails outright (DNS, TLS, a refused connection) is one
+	// more thing to retry, and is reported by its code alone: Node's own text
+	// for it names the host -- "getaddrinfo ENOTFOUND mail.example.com" -- and
+	// the secret this log masks is the whole URL, not the bare hostname.
+	try {
+		problems = await inspect();
+	} catch (e) {
+		const code = e?.cause?.code ?? e?.code ?? e?.name ?? "error";
+		problems = [`the request failed (${code})`];
+	}
 	if (problems.length === 0) break;
 	if (attempt < ATTEMPTS) {
 		console.log(

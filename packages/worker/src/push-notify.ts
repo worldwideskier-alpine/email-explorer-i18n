@@ -103,8 +103,10 @@ export function buildNewEmailPayload(
 	email: { id: string; sender: string; subject: string },
 ): { title: string; body: string; url: string; tag: string } {
 	return {
-		title: `[${mailboxLabel}] ${email.sender || mailboxId}`,
-		body: email.subject,
+		title: `[${mailboxLabel}] ${email.sender || mailboxId}`.slice(0, 200),
+		// Push services refuse a payload over about 4KB, and a subject is the
+		// sender's to make as long as they like.
+		body: email.subject.slice(0, 500),
 		url: mailboxEmailPath(mailboxId, email.id),
 		// Unique per message: a shared tag would make each new mail replace
 		// the previous notification instead of stacking beside it.
@@ -112,17 +114,28 @@ export function buildNewEmailPayload(
 	};
 }
 
+/**
+ * Never throws. It runs after the message is stored, inside the delivery of
+ * that message, so anything escaping from here -- the label read, the auth
+ * Durable Object, a malformed VAPID key -- failed the delivery of mail that
+ * had already arrived: a bounce, or a second copy when the sender retried.
+ * Only the send to each device was guarded before.
+ */
 export async function notifyNewEmail(
 	env: Env,
 	mailboxId: string,
 	email: { id: string; sender: string; subject: string },
 ): Promise<void> {
-	const mailboxLabel = await getMailboxLabel(env, mailboxId);
-	await notifyMailboxSubscribers(
-		env,
-		mailboxId,
-		buildNewEmailPayload(mailboxId, mailboxLabel, email),
-	);
+	try {
+		const mailboxLabel = await getMailboxLabel(env, mailboxId);
+		await notifyMailboxSubscribers(
+			env,
+			mailboxId,
+			buildNewEmailPayload(mailboxId, mailboxLabel, email),
+		);
+	} catch (e) {
+		console.error("Push notification failed:", e);
+	}
 }
 
 /**

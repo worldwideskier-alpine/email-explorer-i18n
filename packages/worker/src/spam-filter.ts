@@ -27,13 +27,60 @@ import type { Header } from "postal-mime";
  * recoverable -- but only by someone who looks in it.
  */
 /**
- * RFC 8601 gives each result its own `;`-separated section, and a relay may
- * record the same method more than once. Reading a verdict with one regex
- * over the whole header takes whichever happened to come first, which is not
- * the same as taking the one that matters.
+ * One result per `;`-separated section, read from where RFC 8601 puts it:
+ * the `method=result` token at the start of the section, after comments are
+ * taken out.
+ *
+ * It used to be a search for `dkim=pass` anywhere in the section, and the
+ * rest of a section is the sender's to write. `=` is legal in an address, so
+ * an envelope sender of `dkim=pass@example.com` put the words into the SPF
+ * section's `smtp.mailfrom=` and inside its comment, and the search found
+ * them: a hard SPF failure read as DKIM-authenticated and went to the inbox.
+ * `raw` keeps the comments, which one relay uses for the DMARC policy.
  */
-function resultSections(authResults: string): string[] {
-	return authResults.split(";");
+interface ResultSection {
+	raw: string;
+	bare: string;
+}
+
+/** Comments are parenthesised and nest (RFC 5322 CFWS); removed in one scan. */
+function withoutComments(text: string): string {
+	let depth = 0;
+	let out = "";
+	for (const ch of text) {
+		if (ch === "(") depth += 1;
+		else if (ch === ")" && depth > 0) depth -= 1;
+		else if (depth === 0) out += ch;
+	}
+	return out;
+}
+
+/**
+ * Split at the `;` between results, not at one inside a comment: split
+ * naively, `dkim=none (x; dkim=pass)` became a section that began with
+ * `dkim=pass`.
+ */
+function resultSections(authResults: string): ResultSection[] {
+	const raws: string[] = [];
+	let depth = 0;
+	let start = 0;
+	for (let i = 0; i < authResults.length; i++) {
+		const ch = authResults[i];
+		if (ch === "(") depth += 1;
+		else if (ch === ")" && depth > 0) depth -= 1;
+		else if (ch === ";" && depth === 0) {
+			raws.push(authResults.slice(start, i));
+			start = i + 1;
+		}
+	}
+	raws.push(authResults.slice(start));
+	return raws.map((raw) => ({ raw, bare: withoutComments(raw) }));
+}
+
+function resultOf(section: ResultSection, method: string): string | undefined {
+	return new RegExp(`^\\s*${method}\\s*=\\s*(\\w+)`, "i")
+		.exec(section.bare)?.[1]
+		?.toLowerCase();
 }
 
 /**
@@ -50,12 +97,12 @@ function resultSections(authResults: string): string[] {
  * anything else -- which is the usual case, since HELO names rarely carry SPF.
  */
 function spfVerdict(authResults: string): string | undefined {
-	const withSpf = resultSections(authResults).filter((section) =>
-		/\bspf=/i.test(section),
+	const withSpf = resultSections(authResults).filter(
+		(section) => resultOf(section, "spf") !== undefined,
 	);
 	const section =
-		withSpf.find((s) => /\bsmtp\.mailfrom=/i.test(s)) ?? withSpf[0];
-	return /\bspf=(\w+)/i.exec(section ?? "")?.[1]?.toLowerCase();
+		withSpf.find((s) => /\bsmtp\.mailfrom=/i.test(s.bare)) ?? withSpf[0];
+	return section && resultOf(section, "spf");
 }
 
 /**
@@ -69,7 +116,7 @@ function spfVerdict(authResults: string): string | undefined {
  */
 function dkimVerdict(authResults: string): string | undefined {
 	const verdicts = resultSections(authResults)
-		.map((section) => /\bdkim=(\w+)/i.exec(section)?.[1]?.toLowerCase())
+		.map((section) => resultOf(section, "dkim"))
 		.filter((verdict): verdict is string => verdict !== undefined);
 
 	if (verdicts.length === 0) return undefined;
@@ -78,13 +125,21 @@ function dkimVerdict(authResults: string): string | undefined {
 	return verdicts[0];
 }
 
+function dmarcVerdict(authResults: string): string | undefined {
+	for (const section of resultSections(authResults)) {
+		const verdict = resultOf(section, "dmarc");
+		if (verdict) return verdict;
+	}
+	return undefined;
+}
+
 /**
  * The DMARC policy the From domain publishes, as the relay recorded it.
  *
  * Two shapes are in the wild: Cloudflare writes `policy.dmarc=none`, other
  * relays write `dmarc=pass (p=NONE sp=NONE dis=NONE)`. Both are read from
  * the DMARC section alone -- `p=` appearing anywhere else in the header is
- * not this.
+ * not this. The second shape is inside a comment, so this one reads `raw`.
  *
  * This is not used to file mail. `p=none` says only what the domain wants
  * done when DMARC *fails*, so it can never make a passing message worse.
@@ -93,10 +148,12 @@ function dkimVerdict(authResults: string): string | undefined {
  * stops there.
  */
 function dmarcPolicy(authResults: string): string | undefined {
-	const section = resultSections(authResults).find((s) => /\bdmarc=/i.test(s));
+	const section = resultSections(authResults).find(
+		(s) => resultOf(s, "dmarc") !== undefined,
+	);
 	if (!section) return undefined;
-	const explicit = /\bpolicy\.dmarc=(\w+)/i.exec(section)?.[1];
-	return (explicit ?? /\bp=(\w+)/i.exec(section)?.[1])?.toLowerCase();
+	const explicit = /\bpolicy\.dmarc=(\w+)/i.exec(section.bare)?.[1];
+	return (explicit ?? /\bp=(\w+)/i.exec(section.raw)?.[1])?.toLowerCase();
 }
 
 export interface AuthSummary {
@@ -106,11 +163,16 @@ export interface AuthSummary {
 	dmarcPolicy?: string;
 }
 
+/**
+ * The Authentication-Results header the receiving relay wrote: the topmost.
+ *
+ * A relay adds its header above everything already in the message (RFC 8601
+ * section 5), so the top one is Cloudflare's own. Every header was read
+ * together before, and anybody can put an `Authentication-Results:
+ * x; dkim=pass` in the message they send -- which then authenticated it.
+ */
 function joinAuthResults(headers: Header[]): string {
-	return headers
-		.filter((h) => h.key === "authentication-results")
-		.map((h) => h.value)
-		.join(" ");
+	return headers.find((h) => h.key === "authentication-results")?.value ?? "";
 }
 
 /**
@@ -130,7 +192,7 @@ export function summarizeAuthResults(headers: Header[]): AuthSummary {
 	return {
 		spf: spfVerdict(authResults),
 		dkim: dkimVerdict(authResults),
-		dmarc: /\bdmarc=(\w+)/i.exec(authResults)?.[1]?.toLowerCase(),
+		dmarc: dmarcVerdict(authResults),
 		dmarcPolicy: dmarcPolicy(authResults),
 	};
 }
@@ -140,7 +202,7 @@ export function classifyByAuthResults(headers: Header[]): "inbox" | "spam" {
 
 	if (!authResults) return "inbox";
 
-	const dmarc = /\bdmarc=(\w+)/i.exec(authResults)?.[1]?.toLowerCase();
+	const dmarc = dmarcVerdict(authResults);
 	const spf = spfVerdict(authResults);
 	const dkim = dkimVerdict(authResults);
 
@@ -184,10 +246,7 @@ export function isTrustedSelfDomainSender(
 ): boolean {
 	if (!fromAddress) return false;
 
-	const dmarc = /\bdmarc=(\w+)/i
-		.exec(joinAuthResults(headers))?.[1]
-		?.toLowerCase();
-	if (dmarc !== "pass") return false;
+	if (dmarcVerdict(joinAuthResults(headers)) !== "pass") return false;
 
 	return extractDomain(fromAddress) === extractDomain(mailboxId);
 }
