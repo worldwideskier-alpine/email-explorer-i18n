@@ -93,6 +93,13 @@ export interface Email {
 	starred: boolean;
 	body?: string | null;
 	attachments?: Attachment[];
+	/**
+	 * The folder the message is in, as the server has it. What decides how
+	 * the message is treated -- shown as spam, deleted for good -- rather
+	 * than the folder the screen was opened from, which a search result or a
+	 * late response can get wrong.
+	 */
+	folder_id?: string;
 }
 
 export interface Attachment {

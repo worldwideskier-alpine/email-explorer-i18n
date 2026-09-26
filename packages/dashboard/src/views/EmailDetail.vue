@@ -86,7 +86,7 @@
             </svg>
           </router-link>
           <button
-            v-if="fromFolder === 'spam'"
+            v-if="currentFolder === 'spam'"
             @click="handleMarkNotSpam"
             class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 rounded-xl hover:bg-green-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer"
             :title="t('emailDetail.markNotSpam')"
@@ -135,7 +135,7 @@
     <div class="flex-grow">
       <EmailIframe
         :body="emailBodyWithInlineImages"
-        :disable-links="fromFolder === 'spam'"
+        :disable-links="blocksRemoteContent"
         :block-remote-content="blocksRemoteContent"
       />
     </div>
@@ -233,8 +233,22 @@ onBeforeUnmount(() => {
 	document.removeEventListener("click", handleClickOutside);
 });
 
+/** Where the reader came from, which is where "back" goes. */
 const fromFolder = computed(
 	() => (route.query.fromFolder as string) || "inbox",
+);
+
+/**
+ * Where the message actually is, which is what decides how it is treated.
+ *
+ * It used to be `fromFolder`, the query parameter, and a search result links
+ * here without one -- so a spam message opened from search was shown as if
+ * from the inbox: every image fetched, every link live. The message says
+ * which folder it is in; the parameter only stands in until it has loaded,
+ * and nothing is rendered before then.
+ */
+const currentFolder = computed(
+	() => email.value?.folder_id ?? fromFolder.value,
 );
 
 /**
@@ -243,10 +257,10 @@ const fromFolder = computed(
  * a tracking pixel turns "I looked at this to see whether it was spam" into
  * a confirmation to the sender that the address is live.
  */
-const blocksRemoteContent = computed(() => fromFolder.value === "spam");
+const blocksRemoteContent = computed(() => currentFolder.value === "spam");
 
 const moveToFolders = computed(() =>
-	folders.value.filter((folder) => folder.id !== fromFolder.value),
+	folders.value.filter((folder) => folder.id !== currentFolder.value),
 );
 
 /**
@@ -456,13 +470,13 @@ const handleMarkNotSpam = async () => {
 const handleDelete = () => {
 	if (!email.value) return;
 	const mailboxId = route.params.mailboxId as string;
-	const isPermanent = fromFolder.value === "trash";
+	const isPermanent = emailStore.deletesPermanently(email.value.id);
 
 	if (isPermanent && !confirm(t("emailList.confirmPermanentDelete"))) {
 		return;
 	}
 
-	emailStore.deleteOrTrashEmail(mailboxId, email.value.id, fromFolder.value);
+	emailStore.deleteOrTrashEmail(mailboxId, email.value.id);
 	goToList();
 };
 

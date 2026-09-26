@@ -5,6 +5,19 @@ import type { Email } from "@/types";
 /** Rows fetched per scroll step; also the server's own default page size. */
 const PAGE_SIZE = 25;
 
+/**
+ * Which request is the latest, for the list and for the open message.
+ *
+ * A response is applied only if no request was made after it. Otherwise the
+ * last response to arrive wins rather than the last request made: switch from
+ * the inbox to the trash while the inbox is still loading, and the inbox's
+ * rows arrived second and were shown under "Trash". That was the dangerous
+ * one -- deleting in the trash is permanent, so a message from the inbox was
+ * one click from gone.
+ */
+let latestList = 0;
+let latestEmail = 0;
+
 export const useEmailStore = defineStore("emails", {
 	state: () => ({
 		emails: [] as Email[],
@@ -28,11 +41,13 @@ export const useEmailStore = defineStore("emails", {
 		 */
 		async loadEmailPages(mailboxId: string, params: any, pages: number) {
 			const limit = PAGE_SIZE * pages;
+			const request = ++latestList;
 			const response = await api.listEmails(mailboxId, {
 				...params,
 				page: 1,
 				limit,
 			});
+			if (request !== latestList) return;
 			this.emails = response.data;
 			this.loadedPages = pages;
 			this.hasMore = response.data.length >= limit;
@@ -66,7 +81,9 @@ export const useEmailStore = defineStore("emails", {
 			// opened again through the browser's back button) leaves the
 			// previously read email rendered, looking like stale cache.
 			this.currentEmail = null;
+			const request = ++latestEmail;
 			const response = await api.getEmail(mailboxId, id);
+			if (request !== latestEmail) return;
 			this.currentEmail = response.data;
 		},
 		async sendEmail(mailboxId: string, email: any) {
@@ -91,12 +108,24 @@ export const useEmailStore = defineStore("emails", {
 			await api.moveEmail(mailboxId, id, folderId);
 			this.emails = this.emails.filter((email) => email.id !== id);
 		},
-		async deleteOrTrashEmail(
-			mailboxId: string,
-			id: string,
-			currentFolderId: string,
-		) {
-			if (currentFolderId === "trash") {
+		/**
+		 * Whether deleting this message deletes it for good: only when the
+		 * message itself says it is in the trash.
+		 *
+		 * Asked of the row rather than of the folder on screen, because what is
+		 * on screen can be wrong about which folder its rows came from (see
+		 * latestList), and a message the row does not place in the trash is
+		 * moved there rather than destroyed.
+		 */
+		deletesPermanently(id: string): boolean {
+			const row =
+				this.currentEmail?.id === id
+					? this.currentEmail
+					: this.emails.find((email) => email.id === id);
+			return row?.folder_id === "trash";
+		},
+		async deleteOrTrashEmail(mailboxId: string, id: string) {
+			if (this.deletesPermanently(id)) {
 				await this.deleteEmail(mailboxId, id);
 			} else {
 				await this.moveEmail(mailboxId, id, "trash");

@@ -1123,6 +1123,7 @@ export class MailboxDO extends DurableObject<Env> {
 				"in_reply_to",
 				"email_references",
 				"thread_id",
+				"folder_id",
 			]);
 
 		const folderId = folder ? this.#resolveFolderId(folder) : undefined;
@@ -1709,6 +1710,7 @@ export class MailboxDO extends DurableObject<Env> {
 				"in_reply_to",
 				"email_references",
 				"thread_id",
+				"folder_id",
 			]);
 
 		const folderId = folder ? this.#resolveFolderId(folder) : undefined;

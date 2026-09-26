@@ -11,7 +11,7 @@
     </div>
     <ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
       <li v-for="email in results" :key="email.id">
-        <router-link :to="{ name: 'EmailDetail', params: { id: email.id } }" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-700">
+        <router-link :to="{ name: 'EmailDetail', params: { id: email.id }, query: email.folder_id ? { fromFolder: email.folder_id } : {} }" class="block p-4 hover:bg-gray-50 dark:hover:bg-gray-700">
           <div class="flex items-center justify-between">
             <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ email.sender }}</p>
             <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatListDate(email.date) }}</p>

@@ -139,3 +139,34 @@ describe("Listing one folder", () => {
 		]);
 	});
 });
+
+/**
+ * Every row says which folder it is in. The dashboard decides from that --
+ * not from the folder on screen -- whether a message is shown as spam and
+ * whether deleting it is permanent, and a search result has no folder on
+ * screen at all.
+ */
+describe("rows carry their folder", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createDummyMailbox();
+		await importInto("spam", "in spam");
+		await importInto("inbox", "in inbox");
+	});
+
+	it("in a search", async () => {
+		const found = (await search("query=needle")) as (FoundEmail & {
+			folder_id?: string;
+		})[];
+		expect(
+			Object.fromEntries(found.map((e) => [e.subject, e.folder_id])),
+		).toEqual({ "in spam": "spam", "in inbox": "inbox" });
+	});
+
+	it("in a folder's list", async () => {
+		const listed = (await list("folder=spam")) as (FoundEmail & {
+			folder_id?: string;
+		})[];
+		expect(listed.map((e) => e.folder_id)).toEqual(["spam"]);
+	});
+});
