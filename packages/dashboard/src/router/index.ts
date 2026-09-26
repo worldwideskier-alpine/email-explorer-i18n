@@ -180,7 +180,9 @@ let sessionRefreshed = false;
  */
 const ROOT_MAY_OPEN = ["Root", "Account"];
 
-router.beforeEach(async (to, _from, next) => {
+// Returns where to go rather than calling `next`, which vue-router 5 has
+// deprecated (VUE_ROUTER_R0025, printed on every navigation in development).
+router.beforeEach(async (to) => {
 	const authStore = useAuthStore();
 
 	if (!sessionRefreshed && authStore.session) {
@@ -204,10 +206,12 @@ router.beforeEach(async (to, _from, next) => {
 
 	if (!isPublicRoute && requiresAuth && !authStore.isAuthenticated) {
 		// Redirect to login if not authenticated
-		next({ name: "Login", query: { redirect: to.fullPath } });
-	} else if (requiresRoot && !authStore.isRoot) {
-		next({ name: "Home" });
-	} else if (
+		return { name: "Login", query: { redirect: to.fullPath } };
+	}
+	if (requiresRoot && !authStore.isRoot) {
+		return { name: "Home" };
+	}
+	if (
 		authStore.isRoot &&
 		requiresAuth &&
 		!isPublicRoute &&
@@ -215,8 +219,9 @@ router.beforeEach(async (to, _from, next) => {
 	) {
 		// Root owns no mailbox, so the mailbox list it would otherwise land on
 		// is an empty screen saying it has none. Its home is the account list.
-		next({ name: "Root" });
-	} else if (
+		return { name: "Root" };
+	}
+	if (
 		isPublicRoute &&
 		authStore.isAuthenticated &&
 		(to.name === "Login" ||
@@ -224,10 +229,9 @@ router.beforeEach(async (to, _from, next) => {
 			to.name === "ForgotPassword")
 	) {
 		// Redirect to home if already authenticated and trying to access login/register/forgot-password
-		next({ name: authStore.isRoot ? "Root" : "Home" });
-	} else {
-		next();
+		return { name: authStore.isRoot ? "Root" : "Home" };
 	}
+	return true;
 });
 
 router.afterEach((to) => {
