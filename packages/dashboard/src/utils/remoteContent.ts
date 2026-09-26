@@ -88,10 +88,17 @@ const URL_ATTRIBUTES = [
 ];
 
 /**
- * The space CSS skips inside `url(`: space, tab and the three line breaks --
- * not `\s`, which also takes the no-break space and U+3000. One definition,
- * because the two patterns built from it drifting apart is how
- * `url(&nbsp;#x)` came to be read as a reference into the message.
+ * CSS's whitespace: space, tab and the three line breaks, and nothing else.
+ *
+ * Not `\s`, which takes a dozen more -- the vertical tab, the no-break space,
+ * U+FEFF, U+1680, U+2000 to U+200A, U+2028, U+2029, U+202F, U+205F and
+ * U+3000 -- none of which CSS skips. `\s` in one pattern and not another is
+ * how `url(&nbsp;#x)` came to be read as a reference into the message while
+ * the browser read a relative address and fetched it (measured, from this
+ * application's own origin, which is harmless only because the page's
+ * `base-uri 'self'` keeps a message's `<base>` from pointing it anywhere
+ * else). So every pattern here that means CSS's whitespace is built from
+ * this one.
  */
 const CSS_SPACE = "[ \\t\\n\\r\\f]";
 
@@ -104,7 +111,15 @@ const CSS_SPACE = "[ \\t\\n\\r\\f]";
  * cssFetches decides that now, and CSS the rewrite cannot mend is dropped
  * whole, so matching to the end is what keeps the rest of such a style rather
  * than what keeps the address out. A quoted address that is not closed falls
- * through to the last spelling, which runs to the next `)` or the end.
+ * through to the last spelling, which runs to the next `)`, the end, or the
+ * end of a comment.
+ *
+ * That last stop is for an `url(` left open inside a comment -- `/* TODO
+ * url( *\/`. Run on to the next `)`, the match took the `*\/`, every rule
+ * up to that `)` and whatever `url(#...)` was among them, and left the rest
+ * of the sheet inside a comment that never closed; the browser kept all of
+ * it. Where to stop changes only what is rewritten, not whether anything
+ * fetches: cssFetches checks the result either way.
  *
  * The space it skips is CSS_SPACE, as in FETCHES, and that is what makes a
  * no-break space before a quote end the match where the browser ends it:
@@ -115,7 +130,7 @@ const CSS_SPACE = "[ \\t\\n\\r\\f]";
  * sender's CSS than the browser would.
  */
 const CSS_URL = new RegExp(
-	`url\\(${CSS_SPACE}*(?:"[^"]*"${CSS_SPACE}*\\)|'[^']*'${CSS_SPACE}*\\)|[^)]*(?:\\)|$))`,
+	`url\\(${CSS_SPACE}*(?:"[^"]*"${CSS_SPACE}*\\)|'[^']*'${CSS_SPACE}*\\)|(?:(?!\\*/)[^)])*(?:\\)|$|(?=\\*/)))`,
 	"gi",
 );
 
@@ -132,14 +147,7 @@ const CSS_URL = new RegExp(
  * spam folder fetched it. So nothing is paired up. Every `url(` in the text
  * is looked at on its own, wherever it is, and CSS counts as fetching nothing
  * only if each one is followed by `#`. The one a browser reads is among them,
- * whichever it turns out to be.
- *
- * "Followed" skips only what CSS skips there: space, tab and the three line
- * breaks. `\s` skipped the no-break space and U+3000 as well, so
- * `url(&nbsp;#x)` passed as a reference into the message, while the browser
- * read a relative address and fetched it -- measured, from this application's
- * own origin, which is harmless only because the page's `base-uri 'self'`
- * keeps a message's `<base>` from pointing it anywhere else.
+ * whichever it turns out to be. "Followed" skips CSS_SPACE and nothing else.
  */
 const FETCHES = new RegExp(
 	`url\\((?!${CSS_SPACE}*["']?#)|image-set\\(|@import`,
@@ -161,6 +169,12 @@ const CSS_IMAGE_SET =
  */
 const CSS_IMPORT = /@import[^;}]*;?/gi;
 
+/** A backslash and what it escapes; a hex escape may end in one space. */
+const CSS_ESCAPE = new RegExp(
+	`\\\\(?:([0-9a-fA-F]{1,6})(?:\\r\\n|${CSS_SPACE})?|([\\s\\S]))`,
+	"g",
+);
+
 /**
  * CSS with its escapes read the way CSS reads them.
  *
@@ -179,7 +193,7 @@ const CSS_IMPORT = /@import[^;}]*;?/gi;
  */
 export function decodeCssEscapes(css: string): string {
 	return css.replace(
-		/\\(?:([0-9a-fA-F]{1,6})(?:\r\n|[ \t\n\r\f])?|([\s\S]))/g,
+		CSS_ESCAPE,
 		(_, hex: string | undefined, other: string | undefined) => {
 			if (hex !== undefined) {
 				const code = Number.parseInt(hex, 16);
@@ -234,11 +248,11 @@ function cssFetches(css: string): boolean {
  * what it costs is appearance, not a fetch. Measured, against Chromium's own
  * reading of the same CSS: `url(#a\)u\rl(...)` is a bad url to the browser,
  * which drops that one declaration and keeps the rest of the style; this
- * drops the whole style. And an `url(` left open inside a comment --
- * `/* TODO url( *\/` -- is matched on past the `*\/`, so the rewrite takes
- * the `*\/` with it and what follows is commented out; the browser kept it.
- * That second one needs no intent to hide anything, only a stray `url(` in a
- * comment, and it happens only in the spam folder, where these rules run. A
+ * drops the whole style. And an address hidden behind `url(#` in a comment
+ * and spelled in escapes -- `/*url(#*\/background:u\rl(...)` -- drops the
+ * style it is in: the match stops at the `*\/` (see CSS_URL), and the `u\rl(`
+ * after it is outside every match. Both are CSS written to hide an address,
+ * and both happen only in the spam folder, where these rules run. A
  * tokenizer would keep more of such styles, and would be a second reading of
  * CSS that has to match the browser's own, error recovery included, to be
  * safe.

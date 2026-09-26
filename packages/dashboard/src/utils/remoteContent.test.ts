@@ -334,6 +334,8 @@ describe("CSS that spells its fetch in escapes", () => {
 		expect(decodeCssEscapes("u\\72 l(")).toBe("url(");
 		expect(decodeCssEscapes("\\30E1\\30A4")).toBe("メイ");
 		expect(decodeCssEscapes("a\\0 b")).toBe("a\uFFFDb");
+		// A hex escape may end in one space -- CSS's, not a no-break space.
+		expect(decodeCssEscapes("\\72\u00a0x")).toBe("r\u00a0x");
 		expect(decodeCssEscapes("no escapes")).toBe("no escapes");
 	});
 });
@@ -438,9 +440,11 @@ describe("an address hidden behind url(#", () => {
 			"color:red",
 		],
 		[
+			// Taken away whole: the match stops at the comment's end, and the
+			// `u\rl(` after it is outside every `url(` as written.
 			"a comment, with the address in escapes",
 			'<div style="color:red;/*url(#*/background:u\\rl(https://tracker.example/10.gif)">x</div>',
-			"color:red",
+			"<div",
 		],
 		[
 			"a comment in an SVG style",
@@ -517,7 +521,7 @@ describe("a space CSS does not skip", () => {
 	// Read from the attributes, not from serialised markup: innerHTML writes
 	// U+00A0 as `&nbsp;`, so a search of it for the character itself passed
 	// with the fix taken out -- measured, for this half of the test.
-	for (const space of ["\u00a0", "\u3000"]) {
+	for (const space of ["\u00a0", "\u3000", "\u000b", "\ufeff", "\u2028"]) {
 		it(`is not taken for one, ${JSON.stringify(space)}`, () => {
 			const div = spamDocument(
 				`<div style="color:red;background:url(${space}#x)">x</div>`,
@@ -546,7 +550,8 @@ describe("a space CSS does not skip", () => {
 		).querySelector("div");
 		const style = div?.getAttribute("style") ?? "";
 		expect(style).not.toContain("tracker.example");
-		expect(style).toContain('noneb")');
+		// What follows the first `)` is left as the sender wrote it.
+		expect(style).toContain('b");color:red');
 	});
 });
 
@@ -566,13 +571,27 @@ describe("a reference into the message, beside something that fetches", () => {
 	});
 
 	/**
-	 * And beside one hidden behind `url(#` in escapes, which the rewrite used
-	 * to reach only on a second pass that took every address -- this one
-	 * included.
+	 * An `url(` left open inside a comment used to run on to the next `)`,
+	 * which took the rules after it and their references with it, and left
+	 * the rest of the sheet in a comment that never closed. The browser kept
+	 * all of it.
+	 */
+	it("stays when the other is an url( left open in a comment", () => {
+		const out = spamBody(
+			"<style>/* TODO url( */ .a{color:red} .b{fill:url(#g)}</style><p>x</p>",
+		);
+		expect(out).toContain("*/ .a{color:red} .b{fill:url(#g)}");
+	});
+
+	/**
+	 * And beside one hidden behind `url(#` in a string and spelled in
+	 * escapes. Each match is judged with its escapes read; judged as written,
+	 * the match was kept, the check found the address, and the whole style --
+	 * this reference with it -- was dropped.
 	 */
 	it("stays beside a tracker hidden in escapes", () => {
 		const out = spamBody(
-			'<svg><rect width="9" height="9" style="fill:url(#g);/*url(#*/background:u\\rl(https://tracker.example/b.gif)"/></svg>',
+			`<svg><rect width="9" height="9" style="fill:url(#g);content:'url(#';background:u\\rl(https://tracker.example/b.gif)"/></svg>`,
 		);
 		expect(out).not.toContain("tracker.example");
 		expect(out).toContain("fill:url(#g)");
