@@ -222,6 +222,55 @@ describe("the run writes down where it got to", () => {
  * The archive it produces must be the one it produced before -- same messages,
  * same order -- which is what these check, across more than one page.
  */
+/**
+ * Written as it goes, not only at the end.
+ *
+ * The test above reads the record once the run has finished, which a run
+ * that saved the progress only on its way out would pass just as well -- and
+ * that run leaves nothing behind when it is cut off, which is the case this
+ * exists for. So this watches every write of the record and asks for one made
+ * while the backup pass was still going: progress present, pass not yet
+ * written down as finished. That write is what a killed run leaves.
+ */
+describe("the progress survives the run being cut off", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createDummyMailbox();
+	});
+
+	it("is in the record before the backup pass has finished", async () => {
+		await setAutoBackup(mailboxId, { enabled: true });
+		await fill(mailboxId, 3);
+
+		const writes: { backupProgress?: unknown; backups?: unknown }[] = [];
+		const bucket = env.BUCKET;
+		const watched = new Proxy(bucket, {
+			get(target, property) {
+				if (property === "put") {
+					return (key: string, value: string, options?: R2PutOptions) => {
+						if (key === "maintenance/last-run.json") {
+							writes.push(JSON.parse(value));
+						}
+						return target.put(key, value, options);
+					};
+				}
+				const member = Reflect.get(target, property);
+				return typeof member === "function" ? member.bind(target) : member;
+			},
+		});
+
+		await runScheduledMaintenance({ ...env, BUCKET: watched }, new Date());
+
+		const midPass = writes.filter((w) => w.backupProgress && !w.backups);
+		expect(midPass.length).toBeGreaterThan(0);
+		expect(midPass[0].backupProgress).toMatchObject({
+			mailbox: mailboxId,
+			index: 1,
+			of: 1,
+		});
+	});
+});
+
 describe("reading a page at a time", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
