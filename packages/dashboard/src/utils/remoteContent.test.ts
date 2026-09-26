@@ -532,6 +532,22 @@ describe("a space CSS does not skip", () => {
 			expect(rect?.hasAttribute("mask")).toBe(false);
 		});
 	}
+
+	/**
+	 * The rewrite skips the same space, so a no-break space before a quote
+	 * ends the match at the first `)`, as the browser's bad url does. What
+	 * is left -- `b"` and a string that never closes -- is what the browser
+	 * made of it too: measured in Chromium, `color` after it was dropped with
+	 * no rewrite at all. `\s` matched the quoted spelling and kept it.
+	 */
+	it("does not end a match where the browser would not", () => {
+		const div = spamDocument(
+			'<div style="background:url(\u00a0&quot;https://tracker.example/a)b&quot;);color:red">x</div>',
+		).querySelector("div");
+		const style = div?.getAttribute("style") ?? "";
+		expect(style).not.toContain("tracker.example");
+		expect(style).toContain('noneb")');
+	});
 });
 
 /**
