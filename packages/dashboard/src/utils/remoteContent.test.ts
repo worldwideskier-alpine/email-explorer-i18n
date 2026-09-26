@@ -440,11 +440,17 @@ describe("an address hidden behind url(#", () => {
 			"color:red",
 		],
 		[
-			// Taken away whole: the match stops at the comment's end, and the
-			// `u\rl(` after it is outside every `url(` as written.
+			// Mended by the second try: the first cuts the match at the
+			// comment's end, which leaves the `u\rl(` outside every match.
 			"a comment, with the address in escapes",
 			'<div style="color:red;/*url(#*/background:u\\rl(https://tracker.example/10.gif)">x</div>',
-			"<div",
+			"color:red",
+		],
+		[
+			// Outside a comment `*/` ends nothing, so the match is not cut.
+			"`url(#` and an escaped address, with `*/` between them",
+			'<div style="color:red;background:url(#a*/u\\rl(https://tracker.example/11.gif))">x</div>',
+			"color:red",
 		],
 		[
 			"a comment in an SVG style",
@@ -576,6 +582,20 @@ describe("a reference into the message, beside something that fetches", () => {
 	 * the rest of the sheet in a comment that never closed. The browser kept
 	 * all of it.
 	 */
+	/**
+	 * Only in a comment, though. An url token does not end at `*\/`: cut
+	 * there, `url(https://.../a*\/b'.gif)` left `*\/b'.gif)` behind, and its
+	 * quote opened a string that swallowed the declarations after it.
+	 */
+	it("does not cut an address at a `*/` outside a comment", () => {
+		const div = spamDocument(
+			`<div style="background:url(https://tracker.example/a*/b'.gif);color:red">x</div>`,
+		).querySelector("div");
+		const style = div?.getAttribute("style") ?? "";
+		expect(style).not.toContain("tracker.example");
+		expect(style).toContain("background:none;color:red");
+	});
+
 	it("stays when the other is an url( left open in a comment", () => {
 		const out = spamBody(
 			"<style>/* TODO url( */ .a{color:red} .b{fill:url(#g)}</style><p>x</p>",
