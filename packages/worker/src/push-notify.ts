@@ -57,7 +57,7 @@ export async function notifyMailboxSubscribers(
 				const res = await fetch(endpoint, { method: "POST", headers, body });
 
 				if (res.status === 404 || res.status === 410) {
-					await authDO.removePushSubscription(sub.endpoint);
+					await authDO.forgetGonePushEndpoint(sub.endpoint);
 				}
 			} catch (e) {
 				console.error(`Failed to send push to ${sub.endpoint}:`, e);

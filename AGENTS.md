@@ -96,10 +96,10 @@ fork's work. This fork ships by being forked.
   deployment variable. This is software people fork and deploy: naming who
   administers their own mail must not send them to GitHub, so every part of it
   happens on the deployed site. A deployment starts with no root and every
-  `/api/v1/root/*` route refuses everyone; while there is none, an
+  `/api/v1/root/*` route refuses everyone; while there is none,
   **the first account to register is root**, and that is the only way one
-  comes into being -- `claimRoot` is called from registration and is reachable
-  from no route. An endpoint that named a root, however well guarded, would
+  comes into being -- decided inside `registerFromForm`, in the same step that
+  inserts the account, and reachable from no other route. An endpoint that named a root, however well guarded, would
   read as "somebody may take the tier above them" on every deployment of this
   that exists. The role does not move afterwards either: `transferRoot` is
   gone, and succession is root adding a second address to **their own
@@ -141,6 +141,23 @@ fork's work. This fork ships by being forked.
   measured rather than reasoned about; `toggleSwitch.test.ts` mounts for real,
   because the fault was invisible in the source and a source-text assertion
   about it passed while a screen was wrong.
+- **Decide and act in one Durable Object call.** A Durable Object runs other
+  requests while one awaits, so anything a route asks in one call and acts on
+  in the next is decided for every request that arrived in between. Measured
+  twice: 25 wrong passwords sent at once were all verified (the limit is 10)
+  because the route asked "locked?", verified, then recorded; and four
+  registrations to a new deployment all got in, because each was told it was
+  first. `throttleTake` checks and counts in one call, and a success hands
+  back what it should not have cost through `throttleSettle` -- per rule:
+  the account's key resets, the IP's key (shared by every account behind it)
+  gets back only that attempt. `auth-concurrency.test.ts` holds both.
+- **Ending a session ends its push subscription.** A notification carries
+  the sender and subject of each new message, so a subscription is bound to
+  the session that registered it and delivered to only while that session
+  lives; a password change, a reset and root setting a password end the
+  others with their sessions. The dashboard hands the browser's subscription
+  to each new session (`rebindPushSubscription`), since the browser keeps it
+  and the settings switch reads it from there. `sessions-end.test.ts`.
 - **Mailbox ownership.** A grant says who a mailbox belongs to, and it is the
   only thing that grants access: the middleware in `fetch()` and every
   mailbox-scoped route ask `personHoldsMailbox`, and the mailbox list filters

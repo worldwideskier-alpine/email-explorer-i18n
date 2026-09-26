@@ -308,4 +308,24 @@ export const authMigrations: Migration[] = [
             CREATE INDEX idx_person_mailboxes_mailbox_id ON person_mailboxes(mailbox_id);
         `,
 	},
+	{
+		/**
+		 * Which session registered a push subscription.
+		 *
+		 * A subscription used to belong to the account alone, so it outlived
+		 * every way of ending a session: signing out, changing the password,
+		 * a reset. Whoever had once turned notifications on in a browser went
+		 * on being told the sender and subject of every new message after the
+		 * owner had changed the password to get rid of them.
+		 *
+		 * Rows from before this have no session. They are still delivered to,
+		 * because nothing says which session they came from, and a browser
+		 * binds its own row to its session the next time the dashboard loads;
+		 * anything ending the account's other sessions removes them.
+		 */
+		name: "7_push_session",
+		sql: `
+            ALTER TABLE push_subscriptions ADD COLUMN session_id TEXT;
+        `,
+	},
 ];

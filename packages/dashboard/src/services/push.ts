@@ -45,6 +45,32 @@ export async function subscribeToPush(): Promise<void> {
 	await api.subscribePush(subscription.toJSON());
 }
 
+/**
+ * Tells the Worker that this browser's subscription, if it has one, belongs
+ * to the session now signed in.
+ *
+ * The Worker delivers a notification only through a session that is still
+ * good, and forgets a session's subscription when the session ends -- so
+ * whoever is told about new mail is whoever is signed in. The browser keeps
+ * its subscription across that, though, and the settings screen reads its
+ * switch from the browser; without this, signing out and back in left the
+ * switch on and the notifications off. Called once a session is known good.
+ *
+ * Asks for nothing: no permission prompt, and nothing if permission is not
+ * already granted. Failure changes nothing a person can see, so it is
+ * swallowed.
+ */
+export async function rebindPushSubscription(): Promise<void> {
+	try {
+		if (!isPushSupported() || Notification.permission !== "granted") return;
+		const subscription = await getExistingSubscription();
+		if (!subscription) return;
+		await api.subscribePush(subscription.toJSON());
+	} catch {
+		// See above.
+	}
+}
+
 export async function unsubscribeFromPush(): Promise<void> {
 	const subscription = await getExistingSubscription();
 	if (!subscription) return;

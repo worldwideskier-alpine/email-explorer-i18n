@@ -77,7 +77,12 @@ export class PostPushSubscribe extends OpenAPIRoute {
 
 		const authId = c.env.MAILBOX.idFromName("AUTH");
 		const authDO = c.env.MAILBOX.get(authId);
-		await authDO.savePushSubscription(session.userId, endpoint, keys);
+		await authDO.savePushSubscription(
+			session.userId,
+			session.id,
+			endpoint,
+			keys,
+		);
 
 		return c.json({ status: "subscribed" });
 	}
@@ -118,7 +123,7 @@ export class PostPushUnsubscribe extends OpenAPIRoute {
 
 		const authId = c.env.MAILBOX.idFromName("AUTH");
 		const authDO = c.env.MAILBOX.get(authId);
-		await authDO.removePushSubscription(endpoint);
+		await authDO.removePushSubscription(session.userId, endpoint);
 
 		return c.json({ status: "unsubscribed" });
 	}
