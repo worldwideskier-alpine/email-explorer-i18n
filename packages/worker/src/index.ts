@@ -1053,6 +1053,13 @@ class PostMoveEmail extends OpenAPIRoute {
 		const doId = ns.idFromName(mailboxId);
 		const stub = ns.get(doId);
 
+		// Drafts are written, not received: a message moved there opens in the
+		// composer (outside the sandboxed frame, images on) and is deleted
+		// when "sent". Only the draft routes put anything in that folder.
+		if (folderId === "draft") {
+			return c.json({ error: "Cannot move a message into drafts" }, 400);
+		}
+
 		const success = await stub.moveEmail(id, folderId);
 
 		if (!success) {

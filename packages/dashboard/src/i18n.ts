@@ -82,8 +82,16 @@ function applyDocumentLanguage(locale: Locale): void {
 	root.setAttribute("dir", localeEntry(locale).dir ?? "ltr");
 }
 
+/** The language last asked for; see setLocale. */
+let latestLocale = 0;
+
 export async function setLocale(locale: Locale): Promise<void> {
+	// A catalogue not yet loaded takes a moment. Picking it and then one
+	// already loaded applied the second at once and the first when it
+	// arrived -- the first won, on screen and in storage.
+	const request = ++latestLocale;
 	await loadLocale(locale);
+	if (request !== latestLocale) return;
 	i18n.global.locale.value = locale;
 	try {
 		localStorage.setItem(STORAGE_KEY, locale);

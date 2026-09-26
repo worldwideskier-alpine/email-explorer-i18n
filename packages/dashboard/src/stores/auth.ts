@@ -182,9 +182,17 @@ export const useAuthStore = defineStore("auth", () => {
 			localStorage.setItem("session", JSON.stringify(session.value));
 			void rebindPushSubscription();
 			return true;
-		} catch (_err) {
-			await logout();
-			return false;
+		} catch (err: any) {
+			// Only the server saying the session is no good ends it. A dropped
+			// connection or a 5xx while the page loads used to sign the person
+			// out -- revoking the session on the server too if the logout got
+			// through -- for a hiccup.
+			const status = err?.response?.status;
+			if (status === 401 || status === 403) {
+				await logout();
+				return false;
+			}
+			return true;
 		} finally {
 			loading.value = false;
 		}

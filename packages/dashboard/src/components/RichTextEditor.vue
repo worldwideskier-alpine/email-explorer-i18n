@@ -444,12 +444,14 @@ const editor = useEditor({
 			class: "prose prose-sm max-w-none focus:outline-none min-h-full",
 		},
 	},
+	// The editor's HTML does not go back into the source box while it is open.
+	// In source mode the box is what is being typed into, and each keystroke
+	// reaches the editor (updateFromSource) and came straight back out of it
+	// normalised: a lone `<` became `<p>&lt;</p>`, the caret jumped to the
+	// end, and a tag edited a letter at a time lost its formatting at the
+	// first half-typed step. The box is read from the editor when it opens.
 	onUpdate: ({ editor }) => {
-		const html = editor.getHTML();
-		emit("update:modelValue", html);
-		if (showSourceCode.value) {
-			sourceCode.value = html;
-		}
+		emit("update:modelValue", editor.getHTML());
 	},
 });
 

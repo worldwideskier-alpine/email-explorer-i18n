@@ -15,9 +15,11 @@ app.use(i18n);
 
 // Catalogues are fetched rather than bundled, so the first one has to arrive
 // before the first paint. Mounting first would flash the untranslated keys.
-initLocale().then(() => {
-	app.mount("#app");
-});
+// A catalogue that fails to load must not leave the page blank: it mounts
+// all the same, and a missing message shows as its key rather than nothing.
+initLocale()
+	.catch((e) => console.error("Could not load the language:", e))
+	.finally(() => app.mount("#app"));
 
 // A page kept on a home screen is resumed rather than loaded, so it can go on
 // running an old build indefinitely -- which is how a deployed fix reached

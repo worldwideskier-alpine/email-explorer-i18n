@@ -259,8 +259,14 @@ const currentFolder = computed(
  */
 const blocksRemoteContent = computed(() => currentFolder.value === "spam");
 
+// Not into Draft: a message there opens in the composer, which is part of
+// this page with images on -- a spam message moved there loaded its trackers,
+// and sending "the draft" deleted the received message. The Worker refuses
+// that move too.
 const moveToFolders = computed(() =>
-	folders.value.filter((folder) => folder.id !== currentFolder.value),
+	folders.value.filter(
+		(folder) => folder.id !== currentFolder.value && folder.id !== "draft",
+	),
 );
 
 /**
@@ -306,15 +312,23 @@ function substituteInlineImages(
 	inlineIds: Set<string>,
 ): { html: string; inlineIds: Set<string> } {
 	let html = body;
+	const bare = (contentId: string) =>
+		contentId.startsWith("<") ? contentId.slice(1, -1) : contentId;
 
-	for (const attachment of email.value?.attachments ?? []) {
-		if (attachment.disposition !== "inline" || !attachment.content_id) {
-			continue;
-		}
+	// Longest first. `cid:img1` is also the start of `cid:img10`, so taking
+	// img1 first rewrote img10's reference into img1's address with a "0"
+	// after it -- a broken picture, and img10 offered as a download too. Once
+	// the longer one has been replaced there is no `cid:` left for the shorter
+	// one to match inside it.
+	const inline = (email.value?.attachments ?? [])
+		.filter((a) => a.disposition === "inline" && a.content_id)
+		.sort(
+			(a, b) =>
+				bare(b.content_id ?? "").length - bare(a.content_id ?? "").length,
+		);
 
-		const cid = attachment.content_id.startsWith("<")
-			? attachment.content_id.slice(1, -1)
-			: attachment.content_id;
+	for (const attachment of inline) {
+		const cid = bare(attachment.content_id ?? "");
 		const substituted = html
 			.split(`cid:${cid}`)
 			.join(getAttachmentUrl(attachment.id));

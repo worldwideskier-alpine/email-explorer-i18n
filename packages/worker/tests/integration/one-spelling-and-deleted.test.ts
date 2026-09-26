@@ -521,3 +521,30 @@ describe("an attachment", () => {
 		).toBe(404);
 	});
 });
+
+describe("moving a message", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createDummyMailbox();
+	});
+
+	/** A message in Draft opens in the composer, outside the sandbox. */
+	it("does not move it into drafts", async () => {
+		const imported = await authenticatedFetch(
+			`${API}/admin/mailboxes/${mailboxId}/import`,
+			json({
+				folder: "spam",
+				rawEmailBase64: btoa(
+					`From: a@example.org\r\nTo: ${mailboxId}\r\nSubject: s\r\n\r\n<img src="https://t.invalid/p">`,
+				),
+			}),
+		);
+		const id = (await imported.json<{ id: string }>()).id;
+		const moved = await authenticatedFetch(
+			`${API}/mailboxes/${mailboxId}/emails/${id}/move`,
+			json({ folderId: "draft" }),
+		);
+		expect(moved.status).toBe(400);
+		expect((await box(mailboxId).getEmail(id))?.folder_id).toBe("spam");
+	});
+});

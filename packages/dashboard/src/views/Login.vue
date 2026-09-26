@@ -71,11 +71,28 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useAppSettings } from "@/composables/useAppSettings";
 import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
+const route = useRoute();
+
+/**
+ * Where to go once signed in: where the person was headed when they were sent
+ * here (the router puts it in ?redirect=), so a notification's link reaches
+ * its message rather than the front page. Only a path on this site -- a
+ * redirect that could name another origin is a way to hand somebody off to it.
+ */
+function afterLogin(): string {
+	const wanted = route.query.redirect;
+	if (typeof wanted !== "string") return "/";
+	return wanted.startsWith("/") &&
+		!wanted.startsWith("//") &&
+		!wanted.startsWith("/\\")
+		? wanted
+		: "/";
+}
 const authStore = useAuthStore();
 const { t } = useI18n();
 const { isRegistrationEnabled, isAccountRecoveryEnabled } = useAppSettings();
@@ -86,7 +103,7 @@ const password = ref("");
 async function handleLogin() {
 	try {
 		await authStore.login(email.value, password.value);
-		router.push("/");
+		router.push(afterLogin());
 	} catch (error) {
 		// Error is handled by store
 	}
