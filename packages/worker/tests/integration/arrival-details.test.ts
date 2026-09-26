@@ -130,6 +130,32 @@ describe("a received message", () => {
 		).json<{ cc: string }>();
 		expect(detail.cc).toBe("three@example.org");
 	});
+	/**
+	 * The parser takes the quotes off a quoted local part. Stored bare in a
+	 * comma-separated list, `"a,b"@example.org` read back as `a` and
+	 * `b@example.org`, and reply-all offered the second -- somebody else.
+	 */
+	it("keeps a quoted address one address", async () => {
+		const raw = [
+			'From: "s p"@example.org',
+			`To: "a,b"@example.org, ${mailboxId}`,
+			'Cc: "c d"@example.org, e@example.org',
+			"Subject: quoted",
+			"",
+			"body",
+		].join("\r\n");
+
+		expect(await receive(raw)).toEqual([]);
+		const [message] = await inbox();
+		expect(message.recipient).toBe(`"a,b"@example.org, ${mailboxId}`);
+		const detail = await (
+			await authenticatedFetch(
+				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${message.id}`,
+			)
+		).json<{ cc: string; sender: string }>();
+		expect(detail.cc).toBe('"c d"@example.org, e@example.org');
+		expect(detail.sender).toBe('"s p"@example.org');
+	});
 });
 
 describe("marking a message read", () => {

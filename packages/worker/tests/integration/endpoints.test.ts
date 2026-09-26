@@ -694,6 +694,44 @@ describe("API Integration Tests", () => {
 			).json<{ id: number }[]>();
 			expect(contacts.map((c) => c.id)).not.toContain(contactId);
 		});
+		/**
+		 * `parseInt` read `12abc` as contact 12 and `abc` as NaN, which the
+		 * Durable Object was then asked to find. Neither is an id.
+		 */
+		it("refuses an id that is not a number, and touches nothing", async () => {
+			await createMailbox();
+			const created = await (
+				await authenticatedFetch(
+					`http://local.test/api/v1/mailboxes/${mailboxId}/contacts`,
+					{
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ name: "Kept", email: "kept@example.com" }),
+					},
+				)
+			).json<{ id: number }>();
+
+			for (const id of ["abc", `${created.id}abc`, `${created.id}.0`, "1e0"]) {
+				const url = `http://local.test/api/v1/mailboxes/${mailboxId}/contacts/${id}`;
+				const put = await authenticatedFetch(url, {
+					method: "PUT",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ name: "Changed", email: "kept@example.com" }),
+				});
+				expect(put.status, `PUT ${id}`).toBe(400);
+				const del = await authenticatedFetch(url, { method: "DELETE" });
+				expect(del.status, `DELETE ${id}`).toBe(400);
+			}
+
+			const contacts = await (
+				await authenticatedFetch(
+					`http://local.test/api/v1/mailboxes/${mailboxId}/contacts`,
+				)
+			).json<{ id: number; name: string }[]>();
+			expect(contacts).toEqual([
+				expect.objectContaining({ id: created.id, name: "Kept" }),
+			]);
+		});
 	});
 
 	// Tests for Search

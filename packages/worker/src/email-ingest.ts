@@ -3,7 +3,7 @@ import { charsetsForAttachments, typeWithCharset } from "./attachment-charset";
 import { storableFilename } from "./attachment-name";
 import { plainTextToHtml } from "./plain-text-to-html";
 import { notifyNewEmail } from "./push-notify";
-import { formatAddressList } from "./recipients";
+import { asHeaderAddress, formatAddressList } from "./recipients";
 import type { Env } from "./types";
 
 /**
@@ -112,14 +112,16 @@ export async function ingestEmailIntoMailbox(
 		{
 			id: messageId,
 			subject: parsedEmail.subject || "",
-			sender: parsedEmail.from?.address || "",
+			sender: asHeaderAddress(parsedEmail.from?.address || ""),
 			// The whole To: and Cc: lists, not just the first address, so
 			// "reply all" can reach everyone who saw the message. This does not
 			// decide which mailbox the message lands in -- that is the envelope
 			// recipient, settled before this is called -- it is only what gets
 			// shown and replied to.
-			recipient: formatAddressList(addressesOf(parsedEmail.to)) || mailboxId,
-			cc: formatAddressList(addressesOf(parsedEmail.cc)),
+			recipient:
+				formatAddressList(addressesOf(parsedEmail.to).map(asHeaderAddress)) ||
+				mailboxId,
+			cc: formatAddressList(addressesOf(parsedEmail.cc).map(asHeaderAddress)),
 			date: storedDate(overrides.date),
 			body:
 				parsedEmail.html ||
