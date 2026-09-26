@@ -291,3 +291,28 @@ describe("mail sent through a mailbox", () => {
 		});
 	}
 });
+
+describe("a new address asked for twice at once", () => {
+	beforeEach(() => resetLegacyGrantMemo());
+
+	/** The checks come several awaits before the grant; the claim does not. */
+	it("goes to one person", async () => {
+		const { first, second } = await setUpTwoPeople();
+		const [a, b] = await Promise.all([
+			first(
+				`${API}/mailboxes`,
+				json({ email: "contested@test.com", name: "a" }),
+			),
+			second(
+				`${API}/mailboxes`,
+				json({ email: "contested@test.com", name: "b" }),
+			),
+		]);
+		expect([a.status, b.status].sort()).toEqual([201, 409]);
+
+		// @ts-expect-error test binding
+		const authStub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
+		const holders = await authStub.getUserIdsForMailbox("contested@test.com");
+		expect(holders).toHaveLength(1);
+	});
+});

@@ -277,3 +277,30 @@ describe("a restored message's date", () => {
 		]);
 	});
 });
+
+describe("the push public key", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+	});
+
+	const ask = async (e: object) => {
+		const worker = await import("../../dev/index");
+		const res = await worker.default.fetch(
+			new Request("http://local.test/api/v1/push/vapid-public-key", {
+				headers: { Authorization: `Bearer ${sessionToken}` },
+			}),
+			e,
+			createExecutionContext(),
+		);
+		return (await res.json<{ publicKey: string }>()).publicKey;
+	};
+
+	/**
+	 * Without the private half nothing can be delivered, and a fork inherits
+	 * this repository's public key; the switch must not look usable.
+	 */
+	it("is withheld when there is no private key to send with", async () => {
+		expect(await ask(env)).not.toBe("");
+		expect(await ask({ ...(env as object), VAPID_PRIVATE_KEY: "" })).toBe("");
+	});
+});

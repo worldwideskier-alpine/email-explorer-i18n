@@ -805,6 +805,35 @@ export class MailboxDO extends DurableObject<Env> {
 		);
 	}
 
+	/**
+	 * Claims an address for the person of a login, unless another person
+	 * holds it. One step, so two people creating the same new address at once
+	 * cannot both end up holding it: the route's own checks come several
+	 * awaits earlier, and the grant table allows any number of holders.
+	 */
+	async claimMailboxForPersonOf(
+		userId: string,
+		mailboxId: string,
+	): Promise<boolean> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+		const personId = await this.getPersonId(userId);
+		if (!personId) return false;
+		const others = this.ctx.storage.sql
+			.exec(
+				"SELECT 1 FROM person_mailboxes WHERE mailbox_id = ? AND person_id != ?",
+				mailboxId,
+				personId,
+			)
+			.toArray();
+		if (others.length > 0) return false;
+		this.ctx.storage.sql.exec(
+			"INSERT OR IGNORE INTO person_mailboxes (person_id, mailbox_id) VALUES (?, ?)",
+			personId,
+			mailboxId,
+		);
+		return true;
+	}
+
 	/** The same, addressed by one of the person's logins. */
 	async giveMailboxToPersonOf(
 		userId: string,

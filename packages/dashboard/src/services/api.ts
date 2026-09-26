@@ -252,8 +252,18 @@ export default {
 	// happened to it, which answers "did my backup run" but not "did the run
 	// finish" -- and those came apart in production.
 	getMaintenance: () => apiClient.get("/api/v1/root/maintenance"),
-	createAccount: (email: string, password: string, role: "root" | "admin") =>
-		apiClient.post("/api/v1/root/accounts", { email, password, role }),
+	createAccount: (
+		email: string,
+		password: string,
+		role: "root" | "admin",
+		currentPassword?: string,
+	) =>
+		apiClient.post("/api/v1/root/accounts", {
+			email,
+			password,
+			role,
+			currentPassword,
+		}),
 	setAccountPassword: (userId: string, password: string) =>
 		apiClient.post(`/api/v1/root/accounts/${userId}/password`, { password }),
 	// The lock that makes deleting a person two acts instead of one. The
@@ -273,11 +283,19 @@ export default {
 
 	// Your own logins: the addresses you sign in with. Adding one adds it to
 	// you, not to somebody else, and the list holds yours alone.
-	addOwnLogin: (email: string, password: string) =>
-		apiClient.post("/api/v1/auth/admin/register", { email, password }),
+	// Both ask for the current password: a sign-in address outlasts the
+	// session it was added from.
+	addOwnLogin: (email: string, password: string, currentPassword: string) =>
+		apiClient.post("/api/v1/auth/admin/register", {
+			email,
+			password,
+			currentPassword,
+		}),
 	listOwnLogins: () => apiClient.get("/api/v1/auth/admin/users"),
-	deleteOwnLogin: (userId: string) =>
-		apiClient.delete(`/api/v1/auth/admin/users/${userId}`),
+	deleteOwnLogin: (userId: string, currentPassword: string) =>
+		apiClient.delete(`/api/v1/auth/admin/users/${userId}`, {
+			data: { currentPassword },
+		}),
 
 	// Push notifications
 	getVapidPublicKey: () => apiClient.get("/api/v1/push/vapid-public-key"),

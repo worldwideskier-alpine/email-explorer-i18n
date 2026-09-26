@@ -14,6 +14,7 @@ import { ensureLegacyMailboxGrants } from "./legacy-grants";
 import { buildPasswordResetEmail, MAIL_LOCALES } from "./mail-templates";
 import { personHoldsMailbox, sendsAsMailbox } from "./mailbox-access";
 import { deletedMailboxKey, holdsMailOrArchives } from "./mailbox-destroy";
+import { listMailboxes } from "./mailbox-records";
 import {
 	getClaudeApiKey,
 	getSenderVerdictOverride,
@@ -305,23 +306,11 @@ class GetMailboxes extends OpenAPIRoute {
 	async handle(c: AppContext) {
 		const session = c.get("session");
 
-		const list = await c.env.BUCKET.list({
-			prefix: "mailboxes/",
+		const summary = (id: string, settings: { fromName?: string } | null) => ({
+			id,
+			name: settings?.fromName || id,
+			email: id,
 		});
-		const allMailboxes = await Promise.all(
-			list.objects.map(async (obj) => {
-				const id = obj.key.replace("mailboxes/", "").replace(".json", "");
-				const settingsObj = await c.env.BUCKET.get(obj.key);
-				const settings = settingsObj
-					? await settingsObj.json<{ fromName?: string }>()
-					: null;
-				return {
-					id,
-					name: settings?.fromName || id,
-					email: id,
-				};
-			}),
-		);
 
 		// Before answering, make sure every mailbox that predates the grant
 		// model has an owner. This is the screen where a missing grant would
@@ -333,20 +322,39 @@ class GetMailboxes extends OpenAPIRoute {
 		// With authentication switched off there is nobody to ask about, so
 		// everything is on show. That is the deployment's own choice.
 		if (!session) {
-			return c.json(allMailboxes);
+			return c.json(
+				(await listMailboxes(c.env)).map((m) =>
+					summary(m.id, m.settings as { fromName?: string }),
+				),
+			);
 		}
 
 		// Otherwise: the mailboxes this person holds. It used to be
 		// "everything, if the account carries the admin flag", which reads as
 		// one person's own estate only while the deployment holds one person
 		// -- a second person made administrator saw the first one's mail.
-		const authId = c.env.MAILBOX.idFromName("AUTH");
-		const authDO = c.env.MAILBOX.get(authId);
-		const allowedMailboxIds = new Set(
-			await authDO.getPersonMailboxes(session.userId),
+		//
+		// Read from the person's grants rather than by listing every mailbox
+		// in the deployment and filtering: that read one settings object per
+		// mailbox of every person on every call, and a single listing stops
+		// at 1000 keys, past which people's mailboxes silently disappeared.
+		// A grant whose mailbox has no settings object is a deleted mailbox,
+		// and is left out.
+		const authDO = c.env.MAILBOX.get(c.env.MAILBOX.idFromName("AUTH"));
+		const held = await authDO.getPersonMailboxes(session.userId);
+		const found = await Promise.all(
+			held.map(async (id) => {
+				const stored = await c.env.BUCKET.get(`mailboxes/${id}.json`);
+				return stored
+					? summary(id, await stored.json<{ fromName?: string }>())
+					: null;
+			}),
 		);
-
-		return c.json(allMailboxes.filter((m) => allowedMailboxIds.has(m.id)));
+		return c.json(
+			found
+				.filter((m): m is NonNullable<typeof m> => m !== null)
+				.sort((x, y) => x.id.localeCompare(y.id)),
+		);
 	}
 }
 
@@ -641,6 +649,15 @@ class PostMailbox extends OpenAPIRoute {
 			: defaultSettings;
 		const finalSettings = mergeMailboxSettings(base, { ...base, ...settings });
 
+		// Whoever registered it holds it -- the person, not the login, so it
+		// stays theirs when they change which address they sign in with.
+		// Claimed before anything is written, in one step inside the auth
+		// object: the checks above are several awaits old by now, and two
+		// people creating the same new address at once both passed them.
+		if (!(await authDO.claimMailboxForPersonOf(session.userId, email))) {
+			return c.json({ error: "Mailbox already exists" }, 409);
+		}
+
 		// Save mailbox settings to R2
 		await c.env.BUCKET.put(key, JSON.stringify(finalSettings));
 
@@ -652,11 +669,6 @@ class PostMailbox extends OpenAPIRoute {
 		// Trigger first run of the durable object to initialize database
 		await stub.getFolders();
 
-		// Whoever registered it holds it -- the person, not the login, so it
-		// stays theirs when they change which address they sign in with.
-		// Without this the mailbox belongs to nobody and is invisible on every
-		// screen: a mailbox created and lost in the same click.
-		await authDO.giveMailboxToPersonOf(session.userId, email);
 		if (kept) await c.env.BUCKET.delete(deletedMailboxKey(email));
 
 		// The same shape as the other two, even though a mailbox created a

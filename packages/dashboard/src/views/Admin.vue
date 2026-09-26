@@ -113,6 +113,21 @@
 							:placeholder="t('admin.registerUser.passwordPlaceholder')"
 						/>
 					</div>
+					<!-- A sign-in address outlasts the session it was added
+					     from, so adding one asks for yours. -->
+					<div>
+						<label for="add-current-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+							{{ t("account.currentPassword") }}
+						</label>
+						<input
+							id="add-current-password"
+							v-model="newLogin.currentPassword"
+							type="password"
+							required
+							autocomplete="current-password"
+							class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+						/>
+					</div>
 				</div>
 				<button
 					type="submit"
@@ -139,6 +154,19 @@
 				</button>
 			</div>
 			<p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ t("admin.users.description") }}</p>
+			<!-- Removing one asks for the password too, for the same reason. -->
+			<div v-if="logins.length > 1" class="mb-4 max-w-sm">
+				<label for="remove-current-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+					{{ t("account.currentPassword") }}
+				</label>
+				<input
+					id="remove-current-password"
+					v-model="removePassword"
+					type="password"
+					autocomplete="current-password"
+					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+				/>
+			</div>
 
 			<div v-if="loginsLoading && logins.length === 0" class="text-center py-8 text-gray-500">
 				{{ t("admin.users.loadingUsers") }}
@@ -157,7 +185,7 @@
 					<button
 						v-if="logins.length > 1"
 						@click="removeLogin(login)"
-						:disabled="removing === login.id"
+						:disabled="removing === login.id || !removePassword"
 						class="px-3 py-1 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 dark:text-red-400 dark:border-red-900 dark:hover:bg-red-900/30 disabled:opacity-50"
 					>
 						{{ t("admin.users.remove") }}
@@ -204,7 +232,8 @@ if (authStore.role === "root") {
 	router.push("/root");
 }
 
-const newLogin = ref({ email: "", password: "" });
+const newLogin = ref({ email: "", password: "", currentPassword: "" });
+const removePassword = ref("");
 const registerLoading = ref(false);
 const registerError = useLocalizedMessage();
 const registerSuccess = useLocalizedMessage();
@@ -271,16 +300,20 @@ async function handleAddLogin() {
 	registerSuccess.value = "";
 
 	try {
-		await api.addOwnLogin(newLogin.value.email, newLogin.value.password);
+		await api.addOwnLogin(
+			newLogin.value.email,
+			newLogin.value.password,
+			newLogin.value.currentPassword,
+		);
 		const added = newLogin.value.email;
 		registerSuccess.value = () =>
 			t("admin.registerUser.successMessage", { email: added });
-		newLogin.value = { email: "", password: "" };
+		newLogin.value = { email: "", password: "", currentPassword: "" };
 		await loadLogins();
 	} catch (error: any) {
 		const fromApi = error.response?.data?.error;
 		registerError.value = () =>
-			fromApi || t("admin.registerUser.failedToCreate");
+			translateApiError(fromApi, t("admin.registerUser.failedToCreate"));
 	} finally {
 		registerLoading.value = false;
 	}
@@ -309,7 +342,8 @@ async function removeLogin(login: Login) {
 	}
 	removing.value = login.id;
 	try {
-		await api.deleteOwnLogin(login.id);
+		await api.deleteOwnLogin(login.id, removePassword.value);
+		removePassword.value = "";
 		await loadLogins();
 	} catch (e: any) {
 		window.alert(

@@ -85,6 +85,7 @@ describe("the list of logins on the account screen", () => {
 			body: JSON.stringify({
 				email: "person-spare@example.com",
 				password: "password123",
+				currentPassword: "password123",
 			}),
 		});
 
@@ -148,6 +149,7 @@ describe("removing one of your own logins", () => {
 				body: JSON.stringify({
 					email: "spare@example.com",
 					password: "password123",
+					currentPassword: "password123",
 				}),
 			},
 		);
@@ -157,7 +159,11 @@ describe("removing one of your own logins", () => {
 	it("removes a spare, and it can no longer sign in", async () => {
 		const res = await as(personToken)(
 			`http://local.test/api/v1/auth/admin/users/${spareId}`,
-			{ method: "DELETE" },
+			{
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ currentPassword: "password123" }),
+			},
 		);
 		expect(res.status).toBe(204);
 
@@ -176,12 +182,20 @@ describe("removing one of your own logins", () => {
 	it("refuses the last one", async () => {
 		await as(personToken)(
 			`http://local.test/api/v1/auth/admin/users/${spareId}`,
-			{ method: "DELETE" },
+			{
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ currentPassword: "password123" }),
+			},
 		);
 		const me = (await listedBy(personToken))[0];
 		const res = await as(personToken)(
 			`http://local.test/api/v1/auth/admin/users/${me.id}`,
-			{ method: "DELETE" },
+			{
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ currentPassword: "password123" }),
+			},
 		);
 		expect(res.status).toBe(409);
 	});
@@ -198,8 +212,117 @@ describe("removing one of your own logins", () => {
 		);
 		const res = await as(personToken)(
 			`http://local.test/api/v1/auth/admin/users/${stranger.id}`,
-			{ method: "DELETE" },
+			{
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ currentPassword: "password123" }),
+			},
 		);
 		expect(res.status).toBe(403);
+	});
+});
+
+/**
+ * Adding or removing a sign-in address outlasts the session it is done from,
+ * so it asks for the password. Without it, a stolen session added a login of
+ * the thief's own -- untouched by a reset of the owner's password -- and kept
+ * the account after every session had been ended.
+ */
+describe("changing the addresses you sign in with", () => {
+	let personToken: string;
+	let spareId: string;
+
+	const add = (currentPassword?: string) =>
+		as(personToken)("http://local.test/api/v1/auth/admin/register", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				email: "thief@example.com",
+				password: "password123",
+				...(currentPassword === undefined ? {} : { currentPassword }),
+			}),
+		});
+
+	beforeEach(async () => {
+		resetLegacyGrantMemo();
+		await register("person@example.com");
+		personToken = (await signIn("person@example.com")).id;
+		const added = await as(personToken)(
+			"http://local.test/api/v1/auth/admin/register",
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					email: "spare@example.com",
+					password: "password123",
+					currentPassword: "password123",
+				}),
+			},
+		);
+		spareId = (await added.json<{ id: string }>()).id;
+	});
+
+	it("does not add one without the current password", async () => {
+		expect((await add()).status).toBe(400);
+		expect((await add("wrong-password")).status).toBe(403);
+		expect((await listedBy(personToken)).map((l) => l.email).sort()).toEqual([
+			"person@example.com",
+			"spare@example.com",
+		]);
+	});
+
+	it("does not remove one without it", async () => {
+		const res = await as(personToken)(
+			`http://local.test/api/v1/auth/admin/users/${spareId}`,
+			{
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ currentPassword: "wrong-password" }),
+			},
+		);
+		expect(res.status).toBe(403);
+		expect((await listedBy(personToken)).length).toBe(2);
+	});
+
+	/** Guessing it here is limited like guessing it anywhere else. */
+	it("stops listening after ten wrong guesses", async () => {
+		for (let i = 0; i < 10; i++) {
+			expect((await add("wrong-password")).status).toBe(403);
+		}
+		expect((await add("password123")).status).toBe(429);
+	});
+});
+
+describe("root adding a spare of its own", () => {
+	let root: string;
+
+	const create = (role: "root" | "admin", currentPassword?: string) =>
+		as(root)("http://local.test/api/v1/root/accounts", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				email: `${role}-${currentPassword ?? "none"}@example.com`,
+				password: "password123",
+				role,
+				...(currentPassword === undefined ? {} : { currentPassword }),
+			}),
+		});
+
+	beforeEach(async () => {
+		resetLegacyGrantMemo();
+		await register("operator@example.com");
+		root = (await signIn("operator@example.com")).id;
+	});
+
+	/** A spare root login is the role, for good. */
+	it("needs the current password", async () => {
+		expect((await create("root")).status).toBe(403);
+		expect((await create("root", "wrong-password")).status).toBe(403);
+		expect((await create("root", "password123")).status).toBe(201);
+	});
+
+	/** Making a new person gives nobody the role, and stays one step. */
+	it("does not need it to make somebody else's account", async () => {
+		expect((await create("admin")).status).toBe(201);
 	});
 });

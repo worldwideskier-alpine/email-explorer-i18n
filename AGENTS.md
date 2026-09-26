@@ -151,6 +151,15 @@ fork's work. This fork ships by being forked.
   back what it should not have cost through `throttleSettle` -- per rule:
   the account's key resets, the IP's key (shared by every account behind it)
   gets back only that attempt. `auth-concurrency.test.ts` holds both.
+  Creating a mailbox is the same shape: the address is claimed in one call
+  to the auth object (`claimMailboxForPersonOf`) before anything is written,
+  because two people creating the same new address at once both got it.
+- **Adding or removing a sign-in address asks for the password.** It outlasts
+  the session it is done from: with a session alone, a thief added a login of
+  their own to the owner's person, which a reset of the owner's password does
+  not touch. The same holds for root's spare (`PostAccount` with `role:
+  "root"`), which is the role for good. `proveCurrentPassword` in
+  `routes/auth.ts`, under the account-change limit; `own-logins.test.ts`.
 - **Ending a session ends its push subscription.** A notification carries
   the sender and subject of each new message, so a subscription is bound to
   the session that registered it and delivered to only while that session

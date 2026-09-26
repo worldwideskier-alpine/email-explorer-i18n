@@ -102,6 +102,19 @@
               class="mt-1 w-72 max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
             />
           </div>
+          <!-- A spare of your own is the role itself, so it asks for your
+               password; somebody holding only your session cannot mint one. -->
+          <div v-if="newRole === 'root'" class="w-full sm:w-auto">
+            <label for="rootCurrentPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("account.currentPassword") }}</label>
+            <input
+              id="rootCurrentPassword"
+              v-model="currentPassword"
+              type="password"
+              required
+              autocomplete="current-password"
+              class="mt-1 w-72 max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
+            />
+          </div>
           <button
             type="submit"
             :disabled="busy"
@@ -276,6 +289,7 @@ import { useDateFormat } from "@/composables/useDateFormat";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 import { type AccountRole, useAuthStore } from "@/stores/auth";
+import { translateApiError } from "@/utils/apiError";
 import { formatBytes } from "@/utils/attachments";
 import {
 	type MaintenanceRecord,
@@ -307,6 +321,7 @@ const busy = ref(false);
 const newEmail = ref("");
 const newPassword = ref("");
 const newRole = ref<AccountRole>("admin");
+const currentPassword = ref("");
 // Stored as how to produce the text, not as the text: a message frozen at
 // whichever language was current stays behind when the language changes.
 const message = useLocalizedMessage();
@@ -516,16 +531,24 @@ async function createAccount() {
 	try {
 		const email = newEmail.value;
 		const role = newRole.value;
-		await api.createAccount(email, newPassword.value, role);
+		await api.createAccount(
+			email,
+			newPassword.value,
+			role,
+			role === "root" ? currentPassword.value : undefined,
+		);
 		newEmail.value = "";
 		newPassword.value = "";
+		currentPassword.value = "";
 		message.value = () =>
 			role === "root"
 				? t("root.create.addedOwn", { email })
 				: t("admin.registerUser.successMessage", { email });
 		await load();
-	} catch {
-		error.value = () => t("admin.registerUser.failedToCreate");
+	} catch (e: any) {
+		const fromApi = e?.response?.data?.error;
+		error.value = () =>
+			translateApiError(fromApi, t("admin.registerUser.failedToCreate"));
 	} finally {
 		busy.value = false;
 	}

@@ -227,9 +227,9 @@ Pull Request では Deploy to Cloudflare の `build-and-check` ジョブだけ�
 
 # Email Explorer
 
-Email Explorer is a full-stack, serverless email client that runs entirely on your own Cloudflare account. It provides a modern, fast, and secure way to manage your emails using Cloudflare's powerful infrastructure, including Workers, R2, Durable Objects, Email Routing, and Email Sending.
+Email Explorer is a full-stack, serverless email client that runs entirely on your own Cloudflare account: Workers, R2 and Durable Objects hold it, Email Routing brings mail in, and Resend sends it out.
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/G4brym/email-explorer/tree/main/template)
+This fork is deployed by forking it -- see **[Deploying your own](docs/deploying-your-own.md)**. Upstream's one-click button and `template/` install upstream's npm package, which carries none of this fork's work, so they are not offered here.
 
 ## Table of Contents
 
@@ -298,19 +298,19 @@ Email Explorer gives you a private, self-hosted email solution with a user-frien
 - Mobile-responsive design
 
 **🛠️ Easy Setup**
-- Deploy with one click
-- Automatic mailbox creation
-- Smart authentication setup
+- Fork, set a few repository variables, push
+- The first account to register runs the deployment
+- Everything else is set on the deployed site
 
-> **Note:** To send emails, you need to have [Cloudflare Email Sending](https://developers.cloudflare.com/email-routing/email-workers/send-email-workers/) enabled on your account. Receiving emails works through [Cloudflare Email Routing](https://developers.cloudflare.com/email-routing/).
+> **Note:** Sending goes through [Resend](https://resend.com/), with each person's own API key entered on the site. Receiving goes through [Cloudflare Email Routing](https://developers.cloudflare.com/email-routing/).
 
-> **Note:** When you first load your worker, there will be no mailboxes. They are automatically created when you start receiving emails.
+> **Note:** Mail is accepted only for a mailbox that exists. Create the mailbox in the app first; mail to any other address is rejected rather than filed where nobody looks.
 
 ## Key Features
 
 - **🔒 Secure & Private**: Self-hosted on your Cloudflare account. No third-party tracking or data scanning.
-- **🔐 Smart Authentication**: Automatic first-user admin setup with role-based access control and secure session management.
-- **👥 Multi-User Support**: Admin panel for managing users and mailbox permissions with granular roles (Owner, Admin, Write, Read).
+- **🔐 Authentication**: The first account to register is root, which runs the deployment and makes everybody else's accounts; sessions end with a password change or reset.
+- **👥 Multi-User Support**: Each person holds their own mailboxes and nobody else's; a person can sign in with more than one address.
 - **✍️ Rich Text Editor**: Full-featured WYSIWYG editor with formatting, colors, links, lists, and more - just like Gmail or Outlook.
 - **↩️ Reply & Forward**: Reply to sender, reply all, or forward emails with automatic quoting and threading support.
 - **✉️ Email Management**: Send, receive, and organize emails with a clean and intuitive interface.
@@ -327,7 +327,7 @@ Before deploying Email Explorer, make sure you have:
 - **Cloudflare Account** - [Sign up for free](https://dash.cloudflare.com/sign-up)
 - **Domain Name** - Added to your Cloudflare account
 - **Email Routing** - [Enable Email Routing](https://developers.cloudflare.com/email-routing/) for receiving emails
-- **Email Sending** - [Enable Email Sending](https://developers.cloudflare.com/email-routing/email-workers/send-email-workers/) for sending emails (optional but recommended)
+- **Resend account** - For sending mail (optional: without it you can read but not send)
 - **Node.js 18+** - For local development (not required for deployment)
 
 **Cloudflare Services Used:**
@@ -336,31 +336,15 @@ Before deploying Email Explorer, make sure you have:
 - R2 (Object storage)
 - D1 (SQL database via Durable Objects)
 - Email Routing (Receive emails)
-- Email Sending (Send emails)
+- Resend (Send emails; outside Cloudflare)
 
 Most of these services have generous free tiers that are sufficient for personal use.
 
 ## Getting Started
 
-To deploy Email Explorer, you can use the "Deploy to Cloudflare" button above or run this command:
-
-```bash
-npm create cloudflare@latest -- --template=https://github.com/G4brym/email-explorer/tree/main/template
-```
-
-**Or deploy manually:**
-
-```bash
-# Clone the repository
-git clone https://github.com/G4brym/email-explorer.git
-cd email-explorer
-
-# Install dependencies
-pnpm install
-
-# Deploy to Cloudflare
-pnpm --filter email-explorer deploy
-```
+Follow **[Deploying your own](docs/deploying-your-own.md)**: fork this
+repository, set its repository variables and secrets, and push. Every push to
+`main` deploys, after lint, build and both test suites have passed.
 
 ### Configuration
 
@@ -380,10 +364,10 @@ export default EmailExplorer({
 ```
 
 **Smart Mode (Recommended):**
-- First user to register automatically becomes admin
-- Registration closes after first user
-- Admins can create additional users via admin panel
-- Perfect for production deployments
+- The first account to register becomes root
+- Registration closes after it
+- Root creates everybody else's accounts on `/root`
+- Each person then creates their own mailboxes
 
 **Other Modes:**
 ```typescript
@@ -395,7 +379,9 @@ export default EmailExplorer({
   }
 })
 
-// No Authentication (Single User)
+// No Authentication -- DO NOT deploy this anywhere reachable.
+// It turns off the whole gate, including the check that you hold a mailbox:
+// anybody who can guess an address can read that mailbox.
 export default EmailExplorer({
   auth: {
     enabled: false
@@ -423,25 +409,25 @@ export default EmailExplorer({
 
 **Account Recovery:**
 - When configured, users can reset forgotten passwords via email
-- The `fromEmail` address must be a valid email on your Cloudflare account
-- Requires [Cloudflare Email Sending](https://developers.cloudflare.com/email-routing/email-workers/send-email-workers/) to be enabled
+- The `fromEmail` address must be on a domain your Resend account can send from
+- The `ACCOUNT_RECOVERY_FROM` repository variable, when set, takes precedence over this option
 - See [Account Recovery Guide](docs/features/account-recovery.md) for more details
 
 ### First-Time Setup
 
 1. **Deploy your worker** with smart mode enabled (default)
 2. **Visit your worker URL** in a browser
-3. **Register the first user** - this becomes your admin account
-4. **Log in** with your admin credentials
-5. **Manage additional users** through the admin panel
+3. **Register the first account** - this is root
+4. **Create the other accounts** on `/root`
+5. **Each person creates their mailboxes** and enters their Resend key on `/admin`
 
-### Admin Operations
+### Roles
 
-As an admin, you can:
-- Create new users
-- Grant/revoke mailbox access
-- Assign roles: `owner`, `admin`, `write`, or `read`
-- Promote users to admin status
+- **Root** makes and deletes accounts. It does not see anybody's mailboxes,
+  and the role cannot be handed on -- only given a spare address on root's own
+  account, which asks for root's password.
+- **Administrator** is everybody else: they create their own mailboxes, hold
+  them, and add or remove the addresses they sign in with.
 
 ## Documentation
 
@@ -466,7 +452,8 @@ Email Explorer is built with modern web technologies:
 - **Cloudflare Durable Objects** - Distributed state management
 - **Cloudflare R2** - Object storage for attachments
 - **Cloudflare D1** - SQL database (via Durable Objects)
-- **Cloudflare Email Routing** - Email sending and receiving
+- **Cloudflare Email Routing** - Receiving mail
+- **Resend** - Sending mail
 
 **Frontend (Dashboard):**
 - **Vue.js 3** - Progressive JavaScript framework
@@ -479,11 +466,11 @@ Email Explorer is built with modern web technologies:
 ## Production Ready Features
 
 ✅ **Authentication & Security**
-- Smart mode with automatic admin setup
+- Smart mode: the first account is root
 - Session-based authentication (30-day expiry)
 - Password hashing with Web Crypto API
 - HttpOnly, Secure, SameSite cookies
-- Role-based access control (RBAC)
+- Root and administrator roles; a mailbox is reached only by the person who holds it
 
 ✅ **Email Capabilities**
 - Send and receive emails
@@ -494,10 +481,9 @@ Email Explorer is built with modern web technologies:
 - Attachment handling
 
 ✅ **User Management**
-- Admin panel for user creation
-- Granular mailbox permissions (Owner, Admin, Write, Read)
-- Multi-user support with isolation
-- Access grant and revoke capabilities
+- Root creates and deletes accounts
+- Each person holds their own mailboxes, and nobody else's
+- More than one sign-in address per person
 
 ✅ **Organization**
 - Custom folder creation
@@ -595,7 +581,7 @@ Email Explorer takes security seriously:
 - All data stored in YOUR Cloudflare account
 - Email content rendered in sandboxed iframes
 - No third-party data sharing
-- Role-based access control (RBAC)
+- Root and administrator roles; a mailbox is reached only by the person who holds it
 
 **🔒 Best Practices**
 - Always use HTTPS (automatic with Cloudflare)
