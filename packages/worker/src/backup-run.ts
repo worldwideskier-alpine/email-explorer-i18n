@@ -18,7 +18,15 @@ import { writeMailboxBackup } from "./backup-writer";
 import { listMailboxes, updateMailboxSettings } from "./mailbox-records";
 import type { Env } from "./types";
 
-/** Writes the outcome back onto the mailbox. Only the fields this run owns. */
+/**
+ * Writes the outcome back onto the mailbox. Only the fields this run owns.
+ *
+ * `lastRunAt` moves only on success. It is what decides the next run is due,
+ * and moving it on a failure put a weekly or monthly backup off for the whole
+ * interval after one transient error; a failed mailbox is due again the next
+ * night. It is also what orders the pass, most overdue first, so the one that
+ * failed goes to the front.
+ */
 async function recordResult(
 	env: Env,
 	mailboxId: string,
@@ -27,7 +35,7 @@ async function recordResult(
 	await updateMailboxSettings(env, mailboxId, (settings) => {
 		settings.autoBackup = {
 			...settings.autoBackup,
-			lastRunAt: result.at,
+			...(result.ok ? { lastRunAt: result.at } : {}),
 			lastResult: result,
 		};
 	});

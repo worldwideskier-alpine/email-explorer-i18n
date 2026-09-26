@@ -256,3 +256,78 @@ describe("isTrustedSelfDomainSender", () => {
 		).toBe(false);
 	});
 });
+
+/**
+ * What the sender writes cannot stand in for what the relay found.
+ *
+ * `=` is legal in an address, and every header below Cloudflare's is the
+ * sender's own. Both used to be read as verdicts.
+ */
+describe("verdicts the sender wrote", () => {
+	const auth = (...values: string[]) =>
+		values.map((value) => ({
+			key: "authentication-results",
+			originalKey: "Authentication-Results",
+			value,
+		}));
+
+	// The shape Cloudflare writes, for an envelope sender chosen to contain
+	// the words.
+	const forgedMailFrom =
+		"mx.cloudflare.net; dkim=none; dmarc=none; spf=fail (mx.cloudflare.net: domain of dkim=pass@victim.example does not designate 203.0.113.9 as permitted sender) smtp.mailfrom=dkim=pass@victim.example;";
+
+	it("does not read dkim=pass out of an envelope address", () => {
+		expect(classifyByAuthResults(auth(forgedMailFrom))).toBe("spam");
+	});
+
+	it("does not read dmarc=pass out of an envelope address", () => {
+		const value =
+			"mx.cloudflare.net; dkim=none; spf=fail smtp.mailfrom=dmarc=pass@victim.example";
+		expect(classifyByAuthResults(auth(value))).toBe("spam");
+		expect(
+			isTrustedSelfDomainSender(
+				auth(value),
+				"boss@victim.example",
+				"me@victim.example",
+			),
+		).toBe(false);
+	});
+
+	/**
+	 * A comment is free text. One on the HELO result that mentions
+	 * smtp.mailfrom made that result pass for the envelope sender's.
+	 */
+	it("does not take a comment for a property", () => {
+		const value =
+			"mx.cloudflare.net; spf=none (no record, see smtp.mailfrom=x.example) smtp.helo=h.example; spf=fail smtp.mailfrom=x.example; dkim=none";
+		expect(classifyByAuthResults(auth(value))).toBe("spam");
+	});
+
+	it("does not split a result at a ; inside its comment", () => {
+		const value =
+			"mx.cloudflare.net; dkim=none (unsigned; dkim=pass was never here); spf=fail smtp.mailfrom=x.example";
+		expect(classifyByAuthResults(auth(value))).toBe("spam");
+	});
+
+	/** The relay's header is the topmost; the sender's own come after it. */
+	it("ignores an Authentication-Results header the sender put in the message", () => {
+		const headers = auth(
+			"mx.cloudflare.net; dkim=none; spf=fail smtp.mailfrom=x.example",
+			"forged.example; dkim=pass; dmarc=pass",
+		);
+		expect(classifyByAuthResults(headers)).toBe("spam");
+		expect(
+			isTrustedSelfDomainSender(headers, "a@x.example", "me@x.example"),
+		).toBe(false);
+	});
+
+	it("still reads a real pass", () => {
+		expect(
+			classifyByAuthResults(
+				auth(
+					"mx.cloudflare.net; dkim=pass header.d=x.example; spf=fail smtp.mailfrom=x.example",
+				),
+			),
+		).toBe("inbox");
+	});
+});

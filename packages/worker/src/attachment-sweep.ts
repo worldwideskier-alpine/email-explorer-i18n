@@ -240,18 +240,36 @@ export async function deleteUnclaimedAttachments(
 	env: Env,
 	limit = DELETE_BATCH,
 ): Promise<PurgeResult> {
+	// Ingest writes the object before the row that names it, so anything
+	// uploaded after the rows were read looks unclaimed and is not: mail that
+	// arrived, or a restore running, while this walked the bucket. Those are
+	// left for a later press, and what is left is asked about again, against
+	// rows read afresh, just before it goes.
+	const rowsReadFrom = Date.now();
 	const rows = await readRows(env);
 	const result: PurgeResult = { deleted: 0, bytes: 0, remaining: 0 };
-	const keys: string[] = [];
+	const candidates: { key: string; size: number }[] = [];
 
 	for await (const object of listAttachments(env)) {
 		if (classify(object.key, rows).kind !== "unclaimed") continue;
-		if (keys.length >= limit) {
+		if (
+			object.uploaded.getTime() >= rowsReadFrom ||
+			candidates.length >= limit
+		) {
 			result.remaining += 1;
 			continue;
 		}
-		keys.push(object.key);
-		result.bytes += object.size;
+		candidates.push({ key: object.key, size: object.size });
+	}
+
+	// A row that appeared meanwhile claims its object: not deleted, and not
+	// left over either.
+	const rowsNow = candidates.length > 0 ? await readRows(env) : rows;
+	const keys: string[] = [];
+	for (const { key, size } of candidates) {
+		if (classify(key, rowsNow).kind !== "unclaimed") continue;
+		keys.push(key);
+		result.bytes += size;
 	}
 
 	if (keys.length > 0) await env.BUCKET.delete(keys);

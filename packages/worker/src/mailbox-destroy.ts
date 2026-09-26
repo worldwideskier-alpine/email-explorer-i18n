@@ -66,15 +66,20 @@ export async function destroyMailboxCompletely(
 
 	// The ids first: destroying the Durable Object takes the only record of
 	// which R2 objects belonged to this mailbox with it.
-	let emailIds: string[] = [];
-	try {
-		emailIds = await stub.listAllEmailIds();
-	} catch {
-		// A mailbox whose object was never woken has no messages to name.
-	}
+	// Not caught. Asking a stub wakes the object rather than failing, so a
+	// failure here is a real one -- and carrying on to destroyMailbox would
+	// wipe the only record of which objects were this mailbox's, leaving its
+	// mail in the bucket with nothing naming it.
+	const emailIds: string[] = await stub.listAllEmailIds();
 
 	const wanted = new Set(emailIds);
-	const keys: string[] = emailIds.map((id) => `raw/${id}.eml`);
+	// The settings first: while they exist the address accepts mail, and mail
+	// arriving during the rest of this went into an object being wiped.
+	const keys: string[] = [
+		`mailboxes/${mailboxId}.json`,
+		deletedMailboxKey(mailboxId),
+		...emailIds.map((id) => `raw/${id}.eml`),
+	];
 
 	// Attachment keys carry the email id, so one scan of the prefix finds
 	// them all; listing per message would burn a subrequest each.
@@ -86,8 +91,6 @@ export async function destroyMailboxCompletely(
 	keys.push(
 		...(await listKeys(env, `backups/${encodeURIComponent(mailboxId)}/`)),
 	);
-	keys.push(`mailboxes/${mailboxId}.json`, deletedMailboxKey(mailboxId));
-
 	const objects = await deleteKeys(env, keys);
 
 	try {

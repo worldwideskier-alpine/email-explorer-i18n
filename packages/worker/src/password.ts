@@ -19,9 +19,14 @@
  * the Workers runtime, which leaves plenty of headroom on the Workers Paid
  * plan's per-request CPU budget.
  *
- * Raising this later does not invalidate anything: the iteration count is
- * stored alongside each hash, so old hashes keep verifying at their own cost
- * and are re-derived at the new one the next time their owner logs in.
+ * Raising this later does not invalidate anything stored: the iteration
+ * count is kept alongside each hash, so old hashes keep verifying at their
+ * own cost and are re-derived at the new one the next time their owner logs
+ * in. But check a higher value on the deployed runtime before shipping it.
+ * Cloudflare's Workers are reported to refuse PBKDF2 above 100,000
+ * iterations, and the local runtime does not reproduce that (200,000 derives
+ * fine under the test pool) -- if the report holds, a raise would make every
+ * registration, password change and login-time rehash throw.
  */
 export const PBKDF2_ITERATIONS = 100_000;
 
