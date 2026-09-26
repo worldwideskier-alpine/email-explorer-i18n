@@ -42,19 +42,21 @@ import { useToast } from "@/composables/useToast";
 
 const { toasts, removeToast } = useToast();
 
-const getToastClasses = (type: string) => {
-	const baseClasses = "text-white";
-	switch (type) {
-		case "success":
-			return `${baseClasses} bg-green-500`;
-		case "error":
-			return `${baseClasses} bg-red-500`;
-		case "warning":
-			return `${baseClasses} bg-yellow-500`;
-		default:
-			return `${baseClasses} bg-blue-500`;
-	}
+/**
+ * Whole class strings, so whiteOnColour.test.ts can read them. The 500 shades
+ * these were put white text on measure 2.3 to 3.7:1 against it, where 4.5 is
+ * wanted, and the test could not see them because the classes were built up
+ * from pieces here.
+ */
+const TOAST_CLASSES: Record<string, string> = {
+	success: "text-white bg-green-700",
+	error: "text-white bg-red-700",
+	warning: "text-white bg-amber-700",
+	info: "text-white bg-indigo-700",
 };
+
+const getToastClasses = (type: string) =>
+	TOAST_CLASSES[type] ?? TOAST_CLASSES.info;
 </script>
 
 <style scoped>

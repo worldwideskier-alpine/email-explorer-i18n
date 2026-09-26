@@ -9,13 +9,17 @@ export interface Toast {
 
 const toasts = ref<Toast[]>([]);
 
+// A counter, not the clock: two toasts in the same millisecond shared an id,
+// so one's timeout took both away and the list had a duplicate key.
+let lastId = 0;
+
 export function useToast() {
 	const addToast = (
 		message: string,
 		type: "success" | "error" | "info" | "warning" = "info",
 		duration = 3000,
 	) => {
-		const id = Date.now().toString();
+		const id = String(++lastId);
 		const toast: Toast = { id, message, type, duration };
 
 		toasts.value.push(toast);

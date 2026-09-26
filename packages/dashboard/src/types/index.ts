@@ -100,6 +100,8 @@ export interface Email {
 	 * late response can get wrong.
 	 */
 	folder_id?: string;
+	/** For a draft: the message it replies to, if it is a reply. */
+	draft_reply_to?: string | null;
 }
 
 export interface Attachment {

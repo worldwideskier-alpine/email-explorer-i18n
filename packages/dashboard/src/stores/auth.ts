@@ -3,6 +3,9 @@ import { computed, ref } from "vue";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 import { rebindPushSubscription } from "@/services/push";
+import { useEmailStore } from "@/stores/emails";
+import { useMailboxStore } from "@/stores/mailboxes";
+import { useSearchStore } from "@/stores/search";
 import { translateApiError } from "@/utils/apiError";
 
 export interface User {
@@ -149,6 +152,12 @@ export const useAuthStore = defineStore("auth", () => {
 			session.value = null;
 			localStorage.removeItem("session");
 			api.clearAuthToken();
+			// What this person had open goes with them. The stores outlive the
+			// session in the tab, so the next person to sign in there saw the
+			// last one's search results until they searched for something.
+			useSearchStore().$reset();
+			useEmailStore().$reset();
+			useMailboxStore().$reset();
 			loading.value = false;
 		}
 	}

@@ -1,6 +1,8 @@
 import axios from "axios";
+import { somethingIsBeingWritten } from "./appUpdate";
 
-const apiClient = axios.create({
+/** Exported for tests, which answer its requests themselves. */
+export const apiClient = axios.create({
 	baseURL: "",
 	headers: {
 		"Content-Type": "application/json",
@@ -53,6 +55,13 @@ const PUBLIC_PAGES = [
 	"/confirm-email-change",
 ];
 
+/** How the page is sent to sign in; a test watches it rather than jsdom. */
+export const leave = {
+	to(url: string) {
+		window.location.href = url;
+	},
+};
+
 // Response interceptor: a 401 anywhere else means the session is gone.
 apiClient.interceptors.response.use(
 	(response) => response,
@@ -62,15 +71,31 @@ apiClient.interceptors.response.use(
 			url.startsWith(path),
 		);
 		if (error.response?.status === 401 && !handledByCaller) {
-			// Clear auth and redirect to login
 			localStorage.removeItem("session");
-			if (!PUBLIC_PAGES.includes(window.location.pathname)) {
-				window.location.href = "/login";
+			// Not while somebody is writing. Navigating away threw the unsent
+			// message out with the session -- the one thing appUpdate.ts
+			// already refuses to do. The failed send says so, the text stays
+			// to be copied, and the next navigation goes to sign-in.
+			if (
+				!PUBLIC_PAGES.includes(window.location.pathname) &&
+				!somethingIsBeingWritten(document)
+			) {
+				const here = window.location.pathname + window.location.search;
+				leave.to(`/login?redirect=${encodeURIComponent(here)}`);
 			}
 		}
 		return Promise.reject(error);
 	},
 );
+
+/**
+ * One path segment, encoded. Ids and addresses went into the path as they
+ * were, and they come from route params and stored rows: an attachment or
+ * backup name is somebody else's to choose, and a "/", "?" or "#" in one
+ * named another path. The Worker reads the encoded form back as the same
+ * value (encoded-path.test.ts on its side).
+ */
+const seg = (value: string | number) => encodeURIComponent(String(value));
 
 export default {
 	// Settings
@@ -116,13 +141,13 @@ export default {
 	createMailbox: (email: string, name: string, settings?: any) =>
 		apiClient.post("/api/v1/mailboxes", { email, name, settings }),
 	getMailbox: (mailboxId: string) =>
-		apiClient.get(`/api/v1/mailboxes/${mailboxId}`),
+		apiClient.get(`/api/v1/mailboxes/${seg(mailboxId)}`),
 	updateMailbox: (mailboxId: string, settings: any) =>
-		apiClient.put(`/api/v1/mailboxes/${mailboxId}`, { settings }),
+		apiClient.put(`/api/v1/mailboxes/${seg(mailboxId)}`, { settings }),
 	// purge also destroys the stored mail; without it the mailbox is only
 	// unlisted and its messages survive.
 	deleteMailbox: (mailboxId: string, purge = false) =>
-		apiClient.delete(`/api/v1/mailboxes/${mailboxId}`, {
+		apiClient.delete(`/api/v1/mailboxes/${seg(mailboxId)}`, {
 			params: purge ? { purge: "true" } : undefined,
 		}),
 
@@ -131,13 +156,13 @@ export default {
 	// the API refuses looks exactly like one that works until the next message
 	// happens to arrive.
 	checkSpamFilterKey: (mailboxId: string) =>
-		apiClient.post(`/api/v1/mailboxes/${mailboxId}/spam-filter/check`),
+		apiClient.post(`/api/v1/mailboxes/${seg(mailboxId)}/spam-filter/check`),
 
 	// The whole mailbox as an mbox archive. Fetched as a blob through this
 	// client because the endpoint needs the session; see exportMailbox in
 	// Settings.vue for why that caps the practical size.
 	exportMailbox: (mailboxId: string) =>
-		apiClient.get(`/api/v1/mailboxes/${mailboxId}/export`, {
+		apiClient.get(`/api/v1/mailboxes/${seg(mailboxId)}/export`, {
 			responseType: "blob",
 		}),
 
@@ -146,12 +171,12 @@ export default {
 	// scheduled run is the only thing that removes one, so someone who takes
 	// over an account here can destroy the mail but not the copies of it.
 	listBackups: (mailboxId: string) =>
-		apiClient.get(`/api/v1/mailboxes/${mailboxId}/backups`),
+		apiClient.get(`/api/v1/mailboxes/${seg(mailboxId)}/backups`),
 	// Through this client rather than a plain link, for the same reason the
 	// export is: a new browsing context carries neither the Authorization
 	// header nor the session cookie.
 	downloadBackup: (mailboxId: string, name: string) =>
-		apiClient.get(`/api/v1/mailboxes/${mailboxId}/backups/${name}`, {
+		apiClient.get(`/api/v1/mailboxes/${seg(mailboxId)}/backups/${seg(name)}`, {
 			responseType: "blob",
 		}),
 
@@ -172,87 +197,108 @@ export default {
 			read?: boolean;
 			starred?: boolean;
 		},
-	) => apiClient.post(`/api/v1/admin/mailboxes/${mailboxId}/import`, message),
+	) =>
+		apiClient.post(`/api/v1/admin/mailboxes/${seg(mailboxId)}/import`, message),
 
 	// Emails
 	listEmails: (mailboxId: string, params: any) =>
-		apiClient.get(`/api/v1/mailboxes/${mailboxId}/emails`, { params }),
+		apiClient.get(`/api/v1/mailboxes/${seg(mailboxId)}/emails`, { params }),
 	sendEmail: (mailboxId: string, email: any) =>
-		apiClient.post(`/api/v1/mailboxes/${mailboxId}/emails`, email),
+		apiClient.post(`/api/v1/mailboxes/${seg(mailboxId)}/emails`, email),
 	getEmail: (mailboxId: string, id: string) =>
-		apiClient.get(`/api/v1/mailboxes/${mailboxId}/emails/${id}`),
+		apiClient.get(`/api/v1/mailboxes/${seg(mailboxId)}/emails/${seg(id)}`),
 	getEmailSource: (mailboxId: string, id: string) =>
-		apiClient.get(`/api/v1/mailboxes/${mailboxId}/emails/${id}/source`, {
-			responseType: "text",
-		}),
+		apiClient.get(
+			`/api/v1/mailboxes/${seg(mailboxId)}/emails/${seg(id)}/source`,
+			{
+				responseType: "text",
+			},
+		),
 	// Fetched through this client, not linked to directly: a plain link opens
 	// a new browsing context that carries neither the Authorization header nor
 	// (from the installed PWA) the session cookie, and the download comes back
 	// as {"error":"Unauthorized"}.
 	downloadAttachment: (mailboxId: string, id: string, attachmentId: string) =>
 		apiClient.get(
-			`/api/v1/mailboxes/${mailboxId}/emails/${id}/attachments/${attachmentId}`,
+			`/api/v1/mailboxes/${seg(mailboxId)}/emails/${seg(id)}/attachments/${seg(attachmentId)}`,
 			{ responseType: "blob" },
 		),
 	updateEmail: (mailboxId: string, id: string, data: any) =>
-		apiClient.put(`/api/v1/mailboxes/${mailboxId}/emails/${id}`, data),
+		apiClient.put(
+			`/api/v1/mailboxes/${seg(mailboxId)}/emails/${seg(id)}`,
+			data,
+		),
 	deleteEmail: (mailboxId: string, id: string) =>
-		apiClient.delete(`/api/v1/mailboxes/${mailboxId}/emails/${id}`),
+		apiClient.delete(`/api/v1/mailboxes/${seg(mailboxId)}/emails/${seg(id)}`),
 	moveEmail: (mailboxId: string, id: string, folderId: string) =>
-		apiClient.post(`/api/v1/mailboxes/${mailboxId}/emails/${id}/move`, {
-			folderId,
-		}),
+		apiClient.post(
+			`/api/v1/mailboxes/${seg(mailboxId)}/emails/${seg(id)}/move`,
+			{
+				folderId,
+			},
+		),
 	setEmailSpamVerdict: (
 		mailboxId: string,
 		id: string,
 		verdict: "spam" | "not-spam",
 	) =>
-		apiClient.post(`/api/v1/mailboxes/${mailboxId}/emails/${id}/spam-verdict`, {
-			verdict,
-		}),
+		apiClient.post(
+			`/api/v1/mailboxes/${seg(mailboxId)}/emails/${seg(id)}/spam-verdict`,
+			{
+				verdict,
+			},
+		),
 	getAttachment: (mailboxId: string, emailId: string, attachmentId: string) =>
 		apiClient.get(
-			`/api/v1/mailboxes/${mailboxId}/emails/${emailId}/attachments/${attachmentId}`,
+			`/api/v1/mailboxes/${seg(mailboxId)}/emails/${seg(emailId)}/attachments/${seg(attachmentId)}`,
 			{ responseType: "blob" },
 		),
 	replyToEmail: (mailboxId: string, emailId: string, email: any) =>
 		apiClient.post(
-			`/api/v1/mailboxes/${mailboxId}/emails/${emailId}/reply`,
+			`/api/v1/mailboxes/${seg(mailboxId)}/emails/${seg(emailId)}/reply`,
 			email,
 		),
 	forwardEmail: (mailboxId: string, emailId: string, email: any) =>
 		apiClient.post(
-			`/api/v1/mailboxes/${mailboxId}/emails/${emailId}/forward`,
+			`/api/v1/mailboxes/${seg(mailboxId)}/emails/${seg(emailId)}/forward`,
 			email,
 		),
 	saveDraft: (mailboxId: string, draft: any) =>
-		apiClient.post(`/api/v1/mailboxes/${mailboxId}/drafts`, draft),
+		apiClient.post(`/api/v1/mailboxes/${seg(mailboxId)}/drafts`, draft),
 	updateDraft: (mailboxId: string, id: string, draft: any) =>
-		apiClient.put(`/api/v1/mailboxes/${mailboxId}/drafts/${id}`, draft),
+		apiClient.put(
+			`/api/v1/mailboxes/${seg(mailboxId)}/drafts/${seg(id)}`,
+			draft,
+		),
 
 	// Folders
 	listFolders: (mailboxId: string) =>
-		apiClient.get(`/api/v1/mailboxes/${mailboxId}/folders`),
+		apiClient.get(`/api/v1/mailboxes/${seg(mailboxId)}/folders`),
 	createFolder: (mailboxId: string, name: string) =>
-		apiClient.post(`/api/v1/mailboxes/${mailboxId}/folders`, { name }),
+		apiClient.post(`/api/v1/mailboxes/${seg(mailboxId)}/folders`, { name }),
 	updateFolder: (mailboxId: string, id: string, name: string) =>
-		apiClient.put(`/api/v1/mailboxes/${mailboxId}/folders/${id}`, { name }),
+		apiClient.put(`/api/v1/mailboxes/${seg(mailboxId)}/folders/${seg(id)}`, {
+			name,
+		}),
 	deleteFolder: (mailboxId: string, id: string) =>
-		apiClient.delete(`/api/v1/mailboxes/${mailboxId}/folders/${id}`),
+		apiClient.delete(`/api/v1/mailboxes/${seg(mailboxId)}/folders/${seg(id)}`),
 
 	// Contacts
 	listContacts: (mailboxId: string) =>
-		apiClient.get(`/api/v1/mailboxes/${mailboxId}/contacts`),
+		apiClient.get(`/api/v1/mailboxes/${seg(mailboxId)}/contacts`),
 	createContact: (mailboxId: string, contact: any) =>
-		apiClient.post(`/api/v1/mailboxes/${mailboxId}/contacts`, contact),
+		apiClient.post(`/api/v1/mailboxes/${seg(mailboxId)}/contacts`, contact),
 	updateContact: (mailboxId: string, id: string, contact: any) =>
-		apiClient.put(`/api/v1/mailboxes/${mailboxId}/contacts/${id}`, contact),
+		apiClient.put(
+			`/api/v1/mailboxes/${seg(mailboxId)}/contacts/${seg(id)}`,
+			contact,
+		),
 	deleteContact: (mailboxId: string, id: string) =>
-		apiClient.delete(`/api/v1/mailboxes/${mailboxId}/contacts/${id}`),
+		apiClient.delete(`/api/v1/mailboxes/${seg(mailboxId)}/contacts/${seg(id)}`),
 
 	// Search
 	searchEmails: (mailboxId: string, params: any) =>
-		apiClient.get(`/api/v1/mailboxes/${mailboxId}/search`, { params }),
+		apiClient.get(`/api/v1/mailboxes/${seg(mailboxId)}/search`, { params }),
 
 	// Admin
 	// The key is never returned by either of these; the response says only
@@ -282,14 +328,16 @@ export default {
 			currentPassword,
 		}),
 	setAccountPassword: (userId: string, password: string) =>
-		apiClient.post(`/api/v1/root/accounts/${userId}/password`, { password }),
+		apiClient.post(`/api/v1/root/accounts/${seg(userId)}/password`, {
+			password,
+		}),
 	// The lock that makes deleting a person two acts instead of one. The
 	// Worker refuses the delete below with 423 while it is on, so hiding the
 	// button is the courtesy and this is the guard.
 	setPersonDeletionLock: (personId: string, locked: boolean) =>
-		apiClient.post(`/api/v1/root/accounts/${personId}/lock`, { locked }),
+		apiClient.post(`/api/v1/root/accounts/${seg(personId)}/lock`, { locked }),
 	deletePerson: (personId: string) =>
-		apiClient.delete(`/api/v1/root/accounts/${personId}`),
+		apiClient.delete(`/api/v1/root/accounts/${seg(personId)}`),
 	// The bucket against the mail that claims it: counts only, no filename.
 	// The repair moves objects onto the name their row gives and loses
 	// nothing; the purge deletes what nothing claims and is a separate press
@@ -310,7 +358,7 @@ export default {
 		}),
 	listOwnLogins: () => apiClient.get("/api/v1/auth/admin/users"),
 	deleteOwnLogin: (userId: string, currentPassword: string) =>
-		apiClient.delete(`/api/v1/auth/admin/users/${userId}`, {
+		apiClient.delete(`/api/v1/auth/admin/users/${seg(userId)}`, {
 			data: { currentPassword },
 		}),
 

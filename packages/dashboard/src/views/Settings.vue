@@ -29,8 +29,9 @@
           </div>
         </div>
 
-        <div class="flex justify-end">
-          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">{{ t("settings.save") }}</button>
+        <div class="flex items-center justify-end gap-3">
+          <p v-if="profileError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ profileError }}</p>
+          <button type="submit" :disabled="profileSaving" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50">{{ t("settings.save") }}</button>
         </div>
       </form>
 
@@ -98,6 +99,7 @@
           </button>
         </form>
         <p v-if="spamFilterMessage" class="text-sm text-green-600 dark:text-green-400 mt-2">{{ spamFilterMessage }}</p>
+        <p v-if="spamFilterError" class="text-sm text-red-600 dark:text-red-400 mt-2" role="alert">{{ spamFilterError }}</p>
         <!-- What the API said to the key just saved. Without this the answer
              arrives whenever the next message does, which on a quiet mailbox
              is hours, and a refused key looks exactly like a working one until
@@ -176,6 +178,7 @@
             {{ t("settings.save") }}
           </button>
           <p v-if="spamPurgeMessage" class="text-sm text-green-600 dark:text-green-400">{{ spamPurgeMessage }}</p>
+          <p v-if="spamPurgeError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ spamPurgeError }}</p>
 
           <p class="text-sm" :class="spamPurgeLastOk === false ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'">
             {{ spamPurgeLastLine }}
@@ -250,6 +253,7 @@
             {{ t("settings.save") }}
           </button>
           <p v-if="autoBackupMessage" class="text-sm text-green-600 dark:text-green-400">{{ autoBackupMessage }}</p>
+          <p v-if="autoBackupError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ autoBackupError }}</p>
 
           <p class="text-sm" :class="autoBackupLastOk === false ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'">
             {{ autoBackupLastLine }}
@@ -384,6 +388,7 @@ import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import { useDateFormat } from "@/composables/useDateFormat";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
+import { holdReload } from "@/services/appUpdate";
 import {
 	getExistingSubscription,
 	isPushSupported,
@@ -391,6 +396,7 @@ import {
 	unsubscribeFromPush,
 } from "@/services/push";
 import { useMailboxStore } from "@/stores/mailboxes";
+import { translateApiError } from "@/utils/apiError";
 import { htmlToPlainText } from "@/utils/htmlToPlainText";
 import { parseMbox, toBase64 } from "@/utils/mbox";
 import {
@@ -441,35 +447,53 @@ const togglePush = async () => {
 	}
 };
 
-// Initialize signature state when mailbox loads
-watch(
-	mailbox,
-	(m) => {
-		if (m?.settings?.signature) {
-			signatureEnabled.value = m.settings.signature.enabled;
-			signatureHtml.value =
-				m.settings.signature.html || m.settings.signature.text || "";
-		}
-	},
-	{ immediate: true },
-);
+/**
+ * Fills a section's fields from the stored settings when a mailbox is opened
+ * -- and only then. These used to follow every change to the mailbox, and
+ * every save replaces it, so saving one section put back what was stored in
+ * all the others: an unsaved signature vanished when the spam settings were
+ * saved. Displays derived from the stored settings (the key badge, the lock,
+ * the last-run lines) still follow every change; they are not being edited.
+ */
+function whenOpened(fill: (m: NonNullable<typeof mailbox.value>) => void) {
+	watch(
+		() => mailbox.value?.id,
+		(id) => {
+			if (id && mailbox.value) fill(mailbox.value);
+		},
+		{ immediate: true },
+	);
+}
 
-// Initialize the display name from settings.fromName -- the actual persisted
-// field (see mergeMailboxSettings server-side); mailbox.name is just a
-// read-only projection of it, so editing it directly wouldn't persist.
-watch(
-	mailbox,
-	(m) => {
-		nameInput.value = m?.settings?.fromName || m?.name || "";
-	},
-	{ immediate: true },
-);
+/**
+ * The failure line a save shows. Every save used to fail in silence -- the
+ * screen kept the values that had not been stored, and nothing said so.
+ */
+const saveFailed = (e: any) => {
+	const fromApi = e?.response?.data?.error;
+	return () => translateApiError(fromApi, t("admin.resend.failed"));
+};
+
+const profileSaving = ref(false);
+const profileError = useLocalizedMessage();
+
+whenOpened((m) => {
+	if (m.settings?.signature) {
+		signatureEnabled.value = m.settings.signature.enabled;
+		signatureHtml.value =
+			m.settings.signature.html || m.settings.signature.text || "";
+	}
+	// settings.fromName is the persisted field (see mergeMailboxSettings
+	// server-side); mailbox.name is only a projection of it.
+	nameInput.value = m.settings?.fromName || m.name || "";
+});
 
 const claudeApiKeyInput = ref("");
 const claudeApiKeyConfigured = ref(false);
 const claudeApiKeyMasked = ref("");
 const spamFilterLoading = ref(false);
 const spamFilterMessage = useLocalizedMessage();
+const spamFilterError = useLocalizedMessage();
 // What the API said to the key that was just saved. Held apart from the
 // health line below, which is the history of what happened to actual mail:
 // a manual test is not a message, and writing one into that history would
@@ -557,22 +581,22 @@ const autoBackupKeep = ref(7);
  * next run. The server enforces it; this is only so the field says so rather
  * than silently discarding what was typed.
  */
-const autoBackupKeepFloor = ref(1);
+// The stored count, which the field may not go below. Follows the stored
+// settings rather than the field, so it moves up only once a save has.
+const autoBackupKeepFloor = computed(
+	() => mailbox.value?.settings?.autoBackup?.keep ?? 1,
+);
 const autoBackupSaving = ref(false);
 const autoBackupMessage = useLocalizedMessage();
+const autoBackupError = useLocalizedMessage();
 const backups = ref<{ name: string; at: string; size: number }[]>([]);
 
-watch(
-	mailbox,
-	(m) => {
-		const backup = m?.settings?.autoBackup;
-		autoBackupEnabled.value = !!backup?.enabled;
-		autoBackupFrequency.value = backup?.frequency ?? "daily";
-		autoBackupKeep.value = backup?.keep ?? 7;
-		autoBackupKeepFloor.value = backup?.keep ?? 1;
-	},
-	{ immediate: true },
-);
+whenOpened((m) => {
+	const backup = m.settings?.autoBackup;
+	autoBackupEnabled.value = !!backup?.enabled;
+	autoBackupFrequency.value = backup?.frequency ?? "daily";
+	autoBackupKeep.value = backup?.keep ?? 7;
+});
 
 const autoBackupLastResult = computed(
 	() => mailbox.value?.settings?.autoBackup?.lastResult,
@@ -602,16 +626,13 @@ const spamPurgeEnabled = ref(false);
 const spamPurgeDays = ref(30);
 const spamPurgeSaving = ref(false);
 const spamPurgeMessage = useLocalizedMessage();
+const spamPurgeError = useLocalizedMessage();
 
-watch(
-	mailbox,
-	(m) => {
-		const retention = m?.settings?.spamRetention;
-		spamPurgeEnabled.value = !!retention?.enabled;
-		spamPurgeDays.value = retention?.days ?? 30;
-	},
-	{ immediate: true },
-);
+whenOpened((m) => {
+	const retention = m.settings?.spamRetention;
+	spamPurgeEnabled.value = !!retention?.enabled;
+	spamPurgeDays.value = retention?.days ?? 30;
+});
 
 const spamPurgeLastResult = computed(
 	() => mailbox.value?.settings?.spamRetention?.lastResult,
@@ -638,19 +659,18 @@ async function saveSpamPurge() {
 	if (spamPurgeSaving.value) return;
 	spamPurgeSaving.value = true;
 	spamPurgeMessage.value = "";
+	spamPurgeError.value = "";
 	try {
-		const mailboxId = route.params.mailboxId as string;
-		await api.updateMailbox(mailboxId, {
-			...(mailbox.value?.settings ?? {}),
+		// This section alone: the server keeps what it does not send.
+		await mailboxStore.updateMailbox(route.params.mailboxId as string, {
 			spamRetention: {
 				enabled: spamPurgeEnabled.value,
 				days: spamPurgeDays.value,
 			},
 		});
-		await mailboxStore.fetchMailbox(mailboxId);
 		spamPurgeMessage.value = () => t("settings.spamPurgeSaved");
-	} catch {
-		spamPurgeMessage.value = "";
+	} catch (e) {
+		spamPurgeError.value = saveFailed(e);
 	} finally {
 		spamPurgeSaving.value = false;
 	}
@@ -675,21 +695,23 @@ async function saveAutoBackup() {
 	if (autoBackupSaving.value) return;
 	autoBackupSaving.value = true;
 	autoBackupMessage.value = "";
+	autoBackupError.value = "";
 	try {
-		const mailboxId = route.params.mailboxId as string;
-		await api.updateMailbox(mailboxId, {
-			...(mailbox.value?.settings ?? {}),
+		await mailboxStore.updateMailbox(route.params.mailboxId as string, {
 			autoBackup: {
 				enabled: autoBackupEnabled.value,
 				frequency: autoBackupFrequency.value,
 				keep: autoBackupKeep.value,
 			},
 		});
-		await mailboxStore.fetchMailbox(mailboxId);
+		// What the server kept: the count can only rise, so a lower one sent
+		// comes back as the stored one.
+		autoBackupKeep.value =
+			mailbox.value?.settings?.autoBackup?.keep ?? autoBackupKeep.value;
 		await loadBackups();
 		autoBackupMessage.value = () => t("settings.autoBackupSaved");
-	} catch {
-		autoBackupMessage.value = "";
+	} catch (e) {
+		autoBackupError.value = saveFailed(e);
 	} finally {
 		autoBackupSaving.value = false;
 	}
@@ -747,6 +769,9 @@ async function restoreMailbox() {
 	restoreError.value = "";
 	restoreDone.value = 0;
 	restoreTotal.value = 0;
+	// A reload for a new build would cut the restore off partway, with
+	// nothing on screen to say how far it had got.
+	const releaseReload = holdReload();
 
 	try {
 		const mailboxId = route.params.mailboxId as string;
@@ -788,6 +813,7 @@ async function restoreMailbox() {
 	} catch {
 		restoreError.value = () => t("settings.restoreFailed");
 	} finally {
+		releaseReload();
 		restoring.value = false;
 		restoreFile.value = null;
 		if (restoreInput.value) restoreInput.value.value = "";
@@ -796,18 +822,23 @@ async function restoreMailbox() {
 
 const stripHtml = (html: string): string => htmlToPlainText(html);
 
-const updateSettings = () => {
-	if (mailbox.value) {
-		const settings = {
-			...mailbox.value.settings,
+const updateSettings = async () => {
+	if (!mailbox.value || profileSaving.value) return;
+	profileSaving.value = true;
+	profileError.value = "";
+	try {
+		await mailboxStore.updateMailbox(route.params.mailboxId as string, {
 			fromName: nameInput.value.trim(),
 			signature: {
 				enabled: signatureEnabled.value,
 				text: stripHtml(signatureHtml.value),
 				html: signatureHtml.value,
 			},
-		};
-		mailboxStore.updateMailbox(route.params.mailboxId as string, settings);
+		});
+	} catch (e) {
+		profileError.value = saveFailed(e);
+	} finally {
+		profileSaving.value = false;
 	}
 };
 
@@ -815,20 +846,21 @@ const saveApiKey = async () => {
 	if (!mailbox.value || !claudeApiKeyInput.value.trim()) return;
 	spamFilterLoading.value = true;
 	spamFilterMessage.value = "";
+	spamFilterError.value = "";
 	keyCheckFailure.value = null;
 	keyCheckDetail.value = null;
 	try {
-		const settings = {
-			...mailbox.value.settings,
-			spamFilter: {
-				...mailbox.value.settings?.spamFilter,
-				claudeApiKey: claudeApiKeyInput.value.trim(),
-			},
-		};
-		await mailboxStore.updateMailbox(
-			route.params.mailboxId as string,
-			settings,
-		);
+		try {
+			await mailboxStore.updateMailbox(route.params.mailboxId as string, {
+				spamFilter: {
+					...mailbox.value.settings?.spamFilter,
+					claudeApiKey: claudeApiKeyInput.value.trim(),
+				},
+			});
+		} catch (e) {
+			spamFilterError.value = saveFailed(e);
+			return;
+		}
 		claudeApiKeyInput.value = "";
 
 		// The key is stored either way; this only says whether it works. A
@@ -880,10 +912,11 @@ const toggleDeletionLock = async () => {
 	deleteError.value = "";
 	try {
 		await mailboxStore.updateMailbox(route.params.mailboxId as string, {
-			...mailbox.value.settings,
 			deletionLocked: next,
 		});
 		deletionLocked.value = next;
+	} catch (e) {
+		deleteError.value = saveFailed(e);
 	} finally {
 		lockLoading.value = false;
 	}
@@ -923,22 +956,20 @@ const removeApiKey = async () => {
 	if (!confirm(t("settings.spamFilterConfirmRemove"))) return;
 	spamFilterLoading.value = true;
 	spamFilterMessage.value = "";
+	spamFilterError.value = "";
 	// The refusal belonged to the key being removed.
 	keyCheckFailure.value = null;
 	keyCheckDetail.value = null;
 	try {
-		const settings = {
-			...mailbox.value.settings,
+		await mailboxStore.updateMailbox(route.params.mailboxId as string, {
 			spamFilter: {
 				...mailbox.value.settings?.spamFilter,
 				claudeApiKey: "",
 			},
-		};
-		await mailboxStore.updateMailbox(
-			route.params.mailboxId as string,
-			settings,
-		);
+		});
 		claudeApiKeyInput.value = "";
+	} catch (e) {
+		spamFilterError.value = saveFailed(e);
 	} finally {
 		spamFilterLoading.value = false;
 	}

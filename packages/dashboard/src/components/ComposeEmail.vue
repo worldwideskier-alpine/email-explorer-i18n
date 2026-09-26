@@ -192,6 +192,7 @@ import { useEmailStore } from "@/stores/emails";
 import { useMailboxStore } from "@/stores/mailboxes";
 import { useUIStore } from "@/stores/ui";
 import { splitAddresses } from "@/utils/addresses";
+import { translateApiError } from "@/utils/apiError";
 import {
 	fileToAttachment,
 	formatBytes,
@@ -230,6 +231,9 @@ const isPlainText = ref(false);
 const htmlBeforePlainText = ref<string | null>(null);
 const generatedPlainText = ref<string | null>(null);
 const draftId = ref<string | null>(null);
+// The message a reply answers, kept through a draft: resumed without it, a
+// reply was sent as a new message and lost its thread.
+const replyToId = ref<string | null>(null);
 const error = useLocalizedMessage();
 
 const attachments = ref<PendingAttachment[]>([]);
@@ -369,6 +373,7 @@ const closeModal = () => {
 	htmlBeforePlainText.value = null;
 	generatedPlainText.value = null;
 	draftId.value = null;
+	replyToId.value = null;
 	uiStore.closeComposeModal();
 };
 
@@ -394,6 +399,7 @@ watch(isComposeModalOpen, (isOpen) => {
 		isPlainText.value = false;
 		plainBody.value = "";
 		draftId.value = null;
+		replyToId.value = null;
 		cc.value = "";
 		bcc.value = "";
 		showCcBcc.value = false;
@@ -411,13 +417,16 @@ watch(isComposeModalOpen, (isOpen) => {
 			subject.value = original.subject || "";
 			body.value = original.body || "";
 			draftId.value = original.id;
+			replyToId.value = original.draft_reply_to ?? null;
 		} else if (options.mode === "reply" && original) {
+			replyToId.value = original.id;
 			to.value = original.sender;
 			subject.value = original.subject.startsWith("Re: ")
 				? original.subject
 				: `Re: ${original.subject}`;
 			body.value = `<p><br></p>${sigBlock}${quotedBlock(original)}`;
 		} else if (options.mode === "reply-all" && original) {
+			replyToId.value = original.id;
 			// Everyone who saw the original, minus this mailbox: the sender and
 			// the other To: addresses go to To, the original Cc: stays Cc. The
 			// stored fields are comma-separated lists, so a message with
@@ -498,7 +507,12 @@ const saveDraft = async () => {
 			bcc: bcc.value,
 			from: currentMailbox.value.email,
 			subject: subject.value,
-			html: isPlainText.value ? plainBody.value : body.value,
+			// As HTML either way. Plain text saved as it was came back through
+			// the rich editor as one paragraph, its line breaks gone.
+			html: isPlainText.value
+				? plainTextToSimpleHtml(plainBody.value)
+				: body.value,
+			replyTo: replyToId.value ?? undefined,
 		};
 
 		if (draftId.value) {
@@ -577,20 +591,25 @@ const send = async () => {
 		// Use appropriate API endpoint based on mode
 		if (
 			composeOptions.value.mode === "reply" ||
-			composeOptions.value.mode === "reply-all"
+			composeOptions.value.mode === "reply-all" ||
+			(composeOptions.value.mode === "draft" && replyToId.value)
 		) {
-			const originalEmailId = composeOptions.value.originalEmail?.id;
+			// A resumed reply draft answers what it was written to answer.
+			const originalEmailId =
+				composeOptions.value.mode === "draft"
+					? replyToId.value
+					: composeOptions.value.originalEmail?.id;
 			if (originalEmailId) {
 				await api.replyToEmail(mailboxId, originalEmailId, emailData);
 			} else {
-				throw new Error(t("compose.originalEmailNotFound"));
+				throw new ComposeError("compose.originalEmailNotFound");
 			}
 		} else if (composeOptions.value.mode === "forward") {
 			const originalEmailId = composeOptions.value.originalEmail?.id;
 			if (originalEmailId) {
 				await api.forwardEmail(mailboxId, originalEmailId, emailData);
 			} else {
-				throw new Error(t("compose.originalEmailNotFound"));
+				throw new ComposeError("compose.originalEmailNotFound");
 			}
 		} else {
 			await emailStore.sendEmail(mailboxId, emailData);
@@ -613,12 +632,26 @@ const send = async () => {
 		closeModal();
 		showSuccessToast(t("compose.emailSentSuccess"));
 	} catch (e: any) {
+		// A refusal from the server, or one of ours by its key. Ours used to
+		// be thrown translated and then dropped here, which read only the
+		// server's answer, so the reason became "an unexpected error".
 		const fromApi = e.response?.data?.error;
-		const errorMessage = () => fromApi || t("compose.unexpectedError");
+		const ownKey = e instanceof ComposeError ? e.key : null;
+		const errorMessage = () =>
+			ownKey
+				? t(ownKey)
+				: translateApiError(fromApi, t("compose.unexpectedError"));
 		error.value = errorMessage;
 		showErrorToast(errorMessage());
 	} finally {
 		isLoading.value = false;
 	}
 };
+
+/** A send refused before it reached the server, named by its message key. */
+class ComposeError extends Error {
+	constructor(readonly key: string) {
+		super(key);
+	}
+}
 </script>
