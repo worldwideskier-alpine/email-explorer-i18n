@@ -41,6 +41,8 @@ interface EmailData {
 	in_reply_to?: string | null;
 	email_references?: string | null;
 	thread_id?: string | null;
+	/** The sender's Message-ID, brackets stripped; null for mail sent here. */
+	message_id?: string | null;
 }
 
 /** The most results one search returns. */
@@ -1445,10 +1447,17 @@ export class MailboxDO extends DurableObject<Env> {
 	 * pick the wrong messages to delete. See expiredSpamIds.
 	 */
 	async listSpamEmailDates(): Promise<
-		{ id: string; date: string | null; receivedAt: string | null }[]
+		{
+			id: string;
+			date: string | null;
+			receivedAt: string | null;
+			spamSince: string | null;
+		}[]
 	> {
 		const rows = this.ctx.storage.sql
-			.exec("SELECT id, date, received_at FROM emails WHERE folder_id = 'spam'")
+			.exec(
+				"SELECT id, date, received_at, spam_since FROM emails WHERE folder_id = 'spam'",
+			)
 			.toArray();
 		const text = (value: unknown) =>
 			value === null || value === undefined ? null : String(value);
@@ -1456,6 +1465,7 @@ export class MailboxDO extends DurableObject<Env> {
 			id: String(row.id),
 			date: text(row.date),
 			receivedAt: text(row.received_at),
+			spamSince: text(row.spam_since),
 		}));
 	}
 
@@ -1785,18 +1795,47 @@ export class MailboxDO extends DurableObject<Env> {
 			return false;
 		}
 
-		this.#qb
-			.update({
-				tableName: "emails",
-				data: { folder_id: folderId },
-				where: {
-					conditions: "id = ?",
-					params: [id],
-				},
-			})
-			.execute();
+		// Retention runs from when a message became spam, not from its date:
+		// an old message filed as spam today is not already expired. Moving
+		// spam to spam keeps its clock; leaving spam stops it.
+		this.ctx.storage.sql.exec(
+			`UPDATE emails
+			    SET spam_since = CASE
+			            WHEN ?1 != 'spam' THEN NULL
+			            WHEN folder_id = 'spam' THEN spam_since
+			            ELSE ?2
+			        END,
+			        folder_id = ?1
+			  WHERE id = ?3`,
+			folderId,
+			new Date().toISOString(),
+			id,
+		);
 
 		return true;
+	}
+
+	/** Records that a new-mail notification went out for this message. */
+	async markNotified(id: string): Promise<void> {
+		this.ctx.storage.sql.exec(
+			"UPDATE emails SET notified = 1 WHERE id = ?",
+			id,
+		);
+	}
+
+	/**
+	 * Whether this message's notification may still be on a device, clearing
+	 * the answer in the same step: a notification is dismissed once. Only a
+	 * message that was announced gets a dismissal -- the rest are pushes that
+	 * show nothing, which browsers may punish by dropping the subscription.
+	 */
+	async takeNotified(id: string): Promise<boolean> {
+		return (
+			this.ctx.storage.sql.exec(
+				"UPDATE emails SET notified = 0 WHERE id = ? AND notified = 1",
+				id,
+			).rowsWritten > 0
+		);
 	}
 
 	async searchEmails(options: {
@@ -1875,13 +1914,15 @@ export class MailboxDO extends DurableObject<Env> {
 		email: EmailData,
 		attachments: AttachmentData[],
 	) {
+		const now = new Date().toISOString();
 		this.#qb
 			.insert({
 				tableName: "emails",
 				data: {
 					...email,
 					folder_id: folder,
-					received_at: new Date().toISOString(),
+					received_at: now,
+					spam_since: folder === "spam" ? now : null,
 				},
 			})
 			.execute();

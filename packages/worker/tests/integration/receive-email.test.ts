@@ -254,12 +254,17 @@ describe("Incoming Email Threading Tests", () => {
 			);
 			const replyEmailBody = await replyEmail.json<any>();
 
-			expect(replyEmailBody.in_reply_to).toBe(received.id);
+			// The incoming message's own Message-ID, which is what the sender's
+			// client knows it by. Our row id used to go here and out in the
+			// headers, and the reply started a thread of its own over there.
+			expect(replyEmailBody.in_reply_to).toBe("ext-reply@external.com");
 
-			// References should include the incoming email's references chain + the incoming email ID
 			const references = JSON.parse(replyEmailBody.email_references);
-			expect(references).toContain("ext-original@external.com");
-			expect(references).toContain(received.id);
+			expect(references).toEqual([
+				"ext-original@external.com",
+				"ext-reply@external.com",
+			]);
+			expect(references).not.toContain(received.id);
 
 			// References should NOT contain angle brackets (no double-wrapping)
 			for (const ref of references) {

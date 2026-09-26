@@ -51,7 +51,22 @@ async function place(subject: string, folder: string, date: string) {
 		},
 	);
 	expect(res.status, `importing ${subject}`).toBe(201);
-	return (await res.json<{ id: string }>()).id;
+	const { id } = await res.json<{ id: string }>();
+	if (folder === "spam") {
+		// In spam since its date, as a message that old would have been. The
+		// import itself files it as spam as of now, which is when a restore
+		// puts it there.
+		// @ts-expect-error test binding
+		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+		await runInDurableObject(stub, async (_i, state) => {
+			state.storage.sql.exec(
+				"UPDATE emails SET spam_since = ? WHERE id = ?",
+				date,
+				id,
+			);
+		});
+	}
+	return id;
 }
 
 describe("the daily maintenance pass", () => {

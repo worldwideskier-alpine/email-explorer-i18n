@@ -151,6 +151,34 @@ export const mailboxMigrations: Migration[] = [
             UPDATE emails SET received_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now');
         `,
 	},
+	{
+		/**
+		 * Three things a message row could not say.
+		 *
+		 * `message_id` is the Message-ID the sender gave it. Replies used the
+		 * row's own id for In-Reply-To and References, which names no message
+		 * anyone else has: the other side's client could not thread the reply,
+		 * and an internal id went out in the headers.
+		 *
+		 * `spam_since` is when it entered the spam folder. Retention was
+		 * counted from the message's date, so an old message filed as spam
+		 * today was deleted at the next nightly run. Rows already in spam keep
+		 * the clock they had, which was their date.
+		 *
+		 * `notified` says a new-mail notification went out for it. Dismissals
+		 * went to every device for every message read, deleted or filed --
+		 * spam and restored mail included, which were never announced -- and a
+		 * push that shows nothing is one a browser may answer by withdrawing
+		 * the subscription.
+		 */
+		name: "9_message_id_spam_since_notified",
+		sql: `
+            ALTER TABLE emails ADD COLUMN message_id TEXT;
+            ALTER TABLE emails ADD COLUMN spam_since TEXT;
+            ALTER TABLE emails ADD COLUMN notified INTEGER NOT NULL DEFAULT 0;
+            UPDATE emails SET spam_since = date WHERE folder_id = 'spam';
+        `,
+	},
 ];
 
 export const authMigrations: Migration[] = [

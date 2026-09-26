@@ -167,6 +167,17 @@ fork's work. This fork ships by being forked.
   others with their sessions. The dashboard hands the browser's subscription
   to each new session (`rebindPushSubscription`), since the browser keeps it
   and the settings switch reads it from there. `sessions-end.test.ts`.
+- **Threading uses the sender's Message-ID.** Ingest keeps it in
+  `message_id`; a reply names it in In-Reply-To and References, and never a
+  row id, which no other client has seen (`replyThreading`,
+  `routes/reply-forward.ts`). Mail sent from here has none we know -- Resend
+  assigns it and does not say -- so a reply to it carries no In-Reply-To and
+  keeps the thread through References.
+- **A notification is dismissed only if it was sent.** Delivery sets
+  `notified` when a device was told; mark-read, delete, bin and "spam" ask
+  `takeNotified`, which clears it in the same step. A dismissal is a push that
+  shows nothing, and sending one for mail no device had seen is how a browser
+  comes to withdraw the subscription.
 - **Mailbox ownership.** A grant says who a mailbox belongs to, and it is the
   only thing that grants access: the middleware in `fetch()` and every
   mailbox-scoped route ask `personHoldsMailbox`, and the mailbox list filters
@@ -213,6 +224,9 @@ fork's work. This fork ships by being forked.
   there is none; `spam-purge.test.ts` holds it. "Arrived" is `received_at`,
   stamped at ingest, never `date`: a restored message carries its own date,
   years back, and by that it counted as archived when no archive held it.
+  Expiry is a third clock, `spam_since`, set when a message enters spam and
+  cleared when it leaves: counted from `date`, an old message filed as spam
+  today was deleted the same night.
 - **The nightly run has to survive being cut off**, because it was not. On
   2026-09-04 the whole record was `{"startedAt":"2026-09-03T18:14:09.407Z"}`:
   `scheduled-run.ts` writes `backups` whether the pass returns *or throws*, so

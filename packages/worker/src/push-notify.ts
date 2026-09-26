@@ -9,25 +9,26 @@ interface NotifyPayload {
 }
 
 /**
- * Sends a Web Push notification to every device subscribed by the given
- * users. Best-effort: a failed/expired subscription is removed and never
- * throws, so a push failure can't break email ingestion.
+ * Sends a Web Push notification to every device subscribed to a mailbox, and
+ * says how many devices it tried. A failed or expired subscription is removed
+ * and does not stop the others, but anything before the sends -- the auth
+ * Durable Object, a malformed VAPID key -- throws. Both callers below catch.
  */
 export async function notifyMailboxSubscribers(
 	env: Env,
 	mailboxId: string,
 	payload: NotifyPayload,
-): Promise<void> {
-	if (!env.VAPID_PRIVATE_KEY) return;
+): Promise<number> {
+	if (!env.VAPID_PRIVATE_KEY) return 0;
 
 	const authId = env.MAILBOX.idFromName("AUTH");
 	const authDO = env.MAILBOX.get(authId);
 
 	const userIds = await authDO.getUserIdsForMailbox(mailboxId);
-	if (userIds.length === 0) return;
+	if (userIds.length === 0) return 0;
 
 	const subscriptions = await authDO.getPushSubscriptionsForUsers(userIds);
-	if (subscriptions.length === 0) return;
+	if (subscriptions.length === 0) return 0;
 
 	const privateJWK = JSON.parse(env.VAPID_PRIVATE_KEY);
 
@@ -64,6 +65,7 @@ export async function notifyMailboxSubscribers(
 			}
 		}),
 	);
+	return subscriptions.length;
 }
 
 /**
@@ -120,21 +122,26 @@ export function buildNewEmailPayload(
  * Durable Object, a malformed VAPID key -- failed the delivery of mail that
  * had already arrived: a bounce, or a second copy when the sender retried.
  * Only the send to each device was guarded before.
+ *
+ * Answers whether any device was sent the notification, which is what
+ * decides whether the message is dismissed later.
  */
 export async function notifyNewEmail(
 	env: Env,
 	mailboxId: string,
 	email: { id: string; sender: string; subject: string },
-): Promise<void> {
+): Promise<boolean> {
 	try {
 		const mailboxLabel = await getMailboxLabel(env, mailboxId);
-		await notifyMailboxSubscribers(
+		const devices = await notifyMailboxSubscribers(
 			env,
 			mailboxId,
 			buildNewEmailPayload(mailboxId, mailboxLabel, email),
 		);
+		return devices > 0;
 	} catch (e) {
 		console.error("Push notification failed:", e);
+		return false;
 	}
 }
 
@@ -142,17 +149,28 @@ export async function notifyNewEmail(
  * Closes the notification for one specific email on every subscribed device
  * without showing anything new -- used when the message gets marked read
  * somewhere else, e.g. opened on a PC while the phone still shows it.
+ *
+ * Only for a message that was announced: the mailbox's `takeNotified` says
+ * so, and asking it is the caller's job, since the caller holds the stub.
+ *
+ * Never throws. It runs after the change it follows has been stored -- a
+ * mark-read, a delete, a move -- and a bad VAPID key or an unavailable auth
+ * object turned each of those into a 500 for something that had happened.
  */
 export async function dismissEmailNotification(
 	env: Env,
 	mailboxId: string,
 	emailId: string,
 ): Promise<void> {
-	await notifyMailboxSubscribers(env, mailboxId, {
-		type: "dismiss",
-		tag: emailId,
-		title: "",
-		body: "",
-		url: "",
-	});
+	try {
+		await notifyMailboxSubscribers(env, mailboxId, {
+			type: "dismiss",
+			tag: emailId,
+			title: "",
+			body: "",
+			url: "",
+		});
+	} catch (e) {
+		console.error("Push dismissal failed:", e);
+	}
 }
