@@ -70,6 +70,25 @@ root's business.
   is a spare, not a second root: the role does not move, and there is no
   button that hands it to somebody else.
 
+### Setting a password
+
+Every address in the list has **Change password** beside it. It sets a new
+password for that login with no mail involved, and asks for root's own
+current password: setting somebody's password is taking their account, and
+a root session alone -- left open, or copied -- must not be enough.
+
+This is the way back in for an administrator who has lost their password,
+and for root itself: signed in with its spare address, root can set the
+other login's password.
+
+### Password reset sender
+
+The address "forgot password" and address-change mail is sent from. It must
+be on a domain verified in Resend; nobody reads replies to it. Until it is
+set, "forgot password" is off. If the deployment sets `ACCOUNT_RECOVERY_FROM`
+(see [Deploying your own](../deploying-your-own.md)), that one is used and
+this section says so.
+
 ### Deleting a person
 
 Deleting a person takes everything of theirs: their logins, their mailboxes,

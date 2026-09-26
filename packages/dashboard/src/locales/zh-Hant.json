@@ -456,6 +456,13 @@
 			"confirmPurge": "將永久刪除 {count} 個沒有任何郵件認領的附件檔案。無法復原。是否繼續？",
 			"unreadable": "無法讀取儲存的狀態。",
 			"failed": "無法執行。"
+		},
+		"recovery": {
+			"title": "密碼重設寄件者",
+			"description": "密碼重設與地址變更郵件會從此地址寄出。其網域必須已在 Resend 中驗證。",
+			"current": "正從 {address} 寄出。",
+			"off": "未設定：「忘記密碼」已關閉。",
+			"byDeployment": "正在使用部署本身的設定，其優先於此設定。"
 		}
 	}
 }

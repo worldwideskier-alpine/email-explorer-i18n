@@ -456,6 +456,13 @@
 			"confirmPurge": "Natrvalo sa zmaže {count} súborov príloh, ku ktorým sa nehlási žiadna správa. Nedá sa vrátiť. Pokračovať?",
 			"unreadable": "Stav úložiska sa nepodarilo prečítať.",
 			"failed": "Nepodarilo sa to vykonať."
+		},
+		"recovery": {
+			"title": "Odosielateľ obnovenia hesla",
+			"description": "E-maily na obnovenie hesla a zmenu adresy sa odosielajú z tejto adresy. Jej doména musí byť overená v Resende.",
+			"current": "Odosiela sa z {address}.",
+			"off": "Nenastavené: „Zabudnuté heslo“ je vypnuté.",
+			"byDeployment": "Používa sa vlastné nastavenie nasadenia, ktoré má prednosť pred týmto."
 		}
 	}
 }

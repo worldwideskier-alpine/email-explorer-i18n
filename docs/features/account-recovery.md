@@ -43,7 +43,16 @@ To enable Account Recovery, you need:
 
 ### Enable Account Recovery
 
-Edit your worker configuration file (typically `src/index.ts` or `dev/index.ts`):
+Set the **password reset sender** on `/root`, signed in as root. That is the
+whole of it: the address is kept in the deployment's bucket, and "forgot
+password" turns on as soon as it is saved. It must be on a domain verified in
+Resend.
+
+Two other sources exist, and both take precedence over `/root` in this
+order: the deployment's `ACCOUNT_RECOVERY_FROM` variable or secret (see
+[Deploying your own](../deploying-your-own.md)), and then -- only when
+neither of those is set -- an `accountRecovery` option in code, for somebody
+embedding the package:
 
 ```typescript
 export default EmailExplorer({
@@ -64,7 +73,8 @@ export default EmailExplorer({
 
 ### Disable Account Recovery
 
-To disable Account Recovery, simply remove or omit the `accountRecovery` configuration:
+Remove the sender on `/root` (and leave `ACCOUNT_RECOVERY_FROM` unset). With
+no sender anywhere the flow is off. In code, that is omitting the option:
 
 ```typescript
 export default EmailExplorer({

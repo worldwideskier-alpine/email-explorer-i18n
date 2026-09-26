@@ -1,7 +1,14 @@
 import { env, runInDurableObject, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { hashPassword } from "../../src/password";
-import { authenticatedFetch, testAuthBeforeAll } from "./utils";
+import {
+	authenticatedFetch,
+	enableAccountRecovery,
+	testAuthBeforeAll,
+} from "./utils";
+
+// Reset and address-change mail need a sender, which root sets on /root.
+beforeEach(() => enableAccountRecovery());
 
 const EMAIL = "owner@example.com";
 const PASSWORD = "correct-horse-battery-staple";

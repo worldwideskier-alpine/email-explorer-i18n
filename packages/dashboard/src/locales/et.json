@@ -456,6 +456,13 @@
 			"confirmPurge": "Jäädavalt kustutatakse {count} manusfaili, mida ükski kiri endale ei nõua. Tagasi võtta ei saa. Kas jätkata?",
 			"unreadable": "Hoidla seisundit ei õnnestunud lugeda.",
 			"failed": "Seda ei õnnestunud käivitada."
+		},
+		"recovery": {
+			"title": "Parooli lähtestamise saatja",
+			"description": "Parooli lähtestamise ja aadressi muutmise kirjad saadetakse sellelt aadressilt. Selle domeen peab olema Resendis kinnitatud.",
+			"current": "Saadetakse aadressilt {address}.",
+			"off": "Määramata: „Unustasin parooli“ on välja lülitatud.",
+			"byDeployment": "Kasutusel on juurutuse enda säte, mis on selle ees eelistatud."
 		}
 	}
 }

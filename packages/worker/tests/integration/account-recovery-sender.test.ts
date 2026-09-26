@@ -1,25 +1,30 @@
-import { SELF } from "cloudflare:test";
-import { beforeEach, describe, expect, it } from "vitest";
-import { testAuthBeforeAll } from "./utils";
+import { createExecutionContext, env, SELF } from "cloudflare:test";
+import { describe, expect, it } from "vitest";
+import { recoveryFromEmail } from "../../src/deployment-config";
 
 /**
- * That account recovery is still switched on for THIS deployment.
+ * Where the "forgot password" flow gets its sender.
  *
- * The from-address moved from being read straight off
- * `config.accountRecovery` to being resolved -- environment variable first,
- * then the `EmailExplorer({ accountRecovery })` option -- so that a fork can
- * set its own without editing source. This deployment sets the option in
- * dev/index.ts and leaves the variable blank, which is the case that has to
- * keep working.
+ * It was a string in dev/index.ts, which every fork inherited: a fork that
+ * set nothing sent its resets as this deployment's address, on a domain its
+ * Resend account cannot send from, and they never arrived. It is set on
+ * /root now and kept in the bucket; the deployment's ACCOUNT_RECOVERY_FROM
+ * variable, when set, still wins.
  *
- * Getting it wrong is quiet. The "forgot password" flow answers the same way
- * whether it sent anything or not, on purpose: saying otherwise would tell a
- * stranger which addresses have accounts. So a resolution bug would not show
- * up as an error anywhere; recovery would simply stop, and nobody would find
- * out until they needed it.
+ * Getting it wrong is quiet. The flow answers the same way whether it sent
+ * anything or not, on purpose -- saying otherwise would tell a stranger which
+ * addresses have accounts -- so a broken resolution shows up nowhere until
+ * somebody needs it.
  */
 
-const settings = () => SELF.fetch("http://local.test/api/v1/settings");
+const settings = async () =>
+	(
+		await (
+			await SELF.fetch("http://local.test/api/v1/settings")
+		).json<{
+			accountRecovery: { enabled: boolean };
+		}>()
+	).accountRecovery.enabled;
 
 const forgotPassword = (email: string) =>
 	SELF.fetch("http://local.test/api/v1/auth/forgot-password", {
@@ -28,30 +33,99 @@ const forgotPassword = (email: string) =>
 		body: JSON.stringify({ email }),
 	});
 
-describe("account recovery on this deployment", () => {
-	beforeEach(async () => {
-		await testAuthBeforeAll();
+/** Root, signed in: the first account registered. */
+async function root(): Promise<string> {
+	await SELF.fetch("http://local.test/api/v1/auth/register", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ email: "op@example.com", password: "password123" }),
+	});
+	const login = await SELF.fetch("http://local.test/api/v1/auth/login", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ email: "op@example.com", password: "password123" }),
+	});
+	return (await login.json<{ id: string }>()).id;
+}
+
+const setSender = (token: string, fromEmail: string) =>
+	SELF.fetch("http://local.test/api/v1/root/settings/account-recovery", {
+		method: "PUT",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${token}`,
+		},
+		body: JSON.stringify({ fromEmail }),
 	});
 
-	// dev/wrangler.jsonc carries ACCOUNT_RECOVERY_FROM as an empty string so a
-	// fork has somewhere to put its own address. Empty must not read as
-	// "configured to nothing" and turn the flow off.
-	it("is reported as available", async () => {
-		const body = await (await settings()).json<{
-			accountRecovery: { enabled: boolean };
-		}>();
-		expect(body.accountRecovery.enabled).toBe(true);
+// No fixture account: root is whoever registers first, as on a new deployment.
+describe("the password-reset sender", () => {
+	/** Nothing in the source names one, so a new deployment starts with it off. */
+	it("is off until somebody sets one", async () => {
+		expect(await settings()).toBe(false);
+		expect((await forgotPassword("test@example.com")).status).toBe(503);
 	});
 
-	// 503 is the "no from-address anywhere" answer. Anything else means one
-	// was found and the flow ran.
-	it("does not refuse a reset request as unconfigured", async () => {
+	it("is set by root on /root, and turns the flow on", async () => {
+		const token = await root();
+		const saved = await setSender(token, " NoReply@Example.com ");
+		expect(saved.status).toBe(200);
+		expect(await saved.json()).toEqual({
+			fromEmail: "noreply@example.com",
+			setByDeployment: false,
+			enabled: true,
+		});
+		expect(await settings()).toBe(true);
 		expect((await forgotPassword("test@example.com")).status).not.toBe(503);
+		// The same answer for an address with no account.
+		expect((await forgotPassword("nobody@example.com")).status).toBe(
+			(await forgotPassword("test@example.com")).status,
+		);
 	});
 
-	it("answers the same for an address with no account", async () => {
-		const known = await forgotPassword("test@example.com");
-		const unknown = await forgotPassword("nobody@example.com");
-		expect(unknown.status).toBe(known.status);
+	it("is turned off again by clearing it", async () => {
+		const token = await root();
+		await setSender(token, "noreply@example.com");
+		expect((await setSender(token, "")).status).toBe(200);
+		expect(await settings()).toBe(false);
+	});
+
+	it("is refused when it is not an address", async () => {
+		const token = await root();
+		expect((await setSender(token, "not an address")).status).toBe(400);
+		expect(await settings()).toBe(false);
+	});
+
+	/**
+	 * The variable is set per deployment, in GitHub, by whoever runs it; it
+	 * wins over the screen. A blank one -- which is what an unset variable
+	 * arrives as -- does not.
+	 */
+	it("gives way to the deployment's own variable, but not to a blank one", async () => {
+		const token = await root();
+		await setSender(token, "screen@example.com");
+		expect(await recoveryFromEmail(env as never)).toBe("screen@example.com");
+		expect(
+			await recoveryFromEmail({
+				...(env as object),
+				ACCOUNT_RECOVERY_FROM: "variable@example.com",
+			} as never),
+		).toBe("variable@example.com");
+		expect(
+			await recoveryFromEmail({
+				...(env as object),
+				ACCOUNT_RECOVERY_FROM: "  ",
+			} as never),
+		).toBe("screen@example.com");
+
+		const worker = await import("../../dev/index");
+		const state = await worker.default.fetch(
+			new Request("http://local.test/api/v1/root/settings/account-recovery", {
+				headers: { Authorization: `Bearer ${token}` },
+			}),
+			{ ...(env as object), ACCOUNT_RECOVERY_FROM: "variable@example.com" },
+			createExecutionContext(),
+		);
+		expect(await state.json()).toMatchObject({ setByDeployment: true });
 	});
 });

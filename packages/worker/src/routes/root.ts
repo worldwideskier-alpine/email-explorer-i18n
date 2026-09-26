@@ -30,6 +30,11 @@ import {
 	repairMisnamedAttachments,
 	surveyAttachments,
 } from "../attachment-sweep";
+import {
+	RECOVERY_SENDER_KEY,
+	recoveryFromEmail,
+	storedRecoverySender,
+} from "../deployment-config";
 import { destroyMailboxCompletely } from "../mailbox-destroy";
 import { readMaintenanceRecord } from "../maintenance-record";
 import { roleOf } from "../roles";
@@ -57,6 +62,8 @@ const SuccessResponseSchema = z.object({ status: z.string() });
 const PersonSchema = z.object({
 	personId: z.string(),
 	emails: z.array(z.string()),
+	/** Each sign-in address with the id a password is set against. */
+	logins: z.array(z.object({ id: z.string(), email: z.string() })),
 	role: z.enum(["root", "admin"]),
 	createdAt: z.number(),
 	/** Protected from deletion; see isPersonDeletionLocked. */
@@ -411,7 +418,13 @@ export class PostAccountPassword extends OpenAPIRoute {
 		tags: ["Root"],
 		request: {
 			params: z.object({ userId: z.string() }),
-			body: contentJson(z.object({ password: z.string().min(8) })),
+			body: contentJson(
+				z.object({
+					password: z.string().min(8),
+					/** Root's own, as adding a spare address asks for it. */
+					currentPassword: z.string(),
+				}),
+			),
 		},
 		responses: {
 			"200": { description: "Set", ...contentJson(SuccessResponseSchema) },
@@ -425,6 +438,16 @@ export class PostAccountPassword extends OpenAPIRoute {
 		if (session instanceof Response) return session;
 
 		const data = await this.getValidatedData<typeof this.schema>();
+		// Setting somebody's password is taking their account, and a root
+		// session alone -- one left open, or copied -- would otherwise be
+		// enough to take any account on the deployment, root's own spare
+		// included. The same proof adding a spare asks for.
+		const refused = await proveCurrentPassword(
+			c,
+			session,
+			data.body.currentPassword,
+		);
+		if (refused) return refused;
 		const result = await authDO(c.env).setUserPassword(
 			data.params.userId,
 			data.body.password,
@@ -607,4 +630,90 @@ export class DeleteAccount extends OpenAPIRoute {
 			mailboxes: result.mailboxIds.length,
 		});
 	}
+}
+
+const RecoverySenderSchema = z.object({
+	/** What root saved here, or null. */
+	fromEmail: z.string().nullable(),
+	/** Whether the deployment's ACCOUNT_RECOVERY_FROM is set, which wins. */
+	setByDeployment: z.boolean(),
+	/** Whether "forgot password" is on at all, from whichever source. */
+	enabled: z.boolean(),
+});
+
+/**
+ * The address password-reset mail is sent from, as root has set it.
+ *
+ * It used to be a string in `dev/index.ts`, which every fork inherited: a
+ * fork that set nothing sent its resets as this repository's address, on a
+ * domain its Resend account cannot send from, and they never arrived.
+ */
+export class GetRecoverySender extends OpenAPIRoute {
+	schema = {
+		summary: "The password-reset sender (root only)",
+		operationId: "getRecoverySender",
+		tags: ["Root"],
+		responses: {
+			"200": {
+				description: "Sender",
+				...contentJson(RecoverySenderSchema),
+			},
+			...forbidden,
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = requireRoot(c);
+		if (session instanceof Response) return session;
+		return c.json(await recoverySenderState(c.env));
+	}
+}
+
+export class PutRecoverySender extends OpenAPIRoute {
+	schema = {
+		summary: "Set or clear the password-reset sender (root only)",
+		operationId: "setRecoverySender",
+		tags: ["Root"],
+		request: {
+			body: contentJson(
+				z.object({
+					/** An address, or "" to clear it and turn the flow off. */
+					fromEmail: z.union([z.string().trim().email(), z.literal("")]),
+				}),
+			),
+		},
+		responses: {
+			"200": {
+				description: "Saved",
+				...contentJson(RecoverySenderSchema),
+			},
+			...forbidden,
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = requireRoot(c);
+		if (session instanceof Response) return session;
+
+		const { fromEmail } = (await this.getValidatedData<typeof this.schema>())
+			.body;
+		const address = fromEmail.trim().toLowerCase();
+		if (address) {
+			await c.env.BUCKET.put(
+				RECOVERY_SENDER_KEY,
+				JSON.stringify({ fromEmail: address }),
+			);
+		} else {
+			await c.env.BUCKET.delete(RECOVERY_SENDER_KEY);
+		}
+		return c.json(await recoverySenderState(c.env));
+	}
+}
+
+async function recoverySenderState(env: Env) {
+	return {
+		fromEmail: (await storedRecoverySender(env)) ?? null,
+		setByDeployment: Boolean(env.ACCOUNT_RECOVERY_FROM?.trim()),
+		enabled: (await recoveryFromEmail(env)) !== undefined,
+	};
 }

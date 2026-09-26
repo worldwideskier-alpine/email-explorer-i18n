@@ -456,6 +456,13 @@
 			"confirmPurge": "Trvale se smaže {count} souborů příloh, ke kterým se nehlásí žádná zpráva. Nelze vzít zpět. Pokračovat?",
 			"unreadable": "Stav úložiště se nepodařilo přečíst.",
 			"failed": "Nepodařilo se to provést."
+		},
+		"recovery": {
+			"title": "Odesílatel obnovení hesla",
+			"description": "E-maily pro obnovení hesla a změnu adresy se odesílají z této adresy. Její doména musí být ověřena v Resendu.",
+			"current": "Odesílá se z {address}.",
+			"off": "Nenastaveno: „Zapomenuté heslo“ je vypnuto.",
+			"byDeployment": "Používá se vlastní nastavení nasazení, které má přednost před tímto."
 		}
 	}
 }

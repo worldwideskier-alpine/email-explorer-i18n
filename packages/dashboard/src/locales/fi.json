@@ -456,6 +456,13 @@
 			"confirmPurge": "Poistetaan pysyvästi {count} liitetiedostoa, joita mikään viesti ei omista. Tätä ei voi perua. Jatketaanko?",
 			"unreadable": "Varaston tilaa ei voitu lukea.",
 			"failed": "Tätä ei voitu suorittaa."
+		},
+		"recovery": {
+			"title": "Salasanan palautuksen lähettäjä",
+			"description": "Salasanan palautus- ja osoitteenvaihtoviestit lähetetään tästä osoitteesta. Sen verkkotunnuksen on oltava vahvistettu Resendissä.",
+			"current": "Lähetetään osoitteesta {address}.",
+			"off": "Ei asetettu: ”Unohtuiko salasana” on pois käytöstä.",
+			"byDeployment": "Käyttöönoton oma asetus on käytössä ja menee tämän edelle."
 		}
 	}
 }

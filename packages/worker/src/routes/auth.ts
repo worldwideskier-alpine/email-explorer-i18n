@@ -375,7 +375,7 @@ export class PostChangeEmail extends OpenAPIRoute {
 		// The confirmation link is the whole mechanism, and it goes out over
 		// the same sender the recovery mail uses. Without that configured
 		// there is no way to prove the new address is reachable.
-		const fromEmail = recoveryFromEmail(c.env);
+		const fromEmail = await recoveryFromEmail(c.env);
 		if (!fromEmail) {
 			return c.json({ error: "Account recovery is not enabled" }, 503);
 		}

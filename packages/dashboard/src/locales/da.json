@@ -456,6 +456,13 @@
 			"confirmPurge": "{count} vedhæftede filer, som ingen besked gør krav på, slettes permanent. Det kan ikke fortrydes. Fortsæt?",
 			"unreadable": "Lagerets tilstand kunne ikke læses.",
 			"failed": "Det kunne ikke udføres."
+		},
+		"recovery": {
+			"title": "Afsender af nulstilling af adgangskode",
+			"description": "Mails om nulstilling af adgangskode og adresseændring sendes fra denne adresse. Domænet skal være verificeret i Resend.",
+			"current": "Sender fra {address}.",
+			"off": "Ikke angivet: »Glemt adgangskode« er slået fra.",
+			"byDeployment": "Udrulningens egen indstilling bruges og går forud for denne."
 		}
 	}
 }

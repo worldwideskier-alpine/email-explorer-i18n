@@ -456,6 +456,13 @@
 			"confirmPurge": "{count} fail lampiran yang tidak dituntut sebarang mesej akan dipadam secara kekal. Tidak boleh dibatalkan. Teruskan?",
 			"unreadable": "Keadaan simpanan tidak dapat dibaca.",
 			"failed": "Ini tidak dapat dijalankan."
+		},
+		"recovery": {
+			"title": "Pengirim tetapan semula kata laluan",
+			"description": "E-mel tetapan semula kata laluan dan penukaran alamat dihantar daripada alamat ini. Domainnya mesti disahkan dalam Resend.",
+			"current": "Dihantar daripada {address}.",
+			"off": "Tidak ditetapkan: “Lupa kata laluan” dimatikan.",
+			"byDeployment": "Tetapan penggunaan itu sendiri sedang digunakan dan diutamakan berbanding tetapan ini."
 		}
 	}
 }

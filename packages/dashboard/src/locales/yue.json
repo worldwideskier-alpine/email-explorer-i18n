@@ -456,6 +456,13 @@
 			"confirmPurge": "會永久刪除 {count} 個冇任何郵件認領嘅附件檔案。返唔到轉頭。要繼續嗎？",
 			"unreadable": "讀唔到倉庫嘅狀態。",
 			"failed": "執行唔到。"
+		},
+		"recovery": {
+			"title": "重設密碼嘅寄件人",
+			"description": "重設密碼同更改地址嘅電郵會由呢個地址寄出。佢個網域一定要喺 Resend 驗證咗。",
+			"current": "而家由 {address} 寄出。",
+			"off": "未設定：「唔記得密碼」已經熄咗。",
+			"byDeployment": "而家用緊部署本身嘅設定，佢比呢個設定優先。"
 		}
 	}
 }

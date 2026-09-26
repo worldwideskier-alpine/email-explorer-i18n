@@ -456,6 +456,13 @@
 			"confirmPurge": "S'esborraran definitivament {count} fitxers adjunts que cap missatge no reclama. No es pot desfer. Voleu continuar?",
 			"unreadable": "No s'ha pogut llegir l'estat del magatzem.",
 			"failed": "No s'ha pogut executar."
+		},
+		"recovery": {
+			"title": "Remitent del restabliment de contrasenya",
+			"description": "Els correus de restabliment de contrasenya i de canvi d'adreça s'envien des d'aquesta adreça. El seu domini ha d'estar verificat a Resend.",
+			"current": "S'envia des de {address}.",
+			"off": "Sense definir: «He oblidat la contrasenya» està desactivat.",
+			"byDeployment": "S'utilitza la configuració pròpia del desplegament, que té prioritat sobre aquesta."
 		}
 	}
 }

@@ -456,6 +456,13 @@
 			"confirmPurge": "Trajno bo izbrisanih {count} datotek priponk, ki si jih ne lasti nobeno sporočilo. Ni mogoče razveljaviti. Nadaljujem?",
 			"unreadable": "Stanja shrambe ni bilo mogoče prebrati.",
 			"failed": "Tega ni bilo mogoče izvesti."
+		},
+		"recovery": {
+			"title": "Pošiljatelj ponastavitve gesla",
+			"description": "E-poštna sporočila za ponastavitev gesla in spremembo naslova se pošiljajo s tega naslova. Njegova domena mora biti preverjena v storitvi Resend.",
+			"current": "Pošilja se z {address}.",
+			"off": "Ni nastavljeno: »Pozabljeno geslo« je izklopljeno.",
+			"byDeployment": "Uporablja se lastna nastavitev namestitve, ki ima prednost pred to."
 		}
 	}
 }

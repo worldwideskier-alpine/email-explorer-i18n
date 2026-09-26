@@ -456,6 +456,13 @@
 			"confirmPurge": "Verranno eliminati definitivamente {count} file allegati che nessun messaggio rivendica. Non è reversibile. Continuare?",
 			"unreadable": "Non è stato possibile leggere lo stato dell'archivio.",
 			"failed": "Non è stato possibile eseguire."
+		},
+		"recovery": {
+			"title": "Mittente per il ripristino della password",
+			"description": "Le email di ripristino della password e di cambio indirizzo vengono inviate da questo indirizzo. Il suo dominio deve essere verificato in Resend.",
+			"current": "Invio da {address}.",
+			"off": "Non impostato: «Password dimenticata» è disattivato.",
+			"byDeployment": "È in uso l'impostazione propria del deployment, che ha la precedenza su questa."
 		}
 	}
 }

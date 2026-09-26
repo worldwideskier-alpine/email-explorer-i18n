@@ -456,6 +456,13 @@
 			"confirmPurge": "{count} bijlagebestanden die geen enkel bericht opeist, worden definitief verwijderd. Dit kan niet ongedaan worden gemaakt. Doorgaan?",
 			"unreadable": "De staat van de opslag kon niet gelezen worden.",
 			"failed": "Dit kon niet worden uitgevoerd."
+		},
+		"recovery": {
+			"title": "Afzender voor wachtwoordherstel",
+			"description": "E-mails voor wachtwoordherstel en adreswijziging worden vanaf dit adres verstuurd. Het domein moet in Resend geverifieerd zijn.",
+			"current": "Verzonden vanaf {address}.",
+			"off": "Niet ingesteld: ‘Wachtwoord vergeten’ staat uit.",
+			"byDeployment": "De eigen instelling van de implementatie wordt gebruikt en gaat hiervoor."
 		}
 	}
 }

@@ -456,6 +456,13 @@
 			"confirmPurge": "Heç bir məktubun sahiblənmədiyi {count} qoşma faylı həmişəlik silinəcək. Geri qaytarmaq olmaz. Davam edilsin?",
 			"unreadable": "Anbarın vəziyyəti oxunmadı.",
 			"failed": "Bu icra oluna bilmədi."
+		},
+		"recovery": {
+			"title": "Parol sıfırlama göndərəni",
+			"description": "Parol sıfırlama və ünvan dəyişikliyi məktubları bu ünvandan göndərilir. Onun domeni Resend-də təsdiqlənməlidir.",
+			"current": "{address} ünvanından göndərilir.",
+			"off": "Təyin edilməyib: “Parolu unutmusunuz” söndürülüb.",
+			"byDeployment": "Yerləşdirmənin öz ayarı istifadə olunur və bundan üstündür."
 		}
 	}
 }

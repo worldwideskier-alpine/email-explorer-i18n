@@ -456,6 +456,13 @@
 			"confirmPurge": "Trwale usuniętych zostanie {count} plików załączników, do których nie przyznaje się żadna wiadomość. Nie da się tego cofnąć. Kontynuować?",
 			"unreadable": "Nie udało się odczytać stanu magazynu.",
 			"failed": "Nie udało się tego wykonać."
+		},
+		"recovery": {
+			"title": "Nadawca resetowania hasła",
+			"description": "Wiadomości o resetowaniu hasła i zmianie adresu są wysyłane z tego adresu. Jego domena musi być zweryfikowana w Resend.",
+			"current": "Wysyłane z {address}.",
+			"off": "Nie ustawiono: „Nie pamiętam hasła” jest wyłączone.",
+			"byDeployment": "Używane jest ustawienie samego wdrożenia, które ma pierwszeństwo przed tym."
 		}
 	}
 }

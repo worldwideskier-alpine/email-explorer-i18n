@@ -456,6 +456,13 @@
 			"confirmPurge": "{count} viðhengisskrám sem ekkert skeyti gerir tilkall til verður eytt varanlega. Verður ekki afturkallað. Halda áfram?",
 			"unreadable": "Ekki tókst að lesa stöðu geymslunnar.",
 			"failed": "Ekki tókst að keyra þetta."
+		},
+		"recovery": {
+			"title": "Sendandi endurstillingar lykilorðs",
+			"description": "Póstar um endurstillingu lykilorðs og breytingu netfangs eru sendir frá þessu netfangi. Lénið þarf að vera staðfest í Resend.",
+			"current": "Sent frá {address}.",
+			"off": "Ekki stillt: „Gleymt lykilorð“ er óvirkt.",
+			"byDeployment": "Eigin stilling uppsetningarinnar er í notkun og gengur fyrir þessari."
 		}
 	}
 }

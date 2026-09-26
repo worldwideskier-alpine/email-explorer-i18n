@@ -456,6 +456,13 @@
 			"confirmPurge": "{count} vedleggsfiler som ingen melding gjør krav på, slettes for godt. Kan ikke angres. Fortsette?",
 			"unreadable": "Tilstanden til lageret kunne ikke leses.",
 			"failed": "Dette kunne ikke kjøres."
+		},
+		"recovery": {
+			"title": "Avsender for tilbakestilling av passord",
+			"description": "E-post om tilbakestilling av passord og adresseendring sendes fra denne adressen. Domenet må være bekreftet i Resend.",
+			"current": "Sender fra {address}.",
+			"off": "Ikke angitt: «Glemt passord» er slått av.",
+			"byDeployment": "Utrullingens egen innstilling brukes og går foran denne."
 		}
 	}
 }
