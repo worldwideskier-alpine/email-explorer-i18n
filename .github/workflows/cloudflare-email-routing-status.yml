@@ -15,6 +15,14 @@ name: Cloudflare Email Routing status (read-only)
 # everywhere it appears, including inside the API responses printed below.
 #
 # Not confidentiality theatre: this repository is public and so are its logs.
+#
+# The secret only covers the domain, though. What the rules forward to, and
+# the destination addresses, are other people's addresses on other domains --
+# a personal mailbox, typically -- and the runner has no reason to hide them.
+# So everything the step prints goes through the same filter deploy.yml puts
+# on `wrangler deployments status`: anything shaped like an address is
+# withheld. What is left still answers the questions this is for: whether
+# routing is on, and which rules send mail to the Worker, forward it or drop.
 on:
   workflow_dispatch: {}
 
@@ -28,6 +36,9 @@ jobs:
           ZONE: ${{ secrets.EMAIL_ROUTING_ZONE }}
         run: |
           set -uo pipefail
+
+          # Everything below, stdout and stderr, is printed through this.
+          exec > >(sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/(address withheld)/g') 2>&1
 
           if [ -z "$ZONE" ]; then
             echo "Set the repository secret EMAIL_ROUTING_ZONE to the domain"
