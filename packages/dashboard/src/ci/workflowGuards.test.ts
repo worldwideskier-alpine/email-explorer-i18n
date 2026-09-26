@@ -47,10 +47,12 @@ describe("the deploy workflow", () => {
 	 * pull request against this repository would run the deploy job -- and the
 	 * deploy job holds the Cloudflare token.
 	 */
-	it("deploys only on a push to main", () => {
-		expect(deploy).toContain(
-			"if: github.ref == 'refs/heads/main' && github.event_name == 'push'",
+	it("deploys only from main, on a push or a run started by hand", () => {
+		const guard = /^\s*deploy:\n\s*if: (.*)$/m.exec(deploy ?? "")?.[1] ?? "";
+		expect(guard).toBe(
+			"github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')",
 		);
+		expect(guard).not.toContain("pull_request");
 	});
 
 	/**

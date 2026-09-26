@@ -18,15 +18,14 @@ When Email Explorer is first deployed, the system is in "smart mode" - the first
    - **Password**: Choose a strong password (minimum 8 characters)
 5. Click **"Create Account"**
 
-**Congratulations!** You're now registered and automatically logged in as an administrator.
+**Congratulations!** You're now registered and automatically logged in as root, the account that runs the deployment.
 
 ### Additional User Registration
 
-After the first user registers, **public registration is automatically closed** for security. New users must be created by an administrator through the [Admin Panel](./admin-panel.md).
+After the first user registers, **public registration is automatically closed** for security. Every other account is created by root, on `/root`.
 
 If you need an account and see "Registration is closed":
-- Contact your administrator to create an account for you
-- They can create your account through the Admin Panel
+- Ask whoever runs the deployment (root) to create one for you
 
 ## Logging In
 

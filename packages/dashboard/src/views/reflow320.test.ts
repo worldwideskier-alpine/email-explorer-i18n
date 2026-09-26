@@ -127,11 +127,12 @@ describe("a row of actions beside a heading", () => {
 describe("a form field wider than the screen", () => {
 	it("stacks rather than pushing the page sideways", () => {
 		const root = source("./Root.vue");
-		// The three fields of the create-an-account form, each `w-72` inside a
+		// The fields of the create-an-account form -- three, and a fourth (the
+		// current password) for a spare of your own -- each `w-72` inside a
 		// wrapper that was content-width: the wrapper is the full line below sm
 		// and the field's own `max-w-full` then applies to something.
 		const wrappers = [...root.matchAll(/class="w-full sm:w-auto"/g)];
-		expect(wrappers).toHaveLength(3);
+		expect(wrappers).toHaveLength(4);
 		expect(classesContaining(root, "mt-1 w-72")).toContain("max-w-full");
 		expect(classesContaining(root, "mt-1 w-72")).toContain("min-w-0");
 	});

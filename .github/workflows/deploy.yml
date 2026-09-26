@@ -40,8 +40,11 @@ jobs:
       - run: pnpm run build
       - run: pnpm test
 
+  # A push to main, or a run started by hand from main -- which only somebody
+  # with write access can start, and which docs/deploying-your-own.md tells a
+  # fork to use after setting its variables. Never a pull request.
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs: build-and-check
     runs-on: ubuntu-latest
     permissions:
@@ -108,7 +111,15 @@ jobs:
       # step does not interrupt outbound mail; see app-settings.ts.
       - name: Set VAPID_PRIVATE_KEY secret
         working-directory: packages/worker/dev
-        run: printf '%s' "$VAPID_PRIVATE_KEY" | npx wrangler secret put VAPID_PRIVATE_KEY
+        # Skipped when the secret is not set: piping an empty value would
+        # either blank the Worker's key or fail the job after the Worker is
+        # already live, and a fork without a VAPID pair simply has no push.
+        run: |
+          if [ -z "$VAPID_PRIVATE_KEY" ]; then
+            echo "VAPID_PRIVATE_KEY is not set; push notifications stay off."
+            exit 0
+          fi
+          printf '%s' "$VAPID_PRIVATE_KEY" | npx wrangler secret put VAPID_PRIVATE_KEY
         env:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
       # Setting a secret publishes a version of its own, so the id printed by

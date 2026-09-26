@@ -21,6 +21,40 @@ const RegisterRequestSchema = z.object({
 	password: z.string().min(8),
 });
 
+/**
+ * Asks the signed-in person for their current password, under the same limit
+ * as changing it. Null when it is right; otherwise the response to send.
+ *
+ * Adding or removing a sign-in address is an act that outlasts the session it
+ * was done from. Without this, somebody holding a stolen session added a
+ * login of their own to the owner's person -- a password they chose, which a
+ * reset of the owner's password does not touch -- and kept the account after
+ * every session had been ended. On root, that was the deployment for good.
+ */
+export async function proveCurrentPassword(
+	c: AppContext,
+	session: Session,
+	currentPassword: string,
+): Promise<Response | null> {
+	const authDO = getAuthDO(c.env);
+	const rules = accountChangeThrottleRules(
+		session.userId,
+		clientIp(c.req.raw),
+		{ sendsMail: false },
+	);
+	const retryAfterMs = await authDO.throttleTake(rules);
+	if (retryAfterMs > 0) {
+		c.header("Retry-After", String(retryAfterSeconds(retryAfterMs)));
+		return c.json({ error: "Too many attempts" }, 429);
+	}
+	if (!(await authDO.verifyUserPassword(session.userId, currentPassword))) {
+		// 403, not 401: the session is fine, the password in the body is not.
+		return c.json({ error: "Current password is incorrect" }, 403);
+	}
+	await authDO.throttleSettle(rules);
+	return null;
+}
+
 const LoginRequestSchema = z.object({
 	email: z.string().email(),
 	password: z.string(),
@@ -548,7 +582,9 @@ export class PostAdminRegister extends OpenAPIRoute {
 		operationId: "addOwnLogin",
 		tags: ["Auth - Admin"],
 		request: {
-			body: contentJson(RegisterRequestSchema),
+			body: contentJson(
+				RegisterRequestSchema.extend({ currentPassword: z.string() }),
+			),
 		},
 		responses: {
 			"201": {
@@ -574,7 +610,10 @@ export class PostAdminRegister extends OpenAPIRoute {
 		}
 
 		const data = await this.getValidatedData<typeof this.schema>();
-		const { email, password } = data.body;
+		const { email, password, currentPassword } = data.body;
+
+		const refused = await proveCurrentPassword(c, session, currentPassword);
+		if (refused) return refused;
 
 		try {
 			const user = await getAuthDO(c.env).register(
@@ -646,7 +685,10 @@ export class DeleteOwnLogin extends OpenAPIRoute {
 		summary: "Remove one of your own logins",
 		operationId: "deleteOwnLogin",
 		tags: ["Auth - Admin"],
-		request: { params: z.object({ userId: z.string() }) },
+		request: {
+			params: z.object({ userId: z.string() }),
+			body: contentJson(z.object({ currentPassword: z.string() })),
+		},
 		responses: {
 			"204": { description: "Removed" },
 			"401": {
@@ -665,8 +707,16 @@ export class DeleteOwnLogin extends OpenAPIRoute {
 		const session = c.get("session");
 		if (!session) return c.json({ error: "Unauthorized" }, 401);
 
-		const userId = c.req.param("userId");
+		const data = await this.getValidatedData<typeof this.schema>();
+		const userId = data.params.userId;
 		const authDO = getAuthDO(c.env);
+
+		const refused = await proveCurrentPassword(
+			c,
+			session,
+			data.body.currentPassword,
+		);
+		if (refused) return refused;
 
 		// Yours means: belonging to the same person. Not "any account", which
 		// is what made the old admin screen able to reach strangers.

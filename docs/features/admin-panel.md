@@ -1,5 +1,13 @@
 # Admin Panel Guide
 
+> **This guide describes upstream's model, not this fork's.** Granting and
+> revoking mailbox access, the Owner/Admin/Write/Read roles and promoting
+> users to administrator do not exist here. In this fork the first account to
+> register is **root**, which creates and deletes accounts on `/root`; every
+> other person holds the mailboxes they create, and nobody else's, and on
+> `/admin` manages their own sign-in addresses and Resend key. See
+> [Roles](../../README.md#roles) in the README.
+
 The Admin Panel is a powerful tool for administrators to manage users and control access to mailboxes. This guide will help you understand and use all administrative features.
 
 ## Accessing the Admin Panel

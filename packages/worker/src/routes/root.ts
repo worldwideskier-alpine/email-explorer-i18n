@@ -34,6 +34,7 @@ import { destroyMailboxCompletely } from "../mailbox-destroy";
 import { readMaintenanceRecord } from "../maintenance-record";
 import { roleOf } from "../roles";
 import type { Env, Session } from "../types";
+import { proveCurrentPassword } from "./auth";
 
 type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
 
@@ -335,6 +336,8 @@ export class PostAccount extends OpenAPIRoute {
 					email: z.string().email(),
 					password: z.string().min(8),
 					role: z.enum(["root", "admin"]).default("admin"),
+					// Required for role "root" -- see proveCurrentPassword.
+					currentPassword: z.string().optional(),
 				}),
 			),
 		},
@@ -352,9 +355,21 @@ export class PostAccount extends OpenAPIRoute {
 		const session = requireRoot(c);
 		if (session instanceof Response) return session;
 
-		const { email, password, role } = (
+		const { email, password, role, currentPassword } = (
 			await this.getValidatedData<typeof this.schema>()
 		).body;
+
+		// A spare root login is the role itself, for good. A stolen root
+		// session must not be able to mint one; making a new person, which
+		// root does every day and which gives nobody the role, stays one step.
+		if (role === "root") {
+			const refused = await proveCurrentPassword(
+				c,
+				session,
+				currentPassword ?? "",
+			);
+			if (refused) return refused;
+		}
 
 		// "root" means this login joins the person already holding the role.
 		// "admin" leaves the person unset, and register() makes a new one.
@@ -561,6 +576,18 @@ export class DeleteAccount extends OpenAPIRoute {
 		// this mail through the application any more. The bucket is emptied
 		// after that, and a failure part-way leaves objects that no longer
 		// belong to anyone rather than an account that half exists.
+		//
+		// Every mailbox stops taking mail first, in one call: a settings
+		// object is what makes an address accept mail, and emptying the
+		// mailboxes one at a time left the ones not yet reached -- all of them,
+		// if the invocation was cut off early -- receiving mail for a person
+		// who no longer existed, with no holder to read it and no retry, since
+		// asking again answers 404.
+		if (result.mailboxIds.length > 0) {
+			await c.env.BUCKET.delete(
+				result.mailboxIds.map((id) => `mailboxes/${id}.json`),
+			);
+		}
 		for (const mailboxId of result.mailboxIds) {
 			await destroyMailboxCompletely(c.env, mailboxId);
 		}

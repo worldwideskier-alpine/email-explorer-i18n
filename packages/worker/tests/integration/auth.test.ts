@@ -347,6 +347,7 @@ describe("Authentication & User Management Integration Tests", () => {
 					body: JSON.stringify({
 						email: "newuser@example.com",
 						password: "password123",
+						currentPassword: "adminpass123",
 					}),
 				},
 			);
@@ -368,6 +369,7 @@ describe("Authentication & User Management Integration Tests", () => {
 					body: JSON.stringify({
 						email: "noauth@example.com",
 						password: "password123",
+						currentPassword: "adminpass123",
 					}),
 				},
 			);
@@ -386,6 +388,7 @@ describe("Authentication & User Management Integration Tests", () => {
 					body: JSON.stringify({
 						email: "listuser@example.com",
 						password: "password123",
+						currentPassword: "adminpass123",
 					}),
 				},
 			);
@@ -460,6 +463,7 @@ describe("Authentication & User Management Integration Tests", () => {
 					body: JSON.stringify({
 						email: "regularuser@example.com",
 						password: "password123",
+						currentPassword: "password123",
 					}),
 				},
 			);

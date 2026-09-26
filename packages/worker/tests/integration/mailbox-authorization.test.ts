@@ -173,6 +173,7 @@ describe("a person's other login", () => {
 			body: JSON.stringify({
 				email: "first-spare@test.com",
 				password: "password123",
+				currentPassword: "password123",
 			}),
 		});
 		const spareToken = await login("first-spare@test.com");
@@ -195,6 +196,7 @@ describe("a person's other login", () => {
 			body: JSON.stringify({
 				email: "first-spare@test.com",
 				password: "password123",
+				currentPassword: "password123",
 			}),
 		});
 		const spareToken = await login("first-spare@test.com");

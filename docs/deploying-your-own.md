@@ -76,14 +76,23 @@ repository's names.
 | `VAPID_PUBLIC_KEY` | The public half from step 3. |
 | `ACCOUNT_RECOVERY_FROM` | The address password-reset mail is sent from, on your Resend-verified domain. Nobody reads replies to it. |
 
-Leave `ACCOUNT_RECOVERY_FROM` unset and the "forgot password" flow stays off;
-everything else works.
+Set `ACCOUNT_RECOVERY_FROM`. Left unset, the "forgot password" flow does not
+stay off: it falls back to the address written in
+`packages/worker/dev/index.ts`, which is this repository's own, on a domain
+your Resend account cannot send from. The page then says a reset mail was sent
+(it says the same for every address, on purpose) and nothing arrives. To turn
+the flow off instead, remove the `accountRecovery` option from your copy of
+that file.
 
 ## 6. Deploy
 
 Push to `main`, or run the **Deploy to Cloudflare** workflow by hand from the
-Actions tab. The run creates the R2 bucket if it is missing, deploys the
-Worker, and uploads the VAPID private key as a Worker secret.
+Actions tab, on `main`. The run creates the R2 bucket if it is missing, deploys
+the Worker, and uploads the VAPID private key as a Worker secret (skipped, with
+a line saying so, when you have not set one).
+
+A new fork has Actions switched off until you enable them in its **Actions**
+tab, so the first push deploys nothing until you have.
 
 The deploy log opens with a line per setting saying whether your value or the
 default was used — check it the first time.
@@ -107,9 +116,9 @@ than filed somewhere nobody watches.
 
 ## 8. Register, and set the outbound key
 
-Open your Worker's URL. The **first** account to register becomes the
-administrator, and registration closes behind it. Create the rest from the
-admin screen.
+Open your Worker's URL. The **first** account to register becomes root, and
+registration closes behind it. Root makes everybody else's accounts, on
+`/root`; each of them then creates their own mailboxes.
 
 Then, on `/admin`, paste your Resend API key. It is stored in your R2 bucket
 rather than in a GitHub secret, so rotating it is not a redeploy.
@@ -127,7 +136,9 @@ nothing here to conflict. Push, and the workflow redeploys.
 ## What is optional
 
 - **Push notifications.** Without a VAPID pair the app works; the browser
-  notification toggle simply cannot be turned on.
+  notification toggle simply cannot be turned on. That needs the private key:
+  the public one alone is not enough, and the checked-in default is this
+  repository's, which is no use to you.
 - **Outbound mail.** Without a Resend key you can read mail but not send it.
   The app says so rather than failing silently.
 - **Second-pass spam filtering.** Per mailbox, on the settings screen, you can

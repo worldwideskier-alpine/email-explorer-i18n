@@ -571,7 +571,12 @@ describe("what root's create form makes", () => {
 		as(root)("http://local.test/api/v1/root/accounts", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ email, password: "password123", role }),
+			body: JSON.stringify({
+				email,
+				password: "password123",
+				role,
+				currentPassword: "password123",
+			}),
 		});
 
 	const people = async () =>

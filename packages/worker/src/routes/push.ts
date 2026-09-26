@@ -27,7 +27,12 @@ export class GetVapidPublicKey extends OpenAPIRoute {
 	};
 
 	async handle(c: AppContext) {
-		return c.json({ publicKey: c.env.VAPID_PUBLIC_KEY || "" });
+		// No private key, no push: the public half alone makes the switch look
+		// usable while nothing could ever be delivered. A fork inherits this
+		// repository's public key in wrangler.jsonc, so that was the default
+		// for anybody who had not made a pair of their own.
+		const publicKey = c.env.VAPID_PRIVATE_KEY ? c.env.VAPID_PUBLIC_KEY : "";
+		return c.json({ publicKey: publicKey || "" });
 	}
 }
 
