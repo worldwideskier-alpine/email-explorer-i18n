@@ -23,7 +23,7 @@ import {
  */
 
 const PASSING_AUTH_RESULTS =
-	"mx.example.com; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
+	"mx.cloudflare.net; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
 
 function buildRawEmail(headers: Record<string, string>, body: string): string {
 	let raw = "";

@@ -20,7 +20,7 @@ import {
  */
 
 const PASSING_AUTH_RESULTS =
-	"mx.example.com; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
+	"mx.cloudflare.net; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
 
 function buildRawEmail(headers: Record<string, string>, body: string): string {
 	let raw = "";
@@ -185,7 +185,7 @@ describe("the second-stage check reports whether it is working", () => {
 				Subject: "Stage one already failed",
 				"Content-Type": "text/plain",
 				"Authentication-Results":
-					"mx.example.com; spf=fail smtp.mailfrom=spoofed.com; dkim=fail header.i=@other.com",
+					"mx.cloudflare.net; spf=fail smtp.mailfrom=spoofed.com; dkim=fail header.i=@other.com",
 			},
 			"Hello",
 		);

@@ -8,9 +8,9 @@ import {
 } from "./utils";
 
 const PASSING_AUTH_RESULTS =
-	"mx.example.com; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
+	"mx.cloudflare.net; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
 const FAILING_AUTH_RESULTS =
-	"mx.example.com; spf=fail smtp.mailfrom=spoofed.com; dkim=fail header.i=@other.com";
+	"mx.cloudflare.net; spf=fail smtp.mailfrom=spoofed.com; dkim=fail header.i=@other.com";
 
 function buildRawEmail(headers: Record<string, string>, body: string): string {
 	let raw = "";
@@ -167,7 +167,7 @@ describe("Claude second-stage spam classification", () => {
 				Subject: "Self-domain transactional mail TRIGGER_CLAUDE_SPAM",
 				"Content-Type": "text/plain",
 				"Authentication-Results":
-					"mx.example.com; spf=pass smtp.mailfrom=example.com; dkim=pass header.i=@example.com; dmarc=pass header.from=example.com",
+					"mx.cloudflare.net; spf=pass smtp.mailfrom=example.com; dkim=pass header.i=@example.com; dmarc=pass header.from=example.com",
 			},
 			"Hello",
 		);
@@ -272,7 +272,7 @@ describe("Claude second-stage spam classification", () => {
 					// Authentication line, sent. It is not one of the values the
 					// first pass files mail on, so stage 1 lets this through.
 					"Authentication-Results":
-						"mx.example.com; spf=pass smtp.mailfrom=legit.com; dkim=TRIGGER_CLAUDE_SPAM header.i=@legit.com; dmarc=pass header.from=legit.com",
+						"mx.cloudflare.net; spf=pass smtp.mailfrom=legit.com; dkim=TRIGGER_CLAUDE_SPAM header.i=@legit.com; dmarc=pass header.from=legit.com",
 				},
 				"Hello",
 			);

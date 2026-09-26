@@ -26,7 +26,7 @@ import {
  */
 
 const PASSING_AUTH =
-	"mx.test; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
+	"mx.cloudflare.net; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
 
 /** 「日本語」in Shift_JIS. Not valid UTF-8 by any reading. */
 const SHIFT_JIS = new Uint8Array([0x93, 0x7a, 0x96, 0x7b, 0x8c, 0xea]);
