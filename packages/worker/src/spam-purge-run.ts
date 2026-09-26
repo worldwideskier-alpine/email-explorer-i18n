@@ -86,6 +86,8 @@ export async function newestArchiveAt(
  *
  * `archivedBefore`, when given, is a second cutoff: nothing that arrived at
  * or after it goes, because no archive holds it yet. It waits for the next.
+ * Arrival is `received_at`, not the message's date -- see migration
+ * 8_received_at.
  *
  * The row is deleted first and the objects after. The other order would leave
  * a message in the folder whose body and attachments had already been removed
@@ -102,17 +104,29 @@ export async function purgeMailboxSpam(
 	archivedBefore?: number,
 ): Promise<number> {
 	const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+	const listed = await stub.listSpamEmailDates();
+	// Old enough by the date the message carries, and -- when backups are on
+	// -- here since before the newest archive by when it actually arrived.
+	// The two are different clocks for a restored message, and only arrival
+	// says whether an archive holds it.
+	const archived =
+		archivedBefore === undefined
+			? listed
+			: listed.filter((email) => {
+					const at = Date.parse(email.receivedAt ?? "");
+					return Number.isFinite(at) && at < archivedBefore;
+				});
 	const expired = expiredSpamIds(
-		await stub.listSpamEmailDates(),
-		Math.min(
-			retentionCutoff(days, now.getTime()),
-			archivedBefore ?? Number.POSITIVE_INFINITY,
-		),
+		archived,
+		retentionCutoff(days, now.getTime()),
 	);
 
 	const keys: string[] = [];
+	let deleted = 0;
 	for (const id of expired) {
-		const attachments = await stub.deleteEmail(id);
+		const attachments = await stub.deleteEmail(id, "spam");
+		if (attachments === null) continue;
+		deleted += 1;
 		for (const attachment of attachments) {
 			const att = attachment as { id: string; filename: string };
 			keys.push(`attachments/${id}/${att.id}/${att.filename}`);
@@ -121,7 +135,7 @@ export async function purgeMailboxSpam(
 	}
 	await deleteKeys(env, keys);
 
-	return expired.length;
+	return deleted;
 }
 
 export interface SpamPurgeSummary {

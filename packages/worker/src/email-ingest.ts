@@ -34,15 +34,10 @@ export async function ingestEmailIntoMailbox(
 ) {
 	const messageId = overrides.id ?? crypto.randomUUID();
 
-	// Creating the mailbox here is for the admin import path, which may be
-	// seeding a mailbox that has no settings object yet. Inbound mail must not
-	// rely on it: receiveEmail checks the mailbox exists first and rejects the
-	// message otherwise, so a stray address can never become a mailbox.
-	const key = `mailboxes/${mailboxId}.json`;
-	const obj = await env.BUCKET.head(key);
-	if (!obj) {
-		await env.BUCKET.put(key, JSON.stringify({}));
-	}
+	// Nothing here creates the mailbox. Both callers check it exists first --
+	// receiveEmail rejects mail for an address with no mailbox, the import
+	// route answers 404 -- because creating it here brought deleted mailboxes
+	// back with empty settings.
 
 	// Kept as bytes rather than decoded: the part headers this is read for are
 	// ASCII, but the body around them is whatever the sender sent.

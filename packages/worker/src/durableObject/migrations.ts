@@ -131,6 +131,26 @@ export const mailboxMigrations: Migration[] = [
             ALTER TABLE spam_check_health ADD COLUMN last_success_via TEXT;
         `,
 	},
+	{
+		/**
+		 * When a message arrived here, apart from the date it carries.
+		 *
+		 * `date` is the arrival time for mail received, but for a restore it
+		 * is whatever the imported message said -- years back, often. The
+		 * spam purge deletes only what an archive already holds, and asking
+		 * that of `date` let a message imported yesterday with a 2025 date
+		 * count as archived when no archive had it.
+		 *
+		 * Rows already here are stamped with the moment this runs. That is
+		 * later than their real arrival, which only ever makes the purge wait
+		 * for the next archive -- one that certainly holds them.
+		 */
+		name: "8_received_at",
+		sql: `
+            ALTER TABLE emails ADD COLUMN received_at TEXT;
+            UPDATE emails SET received_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now');
+        `,
+	},
 ];
 
 export const authMigrations: Migration[] = [

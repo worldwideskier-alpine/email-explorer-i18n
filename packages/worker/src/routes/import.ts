@@ -118,6 +118,14 @@ export class PostImportEmail extends OpenAPIRoute {
 		if (!(await personHoldsMailbox(c.env, session, mailboxId))) {
 			return c.json({ error: "You don't have access to this mailbox" }, 403);
 		}
+		// Outside the /mailboxes/:mailboxId gate, so it asks the gate's other
+		// question itself: a deleted mailbox is not restored into. Ingest used
+		// to create an empty settings object for it, which brought the mailbox
+		// back without the settings kept for its holder -- the backup count at
+		// the minimum, free to be lowered.
+		if (!(await c.env.BUCKET.head(`mailboxes/${mailboxId}.json`))) {
+			return c.json({ error: "Mailbox not found" }, 404);
+		}
 
 		const data = await this.getValidatedData<typeof this.schema>();
 		const {

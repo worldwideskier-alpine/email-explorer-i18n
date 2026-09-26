@@ -574,7 +574,14 @@ class PostMailbox extends OpenAPIRoute {
 
 	async handle(c: AppContext) {
 		const data = await this.getValidatedData<typeof this.schema>();
-		const { email, name, settings } = data.body;
+		const { name, settings } = data.body;
+		// One spelling per address. Stored as typed, `Alice@x` and `alice@x`
+		// were two mailboxes: the holder checks below compare exactly, so a
+		// second person could register a capitalised copy of an address that
+		// was not theirs -- and sending, which compares without case, then let
+		// them send as the original. Inbound mail is filed by the lowercased
+		// envelope recipient, so a capitalised mailbox also received nothing.
+		const email = data.body.email.trim().toLowerCase();
 
 		const key = `mailboxes/${email}.json`;
 
@@ -670,8 +677,10 @@ class GetEmails extends OpenAPIRoute {
 			}),
 			query: z.object({
 				folder: z.string().optional(),
-				page: z.number().int().optional(),
-				limit: z.number().int().optional(),
+				// Bounded: SQLite reads LIMIT -1 as no limit at all, so an
+				// unbounded integer here returned a whole mailbox in one go.
+				page: z.number().int().min(1).optional(),
+				limit: z.number().int().min(1).max(5000).optional(),
 				sortColumn: z
 					.enum([
 						"id",
@@ -974,7 +983,7 @@ class DeleteEmail extends OpenAPIRoute {
 			return c.json({ error: "Not found" }, 404);
 		}
 
-		const attachments = await stub.deleteEmail(id);
+		const attachments = (await stub.deleteEmail(id)) ?? [];
 
 		if (attachments.length > 0) {
 			const keys = attachments.map(
@@ -1219,6 +1228,9 @@ class PutFolder extends OpenAPIRoute {
 
 		const updatedFolder = await stub.updateFolder(id, name);
 
+		if (updatedFolder === "taken") {
+			return c.json({ error: "Folder with this name already exists" }, 409);
+		}
 		if (!updatedFolder) {
 			return c.json({ error: "Folder not found" }, 404);
 		}
@@ -1264,6 +1276,9 @@ class DeleteFolder extends OpenAPIRoute {
 
 		const success = await stub.deleteFolder(id);
 
+		if (success === "not-empty") {
+			return c.json({ error: "Folder is not empty" }, 409);
+		}
 		if (!success) {
 			return c.json({ error: "Folder not found or cannot be deleted" }, 400);
 		}
@@ -1346,6 +1361,9 @@ class PostContact extends OpenAPIRoute {
 		const stub = ns.get(id);
 
 		const newContact = await stub.createContact({ name, email });
+		if (!newContact) {
+			return c.json({ error: "Contact already exists" }, 409);
+		}
 
 		return c.json(newContact, 201);
 	}
@@ -1428,7 +1446,11 @@ class DeleteContact extends OpenAPIRoute {
 		const doId = ns.idFromName(mailboxId);
 		const stub = ns.get(doId);
 
-		stub.deleteContact(Number.parseInt(id, 10));
+		// Awaited: unawaited, every delete answered 204 before it had run --
+		// for an id that did not exist too -- and a failure went nowhere.
+		if (!(await stub.deleteContact(Number.parseInt(id, 10)))) {
+			return c.json({ error: "Not found" }, 404);
+		}
 
 		return c.body(null, 204);
 	}
@@ -1529,11 +1551,14 @@ class GetAttachment extends OpenAPIRoute {
 
 		const attachment = await stub.getAttachment(attachmentId);
 
-		if (!attachment) {
+		// The row names the object -- every reader rebuilds the key from it
+		// (AGENTS.md). The email id in the path has to be that row's, not just
+		// any id the caller put there.
+		if (!attachment || attachment.email_id !== emailId) {
 			return c.json({ error: "Attachment not found" }, 404);
 		}
 
-		const attachmentKey = `attachments/${emailId}/${attachmentId}/${attachment.filename}`;
+		const attachmentKey = `attachments/${attachment.email_id}/${attachmentId}/${attachment.filename}`;
 		const attachmentObj = await c.env.BUCKET.get(attachmentKey);
 
 		if (!attachmentObj) {
@@ -2697,6 +2722,16 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 							{ error: "You don't have access to this mailbox" },
 							403,
 						);
+					}
+					// A grant outlives the mailbox's deletion (that is what keeps
+					// the address its holder's), so holding it is not enough to
+					// act on it. Deleted means deleted until its holder creates it
+					// again: a spam verdict on a message the Durable Object still
+					// held used to write a fresh settings object, which brought
+					// the mailbox back with none of its settings -- the backup
+					// count at the minimum, and inbound mail accepted again.
+					if (!(await env.BUCKET.head(`mailboxes/${mailboxId}.json`))) {
+						return c.json({ error: "Mailbox not found" }, 404);
 					}
 					await next();
 				};
