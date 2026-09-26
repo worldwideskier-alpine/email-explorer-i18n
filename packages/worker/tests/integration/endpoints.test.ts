@@ -119,7 +119,7 @@ describe("API Integration Tests", () => {
 			await createMailbox();
 			const emailData = {
 				to: ["recipient@example.com"],
-				from: "sender@example.com",
+				from: mailboxId,
 				subject: "Test Email",
 				text: "This is a test email.",
 			};
@@ -141,7 +141,7 @@ describe("API Integration Tests", () => {
 			await createMailbox();
 			const emailData = {
 				to: ["recipient@example.com"],
-				from: "sender@example.com",
+				from: mailboxId,
 				subject: "Test Email",
 				text: "This is a test email.",
 			};
@@ -169,7 +169,7 @@ describe("API Integration Tests", () => {
 			await createMailbox();
 			const emailData = {
 				to: ["recipient@example.com"],
-				from: "sender@example.com",
+				from: mailboxId,
 				subject: "Test Email",
 				text: "This is a test email.",
 			};
@@ -207,7 +207,7 @@ describe("API Integration Tests", () => {
 			await createMailbox();
 			const emailData = {
 				to: ["recipient@example.com"],
-				from: "sender@example.com",
+				from: mailboxId,
 				subject: "Test Email",
 				text: "This is a test email.",
 			};
@@ -255,7 +255,7 @@ describe("API Integration Tests", () => {
 			// Create an email in the new folder
 			const emailData1 = {
 				to: ["recipient1@example.com"],
-				from: "sender@example.com",
+				from: mailboxId,
 				subject: "Email in Test Folder",
 				text: "This email should be in the test folder.",
 			};
@@ -281,7 +281,7 @@ describe("API Integration Tests", () => {
 			// Create another email (will be in "Sent" by default)
 			const emailData2 = {
 				to: ["recipient2@example.com"],
-				from: "sender@example.com",
+				from: mailboxId,
 				subject: "Email in Sent Folder",
 				text: "This email should be in the sent folder.",
 			};
@@ -332,7 +332,7 @@ describe("API Integration Tests", () => {
 			// Create an email in the new folder
 			const emailData1 = {
 				to: ["recipient1@example.com"],
-				from: "sender@example.com",
+				from: mailboxId,
 				subject: "Email in Another Test Folder",
 				text: "This email should be in another test folder.",
 			};
@@ -377,7 +377,7 @@ describe("API Integration Tests", () => {
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({
 							to: [`recipient${i}@example.com`],
-							from: "sender@example.com",
+							from: mailboxId,
 							subject: `Email ${i}`,
 							text: `This is email ${i}.`,
 						}),
@@ -412,7 +412,7 @@ describe("API Integration Tests", () => {
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
 						to: ["recipient1@example.com"],
-						from: "sender@example.com",
+						from: mailboxId,
 						subject: "A Subject",
 						text: "...",
 					}),
@@ -425,7 +425,7 @@ describe("API Integration Tests", () => {
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
 						to: ["recipient2@example.com"],
-						from: "sender@example.com",
+						from: mailboxId,
 						subject: "B Subject",
 						text: "...",
 					}),
@@ -687,7 +687,7 @@ describe("API Integration Tests", () => {
 			await createMailbox();
 			const emailData = {
 				to: ["recipient@example.com"],
-				from: "sender@example.com",
+				from: mailboxId,
 				subject: "Test Email",
 				text: "This is a test email about searching.",
 			};
@@ -718,7 +718,7 @@ describe("API Integration Tests", () => {
 			// Create email
 			const emailData = {
 				to: ["recipient@example.com"],
-				from: "sender@example.com",
+				from: mailboxId,
 				subject: "Test Email",
 				text: "This is a test email.",
 			};
@@ -779,7 +779,7 @@ describe("API Integration Tests", () => {
 			await createMailbox();
 			const emailData = {
 				to: ["recipient@example.com"],
-				from: "sender@example.com",
+				from: mailboxId,
 				subject: "Test Email",
 				text: "This is a test email.",
 			};
@@ -815,7 +815,7 @@ describe("API Integration Tests", () => {
 
 			const emailData = {
 				to: ["recipient@example.com"],
-				from: "sender@example.com",
+				from: mailboxId,
 				subject: "Email with attachment",
 				text: "...",
 				attachments: [
@@ -871,7 +871,7 @@ describe("API Integration Tests", () => {
 
 			const emailDataWithContentId = {
 				to: ["recipient@example.com"],
-				from: "sender@example.com",
+				from: mailboxId,
 				subject: "Email with contentId",
 				text: "...",
 				attachments: [
@@ -887,7 +887,7 @@ describe("API Integration Tests", () => {
 
 			const emailDataWithoutContentId = {
 				to: ["recipient@example.com"],
-				from: "sender@example.com",
+				from: mailboxId,
 				subject: "Email without contentId",
 				text: "...",
 				attachments: [

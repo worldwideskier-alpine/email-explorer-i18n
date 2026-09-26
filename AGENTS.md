@@ -151,6 +151,19 @@ fork's work. This fork ships by being forked.
   anywhere in the request path. The mailboxes in daily use predate the grant
   model and had no rows at all; `legacy-grants.ts` backfilled them once, which
   is what made removing the bypass survivable.
+  A grant also outlives the mailbox's deletion, purged or not, and that is
+  what keeps the address its holder's: the archives a purge leaves on purpose
+  are theirs, and so is the mail a plain delete keeps. `PostMailbox` gives an
+  address to nobody else while anyone holds it, and to nobody at all when
+  nobody does and mail or archives remain -- it used to check only whether a
+  settings object existed, and a second person registered a deleted address
+  and read the first one's mail and archives. A delete keeps the settings in
+  `mailboxes-deleted/{id}.json`, for the holder's recreate to start from:
+  without them the backup count came back at the minimum and a recreate was a
+  way round the rule that it only rises. `mailbox-boundaries.test.ts` holds
+  all of this, and also that an original (`raw/{id}.eml`, named by id alone)
+  is read or deleted only through the mailbox whose message it is, and that
+  mail is sent only as the mailbox in the path.
 - **The daily cron.** One `scheduled()` handler, and the order inside it
   matters: `scheduled-run.ts` backs every mailbox up *first* and deletes old
   spam *second*, so a message the purge removes is already in that run's

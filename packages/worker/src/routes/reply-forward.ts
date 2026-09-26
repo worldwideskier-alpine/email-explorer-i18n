@@ -2,6 +2,7 @@ import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
 import { base64ToBytes } from "../base64";
+import { sendsAsMailbox } from "../mailbox-access";
 import { plainTextToHtml } from "../plain-text-to-html";
 import { formatAddressList } from "../recipients";
 import { sendEmail } from "../resend";
@@ -80,6 +81,10 @@ export class PostReplyEmail extends OpenAPIRoute {
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { mailboxId, id } = data.params;
 		const { to, cc, bcc, from, subject, html, text, attachments } = data.body;
+
+		if (!sendsAsMailbox(from, mailboxId)) {
+			return c.json({ error: "The sender must be this mailbox" }, 403);
+		}
 
 		const key = `mailboxes/${mailboxId}.json`;
 		const obj = await c.env.BUCKET.head(key);
@@ -208,6 +213,10 @@ export class PostForwardEmail extends OpenAPIRoute {
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { mailboxId, id } = data.params;
 		const { to, cc, bcc, from, subject, html, text, attachments } = data.body;
+
+		if (!sendsAsMailbox(from, mailboxId)) {
+			return c.json({ error: "The sender must be this mailbox" }, 403);
+		}
 
 		const key = `mailboxes/${mailboxId}.json`;
 		const obj = await c.env.BUCKET.head(key);

@@ -12,7 +12,8 @@ import { recoveryFromEmail } from "./deployment-config";
 import { ingestEmailIntoMailbox } from "./email-ingest";
 import { ensureLegacyMailboxGrants } from "./legacy-grants";
 import { buildPasswordResetEmail, MAIL_LOCALES } from "./mail-templates";
-import { personHoldsMailbox } from "./mailbox-access";
+import { personHoldsMailbox, sendsAsMailbox } from "./mailbox-access";
+import { deletedMailboxKey, holdsMailOrArchives } from "./mailbox-destroy";
 import {
 	getClaudeApiKey,
 	getSenderVerdictOverride,
@@ -524,11 +525,24 @@ class DeleteMailbox extends OpenAPIRoute {
 			const emailIds = await stub.listAllEmailIds();
 			await deleteEmailObjects(c.env.BUCKET, emailIds);
 			await stub.destroyMailbox();
-
-			const authStub = ns.get(ns.idFromName("AUTH"));
-			await authStub.revokeAllMailboxAccess(mailboxId);
 		}
 
+		// What this does not remove, purged or not, is the archives and who
+		// holds the mailbox. The archives survive on purpose: they are how
+		// mail destroyed from a stolen session comes back (see
+		// auto-backup.ts). The holder survives with them, because the
+		// archives are theirs -- this used to revoke the grant, which left
+		// the archives belonging to nobody, and PostMailbox then gave the
+		// address, archives and all, to whoever registered it next.
+		//
+		// The settings are kept too, for the holder to have back when they
+		// recreate the address. Without them the backup count -- which may
+		// only rise -- came back at the minimum, and the next nightly run
+		// rotated the archives down to it.
+		await c.env.BUCKET.put(
+			deletedMailboxKey(mailboxId),
+			JSON.stringify(settings),
+		);
 		await c.env.BUCKET.delete(key);
 
 		return c.body(null, 204);
@@ -571,6 +585,26 @@ class PostMailbox extends OpenAPIRoute {
 			return c.json({ error: "Mailbox already exists" }, 409);
 		}
 
+		// An address with no settings object is not necessarily free. A
+		// mailbox deleted without purge keeps its mail and its holder, and
+		// this route used to give it to whoever asked next: measured, a
+		// second administrator registered the address and read the first
+		// one's mail, and the first went on reading the second's. Only the
+		// person who holds it may bring it back; and an address nobody holds
+		// that still has mail or archives -- left from before grants existed
+		// -- is given to nobody, because nothing says whose it was.
+		const session = c.get("session");
+		if (!session) return c.json({ error: "Unauthorized" }, 401);
+		await ensureLegacyMailboxGrants(c.env);
+		const authDO = c.env.MAILBOX.get(c.env.MAILBOX.idFromName("AUTH"));
+		const holders = await authDO.getUserIdsForMailbox(email);
+		if (holders.length > 0 && !holders.includes(session.userId)) {
+			return c.json({ error: "Mailbox already exists" }, 409);
+		}
+		if (holders.length === 0 && (await holdsMailOrArchives(c.env, email))) {
+			return c.json({ error: "Mailbox already exists" }, 409);
+		}
+
 		// Default settings
 		const defaultSettings = {
 			fromName: name,
@@ -592,7 +626,14 @@ class PostMailbox extends OpenAPIRoute {
 			},
 		};
 
-		const finalSettings = { ...defaultSettings, ...settings };
+		// What was there before it was deleted, if anything, is the base; the
+		// caller's settings go through the same merge as an update, so a
+		// create cannot lower the backup count or write a run history.
+		const kept = await c.env.BUCKET.get(deletedMailboxKey(email));
+		const base = kept
+			? { ...defaultSettings, ...(await kept.json<Record<string, any>>()) }
+			: defaultSettings;
+		const finalSettings = mergeMailboxSettings(base, { ...base, ...settings });
 
 		// Save mailbox settings to R2
 		await c.env.BUCKET.put(key, JSON.stringify(finalSettings));
@@ -609,11 +650,8 @@ class PostMailbox extends OpenAPIRoute {
 		// stays theirs when they change which address they sign in with.
 		// Without this the mailbox belongs to nobody and is invisible on every
 		// screen: a mailbox created and lost in the same click.
-		const session = c.get("session");
-		if (session) {
-			const authDO = c.env.MAILBOX.get(c.env.MAILBOX.idFromName("AUTH"));
-			await authDO.giveMailboxToPersonOf(session.userId, email);
-		}
+		await authDO.giveMailboxToPersonOf(session.userId, email);
+		if (kept) await c.env.BUCKET.delete(deletedMailboxKey(email));
 
 		// The same shape as the other two, even though a mailbox created a
 		// moment ago has nothing to report: one shape is what keeps a client
@@ -724,6 +762,10 @@ class PostEmail extends OpenAPIRoute {
 			references,
 			thread_id,
 		} = data.body;
+
+		if (!sendsAsMailbox(from, mailboxId)) {
+			return c.json({ error: "The sender must be this mailbox" }, 403);
+		}
 
 		const key = `mailboxes/${mailboxId}.json`;
 		const obj = await c.env.BUCKET.head(key);
@@ -925,6 +967,13 @@ class DeleteEmail extends OpenAPIRoute {
 		const ns = c.env.MAILBOX;
 		const doId = ns.idFromName(mailboxId);
 		const stub = ns.get(doId);
+
+		// The R2 keys below carry the email id and no mailbox, so they are
+		// this mailbox's to delete only if the message is. Without asking,
+		// anyone holding a mailbox deleted another's original by its id.
+		if (!(await stub.getEmail(id))) {
+			return c.json({ error: "Not found" }, 404);
+		}
 
 		const attachments = await stub.deleteEmail(id);
 
@@ -1548,6 +1597,15 @@ class GetEmailSource extends OpenAPIRoute {
 		const key = `mailboxes/${mailboxId}.json`;
 		const obj = await c.env.BUCKET.head(key);
 		if (!obj) {
+			return c.json({ error: "Not found" }, 404);
+		}
+
+		// `raw/{id}.eml` is named by the email id alone, so the message has to
+		// be this mailbox's before its original is: without asking, anyone
+		// holding a mailbox read another's by its id.
+		const ns = c.env.MAILBOX;
+		const stub = ns.get(ns.idFromName(mailboxId));
+		if (!(await stub.getEmail(emailId))) {
 			return c.json({ error: "Not found" }, 404);
 		}
 

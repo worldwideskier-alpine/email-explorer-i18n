@@ -233,9 +233,11 @@ describe("Mailbox deletion: what survives", () => {
 		expect(await readSettings(other)).not.toBeNull();
 	});
 
-	// A claim on a mailbox that no longer exists would be inherited by the
-	// next mailbox registered at the same address.
-	it("drops the claim on a purged mailbox", async () => {
+	// The claim is kept: the archives a purge leaves are the holder's, and
+	// the claim is what stops anybody else registering the address and being
+	// served them (mailbox-boundaries.test.ts). Dropping it is what used to
+	// make that possible.
+	it("keeps the claim on a purged mailbox", async () => {
 		// @ts-expect-error test binding
 		const authStub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 		expect(await authStub.getPersonMailboxes("user1")).toContain(mailboxId);
@@ -246,6 +248,6 @@ describe("Mailbox deletion: what survives", () => {
 			{ method: "DELETE" },
 		);
 
-		expect(await authStub.getPersonMailboxes("user1")).not.toContain(mailboxId);
+		expect(await authStub.getPersonMailboxes("user1")).toContain(mailboxId);
 	});
 });
