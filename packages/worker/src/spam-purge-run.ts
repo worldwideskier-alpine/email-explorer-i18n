@@ -2,7 +2,13 @@
  * The scheduled pass that empties the back of each mailbox's spam folder.
  *
  * Runs after the backup pass, not before: see runScheduledMaintenance. The
- * ordering is what makes a permanent deletion here safe to offer at all.
+ * ordering is what makes a permanent deletion here safe to offer at all --
+ * but only the ordering's intent. Tonight's archive may not exist: the backup
+ * may have failed, been cut off (as it was, two nights running), or not been
+ * due, since a weekly or monthly backup is not taken every night. So for a
+ * mailbox whose backups are on, what is deleted is limited to what an archive
+ * in the bucket actually holds -- see newestArchiveAt. A mailbox with backups
+ * off is told on its settings screen that what this deletes is kept nowhere.
  *
  * Every run records what happened on the mailbox, success or failure, for the
  * same reason the backup does. A deletion that stopped running is invisible
@@ -10,6 +16,7 @@
  * that is failing every night is worse, and neither shows up anywhere else.
  */
 
+import { backupKeyPrefix } from "./auto-backup";
 import { listMailboxes, updateMailboxSettings } from "./mailbox-records";
 import type { SpamRetentionSettings } from "./spam-retention";
 import { expiredSpamIds, retentionCutoff } from "./spam-retention";
@@ -39,7 +46,46 @@ async function deleteKeys(env: Env, keys: string[]): Promise<void> {
 }
 
 /**
+ * When the newest archive of this mailbox was taken, or null if it has none.
+ *
+ * Read from the bucket rather than from the mailbox's record of its last run:
+ * the record holds only the latest run, so one failure hides every earlier
+ * success, and it is a claim about an archive where the key is the archive.
+ * An archive's key is stamped with the moment its run began and it becomes an
+ * object only once complete, so every message that arrived before that moment
+ * and was still in the mailbox is inside it.
+ */
+export async function newestArchiveAt(
+	env: Env,
+	mailboxId: string,
+): Promise<number | null> {
+	let newest: string | null = null;
+	let cursor: string | undefined;
+	do {
+		const page = await env.BUCKET.list({
+			prefix: backupKeyPrefix(mailboxId),
+			cursor,
+		});
+		for (const object of page.objects) {
+			if (newest === null || object.key > newest) newest = object.key;
+		}
+		cursor = page.truncated ? page.cursor : undefined;
+	} while (cursor);
+	if (newest === null) return null;
+
+	const stamp =
+		/(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})-(\d{3})Z\.mbox$/.exec(newest);
+	if (!stamp) return null;
+	const [, day, h, m, sec, ms] = stamp;
+	const at = Date.parse(`${day}T${h}:${m}:${sec}.${ms}Z`);
+	return Number.isFinite(at) ? at : null;
+}
+
+/**
  * Removes one mailbox's expired spam and returns how many messages went.
+ *
+ * `archivedBefore`, when given, is a second cutoff: nothing that arrived at
+ * or after it goes, because no archive holds it yet. It waits for the next.
  *
  * The row is deleted first and the objects after. The other order would leave
  * a message in the folder whose body and attachments had already been removed
@@ -53,11 +99,15 @@ export async function purgeMailboxSpam(
 	mailboxId: string,
 	now: Date,
 	days: unknown,
+	archivedBefore?: number,
 ): Promise<number> {
 	const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 	const expired = expiredSpamIds(
 		await stub.listSpamEmailDates(),
-		retentionCutoff(days, now.getTime()),
+		Math.min(
+			retentionCutoff(days, now.getTime()),
+			archivedBefore ?? Number.POSITIVE_INFINITY,
+		),
 	);
 
 	const keys: string[] = [];
@@ -98,11 +148,16 @@ export async function runScheduledSpamPurge(
 		if (!retention?.enabled) continue;
 
 		try {
+			// No archive at all means nothing is covered yet, so nothing goes.
+			const archivedBefore = mailbox.settings.autoBackup?.enabled
+				? ((await newestArchiveAt(env, mailbox.id)) ?? Number.NEGATIVE_INFINITY)
+				: undefined;
 			const deleted = await purgeMailboxSpam(
 				env,
 				mailbox.id,
 				now,
 				retention.days,
+				archivedBefore,
 			);
 			summary.ran += 1;
 			summary.deleted += deleted;

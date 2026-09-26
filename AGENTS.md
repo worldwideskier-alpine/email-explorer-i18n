@@ -186,6 +186,11 @@ fork's work. This fork ships by being forked.
   spam *second*, so a message the purge removes is already in that run's
   archive. Reversed, the deletion would be permanent with no copy anywhere.
   Nothing in the types holds it; `scheduled-order.test.ts` does.
+  The order is not enough on its own, though: tonight's archive may not exist
+  (the backup failed, was cut off, or a weekly or monthly one was not due).
+  So for a mailbox with backups on, the purge deletes only what arrived before
+  the newest archive in the bucket (`newestArchiveAt`), and nothing while
+  there is none; `spam-purge.test.ts` holds it.
 - **The nightly run has to survive being cut off**, because it was not. On
   2026-09-04 the whole record was `{"startedAt":"2026-09-03T18:14:09.407Z"}`:
   `scheduled-run.ts` writes `backups` whether the pass returns *or throws*, so
