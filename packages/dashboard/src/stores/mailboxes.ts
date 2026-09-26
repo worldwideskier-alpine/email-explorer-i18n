@@ -27,9 +27,13 @@ export const useMailboxStore = defineStore("mailboxes", {
 			const response = await api.getMailbox(id);
 			if (request === latestMailbox) this.currentMailbox = response.data;
 		},
+		/**
+		 * Saves what is given -- one section is enough; the server keeps the
+		 * rest -- and shows the answer only if this is still the mailbox open.
+		 */
 		async updateMailbox(id: string, settings: any) {
 			const response = await api.updateMailbox(id, settings);
-			this.currentMailbox = response.data;
+			if (this.currentMailbox?.id === id) this.currentMailbox = response.data;
 		},
 		async deleteMailbox(id: string, purge = false) {
 			await api.deleteMailbox(id, purge);

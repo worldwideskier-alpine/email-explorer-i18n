@@ -43,24 +43,44 @@ self.addEventListener("push", (event) => {
 	);
 });
 
+/**
+ * Opens the message a notification is about.
+ *
+ * An open tab is asked to go there itself (a message the app turns into an
+ * in-page navigation) rather than navigated from here: `client.navigate`
+ * reloads the tab, which threw away whatever was being written in it, and it
+ * rejects outright for a tab this worker does not control -- so the tab came
+ * to the front and stayed where it was. A tab already showing that message
+ * is only brought forward. With no tab open, a new one is opened.
+ *
+ * Only an address on this site is opened.
+ */
 self.addEventListener("notificationclick", (event) => {
 	event.notification.close();
-	const url = event.notification.data?.url || "/";
+	const target = new URL(
+		event.notification.data?.url || "/",
+		self.location.origin,
+	);
+	if (target.origin !== self.location.origin) return;
+	const path = target.pathname + target.search;
 
 	event.waitUntil(
 		self.clients
 			.matchAll({ type: "window", includeUncontrolled: true })
 			.then((clientList) => {
-				for (const client of clientList) {
-					if ("focus" in client) {
-						if ("navigate" in client) {
-							client.navigate(url);
-						}
-						return client.focus();
-					}
+				const already = clientList.find((client) => {
+					const at = new URL(client.url);
+					return at.pathname === target.pathname;
+				});
+				if (already) return already.focus();
+
+				const tab = clientList.find((client) => "focus" in client);
+				if (tab) {
+					tab.postMessage({ type: "open", url: path });
+					return tab.focus();
 				}
 				if (self.clients.openWindow) {
-					return self.clients.openWindow(url);
+					return self.clients.openWindow(path);
 				}
 			}),
 	);

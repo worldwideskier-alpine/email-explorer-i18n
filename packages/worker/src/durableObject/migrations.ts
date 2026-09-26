@@ -179,6 +179,18 @@ export const mailboxMigrations: Migration[] = [
             UPDATE emails SET spam_since = date WHERE folder_id = 'spam';
         `,
 	},
+	{
+		/**
+		 * Which message a draft answers. A reply saved as a draft came back as
+		 * a new message: the composer had forgotten what it was replying to,
+		 * so it was sent without In-Reply-To or References and started a
+		 * thread of its own on the other side.
+		 */
+		name: "10_draft_reply_to",
+		sql: `
+            ALTER TABLE emails ADD COLUMN draft_reply_to TEXT;
+        `,
+	},
 ];
 
 export const authMigrations: Migration[] = [

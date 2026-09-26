@@ -38,6 +38,7 @@ const sources = {
 
 /** Contrast against white, measured in a browser. See the note above. */
 const MEASURED: Record<string, number> = {
+	"amber-700": 5.03,
 	"green-600": 3.22,
 	"green-700": 4.95,
 	"green-800": 7.13,
@@ -68,7 +69,14 @@ interface Pair {
 function whiteOnColour(): Pair[] {
 	const found: Pair[] = [];
 	for (const [path, source] of Object.entries(sources)) {
-		for (const match of source.matchAll(/class="([^"]*)"/gs)) {
+		// Class attributes, and any whole string in the script that carries
+		// text-white: a component choosing its colours in code (Toast) was
+		// invisible to a reading of attributes alone.
+		const strings = [
+			...source.matchAll(/class="([^"]*)"/gs),
+			...source.matchAll(/["'`]([^"'`\n]*\btext-white\b[^"'`\n]*)["'`]/g),
+		];
+		for (const match of strings) {
 			const classes = match[1].split(/\s+/);
 			const line = source.slice(0, match.index).split("\n").length;
 			const file = path.replace(/^\.\.?\//, "");

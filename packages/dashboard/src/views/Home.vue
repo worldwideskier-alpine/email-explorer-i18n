@@ -226,7 +226,9 @@ const handleCreateMailbox = async () => {
 		await api.createMailbox(newMailboxEmail.value, newMailboxName.value);
 		showSuccessToast(t("home.mailboxCreated"));
 		closeCreateMailboxModal();
-		await mailboxStore.fetchMailboxes();
+		// Refreshing the list is not creating the mailbox: a failure here used
+		// to say "Failed to create mailbox" about one that had been created.
+		await mailboxStore.fetchMailboxes().catch(() => {});
 	} catch (e: any) {
 		const fromApi = e.response?.data?.error;
 		const errorMessage = () =>

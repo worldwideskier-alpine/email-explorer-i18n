@@ -27,6 +27,19 @@ initLocale()
 watchForANewBuild();
 
 if ("serviceWorker" in navigator) {
+	// A tapped notification asks an open tab to show its message. Routed
+	// inside the page rather than reloaded, so a message being written stays.
+	navigator.serviceWorker.addEventListener("message", (event) => {
+		const url = event.data?.type === "open" ? event.data.url : null;
+		if (
+			typeof url === "string" &&
+			url.startsWith("/") &&
+			!url.startsWith("//")
+		) {
+			router.push(url).catch(() => {});
+		}
+	});
+
 	window.addEventListener("load", () => {
 		navigator.serviceWorker.register("/sw.js").catch((e) => {
 			console.error("Service worker registration failed:", e);

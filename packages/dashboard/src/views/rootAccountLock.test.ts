@@ -15,8 +15,10 @@ import { describe, expect, it } from "vitest";
  * that unlocking asks first, and that a row arriving without the flag is
  * treated as locked rather than as deletable.
  *
- * Read from the source for the reason formContrast.test.ts documents: the
- * dashboard's tests run in node, without a DOM to mount into.
+ * Read from the source. That was said here to be because the dashboard's
+ * tests have no DOM to mount into; they do (jsdom), and toggleSwitch.test.ts
+ * and screensForReal.test.ts mount for real. What a source reading cannot see
+ * -- the button's behaviour once rendered -- is what those are for.
  */
 
 const source = Object.values(

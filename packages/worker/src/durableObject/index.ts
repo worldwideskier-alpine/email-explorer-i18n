@@ -43,6 +43,8 @@ interface EmailData {
 	thread_id?: string | null;
 	/** The sender's Message-ID, brackets stripped; null for mail sent here. */
 	message_id?: string | null;
+	/** For a draft: the id of the message it replies to, in this mailbox. */
+	draft_reply_to?: string | null;
 }
 
 /** The most results one search returns. */
@@ -1373,6 +1375,7 @@ export class MailboxDO extends DurableObject<Env> {
 			cc,
 			bcc,
 			body,
+			draft_reply_to,
 		}: {
 			subject: string;
 			sender: string;
@@ -1380,6 +1383,7 @@ export class MailboxDO extends DurableObject<Env> {
 			cc: string | null;
 			bcc: string | null;
 			body: string;
+			draft_reply_to?: string | null;
 		},
 	) {
 		this.#qb
@@ -1393,6 +1397,8 @@ export class MailboxDO extends DurableObject<Env> {
 					bcc,
 					body,
 					date: new Date().toISOString(),
+					// Kept as it was unless the save says otherwise.
+					...(draft_reply_to !== undefined ? { draft_reply_to } : {}),
 				},
 				where: {
 					conditions: "id = ? AND folder_id = 'draft'",

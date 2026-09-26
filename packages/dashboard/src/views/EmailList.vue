@@ -115,13 +115,16 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useDateFormat } from "@/composables/useDateFormat";
+import { useToast } from "@/composables/useToast";
 import api from "@/services/api";
 import { useEmailStore } from "@/stores/emails";
 import { useFolderStore } from "@/stores/folders";
 import { useUIStore } from "@/stores/ui";
 import type { Email } from "@/types";
+import { translateApiError } from "@/utils/apiError";
 
 const { t } = useI18n();
+const { error: showErrorToast } = useToast();
 const { formatListDate } = useDateFormat();
 const emailStore = useEmailStore();
 const { emails, isRefreshing, hasMore } = storeToRefs(emailStore);
@@ -226,17 +229,30 @@ watch(folderId, (newFolderId) => {
 	});
 });
 
-const toggleReadStatus = (email: Email) => {
-	emailStore.updateEmail(route.params.mailboxId as string, email.id, {
-		read: !email.read,
-	});
+/** Runs a row action and says so when it fails, rather than nothing. */
+const act = async (action: () => Promise<unknown>) => {
+	try {
+		await action();
+	} catch (e: any) {
+		showErrorToast(
+			translateApiError(e?.response?.data?.error, t("compose.unexpectedError")),
+		);
+	}
 };
 
-const toggleStarStatus = (email: Email) => {
-	emailStore.updateEmail(route.params.mailboxId as string, email.id, {
-		starred: !email.starred,
-	});
-};
+const toggleReadStatus = (email: Email) =>
+	act(() =>
+		emailStore.updateEmail(route.params.mailboxId as string, email.id, {
+			read: !email.read,
+		}),
+	);
+
+const toggleStarStatus = (email: Email) =>
+	act(() =>
+		emailStore.updateEmail(route.params.mailboxId as string, email.id, {
+			starred: !email.starred,
+		}),
+	);
 
 // In the spam folder the button means "this isn't spam" and sends the message
 // back to the inbox; everywhere else it files the message as spam. Either way
@@ -248,13 +264,14 @@ const toggleStarStatus = (email: Email) => {
 const isSpamRow = (email: Email) =>
 	(email.folder_id ?? folderId.value) === "spam";
 
-const handleSpamVerdict = (email: Email) => {
-	emailStore.setEmailSpamVerdict(
-		route.params.mailboxId as string,
-		email.id,
-		isSpamRow(email) ? "not-spam" : "spam",
+const handleSpamVerdict = (email: Email) =>
+	act(() =>
+		emailStore.setEmailSpamVerdict(
+			route.params.mailboxId as string,
+			email.id,
+			isSpamRow(email) ? "not-spam" : "spam",
+		),
 	);
-};
 
 const handleRowClick = async (
 	event: MouseEvent,
@@ -267,8 +284,10 @@ const handleRowClick = async (
 	}
 	event.preventDefault();
 	const mailboxId = route.params.mailboxId as string;
-	const response = await api.getEmail(mailboxId, email.id);
-	uiStore.openComposeModal({ mode: "draft", originalEmail: response.data });
+	await act(async () => {
+		const response = await api.getEmail(mailboxId, email.id);
+		uiStore.openComposeModal({ mode: "draft", originalEmail: response.data });
+	});
 };
 
 const handleDelete = (emailId: string) => {
@@ -279,6 +298,6 @@ const handleDelete = (emailId: string) => {
 	) {
 		return;
 	}
-	emailStore.deleteOrTrashEmail(mailboxId, emailId);
+	return act(() => emailStore.deleteOrTrashEmail(mailboxId, emailId));
 };
 </script>

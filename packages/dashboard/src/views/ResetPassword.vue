@@ -79,6 +79,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import { useToast } from "@/composables/useToast";
 import api from "@/services/api";
+import { translateApiError } from "@/utils/apiError";
 
 const router = useRouter();
 const route = useRoute();
@@ -123,7 +124,9 @@ async function handleResetPassword() {
 		}, 5000);
 	} catch (e: any) {
 		const fromApi = e.response?.data?.error;
-		const errorMessage = () => fromApi || t("resetPassword.failedToReset");
+		// The server answers in English; the catalogues have its sentences.
+		const errorMessage = () =>
+			translateApiError(fromApi, t("resetPassword.failedToReset"));
 		error.value = errorMessage;
 		showError(errorMessage());
 	} finally {

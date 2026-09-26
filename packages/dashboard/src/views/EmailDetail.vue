@@ -197,12 +197,15 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import EmailIframe from "@/components/EmailIframe.vue";
 import { useDateFormat } from "@/composables/useDateFormat";
+import { useToast } from "@/composables/useToast";
 import api from "@/services/api";
 import { useEmailStore } from "@/stores/emails";
 import { useFolderStore } from "@/stores/folders";
 import { useUIStore } from "@/stores/ui";
+import { translateApiError } from "@/utils/apiError";
 
 const { t } = useI18n();
+const { error: showErrorToast } = useToast();
 const { formatFullDate } = useDateFormat();
 const emailStore = useEmailStore();
 const { currentEmail: email } = storeToRefs(emailStore);
@@ -439,59 +442,85 @@ onMounted(async () => {
 	}
 });
 
+/**
+ * Runs an action on this message and says so when it fails. These used to be
+ * fired and forgotten: the screen went back to the list as though the move or
+ * delete had happened, and the message was still there next time.
+ */
+const act = async (action: () => Promise<unknown>, then?: () => void) => {
+	try {
+		await action();
+		then?.();
+	} catch (e: any) {
+		showErrorToast(
+			translateApiError(e?.response?.data?.error, t("compose.unexpectedError")),
+		);
+	}
+};
+
 const toggleReadStatus = () => {
 	if (email.value) {
-		emailStore.updateEmail(route.params.mailboxId as string, email.value.id, {
-			read: !email.value.read,
-		});
+		const { id, read } = email.value;
+		void act(() =>
+			emailStore.updateEmail(route.params.mailboxId as string, id, {
+				read: !read,
+			}),
+		);
 	}
 };
 
 const toggleStarStatus = () => {
 	if (email.value) {
-		emailStore.updateEmail(route.params.mailboxId as string, email.value.id, {
-			starred: !email.value.starred,
-		});
+		const { id, starred } = email.value;
+		void act(() =>
+			emailStore.updateEmail(route.params.mailboxId as string, id, {
+				starred: !starred,
+			}),
+		);
 	}
 };
 
-const handleMove = (folderId: string) => {
-	if (email.value) {
-		emailStore.moveEmail(
-			route.params.mailboxId as string,
-			email.value.id,
-			folderId,
-		);
-		isMoveMenuOpen.value = false;
-		goToList();
-	}
+const handleMove = async (folderId: string) => {
+	if (!email.value) return;
+	const id = email.value.id;
+	isMoveMenuOpen.value = false;
+	await act(
+		() => emailStore.moveEmail(route.params.mailboxId as string, id, folderId),
+		goToList,
+	);
 };
 
 const handleMarkSpam = async () => {
 	if (!email.value) return;
+	const id = email.value.id;
 	const mailboxId = route.params.mailboxId as string;
-	await emailStore.setEmailSpamVerdict(mailboxId, email.value.id, "spam");
-	goToList();
+	await act(
+		() => emailStore.setEmailSpamVerdict(mailboxId, id, "spam"),
+		goToList,
+	);
 };
 
 const handleMarkNotSpam = async () => {
 	if (!email.value) return;
+	const id = email.value.id;
 	const mailboxId = route.params.mailboxId as string;
-	await emailStore.setEmailSpamVerdict(mailboxId, email.value.id, "not-spam");
-	goToList();
+	await act(
+		() => emailStore.setEmailSpamVerdict(mailboxId, id, "not-spam"),
+		goToList,
+	);
 };
 
-const handleDelete = () => {
+const handleDelete = async () => {
 	if (!email.value) return;
+	const id = email.value.id;
 	const mailboxId = route.params.mailboxId as string;
-	const isPermanent = emailStore.deletesPermanently(email.value.id);
+	const isPermanent = emailStore.deletesPermanently(id);
 
 	if (isPermanent && !confirm(t("emailList.confirmPermanentDelete"))) {
 		return;
 	}
 
-	emailStore.deleteOrTrashEmail(mailboxId, email.value.id);
-	goToList();
+	await act(() => emailStore.deleteOrTrashEmail(mailboxId, id), goToList);
 };
 
 const handleReply = () => {

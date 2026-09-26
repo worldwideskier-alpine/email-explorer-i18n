@@ -50,7 +50,15 @@ const { t, locale } = useI18n();
 const groups = localesByRegion();
 
 // Switching fetches the catalogue, so it lands a moment after the change.
+//
+// The browser shows the choice the moment it is made, and `:value` is written
+// back only when `locale` changes -- so a catalogue that failed to load left
+// the control naming a language the page was not in (see "Switches" in
+// AGENTS.md for the same thing with a checkbox). It is put back by hand.
 const onChange = (event: Event) => {
-	void setLocale((event.target as HTMLSelectElement).value as Locale);
+	const select = event.target as HTMLSelectElement;
+	setLocale(select.value as Locale).catch(() => {
+		select.value = locale.value;
+	});
 };
 </script>

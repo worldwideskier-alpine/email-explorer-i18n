@@ -82,6 +82,7 @@ export function looksLikeANewBuild(
  * somebody had written.
  */
 export function somethingIsBeingWritten(doc: Document): boolean {
+	if (holds > 0) return true;
 	const active = doc.activeElement;
 	if (
 		active instanceof HTMLInputElement ||
@@ -96,7 +97,38 @@ export function somethingIsBeingWritten(doc: Document): boolean {
 	for (const editor of doc.querySelectorAll('[contenteditable="true"]')) {
 		if ((editor.textContent ?? "").trim()) return true;
 	}
+	// A filled box is writing too: the composer's To and Subject are inputs,
+	// and so is a picked attachment. Only boxes someone can type into --
+	// a disabled one showing a stored value is not being written.
+	for (const field of doc.querySelectorAll("input")) {
+		if (field.disabled || field.readOnly) continue;
+		if (field.type === "file") {
+			if (field.files && field.files.length > 0) return true;
+		} else if (TYPED.has(field.type) && field.value.trim()) {
+			return true;
+		}
+	}
 	return false;
+}
+
+/** Input types somebody types words into. */
+const TYPED = new Set(["text", "email", "search", "url", "tel", "password"]);
+
+let holds = 0;
+
+/**
+ * Keeps the page from reloading until the returned function is called, for
+ * work in progress that shows in no field -- a restore feeding messages to
+ * the server one at a time, which a reload would cut off halfway.
+ */
+export function holdReload(): () => void {
+	holds += 1;
+	let released = false;
+	return () => {
+		if (released) return;
+		released = true;
+		holds -= 1;
+	};
 }
 
 /** Asks the server what the page says now, without going through the cache. */

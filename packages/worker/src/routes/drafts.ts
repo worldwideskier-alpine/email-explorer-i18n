@@ -15,6 +15,11 @@ const DraftEmailRequestSchema = z.object({
 	from: z.string().email(),
 	subject: z.string().optional().default(""),
 	html: z.string().optional().default(""),
+	/**
+	 * The message this draft replies to, by its id in this mailbox. Sending
+	 * the draft then goes through the reply route, which threads it.
+	 */
+	replyTo: z.string().optional(),
 });
 
 const DraftEmailResponseSchema = z.object({
@@ -49,7 +54,7 @@ export class PostDraftEmail extends OpenAPIRoute {
 	async handle(c: AppContext) {
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { mailboxId } = data.params;
-		const { to, cc, bcc, from, subject, html } = data.body;
+		const { to, cc, bcc, from, subject, html, replyTo } = data.body;
 
 		const key = `mailboxes/${mailboxId}.json`;
 		const obj = await c.env.BUCKET.head(key);
@@ -62,6 +67,7 @@ export class PostDraftEmail extends OpenAPIRoute {
 		const stub = ns.get(doId);
 
 		const draftId = crypto.randomUUID();
+		const draft_reply_to = await parentIn(stub, replyTo);
 
 		await stub.createEmail(
 			"draft",
@@ -74,6 +80,7 @@ export class PostDraftEmail extends OpenAPIRoute {
 				bcc: bcc || null,
 				date: new Date().toISOString(),
 				body: html,
+				draft_reply_to,
 			},
 			[],
 		);
@@ -106,7 +113,7 @@ export class PutDraftEmail extends OpenAPIRoute {
 	async handle(c: AppContext) {
 		const data = await this.getValidatedData<typeof this.schema>();
 		const { mailboxId, id } = data.params;
-		const { to, cc, bcc, from, subject, html } = data.body;
+		const { to, cc, bcc, from, subject, html, replyTo } = data.body;
 
 		const key = `mailboxes/${mailboxId}.json`;
 		const obj = await c.env.BUCKET.head(key);
@@ -130,8 +137,24 @@ export class PutDraftEmail extends OpenAPIRoute {
 			cc: cc || null,
 			bcc: bcc || null,
 			body: html,
+			...(replyTo !== undefined
+				? { draft_reply_to: await parentIn(stub, replyTo) }
+				: {}),
 		});
 
 		return c.json({ id, status: "saved" }, 200);
 	}
+}
+
+/**
+ * The replied-to message's id if it is a message in this mailbox, and
+ * nothing otherwise: the id comes from the browser, and a draft pointing at
+ * somebody else's message would send its reply through their thread.
+ */
+async function parentIn(
+	stub: { getEmail: (id: string) => Promise<unknown> },
+	id: string | undefined,
+): Promise<string | null> {
+	if (!id) return null;
+	return (await stub.getEmail(id)) ? id : null;
 }

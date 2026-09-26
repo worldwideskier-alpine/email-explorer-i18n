@@ -20,6 +20,7 @@ vi.mock("@/services/api", () => ({
 		searchEmails: (mailboxId: string, params: { query: string }) =>
 			later(`search:${mailboxId}:${params.query}`),
 		getMailbox: (id: string) => later(`mailbox:${id}`),
+		updateMailbox: (id: string) => later(`update:${id}`),
 		getCurrentUser: () => getCurrentUser(),
 		logout: () => logout(),
 		setAuthToken: vi.fn(),
@@ -85,6 +86,23 @@ describe("the open mailbox", () => {
 		await b;
 		pending["mailbox:a"]({ data: { id: "a" } });
 		await a;
+		expect(store.currentMailbox?.id).toBe("b");
+	});
+});
+
+describe("a save's answer", () => {
+	/**
+	 * It replaced whatever mailbox was open when it arrived -- after a switch,
+	 * the settings screen of one mailbox showing another's.
+	 */
+	it("does not replace a mailbox opened since", async () => {
+		const store = useMailboxStore();
+		const b = store.fetchMailbox("b");
+		pending["mailbox:b"]({ data: { id: "b" } });
+		await b;
+		const save = store.updateMailbox("a", {});
+		pending["update:a"]({ data: { id: "a" } });
+		await save;
 		expect(store.currentMailbox?.id).toBe("b");
 	});
 });
