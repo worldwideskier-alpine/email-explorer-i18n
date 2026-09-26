@@ -16,6 +16,10 @@
  * reason to stop deleting old spam -- the backup pass records its own failure
  * on the mailbox, and leaving the purge undone as well would mean one broken
  * mailbox quietly stops both jobs for every mailbox behind it in the loop.
+ * What the purge may delete does depend on the backups, though: for a mailbox
+ * with backups on, only what an archive in the bucket already holds. The
+ * order alone promised that and did not deliver it on a night the backup
+ * failed or was not due; see spam-purge-run.ts.
  *
  * The run also writes down that it happened; see maintenance-record.ts. Each
  * pass records its outcome on the mailboxes it touched, which answers "did my

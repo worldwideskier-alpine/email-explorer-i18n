@@ -200,3 +200,93 @@ describe("deleting old mail out of the spam folder", () => {
 		expect((await storedSettings()).spamRetention?.days).toBe(30);
 	});
 });
+
+/**
+ * With backups on, the purge deletes only what an archive holds.
+ *
+ * Running after the backup pass promised that and did not deliver it: the
+ * backup can fail, be cut off (it was, two nights running), or not be due --
+ * a weekly or monthly backup is not taken every night, and a message can
+ * arrive and expire between two of them. Each case below is one where a
+ * message would have been deleted with no copy anywhere.
+ */
+describe("deleting old spam when backups are on", () => {
+	const bucket = () => (env as unknown as { BUCKET: R2Bucket }).BUCKET;
+	const archive = (stamp: string) =>
+		bucket().put(`backups/${encodeURIComponent(mailboxId)}/${stamp}.mbox`, "x");
+
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createDummyMailbox();
+		await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}`,
+			{
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					settings: {
+						autoBackup: { enabled: true, frequency: "monthly", keep: 3 },
+					},
+				}),
+			},
+		);
+	});
+
+	it("deletes nothing before there is any archive", async () => {
+		await place("Old spam", "spam", "2026-07-01T00:00:00.000Z");
+		await setRetention({ enabled: true, days: 30 });
+
+		const summary = await runScheduledSpamPurge(env as never, NOW);
+
+		expect(summary.deleted).toBe(0);
+		expect(await subjectsIn("spam")).toEqual(["Old spam"]);
+		expect((await storedSettings()).spamRetention?.lastResult).toMatchObject({
+			ok: true,
+			deleted: 0,
+		});
+	});
+
+	it("deletes what arrived before the newest archive and keeps what came after", async () => {
+		await archive("2026-07-15T18-00-00-000Z");
+		await archive("2026-08-10T18-00-00-000Z");
+		await place("In the archive", "spam", "2026-08-01T00:00:00.000Z");
+		await place("After the archive", "spam", "2026-08-20T00:00:00.000Z");
+		await place("Recent", "spam", "2026-08-31T00:00:00.000Z");
+		await setRetention({ enabled: true, days: 7 });
+
+		const summary = await runScheduledSpamPurge(env as never, NOW);
+
+		expect(summary.deleted).toBe(1);
+		expect((await subjectsIn("spam")).sort()).toEqual([
+			"After the archive",
+			"Recent",
+		]);
+	});
+
+	it("goes by the newest archive, not the first one listed", async () => {
+		for (let day = 1; day <= 28; day++) {
+			const d = String(day).padStart(2, "0");
+			await archive(`2026-06-${d}T18-00-00-000Z`);
+		}
+		await archive("2026-08-25T18-00-00-000Z");
+		await place("Covered", "spam", "2026-08-20T00:00:00.000Z");
+		await setRetention({ enabled: true, days: 7 });
+
+		expect((await runScheduledSpamPurge(env as never, NOW)).deleted).toBe(1);
+	});
+
+	it("still deletes by date alone when backups are off", async () => {
+		await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}`,
+			{
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ settings: { autoBackup: { enabled: false } } }),
+			},
+		);
+		await place("Old spam", "spam", "2026-07-01T00:00:00.000Z");
+		await setRetention({ enabled: true, days: 30 });
+
+		expect((await runScheduledSpamPurge(env as never, NOW)).deleted).toBe(1);
+	});
+});

@@ -151,12 +151,101 @@ const SYSTEM_PROMPT = [
 		"If you are unsure, respond NOT_SPAM so legitimate mail is never lost.",
 ].join("\n\n");
 
-function stripHtml(html: string): string {
-	return html
-		.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, " ")
-		.replace(/<[^>]+>/g, " ")
+/**
+ * The words of an HTML body: script and style elements out, then tags out.
+ *
+ * Scans rather than the regular expressions they replaced, because those were
+ * quadratic on input a sender chooses: every `<style` with no `</style>`
+ * after it, and every `<` with no `>`, sent the engine to the end of the
+ * message and back one character on. 320KB of `<style x` took 25 seconds,
+ * inside the mailbox's Durable Object, which answers nothing else while it
+ * runs -- one message stalled the mailbox. Here each search remembers where
+ * it got to, and one that found nothing is not made again, since nothing
+ * further on can be found either.
+ *
+ * What comes out is exactly what the expressions produced, malformed input
+ * included -- the two passes are theirs, in their order; the unit test
+ * compares them on generated input.
+ */
+export function stripHtml(html: string): string {
+	return collapseTags(withoutScriptsAndStyles(html))
 		.replace(/\s+/g, " ")
 		.trim();
+}
+
+/** `/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi` replaced with a space. */
+function withoutScriptsAndStyles(html: string): string {
+	// ASCII only, so every index means the same in both strings:
+	// toLowerCase lengthens some characters ("İ" becomes two), and the
+	// expression's `i` flag folded nothing outside ASCII into these names.
+	const lower = html.replace(/[A-Z]/g, (c) => c.toLowerCase());
+	const found = new Searcher(lower);
+	const out: string[] = [];
+	let i = 0;
+	let at = i;
+	while (at < html.length) {
+		const lt = lower.indexOf("<", at);
+		if (lt === -1) break;
+		const name = lower.startsWith("script", lt + 1)
+			? "script"
+			: lower.startsWith("style", lt + 1)
+				? "style"
+				: null;
+		if (name) {
+			const gt = found.next(">", lt + 1 + name.length);
+			const close = gt === -1 ? -1 : found.next(`</${name}>`, gt + 1);
+			if (close !== -1) {
+				out.push(html.slice(i, lt), " ");
+				i = at = close + name.length + 3;
+				continue;
+			}
+		}
+		at = lt + 1;
+	}
+	out.push(html.slice(i));
+	return out.join("");
+}
+
+/** `/<[^>]+>/g` replaced with a space. */
+function collapseTags(html: string): string {
+	const found = new Searcher(html);
+	const out: string[] = [];
+	let i = 0;
+	let at = 0;
+	while (at < html.length) {
+		const lt = html.indexOf("<", at);
+		if (lt === -1) break;
+		const gt = found.next(">", lt + 1);
+		if (gt === -1) break;
+		if (gt === lt + 1) {
+			// `<>`: nothing between, so not a tag; the search goes on from `>`.
+			at = lt + 1;
+			continue;
+		}
+		out.push(html.slice(i, lt), " ");
+		i = at = gt + 1;
+	}
+	out.push(html.slice(i));
+	return out.join("");
+}
+
+/**
+ * indexOf that remembers. Asked for the same needle from a position no
+ * earlier than last time, it answers from memory when the remembered hit is
+ * still ahead, and a miss stays a miss -- which is what keeps a scan that
+ * asks at every `<` linear rather than quadratic.
+ */
+class Searcher {
+	#hits = new Map<string, number>();
+	constructor(private readonly text: string) {}
+	next(needle: string, from: number): number {
+		const known = this.#hits.get(needle);
+		if (known === -1) return -1;
+		if (known !== undefined && known >= from) return known;
+		const hit = this.text.indexOf(needle, from);
+		this.#hits.set(needle, hit);
+		return hit;
+	}
 }
 
 export interface ClassifyInput {
