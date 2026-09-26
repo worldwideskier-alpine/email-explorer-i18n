@@ -1,21 +1,29 @@
 import { describe, expect, it } from "vitest";
 import { prepareFrame } from "./messageFrame";
-import { decodeCssEscapes } from "./remoteContent";
+import { cssWithoutFetches, decodeCssEscapes } from "./remoteContent";
 
 /**
- * Everything here is asked of the *string*, not of a rendered frame.
+ * What the spam folder's rules guarantee, one group per guarantee:
  *
- * That is the property under test. A body that reaches the parser with an
- * address still in it has already been fetched by the time any later pass
- * could remove it, so "the markup carries no address" is the only form of the
- * question whose answer arrives in time.
+ *   1. nothing in a message fetches anything;
+ *   2. CSS that fetches is rewritten to exactly this -- every address becomes
+ *      `none`, or the CSS is dropped when that cannot mend it;
+ *   3. CSS that fetches nothing is left exactly as it was written;
+ *   4. an element or attribute that fetches loses that, and nothing else;
+ *   5. the rewrite takes time in proportion to the CSS.
  *
- * Asked through prepareFrame, which is how the spam folder reaches these
- * rules, and of the frame's own reading of what it returns. These tests used
- * to call a string version of the pass that nothing in production used any
- * more -- it parsed separately and returned head and body, so they passed
- * against a path the frame never took.
+ * Asked through prepareFrame and of the frame's own reading of what it
+ * returns, because that is the document the frame shows -- and asked of that
+ * document's DOM rather than of serialised markup: `innerHTML` writes U+00A0
+ * as `&nbsp;`, and a search of it for the character itself passed with the
+ * fix it was meant to hold taken out.
+ *
+ * Expectations are exact wherever they can be. "The address is gone and the
+ * element is still there" is as true of CSS dropped whole as of CSS mended,
+ * and tests built on it passed while testing nothing.
  */
+
+const T = "https://tracker.example";
 
 /** A spam message, as the frame will read it. */
 function spamDocument(html: string): Document {
@@ -25,311 +33,639 @@ function spamDocument(html: string): Document {
 	);
 }
 
-/** Its body, serialised -- which writes U+00A0 as `&nbsp;`. */
-function spamBody(html: string): string {
-	return spamDocument(html).body.innerHTML;
+/** Every attribute value, text and comment in a document. */
+function everythingIn(doc: Document): string[] {
+	const found: string[] = [];
+	const walker = doc.createTreeWalker(
+		doc,
+		NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT | NodeFilter.SHOW_COMMENT,
+	);
+	for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+		if (node instanceof Element) {
+			for (const attribute of Array.from(node.attributes)) {
+				found.push(attribute.value);
+			}
+		} else {
+			found.push((node as CharacterData).data);
+		}
+	}
+	return found;
 }
 
-/** What a browser would go and get, spelled every way this has to survive. */
-const fetchesSomething = (html: string) =>
-	/https?:\/\/|\/\/tracker|cid:/i.test(html);
+/** The style attribute of `#t` once the frame has it; null if it went. */
+function styleOf(style: string): string | null {
+	return (
+		spamDocument(
+			`<div id="t" style="${style.replaceAll('"', "&quot;")}">x</div>`,
+		)
+			.getElementById("t")
+			?.getAttribute("style") ?? null
+	);
+}
 
-describe("what a spam message is allowed to load", () => {
-	it("takes the address off an image", () => {
-		const out = spamBody(
-			'<p>hello</p><img src="https://tracker.example/pixel.gif" alt="">',
-		);
-		expect(fetchesSomething(out)).toBe(false);
-		expect(out).toContain("hello");
-	});
+/** The text of a message's own `<style>` once the frame has it. */
+function sheetOf(css: string, insideSvg = false): string | null {
+	const doc = spamDocument(
+		insideSvg
+			? `<svg><style>${css}</style></svg><p>x</p>`
+			: `<style>${css}</style><p>x</p>`,
+	);
+	// The frame's own stylesheet comes first; the message's is the last.
+	const sheets = doc.querySelectorAll("style");
+	return sheets.length > 1 ? sheets[sheets.length - 1].textContent : null;
+}
 
+describe("1. nothing in a spam message fetches anything", () => {
 	/**
-	 * The pixel that started this: one by one, transparent, styled out of the
-	 * way, and it is the entire reason the message was sent to an address
-	 * nobody has confirmed is real.
+	 * Every way of fetching that has been found, measured fetching in
+	 * Chromium before it was closed. One question is asked of each: whether
+	 * any attribute, text or comment in the frame's document still names the
+	 * address. And that the markup was mended rather than replaced by the
+	 * words alone, which would also name nothing.
 	 */
-	it("takes it off an image nobody can see either", () => {
-		expect(
-			spamBody(
-				'<img src="https://tracker.example/o.gif?id=deadbeef" width="1" height="1" style="display:none">',
-			),
-		).not.toContain("tracker.example");
-	});
-
-	it("leaves the element behind so its alt text still says what was there", () => {
-		const out = spamBody(
-			'<img src="https://tracker.example/logo.png" alt="SAISON">',
-		);
-		expect(out).toContain("<img");
-		expect(out).toContain("SAISON");
-	});
-
-	it("takes every candidate out of a srcset, not just the first", () => {
-		const out = spamBody(
-			'<img src="https://a.example/1.png" srcset="https://b.example/2.png 2x, https://c.example/3.png 3x">',
-		);
-		expect(fetchesSomething(out)).toBe(false);
-	});
-
-	// Older than CSS, still honoured, and still a request.
-	it("knows the attributes that predate CSS", () => {
-		const out = spamBody(
-			'<table background="https://tracker.example/bg.png"><tr><td><img lowsrc="https://tracker.example/low.gif"></td></tr></table>',
-		);
-		expect(fetchesSomething(out)).toBe(false);
-	});
-
-	it("silences the things that play by themselves", () => {
-		const out = spamBody(
-			'<video poster="https://tracker.example/p.jpg" src="https://tracker.example/v.mp4"></video>' +
-				'<audio><source src="https://tracker.example/a.mp3"></audio>' +
-				'<object data="https://tracker.example/o.swf"></object>',
-		);
-		expect(fetchesSomething(out)).toBe(false);
-	});
-
-	it("drops a stylesheet link, which is a fetch with nothing to show", () => {
-		const out = spamBody(
-			'<link rel="stylesheet" href="https://tracker.example/mail.css"><p>hi</p>',
-		);
-		expect(fetchesSomething(out)).toBe(false);
-		expect(out.toLowerCase()).not.toContain("<link");
-	});
-
-	/**
-	 * No click needed and no image needed: the frame navigates itself to the
-	 * sender's address a moment after it opens, which reports the open exactly
-	 * as well as a pixel does.
-	 */
-	it("drops a meta refresh", () => {
-		const out = spamBody(
-			'<meta http-equiv="refresh" content="0;url=https://tracker.example/opened"><p>hi</p>',
-		);
-		expect(fetchesSomething(out)).toBe(false);
-		expect(out).toContain("hi");
-	});
-
-	it("keeps SVG from fetching through either spelling of href", () => {
-		const out = spamBody(
-			'<svg><image href="https://tracker.example/a.png"></image>' +
-				'<image xlink:href="https://tracker.example/b.png"></image>' +
-				'<use href="https://tracker.example/s.svg#i"></use></svg>',
-		);
-		expect(fetchesSomething(out)).toBe(false);
-	});
-
-	it("does not spare an inline attachment either", () => {
-		expect(spamBody('<img src="cid:logo@example" alt="logo">')).not.toContain(
-			"cid:",
-		);
-	});
-});
-
-describe("the CSS a spam message carries", () => {
-	it("turns a background image into no background image", () => {
-		const out = spamBody(
-			'<div style="background-image: url(https://tracker.example/bg.png); color: red">x</div>',
-		);
-		expect(fetchesSomething(out)).toBe(false);
-		// The declaration is still a declaration. Deleting the value would
-		// leave `background-image: ;`, which a browser drops as malformed --
-		// the same result, arrived at by pretending nothing was there.
-		expect(out).toContain("none");
-		expect(out).toContain("color: red");
-	});
-
-	it("does not care how the address is quoted", () => {
-		for (const value of [
-			"url(https://tracker.example/a.png)",
-			`url("https://tracker.example/a.png")`,
-			"url( 'https://tracker.example/a.png' )",
-		]) {
-			expect(
-				fetchesSomething(spamBody(`<div style="background: ${value}">x</div>`)),
-			).toBe(false);
-		}
-	});
-
-	/**
-	 * CSS closes what the sender left open at its end, so `url(` with no `)`
-	 * is still an address. Measured: all three spellings fetched from the
-	 * spam folder, because the pattern waited for a `)` that never came.
-	 */
-	it("catches an address the CSS never closes", () => {
-		for (const value of [
-			"url(https://tracker.example/a.png",
-			`url("https://tracker.example/a.png`,
-			"url('https://tracker.example/a.png",
-			'image-set("https://tracker.example/a.png" 1x',
-			"image-set(url(https://tracker.example/a.png",
-		]) {
-			const attribute = spamBody(
-				`<div style="color:red;background:${value.replaceAll('"', "&quot;")}">x</div>`,
-			);
-			expect(attribute, value).not.toContain("tracker.example");
-			// Mended rather than dropped: what else the style says stays.
-			expect(attribute, value).toContain("color:red");
-			const element = spamBody(
-				`<style>.a{color:red;background:${value}</style><div class="a">x</div>`,
-			);
-			expect(element, value).not.toContain("tracker.example");
-			expect(element, value).toContain("color:red");
-			expect(element, value).toContain('<div class="a">');
-		}
-	});
-
-	it("reaches inside a style block, where mail puts most of its styling", () => {
-		const out = spamBody(
-			"<style>.hero { background: url(https://tracker.example/hero.png) no-repeat; }</style><div class='hero'>x</div>",
-		);
-		expect(fetchesSomething(out)).toBe(false);
-		expect(out).toContain(".hero");
-	});
-
-	/**
-	 * `@import` fetches a stylesheet with no `url()` around the address, so the
-	 * pass that rewrites addresses never sees it.
-	 */
-	it("drops an @import, address and all", () => {
-		const out = spamBody(
-			`<style>@import "https://tracker.example/mail.css"; p { margin: 0 }</style><p>x</p>`,
-		);
-		expect(fetchesSomething(out)).toBe(false);
-		expect(out).toContain("margin: 0");
-	});
-
-	/**
-	 * The HTML parser puts a leading `<style>` in `<head>`, and Outlook opens
-	 * every message it sends with one. Returning only the body would throw the
-	 * message's entire stylesheet away and leave it looking broken -- a
-	 * silent second cost for asking not to be tracked.
-	 */
-	it("keeps a stylesheet the parser moved into the head", () => {
-		const out = spamBody("<style>p { margin-top: 0 }</style><p>hello</p>");
-		expect(out).toContain("margin-top: 0");
-		expect(out).toContain("hello");
-		expect(out.indexOf("margin-top")).toBeLessThan(out.indexOf("hello"));
-	});
-});
-
-describe("what is left alone", () => {
-	// Links are a separate question with a separate answer: they are made
-	// inert on load so a click cannot follow them. Nothing about a link fetches
-	// anything until it is clicked, so there is no reason to lose the address
-	// a reader may want to look at.
-	it("leaves an anchor's destination readable", () => {
-		expect(
-			spamBody('<a href="https://phish.example/login">sign in</a>'),
-		).toContain("https://phish.example/login");
-	});
-
-	it("leaves the words of the message exactly as they were", () => {
-		const out = spamBody(
-			"<p>ご請求金額のお知らせ</p><blockquote>元のメール</blockquote>",
-		);
-		expect(out).toContain("ご請求金額のお知らせ");
-		expect(out).toContain("<blockquote>元のメール</blockquote>");
-	});
-
-	it("copes with an empty body", () => {
-		expect(spamBody("").trim()).toBe("");
-	});
-});
-
-/**
- * These are here because these rules are the only thing standing between a
- * spam message and its sender's server. A frame policy would have caught what
- * a rewrite is worst at, and neither way of giving a `srcdoc` frame one held
- * a fetch back when measured -- a `<meta http-equiv="Content-Security-Policy">`
- * first in its head, or the iframe's `csp` attribute. So the spellings a
- * regular expression is likeliest to miss get their own cases.
- */
-describe("the spellings a rewrite is worst at", () => {
-	it("catches an image-set that names its addresses as bare strings", () => {
-		const out = spamBody(
-			`<div style='background-image: image-set("https://tracker.example/a.png" 1x, "https://tracker.example/b.png" 2x)'>x</div>`,
-		);
-		expect(fetchesSomething(out)).toBe(false);
-	});
-
-	it("catches one wrapped around url(), without leaving the wrapper behind", () => {
-		const out = spamBody(
-			'<div style="background-image: -webkit-image-set(url(https://tracker.example/a.png) 1x)">x</div>',
-		);
-		expect(fetchesSomething(out)).toBe(false);
-		expect(out).not.toContain("image-set");
-	});
-
-	it("catches an @import that puts its address inside url()", () => {
-		const out = spamBody(
-			"<style>@import url(https://tracker.example/mail.css); p{margin:0}</style>",
-		);
-		expect(fetchesSomething(out)).toBe(false);
-		expect(out).not.toContain("@import");
-	});
-});
-
-/**
- * CSS lets any character of a name be written as an escape, and a browser
- * reads the escape. Measured: every one of these fetched from the spam
- * folder while the patterns matched only what was written.
- */
-describe("CSS that spells its fetch in escapes", () => {
-	const hidden = [
+	const payloads: [string, string][] = [
+		["an image", `<p>hello</p><img src="${T}/pixel.gif" alt="">`],
 		[
-			"an escaped letter in url(",
-			"background:u\\rl(https://tracker.example/1.gif)",
+			"a hidden pixel",
+			`<img src="${T}/o.gif?id=1" width="1" height="1" style="display:none">`,
 		],
 		[
-			"a hex escape in url(",
-			"background:u\\72 l(https://tracker.example/2.gif)",
+			"every candidate in a srcset",
+			`<img srcset="${T}/2.png 2x, ${T}/3.png 3x">`,
 		],
 		[
-			"a capital hex escape",
-			"background:\\55 RL(https://tracker.example/3.gif)",
+			"attributes older than CSS",
+			`<table background="${T}/bg.png"><tr><td><img lowsrc="${T}/low.gif"></td></tr></table>`,
 		],
 		[
-			"an escaped image-set(",
-			'background:im\\61ge-set("https://tracker.example/4.gif" 1x)',
+			"media that plays by itself",
+			`<video poster="${T}/p.jpg" src="${T}/v.mp4"></video><audio><source src="${T}/a.mp3"></audio><object data="${T}/o.swf"></object>`,
+		],
+		[
+			"a stylesheet link",
+			`<link rel="stylesheet" href="${T}/mail.css"><p>hi</p>`,
+		],
+		[
+			"a meta refresh",
+			`<meta http-equiv="refresh" content="0;url=${T}/opened"><p>hi</p>`,
+		],
+		[
+			"SVG images and uses, both spellings",
+			`<svg><image href="${T}/a.png"></image><image xlink:href="${T}/b.png"></image><use href="${T}/s.svg#i"></use></svg>`,
+		],
+		[
+			"feImage, both spellings",
+			`<svg><filter id="f"><feImage href="${T}/a.gif"/><feImage xlink:href="${T}/b.gif"/></filter></svg>`,
+		],
+		["an inline attachment", '<img src="cid:logo@example" alt="logo">'],
+		[
+			"a background in a style",
+			`<div style="background-image: url(${T}/bg.png); color: red">x</div>`,
+		],
+		[
+			'url("…")',
+			`<div style="background: url(&quot;${T}/a.png&quot;)">x</div>`,
+		],
+		["url( '…' )", `<div style="background: url( '${T}/a.png' )">x</div>`],
+		["url( never closed", `<div style="background:url(${T}/a.png">x</div>`],
+		[
+			'url(" never closed',
+			`<div style="background:url(&quot;${T}/a.png">x</div>`,
+		],
+		["url(' never closed", `<div style="background:url('${T}/a.png">x</div>`],
+		[
+			"image-set( never closed",
+			`<div style="background:image-set(&quot;${T}/a.png&quot; 1x">x</div>`,
+		],
+		[
+			"image-set(url( never closed",
+			`<div style="background:image-set(url(${T}/a.png">x</div>`,
+		],
+		[
+			"url( never closed in a style element",
+			`<style>.a{background:url(${T}/a.png</style><div class="a">x</div>`,
+		],
+		[
+			"a style element",
+			`<style>.hero { background: url(${T}/hero.png) no-repeat; }</style><div class="hero">x</div>`,
+		],
+		[
+			"@import of a string",
+			`<style>@import "${T}/mail.css"; p { margin: 0 }</style><p>x</p>`,
+		],
+		[
+			"@import of url()",
+			`<style>@import url(${T}/mail.css); p{margin:0}</style><p>x</p>`,
+		],
+		[
+			"image-set of bare strings",
+			`<div style='background-image: image-set("${T}/a.png" 1x, "${T}/b.png" 2x)'>x</div>`,
+		],
+		[
+			"-webkit-image-set of url()",
+			`<div style="background-image: -webkit-image-set(url(${T}/a.png) 1x)">x</div>`,
+		],
+		["u\\rl(", `<div style="background:u\\rl(${T}/1.gif)">x</div>`],
+		["u\\72 l(", `<div style="background:u\\72 l(${T}/2.gif)">x</div>`],
+		["\\55 RL(", `<div style="background:\\55 RL(${T}/3.gif)">x</div>`],
+		[
+			"im\\61ge-set(",
+			`<div style="background:im\\61ge-set(&quot;${T}/4.gif&quot; 1x)">x</div>`,
+		],
+		[
+			"u\\rl( in a style element",
+			`<style>.a{background:u\\rl(${T}/1.gif)}</style><div class="a">x</div>`,
+		],
+		[
+			"@\\69mport",
+			`<style>@\\69mport "${T}/i.css"; p{margin:0}</style><p>x</p>`,
+		],
+		[
+			"SVG attributes that take url()",
+			`<svg><rect mask="url(${T}/m.svg#m)" filter="url(${T}/f.svg#f)" clip-path="url(${T}/c.svg#c)" cursor="url(${T}/c.png), auto" marker-end="u\\rl(${T}/k.svg#k)" width="9" height="9"/></svg>`,
+		],
+		[
+			"an animation's values, from and by",
+			`<svg><rect width="9" height="9"><animate attributeName="fill" values="red;url(${T}/1.svg#m)" dur="1s"/><animate attributeName="fill" from="url(${T}/2.svg#m)" to="red" dur="1s"/><animate attributeName="fill" by="url(${T}/3.svg#m)" dur="1s"/></rect></svg>`,
+		],
+		[
+			"an animation that sets one",
+			`<svg><rect width="9" height="9"><set attributeName="mask" to="url(${T}/m.svg#m)"/></rect></svg>`,
+		],
+		[
+			"url(# then a comment",
+			`<div style="color:red;/*url(#*/background:url(${T}/1.gif)">x</div>`,
+		],
+		[
+			"url(# then a comment, escaped",
+			`<div style="color:red;/*url(#*/background:u\\rl(${T}/2.gif)">x</div>`,
+		],
+		[
+			"url(#a*/ then escaped",
+			`<div style="color:red;background:url(#a*/u\\rl(${T}/3.gif))">x</div>`,
+		],
+		[
+			"url(# in an SVG style",
+			`<svg><rect width="9" height="9" style="/*url(#*/fill:url(${T}/4.svg#m)"/></svg>`,
+		],
+		[
+			"url(# in a string",
+			`<div style="color:red;content:'url(&quot;#';background:url(${T}/5.gif)">x</div>`,
+		],
+		[
+			"url(# in a string in a style element",
+			`<style>.a{content:"url('#"}.b{background:url(${T}/6.gif)}</style><div class="b">x</div>`,
+		],
+		[
+			"url(# in a string ended by a newline",
+			`<style>.a{fill:url("#g\n);}.b{background:url(${T}/7.gif)}</style><div class="b">x</div>`,
+		],
+		[
+			"url(# in an animation's list",
+			`<svg><rect width="9" height="9"><animate attributeName="mask" values="url(#a;url(${T}/8.svg#m)" dur="1s"/></rect></svg>`,
+		],
+		[
+			"url(# then a comment in an SVG attribute",
+			`<svg><rect width="9" height="9" mask="/*url(#*/url(${T}/9.svg#m)"/></svg>`,
+		],
+		[
+			"url(# in a string, escaped",
+			`<svg><rect width="9" height="9" style="fill:url(#g);content:'url(#';background:u\\rl(${T}/10.gif)"/></svg>`,
+		],
+		[
+			"an element splitting url(#x) from its address",
+			`<svg><style>.a{background:url(<g>#x) </g>${T}/11.gif)}</style></svg><div class="a">x</div>`,
+		],
+		[
+			"an element splitting the word url",
+			`<svg><style>.a{background:u<g>x</g>rl(${T}/12.gif)}</style></svg><div class="a">x</div>`,
+		],
+		[
+			"*/ inside an address",
+			`<div style="background:url(${T}/a*/b'.gif);color:red">x</div>`,
+		],
+		[
+			"a no-break space before a quote",
+			`<div style="background:url(\u00a0&quot;${T}/a)b&quot;);color:red">x</div>`,
 		],
 	];
-	for (const [label, css] of hidden) {
-		it(`sees through ${label} in a style attribute`, () => {
-			const out = spamBody(
-				`<div style="${css.replaceAll('"', "&quot;")}">x</div>`,
-			);
-			expect(out).not.toContain("tracker.example");
-			// Mended, not given up on: the last resort would also have no
-			// address in it, and no <div> either.
-			expect(out).toContain("<div");
+	for (const [label, html] of payloads) {
+		it(label, () => {
+			const doc = spamDocument(html);
+			expect(
+				everythingIn(doc).filter((value) =>
+					/tracker\.example|cid:/.test(value),
+				),
+			).toEqual([]);
+			expect(
+				doc.querySelector('body > pre[style="white-space: pre-wrap"]'),
+			).toBeNull();
 		});
-		it(`sees through ${label} in a style element`, () => {
-			const out = spamBody(`<style>.a{${css}}</style><div class="a">x</div>`);
-			expect(out).not.toContain("tracker.example");
-			expect(out).toContain('<div class="a">');
+	}
+});
+
+describe("2. CSS that fetches is rewritten to exactly this", () => {
+	/**
+	 * Every address becomes `none` -- `url(#...)` beside it too, since the
+	 * rewrite does not try to keep the look of the CSS it mends -- and an
+	 * `@import` goes whole. `none` rather than nothing, so a declaration stays
+	 * a declaration: `background-image: ;` is dropped as malformed, which is
+	 * the same result by a less honest route. What the rewrite cannot mend is
+	 * dropped: a style attribute removed (null), a `<style>` emptied.
+	 */
+	const inStyles: [string, string, string | null][] = [
+		[
+			"a background",
+			`background-image: url(${T}/bg.png); color: red`,
+			"background-image: none; color: red",
+		],
+		['url("…")', `background: url("${T}/a.png")`, "background: none"],
+		["url( '…' )", `background: url( '${T}/a.png' )`, "background: none"],
+		[
+			"url( never closed",
+			`color:red;background:url(${T}/a.png`,
+			"color:red;background:none",
+		],
+		[
+			'url(" never closed',
+			`color:red;background:url("${T}/a.png`,
+			"color:red;background:none",
+		],
+		[
+			"url(' never closed",
+			`color:red;background:url('${T}/a.png`,
+			"color:red;background:none",
+		],
+		[
+			"image-set( never closed",
+			`color:red;background:image-set("${T}/a.png" 1x`,
+			"color:red;background:none",
+		],
+		[
+			"image-set(url( never closed",
+			`color:red;background:image-set(url(${T}/a.png`,
+			"color:red;background:none",
+		],
+		[
+			"image-set of bare strings",
+			`background-image: image-set("${T}/a.png" 1x, "${T}/b.png" 2x)`,
+			"background-image: none",
+		],
+		[
+			"-webkit-image-set of url()",
+			`background-image: -webkit-image-set(url(${T}/a.png) 1x)`,
+			"background-image: none",
+		],
+		[
+			"an address with */ in it, whole",
+			`background:url(${T}/a*/b'.gif);color:red`,
+			"background:none;color:red",
+		],
+		[
+			"url(# then a comment",
+			`color:red;/*url(#*/background:url(${T}/1.gif)`,
+			"color:red;/*none",
+		],
+		[
+			"url(# then a comment, escaped",
+			`color:red;/*url(#*/background:u\\rl(${T}/1.gif)`,
+			"color:red;/*none",
+		],
+		[
+			"url(#a*/ then escaped",
+			`color:red;background:url(#a*/u\\rl(${T}/1.gif))`,
+			"color:red;background:none)",
+		],
+		[
+			"url(# in a string",
+			`color:red;content:'url("#';background:url(${T}/1.gif)`,
+			"color:red;content:'none",
+		],
+		[
+			"url(# in a string, escaped, beside a reference",
+			`fill:url(#g);content:'url(#';background:u\\rl(${T}/1.gif)`,
+			"fill:none;content:'none",
+		],
+		[
+			"url(# after a no-break space",
+			"color:red;background:url(\u00a0#x)",
+			"color:red;background:none",
+		],
+		[
+			"url(# after U+3000",
+			"color:red;background:url(\u3000#x)",
+			"color:red;background:none",
+		],
+		[
+			"url(# after U+FEFF",
+			"color:red;background:url(\ufeff#x)",
+			"color:red;background:none",
+		],
+		/**
+		 * A no-break space is not CSS's space, so this is a bad url to the
+		 * browser, which stops it at the first `)` and reads `b"` onwards as a
+		 * string left open -- measured in Chromium, `color` after it was
+		 * dropped with no rewrite at all. The rewrite ends the match there too.
+		 */
+		[
+			"a no-break space before a quote",
+			`background:url(\u00a0"${T}/a)b");color:red`,
+			'background:noneb");color:red',
+		],
+		[
+			"an address only escapes spell",
+			`color:red;background:u\\rl(${T}/1.gif)`,
+			null,
+		],
+		[
+			"an image-set only escapes spell",
+			`background:im\\61ge-set("${T}/4.gif" 1x)`,
+			null,
+		],
+	];
+	for (const [label, style, rewritten] of inStyles) {
+		it(`in a style attribute: ${label}`, () => {
+			expect(styleOf(style)).toBe(rewritten);
 		});
 	}
 
-	it("sees through an escaped @import", () => {
-		const out = spamBody(
-			'<style>@\\69mport "https://tracker.example/i.css"; p{margin:0}</style><p>x</p>',
+	const inSheets: [string, string, string][] = [
+		[
+			"url( never closed",
+			`.a{color:red;background:url(${T}/a.png`,
+			".a{color:red;background:none",
+		],
+		[
+			"a background",
+			`.hero { background: url(${T}/hero.png) no-repeat; }`,
+			".hero { background: none no-repeat; }",
+		],
+		[
+			"@import of a string",
+			`@import "${T}/mail.css"; p { margin: 0 }`,
+			" p { margin: 0 }",
+		],
+		[
+			"@import of url()",
+			`@import url(${T}/mail.css); p{margin:0}`,
+			" p{margin:0}",
+		],
+		[
+			"url(# in a string",
+			`.k{color:red}.a{content:"url('#"}.b{background:url(${T}/4.gif)}`,
+			'.k{color:red}.a{content:"none}',
+		],
+		[
+			"url(# in a string ended by a newline",
+			`.k{color:red}.a{fill:url("#g\n);}.b{background:url(${T}/5.gif)}`,
+			".k{color:red}.a{fill:none;}.b{background:none}",
+		],
+		[
+			"a reference beside a mention in a comment",
+			"/* see url(http://x.example/) */ .g{fill:url(#grad)}",
+			"/* see none */ .g{fill:none}",
+		],
+		[
+			"an address only escapes spell",
+			`.k{color:red}.a{background:u\\rl(${T}/1.gif)}`,
+			"",
+		],
+		[
+			"an @import only escapes spell",
+			`@\\69mport "${T}/i.css"; p{margin:0}`,
+			"",
+		],
+	];
+	for (const [label, css, rewritten] of inSheets) {
+		it(`in a style element: ${label}`, () => {
+			expect(sheetOf(css)).toBe(rewritten);
+		});
+	}
+
+	/**
+	 * Inside `<svg>` a `<style>` can hold elements, and the browser builds the
+	 * sheet from the style's own text only -- measured, Chromium fetched both
+	 * of these. So the rewrite reads the same text, and writes back text alone.
+	 */
+	for (const [label, css] of [
+		[
+			"an element splitting url(#x) from its address",
+			`.k{color:red}.a{background:url(<g>#x) </g>${T}/8.gif)}`,
+		],
+		[
+			"an element splitting the word url",
+			`.k{color:red}.a{background:u<g>x</g>rl(${T}/9.gif)}`,
+		],
+	]) {
+		it(`in a style element inside <svg>: ${label}`, () => {
+			expect(sheetOf(css, true)).toBe(".k{color:red}.a{background:none}");
+		});
+	}
+});
+
+describe("3. CSS that fetches nothing is left exactly as written", () => {
+	for (const style of [
+		"color: red",
+		"fill:url(#g);stroke:url( '#s' )",
+		// Japanese mail names its fonts this way constantly.
+		'font-family:"\\30E1\\30A4\\30EA\\30AA";color:red',
+	]) {
+		it(`a style attribute: ${style}`, () => {
+			expect(styleOf(style)).toBe(style);
+		});
+	}
+
+	for (const css of [
+		'.a{fill:url("#g")}',
+		"/* url(#x) */ p{color:red}",
+		"p { margin-top: 0 }",
+	]) {
+		it(`a style element: ${css}`, () => {
+			expect(sheetOf(css)).toBe(css);
+		});
+	}
+
+	/**
+	 * The parser moves a leading `<style>` into the head, and Outlook opens
+	 * every message it sends with one; it has to stay, and stay first.
+	 */
+	it("a style element the parser moved into the head", () => {
+		const doc = spamDocument("<style>p { margin-top: 0 }</style><p>hello</p>");
+		const sheet = doc.querySelectorAll("style")[1];
+		expect(sheet.textContent).toBe("p { margin-top: 0 }");
+		expect(
+			sheet.compareDocumentPosition(doc.querySelector("p") as Element) &
+				Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy();
+	});
+
+	it("an SVG attribute that points into the message", () => {
+		const rect = spamDocument(
+			'<svg><defs><linearGradient id="g"></linearGradient></defs><rect fill="url(#g)" width="9" height="9"/></svg>',
+		).querySelector("rect");
+		expect(rect?.getAttribute("fill")).toBe("url(#g)");
+	});
+
+	/** A colour changing is not a fetch; nor is a list of them with a reference in it. */
+	it("an animation that sets no address", () => {
+		const animations = spamDocument(
+			'<svg><rect width="9" height="9"><animate attributeName="fill" from="red" to="blue" dur="1s"/>' +
+				'<animate attributeName="stroke" values="red;url(#g);blue" dur="1s"/></rect></svg>',
+		).querySelectorAll("animate");
+		expect(
+			Array.from(animations).map((animation) => [
+				animation.getAttribute("attributeName"),
+				animation.getAttribute("from"),
+				animation.getAttribute("to"),
+				animation.getAttribute("values"),
+			]),
+		).toEqual([
+			["fill", "red", "blue", null],
+			["stroke", null, null, "red;url(#g);blue"],
+		]);
+	});
+});
+
+describe("4. what fetches is taken away, and nothing else", () => {
+	it("an image keeps everything but its address", () => {
+		const img = spamDocument(
+			`<img src="${T}/logo.png" srcset="${T}/2.png 2x" lowsrc="${T}/l.gif" alt="SAISON" width="1">`,
+		).querySelector("img");
+		expect(img && Array.from(img.attributes, (a) => [a.name, a.value])).toEqual(
+			[
+				["alt", "SAISON"],
+				["width", "1"],
+			],
 		);
-		expect(out).not.toContain("tracker.example");
+	});
+
+	it("a table keeps everything but its background", () => {
+		const table = spamDocument(
+			`<table background="${T}/bg.png" width="600"><tr><td>x</td></tr></table>`,
+		).querySelector("table");
+		expect(table && Array.from(table.attributes, (a) => a.name)).toEqual([
+			"width",
+		]);
+	});
+
+	it("media keep everything but their addresses", () => {
+		const doc = spamDocument(
+			`<video poster="${T}/p.jpg" src="${T}/v.mp4" width="320"></video><audio><source src="${T}/a.mp3" type="audio/mpeg"></audio>`,
+		);
+		expect(
+			Array.from(doc.querySelector("video")?.attributes ?? [], (a) => a.name),
+		).toEqual(["width"]);
+		expect(
+			Array.from(doc.querySelector("source")?.attributes ?? [], (a) => a.name),
+		).toEqual(["type"]);
+	});
+
+	it("a stylesheet link and a meta refresh go whole, and the words stay", () => {
+		const doc = spamDocument(
+			`<link rel="stylesheet" href="${T}/mail.css"><meta http-equiv="refresh" content="0;url=${T}/o"><p>hi</p>`,
+		);
+		expect(doc.querySelectorAll("link, meta[http-equiv]")).toHaveLength(0);
+		expect(doc.querySelector("p")?.textContent).toBe("hi");
+	});
+
+	it("SVG that loads by href keeps everything but the href", () => {
+		const doc = spamDocument(
+			`<svg><image href="${T}/a.png" width="9"></image><use xlink:href="${T}/s.svg#i" x="1"></use>` +
+				`<filter id="f"><feImage href="${T}/a.gif" result="r"/></filter></svg>`,
+		);
+		expect(
+			Array.from(doc.querySelectorAll("image, use, feImage"), (element) =>
+				Array.from(element.attributes, (a) => a.name),
+			),
+		).toEqual([["width"], ["x"], ["result"]]);
+	});
+
+	it("an SVG shape keeps everything but the attributes that fetch", () => {
+		const rect = spamDocument(
+			`<svg><rect mask="url(${T}/m.svg#m)" filter="url(${T}/f.svg#f)" clip-path="url(${T}/c.svg#c)" cursor="url(${T}/c.png), auto" marker-end="u\\rl(${T}/k.svg#k)" fill="url(#g)" width="9"/></svg>`,
+		).querySelector("rect");
+		expect(
+			rect && Array.from(rect.attributes, (a) => [a.name, a.value]),
+		).toEqual([
+			["fill", "url(#g)"],
+			["width", "9"],
+		]);
+	});
+
+	it("an animation that sets an address goes, and its shape stays", () => {
+		const doc = spamDocument(
+			`<svg><rect width="9"><set attributeName="mask" to="url(${T}/m.svg#m)"/><animate attributeName="fill" from="red" to="blue" dur="1s"/></rect></svg>`,
+		);
+		expect(doc.querySelector("set")).toBeNull();
+		expect(
+			doc.querySelector("rect animate")?.getAttribute("attributeName"),
+		).toBe("fill");
 	});
 
 	/**
-	 * And leaves the escapes that are there for a reason. Japanese mail names
-	 * its fonts this way constantly; dropping the rule would change how every
-	 * such message looks for no gain.
+	 * Links are a separate rule: nothing fetches until one is pressed, and a
+	 * reader deciding about a message may want to see where it points.
 	 */
-	it("keeps an escaped font name that fetches nothing", () => {
-		const css = 'font-family:"\\30E1\\30A4\\30EA\\30AA";color:red';
-		const out = spamBody(`<p style='${css}'>本文</p>`);
-		expect(out).toContain("\\30E1\\30A4\\30EA\\30AA");
-		expect(out).toContain("color:red");
+	it("a link's destination stays readable", () => {
+		expect(
+			spamDocument('<a href="https://phish.example/login">sign in</a>')
+				.querySelector("a")
+				?.getAttribute("href"),
+		).toBe("https://phish.example/login");
 	});
 
-	it("reads escapes the way CSS Syntax says to", () => {
+	it("the words of the message stay exactly as they were, in their elements", () => {
+		const doc = spamDocument(
+			"<p>ご請求金額のお知らせ</p><blockquote>元のメール</blockquote>",
+		);
+		expect(
+			Array.from(doc.body.children, (element) => [
+				element.localName,
+				element.textContent,
+			]),
+		).toEqual([
+			["p", "ご請求金額のお知らせ"],
+			["blockquote", "元のメール"],
+		]);
+	});
+
+	it("an empty body stays empty", () => {
+		expect(spamDocument("").body.children).toHaveLength(0);
+	});
+});
+
+/**
+ * A spam message is written by whoever sent it, so the length of its CSS is
+ * theirs to choose. A rewrite that looked back through the whole sheet for
+ * every `url(` took 8.7 seconds on 700KB of CSS, by the reviewer's
+ * measurement -- a frozen tab for opening one message. Timed on the rewrite
+ * alone, so that parsing the document does not decide the result; the bound
+ * is loose, and only a rewrite that is not linear comes near it.
+ */
+describe("5. the rewrite takes time in proportion to the CSS", () => {
+	for (const [label, css, rewritten] of [
+		[
+			"700KB of references and one tracker",
+			`${"a{background:url(#g)} ".repeat(32000)}b{background:url(${T}/x)}`,
+			`${"a{background:none} ".repeat(32000)}b{background:none}`,
+		],
+		[
+			"350KB of url( left open in comments",
+			`${"/* url( */ ".repeat(32000)}a{color:red}`,
+			"/* none",
+		],
+	]) {
+		it(label, () => {
+			const started = performance.now();
+			const result = cssWithoutFetches(css);
+			expect(performance.now() - started).toBeLessThan(1000);
+			expect(result).toBe(rewritten);
+		});
+	}
+});
+
+describe("reading CSS escapes", () => {
+	it("follows CSS Syntax", () => {
 		expect(decodeCssEscapes("u\\rl(")).toBe("url(");
 		expect(decodeCssEscapes("u\\72 l(")).toBe("url(");
 		expect(decodeCssEscapes("\\30E1\\30A4")).toBe("メイ");
@@ -338,282 +674,4 @@ describe("CSS that spells its fetch in escapes", () => {
 		expect(decodeCssEscapes("\\72\u00a0x")).toBe("r\u00a0x");
 		expect(decodeCssEscapes("no escapes")).toBe("no escapes");
 	});
-});
-
-/**
- * SVG attributes are CSS too. Measured: `mask=`, `filter=`, `clip-path=` and
- * `cursor=` fetched from the spam folder, because only `style` was read.
- */
-describe("SVG attributes that take url()", () => {
-	it("takes an outside address off each of them", () => {
-		const out = spamBody(
-			'<svg><rect mask="url(https://tracker.example/m.svg#m)" filter="url(https://tracker.example/f.svg#f)"' +
-				' clip-path="url(https://tracker.example/c.svg#c)" cursor="url(https://tracker.example/c.png), auto"' +
-				' marker-end="u\\rl(https://tracker.example/k.svg#k)" width="9" height="9"/></svg>',
-		);
-		expect(out).not.toContain("tracker.example");
-		expect(out).toContain("<rect");
-	});
-
-	it("leaves a reference to something inside the message", () => {
-		const out = spamBody(
-			'<svg><defs><linearGradient id="g"></linearGradient></defs><rect fill="url(#g)" width="9" height="9"/></svg>',
-		);
-		expect(out).toContain('fill="url(#g)"');
-	});
-
-	/**
-	 * Read as CSS the same way in a style, and kept the same way: rewriting
-	 * `url(#g)` to `none` took an SVG's own gradient away and fetched nothing
-	 * less.
-	 */
-	it("leaves a reference inside the message in CSS too", () => {
-		const attribute = spamBody(
-			'<svg><rect style="fill:url(#g);stroke:url( \'#s\' )" width="9" height="9"/></svg>',
-		);
-		expect(attribute).toContain("fill:url(#g)");
-		expect(attribute).toContain("stroke:url( '#s' )");
-		const element = spamBody(
-			'<style>.a{fill:url("#g")}</style><svg><rect class="a" width="9" height="9"/></svg>',
-		);
-		expect(element).toContain('fill:url("#g")');
-	});
-
-	/**
-	 * An animation of one of these is taken away only when it would give it
-	 * an address. A colour changing is not a fetch.
-	 */
-	it("leaves an animation that sets no address", () => {
-		const out = spamBody(
-			'<svg><rect width="9" height="9"><animate attributeName="fill" from="red" to="blue" dur="1s"/>' +
-				'<animate attributeName="stroke" values="red;url(#g);blue" dur="1s"/></rect></svg>',
-		);
-		expect(out).toContain('attributeName="fill"');
-		expect(out).toContain('attributeName="stroke"');
-	});
-
-	it("takes away one that sets an address in any of its values", () => {
-		for (const values of [
-			'values="red;url(https://tracker.example/m.svg#m)"',
-			'from="url(https://tracker.example/m.svg#m)" to="red"',
-			'by="url(https://tracker.example/m.svg#m)"',
-		]) {
-			const out = spamBody(
-				`<svg><rect width="9" height="9"><animate attributeName="fill" ${values} dur="1s"/></rect></svg>`,
-			);
-			expect(out, values).not.toContain("tracker.example");
-			expect(out, values).toContain("<rect");
-		}
-	});
-
-	it("does not let an animation put one back", () => {
-		const out = spamBody(
-			'<svg><rect width="9" height="9"><set attributeName="mask" to="url(https://tracker.example/m.svg#m)"/></rect></svg>',
-		);
-		expect(out).not.toContain("tracker.example");
-	});
-
-	it("takes the address off an feImage, in either spelling", () => {
-		const out = spamBody(
-			'<svg><filter id="f"><feImage href="https://tracker.example/a.gif"/>' +
-				'<feImage xlink:href="https://tracker.example/b.gif"/></filter></svg>',
-		);
-		expect(out).not.toContain("tracker.example");
-	});
-});
-
-/**
- * `url(#...)` fetches nothing and is kept -- and every way of hiding a real
- * address behind one. A pattern pairs an `url(` with the wrong `)` when a
- * comment or a string sits between them; measured, each of these fetched
- * from the spam folder while the match the rule looked at began with `#`.
- *
- * Each case also says what has to be left once the address is gone, because
- * "no address and an element still there" is just as true of CSS dropped
- * whole -- measured, these tests passed with every such stylesheet emptied.
- */
-describe("an address hidden behind url(#", () => {
-	const hidden = [
-		[
-			"a comment in a style attribute",
-			'<div style="color:red;/*url(#*/background:url(https://tracker.example/1.gif)">x</div>',
-			"color:red",
-		],
-		[
-			// Mended by the second try: the first cuts the match at the
-			// comment's end, which leaves the `u\rl(` outside every match.
-			"a comment, with the address in escapes",
-			'<div style="color:red;/*url(#*/background:u\\rl(https://tracker.example/10.gif)">x</div>',
-			"color:red",
-		],
-		[
-			// Outside a comment `*/` ends nothing, so the match is not cut.
-			"`url(#` and an escaped address, with `*/` between them",
-			'<div style="color:red;background:url(#a*/u\\rl(https://tracker.example/11.gif))">x</div>',
-			"color:red",
-		],
-		[
-			"a comment in an SVG style",
-			'<svg><rect width="9" height="9" style="color:red;/*url(#*/fill:url(https://tracker.example/2.svg#m)"/></svg>',
-			"color:red",
-		],
-		[
-			"a string in a style attribute",
-			`<div style="color:red;content:'url(&quot;#';background:url(https://tracker.example/3.gif)">x</div>`,
-			"color:red",
-		],
-		[
-			"a string in a style element",
-			`<style>.k{color:red}.a{content:"url('#"}.b{background:url(https://tracker.example/4.gif)}</style><div class="b">x</div>`,
-			".k{color:red}",
-		],
-		[
-			"a string ended by a newline",
-			'<style>.k{color:red}.a{fill:url("#g\n);}.b{background:url(https://tracker.example/5.gif)}</style><div class="b">x</div>',
-			".k{color:red}",
-		],
-		[
-			"an animation's list of values",
-			'<svg><rect width="9" height="9"><animate attributeName="mask" values="url(#a;url(https://tracker.example/6.svg#m)" dur="1s"/></rect></svg>',
-			"<rect",
-		],
-		[
-			"a comment in an SVG attribute",
-			'<svg><rect width="9" height="9" mask="/*url(#*/url(https://tracker.example/7.svg#m)"/></svg>',
-			"<rect",
-		],
-	];
-	for (const [label, html, kept] of hidden) {
-		it(`is found behind ${label}`, () => {
-			const out = spamBody(html);
-			expect(out).not.toContain("tracker.example");
-			expect(out).toContain(kept);
-		});
-	}
-});
-
-/**
- * A `<style>` inside `<svg>` may have child elements, and the browser builds
- * the sheet from the style's own text only. Measured in Chromium: both of
- * these fetched, because the check read the children's text as well.
- */
-describe("a <style> with elements in it", () => {
-	for (const [label, css] of [
-		[
-			"splitting url(#x) from its address",
-			"url(<g>#x) </g>https://tracker.example/8.gif)",
-		],
-		[
-			"splitting the word url itself",
-			"u<g>x</g>rl(https://tracker.example/9.gif)",
-		],
-	]) {
-		it(`is read as the browser reads it, ${label}`, () => {
-			const out = spamBody(
-				`<svg><style>.k{color:red}.a{background:${css}}</style></svg><div class="a">x</div>`,
-			);
-			expect(out).not.toContain("tracker.example");
-			expect(out).toContain(".k{color:red}");
-		});
-	}
-});
-
-/**
- * CSS skips space, tab and line breaks after `url(`, and nothing else. A
- * no-break space or U+3000 before `#` makes a relative address, which the
- * browser fetched -- measured, from this application's own origin.
- */
-describe("a space CSS does not skip", () => {
-	// Read from the attributes, not from serialised markup: innerHTML writes
-	// U+00A0 as `&nbsp;`, so a search of it for the character itself passed
-	// with the fix taken out -- measured, for this half of the test.
-	for (const space of ["\u00a0", "\u3000", "\u000b", "\ufeff", "\u2028"]) {
-		it(`is not taken for one, ${JSON.stringify(space)}`, () => {
-			const div = spamDocument(
-				`<div style="color:red;background:url(${space}#x)">x</div>`,
-			).querySelector("div");
-			const style = div?.getAttribute("style") ?? "";
-			expect(style).not.toContain(`url(${space}`);
-			expect(style).toContain("color:red");
-			const rect = spamDocument(
-				`<svg><rect width="9" height="9" mask="url(${space}#m)"/></svg>`,
-			).querySelector("rect");
-			expect(rect).not.toBeNull();
-			expect(rect?.hasAttribute("mask")).toBe(false);
-		});
-	}
-
-	/**
-	 * The rewrite skips the same space, so a no-break space before a quote
-	 * ends the match at the first `)`, as the browser's bad url does. What
-	 * is left -- `b"` and a string that never closes -- is what the browser
-	 * made of it too: measured in Chromium, `color` after it was dropped with
-	 * no rewrite at all. `\s` matched the quoted spelling and kept it.
-	 */
-	it("does not end a match where the browser would not", () => {
-		const div = spamDocument(
-			'<div style="background:url(\u00a0&quot;https://tracker.example/a)b&quot;);color:red">x</div>',
-		).querySelector("div");
-		const style = div?.getAttribute("style") ?? "";
-		expect(style).not.toContain("tracker.example");
-		// What follows the first `)` is left as the sender wrote it.
-		expect(style).toContain('b");color:red');
-	});
-});
-
-/**
- * Where CSS fetches, every address in it goes, `url(#...)` included -- the
- * rewrite does not try to keep the look of the spam it mends (see
- * cssWithoutFetches). These hold what it does have to get right.
- */
-describe("CSS that has to be rewritten", () => {
-	/**
-	 * An url token does not end at `*\/`: a rewrite that cut the match there
-	 * left `*\/b'.gif)` behind, and its quote opened a string that swallowed
-	 * the declarations after it.
-	 */
-	it("takes an address with `*/` in it whole", () => {
-		const div = spamDocument(
-			`<div style="background:url(https://tracker.example/a*/b'.gif);color:red">x</div>`,
-		).querySelector("div");
-		const style = div?.getAttribute("style") ?? "";
-		expect(style).not.toContain("tracker.example");
-		expect(style).toContain("background:none;color:red");
-	});
-
-	it("finds an address hidden behind `url(#` in a string and in escapes", () => {
-		const out = spamBody(
-			`<svg><rect width="9" height="9" style="fill:url(#g);content:'url(#';background:u\\rl(https://tracker.example/b.gif)"/></svg>`,
-		);
-		expect(out).not.toContain("tracker.example");
-		expect(out).toContain("<rect");
-	});
-});
-
-/**
- * A spam message is written by whoever sent it, so how long the rewrite takes
- * is theirs to choose too. A rewrite that looked back through the whole
- * sheet for every `url(` took, by the reviewer's measurement, 8.7 seconds on
- * 700KB of CSS -- a frozen tab for opening one message. Linear, it is a
- * fraction of a second; the bound is loose on purpose, so that only the
- * difference between the two shapes can fail it.
- */
-describe("a large stylesheet", () => {
-	for (const [label, css] of [
-		[
-			"many references and one tracker",
-			`${"a{background:url(#g)} ".repeat(32000)}b{background:url(https://tracker.example/x)}`,
-		],
-		[
-			"many urls left open in comments",
-			`${"/* url( */ ".repeat(32000)}a{color:red}`,
-		],
-	]) {
-		it(`is rewritten in time proportional to its length: ${label}`, () => {
-			const started = performance.now();
-			const out = spamBody(`<style>${css}</style><p>x</p>`);
-			expect(performance.now() - started).toBeLessThan(3000);
-			expect(out).not.toContain("tracker.example");
-		});
-	}
 });
