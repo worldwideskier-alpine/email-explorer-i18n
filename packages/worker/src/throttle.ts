@@ -17,6 +17,12 @@ export interface ThrottleRule {
 	windowMs: number;
 	/** How long the key stays locked once the limit is crossed. */
 	lockMs: number;
+	/**
+	 * What a successful attempt does to this key (see throttleSettle):
+	 * "reset" forgets its failures, "refund" hands back only that attempt,
+	 * and absent leaves the attempt counted.
+	 */
+	onSuccess?: "reset" | "refund";
 }
 
 const MINUTE = 60_000;
@@ -53,12 +59,14 @@ export function loginThrottleRules(email: string, ip: string): ThrottleRule[] {
 			limit: 10,
 			windowMs: 15 * MINUTE,
 			lockMs: 15 * MINUTE,
+			onSuccess: "reset",
 		},
 		{
 			key: `login:ip:${ip}`,
 			limit: 30,
 			windowMs: 15 * MINUTE,
 			lockMs: 15 * MINUTE,
+			onSuccess: "refund",
 		},
 	];
 }
@@ -94,10 +102,16 @@ export function passwordResetThrottleRules(
  * it, and both sit behind a session, so this is the fallback if one leaks.
  * And using a logged-in account to send confirmation mail at whatever address
  * the caller names.
+ *
+ * That second one is why `sendsMail` exists. A changed password is a success
+ * that clears the slate like a login does; a sent confirmation is the very
+ * thing being limited, so it stays counted. Change-email used to reset both
+ * keys after every send, which left the mail it sent unlimited.
  */
 export function accountChangeThrottleRules(
 	userId: string,
 	ip: string,
+	{ sendsMail }: { sendsMail: boolean },
 ): ThrottleRule[] {
 	return [
 		{
@@ -105,18 +119,16 @@ export function accountChangeThrottleRules(
 			limit: 10,
 			windowMs: HOUR,
 			lockMs: HOUR,
+			onSuccess: sendsMail ? undefined : "reset",
 		},
 		{
 			key: `account:ip:${ip}`,
 			limit: 20,
 			windowMs: HOUR,
 			lockMs: HOUR,
+			onSuccess: sendsMail ? undefined : "refund",
 		},
 	];
-}
-
-export function throttleKeys(rules: ThrottleRule[]): string[] {
-	return rules.map((rule) => rule.key);
 }
 
 /** Retry-After is defined in whole seconds, and never below 1. */

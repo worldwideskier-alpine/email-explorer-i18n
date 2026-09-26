@@ -10,7 +10,6 @@ import {
 	clientIp,
 	loginThrottleRules,
 	retryAfterSeconds,
-	throttleKeys,
 } from "../throttle";
 import type { Env, Session } from "../types";
 
@@ -134,10 +133,19 @@ export class PostRegister extends OpenAPIRoute {
 			return c.json({ error: "Registration is disabled" }, 403);
 		}
 
-		// Smart mode: Allow first user only
-		if (registerEnabled === undefined) {
-			const hasUsers = await authDO.hasUsers();
-			if (hasUsers) {
+		try {
+			// Smart mode (the setting left unset) opens the form to the first
+			// account only. That account is root; everything else follows from
+			// it -- root makes the administrators, administrators make the
+			// mailboxes. Both are decided inside registerFromForm, in the step
+			// that inserts the account, so two registrations at once cannot
+			// both be first.
+			const user = await authDO.registerFromForm(
+				email,
+				password,
+				registerEnabled === undefined,
+			);
+			if (user === "closed") {
 				return c.json(
 					{
 						error: "Registration is closed. Contact an administrator.",
@@ -145,22 +153,6 @@ export class PostRegister extends OpenAPIRoute {
 					403,
 				);
 			}
-		}
-
-		try {
-			// Check if this is the first user
-			const isFirstUser = !(await authDO.hasUsers());
-			const user = await authDO.register(email, password, isFirstUser);
-
-			// The first account to register is the root account, and that is
-			// the only way one comes into being. Not a button somewhere that
-			// an administrator can press: on a public deployment that button
-			// is "any administrator may seize the tier above them, once", and
-			// there is no reading of it that is safe.
-			//
-			// Everything else follows from here -- root makes the
-			// administrators, administrators make the mailboxes.
-			if (isFirstUser) await authDO.claimRoot(user.id);
 
 			return c.json(user, 201);
 		} catch (error: any) {
@@ -203,7 +195,9 @@ export class PostLogin extends OpenAPIRoute {
 		const authDO = getAuthDO(c.env);
 		const rules = loginThrottleRules(email, clientIp(c.req.raw));
 
-		const retryAfterMs = await authDO.throttleRetryAfter(throttleKeys(rules));
+		// The attempt is counted before the password is checked, in the same
+		// call that checks the lock; see throttleTake for why.
+		const retryAfterMs = await authDO.throttleTake(rules);
 		if (retryAfterMs > 0) {
 			c.header("Retry-After", String(retryAfterSeconds(retryAfterMs)));
 			return c.json({ error: "Too many failed attempts" }, 429);
@@ -212,13 +206,13 @@ export class PostLogin extends OpenAPIRoute {
 		const session = await authDO.login(email, password);
 
 		if (!session) {
-			await authDO.throttleRecord(rules);
 			return c.json({ error: "Invalid credentials" }, 401);
 		}
 
-		// Knowing the password clears the slate, so a user who mistyped a few
-		// times and then got it right is not left sitting on a near-lockout.
-		await authDO.throttleReset(throttleKeys(rules));
+		// Knowing the password clears this address's slate, so a user who
+		// mistyped a few times and then got it right is not left sitting on a
+		// near-lockout. The address's own IP only gets this attempt back.
+		await authDO.throttleSettle(rules);
 
 		// Set cookie
 		const cookie = `session=${session.id}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${30 * 24 * 60 * 60}`;
@@ -276,8 +270,9 @@ export class PostChangePassword extends OpenAPIRoute {
 		const rules = accountChangeThrottleRules(
 			session.userId,
 			clientIp(c.req.raw),
+			{ sendsMail: false },
 		);
-		const retryAfterMs = await authDO.throttleRetryAfter(throttleKeys(rules));
+		const retryAfterMs = await authDO.throttleTake(rules);
 		if (retryAfterMs > 0) {
 			c.header("Retry-After", String(retryAfterSeconds(retryAfterMs)));
 			return c.json({ error: "Too many attempts" }, 429);
@@ -292,13 +287,12 @@ export class PostChangePassword extends OpenAPIRoute {
 			session.id,
 		);
 		if (!changed) {
-			await authDO.throttleRecord(rules);
 			// 403, not 401: the session is fine, the password in the body is
 			// not. A 401 would have the dashboard sign the user out for a typo.
 			return c.json({ error: "Current password is incorrect" }, 403);
 		}
 
-		await authDO.throttleReset(throttleKeys(rules));
+		await authDO.throttleSettle(rules);
 		return c.json({ status: "Password changed" });
 	}
 }
@@ -359,13 +353,13 @@ export class PostChangeEmail extends OpenAPIRoute {
 		const rules = accountChangeThrottleRules(
 			session.userId,
 			clientIp(c.req.raw),
+			{ sendsMail: true },
 		);
-		const retryAfterMs = await authDO.throttleRetryAfter(throttleKeys(rules));
+		const retryAfterMs = await authDO.throttleTake(rules);
 		if (retryAfterMs > 0) {
 			c.header("Retry-After", String(retryAfterSeconds(retryAfterMs)));
 			return c.json({ error: "Too many attempts" }, 429);
 		}
-		await authDO.throttleRecord(rules);
 
 		if (!(await authDO.verifyUserPassword(session.userId, currentPassword))) {
 			return c.json({ error: "Current password is incorrect" }, 403);
@@ -408,7 +402,9 @@ export class PostChangeEmail extends OpenAPIRoute {
 			return c.json({ error: "Failed to send confirmation email" }, 500);
 		}
 
-		await authDO.throttleReset(throttleKeys(rules));
+		// Settles nothing -- the rules were made with sendsMail -- but it is
+		// the rules that say so, not the absence of this line.
+		await authDO.throttleSettle(rules);
 		return c.json({ status: "Confirmation email sent" });
 	}
 }

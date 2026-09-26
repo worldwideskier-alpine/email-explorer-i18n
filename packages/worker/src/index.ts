@@ -70,7 +70,6 @@ import {
 	clientIp,
 	passwordResetThrottleRules,
 	retryAfterSeconds,
-	throttleKeys,
 } from "./throttle";
 import type { EmailExplorerOptions, Env, Session } from "./types";
 
@@ -1992,15 +1991,15 @@ class PostForgotPassword extends OpenAPIRoute {
 		const authStub = ns.get(authId);
 
 		const rules = passwordResetThrottleRules(email, clientIp(c.req.raw));
-		const retryAfterMs = await authStub.throttleRetryAfter(throttleKeys(rules));
+		// Counted before the lookup, so the limit applies to addresses that
+		// exist and addresses that don't alike -- otherwise the rate at which
+		// requests are accepted would itself answer "does this account exist".
+		// Never settled: every request that gets past here may send mail.
+		const retryAfterMs = await authStub.throttleTake(rules);
 		if (retryAfterMs > 0) {
 			c.header("Retry-After", String(retryAfterSeconds(retryAfterMs)));
 			return c.json({ error: "Too many requests" }, 429);
 		}
-		// Counted before the lookup, so the limit applies to addresses that
-		// exist and addresses that don't alike -- otherwise the rate at which
-		// requests are accepted would itself answer "does this account exist".
-		await authStub.throttleRecord(rules);
 
 		const user = await authStub.getUserByEmail(email);
 		if (!user) {
@@ -2124,14 +2123,22 @@ class PostResetPassword extends OpenAPIRoute {
 		const authId = ns.idFromName("AUTH");
 		const authStub = ns.get(authId);
 
+		// Deleted first, so the link works once however it is raced.
+		await c.env.BUCKET.delete(tokenKey);
+
+		// Every session of the account ends, and the push subscriptions they
+		// registered with them. A reset is what somebody does when they think
+		// somebody else has their password, and a reset that leaves the
+		// sessions that somebody already holds has reset nothing.
+		let result: "ok" | "not-found";
 		try {
-			await authStub.updateUserPassword(tokenData.userId, newPassword);
+			result = await authStub.setUserPassword(tokenData.userId, newPassword);
 		} catch (e) {
 			return c.json({ error: "Failed to update password" }, 500);
 		}
-
-		// Delete used token
-		await c.env.BUCKET.delete(tokenKey);
+		if (result === "not-found") {
+			return c.json({ error: "Invalid or expired token" }, 401);
+		}
 
 		return c.json({ status: "Password reset successfully" });
 	}

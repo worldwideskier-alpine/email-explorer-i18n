@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
+import { rebindPushSubscription } from "@/services/push";
 import { translateApiError } from "@/utils/apiError";
 
 export interface User {
@@ -125,6 +126,7 @@ export const useAuthStore = defineStore("auth", () => {
 			localStorage.setItem("session", JSON.stringify(session.value));
 			// Set default auth header for future requests
 			api.setAuthToken(response.data.id);
+			void rebindPushSubscription();
 			return session.value;
 		} catch (err: any) {
 			const fromApi = err.response?.data?.error;
@@ -178,6 +180,7 @@ export const useAuthStore = defineStore("auth", () => {
 				role: response.data.role,
 			};
 			localStorage.setItem("session", JSON.stringify(session.value));
+			void rebindPushSubscription();
 			return true;
 		} catch (_err) {
 			await logout();

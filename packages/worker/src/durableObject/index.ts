@@ -164,6 +164,75 @@ export class MailboxDO extends DurableObject<Env> {
 		};
 	}
 
+	/**
+	 * Auth operation: registration from the public form.
+	 *
+	 * Whether this is the first account, and so root, is decided in the same
+	 * step that inserts it, after the only await (hashing). It used to be asked
+	 * by the route in one call and acted on in the next, and a Durable Object
+	 * runs other requests between them: two registrations sent at once to a new
+	 * deployment were both told they were first, so both were marked admin, and
+	 * with registration meant to close after the first account, the second got
+	 * in anyway.
+	 *
+	 * `onlyFirst` is that closing: the form is open until somebody has used it.
+	 * Returns "closed" when it is not open.
+	 */
+	async registerFromForm(
+		email: string,
+		password: string,
+		onlyFirst: boolean,
+	): Promise<User | "closed"> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const passwordHash = await hashPassword(password);
+
+		const count = Number(
+			this.ctx.storage.sql.exec("SELECT COUNT(*) AS n FROM users").one().n,
+		);
+		if (onlyFirst && count > 0) return "closed";
+		const isFirstUser = count === 0;
+
+		const userId = crypto.randomUUID();
+		const personId = `person-${crypto.randomUUID()}`;
+		const now = Date.now();
+		this.#qb
+			.insert({
+				tableName: "users",
+				data: {
+					id: userId,
+					email,
+					password_hash: passwordHash,
+					is_admin: isFirstUser ? 1 : 0,
+					person_id: personId,
+					created_at: now,
+					updated_at: now,
+				},
+			})
+			.execute();
+
+		// The first account to register is the root account, and that is the
+		// only way one comes into being. Not a method anything else can call:
+		// an endpoint that named root, however well guarded, would be
+		// "somebody may take the tier above them" on every deployment of this
+		// that exists. The IS NULL is there so that nothing, not even a bug in
+		// the count above, replaces a root that exists.
+		if (isFirstUser) {
+			this.ctx.storage.sql.exec(
+				"UPDATE app_roles SET root_person_id = ? WHERE id = 1 AND root_person_id IS NULL",
+				personId,
+			);
+		}
+
+		return {
+			id: userId,
+			email,
+			isAdmin: isFirstUser,
+			createdAt: now,
+			updatedAt: now,
+		};
+	}
+
 	// Auth operation: login
 	async login(email: string, password: string): Promise<Session | null> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
@@ -287,38 +356,77 @@ export class MailboxDO extends DurableObject<Env> {
 				},
 			})
 			.execute();
+		this.ctx.storage.sql.exec(
+			"DELETE FROM push_subscriptions WHERE session_id = ?",
+			sessionId,
+		);
 
 		return true;
 	}
 
 	/**
-	 * Auth operation: how long the caller must wait, in milliseconds, before
-	 * any of these keys will accept another attempt. 0 means go ahead.
+	 * Ends every session of a login except `keepSessionId`, and the push
+	 * subscriptions they registered.
 	 *
-	 * Checked before doing the work, so a locked-out attacker doesn't even
-	 * get a password verification (~17ms of CPU) out of each request.
+	 * The subscriptions go with them because a notification carries the
+	 * sender and subject of each new message: a password changed to get rid
+	 * of somebody who should not be signed in, that left their browser being
+	 * told about every message, had not got rid of them. Rows with no session
+	 * (registered before subscriptions recorded one) go too -- nothing says
+	 * they are the kept session's.
 	 */
-	async throttleRetryAfter(keys: string[]): Promise<number> {
+	#endSessions(userId: string, keepSessionId: string | null): void {
+		const keep = keepSessionId ?? "";
+		this.ctx.storage.sql.exec(
+			"DELETE FROM sessions WHERE user_id = ? AND id != ?",
+			userId,
+			keep,
+		);
+		this.ctx.storage.sql.exec(
+			"DELETE FROM push_subscriptions WHERE user_id = ? AND (session_id IS NULL OR session_id != ?)",
+			userId,
+			keep,
+		);
+	}
+
+	/**
+	 * Auth operation: take one attempt, or say how long to wait for one.
+	 *
+	 * Returns 0 and counts the attempt against every rule, or returns the
+	 * longest lock in force, in milliseconds, and counts nothing.
+	 *
+	 * Checking and counting are one call with no await between them, which is
+	 * what makes the limit a limit. They used to be two calls with the work in
+	 * between -- ask whether a key was locked, verify the password, record the
+	 * failure -- and a Durable Object runs other requests while one awaits, so
+	 * a thousand guesses sent at once all asked before any had recorded, and
+	 * all were verified. Counting up front and handing back what a success
+	 * should not have cost (throttleSettle) keeps the count honest under any
+	 * concurrency.
+	 */
+	async throttleTake(rules: ThrottleRule[]): Promise<number> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-		if (keys.length === 0) return 0;
 
 		const now = Date.now();
 		let longest = 0;
-		for (const key of keys) {
+		for (const rule of rules) {
 			const row = this.#qb
 				.select("auth_throttle")
 				.fields(["locked_until"])
-				.where("bucket = ?", key)
+				.where("bucket = ?", rule.key)
 				.one().results;
 			const lockedUntil = Number(row?.locked_until ?? 0);
 			if (lockedUntil > now) longest = Math.max(longest, lockedUntil - now);
 		}
-		return longest;
+		if (longest > 0) return longest;
+
+		this.#throttleCount(rules, now);
+		return 0;
 	}
 
 	/**
-	 * Auth operation: count one attempt against each rule, locking any key
-	 * that crosses its limit.
+	 * Count one attempt against each rule, locking any key that crosses its
+	 * limit.
 	 *
 	 * The window is a fixed one that restarts once it lapses, not a sliding
 	 * one. That is deliberately the cheaper approximation: a sliding window
@@ -326,10 +434,7 @@ export class MailboxDO extends DurableObject<Env> {
 	 * attempts either side of a window boundary -- buys them one extra batch,
 	 * not an unbounded rate.
 	 */
-	async throttleRecord(rules: ThrottleRule[]): Promise<void> {
-		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-
-		const now = Date.now();
+	#throttleCount(rules: ThrottleRule[], now: number): void {
 		for (const rule of rules) {
 			const row = this.#qb
 				.select("auth_throttle")
@@ -373,17 +478,38 @@ export class MailboxDO extends DurableObject<Env> {
 		);
 	}
 
-	/** Auth operation: forget the failures counted against these keys. */
-	async throttleReset(keys: string[]): Promise<void> {
+	/**
+	 * Auth operation: an attempt taken with throttleTake succeeded; do to each
+	 * rule what its `onSuccess` says.
+	 *
+	 * "reset" forgets the key's failures -- knowing the password clears the
+	 * slate for that account. "refund" hands back only the attempt just taken,
+	 * which is right for a key shared by many accounts: resetting the per-IP
+	 * key on any success let whoever held one working account wipe the count
+	 * of their guesses at every other account by logging into their own
+	 * between batches. Anything else leaves the count as it stands.
+	 */
+	async throttleSettle(rules: ThrottleRule[]): Promise<void> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
-		for (const key of keys) {
-			this.#qb
-				.delete({
-					tableName: "auth_throttle",
-					where: { conditions: "bucket = ?", params: [key] },
-				})
-				.execute();
+		for (const rule of rules) {
+			if (rule.onSuccess === "reset") {
+				this.ctx.storage.sql.exec(
+					"DELETE FROM auth_throttle WHERE bucket = ?",
+					rule.key,
+				);
+			} else if (rule.onSuccess === "refund") {
+				// A lock this key carries was set by the attempt that reached the
+				// limit; once that attempt is handed back the key is under it again.
+				this.ctx.storage.sql.exec(
+					`UPDATE auth_throttle
+                     SET failures = MAX(failures - 1, 0),
+                         locked_until = CASE WHEN failures - 1 < ? THEN NULL ELSE locked_until END
+                     WHERE bucket = ?`,
+					rule.limit,
+					rule.key,
+				);
+			}
 		}
 	}
 
@@ -496,27 +622,6 @@ export class MailboxDO extends DurableObject<Env> {
 		};
 	}
 
-	// Auth operation: update user password
-	async updateUserPassword(userId: string, newPassword: string): Promise<void> {
-		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-
-		const hashedPassword = await hashPassword(newPassword);
-
-		this.#qb
-			.update({
-				tableName: "users",
-				data: {
-					password_hash: hashedPassword,
-					updated_at: Date.now(),
-				},
-				where: {
-					conditions: "id = ?",
-					params: [userId],
-				},
-			})
-			.execute();
-	}
-
 	/**
 	 * Auth operation: change a password, having proved the current one.
 	 *
@@ -556,11 +661,7 @@ export class MailboxDO extends DurableObject<Env> {
 			})
 			.execute();
 
-		this.ctx.storage.sql.exec(
-			"DELETE FROM sessions WHERE user_id = ? AND id != ?",
-			userId,
-			keepSessionId,
-		);
+		this.#endSessions(userId, keepSessionId);
 		return true;
 	}
 
@@ -626,33 +727,6 @@ export class MailboxDO extends DurableObject<Env> {
 			.toArray()[0];
 		const value = row?.root_person_id;
 		return value === null || value === undefined ? null : String(value);
-	}
-
-	/**
-	 * Names the first root, and only the first.
-	 *
-	 * Called from one place: the registration of the very first account. It
-	 * is not reachable over HTTP, and that is the point -- an endpoint that
-	 * named root, however well guarded, would be "somebody may take the tier
-	 * above them" on every deployment of this that exists.
-	 *
-	 * The guard is still here because the caller is a route: a second
-	 * registration racing the first must not be able to replace the root
-	 * account.
-	 */
-	async claimRoot(userId: string): Promise<"ok" | "not-found" | "taken"> {
-		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-
-		if (await this.getRootPersonId()) return "taken";
-
-		const personId = await this.getPersonId(userId);
-		if (!personId) return "not-found";
-
-		this.ctx.storage.sql.exec(
-			"UPDATE app_roles SET root_person_id = ? WHERE id = 1",
-			personId,
-		);
-		return "ok";
 	}
 
 	/*
@@ -787,11 +861,12 @@ export class MailboxDO extends DurableObject<Env> {
 	/**
 	 * Sets an account's password without asking for the old one.
 	 *
-	 * Only root reaches this. It is what makes an in-system address usable as
-	 * a login: a person whose recovery mail arrives in a mailbox they cannot
-	 * open until they log in is otherwise locked out for good.
+	 * Two callers: root, for whom it is what makes an in-system address usable
+	 * as a login (a person whose recovery mail arrives in a mailbox they
+	 * cannot open until they log in is otherwise locked out for good), and
+	 * the emailed reset link, which has already proved who is asking.
 	 *
-	 * Every session of that account is dropped. A password reset that leaves
+	 * Every session of that account is dropped, with its push subscriptions. A password reset that leaves
 	 * the old sessions alive resets nothing -- whoever prompted the reset
 	 * keeps the access they already had.
 	 */
@@ -814,7 +889,7 @@ export class MailboxDO extends DurableObject<Env> {
 			Date.now(),
 			userId,
 		);
-		this.ctx.storage.sql.exec("DELETE FROM sessions WHERE user_id = ?", userId);
+		this.#endSessions(userId, null);
 		return "ok";
 	}
 
@@ -900,9 +975,14 @@ export class MailboxDO extends DurableObject<Env> {
 			.map((row) => String(row.id));
 	}
 
-	// Push operation: save a subscription for a user (upsert by endpoint)
+	/**
+	 * Push operation: save a subscription (upsert by endpoint), bound to the
+	 * session that registered it. It is delivered to only while that session
+	 * lives; see getPushSubscriptionsForUsers.
+	 */
 	async savePushSubscription(
 		userId: string,
+		sessionId: string,
 		endpoint: string,
 		keys: { p256dh: string; auth: string },
 	): Promise<void> {
@@ -921,6 +1001,7 @@ export class MailboxDO extends DurableObject<Env> {
 				data: {
 					id: crypto.randomUUID(),
 					user_id: userId,
+					session_id: sessionId,
 					endpoint,
 					p256dh: keys.p256dh,
 					auth: keys.auth,
@@ -930,14 +1011,34 @@ export class MailboxDO extends DurableObject<Env> {
 			.execute();
 	}
 
-	// Push operation: remove a subscription by endpoint
-	async removePushSubscription(endpoint: string): Promise<void> {
+	/**
+	 * Push operation: forget an endpoint the push service says is gone (404 or
+	 * 410), whoever registered it. The service is the authority on that, and
+	 * nobody asks on the login's behalf.
+	 */
+	async forgetGonePushEndpoint(endpoint: string): Promise<void> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		this.ctx.storage.sql.exec(
+			"DELETE FROM push_subscriptions WHERE endpoint = ?",
+			endpoint,
+		);
+	}
+
+	// Push operation: remove one of this login's subscriptions by endpoint
+	async removePushSubscription(
+		userId: string,
+		endpoint: string,
+	): Promise<void> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
 		this.#qb
 			.delete({
 				tableName: "push_subscriptions",
-				where: { conditions: "endpoint = ?", params: [endpoint] },
+				where: {
+					conditions: "endpoint = ? AND user_id = ?",
+					params: [endpoint, userId],
+				},
 			})
 			.execute();
 	}
@@ -949,20 +1050,28 @@ export class MailboxDO extends DurableObject<Env> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 		if (userIds.length === 0) return [];
 
+		// Only through a session that is still good. Signing out and changing
+		// the password remove rows as they end sessions, but a session that
+		// simply expires removes nothing, and its browser should stop hearing
+		// about new mail all the same.
 		const placeholders = userIds.map(() => "?").join(", ");
-		const result = this.#qb
-			.select("push_subscriptions")
-			.fields(["endpoint", "p256dh", "auth"])
-			.where(`user_id IN (${placeholders})`, userIds)
-			.execute();
+		const rows = this.ctx.storage.sql
+			.exec(
+				`SELECT p.endpoint, p.p256dh, p.auth
+                   FROM push_subscriptions p
+              LEFT JOIN sessions s ON s.id = p.session_id
+                  WHERE p.user_id IN (${placeholders})
+                    AND (p.session_id IS NULL OR s.expires_at > ?)`,
+				...userIds,
+				Date.now(),
+			)
+			.toArray();
 
-		return (
-			result.results?.map((row) => ({
-				endpoint: String(row.endpoint),
-				p256dh: String(row.p256dh),
-				auth: String(row.auth),
-			})) ?? []
-		);
+		return rows.map((row) => ({
+			endpoint: String(row.endpoint),
+			p256dh: String(row.p256dh),
+			auth: String(row.auth),
+		}));
 	}
 
 	/**
