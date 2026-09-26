@@ -78,6 +78,11 @@ describe("Exporting a mailbox as mbox", () => {
 
 		expect(text).toContain("From sender@example.org ");
 		expect(text).toContain("X-Email-Explorer-Folder: Inbox");
+		// Our block ends with a marker and the message follows it, so a
+		// message that begins with a line of the same shape keeps it.
+		expect(text).toMatch(
+			/X-Email-Explorer-Date: [^\r\n]+\r\nX-Email-Explorer-End: 1\r\nFrom: sender@example\.org/,
+		);
 		expect(text).toContain("From: sender@example.org");
 		// The subject stays in its original encoded form, not re-encoded.
 		expect(text).toContain(
@@ -153,7 +158,9 @@ describe("Exporting a mailbox as mbox", () => {
 			.slice(start + 1)
 			.findIndex((line) => !line.startsWith("X-Email-Explorer-"));
 
-		expect(ours).toBe(5);
+		// Id, Folder, Read, Starred, Date, and the End that closes them.
+		expect(ours).toBe(6);
+		expect(lines[start + ours]).toBe("X-Email-Explorer-End: 1");
 		expect(lines[start + ours + 1]).toBe("From: sender@example.org");
 	});
 

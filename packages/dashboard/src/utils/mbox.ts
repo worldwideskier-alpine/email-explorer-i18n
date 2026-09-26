@@ -143,14 +143,22 @@ function parseEntry(bytes: Uint8Array): MboxEntry {
 	// message -- a real header of the same shape further down is not ours.
 	// They are the one part of the file this fork wrote itself, so decoding
 	// them as UTF-8 is reading back exactly what was written.
+	//
+	// Archives written since the writer marks the end of its block stop at
+	// the marker, so a message that itself begins with such a line keeps it.
+	// Older archives have no marker; for those the first value of each field
+	// is taken, since the writer's come first -- later ones used to win,
+	// which let the message choose its own id and folder.
 	let bodyStart = 0;
 	for (const line of lines(bytes)) {
 		const match = OUR_HEADER.exec(
 			decoder.decode(bytes.subarray(line.start, line.end)),
 		);
 		if (!match) break;
-		meta.set(match[1].toLowerCase(), match[2].trim());
 		bodyStart = line.next;
+		const field = match[1].toLowerCase();
+		if (field === "end") break;
+		if (!meta.has(field)) meta.set(field, match[2].trim());
 	}
 
 	return {

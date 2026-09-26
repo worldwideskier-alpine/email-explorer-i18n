@@ -48,6 +48,22 @@ interface EmailData {
 /** The most results one search returns. */
 const SEARCH_LIMIT = 500;
 
+/**
+ * The most variables one statement may bind. The runtime's limit is exactly
+ * 100; a statement binding one per id went over it as soon as a caller asked
+ * for 100 ids and bound anything else besides.
+ */
+const MAX_BOUND = 100;
+
+/** `items` in runs of at most `size`. */
+function chunksOf<T>(items: readonly T[], size: number): T[][] {
+	const out: T[][] = [];
+	for (let from = 0; from < items.length; from += size) {
+		out.push(items.slice(from, from + size));
+	}
+	return out;
+}
+
 interface AttachmentData {
 	id: string;
 	email_id: string;
@@ -786,7 +802,7 @@ export class MailboxDO extends DurableObject<Env> {
 	 */
 
 	/**
-	 * Grants access, or changes the role if there already is some.
+	 * Grants access; nothing happens if the person already holds it.
 	 *
 	 * A plain insert used to throw on the primary key, which made "assign this
 	 * mailbox" a request that succeeded the first time and returned a 500 the
@@ -876,7 +892,22 @@ export class MailboxDO extends DurableObject<Env> {
 			return { status: "is-root", mailboxIds: [] };
 		}
 
-		const mailboxIds = (await this.listPersonMailboxes(personId)).slice();
+		// Only the mailboxes nobody else holds go with them. Grants from before
+		// the claim was atomic, and the legacy backfill, can name one mailbox
+		// for two people; destroying it here took the other person's mail.
+		const mailboxIds = this.ctx.storage.sql
+			.exec(
+				`SELECT mine.mailbox_id AS id
+				   FROM person_mailboxes mine
+				  WHERE mine.person_id = ?
+				    AND NOT EXISTS (
+				        SELECT 1 FROM person_mailboxes other
+				         WHERE other.mailbox_id = mine.mailbox_id
+				           AND other.person_id != mine.person_id)`,
+				personId,
+			)
+			.toArray()
+			.map((row) => String(row.id));
 
 		for (const userId of logins) {
 			this.ctx.storage.sql.exec(
@@ -1122,18 +1153,20 @@ export class MailboxDO extends DurableObject<Env> {
 		// the password remove rows as they end sessions, but a session that
 		// simply expires removes nothing, and its browser should stop hearing
 		// about new mail all the same.
-		const placeholders = userIds.map(() => "?").join(", ");
-		const rows = this.ctx.storage.sql
-			.exec(
-				`SELECT p.endpoint, p.p256dh, p.auth
-                   FROM push_subscriptions p
-              LEFT JOIN sessions s ON s.id = p.session_id
-                  WHERE p.user_id IN (${placeholders})
-                    AND (p.session_id IS NULL OR s.expires_at > ?)`,
-				...userIds,
-				Date.now(),
-			)
-			.toArray();
+		// One variable goes on the time, so a run holds one id fewer.
+		const rows = chunksOf(userIds, MAX_BOUND - 1).flatMap((chunk) =>
+			this.ctx.storage.sql
+				.exec(
+					`SELECT p.endpoint, p.p256dh, p.auth
+                       FROM push_subscriptions p
+                  LEFT JOIN sessions s ON s.id = p.session_id
+                      WHERE p.user_id IN (${chunk.map(() => "?").join(", ")})
+                        AND (p.session_id IS NULL OR s.expires_at > ?)`,
+					...chunk,
+					Date.now(),
+				)
+				.toArray(),
+		);
 
 		return rows.map((row) => ({
 			endpoint: String(row.endpoint),
@@ -1262,16 +1295,24 @@ export class MailboxDO extends DurableObject<Env> {
 	async getEmailsByIds(ids: string[]) {
 		if (ids.length === 0) return [];
 
-		const placeholders = ids.map(() => "?").join(",");
-		const emails = this.ctx.storage.sql
-			.exec(`SELECT * FROM emails WHERE id IN (${placeholders})`, ...ids)
-			.toArray();
-		const attachments = this.ctx.storage.sql
-			.exec(
-				`SELECT * FROM attachments WHERE email_id IN (${placeholders})`,
-				...ids,
-			)
-			.toArray();
+		const emails: Record<string, SqlStorageValue>[] = [];
+		const attachments: Record<string, SqlStorageValue>[] = [];
+		for (const chunk of chunksOf(ids, MAX_BOUND)) {
+			const placeholders = chunk.map(() => "?").join(",");
+			emails.push(
+				...this.ctx.storage.sql
+					.exec(`SELECT * FROM emails WHERE id IN (${placeholders})`, ...chunk)
+					.toArray(),
+			);
+			attachments.push(
+				...this.ctx.storage.sql
+					.exec(
+						`SELECT * FROM attachments WHERE email_id IN (${placeholders})`,
+						...chunk,
+					)
+					.toArray(),
+			);
+		}
 
 		const byEmail = new Map<string, Record<string, unknown>[]>();
 		for (const row of attachments) {
@@ -1396,6 +1437,66 @@ export class MailboxDO extends DurableObject<Env> {
 			.execute();
 
 		return attachments.results || [];
+	}
+
+	/**
+	 * Deletes, of the given messages, those still in `folder`, in one call,
+	 * and says which went and what they had attached -- the R2 keys the caller
+	 * then deletes. A message that has left the folder since the caller looked
+	 * is kept, as `deleteEmail(id, folder)` keeps it.
+	 *
+	 * The spam purge made one call per message and deleted every object only
+	 * after the last one: a run cut off partway -- the way the backup pass was
+	 * -- left the objects of every row it had deleted with nothing naming them.
+	 * In runs of at most 99 the caller deletes each run's objects straight
+	 * after, so a cut leaves at most one run's behind.
+	 */
+	async deleteEmailsIn(
+		ids: string[],
+		folder: string,
+	): Promise<
+		{ id: string; attachments: { id: string; filename: string }[] }[]
+	> {
+		const out: {
+			id: string;
+			attachments: { id: string; filename: string }[];
+		}[] = [];
+		// One variable goes on the folder.
+		for (const chunk of chunksOf(ids, MAX_BOUND - 1)) {
+			const placeholders = chunk.map(() => "?").join(",");
+			const here = this.ctx.storage.sql
+				.exec(
+					`SELECT id FROM emails WHERE folder_id = ? AND id IN (${placeholders})`,
+					folder,
+					...chunk,
+				)
+				.toArray()
+				.map((row) => String(row.id));
+			if (here.length === 0) continue;
+			const marks = here.map(() => "?").join(",");
+			const attached = this.ctx.storage.sql
+				.exec(
+					`SELECT id, email_id, filename FROM attachments WHERE email_id IN (${marks})`,
+					...here,
+				)
+				.toArray();
+			this.ctx.storage.sql.exec(
+				`DELETE FROM emails WHERE id IN (${marks})`,
+				...here,
+			);
+			for (const id of here) {
+				out.push({
+					id,
+					attachments: attached
+						.filter((row) => String(row.email_id) === id)
+						.map((row) => ({
+							id: String(row.id),
+							filename: String(row.filename),
+						})),
+				});
+			}
+		}
+		return out;
 	}
 
 	/**

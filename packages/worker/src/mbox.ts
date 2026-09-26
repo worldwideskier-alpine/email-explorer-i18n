@@ -438,6 +438,11 @@ export async function renderMboxEntry(
 		`X-Email-Explorer-Starred: ${email.starred ? "1" : "0"}`,
 	];
 	if (email.date) headers.push(`X-Email-Explorer-Date: ${email.date}`);
+	// Where ours stop. A message may begin with lines of the same shape --
+	// whoever wrote it chose its headers -- and without a marker the reader
+	// took those as ours too: the id and folder it restored under were the
+	// sender's to pick.
+	headers.push("X-Email-Explorer-End: 1");
 
 	return concatBytes([
 		encoder.encode(`${separator}\r\n${headers.join("\r\n")}\r\n`),

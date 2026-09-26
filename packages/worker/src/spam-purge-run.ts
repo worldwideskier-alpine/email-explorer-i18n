@@ -81,6 +81,9 @@ export async function newestArchiveAt(
 	return Number.isFinite(at) ? at : null;
 }
 
+/** How many messages one call to the mailbox deletes. */
+const PURGE_RUN = 99;
+
 /**
  * Removes one mailbox's expired spam and returns how many messages went.
  *
@@ -128,19 +131,26 @@ export async function purgeMailboxSpam(
 		retentionCutoff(days, now.getTime()),
 	);
 
-	const keys: string[] = [];
+	// A run at a time, each run's objects deleted before the next: a pass cut
+	// off partway leaves at most one run's objects behind rather than all of
+	// them. Only what is still in spam goes -- a message rescued while this
+	// runs stays where it was put.
 	let deleted = 0;
-	for (const id of expired) {
-		const attachments = await stub.deleteEmail(id, "spam");
-		if (attachments === null) continue;
-		deleted += 1;
-		for (const attachment of attachments) {
-			const att = attachment as { id: string; filename: string };
-			keys.push(`attachments/${id}/${att.id}/${att.filename}`);
+	for (let from = 0; from < expired.length; from += PURGE_RUN) {
+		const gone = await stub.deleteEmailsIn(
+			expired.slice(from, from + PURGE_RUN),
+			"spam",
+		);
+		const keys: string[] = [];
+		for (const { id, attachments } of gone) {
+			for (const att of attachments) {
+				keys.push(`attachments/${id}/${att.id}/${att.filename}`);
+			}
+			keys.push(`raw/${id}.eml`);
 		}
-		keys.push(`raw/${id}.eml`);
+		await deleteKeys(env, keys);
+		deleted += gone.length;
 	}
-	await deleteKeys(env, keys);
 
 	return deleted;
 }

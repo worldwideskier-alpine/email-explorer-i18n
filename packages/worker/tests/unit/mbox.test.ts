@@ -192,7 +192,7 @@ describe("a message that is not UTF-8", () => {
 			"Inbox",
 		);
 		const header = enc(
-			`From a@example.com Sat Aug 01 10:00:00 2026\r\nX-Email-Explorer-Id: ${ROW.id}\r\nX-Email-Explorer-Folder: Inbox\r\nX-Email-Explorer-Read: 1\r\nX-Email-Explorer-Starred: 1\r\nX-Email-Explorer-Date: ${ROW.date}\r\n`,
+			`From a@example.com Sat Aug 01 10:00:00 2026\r\nX-Email-Explorer-Id: ${ROW.id}\r\nX-Email-Explorer-Folder: Inbox\r\nX-Email-Explorer-Read: 1\r\nX-Email-Explorer-Starred: 1\r\nX-Email-Explorer-Date: ${ROW.date}\r\nX-Email-Explorer-End: 1\r\n`,
 		);
 		expect(entry.length).toBe(header.length + raw.length + 2 /* \r\n */ + 2);
 	});
