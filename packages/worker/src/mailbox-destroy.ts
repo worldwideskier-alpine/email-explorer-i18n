@@ -15,6 +15,8 @@
  *  - `attachments/{emailId}/{attachmentId}/{filename}`
  *  - `mailboxes/{id}.json`, the settings object
  *  - `backups/{id}/*.mbox`, every archive ever taken
+ *  - `mailboxes-deleted/{id}.json`, the settings kept by a delete without
+ *    purge so that recreating the address brings them back
  *
  * The archives are the one most easily forgotten and the one that matters
  * most: they are complete copies of the mail, written nightly, and a deletion
@@ -84,7 +86,7 @@ export async function destroyMailboxCompletely(
 	keys.push(
 		...(await listKeys(env, `backups/${encodeURIComponent(mailboxId)}/`)),
 	);
-	keys.push(`mailboxes/${mailboxId}.json`);
+	keys.push(`mailboxes/${mailboxId}.json`, deletedMailboxKey(mailboxId));
 
 	const objects = await deleteKeys(env, keys);
 
@@ -99,4 +101,27 @@ export async function destroyMailboxCompletely(
 	await authStub.revokeAllMailboxAccess(mailboxId);
 
 	return { mailboxId, emails: emailIds.length, objects };
+}
+
+/**
+ * Where a delete without purge keeps the settings, for the person who holds
+ * the mailbox to have back when they recreate it. Outside `mailboxes/`, so
+ * nothing that lists the live mailboxes sees it.
+ */
+export function deletedMailboxKey(mailboxId: string): string {
+	return `mailboxes-deleted/${mailboxId}.json`;
+}
+
+/** Whether an address still has mail or archives stored under it. */
+export async function holdsMailOrArchives(
+	env: Env,
+	mailboxId: string,
+): Promise<boolean> {
+	const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+	if ((await stub.listAllEmailIds()).length > 0) return true;
+	const archives = await env.BUCKET.list({
+		prefix: `backups/${encodeURIComponent(mailboxId)}/`,
+		limit: 1,
+	});
+	return archives.objects.length > 0;
 }

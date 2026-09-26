@@ -32,3 +32,16 @@ export async function personHoldsMailbox(
 	const authDO = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 	return (await authDO.getPersonMailboxes(session.userId)).includes(mailboxId);
 }
+
+/**
+ * Whether mail sent through this mailbox names it as the sender.
+ *
+ * Sending is authorised by holding the mailbox in the path, and nothing tied
+ * `from` to it: measured, a person holding one mailbox sent as root's address,
+ * through the deployment's shared Resend key, which Resend accepts for any
+ * domain verified on it. Addresses compare without regard to case, as a mail
+ * system compares domains and as most compare local parts.
+ */
+export function sendsAsMailbox(from: string, mailboxId: string): boolean {
+	return from.trim().toLowerCase() === mailboxId.trim().toLowerCase();
+}
