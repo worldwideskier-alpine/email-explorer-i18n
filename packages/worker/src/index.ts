@@ -27,6 +27,7 @@ import {
 import { renderMboxEntry, safeMediaType } from "./mbox";
 import { plainTextToHtml } from "./plain-text-to-html";
 import { dismissEmailNotification } from "./push-notify";
+import { rewriteJson } from "./r2-json";
 import { formatAddressList } from "./recipients";
 import { sendEmail } from "./resend";
 import { roleOf } from "./roles";
@@ -418,17 +419,17 @@ class PutMailbox extends OpenAPIRoute {
 		const { settings: incomingSettings } = data.body;
 		const key = `mailboxes/${mailboxId}.json`;
 
-		const existingObj = await c.env.BUCKET.get(key);
-		if (!existingObj) {
+		// Conditional on the object being the one merged onto: a verdict or the
+		// nightly run writing the same object in between used to be erased.
+		const mergedSettings = await rewriteJson<Record<string, any>>(
+			c.env.BUCKET,
+			key,
+			(existing) =>
+				existing ? mergeMailboxSettings(existing, incomingSettings) : undefined,
+		);
+		if (!mergedSettings) {
 			return c.json({ error: "Not found" }, 404);
 		}
-		const existingSettings = await existingObj.json();
-
-		const mergedSettings = mergeMailboxSettings(
-			existingSettings,
-			incomingSettings,
-		);
-		await c.env.BUCKET.put(key, JSON.stringify(mergedSettings));
 
 		return c.json(await mailboxResponse(c.env, mailboxId, mergedSettings));
 	}

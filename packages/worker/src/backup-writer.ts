@@ -43,8 +43,9 @@ const DELETE_BATCH = 1000;
  *
  * One at a time was over 1500 round trips for the live mailbox, inside an
  * invocation that also does one R2 read per message. A hundred at a time makes
- * that sixteen. Kept well under SQLite's limit on bound variables, since the
- * read binds one per id.
+ * that sixteen. The read binds one variable per id and the runtime allows
+ * exactly 100, so it splits a larger page itself; this is at the limit, not
+ * "well under" it as this said before.
  */
 const READ_BATCH = 100;
 

@@ -124,13 +124,21 @@ fork's work. This fork ships by being forked.
   are locked, because an absent lock reads as locked and asking in the other
   order answered "this person is protected" about an id with a typo in it.
   The person locks live in one object of their own (`settings/person-locks.json`),
-  not beside anybody's Resend key: R2 has no read-modify-write that excludes
-  another writer, so sharing an object would have let a lock being moved
-  clobber a key being saved. Reads of that map swallow failure and answer
+  not beside anybody's Resend key: before writes were conditional, sharing an
+  object let a lock being moved clobber a key being saved. Reads of that map swallow failure and answer
   "everyone locked" (safe, and it keeps one bad read off the account list);
   **writes must not** -- a read-modify-write on a swallowed `{}` puts back a
   map holding one person and answers 200, which is the same loss with a
-  cheerful face. `readLocksToWrite` throws; the forgiving read wraps it.
+  cheerful face. The writers go through `rewriteJson`, which throws on a
+  failed read; the forgiving read wraps `readLocksToWrite`.
+- **A shared R2 object is rewritten conditionally.** A mailbox's settings
+  object has four writers -- a save, a spam verdict, the nightly backup and
+  purge -- and each put back the whole object it had read, so two at once
+  left only the second. `rewriteJson` (`r2-json.ts`) puts only if the object
+  is still the one read (its etag) and otherwise makes the change again on
+  what the other writer left. R2 does have that; an earlier note here said it
+  did not. Settings saves also merge onto what is stored, so a save carries
+  only the section it changes.
 - **Switches.** Never `<input type=checkbox :checked="…">`: the browser owns a
   checkbox's `checked` and flips it before any handler runs, while Vue writes
   a DOM property back only when the *bound* value changed -- so dismissing a

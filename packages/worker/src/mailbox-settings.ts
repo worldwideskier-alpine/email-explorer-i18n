@@ -10,6 +10,7 @@ import {
 	normalizeKeep,
 } from "./auto-backup";
 import { maskSecret } from "./mask-secret";
+import { rewriteJson } from "./r2-json";
 import { normalizeRetentionDays } from "./spam-retention";
 import type { Env } from "./types";
 
@@ -54,7 +55,10 @@ export function mergeMailboxSettings(
 	existing: MailboxSettings | null | undefined,
 	incoming: MailboxSettings,
 ): MailboxSettings {
-	const merged = { ...incoming };
+	// What was stored, with what the save sent on top. Starting from the save
+	// alone meant a save had to carry every section to keep them, so a screen
+	// saving one section wrote its stale copy of all the others.
+	const merged = { ...(existing ?? {}), ...incoming };
 	const incomingSpamFilter = incoming?.spamFilter;
 	const keyWasTouched =
 		!!incomingSpamFilter && Object.hasOwn(incomingSpamFilter, "claudeApiKey");
@@ -72,7 +76,7 @@ export function mergeMailboxSettings(
 			claudeApiKeyConfigured: _configured,
 			claudeApiKeyMasked: _masked,
 			...spamFilter
-		} = incomingSpamFilter ?? {};
+		} = incomingSpamFilter ?? existing?.spamFilter ?? {};
 		merged.spamFilter = { ...spamFilter, claudeApiKey };
 	}
 
@@ -252,21 +256,23 @@ export async function recordSenderVerdict(
 	verdict: SenderVerdict,
 ): Promise<MailboxSettings> {
 	const key = `mailboxes/${mailboxId}.json`;
-	const obj = await env.BUCKET.get(key);
-	// No settings object means the mailbox was deleted. Writing one here would
-	// bring it back from nothing but these rules.
-	if (!obj) return {};
-	const settings: MailboxSettings = await obj.json();
-
 	const normalized = normalizeAddress(fromAddress);
-	const existingAllow: string[] = settings.senderRules?.allow || [];
-	const existingBlock: string[] = settings.senderRules?.block || [];
+	const updated = await rewriteJson<MailboxSettings>(
+		env.BUCKET,
+		key,
+		(settings) => {
+			// No settings object means the mailbox was deleted. Writing one here
+			// would bring it back from nothing but these rules.
+			if (!settings) return undefined;
+			const existingAllow: string[] = settings.senderRules?.allow || [];
+			const existingBlock: string[] = settings.senderRules?.block || [];
 
-	const allow = existingAllow.filter((a) => a !== normalized);
-	const block = existingBlock.filter((a) => a !== normalized);
-	(verdict === "inbox" ? allow : block).push(normalized);
+			const allow = existingAllow.filter((a) => a !== normalized);
+			const block = existingBlock.filter((a) => a !== normalized);
+			(verdict === "inbox" ? allow : block).push(normalized);
 
-	const updated = { ...settings, senderRules: { allow, block } };
-	await env.BUCKET.put(key, JSON.stringify(updated));
-	return updated;
+			return { ...settings, senderRules: { allow, block } };
+		},
+	);
+	return updated ?? {};
 }

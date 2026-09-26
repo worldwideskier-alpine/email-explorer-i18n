@@ -20,6 +20,7 @@
  * them, only whether one is set.
  */
 
+import { rewriteJson } from "./r2-json";
 import type { Env } from "./types";
 
 /**
@@ -122,12 +123,19 @@ export async function setResendApiKey(
 	personId: string,
 	apiKey: string | null,
 ): Promise<void> {
-	const key = personKey(personId);
-	const settings = await readAt(env, key);
 	const trimmed = apiKey?.trim();
-	if (trimmed) settings.resendApiKey = trimmed;
-	else delete settings.resendApiKey;
-	await env.BUCKET.put(key, JSON.stringify(settings));
+	await rewriteJson<AppSettings>(
+		env.BUCKET,
+		personKey(personId),
+		(stored) => {
+			const settings = { ...(stored ?? {}) };
+			if (trimmed) settings.resendApiKey = trimmed;
+			else delete settings.resendApiKey;
+			return settings;
+		},
+		// An unreadable object holds no key anybody could use.
+		{ replaceUnreadable: true },
+	);
 }
 
 /** Everything a person's key is stored under, for deleting them. */
@@ -187,9 +195,11 @@ export function isPersonDeletionLocked(
 }
 
 /**
- * The map as it stands, or a throw. What a *writer* has to use.
+ * The map as it stands, or a throw.
  *
- * A writer that cannot see the map must not write one. The forgiving read
+ * The writers below read through rewriteJson, which fails the same way and
+ * for the same reason: a writer that cannot see the map must not write one.
+ * The forgiving read
  * below turns any failure into `{}`, and a read-modify-write on top of that
  * would put back an object holding one person and nothing else -- every other
  * unlock silently discarded, and the route answering 200 as if it had worked.
@@ -243,24 +253,23 @@ export async function readPersonDeletionLock(
 /**
  * Turns one person's lock on or off.
  *
- * Read-modify-write of the map, which two locks moved at the same instant
- * could still lose one half of. That is root alone, on one screen, with the
- * button disabled until the round trip returns, and the loser of such a race
- * is a flag that the reload immediately shows as it really is. What was not
- * acceptable was the same race costing somebody their sending key.
- *
- * A read that fails takes the write with it rather than writing a map with
- * one person in it. Root sees "the lock could not be changed", which is what
- * happened, and nothing is lost.
+ * Conditional on the map being the one read (rewriteJson), so two locks
+ * moved at once both stand. A read that fails takes the write with it rather
+ * than writing a map with one person in it. Root sees "the lock could not be
+ * changed", which is what happened, and nothing is lost.
  */
 export async function setPersonDeletionLock(
 	env: Pick<Env, "BUCKET">,
 	personId: string,
 	locked: boolean,
 ): Promise<void> {
-	const locks = await readLocksToWrite(env);
-	locks[personId] = locked;
-	await env.BUCKET.put(LOCKS_KEY, JSON.stringify(locks));
+	await rewriteJson<PersonLocks>(
+		env.BUCKET,
+		LOCKS_KEY,
+		(locks) => ({ ...(locks ?? {}), [personId]: locked }),
+		// See readLocksToWrite: an unparseable map holds nothing to keep.
+		{ replaceUnreadable: true },
+	);
 }
 
 /**
@@ -275,10 +284,16 @@ export async function forgetPersonDeletionLock(
 	env: Pick<Env, "BUCKET">,
 	personId: string,
 ): Promise<void> {
-	const locks = await readLocksToWrite(env);
-	if (!(personId in locks)) return;
-	delete locks[personId];
-	await env.BUCKET.put(LOCKS_KEY, JSON.stringify(locks));
+	await rewriteJson<PersonLocks>(
+		env.BUCKET,
+		LOCKS_KEY,
+		(locks) => {
+			if (!locks || !(personId in locks)) return undefined;
+			const { [personId]: _gone, ...rest } = locks;
+			return rest;
+		},
+		{ replaceUnreadable: true },
+	);
 }
 
 /**

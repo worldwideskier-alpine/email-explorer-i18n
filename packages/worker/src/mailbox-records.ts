@@ -9,6 +9,7 @@
  */
 
 import type { AutoBackupSettings } from "./auto-backup";
+import { rewriteJson } from "./r2-json";
 import type { SpamRetentionSettings } from "./spam-retention";
 import type { Env } from "./types";
 
@@ -55,11 +56,13 @@ export async function updateMailboxSettings(
 	mailboxId: string,
 	mutate: (settings: MailboxRecord["settings"]) => void,
 ): Promise<void> {
-	const key = `mailboxes/${mailboxId}.json`;
-	const stored = await env.BUCKET.get(key);
-	if (!stored) return;
-
-	const settings = (await stored.json()) as MailboxRecord["settings"];
-	mutate(settings);
-	await env.BUCKET.put(key, JSON.stringify(settings));
+	await rewriteJson<MailboxRecord["settings"]>(
+		env.BUCKET,
+		`mailboxes/${mailboxId}.json`,
+		(settings) => {
+			if (!settings) return undefined;
+			mutate(settings);
+			return settings;
+		},
+	);
 }

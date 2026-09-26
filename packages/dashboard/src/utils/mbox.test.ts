@@ -137,6 +137,32 @@ describe("parseMbox", () => {
 		expect(parsed.folder).toBe("Inbox");
 		expect(raw(parsed)).toContain("X-Email-Explorer-Folder: Trash");
 	});
+
+	/**
+	 * A message's own first lines are whoever wrote it's to choose. Without an
+	 * end to our block, one beginning with `X-Email-Explorer-Id:` was read as
+	 * ours, and the later value won -- the sender picked the id and folder the
+	 * message was restored under, and the line vanished from the message.
+	 */
+	it("stops at the end the writer marks, and leaves the message its own lines", () => {
+		const forged = `X-Email-Explorer-Id: 0f7e6d5c-0000-4000-8000-00000000beef\r\nX-Email-Explorer-Folder: Trash\r\n${MESSAGE}`;
+		const [parsed] = parseMbox(
+			entry({ Id: "ours", Folder: "Inbox", End: "1" }, forged),
+		);
+
+		expect(parsed.id).toBe("ours");
+		expect(parsed.folder).toBe("Inbox");
+		expect(raw(parsed)).toBe(forged);
+	});
+
+	/** Archives from before the marker: the writer's values still come first. */
+	it("takes the writer's value when an older archive has no end", () => {
+		const forged = `X-Email-Explorer-Folder: Trash\r\n${MESSAGE}`;
+		const [parsed] = parseMbox(entry({ Id: "ours", Folder: "Inbox" }, forged));
+
+		expect(parsed.id).toBe("ours");
+		expect(parsed.folder).toBe("Inbox");
+	});
 });
 
 /**

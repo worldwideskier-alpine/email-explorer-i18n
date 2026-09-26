@@ -48,6 +48,11 @@ const ErrorResponseSchema = z.object({
  * Open to whoever holds the mailbox, which is the rule everywhere else here.
  * See the check in handle() for what it used to be and what that cost.
  */
+
+/** The shape of an id this application mints (crypto.randomUUID). */
+const MINTED_ID =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export class PostImportEmail extends OpenAPIRoute {
 	schema = {
 		summary: "Import a raw email into a mailbox (does not send)",
@@ -158,10 +163,21 @@ export class PostImportEmail extends OpenAPIRoute {
 		// The id is only reused when nothing else owns it. R2 keys are not
 		// scoped per mailbox, so restoring one mailbox's backup into a
 		// different mailbox would otherwise overwrite the raw copy the
-		// original still points at.
+		// original still points at. Attachments count as much as the raw
+		// copy: sent mail has no raw copy at all, and a message restored under
+		// its id shared the original's attachments -- deleting either deleted
+		// both. And it has to be an id of the kind this mints; one with a "/"
+		// in it would name keys in somebody else's space.
 		const idIsFree =
 			requestedId !== undefined &&
-			!(await c.env.BUCKET.head(`raw/${requestedId}.eml`));
+			MINTED_ID.test(requestedId) &&
+			!(await c.env.BUCKET.head(`raw/${requestedId}.eml`)) &&
+			(
+				await c.env.BUCKET.list({
+					prefix: `attachments/${requestedId}/`,
+					limit: 1,
+				})
+			).objects.length === 0;
 
 		const parser = new PostalMime();
 		const parsedEmail = await parser.parse(rawEmail);

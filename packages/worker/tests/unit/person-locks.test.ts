@@ -116,9 +116,10 @@ describe("a write on top of a read that did not work", () => {
 	it("still writes when there is nothing stored, or nothing readable", async () => {
 		for (const get of [
 			() => Promise.resolve(null),
-			() => Promise.resolve({ json: () => Promise.reject(new Error("bad")) }),
+			() => Promise.resolve({ etag: "e", text: () => Promise.resolve("{bad") }),
 		]) {
-			const put = vi.fn(() => Promise.resolve());
+			// A put that went through answers with the object it wrote.
+			const put = vi.fn(() => Promise.resolve({}));
 			const env = { BUCKET: { get, put } } as unknown as Parameters<
 				typeof setPersonDeletionLock
 			>[0];
@@ -153,12 +154,14 @@ describe("a write on top of a read that did not work", () => {
 	});
 
 	it("keeps everyone else's entry when the read does work", async () => {
-		const put = vi.fn(() => Promise.resolve());
+		const put = vi.fn(() => Promise.resolve({}));
 		const env = {
 			BUCKET: {
 				get: () =>
 					Promise.resolve({
-						json: () => Promise.resolve({ other: false, third: true }),
+						etag: "e",
+						text: () =>
+							Promise.resolve(JSON.stringify({ other: false, third: true })),
 					}),
 				put,
 			},
