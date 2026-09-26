@@ -253,12 +253,12 @@ const handleRowClick = async (event: MouseEvent, email: Email) => {
 
 const handleDelete = (emailId: string) => {
 	const mailboxId = route.params.mailboxId as string;
-	if (folderId.value === "trash") {
-		if (confirm(t("emailList.confirmPermanentDelete"))) {
-			emailStore.deleteOrTrashEmail(mailboxId, emailId, folderId.value);
-		}
-	} else {
-		emailStore.deleteOrTrashEmail(mailboxId, emailId, folderId.value);
+	if (
+		emailStore.deletesPermanently(emailId) &&
+		!confirm(t("emailList.confirmPermanentDelete"))
+	) {
+		return;
 	}
+	emailStore.deleteOrTrashEmail(mailboxId, emailId);
 };
 </script>

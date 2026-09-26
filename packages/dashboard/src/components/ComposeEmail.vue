@@ -203,7 +203,7 @@ import {
 	htmlToPlainText,
 	plainTextToSimpleHtml,
 } from "@/utils/htmlToPlainText";
-import { toQuotableHtml } from "@/utils/quotedBody";
+import { plainTextToParagraphs, toQuotableHtml } from "@/utils/quotedBody";
 import RichTextEditor from "./RichTextEditor.vue";
 
 const uiStore = useUIStore();
@@ -305,18 +305,48 @@ const { formatFullDate } = useDateFormat();
  * `<pre>` that the editor turns into one indivisible code block. See
  * toQuotableHtml.
  */
+interface Quotable {
+	date: string;
+	sender: string;
+	body: string;
+	folder_id?: string;
+}
+
+/**
+ * The original's body as it goes into the editor.
+ *
+ * The editor is not the sandboxed frame a message is read in: it is part of
+ * this page, with images enabled, so an `<img>` quoted into it is fetched the
+ * moment the reply opens. Replying to spam -- or forwarding it to report it --
+ * therefore told the sender the address was live, which is what reading it in
+ * the spam folder is careful never to do. From spam the quote is the words
+ * alone.
+ */
+const quotedBody = (original: Quotable) =>
+	original.folder_id === "spam"
+		? plainTextToParagraphs(htmlToPlainText(original.body))
+		: toQuotableHtml(original.body);
+
+/**
+ * The sender, subject and header text are the sender's own words going into
+ * HTML the editor parses, so a subject that is a tag becomes one -- an image
+ * in a subject line was a tracker in every reply.
+ */
+const escapeHtml = (text: string) =>
+	text
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;");
+
 const quoteHeader = (original: { date: string; sender: string }) =>
 	t("compose.replyQuotePrefix", {
 		date: formatFullDate(original.date),
 		sender: original.sender,
 	});
 
-const quotedBlock = (original: {
-	date: string;
-	sender: string;
-	body: string;
-}) =>
-	`<blockquote style="border-left: 2px solid #ccc; margin: 0; padding-left: 1em; color: #666;"><p>${quoteHeader(original)}</p>${toQuotableHtml(original.body)}</blockquote>`;
+const quotedBlock = (original: Quotable) =>
+	`<blockquote style="border-left: 2px solid #ccc; margin: 0; padding-left: 1em; color: #666;"><p>${escapeHtml(quoteHeader(original))}</p>${quotedBody(original)}</blockquote>`;
 
 // Format quoted text for replies
 const formatQuotedText = (text: string) => {
@@ -411,7 +441,7 @@ watch(isComposeModalOpen, (isOpen) => {
 			subject.value = original.subject.startsWith("Fwd: ")
 				? original.subject
 				: `Fwd: ${original.subject}`;
-			body.value = `<p><br></p>${sigBlock}<div style="border: 1px solid #ddd; padding: 1em; background-color: #f9f9f9; margin: 1em 0;"><p><strong>${t("compose.forwardedMessage")}</strong><br><strong>${t("compose.forwardFrom")}</strong> ${original.sender}<br><strong>${t("compose.forwardDate")}</strong> ${formatFullDate(original.date)}<br><strong>${t("compose.forwardSubject")}</strong> ${original.subject}</p>${toQuotableHtml(original.body)}</div>`;
+			body.value = `<p><br></p>${sigBlock}<div style="border: 1px solid #ddd; padding: 1em; background-color: #f9f9f9; margin: 1em 0;"><p><strong>${t("compose.forwardedMessage")}</strong><br><strong>${t("compose.forwardFrom")}</strong> ${escapeHtml(original.sender)}<br><strong>${t("compose.forwardDate")}</strong> ${formatFullDate(original.date)}<br><strong>${t("compose.forwardSubject")}</strong> ${escapeHtml(original.subject)}</p>${quotedBody(original)}</div>`;
 		} else {
 			to.value = "";
 			subject.value = "";

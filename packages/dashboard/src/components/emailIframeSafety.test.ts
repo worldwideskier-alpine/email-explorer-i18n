@@ -180,8 +180,14 @@ describe("the frame that shows a message body", () => {
 });
 
 describe("what the message view asks for", () => {
+	// Decided by the folder the message is in, not the one in the address:
+	// a search result links here with none. spamWherever.test.ts mounts the
+	// screen and holds that; this only keeps the wiring findable.
 	it("turns it on for the spam folder", () => {
-		expect(detail).toMatch(/blocksRemoteContent[\s\S]*?fromFolder.*"spam"/);
+		expect(detail).toMatch(/blocksRemoteContent[\s\S]*?currentFolder.*"spam"/);
+		expect(detail).toMatch(
+			/currentFolder = computed\([\s\S]*?email\.value\?\.folder_id/,
+		);
 		expect(detail).toContain(':block-remote-content="blocksRemoteContent"');
 	});
 
