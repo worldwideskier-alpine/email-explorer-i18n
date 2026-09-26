@@ -121,10 +121,7 @@ const CSS_SPACE = "[ \\t\\n\\r\\f]";
  * matched the quoted spelling instead and kept them, showing more of the
  * sender's CSS than the browser would.
  */
-const CSS_URL = new RegExp(
-	`url\\(${CSS_SPACE}*(?:"[^"]*"${CSS_SPACE}*\\)|'[^']*'${CSS_SPACE}*\\)|[^)]*(?:\\)|$))`,
-	"gi",
-);
+const CSS_URL = `url\\(${CSS_SPACE}*(?:"[^"]*"${CSS_SPACE}*\\)|'[^']*'${CSS_SPACE}*\\)|[^)]*(?:\\)|$))`;
 
 /**
  * Whatever in CSS fetches something -- one list, for the question of whether
@@ -154,14 +151,22 @@ const FETCHES = new RegExp(
  * never see. Matched whole, one level of nesting allowed, so a wrapped
  * `image-set(url(a.png) 1x)` goes with it rather than leaving a fragment.
  */
-const CSS_IMAGE_SET =
-	/(?:-webkit-)?image-set\((?:[^()]|\([^()]*(?:\)|$))*(?:\)|$)/gi;
+const CSS_IMAGE_SET = String.raw`(?:-webkit-)?image-set\((?:[^()]|\([^()]*(?:\)|$))*(?:\)|$)`;
 
 /**
  * `@import`, which fetches a stylesheet without an `url()` around the address
  * -- `@import "https://..."` is legal on its own.
  */
-const CSS_IMPORT = /@import[^;}]*;?/gi;
+const CSS_IMPORT = "@import[^;}]*;?";
+
+/**
+ * All three, found in one pass over the CSS. A spam message chooses how long
+ * its CSS is, and three passes made three copies of it.
+ */
+const CSS_FETCH_SITES = new RegExp(
+	`${CSS_IMPORT}|${CSS_IMAGE_SET}|${CSS_URL}`,
+	"gi",
+);
 
 /** A backslash and what it escapes; a hex escape may end in one space. */
 const CSS_ESCAPE = new RegExp(
@@ -244,11 +249,11 @@ function cssFetches(css: string): boolean {
  * more would mean a CSS tokenizer that matches the browser's own, error
  * recovery included, which is more than the spam folder's looks are worth.
  */
-function cssWithoutFetches(css: string): string | null {
-	const rewritten = css
-		.replace(CSS_IMPORT, "")
-		.replace(CSS_IMAGE_SET, "none")
-		.replace(CSS_URL, "none");
+export function cssWithoutFetches(css: string): string | null {
+	// An `@import` goes whole; there is no value it could be left as.
+	const rewritten = css.replace(CSS_FETCH_SITES, (site) =>
+		site.startsWith("@") ? "" : "none",
+	);
 	return cssFetches(rewritten) ? null : rewritten;
 }
 
