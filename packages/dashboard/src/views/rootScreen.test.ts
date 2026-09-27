@@ -12,6 +12,8 @@ import { createMemoryHistory, createRouter, RouterView } from "vue-router";
 const setAccountPassword = vi.fn(async () => ({ data: {} }));
 const getRecoverySender = vi.fn();
 const setRecoverySender = vi.fn();
+const getResendSettings = vi.fn();
+const setResendApiKey = vi.fn();
 
 vi.mock("@/services/api", () => ({
 	default: {
@@ -42,6 +44,9 @@ vi.mock("@/services/api", () => ({
 		setAccountPassword: (...a: unknown[]) => setAccountPassword(...(a as [])),
 		getRecoverySender: (...a: unknown[]) => getRecoverySender(...(a as [])),
 		setRecoverySender: (...a: unknown[]) => setRecoverySender(...(a as [])),
+		adminGetResendSettings: (...a: unknown[]) =>
+			getResendSettings(...(a as [])),
+		adminSetResendApiKey: (...a: unknown[]) => setResendApiKey(...(a as [])),
 		setAuthToken: vi.fn(),
 		clearAuthToken: vi.fn(),
 	},
@@ -55,6 +60,9 @@ beforeEach(() => {
 	setAccountPassword.mockClear();
 	getRecoverySender.mockReset();
 	setRecoverySender.mockReset();
+	getResendSettings.mockReset();
+	getResendSettings.mockResolvedValue({ data: { source: "none" } });
+	setResendApiKey.mockReset();
 });
 afterEach(() => {
 	unmount();
@@ -176,5 +184,34 @@ describe("the password-reset sender on /root", () => {
 		});
 		await mountRoot();
 		expect(host.textContent).toContain("root.recovery.byDeployment");
+	});
+});
+
+describe("root's own sending key on /root", () => {
+	/**
+	 * Root's reset mail and address-change confirmation go out with root's
+	 * own key, and root cannot open /admin. Without this card that key had
+	 * nowhere to be set, and root's reset mail leaned on the deployment-wide
+	 * key left over from before keys were per person.
+	 */
+	it("says where root's key stands, and saves one", async () => {
+		getRecoverySender.mockResolvedValue({
+			data: { fromEmail: null, setByDeployment: false, enabled: false },
+		});
+		getResendSettings.mockResolvedValue({ data: { source: "environment" } });
+		setResendApiKey.mockResolvedValue({ data: { source: "stored" } });
+		await mountRoot();
+
+		expect(getResendSettings).toHaveBeenCalled();
+		expect(host.textContent).toContain("admin.resend.sourceEnvironment");
+
+		type("#resendApiKey", "  re_roots_own  ");
+		await nextTick();
+		formOf("#resendApiKey").dispatchEvent(new Event("submit"));
+		await settle();
+
+		expect(setResendApiKey).toHaveBeenCalledWith("re_roots_own");
+		expect(host.textContent).toContain("admin.resend.sourceStored");
+		expect(host.textContent).toContain("admin.resend.saved");
 	});
 });

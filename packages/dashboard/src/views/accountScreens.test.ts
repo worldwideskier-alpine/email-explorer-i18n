@@ -36,6 +36,19 @@ const ja = Object.values(
 const admin = views["./Admin.vue"];
 const root = views["./Root.vue"];
 
+describe("your own sending key", () => {
+	/**
+	 * On the screen each person manages themselves from. Root's reset mail is
+	 * root's own and goes out with root's key, and root cannot open /admin;
+	 * with the card on /admin alone, root's key had nowhere to be set.
+	 * rootScreen.test.ts mounts /root and uses it.
+	 */
+	it("is on /admin and on /root", () => {
+		expect(admin).toContain("<ResendKeyCard");
+		expect(root).toContain("<ResendKeyCard");
+	});
+});
+
 describe("the admin screen", () => {
 	it("lists your own logins and nothing about anybody else", () => {
 		expect(admin).toContain("listOwnLogins");

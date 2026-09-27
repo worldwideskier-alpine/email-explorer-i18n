@@ -10,7 +10,9 @@ import { describe, expect, it } from "vitest";
  * address, a new address or a new password must say so.
  */
 
-const views = import.meta.glob("./*.vue", {
+// The screens, and the one form two of them share: the sending-key card on
+// /admin and /root lives in components/, out of reach of "./*.vue".
+const views = import.meta.glob(["./*.vue", "../components/ResendKeyCard.vue"], {
 	query: "?raw",
 	import: "default",
 	eager: true,
@@ -66,6 +68,15 @@ describe("address and password fields", () => {
 		expect(hintOf("Admin.vue", "new-password")).toBe("new-password");
 		expect(hintOf("Account.vue", "newEmail")).toBe("off");
 		expect(hintOf("Home.vue", "mailbox-email")).toBe("off");
+		// An API key, not a password of yours: offering a saved one here
+		// would put a sign-in password where a Resend key belongs.
+		expect(
+			fields().find(
+				(f) =>
+					f.where.startsWith("../components/ResendKeyCard.vue:") &&
+					f.id === "resendApiKey",
+			)?.autocomplete,
+		).toBe("off");
 	});
 
 	/**

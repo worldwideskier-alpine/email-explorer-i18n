@@ -175,7 +175,7 @@ let sessionRefreshed = false;
  * Where root may go besides its own screen: its password and sign-in address
  * (/account). Sending every other screen to /root used to include that one,
  * which left root no way to change its own password. /admin stays out: root's
- * spare addresses are added from its own screen and it sends no mail, so
+ * spare addresses and its own sending key are on its own screen, so
  * Admin.vue sends it back to /root itself.
  */
 const ROOT_MAY_OPEN = ["Root", "Account"];

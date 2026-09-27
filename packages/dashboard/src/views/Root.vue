@@ -299,6 +299,11 @@
         <p v-if="recoveryError" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">{{ recoveryError }}</p>
       </div>
 
+      <!-- Root's own sending key, beside the address its resets come from:
+           the two together decide whether root's own reset mail can go out.
+           Root cannot open /admin, which is where this used to be only. -->
+      <ResendKeyCard plain class="mt-6" />
+
       <!-- Storage housekeeping, which is root's for the same reason the
            nightly record is: the bucket belongs to the deployment rather than
            to a mailbox, and an administrator told "there are objects here
@@ -375,6 +380,7 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
+import ResendKeyCard from "@/components/ResendKeyCard.vue";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import { useDateFormat } from "@/composables/useDateFormat";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";

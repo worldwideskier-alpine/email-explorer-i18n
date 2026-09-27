@@ -2205,7 +2205,9 @@ class PostResetPassword extends OpenAPIRoute {
 }
 
 /**
- * The Resend API key, for administrators.
+ * The signed-in person's own Resend API key -- an administrator's on /admin,
+ * root's on /root. The path says admin for history's sake; the gate is a
+ * session, and each person only ever sees and sets their own.
  *
  * The key is never returned -- only whether one is set and where it came
  * from. That is all the screen needs in order to be useful, and it means a
@@ -2217,7 +2219,7 @@ class PostResetPassword extends OpenAPIRoute {
  */
 class GetResendSettings extends OpenAPIRoute {
 	schema = {
-		summary: "Whether an outbound mail API key is configured (admin only)",
+		summary: "Whether your own outbound mail API key is configured",
 		operationId: "getResendSettings",
 		tags: ["Admin"],
 		responses: {
@@ -2255,7 +2257,7 @@ class GetResendSettings extends OpenAPIRoute {
 
 class PutResendSettings extends OpenAPIRoute {
 	schema = {
-		summary: "Set or clear the outbound mail API key (admin only)",
+		summary: "Set or clear your own outbound mail API key",
 		operationId: "putResendSettings",
 		tags: ["Admin"],
 		request: {

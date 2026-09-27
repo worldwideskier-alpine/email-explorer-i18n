@@ -28,7 +28,9 @@ import { describe, expect, it } from "vitest";
  * because a dependency happened to leak @types/node into scope.
  */
 
-const views = import.meta.glob("./*.vue", {
+// The screens, and the one form two of them share: the sending-key card on
+// /admin and /root lives in components/, out of reach of "./*.vue".
+const views = import.meta.glob(["./*.vue", "../components/ResendKeyCard.vue"], {
 	query: "?raw",
 	import: "default",
 	eager: true,
@@ -62,7 +64,7 @@ function controlsMissingLightColour(): Control[] {
 			if (classes.some((c) => LIGHT_TEXT_COLOUR.test(c))) continue;
 
 			missing.push({
-				file: path.replace("./", ""),
+				file: path.replace(/^\.\//, ""),
 				line: source.slice(0, match.index).split("\n").length,
 				tag: match[1],
 			});
