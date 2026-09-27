@@ -32,11 +32,6 @@ Edit, Workers R2 Storage Edit and Workers KV Storage Edit on your account.
 Note your **Account ID** as well; it is on the right of any zone's overview
 page.
 
-The read-only **Cloudflare Email Routing status** workflow needs three more,
-on your mail domain's zone: Zone Read, Email Routing Rules Read and Email
-Routing Addresses Read. Without them it fails and says which queries were
-refused; nothing else uses them.
-
 ## 3. Generate a push-notification key pair
 
 ```bash
@@ -66,7 +61,6 @@ prints when it finishes.
 | Secret | What it is |
 |---|---|
 | `PRODUCTION_URL` | Where your deployment answers, e.g. `https://your-worker.your-subdomain.workers.dev`. The deploy then asks it what it is serving and fails the run if that is not the build it just made. Without it that check is skipped. |
-| `EMAIL_ROUTING_ZONE` | The domain your mail arrives on. Used only by the **Cloudflare Email Routing status** workflow, which is read-only and run by hand. Without it that workflow tells you to set it. |
 | `ACCOUNT_RECOVERY_FROM` | Only if you want the password-reset sender fixed by the deployment rather than set on `/root` (step 7). Set it here rather than as a variable: a variable is printed in the deploy log, in every step's environment and in the bindings wrangler lists. If both exist, this one is used. |
 
 ## 5. Set the repository variables

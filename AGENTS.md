@@ -406,7 +406,10 @@ Actions logs are public, and the runner prints every step's environment and
 rendered script. A secret's value is replaced with `***` in all of that; a
 variable is published on every run. The first run of the Email Routing
 workflow published the mail domain exactly that way, through an input that
-looked careful because it kept the domain out of the file.
+looked careful because it kept the domain out of the file. (That workflow is
+gone: in two runs every query it existed for was refused for want of token
+permissions the deploy does not need, and the Cloudflare dashboard shows the
+same settings without widening the deploy's token.)
 
 And it is not only what a step is *given* that gets published -- it is what
 the tools it runs decide to print. `wrangler deployments status` names the

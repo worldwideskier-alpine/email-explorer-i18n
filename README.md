@@ -95,7 +95,6 @@ GitHub Actions の消費分数を抑えるため、`main` への push で走る�
 | ワークフロー | 実行タイミング | 内容 |
 |---|---|---|
 | **Deploy to Cloudflare** | `main` への push（`docs/**`・`README.md`・`LICENSE`・`.editorconfig` のみの変更を除く）、Pull Request、手動 | lint → build → テスト → デプロイ |
-| **Cloudflare Email Routing status** | 手動のみ | Email Routing の設定を読み出すだけ（変更は行わない） |
 
 Pull Request では Deploy to Cloudflare の `build-and-check` ジョブだけが走り、デプロイは `main` への push か、`main` での手動実行のときだけ行われます。以前あった Build ワークフローは、この `build-and-check` と同じ lint → build → テストを二重に回していたので削除しました。
 
