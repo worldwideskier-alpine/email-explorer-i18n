@@ -1,0 +1,9 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"moduleResolution": "bundler",
+		"lib": ["es2022", "dom"],
+		"types": ["@types/node"]
+	},
+	"include": ["./vitest.config.mts"]
+}

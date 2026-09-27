@@ -20,7 +20,7 @@ import {
  * devices -- the fact that it was marked read.
  */
 
-async function receive(raw: string, e: object = env) {
+async function receive(raw: string, e: typeof env = env) {
 	const worker = await import("../../dev/index");
 	const bytes = new TextEncoder().encode(raw);
 	const rejections: string[] = [];
@@ -176,10 +176,8 @@ describe("marking a message read", () => {
 			),
 		).toEqual([]);
 		const [message] = await inbox();
-		// @ts-expect-error test binding
 		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 		await stub.markNotified(message.id);
-		// @ts-expect-error test binding
 		const auth = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 		await runInDurableObject(auth, async (_i, state) => {
 			state.storage.sql.exec(
@@ -202,7 +200,7 @@ describe("marking a message read", () => {
 					body: JSON.stringify({ read: true }),
 				},
 			),
-			{ ...(env as object), VAPID_PRIVATE_KEY: "not json" },
+			{ ...env, VAPID_PRIVATE_KEY: "not json" },
 			createExecutionContext(),
 		);
 		expect(res.status).toBe(200);

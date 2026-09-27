@@ -27,21 +27,22 @@ function base64UrlEncode(bytes: Uint8Array): string {
 // for @pushforge/builder's ECDH step to succeed, so generate a real keypair
 // rather than using random bytes.
 async function generateTestSubscriptionKeys() {
-	const keyPair = await crypto.subtle.generateKey(
+	const keyPair = (await crypto.subtle.generateKey(
 		{ name: "ECDH", namedCurve: "P-256" },
 		true,
 		["deriveBits"],
-	);
-	const rawPublicKey = await crypto.subtle.exportKey("raw", keyPair.publicKey);
+	)) as CryptoKeyPair;
+	const rawPublicKey = (await crypto.subtle.exportKey(
+		"raw",
+		keyPair.publicKey,
+	)) as ArrayBuffer;
 	const p256dh = base64UrlEncode(new Uint8Array(rawPublicKey));
 	const auth = base64UrlEncode(crypto.getRandomValues(new Uint8Array(16)));
 	return { p256dh, auth };
 }
 
 async function subscriptionCount(): Promise<number> {
-	// @ts-expect-error
 	const authId = env.MAILBOX.idFromName("AUTH");
-	// @ts-expect-error
 	const authDO = env.MAILBOX.get(authId);
 	const subs = await authDO.getPushSubscriptionsForUsers([userId]);
 	return subs.length;
@@ -49,9 +50,7 @@ async function subscriptionCount(): Promise<number> {
 
 /** An inbox message whose new-mail notification went out, unless told not. */
 async function insertEmail(id: string, read = false, notified = true) {
-	// @ts-expect-error
 	const doId = env.MAILBOX.idFromName(mailboxId);
-	// @ts-expect-error
 	const doStub = env.MAILBOX.get(doId);
 	await runInDurableObject(doStub, async (_instance, state) => {
 		state.storage.sql.exec(
@@ -192,7 +191,6 @@ describe("Push notification dismissal on read", () => {
 		expect(await subscriptionCount()).toBe(0);
 		await deliver("unannounced");
 
-		// @ts-expect-error
 		const doStub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 		const flags = await runInDurableObject(doStub, async (_i, state) =>
 			state.storage.sql

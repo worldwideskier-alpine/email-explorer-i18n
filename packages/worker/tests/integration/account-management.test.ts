@@ -16,7 +16,6 @@ const PASSWORD = "correct-horse-battery-staple";
 const OTHER_SESSION = "another-device-session";
 
 function authStub() {
-	// @ts-expect-error test binding
 	return env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 }
 
@@ -172,7 +171,6 @@ describe("Changing your sign-in address", () => {
 			newEmail: "elsewhere@example.net",
 		});
 
-		// @ts-expect-error test binding
 		const listed = await env.BUCKET.list({ prefix: "email-change-tokens/" });
 		expect(listed.objects).toHaveLength(1);
 		const token = listed.objects[0].key
@@ -191,7 +189,6 @@ describe("Changing your sign-in address", () => {
 		expect(await storedEmail()).toBe("elsewhere@example.net");
 
 		// Single use: the token is gone once it has been spent.
-		// @ts-expect-error test binding
 		const after = await env.BUCKET.list({ prefix: "email-change-tokens/" });
 		expect(after.objects).toHaveLength(0);
 	});

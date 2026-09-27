@@ -11,7 +11,6 @@ import {
 const settingsKey = (id: string) => `mailboxes/${id}.json`;
 
 async function readSettings(id: string): Promise<any> {
-	// @ts-expect-error test binding
 	const obj = await env.BUCKET.get(settingsKey(id));
 	return obj ? await obj.json() : null;
 }
@@ -68,7 +67,6 @@ async function importEmail(id: string, subject: string) {
 }
 
 async function countKeys(prefix: string): Promise<number> {
-	// @ts-expect-error test binding
 	const listed = await env.BUCKET.list({ prefix });
 	return listed.objects.length;
 }
@@ -185,7 +183,6 @@ describe("Mailbox deletion: what survives", () => {
 		expect(await countKeys(`raw/${emailId}.eml`)).toBe(1);
 		expect(await countKeys(`attachments/${emailId}/`)).toBe(1);
 
-		// @ts-expect-error test binding
 		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 		expect(await stub.listAllEmailIds()).toContain(emailId);
 	});
@@ -206,7 +203,6 @@ describe("Mailbox deletion: what survives", () => {
 		expect(await countKeys(`raw/${emailId}.eml`)).toBe(0);
 		expect(await countKeys(`attachments/${emailId}/`)).toBe(0);
 
-		// @ts-expect-error test binding
 		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 		expect(await stub.listAllEmailIds()).toEqual([]);
 	});
@@ -238,7 +234,6 @@ describe("Mailbox deletion: what survives", () => {
 	// served them (mailbox-boundaries.test.ts). Dropping it is what used to
 	// make that possible.
 	it("keeps the claim on a purged mailbox", async () => {
-		// @ts-expect-error test binding
 		const authStub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 		expect(await authStub.getPersonMailboxes("user1")).toContain(mailboxId);
 

@@ -21,9 +21,7 @@ describe("Reply & Forward Functionality Integration Tests", () => {
 
 		// Create an original email directly in the Durable Object
 		originalEmailId = crypto.randomUUID();
-		// @ts-expect-error
 		const doId = env.MAILBOX.idFromName(mailboxId);
-		// @ts-expect-error
 		const doStub = env.MAILBOX.get(doId);
 
 		await runInDurableObject(doStub, async (_instance, state) => {

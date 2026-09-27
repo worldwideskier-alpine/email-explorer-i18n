@@ -56,7 +56,6 @@ async function place(subject: string, folder: string, date: string) {
 		// In spam since its date, as a message that old would have been. The
 		// import itself files it as spam as of now, which is when a restore
 		// puts it there.
-		// @ts-expect-error test binding
 		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 		await runInDurableObject(stub, async (_i, state) => {
 			state.storage.sql.exec(
@@ -83,7 +82,6 @@ describe("the daily maintenance pass", () => {
 		);
 		// Arrived well before tonight's run, as mail that old did. Ingest
 		// stamps the real clock and the run here is at a fixed NOW.
-		// @ts-expect-error test binding
 		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 		await runInDurableObject(stub, async (_i, state) => {
 			state.storage.sql.exec(

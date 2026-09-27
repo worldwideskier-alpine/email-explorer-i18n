@@ -28,7 +28,7 @@ async function signIn(email: string, password = "password123") {
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ email, password }),
 	});
-	return res.json<{ id: string }>();
+	return res.json<{ id: string; userId: string }>();
 }
 
 function as(token: string) {

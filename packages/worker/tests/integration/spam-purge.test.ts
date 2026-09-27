@@ -56,7 +56,6 @@ async function place(subject: string, folder: string, date: string) {
 		// In spam since its date, as a message that old would have been. The
 		// import itself files it as spam as of now, which is when a restore
 		// puts it there.
-		// @ts-expect-error test binding
 		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 		await runInDurableObject(stub, async (_i, state) => {
 			state.storage.sql.exec(
@@ -260,7 +259,6 @@ describe("deleting old mail out of the spam folder", () => {
  * match the story each test tells.
  */
 async function arrivedAt(id: string, iso: string) {
-	// @ts-expect-error test binding
 	const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 	await runInDurableObject(stub, async (_i, state) => {
 		state.storage.sql.exec(
@@ -379,7 +377,6 @@ describe("deleting old spam when backups are on", () => {
 
 		// The mailbox answers the purge's listing, and the message is moved to
 		// the inbox straight after -- the reader said "not spam" meanwhile.
-		// @ts-expect-error test binding
 		const ns = env.MAILBOX;
 		const racing = new Proxy(ns, {
 			get(target, property) {
@@ -404,7 +401,7 @@ describe("deleting old spam when backups are on", () => {
 		});
 
 		const summary = await runScheduledSpamPurge(
-			{ ...(env as object), MAILBOX: racing } as never,
+			{ ...env, MAILBOX: racing } as never,
 			NOW,
 		);
 		expect(summary).toMatchObject({ ran: 1, failed: 0, deleted: 0 });
@@ -415,7 +412,6 @@ describe("deleting old spam when backups are on", () => {
 		await archive("2026-08-25T18-00-00-000Z");
 		const rescued = await place("Rescued", "spam", "2026-08-01T00:00:00.000Z");
 		await arrivedAt(rescued, "2026-08-01T00:00:00.000Z");
-		// @ts-expect-error test binding
 		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 		expect(await stub.deleteEmail(rescued, "spam")).not.toBeNull();
 		const again = await place("Moved", "spam", "2026-08-01T00:00:00.000Z");

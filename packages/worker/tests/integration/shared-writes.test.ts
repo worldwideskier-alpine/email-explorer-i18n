@@ -16,11 +16,8 @@ import {
  * mailbox two people hold.
  */
 
-// @ts-expect-error test binding
 const bucket = (): R2Bucket => env.BUCKET;
-// @ts-expect-error test binding
 const box = () => env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
-// @ts-expect-error test binding
 const auth = () => env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 
 const settings = async () =>
@@ -147,7 +144,6 @@ describe("the spam purge cut off partway", () => {
 	 */
 	it("leaves no original behind for a row it deleted", async () => {
 		const ids = await spamPile(120);
-		// @ts-expect-error test binding
 		const ns = env.MAILBOX;
 		let calls = 0;
 		const cut = new Proxy(ns, {
@@ -162,7 +158,9 @@ describe("the spam purge cut off partway", () => {
 							if (p !== "deleteEmailsIn") return Reflect.get(stub, p);
 							return async (...args: unknown[]) => {
 								if (calls++ > 0) throw new Error("invocation ended");
-								return stub.deleteEmailsIn(...args);
+								return stub.deleteEmailsIn(
+									...(args as Parameters<typeof stub.deleteEmailsIn>),
+								);
 							};
 						},
 					});
@@ -171,7 +169,7 @@ describe("the spam purge cut off partway", () => {
 
 		await expect(
 			purgeMailboxSpam(
-				{ ...(env as object), MAILBOX: cut } as never,
+				{ ...env, MAILBOX: cut } as never,
 				mailboxId,
 				new Date("2026-09-01T00:00:00.000Z"),
 				30,
@@ -197,7 +195,7 @@ describe("reading more than a hundred messages at once", () => {
 	it("reads every one of them", async () => {
 		const ids = await spamPile(150);
 		const read = await box().getEmailsByIds(ids);
-		expect(read.map((row: { id: string }) => row.id)).toEqual(ids);
+		expect(read.map((row) => (row as { id?: unknown }).id)).toEqual(ids);
 	});
 });
 

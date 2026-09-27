@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 // its shape; these run on it, so a key renamed or moved there fails here
 // rather than in the deploy.
 import REAL from "../../dev/wrangler.jsonc?raw";
-// @ts-expect-error -- plain JS on purpose: this module also runs under node
-// from the deploy workflow, where there is nothing to compile it.
+// Plain JS on purpose: this module also runs under node from the deploy
+// workflow, where there is nothing to compile it. allowJs types it here.
 import {
 	applyDeploymentConfig,
 	setStringValue,

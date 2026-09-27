@@ -20,12 +20,15 @@ function base64UrlEncode(bytes: Uint8Array): string {
 }
 
 async function generateTestSubscriptionKeys() {
-	const keyPair = await crypto.subtle.generateKey(
+	const keyPair = (await crypto.subtle.generateKey(
 		{ name: "ECDH", namedCurve: "P-256" },
 		true,
 		["deriveBits"],
-	);
-	const raw = await crypto.subtle.exportKey("raw", keyPair.publicKey);
+	)) as CryptoKeyPair;
+	const raw = (await crypto.subtle.exportKey(
+		"raw",
+		keyPair.publicKey,
+	)) as ArrayBuffer;
 	return {
 		p256dh: base64UrlEncode(new Uint8Array(raw)),
 		auth: base64UrlEncode(crypto.getRandomValues(new Uint8Array(16))),
@@ -33,7 +36,6 @@ async function generateTestSubscriptionKeys() {
 }
 
 async function subscriptionCount(): Promise<number> {
-	// @ts-expect-error
 	const authDO = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 	return (await authDO.getPushSubscriptionsForUsers([userId])).length;
 }
@@ -49,7 +51,6 @@ async function subscribe() {
 
 /** An unread inbox message whose new-mail notification went out. */
 async function insertUnreadInboxEmail(id: string, notified = true) {
-	// @ts-expect-error
 	const doStub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 	await runInDurableObject(doStub, async (_i, state) => {
 		state.storage.sql.exec(

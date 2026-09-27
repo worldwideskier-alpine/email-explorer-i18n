@@ -5,9 +5,7 @@ export const sessionToken = "dummy_token";
 export const userId = "user1";
 
 export const testAuthBeforeAll = async () => {
-	// @ts-expect-error
 	const doId = env.MAILBOX.idFromName("AUTH");
-	// @ts-expect-error
 	const doStub = env.MAILBOX.get(doId);
 
 	await runInDurableObject(doStub, async (_instance, state) => {
@@ -47,9 +45,7 @@ export const personId = "person-test";
  * only because an account with the admin flag used to skip the question.
  */
 export async function createMailbox(settings = {}) {
-	// @ts-expect-error
 	await env.BUCKET.put(`mailboxes/${mailboxId}.json`, JSON.stringify(settings));
-	// @ts-expect-error
 	const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 	await stub.giveMailboxToPerson(personId, mailboxId);
 }
@@ -106,6 +102,5 @@ export async function enableAccountRecovery(
 	fromEmail = "noreply@example.com",
 ): Promise<void> {
 	const { RECOVERY_SENDER_KEY } = await import("../../src/deployment-config");
-	// @ts-expect-error
 	await env.BUCKET.put(RECOVERY_SENDER_KEY, JSON.stringify({ fromEmail }));
 }

@@ -20,11 +20,8 @@ import {
  */
 
 const API = "http://local.test/api/v1";
-// @ts-expect-error test binding
 const bucket = (): R2Bucket => env.BUCKET;
-// @ts-expect-error test binding
 const auth = () => env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
-// @ts-expect-error test binding
 const box = (id: string) => env.MAILBOX.get(env.MAILBOX.idFromName(id));
 
 const json = (body: unknown, method = "POST"): RequestInit => ({
@@ -545,6 +542,9 @@ describe("moving a message", () => {
 			json({ folderId: "draft" }),
 		);
 		expect(moved.status).toBe(400);
-		expect((await box(mailboxId).getEmail(id))?.folder_id).toBe("spam");
+		const row = (await box(mailboxId).getEmail(id)) as {
+			folder_id?: unknown;
+		} | null;
+		expect(row?.folder_id).toBe("spam");
 	});
 });

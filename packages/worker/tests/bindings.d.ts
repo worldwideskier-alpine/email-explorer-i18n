@@ -1,5 +1,9 @@
-import type { Env } from "../worker-configuration";
+import type { Env as WorkerEnv } from "../src/types";
 
-declare module "cloudflare:test" {
-	interface ProvidedEnv extends Env {}
+// The pool types `env` from "cloudflare:test" as Cloudflare.Env since 0.22;
+// ProvidedEnv, which this used to extend, is no longer what it reads.
+declare global {
+	namespace Cloudflare {
+		interface Env extends WorkerEnv {}
+	}
 }

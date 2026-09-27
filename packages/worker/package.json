@@ -4,7 +4,7 @@
 	"description": "A self-hosted, serverless worker for sending and receiving emails on Cloudflare",
 	"scripts": {
 		"build": "tsup src/index.ts --format esm --external cloudflare:workers --external cloudflare:email --dts && rm -rf dashboard && cp -R ../dashboard/dist dashboard && cp ../../README.md . && cp ../../LICENSE .",
-		"test": "tsc && npx vitest run --config tests/vitest.config.mts"
+		"test": "tsc && tsc -p tests/tsconfig.json && tsc -p tests/tsconfig.node.json && npx vitest run --config tests/vitest.config.mts"
 	},
 	"type": "module",
 	"main": "./dist/index.js",
