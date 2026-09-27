@@ -73,6 +73,10 @@ async function openComposer(options: object) {
 		],
 	});
 	const app = createApp({ render: () => [h(RouterView), h(ComposeEmail)] });
+	// Navigate before the router is installed; installed first, it resolved
+	// the memory history's empty start, matched nothing and warned.
+	await router.push("/mailbox/m%40example.com/emails/inbox");
+	await router.isReady();
 	app
 		.use(pinia)
 		.use(router)
@@ -85,8 +89,6 @@ async function openComposer(options: object) {
 				fallbackWarn: false,
 			}),
 		);
-	await router.push("/mailbox/m%40example.com/emails/inbox");
-	await router.isReady();
 	app.mount(host);
 	unmount = () => app.unmount();
 

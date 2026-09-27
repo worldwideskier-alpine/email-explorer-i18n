@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from "pinia";
 import { describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
+import { englishWith } from "@/testing/english";
 
 vi.mock("@/services/api", () => ({
 	default: {
@@ -153,6 +154,7 @@ describe("choosing a language that does not load", () => {
 		const host = document.createElement("div");
 		document.body.appendChild(host);
 		const app = createApp({ render: () => h(LanguageSwitcher) });
+		i18nModule.i18n.global.setLocaleMessage("en", englishWith() as never);
 		app.use(i18nModule.i18n);
 		app.mount(host);
 		await nextTick();
@@ -196,6 +198,10 @@ describe("search results", () => {
 		const host = document.createElement("div");
 		document.body.appendChild(host);
 		const app = createApp({ render: () => h(RouterView) });
+		// Navigate before the router is installed; installed first, it resolved
+		// the memory history's empty start, matched nothing and warned.
+		await router.push("/mailbox/two%40example.com/search");
+		await router.isReady();
 		app
 			.use(pinia)
 			.use(router)
@@ -213,8 +219,6 @@ describe("search results", () => {
 			{ id: "r1", subject: "found", sender: "a@x", date: "2026-09-01" },
 		] as never;
 
-		await router.push("/mailbox/two%40example.com/search");
-		await router.isReady();
 		app.mount(host);
 		await nextTick();
 		expect(host.textContent).not.toContain("found");

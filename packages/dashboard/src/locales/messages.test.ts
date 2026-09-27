@@ -38,6 +38,17 @@ const byCode = new Map(
 	]),
 );
 
+/** Every leaf as its path, since a key may itself hold a full stop. */
+function leafPaths(node: unknown, path: string[] = []): string[][] {
+	if (typeof node === "string") return [path];
+	if (node && typeof node === "object") {
+		return Object.entries(node).flatMap(([key, value]) =>
+			leafPaths(value, [...path, key]),
+		);
+	}
+	return [];
+}
+
 function leafKeys(node: unknown, prefix = ""): string[] {
 	if (typeof node === "string") return [prefix];
 	if (node && typeof node === "object") {
@@ -65,14 +76,27 @@ describe("locale catalogues", () => {
 			fallbackLocale: code,
 			messages: { [code]: messages },
 		});
-		const t = i18n.global.t as (key: string) => string;
+		const { t, tm, rt } = i18n.global as unknown as {
+			t: (key: string) => string;
+			tm: (key: string) => Record<string, unknown>;
+			rt: (message: unknown) => string;
+		};
+		// A key holding a full stop cannot be asked for as a dotted path: `t`
+		// splits it, finds nothing, warns and hands the key back, so its
+		// message was never compiled here at all. It is fetched the way
+		// translateApiError fetches it, by indexing its namespace.
+		const render = (path: string[]) => {
+			const leaf = path[path.length - 1] as string;
+			if (!leaf.includes(".")) return t(path.join("."));
+			return rt(tm(path.slice(0, -1).join("."))[leaf]);
+		};
 
 		const failures: string[] = [];
-		for (const key of leafKeys(messages)) {
+		for (const path of leafPaths(messages)) {
 			try {
-				t(key);
+				render(path);
 			} catch (e) {
-				failures.push(`${key}: ${(e as Error).message}`);
+				failures.push(`${path.join(" > ")}: ${(e as Error).message}`);
 			}
 		}
 

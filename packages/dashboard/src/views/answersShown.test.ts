@@ -2,6 +2,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 import { createMemoryHistory, createRouter, RouterView } from "vue-router";
+import { englishWith } from "@/testing/english";
 
 /**
  * What a screen says after the server has answered: in the reader's
@@ -56,13 +57,16 @@ async function mount(path: string, component: object, routePath: string) {
 	});
 	const { default: Toast } = await import("@/components/Toast.vue");
 	const { i18n } = await import("@/i18n");
-	i18n.global.setLocaleMessage("en", {
-		apiErrors: {
-			"Invalid or expired token": "That link has expired.",
-			"Failed to create mailbox": "Failed to create mailbox",
-		},
-		home: { mailboxCreated: "Mailbox created." },
-	} as never);
+	i18n.global.setLocaleMessage(
+		"en",
+		englishWith({
+			apiErrors: {
+				"Invalid or expired token": "That link has expired.",
+				"Failed to create mailbox": "Failed to create mailbox",
+			},
+			home: { mailboxCreated: "Mailbox created." },
+		}) as never,
+	);
 	i18n.global.locale.value = "en" as never;
 	const app = createApp({ render: () => [h(RouterView), h(Toast)] });
 	app.use(pinia).use(router).use(i18n);
@@ -114,7 +118,7 @@ describe("creating a mailbox", () => {
 		listMailboxes.mockRejectedValue(new Error("offline"));
 
 		const open = [...host.querySelectorAll("button")].find((b) =>
-			b.textContent?.includes("home.newMailbox"),
+			b.textContent?.includes("New Mailbox"),
 		) as HTMLButtonElement;
 		expect(open, "the new mailbox button").toBeTruthy();
 		open.click();

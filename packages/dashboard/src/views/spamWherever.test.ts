@@ -116,9 +116,12 @@ async function open(path: string) {
 	const app = createApp({
 		render: () => [h(RouterView), h(ComposeEmail)],
 	});
-	app.use(pinia).use(router).use(i18n);
+	// Navigated before the app installs the router: installing it first made
+	// the router resolve the memory history's empty starting location, which
+	// matches no route and printed a warning in every test.
 	await router.push(path);
 	await router.isReady();
+	app.use(pinia).use(router).use(i18n);
 	app.mount(host);
 	unmount = () => app.unmount();
 	for (let i = 0; i < 5; i++) {

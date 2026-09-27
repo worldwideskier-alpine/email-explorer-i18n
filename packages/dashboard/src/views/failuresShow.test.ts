@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick } from "vue";
 import { createI18n } from "vue-i18n";
 import { createMemoryHistory, createRouter, RouterView } from "vue-router";
+import { englishWith } from "@/testing/english";
 
 /**
  * Screens mounted for real, for what a failure or a save does to them: a
@@ -109,11 +110,13 @@ async function mount(
 	const { default: Toast } = await import("@/components/Toast.vue");
 	const app = createApp({ render: () => [h(RouterView), h(Toast)] });
 	const { i18n } = await import("@/i18n");
-	i18n.global.setLocaleMessage("en", messages.en as never);
+	i18n.global.setLocaleMessage("en", englishWith(messages.en) as never);
 	i18n.global.locale.value = "en" as never;
-	app.use(pinia).use(router).use(i18n);
+	// Navigate before the router is installed; installed first, it resolved
+	// the memory history's empty start, matched nothing and warned.
 	await router.push(path);
 	await router.isReady();
+	app.use(pinia).use(router).use(i18n);
 	app.mount(host);
 	unmount = () => app.unmount();
 	await settle();
@@ -240,9 +243,7 @@ describe("moving an open message", () => {
 			],
 		);
 
-		(
-			host.querySelector('[title="emailDetail.moveToFolder"]') as HTMLElement
-		).click();
+		(host.querySelector('[title="Move to folder"]') as HTMLElement).click();
 		await settle();
 		const archive = [...host.querySelectorAll("button")].find(
 			(b) => b.textContent?.trim() === "Archive",
