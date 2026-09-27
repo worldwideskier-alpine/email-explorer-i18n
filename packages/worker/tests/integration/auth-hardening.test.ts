@@ -14,7 +14,6 @@ const EMAIL = "owner@example.com";
 const PASSWORD = "correct-horse-battery-staple";
 
 function authStub() {
-	// @ts-expect-error test binding
 	return env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 }
 

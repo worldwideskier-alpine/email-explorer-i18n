@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-// @ts-expect-error -- plain JS on purpose: this module also runs under node
-// from the deploy workflow, where there is nothing to compile it.
+// Plain JS on purpose: this module also runs under node from the deploy
+// workflow, where there is nothing to compile it. allowJs types it here.
 import {
 	answeredByTheWorker,
 	assetMismatch,

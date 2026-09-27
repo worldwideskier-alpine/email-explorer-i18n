@@ -22,7 +22,6 @@ const API = "http://local.test/api/v1";
 const DAY = 24 * 60 * 60 * 1000;
 
 function authStub() {
-	// @ts-expect-error test binding
 	return env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 }
 
@@ -83,7 +82,6 @@ async function liveSessions(): Promise<string[]> {
 
 async function resetWithToken(newPassword: string) {
 	const token = crypto.randomUUID();
-	// @ts-expect-error test binding
 	await env.BUCKET.put(
 		`recovery-tokens/${token}.json`,
 		JSON.stringify({
@@ -134,7 +132,6 @@ describe("a password reset", () => {
 
 	it("works once", async () => {
 		const token = crypto.randomUUID();
-		// @ts-expect-error test binding
 		await env.BUCKET.put(
 			`recovery-tokens/${token}.json`,
 			JSON.stringify({
@@ -155,7 +152,6 @@ describe("a password reset", () => {
 
 	it("refuses an expired link and changes nothing", async () => {
 		const token = crypto.randomUUID();
-		// @ts-expect-error test binding
 		await env.BUCKET.put(
 			`recovery-tokens/${token}.json`,
 			JSON.stringify({

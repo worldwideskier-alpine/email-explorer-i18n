@@ -2,7 +2,18 @@
 	"extends": "../tsconfig.json",
 	"compilerOptions": {
 		"moduleResolution": "bundler",
-		"types": ["./bindings.d.ts", "@cloudflare/vitest-pool-workers/types"]
+		// The parent's Workers and node types as well: `types` replaces the
+		// list rather than adding to it, and without them every R2Bucket,
+		// ExecutionContext and Durable Object `ctx` was an error here.
+		"types": [
+			"@types/node",
+			"@cloudflare/workers-types/experimental",
+			"./bindings.d.ts",
+			"./vite-imports.d.ts",
+			"@cloudflare/vitest-pool-workers/types"
+		]
 	},
-	"include": ["./**/*.ts", "./**/*.mts"]
+	"include": ["./**/*.ts", "./**/*.mts"],
+	// Runs in node, not in workerd: checked by tsconfig.node.json instead.
+	"exclude": ["./vitest.config.mts"]
 }

@@ -20,21 +20,22 @@ function base64UrlEncode(bytes: Uint8Array): string {
 }
 
 async function generateTestSubscriptionKeys() {
-	const keyPair = await crypto.subtle.generateKey(
+	const keyPair = (await crypto.subtle.generateKey(
 		{ name: "ECDH", namedCurve: "P-256" },
 		true,
 		["deriveBits"],
-	);
-	const rawPublicKey = await crypto.subtle.exportKey("raw", keyPair.publicKey);
+	)) as CryptoKeyPair;
+	const rawPublicKey = (await crypto.subtle.exportKey(
+		"raw",
+		keyPair.publicKey,
+	)) as ArrayBuffer;
 	const p256dh = base64UrlEncode(new Uint8Array(rawPublicKey));
 	const auth = base64UrlEncode(crypto.getRandomValues(new Uint8Array(16)));
 	return { p256dh, auth };
 }
 
 async function subscriptionCount(): Promise<number> {
-	// @ts-expect-error
 	const authId = env.MAILBOX.idFromName("AUTH");
-	// @ts-expect-error
 	const authDO = env.MAILBOX.get(authId);
 	const subs = await authDO.getPushSubscriptionsForUsers([userId]);
 	return subs.length;

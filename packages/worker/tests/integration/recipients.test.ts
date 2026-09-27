@@ -26,7 +26,6 @@ const send = (body: Record<string, unknown>) =>
 	});
 
 async function sentRow(id: string) {
-	// @ts-expect-error test binding
 	const doStub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 	return runInDurableObject(doStub, async (_instance, state) => {
 		const rows = state.storage.sql

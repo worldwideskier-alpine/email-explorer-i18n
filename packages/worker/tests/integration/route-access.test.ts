@@ -116,9 +116,7 @@ const routesThatAre = (...kinds: Access[]) =>
 describe("the table of who may reach each route", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
-		// @ts-expect-error test binding
 		await env.BUCKET.put(`mailboxes/${THEIRS}.json`, JSON.stringify({}));
-		// @ts-expect-error test binding
 		await env.MAILBOX.get(env.MAILBOX.idFromName("AUTH")).giveMailboxToPerson(
 			"someone-else",
 			THEIRS,

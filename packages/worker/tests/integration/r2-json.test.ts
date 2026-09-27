@@ -2,7 +2,6 @@ import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { ConcurrentWriteError, rewriteJson } from "../../src/r2-json";
 
-// @ts-expect-error test binding
 const bucket = (): R2Bucket => env.BUCKET;
 
 /** A bucket whose next `put`s are each preceded by somebody else's write. */

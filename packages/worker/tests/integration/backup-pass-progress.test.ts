@@ -287,7 +287,9 @@ describe("reading a page at a time", () => {
 
 		// `IN (...)` promises nothing about order, and the archive is written
 		// in date order, so the caller's order is the one that has to survive.
-		expect(rows.map((row) => String(row.id))).toEqual(backwards);
+		expect(rows.map((row) => String((row as { id?: unknown }).id))).toEqual(
+			backwards,
+		);
 	});
 
 	it("skips an id with no row rather than returning a hole", async () => {
@@ -301,7 +303,10 @@ describe("reading a page at a time", () => {
 			ids[1] as string,
 		]);
 
-		expect(rows.map((row) => String(row.id))).toEqual([ids[0], ids[1]]);
+		expect(rows.map((row) => String((row as { id?: unknown }).id))).toEqual([
+			ids[0],
+			ids[1],
+		]);
 	});
 
 	it("answers nothing for nothing", async () => {
@@ -419,7 +424,6 @@ describe("progress inside one mailbox", () => {
 	it("is reported as the archive is written, not only at the end", async () => {
 		// Straight into the mailbox: the writer checks once per page of 100,
 		// so this needs more than a page, and 150 imports take a while.
-		// @ts-expect-error test binding
 		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 		await runInDurableObject(stub, async (_i, state) => {
 			for (let i = 0; i < 150; i++) {

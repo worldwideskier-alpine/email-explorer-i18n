@@ -44,7 +44,6 @@ async function receive(rawEmailStr: string, envelopeTo?: string) {
 }
 
 async function mailboxExists(id: string): Promise<boolean> {
-	// @ts-expect-error test binding
 	return (await env.BUCKET.head(`mailboxes/${id}.json`)) !== null;
 }
 

@@ -119,7 +119,7 @@ describe("a write on top of a read that did not work", () => {
 			() => Promise.resolve({ etag: "e", text: () => Promise.resolve("{bad") }),
 		]) {
 			// A put that went through answers with the object it wrote.
-			const put = vi.fn(() => Promise.resolve({}));
+			const put = vi.fn((_key: string, _body: string) => Promise.resolve({}));
 			const env = { BUCKET: { get, put } } as unknown as Parameters<
 				typeof setPersonDeletionLock
 			>[0];
@@ -154,7 +154,7 @@ describe("a write on top of a read that did not work", () => {
 	});
 
 	it("keeps everyone else's entry when the read does work", async () => {
-		const put = vi.fn(() => Promise.resolve({}));
+		const put = vi.fn((_key: string, _body: string) => Promise.resolve({}));
 		const env = {
 			BUCKET: {
 				get: () =>

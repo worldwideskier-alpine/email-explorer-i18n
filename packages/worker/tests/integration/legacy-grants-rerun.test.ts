@@ -36,7 +36,6 @@ const as =
 		});
 
 function authStub() {
-	// @ts-expect-error test binding
 	return env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 }
 

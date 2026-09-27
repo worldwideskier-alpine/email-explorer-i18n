@@ -21,11 +21,8 @@ import {
  * sweep, a purge -- and turned a small failure into a larger one.
  */
 
-// @ts-expect-error test binding
 const bucket = (): R2Bucket => env.BUCKET;
-// @ts-expect-error test binding
 const box = (id: string) => env.MAILBOX.get(env.MAILBOX.idFromName(id));
-// @ts-expect-error test binding
 const auth = () => env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 
 /** An env whose bucket answers `method` with `replacement`. */
@@ -40,7 +37,7 @@ function withBucket(
 			return typeof member === "function" ? member.bind(target) : member;
 		},
 	});
-	return { ...(env as object), BUCKET: watched } as typeof env;
+	return { ...env, BUCKET: watched } as typeof env;
 }
 
 async function settings(id: string) {
@@ -49,7 +46,7 @@ async function settings(id: string) {
 	);
 }
 
-async function receive(raw: string, e: object = env) {
+async function receive(raw: string, e: typeof env = env) {
 	const worker = await import("../../dev/index");
 	const bytes = new TextEncoder().encode(raw);
 	const rejections: string[] = [];
@@ -89,7 +86,7 @@ describe("a new message whose notification fails", () => {
 				sessionToken,
 			);
 		});
-		const broken = { ...(env as object), VAPID_PRIVATE_KEY: "not json" };
+		const broken = { ...env, VAPID_PRIVATE_KEY: "not json" };
 
 		await expect(
 			receive(
@@ -162,7 +159,6 @@ describe("destroying a mailbox", () => {
 	 * the destruction went ahead without them.
 	 */
 	it("stops if it cannot learn what the mailbox holds", async () => {
-		// @ts-expect-error test binding
 		const ns = env.MAILBOX;
 		const unreadable = new Proxy(ns, {
 			get(target, property) {
@@ -186,7 +182,7 @@ describe("destroying a mailbox", () => {
 
 		await expect(
 			destroyMailboxCompletely(
-				{ ...(env as object), MAILBOX: unreadable } as never,
+				{ ...env, MAILBOX: unreadable } as never,
 				mailboxId,
 			),
 		).rejects.toThrow("storage unavailable");
@@ -283,7 +279,7 @@ describe("the push public key", () => {
 		await testAuthBeforeAll();
 	});
 
-	const ask = async (e: object) => {
+	const ask = async (e: typeof env) => {
 		const worker = await import("../../dev/index");
 		const res = await worker.default.fetch(
 			new Request("http://local.test/api/v1/push/vapid-public-key", {
@@ -301,6 +297,6 @@ describe("the push public key", () => {
 	 */
 	it("is withheld when there is no private key to send with", async () => {
 		expect(await ask(env)).not.toBe("");
-		expect(await ask({ ...(env as object), VAPID_PRIVATE_KEY: "" })).toBe("");
+		expect(await ask({ ...env, VAPID_PRIVATE_KEY: "" })).toBe("");
 	});
 });

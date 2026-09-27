@@ -20,7 +20,6 @@ const overloadAttempts = new Map<string, number>();
 export default defineConfig({
 	plugins: [
 		cloudflareTest({
-			singleWorker: true,
 			wrangler: {
 				// Resolved from this file rather than left relative. The pool used
 				// to resolve a relative configPath against the directory holding
@@ -291,7 +290,10 @@ export default defineConfig({
 							},
 						);
 					}
-					return fetch(request);
+					// Miniflare's Request and node's fetch are typed from two copies of
+					// the streams types that disagree on one optional field; at run time
+					// they are the same undici Request.
+					return fetch(request as unknown as Request);
 				},
 			},
 		}),

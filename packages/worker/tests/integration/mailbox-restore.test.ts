@@ -68,7 +68,6 @@ const ID = {
 };
 
 const idsInMailbox = async () =>
-	// @ts-expect-error test binding
 	(await env.MAILBOX.get(
 		env.MAILBOX.idFromName(mailboxId),
 	).listAllEmailIds()) as string[];

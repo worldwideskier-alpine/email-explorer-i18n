@@ -483,7 +483,8 @@ describe("archiving a message that has no raw form", () => {
 		const id = `sent-${crypto.randomUUID()}`;
 		await env.BUCKET.put(`attachments/${id}/att-1/note.bin`, attached);
 
-		const one = { ...email(id) };
+		// The stored row carries fields the fixture's type does not name.
+		const one: { attachments: Record<string, unknown>[] } = { ...email(id) };
 		one.attachments = [
 			{
 				...one.attachments[0],
@@ -518,7 +519,8 @@ describe("archiving a message that has no raw form", () => {
 			const id = `sent-${crypto.randomUUID()}`;
 			await env.BUCKET.put(`attachments/${id}/att-1/notes.txt`, attached);
 
-			const one = { ...email(id) };
+			// The stored row carries fields the fixture's type does not name.
+			const one: { attachments: Record<string, unknown>[] } = { ...email(id) };
 			one.attachments = [
 				{
 					...one.attachments[0],

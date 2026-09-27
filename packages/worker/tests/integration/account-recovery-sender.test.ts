@@ -107,13 +107,13 @@ describe("the password-reset sender", () => {
 		expect(await recoveryFromEmail(env as never)).toBe("screen@example.com");
 		expect(
 			await recoveryFromEmail({
-				...(env as object),
+				...env,
 				ACCOUNT_RECOVERY_FROM: "variable@example.com",
 			} as never),
 		).toBe("variable@example.com");
 		expect(
 			await recoveryFromEmail({
-				...(env as object),
+				...env,
 				ACCOUNT_RECOVERY_FROM: "  ",
 			} as never),
 		).toBe("screen@example.com");
@@ -123,7 +123,7 @@ describe("the password-reset sender", () => {
 			new Request("http://local.test/api/v1/root/settings/account-recovery", {
 				headers: { Authorization: `Bearer ${token}` },
 			}),
-			{ ...(env as object), ACCOUNT_RECOVERY_FROM: "variable@example.com" },
+			{ ...env, ACCOUNT_RECOVERY_FROM: "variable@example.com" },
 			createExecutionContext(),
 		);
 		expect(await state.json()).toMatchObject({ setByDeployment: true });

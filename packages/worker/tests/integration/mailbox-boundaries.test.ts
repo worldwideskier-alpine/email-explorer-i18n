@@ -37,7 +37,6 @@ const json = (body: unknown): RequestInit => ({
 const API = "http://local.test/api/v1";
 const THEIRS = "theirs@test.com";
 const MINE = "mine@test.com";
-// @ts-expect-error test binding
 const bucket = (): R2Bucket => env.BUCKET;
 
 /** Two people; the first holds THEIRS, the second holds MINE. */
@@ -310,7 +309,6 @@ describe("a new address asked for twice at once", () => {
 		]);
 		expect([a.status, b.status].sort()).toEqual([201, 409]);
 
-		// @ts-expect-error test binding
 		const authStub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 		const holders = await authStub.getUserIdsForMailbox("contested@test.com");
 		expect(holders).toHaveLength(1);
