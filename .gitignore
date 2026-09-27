@@ -143,5 +143,3 @@ vite.config.ts.timestamp-*
 .dev.vars
 .dev.vars.*
 packages/worker/dashboard
-packages/worker/README.md
-packages/worker/LICENSE

@@ -73,6 +73,14 @@ installs `email-explorer` from npm -- and it was inherited here, where it was
 actively misleading: that package is upstream's, so it carries none of this
 fork's work. This fork ships by being forked.
 
+For the same reason nothing builds a package any more. `packages/worker/dev`
+imports `../src` and wrangler bundles it from there; the `dist/` that tsup used
+to produce for npm was read by nothing, and tsup had stopped taking releases,
+which left an esbuild advisory it could not accept. The worker's `build` only
+copies the dashboard into `packages/worker/dashboard`, the directory the
+deployment's assets come from, and `private: true` keeps it off npm. The types
+are still checked, by the `tsc` that runs before the worker tests.
+
 ## Key concepts
 
 - **MailboxDO.** One Durable Object per mailbox, holding that mailbox's
@@ -360,7 +368,7 @@ fork's work. This fork ships by being forked.
 pnpm install
 pnpm lint     # biome; it autofixes, then fails if it had to
 pnpm test     # both suites -- what CI runs
-pnpm build    # dashboard, then worker (includes vue-tsc)
+pnpm build    # the dashboard (includes vue-tsc), copied into the worker's assets
 ```
 
 To try a change against a real runtime, build first, then run the deployment
