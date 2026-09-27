@@ -10,13 +10,23 @@ import { describe, expect, it } from "vitest";
  * address, a new address or a new password must say so.
  */
 
-// The screens, and the one form two of them share: the sending-key card on
-// /admin and /root lives in components/, out of reach of "./*.vue".
-const views = import.meta.glob(["./*.vue", "../components/ResendKeyCard.vue"], {
-	query: "?raw",
-	import: "default",
-	eager: true,
-}) as Record<string, string>;
+// The screens, and the forms that live in components/, out of reach of
+// "./*.vue": the sending-key card /admin and /root share, and the compose
+// dialog's recipients. Named rather than globbed: the rest of components/
+// holds a `<input type="checkbox" ...>` in a comment these patterns would
+// read as a field.
+const views = import.meta.glob(
+	[
+		"./*.vue",
+		"../components/ResendKeyCard.vue",
+		"../components/ComposeEmail.vue",
+	],
+	{
+		query: "?raw",
+		import: "default",
+		eager: true,
+	},
+) as Record<string, string>;
 
 const INPUT = /<input\b[^>]*?>/gs;
 
@@ -68,6 +78,18 @@ describe("address and password fields", () => {
 		expect(hintOf("Admin.vue", "new-password")).toBe("new-password");
 		expect(hintOf("Account.vue", "newEmail")).toBe("off");
 		expect(hintOf("Home.vue", "mailbox-email")).toBe("off");
+		// Recipients are other people. Unhinted, a type="email" field is
+		// filled with the sender's own saved address.
+		for (const id of ["to", "cc", "bcc"]) {
+			expect(
+				fields().find(
+					(f) =>
+						f.where.startsWith("../components/ComposeEmail.vue:") &&
+						f.id === id,
+				)?.autocomplete,
+				id,
+			).toBe("off");
+		}
 		// An API key, not a password of yours: offering a saved one here
 		// would put a sign-in password where a Resend key belongs.
 		expect(

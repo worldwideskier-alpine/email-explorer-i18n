@@ -28,13 +28,23 @@ import { describe, expect, it } from "vitest";
  * because a dependency happened to leak @types/node into scope.
  */
 
-// The screens, and the one form two of them share: the sending-key card on
-// /admin and /root lives in components/, out of reach of "./*.vue".
-const views = import.meta.glob(["./*.vue", "../components/ResendKeyCard.vue"], {
-	query: "?raw",
-	import: "default",
-	eager: true,
-}) as Record<string, string>;
+// The screens, and the forms that live in components/, out of reach of
+// "./*.vue": the sending-key card /admin and /root share, and the compose
+// dialog's recipients. Named rather than globbed: the rest of components/
+// holds a `<input type="checkbox" ...>` in a comment these patterns would
+// read as a field.
+const views = import.meta.glob(
+	[
+		"./*.vue",
+		"../components/ResendKeyCard.vue",
+		"../components/ComposeEmail.vue",
+	],
+	{
+		query: "?raw",
+		import: "default",
+		eager: true,
+	},
+) as Record<string, string>;
 
 const CONTROL = /<(input|select|textarea)\b[^>]*?>/gs;
 const CLASS = /class="([^"]*)"/s;

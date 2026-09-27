@@ -34,6 +34,10 @@
                 class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
               >{{ t("compose.addCcBcc") }}</button>
             </div>
+            <!-- autocomplete="off" on all three: these are other people's
+                 addresses, and a type="email" field with no hint is one the
+                 browser fills with the sender's own saved address -- the
+                 fault already seen on /admin. See autocompleteHints.test.ts. -->
             <!-- The placeholder stays a literal: vue-i18n reads "@" in a
                  message as the start of a linked key, so an example address
                  in the catalogue fails to compile and takes the whole dialog
@@ -41,6 +45,7 @@
             <input
               type="email"
               id="to"
+              autocomplete="off"
               multiple
               v-model="to"
               class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 transition-all duration-200"
@@ -54,6 +59,7 @@
             <input
               type="email"
               id="cc"
+              autocomplete="off"
               multiple
               v-model="cc"
               class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 transition-all duration-200"
@@ -65,6 +71,7 @@
             <input
               type="email"
               id="bcc"
+              autocomplete="off"
               multiple
               v-model="bcc"
               class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 text-gray-900 dark:text-gray-100 px-4 py-3 transition-all duration-200"
