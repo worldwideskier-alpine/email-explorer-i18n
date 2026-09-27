@@ -1,3 +1,10 @@
 packages:
   - "packages/*"
   - "packages/worker/dev"
+
+overrides:
+  # @cloudflare/vitest-pool-workers 0.22.0 -- still the latest -- pins a
+  # miniflare that pins sharp 0.35.2, which carries the libheif advisory
+  # GHSA-rgj7-g3m4-5g8c. The miniflare wrangler brings in already takes
+  # 0.35.4, a patch release. Drop this once vitest-pool-workers moves on.
+  "sharp@<0.35.4": "0.35.4"
