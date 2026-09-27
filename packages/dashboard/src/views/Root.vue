@@ -71,35 +71,34 @@
             <select
               id="newRole"
               v-model="newRole"
-              class="mt-1 w-72 min-w-0 max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
+              class="mt-1 w-72 border min-w-0 max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm h-10 px-2"
             >
               <option value="admin">{{ t("root.roleAdmin") }}</option>
               <option value="root">{{ t("root.roleRoot") }}</option>
             </select>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 w-72 max-w-full">
-              {{ newRole === "root" ? t("root.create.roleRootHint") : t("root.create.roleAdminHint") }}
-            </p>
           </div>
           <div class="w-full sm:w-auto">
             <label for="newEmail" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("admin.registerUser.emailLabel") }}</label>
             <input
               id="newEmail"
+              autocomplete="off"
               v-model="newEmail"
               type="email"
               required
-              class="mt-1 w-72 max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
+              class="mt-1 w-72 border max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm h-10 px-2"
             />
           </div>
           <div class="w-full sm:w-auto">
             <label for="newPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("admin.registerUser.passwordLabel") }}</label>
             <input
               id="newPassword"
+              autocomplete="new-password"
               v-model="newPassword"
               type="password"
               required
               minlength="8"
               :placeholder="t('admin.registerUser.passwordPlaceholder')"
-              class="mt-1 w-72 max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
+              class="mt-1 w-72 border max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm h-10 px-2"
             />
           </div>
           <!-- A spare of your own is the role itself, so it asks for your
@@ -112,7 +111,7 @@
               type="password"
               required
               autocomplete="current-password"
-              class="mt-1 w-72 max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
+              class="mt-1 w-72 border max-w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm h-10 px-2"
             />
           </div>
           <button
@@ -122,6 +121,12 @@
           >
             {{ busy ? t("admin.registerUser.creating") : t("admin.registerUser.submit") }}
           </button>
+          <!-- On a line of its own: under the selector it made that column
+               taller than the others, and the row, aligned on its bottom
+               edge, lifted the selector above the two fields beside it. -->
+          <p class="basis-full -mt-2 text-xs text-gray-500 dark:text-gray-400">
+            {{ newRole === "root" ? t("root.create.roleRootHint") : t("root.create.roleAdminHint") }}
+          </p>
         </form>
       </div>
 
@@ -271,6 +276,7 @@
           <label for="recoveryFrom" class="sr-only">{{ t("root.recovery.title") }}</label>
           <input
             id="recoveryFrom"
+            autocomplete="off"
             v-model="recoveryInput"
             type="email"
             placeholder="noreply@example.com"

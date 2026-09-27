@@ -36,6 +36,7 @@
 						<label for="email" class="sr-only">{{ t("common.emailAddress") }}</label>
 						<input
 							id="email"
+							autocomplete="username"
 							v-model="email"
 							type="email"
 							required
@@ -47,6 +48,7 @@
 						<label for="password" class="sr-only">{{ t("common.password") }}</label>
 						<input
 							id="password"
+							autocomplete="new-password"
 							v-model="password"
 							type="password"
 							required
@@ -59,6 +61,7 @@
 						<label for="confirm-password" class="sr-only">{{ t("common.confirmPassword") }}</label>
 						<input
 							id="confirm-password"
+							autocomplete="new-password"
 							v-model="confirmPassword"
 							type="password"
 							required

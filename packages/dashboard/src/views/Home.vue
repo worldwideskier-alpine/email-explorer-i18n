@@ -123,6 +123,7 @@
             <input
               type="email"
               id="mailbox-email"
+              autocomplete="off"
               v-model="newMailboxEmail"
               class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-xl shadow-sm focus:ring-2 focus:ring-green-500 focus:border-transparent dark:focus:ring-green-400 text-gray-900 dark:text-gray-100 px-4 py-3 transition-all duration-200"
               placeholder="mailbox@example.com"

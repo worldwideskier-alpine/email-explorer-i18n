@@ -1,0 +1,82 @@
+import { describe, expect, it } from "vitest";
+
+/**
+ * Every address and password field says what it is for, so the browser's
+ * password manager fills only the ones that are the viewer's own sign-in.
+ *
+ * Root's "add an account" form had no hint, and Chrome filled it with
+ * root's own saved address and password -- one press of "Add" from making
+ * an account out of root's own credentials. A field for somebody else's
+ * address, a new address or a new password must say so.
+ */
+
+const views = import.meta.glob("./*.vue", {
+	query: "?raw",
+	import: "default",
+	eager: true,
+}) as Record<string, string>;
+
+const INPUT = /<input\b[^>]*?>/gs;
+
+interface Field {
+	where: string;
+	id: string;
+	autocomplete: string | undefined;
+}
+
+function fields(): Field[] {
+	const found: Field[] = [];
+	for (const [file, source] of Object.entries(views)) {
+		for (const match of source.matchAll(INPUT)) {
+			const tag = match[0];
+			const type = /\btype="([^"]+)"/.exec(tag)?.[1];
+			if (type !== "email" && type !== "password") continue;
+			if (/\sdisabled\b/.test(tag)) continue;
+			found.push({
+				where: `${file}:${source.slice(0, match.index).split("\n").length}`,
+				id:
+					/\bid="([^"]+)"/.exec(tag)?.[1] ??
+					/\bv-model="([^"]+)"/.exec(tag)?.[1] ??
+					"?",
+				autocomplete: /\bautocomplete="([^"]+)"/.exec(tag)?.[1],
+			});
+		}
+	}
+	return found;
+}
+
+const hintOf = (file: string, id: string) =>
+	fields().find((f) => f.where.startsWith(`./${file}:`) && f.id === id)
+		?.autocomplete;
+
+describe("address and password fields", () => {
+	it("each say what they are for", () => {
+		const all = fields();
+		expect(all.length).toBeGreaterThan(15);
+		expect(
+			all.filter((f) => f.autocomplete === undefined).map((f) => f.where),
+		).toEqual([]);
+	});
+
+	it("never offer the viewer's own sign-in for somebody else's account", () => {
+		expect(hintOf("Root.vue", "newEmail")).toBe("off");
+		expect(hintOf("Root.vue", "newPassword")).toBe("new-password");
+		expect(hintOf("Root.vue", "recoveryFrom")).toBe("off");
+		expect(hintOf("Admin.vue", "new-email")).toBe("off");
+		expect(hintOf("Admin.vue", "new-password")).toBe("new-password");
+		expect(hintOf("Account.vue", "newEmail")).toBe("off");
+		expect(hintOf("Home.vue", "mailbox-email")).toBe("off");
+	});
+
+	it("ask for a new password where one is being chosen", () => {
+		for (const [file, id] of [
+			["Register.vue", "password"],
+			["Register.vue", "confirm-password"],
+			["ResetPassword.vue", "password"],
+			["ResetPassword.vue", "confirm-password"],
+		] as const) {
+			expect(hintOf(file, id), `${file} ${id}`).toBe("new-password");
+		}
+		expect(hintOf("Login.vue", "password")).toBe("current-password");
+	});
+});

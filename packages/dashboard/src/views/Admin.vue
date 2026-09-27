@@ -92,6 +92,7 @@
 						</label>
 						<input
 							id="new-email"
+							autocomplete="off"
 							v-model="newLogin.email"
 							type="email"
 							required
@@ -105,6 +106,7 @@
 						</label>
 						<input
 							id="new-password"
+							autocomplete="new-password"
 							v-model="newLogin.password"
 							type="password"
 							required

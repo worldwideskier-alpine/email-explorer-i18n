@@ -30,6 +30,7 @@
 						<label for="email" class="sr-only">{{ t("common.emailAddress") }}</label>
 						<input
 							id="email"
+							autocomplete="username"
 							v-model="email"
 							type="email"
 							required

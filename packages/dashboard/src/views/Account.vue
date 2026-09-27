@@ -82,6 +82,7 @@
         <input
           type="email"
           v-model="newEmail"
+          autocomplete="off"
           required
           :placeholder="t('account.changeEmail.newEmail')"
           class="block w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-gray-100"
