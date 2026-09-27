@@ -266,6 +266,14 @@ describe("mail sent through a mailbox", () => {
 		resetLegacyGrantMemo();
 		({ second } = await setUpTwoPeople());
 		replyTo = await importInto(second, MINE, "question");
+		// The sender's own key, set the way their screen sets it: mail goes
+		// out with the key of the person whose mail it is, or not at all.
+		const keyed = await second(`${API}/admin/settings/resend`, {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ apiKey: "re_placeholder_for_tests" }),
+		});
+		expect(keyed.status).toBe(200);
 	});
 
 	const body = (from: string) => ({

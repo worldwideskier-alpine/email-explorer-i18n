@@ -2225,9 +2225,7 @@ class GetResendSettings extends OpenAPIRoute {
 		responses: {
 			"200": {
 				description: "Key status, never the key",
-				...contentJson(
-					z.object({ source: z.enum(["stored", "environment", "none"]) }),
-				),
+				...contentJson(z.object({ source: z.enum(["stored", "none"]) })),
 			},
 			"401": {
 				description: "Unauthorized",
@@ -2266,9 +2264,7 @@ class PutResendSettings extends OpenAPIRoute {
 		responses: {
 			"200": {
 				description: "Stored",
-				...contentJson(
-					z.object({ source: z.enum(["stored", "environment", "none"]) }),
-				),
+				...contentJson(z.object({ source: z.enum(["stored", "none"]) })),
 			},
 			"401": {
 				description: "Unauthorized",

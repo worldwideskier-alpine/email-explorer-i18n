@@ -1,7 +1,7 @@
 import { env, runInDurableObject, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { hashPassword } from "../../src/password";
-import { enableAccountRecovery } from "./utils";
+import { enableAccountRecovery, giveSendingKey } from "./utils";
 
 // Reset and address-change mail need a sender, which root sets on /root.
 beforeEach(() => enableAccountRecovery());
@@ -41,6 +41,8 @@ async function seedOwner() {
 			now,
 		);
 	});
+	// The confirmation mail is the owner's own, sent with the owner's key.
+	await giveSendingKey("person-owner");
 }
 
 const post = (path: string, body: unknown, token?: string) =>

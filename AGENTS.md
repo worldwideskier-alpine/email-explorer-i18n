@@ -105,7 +105,18 @@ are still checked, by the `tsc` that runs before the worker tests.
   `/api/*`, `/docs` and `/openapi.json` here.
 - **API schema.** Generated at runtime by chanfana from the route classes.
   There is no checked-in `openapi.json`, and `/openapi.json` needs a session.
-- **Sending.** Outbound mail goes through Resend, not Email Routing.
+- **Sending.** Outbound mail goes through Resend, not Email Routing, with
+  the key of the person whose mail it is (`app-settings.ts`, `resend.ts`):
+  a mailbox's mail with its holder's, a password reset or address-change
+  confirmation with that person's, root's own with root's. Each sets theirs
+  on their own screen -- `/admin`, or `/root` for root, through the same
+  `ResendKeyCard.vue`. There is **no fallback**, and a rewrite that adds one
+  back undoes the point: the deployment-wide key from before keys were per
+  person and a `RESEND_API_KEY` Worker secret both used to be read, both sent
+  somebody's mail with a key that was not theirs, and the first was the only
+  way root's reset mail could leave, because root had nowhere to set a key
+  and no screen showed it. `resend-settings.test.ts` holds it; tests that
+  send give their sender a key (`giveSendingKey`), as a real one would.
 - **Roles.** `root` / `admin` / `member`, decided in `roles.ts`. Root is an
   **account id in `app_roles`, inside the auth Durable Object** -- not a
   deployment variable. This is software people fork and deploy: naming who

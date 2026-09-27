@@ -19,10 +19,6 @@
 				class="px-2 py-0.5 text-xs font-semibold text-green-800 bg-green-100 dark:bg-green-900/40 dark:text-green-300 rounded-full"
 			>{{ t("admin.resend.sourceStored") }}</span>
 			<span
-				v-else-if="source === 'environment'"
-				class="px-2 py-0.5 text-xs font-semibold text-amber-800 bg-amber-100 dark:bg-amber-900/40 dark:text-amber-300 rounded-full"
-			>{{ t("admin.resend.sourceEnvironment") }}</span>
-			<span
 				v-else
 				class="px-2 py-0.5 text-xs font-semibold text-red-800 bg-red-100 dark:bg-red-900/40 dark:text-red-300 rounded-full"
 			>{{ t("admin.resend.sourceNone") }}</span>
@@ -83,7 +79,7 @@ defineProps<{ plain?: boolean }>();
 
 const { t } = useI18n();
 
-const source = ref<"stored" | "environment" | "none">("none");
+const source = ref<"stored" | "none">("none");
 const input = ref("");
 const saving = ref(false);
 const message = useLocalizedMessage();

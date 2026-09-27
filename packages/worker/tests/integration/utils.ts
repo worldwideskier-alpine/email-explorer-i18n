@@ -30,7 +30,29 @@ export const testAuthBeforeAll = async () => {
 			now,
 		);
 	});
+	await giveSendingKey(personId);
 };
+
+/**
+ * What the Resend stub below the pool accepts. Only a placeholder: the stub
+ * answers whatever the key, and nothing here reaches the real service.
+ */
+export const TEST_SENDING_KEY = "re_placeholder_for_tests";
+
+/**
+ * Stores a sending key for a person, the way their own screen would.
+ *
+ * Sending uses the key of the person whose mail it is and nobody else's, so
+ * a person without one cannot send. The pool used to bind a deployment-wide
+ * RESEND_API_KEY that every test fell back on; that fallback is gone, and a
+ * test that sends mail now has a sender who set a key, as a real one would.
+ */
+export async function giveSendingKey(person: string): Promise<void> {
+	await env.BUCKET.put(
+		`settings/person/${encodeURIComponent(person)}.json`,
+		JSON.stringify({ resendApiKey: TEST_SENDING_KEY }),
+	);
+}
 
 /** The person the fixture login belongs to. A login always belongs to one. */
 export const personId = "person-test";

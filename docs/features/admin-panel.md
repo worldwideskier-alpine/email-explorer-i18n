@@ -46,11 +46,12 @@ more than one.
 Sending goes through [Resend](https://resend.com), with **your** key: the mail
 of your mailboxes is billed to you, not to anybody else on the deployment.
 
-- The status line says which key is in use: one set on this screen, one from
-  the deployment (a `RESEND_API_KEY` Worker secret), or none -- in which case
-  mail cannot be sent, and the compose screen says so.
-- Saving replaces the stored key; removing it falls back to the deployment's,
-  if there is one.
+- The status line says whether you have set one. Without one, mail cannot be
+  sent -- yours, and the mail sent for you, such as your password reset -- and
+  the compose screen says so. There is no deployment-wide key behind yours.
+- Saving replaces the stored key; removing it stops sending until you set one
+  again.
+- Root sets its own on `/root`, the same card.
 - The key is stored in the deployment's R2 bucket and is never shown again
   after it is saved. Anyone holding the Cloudflare account can read R2.
 

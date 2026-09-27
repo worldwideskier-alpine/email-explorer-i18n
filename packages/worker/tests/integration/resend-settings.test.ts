@@ -22,11 +22,10 @@ import { authenticatedFetch, personId, testAuthBeforeAll } from "./utils";
  */
 
 const bucket = () => (env as unknown as { BUCKET: R2Bucket }).BUCKET;
-const SETTINGS_KEY = "settings/app.json";
+/** Where the deployment-wide key lived before keys were per person. */
+const LEGACY_KEY = "settings/app.json";
 const OWN_KEY = `settings/person/${encodeURIComponent(personId)}.json`;
 const SECRET = "re_a_key_that_must_not_leak";
-/** What the test pool binds as the deployment's own key. */
-const FROM_ENV = "re_placeholder_for_tests";
 
 /** A second person, with their own login and their own key. */
 const OTHER_PERSON = "person-someone-else";
@@ -74,7 +73,7 @@ const setKey = (apiKey: string) =>
 describe("the outbound mail API key", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
-		await bucket().delete(SETTINGS_KEY);
+		await bucket().delete(LEGACY_KEY);
 		await bucket().delete(OWN_KEY);
 	});
 
@@ -83,21 +82,44 @@ describe("the outbound mail API key", () => {
 		expect(await getResendApiKey(env as never, personId)).toBe(SECRET);
 	});
 
-	it("says where the key in use came from", async () => {
-		// The pool binds a RESEND_API_KEY, standing in for the one a real
-		// deployment still carries from before this screen existed.
+	it("says whether you have one", async () => {
 		const before = await authenticatedFetch(RESEND_URL);
-		expect(await before.json()).toEqual({ source: "environment" });
+		expect(await before.json()).toEqual({ source: "none" });
 
 		await setKey(SECRET);
 		const after = await authenticatedFetch(RESEND_URL);
 		expect(await after.json()).toEqual({ source: "stored" });
 	});
 
-	it("reports none when neither source has one", async () => {
-		const bare = { ...env, RESEND_API_KEY: undefined };
-		expect(await getResendKeySource(bare as never, personId)).toBe("none");
-		expect(await getResendApiKey(bare as never, personId)).toBeUndefined();
+	/**
+	 * There is no fallback, and this is what holds it. Both that existed --
+	 * the deployment-wide object from before keys were per person, and a
+	 * RESEND_API_KEY Worker secret -- sent a person's mail with a key that
+	 * was not theirs, and the first was the only way root's own reset mail
+	 * could leave, unseen by any screen. Either one present, a person with no
+	 * key of their own still has none.
+	 */
+	it("never sends a person's mail with a key that is not theirs", async () => {
+		await bucket().put(
+			LEGACY_KEY,
+			JSON.stringify({ resendApiKey: "re_deployment_wide" }),
+		);
+		const withEnv = { ...env, RESEND_API_KEY: "re_from_the_deployment" };
+
+		expect(await getResendApiKey(withEnv as never, personId)).toBeUndefined();
+		expect(await getResendKeySource(withEnv as never, personId)).toBe("none");
+		const status = await authenticatedFetch(RESEND_URL);
+		expect(await status.json()).toEqual({ source: "none" });
+
+		await setKey(SECRET);
+		expect(await getResendApiKey(withEnv as never, personId)).toBe(SECRET);
+	});
+
+	// Mail the application sends with no person behind it has no key either.
+	it("has no key for mail that is nobody's", async () => {
+		await setKey(SECRET);
+		expect(await getResendApiKey(env as never, null)).toBeUndefined();
+		expect(await getResendApiKey(env as never, undefined)).toBeUndefined();
 	});
 
 	/**
@@ -167,7 +189,7 @@ describe("the outbound mail API key", () => {
 		await setKey(SECRET);
 
 		const theirs = await asOtherPerson(RESEND_URL);
-		expect(await theirs.json()).toEqual({ source: "environment" });
+		expect(await theirs.json()).toEqual({ source: "none" });
 	});
 
 	it("is refused to anyone with no session at all", async () => {
@@ -178,7 +200,7 @@ describe("the outbound mail API key", () => {
 			body: JSON.stringify({ apiKey: "re_set_by_a_stranger" }),
 		});
 		expect(write.status).toBe(401);
-		expect(await getResendApiKey(env as never, personId)).toBe(FROM_ENV);
+		expect(await getResendApiKey(env as never, personId)).toBeUndefined();
 	});
 
 	// Clearing must not store an empty string: that would send `Bearer ` and
@@ -186,34 +208,20 @@ describe("the outbound mail API key", () => {
 	it("clears rather than storing an empty key", async () => {
 		await setKey(SECRET);
 		const cleared = await setKey("");
-		// Clearing does not disable sending: it hands back to the deployment.
-		expect(await cleared.json()).toEqual({ source: "environment" });
-		expect(await getResendApiKey(env as never, personId)).toBe(FROM_ENV);
+		// Clearing stops sending until a key is set again; there is nothing
+		// behind yours to hand back to.
+		expect(await cleared.json()).toEqual({ source: "none" });
+		expect(await getResendApiKey(env as never, personId)).toBeUndefined();
 
 		const stored = await bucket().get(OWN_KEY);
 		expect(await stored?.json()).toEqual({});
 	});
 
-	it("prefers the stored key over the deployment's own", async () => {
-		const withEnv = { ...env, RESEND_API_KEY: "re_from_the_deployment" };
-		expect(await getResendApiKey(withEnv as never, personId)).toBe(
-			"re_from_the_deployment",
-		);
-
-		await setKey(SECRET);
-		expect(await getResendApiKey(withEnv as never, personId)).toBe(SECRET);
-	});
-
-	// A settings object that will not parse must not take sending down with
-	// it, and must not be mistaken for a key either.
-	it("falls back when the stored settings are unreadable", async () => {
+	// A settings object that will not parse is read as holding no key: not a
+	// thrown error in the middle of a send, and not mistaken for a key.
+	it("reads unreadable settings as no key", async () => {
 		await bucket().put(OWN_KEY, "this is not json");
-		expect(await getResendApiKey(env as never, personId)).toBe(FROM_ENV);
-		expect(
-			await getResendApiKey(
-				{ ...env, RESEND_API_KEY: undefined } as never,
-				personId,
-			),
-		).toBeUndefined();
+		expect(await getResendApiKey(env as never, personId)).toBeUndefined();
+		expect(await getResendKeySource(env as never, personId)).toBe("none");
 	});
 });

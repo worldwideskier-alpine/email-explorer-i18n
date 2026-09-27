@@ -112,20 +112,23 @@ minute for Cloudflare to start serving the new build before calling it wrong.
 ## 7. Register, and make the accounts
 
 Open your Worker's URL. The **first** account to register becomes root, and
-registration closes behind it. Root owns no mailbox and sends no mail of its
-own: on `/root` it makes everybody else's accounts, and can add a second
-address to its own (a spare way in, not a second root).
+registration closes behind it. Root owns no mailbox: on `/root` it makes
+everybody else's accounts, and can add a second address to its own (a spare
+way in, not a second root).
 
-Each account root makes then signs in, creates its mailboxes, and on `/admin`
-pastes its Resend API key. The key is stored in your R2 bucket rather than in
-a GitHub secret, so rotating it is not a redeploy, and each person's mail goes
-through their own key. Root has no `/admin`; mail sent for root itself -- its
-password reset -- goes through the `RESEND_API_KEY` Worker secret if you set
-one, and otherwise cannot be sent. Give root a spare address (on `/root`,
-*Kind*: **Owner**) instead: signed in with either, root can set the other's
-password on `/root` (**Change password** beside each address, with root's
-own current password), no mail involved. The same button is how root gets
-an administrator back in who has lost their password.
+Every person sends with their own Resend API key, set on the screen they
+manage themselves from: each account root makes signs in, creates its
+mailboxes, and pastes its key on `/admin`; root pastes its own on `/root`.
+The key is stored in your R2 bucket rather than in a GitHub secret, so
+rotating it is not a redeploy. There is no deployment-wide key to fall back
+on: a person without one of their own cannot send, and that includes the
+mail sent for them -- their password reset and address-change confirmation.
+Root's own reset mail therefore needs root's key on `/root`. Give root a
+spare address as well (on `/root`, *Kind*: **Owner**): signed in with either,
+root can set the other's password on `/root` (**Change password** beside
+each address, with root's own current password), no mail involved. The same
+button is how root gets an administrator back in who has lost their
+password.
 
 Also on `/root`, set the **password reset sender**: the address "forgot
 password" and address-change mail is sent from, on a domain verified in

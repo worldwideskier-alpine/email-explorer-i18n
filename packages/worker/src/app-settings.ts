@@ -1,10 +1,10 @@
 /**
- * Settings that belong to the deployment rather than to one mailbox.
+ * Settings that belong to one person rather than to one mailbox.
  *
- * Only the Resend API key lives here so far. It used to be a Worker secret
- * pushed from a GitHub Actions secret on every deploy, which meant rotating
- * it was a trip to GitHub and a redeploy. Now an administrator can set it on
- * the admin screen.
+ * Their Resend API key, so far. It used to be a Worker secret pushed from a
+ * GitHub Actions secret on every deploy, which meant rotating it was a trip
+ * to GitHub and a redeploy. Now each person sets their own on the screen they
+ * manage themselves from -- /admin, or /root for root.
  *
  * What that costs, stated plainly: a Worker secret is write-only -- not
  * readable from the Cloudflare dashboard, not readable by this code's own
@@ -22,16 +22,6 @@
 
 import { rewriteJson } from "./r2-json";
 import type { Env } from "./types";
-
-/**
- * Where the deployment-wide key used to live. Still read as the last resort,
- * and still what a fresh fork finds if it puts one there, but no longer where
- * anybody's key is written: a single key per deployment is a key shared
- * between customers, and the second customer to save one overwrites the
- * first's -- so the first pays for the second's mail, silently, until the
- * bill arrives.
- */
-const KEY = "settings/app.json";
 
 /** One key per person. Whoever sends the mail holds the key that sends it. */
 function personKey(personId: string): string {
@@ -53,8 +43,8 @@ interface AppSettings {
 	resendApiKey?: string;
 }
 
-/** Where the key in use came from, for the admin screen to show. */
-export type ResendKeySource = "stored" | "environment" | "none";
+/** Whether a person has a key, for their screen to show. */
+export type ResendKeySource = "stored" | "none";
 
 async function readAt(
 	env: Pick<Env, "BUCKET">,
@@ -65,15 +55,15 @@ async function readAt(
 	try {
 		return (await obj.json<AppSettings>()) ?? {};
 	} catch {
-		// A settings object that will not parse must not take outbound mail
-		// down with it: an empty result falls back to the environment.
+		// A settings object that will not parse holds no key anybody could
+		// use; reading it as empty says "none" rather than failing the send
+		// with a parse error.
 		return {};
 	}
 }
 
 /**
- * The key that sends a person's mail: their own, or the deployment's if they
- * have not set one.
+ * The key that sends a person's mail: their own, and nobody else's.
  *
  * Whose key sends what follows from who the mail is for. A person's outbound
  * mail goes through their key, and so does the mail this application sends on
@@ -82,39 +72,33 @@ async function readAt(
  * is the point of separating them: the deployment does not pay for mail it
  * knows nothing about.
  *
+ * There is no fallback. There used to be two: the deployment-wide key from
+ * before keys were per person (`settings/app.json`), kept so that the deploy
+ * introducing them would not stop mail, and a `RESEND_API_KEY` Worker secret,
+ * kept so that a fresh fork could send before anybody had set anything. Both
+ * sent somebody's mail with a key that was not theirs -- the one thing the
+ * per-person key exists to stop -- and the first was also the only way root's
+ * own reset mail could leave, because root had nowhere to set a key until
+ * /root grew the card. With every person able to set their own, a fallback
+ * only hides that somebody has not.
+ *
  * Somebody with no key cannot send. That is a service that has stopped, not a
  * lockout: root sets a password directly, without any mail at all, so the way
  * back in does not depend on being able to send.
- *
- * The environment variable stays as a last resort so a fresh fork works
- * before anybody has set anything. This deployment has none set, so nothing
- * falls through to it.
  */
 export async function getResendApiKey(
-	env: Pick<Env, "BUCKET"> & { RESEND_API_KEY?: string },
+	env: Pick<Env, "BUCKET">,
 	personId?: string | null,
 ): Promise<string | undefined> {
-	if (personId) {
-		const own = (await readAt(env, personKey(personId))).resendApiKey;
-		if (own) return own;
-	}
-	// Left over from when there was one key for the whole deployment. Read so
-	// that the deploy introducing per-person keys does not stop mail before
-	// anyone has saved theirs.
-	const shared = (await readAt(env, KEY)).resendApiKey;
-	return shared || env.RESEND_API_KEY || undefined;
+	if (!personId) return undefined;
+	return (await readAt(env, personKey(personId))).resendApiKey || undefined;
 }
 
 export async function getResendKeySource(
-	env: Pick<Env, "BUCKET"> & { RESEND_API_KEY?: string },
+	env: Pick<Env, "BUCKET">,
 	personId?: string | null,
 ): Promise<ResendKeySource> {
-	if (personId && (await readAt(env, personKey(personId))).resendApiKey) {
-		return "stored";
-	}
-	if ((await readAt(env, KEY)).resendApiKey) return "environment";
-	if (env.RESEND_API_KEY) return "environment";
-	return "none";
+	return (await getResendApiKey(env, personId)) ? "stored" : "none";
 }
 
 /** Stores a person's key, or clears it when given nothing. */

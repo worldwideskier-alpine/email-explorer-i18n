@@ -39,8 +39,6 @@ export interface User {
 export type Env = {
 	MAILBOX: DurableObjectNamespace<import("./durableObject/index").MailboxDO>;
 	BUCKET: R2Bucket;
-	/** The deployment-wide fallback; the stored one wins. See app-settings.ts. */
-	RESEND_API_KEY?: string;
 	VAPID_PUBLIC_KEY: string;
 	VAPID_PRIVATE_KEY: string;
 	/**

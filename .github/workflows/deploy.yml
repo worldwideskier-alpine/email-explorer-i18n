@@ -116,11 +116,9 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      # RESEND_API_KEY is no longer pushed from here. It is set on the admin
-      # screen instead, so rotating it does not mean editing a GitHub secret
-      # and redeploying. Any Worker secret of that name already on the
-      # deployment stays and is still used as a fallback, so removing this
-      # step does not interrupt outbound mail; see app-settings.ts.
+      # No RESEND_API_KEY here: each person sets their own on their screen
+      # (/admin, or /root for root), and nothing reads a deployment-wide one
+      # any more; see app-settings.ts.
       - name: Set VAPID_PRIVATE_KEY secret
         working-directory: packages/worker/dev
         # Skipped when the secret is not set: piping an empty value would

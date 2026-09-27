@@ -198,12 +198,12 @@ describe("root's own sending key on /root", () => {
 		getRecoverySender.mockResolvedValue({
 			data: { fromEmail: null, setByDeployment: false, enabled: false },
 		});
-		getResendSettings.mockResolvedValue({ data: { source: "environment" } });
+		getResendSettings.mockResolvedValue({ data: { source: "none" } });
 		setResendApiKey.mockResolvedValue({ data: { source: "stored" } });
 		await mountRoot();
 
 		expect(getResendSettings).toHaveBeenCalled();
-		expect(host.textContent).toContain("admin.resend.sourceEnvironment");
+		expect(host.textContent).toContain("admin.resend.sourceNone");
 
 		type("#resendApiKey", "  re_roots_own  ");
 		await nextTick();
@@ -212,6 +212,7 @@ describe("root's own sending key on /root", () => {
 
 		expect(setResendApiKey).toHaveBeenCalledWith("re_roots_own");
 		expect(host.textContent).toContain("admin.resend.sourceStored");
+		expect(host.textContent).not.toContain("admin.resend.sourceNone");
 		expect(host.textContent).toContain("admin.resend.saved");
 	});
 });
