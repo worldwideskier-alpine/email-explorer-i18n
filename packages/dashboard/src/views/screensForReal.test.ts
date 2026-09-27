@@ -127,6 +127,8 @@ describe("root", () => {
 
 describe("signing in", () => {
 	async function signInWith(redirect: string) {
+		// One test signs in twice; the first app has to leave the host first.
+		unmount();
 		setActivePinia(createPinia());
 		const { default: Login } = await import("./Login.vue");
 		const blank = defineComponent({ render: () => h("div") });
@@ -138,9 +140,11 @@ describe("signing in", () => {
 			],
 		});
 		const app = createApp({ render: () => h(RouterView) });
-		app.use(createPinia()).use(router).use(i18n());
+		// Navigate before the router is installed; installed first, it resolved
+		// the memory history's empty start, matched nothing and warned.
 		await router.push({ path: "/login", query: { redirect } });
 		await router.isReady();
+		app.use(createPinia()).use(router).use(i18n());
 		app.mount(host);
 		unmount = () => app.unmount();
 		await settle();
@@ -197,9 +201,11 @@ async function mountMailbox(path: string) {
 	const pinia = createPinia();
 	setActivePinia(pinia);
 	const app = createApp({ render: () => h(RouterView) });
-	app.use(pinia).use(router).use(i18n());
+	// Navigate before the router is installed; installed first, it resolved
+	// the memory history's empty start, matched nothing and warned.
 	await router.push(path);
 	await router.isReady();
+	app.use(pinia).use(router).use(i18n());
 	app.mount(host);
 	unmount = () => app.unmount();
 	await settle();

@@ -392,7 +392,11 @@ const highlightColors = [
 
 const editor = useEditor({
 	extensions: [
-		StarterKit,
+		// StarterKit 3 carries its own Link and Underline. Left in, they ran
+		// beside the ones configured below -- two `link` extensions, and the
+		// kit's has openOnClick on, so clicking a link in a message being
+		// written opened it in a new tab.
+		StarterKit.configure({ link: false, underline: false }),
 		Underline,
 		TextAlign.configure({
 			types: ["heading", "paragraph"],
