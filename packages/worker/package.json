@@ -48,14 +48,14 @@
 	"dependencies": {
 		"@pushforge/builder": "^2.0.5",
 		"chanfana": "2.8.3",
-		"hono": "4.13.5",
+		"hono": "4.13.8",
 		"postal-mime": "^3.0.0",
 		"workers-qb": "^1.15.0",
 		"zod": "^3.25.76"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.22.0",
-		"@cloudflare/workers-types": "^4.20251128.0",
+		"@cloudflare/workers-types": "^5.20260923.1",
 		"@types/node": "24.10.1",
 		"tsup": "^8.5.1",
 		"typescript": "5.9.3",
