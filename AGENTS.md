@@ -274,6 +274,18 @@ are still checked, by the `tsc` that runs before the worker tests.
   tonight is first tomorrow rather than never; and the pass reports progress as
   it goes into `MaintenanceRecord.backupProgress`, which is the only thing a
   killed run leaves behind. `backup-pass-progress.test.ts` holds all three.
+  It was cut off again on 2026-09-22, differently: `exceededWallTime` at
+  899968 ms with 716 ms of CPU -- fourteen minutes waiting on one call that
+  never answered. Both mailboxes lost that night's archive, each left an
+  upload open, the purge never ran, and the next night overwrote the record,
+  so it was found five days later by reading R2 by hand. So now **nothing in
+  the run waits without a limit** (`deadline.ts`): each call a minute, the
+  backups done by ten minutes in, the purge by thirteen; a mailbox whose call
+  does not answer fails alone, its upload aborted and the reason on its
+  settings, and one not reached in time is first tomorrow. And each run moves
+  the previous record into `maintenance/history.json` (two weeks) before
+  writing its own, which `/root` lists when a night did not end well.
+  `nightly-limits.test.ts` holds both, with that night's own record.
 - **An attachment object is reachable only through its row.** Every writer
   names one `attachments/{emailId}/{attachmentId}/{filename}` and every reader
   — download, archive, delete — rebuilds that name from the row, so an object

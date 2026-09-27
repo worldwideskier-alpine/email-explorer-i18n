@@ -17,6 +17,8 @@
  */
 
 import { backupKeyPrefix } from "./auto-backup";
+import type { TimeLimits } from "./deadline";
+import { limitedBy, pastDeadline } from "./deadline";
 import { listMailboxes, updateMailboxSettings } from "./mailbox-records";
 import type { SpamRetentionSettings } from "./spam-retention";
 import { expiredSpamIds, retentionCutoff } from "./spam-retention";
@@ -165,8 +167,23 @@ export interface SpamPurgeSummary {
 export async function runScheduledSpamPurge(
 	env: Env,
 	now: Date = new Date(),
+	/**
+	 * When the purge must be done by. Each mailbox's purge is bounded by what
+	 * is left of that rather than by the one-minute call limit, because
+	 * deleting a long backlog of spam can honestly take longer than a minute;
+	 * a mailbox not started by then is left for tomorrow, when it is due
+	 * again. See deadline.ts.
+	 */
+	limits: TimeLimits = {},
 ): Promise<SpamPurgeSummary> {
-	const mailboxes = await listMailboxes(env);
+	// As in the backup pass: the deadline decides which mailboxes are
+	// started, and the calls around that are held to the per-call limit.
+	const call = limitedBy({ callLimitMs: limits.callLimitMs });
+	const untilDeadline = limitedBy({
+		deadline: limits.deadline,
+		callLimitMs: Number.POSITIVE_INFINITY,
+	});
+	const mailboxes = await call(listMailboxes(env), "listing mailboxes");
 	const summary: SpamPurgeSummary = {
 		considered: mailboxes.length,
 		ran: 0,
@@ -177,36 +194,45 @@ export async function runScheduledSpamPurge(
 	for (const mailbox of mailboxes) {
 		const retention = mailbox.settings.spamRetention;
 		if (!retention?.enabled) continue;
+		// Not started is not failed: nothing was deleted, which is the safe
+		// direction, and the mailbox is simply due again tomorrow.
+		if (pastDeadline(limits)) continue;
 
 		try {
 			// No archive at all means nothing is covered yet, so nothing goes.
 			const archivedBefore = mailbox.settings.autoBackup?.enabled
-				? ((await newestArchiveAt(env, mailbox.id)) ?? Number.NEGATIVE_INFINITY)
+				? ((await call(
+						newestArchiveAt(env, mailbox.id),
+						"finding the newest archive",
+					)) ?? Number.NEGATIVE_INFINITY)
 				: undefined;
-			const deleted = await purgeMailboxSpam(
-				env,
-				mailbox.id,
-				now,
-				retention.days,
-				archivedBefore,
+			const deleted = await untilDeadline(
+				purgeMailboxSpam(env, mailbox.id, now, retention.days, archivedBefore),
+				"deleting old spam",
 			);
 			summary.ran += 1;
 			summary.deleted += deleted;
-			await recordResult(env, mailbox.id, {
-				at: now.toISOString(),
-				ok: true,
-				deleted,
-			});
+			await call(
+				recordResult(env, mailbox.id, {
+					at: now.toISOString(),
+					ok: true,
+					deleted,
+				}),
+				"recording the result",
+			).catch(() => {});
 		} catch (e) {
 			// One mailbox failing must not stop the others, for the same reason
 			// it must not in the backup pass: they are separate mailboxes and a
 			// large one running out of budget should not take a small one down.
 			summary.failed += 1;
-			await recordResult(env, mailbox.id, {
-				at: now.toISOString(),
-				ok: false,
-				error: String(e instanceof Error ? e.message : e).slice(0, 300),
-			}).catch(() => {});
+			await call(
+				recordResult(env, mailbox.id, {
+					at: now.toISOString(),
+					ok: false,
+					error: String(e instanceof Error ? e.message : e).slice(0, 300),
+				}),
+				"recording the result",
+			).catch(() => {});
 		}
 	}
 

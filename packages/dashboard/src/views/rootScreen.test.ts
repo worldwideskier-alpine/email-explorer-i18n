@@ -13,6 +13,8 @@ const setAccountPassword = vi.fn(async () => ({ data: {} }));
 const getRecoverySender = vi.fn();
 const setRecoverySender = vi.fn();
 const getResendSettings = vi.fn();
+const getMaintenance = vi.fn();
+const getMaintenanceHistory = vi.fn();
 const setResendApiKey = vi.fn();
 
 vi.mock("@/services/api", () => ({
@@ -40,7 +42,9 @@ vi.mock("@/services/api", () => ({
 				},
 			],
 		})),
-		getMaintenance: vi.fn(async () => ({ data: null })),
+		getMaintenance: (...a: unknown[]) => getMaintenance(...(a as [])),
+		getMaintenanceHistory: (...a: unknown[]) =>
+			getMaintenanceHistory(...(a as [])),
 		setAccountPassword: (...a: unknown[]) => setAccountPassword(...(a as [])),
 		getRecoverySender: (...a: unknown[]) => getRecoverySender(...(a as [])),
 		setRecoverySender: (...a: unknown[]) => setRecoverySender(...(a as [])),
@@ -63,6 +67,10 @@ beforeEach(() => {
 	getResendSettings.mockReset();
 	getResendSettings.mockResolvedValue({ data: { source: "none" } });
 	setResendApiKey.mockReset();
+	getMaintenance.mockReset();
+	getMaintenance.mockResolvedValue({ data: null });
+	getMaintenanceHistory.mockReset();
+	getMaintenanceHistory.mockResolvedValue({ data: [] });
 });
 afterEach(() => {
 	unmount();
@@ -214,5 +222,96 @@ describe("root's own sending key on /root", () => {
 		expect(host.textContent).toContain("admin.resend.sourceStored");
 		expect(host.textContent).not.toContain("admin.resend.sourceNone");
 		expect(host.textContent).toContain("admin.resend.saved");
+	});
+});
+
+describe("earlier nights on /root", () => {
+	/**
+	 * 2026-09-22: cut off after fifteen minutes inside the backups, and
+	 * replaced by the next night's record before anybody looked. It is listed
+	 * in the sentence last night would have had; a night that went well is
+	 * not listed at all, so the one that matters is not buried.
+	 */
+	it("lists a night that did not finish, and not one that did", async () => {
+		getRecoverySender.mockResolvedValue({
+			data: { fromEmail: null, setByDeployment: false, enabled: false },
+		});
+		getMaintenance.mockResolvedValue({
+			data: {
+				startedAt: "2026-09-26T18:00:25.613Z",
+				finishedAt: "2026-09-26T18:08:38.000Z",
+				backups: { finishedAt: "2026-09-26T18:07:00.000Z", ran: 2, failed: 0 },
+				spamPurge: {
+					finishedAt: "2026-09-26T18:08:30.000Z",
+					ran: 2,
+					deleted: 1,
+					failed: 0,
+				},
+			},
+		});
+		getMaintenanceHistory.mockResolvedValue({
+			data: [
+				{
+					startedAt: "2026-09-23T18:00:38.032Z",
+					finishedAt: "2026-09-23T18:08:00.000Z",
+					backups: {
+						finishedAt: "2026-09-23T18:07:00.000Z",
+						ran: 2,
+						failed: 0,
+					},
+					spamPurge: {
+						finishedAt: "2026-09-23T18:07:50.000Z",
+						ran: 2,
+						deleted: 0,
+						failed: 0,
+					},
+				},
+				{
+					startedAt: "2026-09-22T18:00:53.757Z",
+					backupProgress: {
+						mailbox: "b@example.com",
+						index: 2,
+						of: 2,
+						messages: 0,
+					},
+				},
+			],
+		});
+		await mountRoot();
+
+		const lines = [...host.querySelectorAll("li.text-amber-700")].map(
+			(li) => li.textContent ?? "",
+		);
+		expect(lines).toHaveLength(1);
+		expect(lines[0]).toContain("root.maintenance.killedInBackup");
+		// Last night's own line is unchanged by any of this.
+		expect(host.textContent).toContain("root.maintenance.done");
+	});
+
+	it("lists nothing when every earlier night went well", async () => {
+		getRecoverySender.mockResolvedValue({
+			data: { fromEmail: null, setByDeployment: false, enabled: false },
+		});
+		getMaintenanceHistory.mockResolvedValue({
+			data: [
+				{
+					startedAt: "2026-09-23T18:00:38.032Z",
+					finishedAt: "2026-09-23T18:08:00.000Z",
+					backups: {
+						finishedAt: "2026-09-23T18:07:00.000Z",
+						ran: 2,
+						failed: 0,
+					},
+					spamPurge: {
+						finishedAt: "2026-09-23T18:07:50.000Z",
+						ran: 2,
+						deleted: 0,
+						failed: 0,
+					},
+				},
+			],
+		});
+		await mountRoot();
+		expect(host.querySelectorAll("li.text-amber-700")).toHaveLength(0);
 	});
 });

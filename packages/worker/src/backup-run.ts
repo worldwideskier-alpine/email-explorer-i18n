@@ -15,6 +15,8 @@
 import type { AutoBackupSettings } from "./auto-backup";
 import { isBackupDue, normalizeKeep } from "./auto-backup";
 import { writeMailboxBackup } from "./backup-writer";
+import type { TimeLimits } from "./deadline";
+import { limitedBy, pastDeadline } from "./deadline";
 import { listMailboxes, updateMailboxSettings } from "./mailbox-records";
 import type { Env } from "./types";
 
@@ -91,8 +93,20 @@ export async function runScheduledBackups(
 	 * is worse than no diagnostic.
 	 */
 	onProgress?: (progress: BackupProgress) => Promise<void>,
+	/**
+	 * When the pass must be done by, and how long one call may take. A
+	 * mailbox not started by the deadline is not started at all tonight: it
+	 * is recorded as not reached and, having not moved `lastRunAt`, is first
+	 * in line tomorrow. See deadline.ts for the night that made this matter.
+	 */
+	limits: TimeLimits = {},
 ): Promise<BackupPassSummary> {
-	const mailboxes = await listMailboxes(env);
+	// Listing, reporting and recording are held to the per-call limit only.
+	// The deadline decides which mailboxes are *started*; refusing to write
+	// down that one was not reached, because time is up, would lose exactly
+	// the fact the deadline exists to produce.
+	const call = limitedBy({ callLimitMs: limits.callLimitMs });
+	const mailboxes = await call(listMailboxes(env), "listing mailboxes");
 	const summary: BackupPassSummary = {
 		considered: mailboxes.length,
 		ran: 0,
@@ -110,7 +124,21 @@ export async function runScheduledBackups(
 			of: due.length,
 			messages,
 		});
-		await onProgress?.(where(0)).catch(() => {});
+		if (pastDeadline(limits)) {
+			summary.failed += 1;
+			await call(
+				recordResult(env, mailbox.id, {
+					at: now.toISOString(),
+					ok: false,
+					error: "Not reached tonight: the pass ran out of time first.",
+				}),
+				"recording the result",
+			).catch(() => {});
+			continue;
+		}
+		if (onProgress) {
+			await call(onProgress(where(0)), "recording progress").catch(() => {});
+		}
 
 		const keep = normalizeKeep(mailbox.settings.autoBackup?.keep);
 		try {
@@ -120,25 +148,36 @@ export async function runScheduledBackups(
 				now,
 				keep,
 				onProgress && ((messages) => onProgress(where(messages))),
+				undefined,
+				limits,
 			);
 			summary.ran += 1;
-			await recordResult(env, mailbox.id, {
-				at: now.toISOString(),
-				ok: true,
-				messages: written.messages,
-				bytes: written.bytes,
-				removed: written.removed,
-			});
+			// Given the per-call limit alone: the archive is written by now,
+			// and saying so should not be refused because the pass's time has
+			// just run out. A failure here is not a failed backup either.
+			await call(
+				recordResult(env, mailbox.id, {
+					at: now.toISOString(),
+					ok: true,
+					messages: written.messages,
+					bytes: written.bytes,
+					removed: written.removed,
+				}),
+				"recording the result",
+			).catch(() => {});
 		} catch (e) {
 			// One mailbox failing must not stop the others: they are separate
 			// backups and a large mailbox running out of budget should not
 			// take a small one down with it.
 			summary.failed += 1;
-			await recordResult(env, mailbox.id, {
-				at: now.toISOString(),
-				ok: false,
-				error: String(e instanceof Error ? e.message : e).slice(0, 300),
-			}).catch(() => {});
+			await call(
+				recordResult(env, mailbox.id, {
+					at: now.toISOString(),
+					ok: false,
+					error: String(e instanceof Error ? e.message : e).slice(0, 300),
+				}),
+				"recording the result",
+			).catch(() => {});
 		}
 	}
 

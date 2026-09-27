@@ -16,6 +16,8 @@
  */
 
 import { backupKey, backupKeyPrefix, keysToRotate } from "./auto-backup";
+import type { TimeLimits } from "./deadline";
+import { limitedBy } from "./deadline";
 import { renderMboxEntry } from "./mbox";
 import type { Env } from "./types";
 
@@ -309,17 +311,34 @@ export async function writeMailboxBackup(
 	onProgress?: (messages: number) => Promise<void>,
 	/** How many messages between reports. A test passes a small one. */
 	progressEvery: number = PROGRESS_EVERY,
+	/**
+	 * How long any one call may take, and when the pass must be done by.
+	 *
+	 * Every call out of this function -- to the mailbox, to R2 -- is bounded
+	 * by it. One that does not answer fails this mailbox with an error the
+	 * pass records, and the upload is aborted; unbounded, the same call held
+	 * the whole night until the runtime killed it, and nothing was recorded
+	 * or aborted at all. See deadline.ts.
+	 */
+	limits: TimeLimits = {},
 ): Promise<BackupResult> {
+	const bounded = limitedBy(limits);
 	const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
-	const ids = await stub.listEmailIdsByDate();
+	const ids = await bounded(
+		stub.listEmailIdsByDate(),
+		"listing the mailbox's messages",
+	);
 
 	const folderNames = new Map<string, string>();
-	for (const folder of await stub.getFolders()) {
+	for (const folder of await bounded(stub.getFolders(), "listing folders")) {
 		folderNames.set(String(folder.id), String(folder.name));
 	}
 
 	const key = backupKey(mailboxId, now);
-	const upload = await env.BUCKET.createMultipartUpload(key);
+	const upload = await bounded(
+		env.BUCKET.createMultipartUpload(key),
+		"starting the archive upload",
+	);
 	const buffer = new PartBuffer();
 	const parts: R2UploadedPart[] = [];
 	let messages = 0;
@@ -331,22 +350,26 @@ export async function writeMailboxBackup(
 		// gives them back in that order, so the archive is written in the same
 		// order it always was.
 		for (let from = 0; from < ids.length; from += READ_BATCH) {
-			const page = await stub.getEmailsByIds(
-				ids.slice(from, from + READ_BATCH),
+			const page = await bounded(
+				stub.getEmailsByIds(ids.slice(from, from + READ_BATCH)),
+				"reading messages from the mailbox",
 			);
 
 			for (const batch of renderBatches(page)) {
-				const rendered = await Promise.all(
-					batch.map((email) => {
-						const folderId = String(
-							(email as { folder_id?: string }).folder_id ?? "inbox",
-						);
-						return renderMboxEntry(
-							env,
-							email as never,
-							folderNames.get(folderId) ?? folderId,
-						);
-					}),
+				const rendered = await bounded(
+					Promise.all(
+						batch.map((email) => {
+							const folderId = String(
+								(email as { folder_id?: string }).folder_id ?? "inbox",
+							);
+							return renderMboxEntry(
+								env,
+								email as never,
+								folderNames.get(folderId) ?? folderId,
+							);
+						}),
+					),
+					"reading messages' originals and attachments",
 				);
 
 				// Appended in the order they were asked for, whatever order they
@@ -362,7 +385,10 @@ export async function writeMailboxBackup(
 					// fill several parts at once.
 					while (buffer.size >= PART_SIZE) {
 						parts.push(
-							await upload.uploadPart(parts.length + 1, buffer.take(PART_SIZE)),
+							await bounded(
+								upload.uploadPart(parts.length + 1, buffer.take(PART_SIZE)),
+								"uploading part of the archive",
+							),
 						);
 					}
 				}
@@ -370,7 +396,12 @@ export async function writeMailboxBackup(
 
 			if (onProgress && messages - reported >= progressEvery) {
 				reported = messages;
-				await onProgress(messages).catch(() => {});
+				// The per-call limit alone: a report is worth making even as the
+				// pass's time runs out, and it is swallowed either way.
+				await limitedBy({ callLimitMs: limits.callLimitMs })(
+					onProgress(messages),
+					"recording progress",
+				).catch(() => {});
 			}
 		}
 
@@ -379,19 +410,38 @@ export async function writeMailboxBackup(
 		// mailbox was empty" is distinguishable from "the backup never ran".
 		if (buffer.size > 0 || parts.length === 0) {
 			parts.push(
-				await upload.uploadPart(parts.length + 1, buffer.take(buffer.size)),
+				await bounded(
+					upload.uploadPart(parts.length + 1, buffer.take(buffer.size)),
+					"uploading the last part of the archive",
+				),
 			);
 		}
 
-		await upload.complete(parts);
+		await bounded(upload.complete(parts), "completing the archive");
 	} catch (e) {
 		// Without this the bucket keeps paying for the parts of a run that
-		// never finished, and nothing would ever clean them up.
-		await upload.abort().catch(() => {});
+		// never finished. The abort gets a limit of its own rather than what
+		// is left of the pass's: giving up on a hung call is exactly when the
+		// pass may have no time left, and the upload still wants aborting.
+		// R2 also drops an upload left incomplete after seven days (the
+		// bucket's default lifecycle rule), so one that cannot be aborted
+		// here is not kept for ever.
+		await limitedBy({ callLimitMs: limits.callLimitMs })(
+			upload.abort(),
+			"aborting the archive upload",
+		).catch(() => {});
 		throw e;
 	}
 
-	return { key, messages, bytes, removed: await rotate(env, mailboxId, keep) };
+	return {
+		key,
+		messages,
+		bytes,
+		removed: await bounded(
+			rotate(env, mailboxId, keep),
+			"removing old archives",
+		),
+	};
 }
 
 /**

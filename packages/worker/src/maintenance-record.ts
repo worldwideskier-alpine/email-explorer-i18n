@@ -88,3 +88,47 @@ export async function writeMaintenanceRecord(
 ): Promise<void> {
 	await env.BUCKET.put(MAINTENANCE_KEY, JSON.stringify(record));
 }
+
+/**
+ * The nights before the last one, newest first.
+ *
+ * The record above is overwritten by every run, which is what made the night
+ * of 2026-09-22 unanswerable five days later: it was cut off after fifteen
+ * minutes, and the next night's record replaced the only trace of it. Each
+ * run therefore moves the previous record in here before it starts its own --
+ * including a record that never reached its end, which is the one worth
+ * keeping. Two weeks is enough to notice a night that went wrong without
+ * having been looking for it.
+ */
+export const MAINTENANCE_HISTORY_KEY = "maintenance/history.json";
+export const HISTORY_LENGTH = 14;
+
+export async function readMaintenanceHistory(
+	env: Pick<Env, "BUCKET">,
+): Promise<MaintenanceRecord[]> {
+	const stored = await env.BUCKET.get(MAINTENANCE_HISTORY_KEY);
+	if (!stored) return [];
+	try {
+		const history = await stored.json<unknown>();
+		return Array.isArray(history) ? (history as MaintenanceRecord[]) : [];
+	} catch {
+		return [];
+	}
+}
+
+/**
+ * Moves the last run's record to the front of the history.
+ *
+ * Only once per run: a record already at the front (the cron firing twice, or
+ * a retry of this step) is not added again.
+ */
+export async function archiveLastRun(env: Pick<Env, "BUCKET">): Promise<void> {
+	const last = await readMaintenanceRecord(env);
+	if (!last) return;
+	const history = await readMaintenanceHistory(env);
+	if (history[0]?.startedAt === last.startedAt) return;
+	await env.BUCKET.put(
+		MAINTENANCE_HISTORY_KEY,
+		JSON.stringify([last, ...history].slice(0, HISTORY_LENGTH)),
+	);
+}

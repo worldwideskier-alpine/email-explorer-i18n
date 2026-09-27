@@ -40,6 +40,7 @@ const TABLE: Record<string, Access> = {
 
 	"GET /api/v1/root/accounts": "root",
 	"GET /api/v1/root/maintenance": "root",
+	"GET /api/v1/root/maintenance/history": "root",
 	"POST /api/v1/root/accounts": "root",
 	"POST /api/v1/root/accounts/:userId/password": "root",
 	"POST /api/v1/root/accounts/:personId/lock": "root",

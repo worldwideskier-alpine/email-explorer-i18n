@@ -36,7 +36,10 @@ import {
 	storedRecoverySender,
 } from "../deployment-config";
 import { destroyMailboxCompletely } from "../mailbox-destroy";
-import { readMaintenanceRecord } from "../maintenance-record";
+import {
+	readMaintenanceHistory,
+	readMaintenanceRecord,
+} from "../maintenance-record";
 import { roleOf } from "../roles";
 import type { Env, Session } from "../types";
 import { proveCurrentPassword } from "./auth";
@@ -162,6 +165,35 @@ export class GetMaintenance extends OpenAPIRoute {
 		if (session instanceof Response) return session;
 
 		return c.json(await readMaintenanceRecord(c.env));
+	}
+}
+
+/**
+ * The nights before the last one, newest first, at most two weeks of them.
+ *
+ * A separate route rather than a field on the last run: that one answers
+ * "did last night finish", which is the question most visits have, and this
+ * answers "has any night not", which the screen only needs to show when one
+ * hasn't. Same counts-and-timestamps rule as the last run.
+ */
+export class GetMaintenanceHistory extends OpenAPIRoute {
+	schema = {
+		summary: "How the earlier scheduled maintenance runs went (root only)",
+		operationId: "getMaintenanceHistory",
+		tags: ["Root"],
+		responses: {
+			"200": {
+				description: "Earlier runs, newest first; empty if there are none",
+				...contentJson(z.array(MaintenanceRecordSchema)),
+			},
+			...forbidden,
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = requireRoot(c);
+		if (session instanceof Response) return session;
+		return c.json(await readMaintenanceHistory(c.env));
 	}
 }
 

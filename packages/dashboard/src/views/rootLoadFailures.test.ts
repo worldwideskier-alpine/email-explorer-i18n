@@ -59,11 +59,14 @@ describe("one failed request does not take the other down", () => {
 		expect(between).toContain("catch");
 	});
 
-	// Both, not just the one the review named: the same fall-through was on
-	// each, and a rejected maintenance request must not take the screen down
-	// either now that something is left to run after it.
-	it("catches both requests", () => {
-		expect(loadBody.match(/catch/g)?.length).toBe(2);
+	// Every one, not just the one the review named: the same fall-through was
+	// on each, and a rejected maintenance request must not take the screen
+	// down either now that something is left to run after it -- the earlier
+	// nights, asked for after the last one.
+	it("catches every request", () => {
+		const requests = loadBody.match(/await api\.\w+\(/g) ?? [];
+		expect(requests.length).toBe(3);
+		expect(loadBody.match(/catch/g)?.length).toBe(requests.length);
 	});
 
 	// The flags start each attempt clean, or a refresh after a failure would

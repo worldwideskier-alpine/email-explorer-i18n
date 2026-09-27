@@ -56,6 +56,20 @@
         <p v-else class="text-amber-700 dark:text-amber-400 font-semibold break-words">
           {{ stoppedLine }}<span v-if="trailingDetail"> · {{ trailingDetail }}</span>
         </p>
+        <!-- Earlier nights that did not end well, in the same sentences. Only
+             those: a list of fourteen calm lines would bury the one that
+             matters. The night of 2026-09-22 was cut off after fifteen
+             minutes and nobody could tell five days later, because the next
+             night's record had replaced it. -->
+        <ul v-if="!maintenanceUnreadable && troubledNights.length" class="mt-1 space-y-1">
+          <li
+            v-for="night in troubledNights"
+            :key="night.startedAt"
+            class="text-amber-700 dark:text-amber-400 break-words"
+          >
+            {{ night.line }}<span v-if="night.trailing"> · {{ night.trailing }}</span>
+          </li>
+        </ul>
       </div>
 
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6 border border-gray-200 dark:border-gray-700 mb-6">
@@ -476,6 +490,28 @@ const trailingDetail = computed(() =>
 	maintenanceTrailingDetail(stoppedLine.value, maintenance.value),
 );
 
+/** The nights before the last, newest first. See maintenance-record.ts. */
+const history = ref<MaintenanceRecord[]>([]);
+
+// Each earlier night that did not end well, told exactly as the last night
+// would have been told on the morning after.
+const troubledNights = computed(() =>
+	history.value
+		.filter((night) => !maintenanceFinishedCleanly(night))
+		.map((night) => {
+			const line = t(maintenanceStoppedKey(night), {
+				at: formatFullDate(night.startedAt),
+				duration: maintenanceDuration(night),
+				detail: maintenanceStoppedDetail(night),
+			});
+			return {
+				startedAt: night.startedAt,
+				line,
+				trailing: maintenanceTrailingDetail(line, night),
+			};
+		}),
+);
+
 /** Each login, with its id when the Worker gave one. */
 const loginsOf = (person: Person) =>
 	person.logins ?? person.emails.map((email) => ({ id: "", email }));
@@ -692,6 +728,15 @@ async function load() {
 		maintenanceUnreadable.value = true;
 	} finally {
 		maintenanceLoading.value = false;
+	}
+	// After the last night rather than beside it: that line answers the
+	// question most visits have, and must not wait on this one. Unreadable
+	// reads as nothing to list -- the line above still says how last night
+	// went, and says so itself when it cannot.
+	try {
+		history.value = (await api.getMaintenanceHistory()).data ?? [];
+	} catch {
+		history.value = [];
 	}
 }
 

@@ -56,6 +56,7 @@ import {
 	GetAccounts,
 	GetAttachmentSweep,
 	GetMaintenance,
+	GetMaintenanceHistory,
 	GetRecoverySender,
 	PostAccount,
 	PostAccountLock,
@@ -2457,6 +2458,7 @@ openapi.delete("/api/v1/auth/admin/users/:userId", DeleteOwnLogin);
 // Root: the account list, and nothing that returns mail. See routes/root.ts.
 openapi.get("/api/v1/root/accounts", GetAccounts);
 openapi.get("/api/v1/root/maintenance", GetMaintenance);
+openapi.get("/api/v1/root/maintenance/history", GetMaintenanceHistory);
 openapi.post("/api/v1/root/accounts", PostAccount);
 openapi.post("/api/v1/root/accounts/:userId/password", PostAccountPassword);
 openapi.post("/api/v1/root/accounts/:personId/lock", PostAccountLock);

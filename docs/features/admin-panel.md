@@ -108,6 +108,14 @@ purge. A run cut off partway says where it was when it stopped -- which
 mailbox, and how far into it -- because that is the only thing such a run
 leaves behind.
 
+Under it, any of the two weeks before that did not end well are listed in
+the same words; nights that went well are not listed. The runtime ends a
+nightly run at fifteen minutes, so each pass has a deadline of its own inside
+that, and no single step may wait more than a minute: a mailbox whose storage
+stops answering fails on its own, with the reason on that mailbox's backup
+settings, and the other mailboxes and the purge still run. A mailbox not
+reached in time is first in line the next night.
+
 ### Leftover attachments
 
 **Check** looks through the stored attachment files for ones no message

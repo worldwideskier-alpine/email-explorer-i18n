@@ -315,6 +315,9 @@ export default {
 	// happened to it, which answers "did my backup run" but not "did the run
 	// finish" -- and those came apart in production.
 	getMaintenance: () => apiClient.get("/api/v1/root/maintenance"),
+	// Earlier nights, newest first, at most two weeks. See maintenance-record.ts.
+	getMaintenanceHistory: () =>
+		apiClient.get("/api/v1/root/maintenance/history"),
 	createAccount: (
 		email: string,
 		password: string,
