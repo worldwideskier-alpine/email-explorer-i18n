@@ -68,6 +68,23 @@ describe("address and password fields", () => {
 		expect(hintOf("Home.vue", "mailbox-email")).toBe("off");
 	});
 
+	/**
+	 * `off` is not enough where the form also asks for your password: Chrome
+	 * takes the text field before a current-password field for the username
+	 * and fills it anyway. Measured on /admin -- the new address arrived
+	 * holding the viewer's own. A username field of the form's own, with the
+	 * signed-in address, is where Chrome looks instead.
+	 */
+	it("name whose password is asked for, after the new address", () => {
+		const admin = views["./Admin.vue"] as string;
+		const username = admin.search(/<input\b[^>]*autocomplete="username"/s);
+		expect(username).toBeGreaterThan(admin.indexOf('id="new-email"'));
+		expect(username).toBeLessThan(admin.indexOf('id="add-current-password"'));
+		const tag = /<input\b[^>]*autocomplete="username"[^>]*>/s.exec(admin)?.[0];
+		expect(tag).toContain(':value="authStore.currentUser?.email');
+		expect(tag).toMatch(/\shidden\b/);
+	});
+
 	it("ask for a new password where one is being chosen", () => {
 		for (const [file, id] of [
 			["Register.vue", "password"],

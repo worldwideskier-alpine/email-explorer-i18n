@@ -56,6 +56,9 @@ function controlsMissingLightColour(): Control[] {
 			// A visually hidden control (a styled toggle's real checkbox) renders
 			// no text of its own, so its colour is irrelevant.
 			if (classes.includes("sr-only")) continue;
+			// Nor does one that is not rendered at all: /admin's username field,
+			// there for the password manager alone.
+			if (/\shidden\b/.test(tag)) continue;
 			if (classes.some((c) => LIGHT_TEXT_COLOUR.test(c))) continue;
 
 			missing.push({

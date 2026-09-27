@@ -121,6 +121,23 @@
 						<label for="add-current-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 							{{ t("account.currentPassword") }}
 						</label>
+						<!-- Whose password this is, for the password manager. With a
+						     current-password field in the form, Chrome takes the text
+						     field before it for the username and fills it with the
+						     saved address, ignoring autocomplete="off" -- so the new
+						     address arrived pre-filled with your own. A username field
+						     of its own, holding the address you are signed in with,
+						     is where Chrome looks instead. -->
+						<input
+							type="text"
+							name="username"
+							autocomplete="username"
+							:value="authStore.currentUser?.email ?? ''"
+							hidden
+							readonly
+							tabindex="-1"
+							aria-hidden="true"
+						/>
 						<input
 							id="add-current-password"
 							v-model="newLogin.currentPassword"
