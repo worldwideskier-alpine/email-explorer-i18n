@@ -327,8 +327,9 @@ fork's work. This fork ships by being forked.
   has both halves (`bg-gray-100 text-gray-900 dark:bg-gray-900
   dark:text-gray-100`); cards use `bg-white dark:bg-gray-800` and follow the
   viewer. It used to pin the body dark unconditionally, which made every
-  card's text near-white on white in light mode — that is fixed, and the
-  docblocks in `formContrast.test.ts` still describe the old state.
+  card's text near-white on white in light mode — that is fixed, and
+  `formContrast.test.ts` keeps its rule (a field says its own text colour)
+  for its own sake rather than because of the body.
   Measured since, in Chromium, over thirteen screens in both schemes (194
   text nodes each): everything clears WCAG AA. Two did not, and neither was
   a light/dark slip. `text-white` on `bg-green-600` was 3.22:1 — Tailwind 4's
@@ -428,6 +429,23 @@ compiler's.
 `setupFiles`. That wipes storage completely rather than unwinding one test's
 writes, so state set up in `beforeAll` does not survive into the tests that
 follow it. Set up per test with `beforeEach`.
+
+The tests are type-checked before they run (`tests/tsconfig.json`, and
+`tests/tsconfig.node.json` for the config file, which runs in node). The pool
+types `env` as `Cloudflare.Env` since 0.22; `tests/bindings.d.ts` fills that
+in. Before it did, `env` was untyped, 182 errors went unreported, and a
+`@ts-expect-error` sat on nearly every binding -- and `singleWorker: true`,
+an option 0.22 no longer has, went on being passed and ignored.
+
+### Dashboard tests
+
+A test that mounts a screen loads the real English catalogue under its own
+strings (`englishWith`, `src/testing/english.ts`) and navigates before the
+router is installed. Without the first, every key the screen asks for and the
+test did not name printed a warning; without the second, the router resolved
+the memory history's empty start and warned. Over a hundred such lines a run
+buried the two that were real: a catalogue key the compile check never
+reached, and a second copy of the editor's Link extension.
 
 ## Conventions
 
