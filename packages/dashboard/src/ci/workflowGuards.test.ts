@@ -132,6 +132,29 @@ describe("the deploy workflow", () => {
 		).not.toContain("workers.dev");
 	});
 
+	/**
+	 * Every job reads the repository and nothing more. The job that checks
+	 * had no permissions of its own and ran with the repository's default
+	 * token, while running every install and build script there is; a token
+	 * that could write could push to main, which deploys.
+	 */
+	it("gives every job a token that can only read", () => {
+		const top = /^permissions:\n((?: {2}.*\n)+)/m.exec(deploy ?? "")?.[1];
+		expect(top?.trim()).toBe("contents: read");
+		expect(deploy).not.toMatch(/:\s*write\b/);
+		expect(deploy).not.toMatch(/permissions:\s*write-all/);
+	});
+
+	it("leaves no token behind in a checkout", () => {
+		const checkouts = (deploy ?? "").split("uses: actions/checkout@").slice(1);
+		expect(checkouts.length).toBeGreaterThan(0);
+		for (const checkout of checkouts) {
+			expect(checkout.split("\n      - ")[0]).toContain(
+				"persist-credentials: false",
+			);
+		}
+	});
+
 	/** A tag can be moved to code nobody here has read; a commit cannot. */
 	it("runs actions pinned to a commit", () => {
 		for (const [path, source] of Object.entries(workflows)) {

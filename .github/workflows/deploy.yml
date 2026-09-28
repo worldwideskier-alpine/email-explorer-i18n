@@ -1,9 +1,8 @@
 name: Deploy to Cloudflare
 
-# This is the only workflow that runs on a push to main. It carries the full
-# check set (lint, build, worker tests) because it is the last gate before
-# production -- Build now runs on pull requests only, so nothing else checks
-# the commit that is about to be deployed.
+# The only workflow there is. It carries the full check set (lint, build,
+# both test suites) because it is the last gate before production, and the
+# same job is what checks a pull request.
 on:
   push:
     branches: [main]
@@ -23,11 +22,22 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
+# Read, and nothing else, for every job. build-and-check had no block of its
+# own and so ran with the repository's default token, whatever that was set
+# to -- and it runs every package install and build script there is, on
+# every push. A dependency that turned hostile there would have held a token
+# that could push to main, and a push to main deploys. The checkouts below do
+# not leave the token in .git/config either.
+permissions:
+  contents: read
+
 jobs:
   build-and-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
           version: 10
@@ -79,6 +89,8 @@ jobs:
       PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
         with:
           version: 10
