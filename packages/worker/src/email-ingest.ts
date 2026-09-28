@@ -147,13 +147,19 @@ export async function ingestEmailIntoMailbox(
 	}
 
 	if (overrides.notify && folder !== "spam") {
+		// Marked before the sends rather than after them. Only an announced
+		// message is worth dismissing later, but the sends take a round trip
+		// to every push service, and a message read or deleted meanwhile
+		// found nothing marked -- so no dismissal went out, and a notification
+		// for mail already read stayed on the phone. A message that no device
+		// took is unmarked again, if nothing has taken the mark since.
+		await stub.markNotified(messageId).catch(() => {});
 		const announced = await notifyNewEmail(env, mailboxId, {
 			id: messageId,
 			sender: parsedEmail.from?.address || "",
 			subject: parsedEmail.subject || "",
 		});
-		// Only an announced message is worth dismissing later.
-		if (announced) await stub.markNotified(messageId).catch(() => {});
+		if (!announced) await stub.takeNotified(messageId).catch(() => {});
 	}
 
 	return messageId;

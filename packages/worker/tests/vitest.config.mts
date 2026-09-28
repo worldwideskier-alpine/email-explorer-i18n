@@ -72,6 +72,14 @@ export default defineConfig({
 					if (url.hostname === "push.example.test") {
 						return new Response(null, { status: 410 });
 					}
+					// A push service that takes the message, and one that is
+					// down: what counts as announced is what a service took.
+					if (url.hostname === "push-ok.example.test") {
+						return new Response(null, { status: 201 });
+					}
+					if (url.hostname === "push-down.example.test") {
+						return new Response(null, { status: 503 });
+					}
 					// The Claude spam classifier calls the real Anthropic API over
 					// fetch(); stub it too. Tests steer the verdict by including a
 					// marker string in the email body/subject, which ends up in the

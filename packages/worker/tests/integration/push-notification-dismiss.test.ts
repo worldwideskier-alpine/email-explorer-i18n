@@ -3,7 +3,7 @@ import {
 	env,
 	runInDurableObject,
 } from "cloudflare:test";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
 	authenticatedFetch,
 	createMailbox,
@@ -63,6 +63,38 @@ async function insertEmail(id: string, read = false, notified = true) {
 			notified ? 1 : 0,
 		);
 	});
+}
+
+/** Delivers a message to the mailbox the way Email Routing does. */
+async function deliver(subject: string) {
+	const worker = await import("../../dev/index");
+	const bytes = new TextEncoder().encode(
+		`From: a@example.org\r\nTo: ${mailboxId}\r\nSubject: ${subject}\r\n\r\nbody`,
+	);
+	await worker.default.email(
+		{
+			raw: new ReadableStream({
+				start(c) {
+					c.enqueue(bytes);
+					c.close();
+				},
+			}),
+			rawSize: bytes.length,
+			to: mailboxId,
+			setReject: () => {},
+		},
+		env,
+		createExecutionContext(),
+	);
+}
+
+async function notifiedFlags() {
+	const doStub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+	return runInDurableObject(doStub, async (_i, state) =>
+		state.storage.sql
+			.exec("SELECT subject, notified FROM emails ORDER BY subject")
+			.toArray(),
+	);
 }
 
 describe("Push notification dismissal on read", () => {
@@ -154,53 +186,92 @@ describe("Push notification dismissal on read", () => {
 	});
 
 	/**
-	 * Delivery marks what it announced. Without the mark, nothing received
-	 * would ever be dismissed.
+	 * Delivery marks what it announced -- what a push service took, not what
+	 * it was asked to take. Counting the asking marked a message whose every
+	 * send failed, and reading it later sent a dismissal to a device that had
+	 * never shown it.
 	 */
-	it("marks mail it announced, and only that", async () => {
+	it("marks mail a push service took, and only that", async () => {
+		const subscribe = async (endpoint: string) => {
+			const { p256dh, auth } = await generateTestSubscriptionKeys();
+			await authenticatedFetch("http://local.test/api/v1/push/subscribe", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ endpoint, keys: { p256dh, auth } }),
+			});
+		};
+		const unsubscribeAll = () =>
+			runInDurableObject(
+				env.MAILBOX.get(env.MAILBOX.idFromName("AUTH")),
+				async (_i, state) => {
+					state.storage.sql.exec("DELETE FROM push_subscriptions");
+				},
+			);
+
+		await subscribe("https://push-ok.example.test/sub/1");
+		await deliver("announced");
+
+		await unsubscribeAll();
+		await subscribe("https://push-down.example.test/sub/1");
+		await deliver("service down");
+
+		await unsubscribeAll();
+		await subscribe(PUSH_ENDPOINT);
+		await deliver("subscription gone");
+		// 410: gone, and forgotten, so the last message reaches no device.
+		expect(await subscriptionCount()).toBe(0);
+		await deliver("nobody subscribed");
+
+		expect(await notifiedFlags()).toEqual([
+			{ subject: "announced", notified: 1 },
+			{ subject: "nobody subscribed", notified: 0 },
+			{ subject: "service down", notified: 0 },
+			{ subject: "subscription gone", notified: 0 },
+		]);
+	});
+
+	/**
+	 * Marked before the sends, not after. The sends take a round trip to
+	 * every push service, and a message read meanwhile -- opened on the
+	 * computer as the phone lit up -- found nothing marked, so no dismissal
+	 * went out and the phone kept a notification for mail already read.
+	 */
+	it("can be dismissed while its notification is still being sent", async () => {
 		const { p256dh, auth } = await generateTestSubscriptionKeys();
 		await authenticatedFetch("http://local.test/api/v1/push/subscribe", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ endpoint: PUSH_ENDPOINT, keys: { p256dh, auth } }),
+			body: JSON.stringify({
+				endpoint: "https://push-ok.example.test/sub/2",
+				keys: { p256dh, auth },
+			}),
 		});
-		const worker = await import("../../dev/index");
-		const deliver = async (subject: string) => {
-			const bytes = new TextEncoder().encode(
-				`From: a@example.org\r\nTo: ${mailboxId}\r\nSubject: ${subject}\r\n\r\nbody`,
-			);
-			await worker.default.email(
-				{
-					raw: new ReadableStream({
-						start(c) {
-							c.enqueue(bytes);
-							c.close();
-						},
-					}),
-					rawSize: bytes.length,
-					to: mailboxId,
-					setReject: () => {},
-				},
-				env,
-				createExecutionContext(),
-			);
-		};
-		await deliver("announced");
-		// The mocked endpoint answered 410, so the subscription is gone and
-		// the next message reaches no device.
-		expect(await subscriptionCount()).toBe(0);
-		await deliver("unannounced");
-
 		const doStub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
-		const flags = await runInDurableObject(doStub, async (_i, state) =>
-			state.storage.sql
-				.exec("SELECT subject, notified FROM emails ORDER BY subject")
-				.toArray(),
-		);
-		expect(flags).toEqual([
-			{ subject: "announced", notified: 1 },
-			{ subject: "unannounced", notified: 0 },
-		]);
+		let dismissedMidway: boolean | undefined;
+		const realFetch = globalThis.fetch;
+		const spy = vi
+			.spyOn(globalThis, "fetch")
+			.mockImplementation(async (input, init) => {
+				const url = new URL(
+					input instanceof Request ? input.url : String(input),
+				);
+				if (url.hostname === "push-ok.example.test") {
+					// Read on another device, while this send is in flight.
+					const [row] = await runInDurableObject(doStub, async (_i, state) =>
+						state.storage.sql
+							.exec("SELECT id FROM emails WHERE subject = 'raced'")
+							.toArray(),
+					);
+					dismissedMidway = await doStub.takeNotified(String(row.id));
+				}
+				return realFetch(input, init);
+			});
+		try {
+			await deliver("raced");
+		} finally {
+			spy.mockRestore();
+		}
+		expect(dismissedMidway).toBe(true);
 	});
 
 	it("does not send a push when only starred status changes", async () => {

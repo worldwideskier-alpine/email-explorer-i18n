@@ -10,9 +10,16 @@ interface NotifyPayload {
 
 /**
  * Sends a Web Push notification to every device subscribed to a mailbox, and
- * says how many devices it tried. A failed or expired subscription is removed
- * and does not stop the others, but anything before the sends -- the auth
- * Durable Object, a malformed VAPID key -- throws. Both callers below catch.
+ * says how many push services took it. A failed or expired subscription is
+ * removed and does not stop the others, but anything before the sends -- the
+ * auth Durable Object, a malformed VAPID key -- throws. Both callers below
+ * catch.
+ *
+ * Took it, not was asked: this used to answer the number of subscriptions
+ * whatever each send did, so a message whose every send failed was recorded
+ * as announced, and reading it later sent a dismissal to devices that had
+ * never shown it -- the push that shows nothing, which is how a browser
+ * comes to withdraw a subscription.
  */
 export async function notifyMailboxSubscribers(
 	env: Env,
@@ -39,7 +46,7 @@ export async function notifyMailboxSubscribers(
 	// mailbox is the operator.
 	const adminContact = env.VAPID_ADMIN_CONTACT?.trim() || `mailto:${mailboxId}`;
 
-	await Promise.all(
+	const accepted = await Promise.all(
 		subscriptions.map(async (sub) => {
 			try {
 				const { endpoint, headers, body } = await buildPushHTTPRequest({
@@ -60,12 +67,14 @@ export async function notifyMailboxSubscribers(
 				if (res.status === 404 || res.status === 410) {
 					await authDO.forgetGonePushEndpoint(sub.endpoint);
 				}
+				return res.ok;
 			} catch (e) {
 				console.error(`Failed to send push to ${sub.endpoint}:`, e);
+				return false;
 			}
 		}),
 	);
-	return subscriptions.length;
+	return accepted.filter(Boolean).length;
 }
 
 /**
