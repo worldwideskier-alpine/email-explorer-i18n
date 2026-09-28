@@ -2036,25 +2036,36 @@ export class MailboxDO extends DurableObject<Env> {
 		attachments: AttachmentData[],
 	) {
 		const now = new Date().toISOString();
-		this.#qb
-			.insert({
-				tableName: "emails",
-				data: {
-					...email,
-					folder_id: folder,
-					received_at: now,
-					spam_since: folder === "spam" ? now : null,
-				},
-			})
-			.execute();
-
-		if (attachments.length > 0) {
+		// One statement for every attachment row bound seven variables a row
+		// and went over MAX_BOUND at the fifteenth: a message with that many
+		// was refused after its email row was already written, so a sent one
+		// had gone out and was missing from Sent, and a received one left its
+		// attachment objects in R2 with no row to reach them by. So the rows go
+		// in runs that fit, and the message and its rows are written together
+		// or not at all.
+		const columns = attachments.length ? Object.keys(attachments[0]).length : 1;
+		const perStatement = Math.max(1, Math.floor(MAX_BOUND / columns));
+		this.ctx.storage.transactionSync(() => {
 			this.#qb
 				.insert({
-					tableName: "attachments",
-					data: attachments as any,
+					tableName: "emails",
+					data: {
+						...email,
+						folder_id: folder,
+						received_at: now,
+						spam_since: folder === "spam" ? now : null,
+					},
 				})
 				.execute();
-		}
+
+			for (const run of chunksOf(attachments, perStatement)) {
+				this.#qb
+					.insert({
+						tableName: "attachments",
+						data: run as any,
+					})
+					.execute();
+			}
+		});
 	}
 }
