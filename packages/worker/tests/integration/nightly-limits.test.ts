@@ -1,8 +1,9 @@
-import { env } from "cloudflare:test";
+import { createExecutionContext, env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { backupKeyPrefix } from "../../src/auto-backup";
 import { runScheduledBackups } from "../../src/backup-run";
 import { OutOfTime, within } from "../../src/deadline";
+import { resetLegacyGrantMemo } from "../../src/legacy-grants";
 import {
 	archiveLastRun,
 	HISTORY_LENGTH,
@@ -290,6 +291,54 @@ describe("a mailbox that uses up the pass", () => {
 		const second = await passWithHang(night(22));
 		expect(second.order[0]).toBe(FINE);
 		expect(await archivesOf(FINE)).toHaveLength(2);
+	});
+});
+
+/**
+ * The scheduled handler itself, not only the passes it runs.
+ *
+ * It used to await the legacy grant backfill first -- two calls to the auth
+ * object, with no limit and before the night's record existed. An auth object
+ * that did not answer held the invocation until the runtime ended it, with
+ * nothing written: the night of 2026-09-22 by another road.
+ */
+describe("the scheduled handler", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await makeMailbox(FINE);
+		await bucket().delete(MAINTENANCE_KEY);
+		resetLegacyGrantMemo();
+	});
+
+	it("finishes the night when the auth object never answers", async () => {
+		const real = env.MAILBOX;
+		const authId = real.idFromName("AUTH");
+		const hungAuth = new Proxy(
+			{},
+			{ get: (_t, prop) => (prop === "then" ? undefined : () => never()) },
+		);
+		const MAILBOX = {
+			idFromName: (name: string) => real.idFromName(name),
+			get: (id: DurableObjectId) =>
+				id.equals(authId) ? hungAuth : real.get(id),
+		};
+		const worker = await import("../../dev/index");
+
+		const outcome = await Promise.race([
+			worker.default
+				.scheduled(
+					{ cron: "0 18 * * *", scheduledTime: Date.now() },
+					{ ...env, MAILBOX } as never,
+					createExecutionContext(),
+				)
+				.then(() => "finished"),
+			new Promise((resolve) => setTimeout(() => resolve("held"), 3000)),
+		]);
+
+		expect(outcome).toBe("finished");
+		const record = await readMaintenanceRecord(env as never);
+		expect(record?.finishedAt).toBeTypeOf("string");
+		expect(await archivesOf(FINE)).toHaveLength(1);
 	});
 });
 
