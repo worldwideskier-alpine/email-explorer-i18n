@@ -2,9 +2,12 @@
  * Turns a folder name into an id.
  *
  * Shared by the route that creates a folder and the restore path, which has to
- * recreate folders a backup names but the mailbox does not have yet. Both must
- * derive the same id from the same name, or a restore would build a second
- * folder beside an identical one.
+ * recreate folders a backup names but the mailbox does not have yet. The id is
+ * not the name: different names can give the same one ("Spam!" and "spam"),
+ * and a name of mostly non-Latin characters gets a random one each time. So a
+ * caller that finds the id taken has found another folder, not the one it
+ * asked for -- the restore looks folders up by name, and makes its own id
+ * when this one belongs to somebody else's folder.
  */
 export function slugify(text: string) {
 	const slug = text

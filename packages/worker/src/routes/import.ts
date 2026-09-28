@@ -245,14 +245,25 @@ async function resolveFolder(
 	);
 	if (existing) return existing.id;
 
-	const id = slugify(folder);
-	await stub.createFolder(id, folder);
-
-	// createFolder answers null when the name is taken, which here means it
-	// was created between the read above and this write; either way the
-	// folder now exists, so read back rather than trusting the return.
-	const after = (await stub.getFolders()) as { id: string; name: string }[];
-	return (
-		after.find((row) => row.id === folder || row.name === folder)?.id ?? id
-	);
+	// createFolder answers null when the id or the name is taken. The name
+	// means it was created between the read above and this write, and it is
+	// the folder wanted. The id means the slug is another folder's -- "Spam!"
+	// slugifies to "spam" -- and falling back to it filed a backup's own
+	// folder into that one: the system spam folder, where the nightly purge
+	// deletes. So the name is looked for, and failing that the folder is
+	// made under an id nothing else has.
+	const byName = async () =>
+		((await stub.getFolders()) as { id: string; name: string }[]).find(
+			(row) => row.name === folder,
+		)?.id;
+	// Once: a mostly non-Latin name slugifies to a fresh random id each time.
+	const slug = slugify(folder);
+	if (await stub.createFolder(slug, folder)) return slug;
+	const raced = await byName();
+	if (raced) return raced;
+	const own = crypto.randomUUID();
+	if (await stub.createFolder(own, folder)) return own;
+	const found = await byName();
+	if (found) return found;
+	throw new Error(`Could not create the folder "${folder}"`);
 }

@@ -267,6 +267,30 @@ describe("Restoring mail into a mailbox", () => {
 		expect(names.filter((name) => name === "FAX")).toHaveLength(1);
 	});
 
+	/**
+	 * A folder name whose slug is another folder's id. "Spam!" slugifies to
+	 * "spam", the creation was refused, and the fallback was that id -- so a
+	 * backup's own folder was filed into the system spam folder, where the
+	 * nightly purge deletes.
+	 */
+	it("does not file a folder into another whose id its name slugifies to", async () => {
+		const res = await importEmail({ folder: "Spam!", id: ID.fax1 });
+		expect(res.status).toBe(201);
+		const { id } = await res.json<{ id: string }>();
+
+		const folders = await (
+			await authenticatedFetch(
+				`http://local.test/api/v1/mailboxes/${mailboxId}/folders`,
+			)
+		).json<{ id: string; name: string }[]>();
+		const own = folders.find((row) => row.name === "Spam!");
+		expect(own, "a folder of its own").toBeTruthy();
+		expect(own?.id).not.toBe("spam");
+
+		const email = await (await getEmail(id)).json<{ folder_id: string }>();
+		expect(email.folder_id).toBe(own?.id);
+	});
+
 	it("puts read and starred back", async () => {
 		const res = await importEmail({
 			id: ID.flagged,
