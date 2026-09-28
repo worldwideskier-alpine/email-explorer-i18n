@@ -27,14 +27,18 @@ Email Explorer's Account Recovery feature provides a secure, email-based passwor
 
 To enable Account Recovery, you need:
 
-1. **Cloudflare Account** with Email Sending enabled
-   - [Enable Email Sending](https://developers.cloudflare.com/email-routing/email-workers/send-email-workers/)
-   - Requires a verified domain in Cloudflare
-
-2. **Valid Email Address**
-   - Must be a valid email on your Cloudflare account
+1. **A sender address on a domain verified in [Resend](https://resend.com)**
+   - Mail leaves through Resend, not through Cloudflare
    - Used as the "from" address for recovery emails
    - Example: `noreply@yourdomain.com`
+
+2. **A Resend API key for each person who may need a reset**
+   - A reset is the reset person's own mail, so it is sent with *their* key,
+     set on their own screen (`/admin`, or `/root` for root). There is no
+     deployment-wide key to fall back on.
+   - **Somebody with no key set gets no reset mail**, and is not told so: the
+     page answers the same whatever happened, so that it cannot be used to
+     find out which addresses have accounts.
 
 3. **Authentication Enabled**
    - Account Recovery requires `auth.enabled: true`
@@ -48,11 +52,12 @@ whole of it: the address is kept in the deployment's bucket, and "forgot
 password" turns on as soon as it is saved. It must be on a domain verified in
 Resend.
 
-Two other sources exist, and both take precedence over `/root` in this
-order: the deployment's `ACCOUNT_RECOVERY_FROM` variable or secret (see
-[Deploying your own](../deploying-your-own.md)), and then -- only when
-neither of those is set -- an `accountRecovery` option in code, for somebody
-embedding the package:
+Two other sources exist. The deployment's `ACCOUNT_RECOVERY_FROM` variable or
+secret (see [Deploying your own](../deploying-your-own.md)) takes precedence
+over `/root`, and `/root` says so when it does. An `accountRecovery` option in
+code, for somebody embedding the package, comes last: it is used only when
+neither of the others is set, because source code is what a fork inherits.
+The order is: the variable, then `/root`, then code.
 
 ```typescript
 export default EmailExplorer({
@@ -182,9 +187,9 @@ export default EmailExplorer({
    - Email delivery can take a few seconds
    - Refresh your inbox
 
-4. **Contact Administrator**
-   - If still not received, contact your admin
-   - Admin can manually reset your password
+4. **Contact root**
+   - If still not received, ask whoever runs the deployment (root)
+   - Root can set a new password for you on `/root`
 
 ## Security
 
@@ -215,8 +220,8 @@ export default EmailExplorer({
 
 - **HTTPS Only:** All links use HTTPS
 - **No Passwords in Email:** Passwords are never sent via email
-- **Verified Domain:** Emails sent from your verified Cloudflare domain
-- **SPF/DKIM:** Cloudflare handles email authentication
+- **Verified Domain:** Emails are sent from a domain verified in Resend
+- **SPF/DKIM:** Resend signs the mail for that domain
 
 ## Troubleshooting
 
@@ -225,10 +230,9 @@ export default EmailExplorer({
 **Problem:** User sees message that account recovery is disabled
 
 **Solutions:**
-1. Verify `accountRecovery.fromEmail` is configured
-2. Check that email address is valid
-3. Redeploy worker after configuration change
-4. Clear browser cache and try again
+1. Set a password reset sender on `/root` (or `ACCOUNT_RECOVERY_FROM`)
+2. Check that the address is on a domain verified in Resend
+3. Reload the page
 
 ### "Invalid or expired token"
 
@@ -248,8 +252,9 @@ export default EmailExplorer({
 1. Check spam/junk folder
 2. Verify email address is correct
 3. Wait a few seconds and refresh inbox
-4. Check that Email Sending is enabled in Cloudflare
-5. Verify `fromEmail` address is valid
+4. Check that the person being reset has a Resend API key set on their own
+   screen -- without one no reset mail is sent, and the page does not say so
+5. Check that the sender address is on a domain verified in Resend
 
 ### "Password reset failed"
 
@@ -266,11 +271,11 @@ export default EmailExplorer({
 **Problem:** "Forgot your password?" link missing from login page
 
 **Solutions:**
-1. Account Recovery must be enabled in configuration
-2. Check that `accountRecovery.fromEmail` is set
-3. Refresh page (Ctrl+F5 or Cmd+Shift+R)
-4. Clear browser cache
-5. Try different browser
+1. Account Recovery must be enabled: a sender set on `/root`, or
+   `ACCOUNT_RECOVERY_FROM`
+2. Refresh page (Ctrl+F5 or Cmd+Shift+R)
+3. Clear browser cache
+4. Try different browser
 
 ## API Endpoints
 
@@ -330,7 +335,7 @@ Response:
 
 - [Authentication Guide](authentication.md) - Account creation and login
 - [Admin Panel Guide](admin-panel.md) - User management
-- [Security Best Practices](../security.md) - General security guidelines
+- [Deploying your own](../deploying-your-own.md) - Where the sender and keys are set
 
 ## Support
 
