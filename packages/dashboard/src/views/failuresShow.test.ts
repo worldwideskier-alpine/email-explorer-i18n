@@ -46,10 +46,16 @@ vi.mock("@/services/api", () => ({
 	},
 }));
 
-vi.mock("@/services/push", () => ({
-	isPushSupported: () => false,
+const push = vi.hoisted(() => ({
+	supported: false,
+	subscribe: async () => {},
+}));
+vi.mock("@/services/push", async (actual) => ({
+	PushPermissionDenied: ((await actual()) as { PushPermissionDenied: unknown })
+		.PushPermissionDenied,
+	isPushSupported: () => push.supported,
 	getExistingSubscription: async () => null,
-	subscribeToPush: async () => {},
+	subscribeToPush: () => push.subscribe(),
 	unsubscribeFromPush: async () => {},
 }));
 
@@ -244,6 +250,68 @@ describe("turning a nightly job off", () => {
 		expect(updateMailbox.mock.calls[0][1]).toMatchObject({
 			autoBackup: { enabled: false },
 		});
+	});
+});
+
+/**
+ * A backup the nightly run did not reach. The run recorded it as an English
+ * sentence, shown as it was in every language; it now says which reason it
+ * is, and the screen words it.
+ */
+describe("a backup the nightly run did not reach", () => {
+	afterEach(() => {
+		stored.settings.autoBackup = {
+			enabled: false,
+			frequency: "daily",
+			keep: 3,
+		};
+	});
+
+	it("is said in the reader's language, not the run's English", async () => {
+		stored.settings.autoBackup = {
+			enabled: true,
+			frequency: "daily",
+			keep: 3,
+			lastResult: {
+				at: "2026-09-22T18:10:00.000Z",
+				ok: false,
+				error: "Not reached tonight: the pass ran out of time first.",
+				reason: "not-reached",
+			},
+		} as never;
+		await mountSettings();
+		expect(host.textContent).toContain("the nightly run ran out of time first");
+		expect(host.textContent).not.toContain("Not reached tonight");
+	});
+});
+
+/**
+ * Notifications the reader has blocked. The browser's refusal was shown as
+ * its own English words; only the reader can undo it, so the screen says how,
+ * in their language.
+ */
+describe("turning notifications on when the browser refuses", () => {
+	afterEach(() => {
+		push.supported = false;
+		push.subscribe = async () => {};
+	});
+
+	it("says what to do, in the reader's language", async () => {
+		const { PushPermissionDenied } =
+			await vi.importActual<typeof import("@/services/push")>(
+				"@/services/push",
+			);
+		push.supported = true;
+		push.subscribe = async () => {
+			throw new PushPermissionDenied();
+		};
+		await mountSettings();
+		(host.querySelector('[role="switch"]') as HTMLButtonElement).click();
+		await settle();
+		expect(host.textContent).toContain(
+			"Notifications are blocked for this site",
+		);
+		expect(host.textContent).not.toContain("permission was not granted");
 	});
 });
 

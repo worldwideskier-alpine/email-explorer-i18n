@@ -157,6 +157,10 @@ export async function runScheduledBackups(
 					at: now.toISOString(),
 					ok: false,
 					error: "Not reached tonight: the pass ran out of time first.",
+					// The screen shows this one in the reader's own language; an
+					// English sentence written for people was going out as-is
+					// in every one of them.
+					reason: "not-reached",
 				}),
 				"recording the result",
 			).catch(() => {});

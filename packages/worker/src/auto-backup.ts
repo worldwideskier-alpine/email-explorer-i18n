@@ -54,6 +54,11 @@ export interface AutoBackupSettings {
 		bytes?: number;
 		removed?: number;
 		error?: string;
+		/**
+		 * Why, when it is one the screen says in the reader's language.
+		 * `error` stays English, for the log and for root.
+		 */
+		reason?: "not-reached";
 	};
 }
 

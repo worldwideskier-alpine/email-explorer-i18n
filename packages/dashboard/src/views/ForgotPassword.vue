@@ -70,6 +70,7 @@ import { useRouter } from "vue-router";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import { useToast } from "@/composables/useToast";
 import api from "@/services/api";
+import { translateApiError } from "@/utils/apiError";
 
 const router = useRouter();
 const { t, locale } = useI18n();
@@ -92,7 +93,10 @@ async function handleForgotPassword() {
 		success(t("forgotPassword.linkSentToast"));
 	} catch (e: any) {
 		const fromApi = e.response?.data?.error;
-		const errorMessage = () => fromApi || t("forgotPassword.failedToSend");
+		// Through the catalogue: "Too many requests" is translated there, and
+		// was shown in English in every language.
+		const errorMessage = () =>
+			translateApiError(fromApi, t("forgotPassword.failedToSend"));
 		error.value = errorMessage;
 		showError(errorMessage());
 	} finally {

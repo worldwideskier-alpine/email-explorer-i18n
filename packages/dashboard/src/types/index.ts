@@ -69,6 +69,8 @@ export interface AutoBackupSettings {
 		bytes?: number;
 		removed?: number;
 		error?: string;
+		/** Set when the reason is one the screen words itself. */
+		reason?: "not-reached";
 	};
 }
 

@@ -21,6 +21,14 @@ export async function getExistingSubscription(): Promise<PushSubscription | null
 	return registration.pushManager.getSubscription();
 }
 
+/** The reader said no to notifications; only they can change that. */
+export class PushPermissionDenied extends Error {
+	constructor() {
+		super("Notification permission was not granted");
+		this.name = "PushPermissionDenied";
+	}
+}
+
 export async function subscribeToPush(): Promise<void> {
 	if (!isPushSupported()) {
 		throw new Error("Push notifications are not supported in this browser");
@@ -28,7 +36,7 @@ export async function subscribeToPush(): Promise<void> {
 
 	const permission = await Notification.requestPermission();
 	if (permission !== "granted") {
-		throw new Error("Notification permission was not granted");
+		throw new PushPermissionDenied();
 	}
 
 	const { data } = await api.getVapidPublicKey();

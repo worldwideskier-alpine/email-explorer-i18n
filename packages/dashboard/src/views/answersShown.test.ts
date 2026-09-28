@@ -10,12 +10,14 @@ import { englishWith } from "@/testing/english";
  */
 
 const resetPassword = vi.fn();
+const forgotPassword = vi.fn();
 const createMailbox = vi.fn();
 const listMailboxes = vi.fn();
 
 vi.mock("@/services/api", () => ({
 	default: {
 		resetPassword: (...a: unknown[]) => resetPassword(...a),
+		forgotPassword: (...a: unknown[]) => forgotPassword(...a),
 		createMailbox: (...a: unknown[]) => createMailbox(...a),
 		listMailboxes: (...a: unknown[]) => listMailboxes(...a),
 		getAppSettings: vi.fn(async () => ({ data: {} })),
@@ -29,7 +31,12 @@ let unmount = () => {};
 beforeEach(() => {
 	host = document.createElement("div");
 	document.body.appendChild(host);
-	for (const fn of [resetPassword, createMailbox, listMailboxes])
+	for (const fn of [
+		resetPassword,
+		forgotPassword,
+		createMailbox,
+		listMailboxes,
+	])
 		fn.mockReset();
 });
 afterEach(() => {
@@ -63,6 +70,7 @@ async function mount(path: string, component: object, routePath: string) {
 			apiErrors: {
 				"Invalid or expired token": "That link has expired.",
 				"Failed to create mailbox": "Failed to create mailbox",
+				"Too many requests": "Slow down a little.",
 			},
 			home: { mailboxCreated: "Mailbox created." },
 		}) as never,
@@ -101,6 +109,30 @@ describe("the reset password screen", () => {
 
 		expect(document.body.textContent).toContain("That link has expired.");
 		expect(document.body.textContent).not.toContain("Invalid or expired token");
+	});
+});
+
+describe("the forgot password screen", () => {
+	/**
+	 * Its refusal was shown as the server's English sentence, whatever the
+	 * language, with the translation in every catalogue all along.
+	 */
+	it("shows a refusal in the reader's language", async () => {
+		forgotPassword.mockRejectedValue({
+			response: { status: 429, data: { error: "Too many requests" } },
+		});
+		const { default: ForgotPassword } = await import("./ForgotPassword.vue");
+		await mount("/forgot-password", ForgotPassword, "/forgot-password");
+		type("#email", "someone@example.com");
+		await nextTick();
+		(host.querySelector("form") as HTMLFormElement).dispatchEvent(
+			new Event("submit"),
+		);
+		await settle();
+
+		expect(forgotPassword).toHaveBeenCalledOnce();
+		expect(document.body.textContent).toContain("Slow down a little.");
+		expect(document.body.textContent).not.toContain("Too many requests");
 	});
 });
 

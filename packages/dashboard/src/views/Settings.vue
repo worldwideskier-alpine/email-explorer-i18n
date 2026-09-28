@@ -398,6 +398,7 @@ import { holdReload } from "@/services/appUpdate";
 import {
 	getExistingSubscription,
 	isPushSupported,
+	PushPermissionDenied,
 	subscribeToPush,
 	unsubscribeFromPush,
 } from "@/services/push";
@@ -446,8 +447,14 @@ const togglePush = async () => {
 			pushEnabled.value = true;
 		}
 	} catch (e: any) {
-		const fromBrowser = e.message;
-		pushError.value = () => fromBrowser || t("settings.pushError");
+		// The browser's own wording and ours were shown as they came, in
+		// English whatever the language; a refused permission is the one
+		// worth saying specifically, since only the reader can undo it.
+		console.error("Push notification settings:", e);
+		pushError.value =
+			e instanceof PushPermissionDenied
+				? () => t("settings.pushPermissionDenied")
+				: () => t("settings.pushError");
 	} finally {
 		pushLoading.value = false;
 	}
@@ -617,6 +624,11 @@ const autoBackupLastOk = computed(() => autoBackupLastResult.value?.ok);
 const autoBackupLastLine = computed(() => {
 	const last = autoBackupLastResult.value;
 	if (!last) return t("settings.autoBackupNeverRun");
+	if (!last.ok && last.reason === "not-reached") {
+		return t("settings.autoBackupNotReached", {
+			at: new Date(last.at).toLocaleString(),
+		});
+	}
 	return last.ok
 		? t("settings.autoBackupLastOk", {
 				at: new Date(last.at).toLocaleString(),
@@ -951,7 +963,13 @@ const deleteMailbox = async () => {
 		router.push({ name: "Home" });
 	} catch (e: any) {
 		const fromApi = e.response?.data?.error;
-		deleteError.value = () => fromApi || t("settings.deleteMailboxFailed");
+		// Through the catalogue, not as the server's English. Refused for the
+		// lock -- which the screen hides the button for, so a lock turned on
+		// meanwhile -- says what to do about it.
+		deleteError.value =
+			e.response?.status === 423
+				? () => t("settings.deleteMailboxLockedHint")
+				: () => translateApiError(fromApi, t("settings.deleteMailboxFailed"));
 	} finally {
 		deleteLoading.value = false;
 	}

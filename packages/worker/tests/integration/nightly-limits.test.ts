@@ -83,7 +83,7 @@ async function settingsOf(id: string) {
 	return (await stored?.json()) as {
 		autoBackup?: {
 			lastRunAt?: string;
-			lastResult?: { ok: boolean; error?: string };
+			lastResult?: { ok: boolean; error?: string; reason?: string };
 		};
 	};
 }
@@ -221,6 +221,9 @@ describe("a pass whose time has run out", () => {
 			expect(settings.autoBackup?.lastResult?.error).toContain(
 				"ran out of time",
 			);
+			// And says which reason it is, so the screen can word it in the
+			// reader's language rather than show this English sentence.
+			expect(settings.autoBackup?.lastResult?.reason).toBe("not-reached");
 			expect(settings.autoBackup?.lastRunAt).toBeUndefined();
 		}
 	});
