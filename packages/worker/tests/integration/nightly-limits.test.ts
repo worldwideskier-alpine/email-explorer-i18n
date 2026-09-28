@@ -225,6 +225,74 @@ describe("a pass whose time has run out", () => {
 	});
 });
 
+/**
+ * A mailbox that takes the whole pass every night.
+ *
+ * The pass took the mailbox with the oldest *successful* backup first. One
+ * that could not finish inside the pass kept its old success, so it was first
+ * again the next night, used up the pass again, and the mailbox behind it was
+ * "not reached" every night from then on -- the starvation the ordering was
+ * written to prevent, moved rather than removed.
+ */
+describe("a mailbox that uses up the pass", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await makeMailbox(HUNG);
+		await makeMailbox(FINE);
+	});
+
+	const night = (day: number) =>
+		new Date(`2026-09-${String(day).padStart(2, "0")}T18:00:00.000Z`);
+
+	/** One night on which HUNG's turn lasts until the pass is out of time. */
+	async function passWithHang(now: Date) {
+		const order: string[] = [];
+		const summary = await runScheduledBackups(
+			nightOfTheHang().env,
+			now,
+			async (p) => {
+				if (p.messages === 0) order.push(p.mailbox);
+			},
+			{ deadline: Date.now() + 1500, callLimitMs: 60_000 },
+		);
+		return { order, summary };
+	}
+
+	it("does not keep the mailbox behind it from its turn", async () => {
+		// FINE has a backup and HUNG has never had one, so HUNG is the more
+		// overdue of the two and goes first -- and takes the whole pass.
+		await runScheduledBackups(nightOfTheHang().env, night(20), undefined, {
+			callLimitMs: 200,
+		});
+		expect(await archivesOf(FINE)).toHaveLength(1);
+
+		const first = await passWithHang(night(21));
+		expect(first.order).toEqual([HUNG]);
+		expect(first.summary).toMatchObject({ ran: 0, failed: 2 });
+
+		// A save of HUNG's backup settings in between -- the section a save
+		// replaces -- keeps what the pass wrote about it.
+		const saved = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${HUNG}`,
+			{
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					settings: {
+						autoBackup: { enabled: true, frequency: "daily", keep: 5 },
+					},
+				}),
+			},
+		);
+		expect(saved.status).toBe(200);
+
+		// HUNG has had its turn and FINE has not: FINE goes first.
+		const second = await passWithHang(night(22));
+		expect(second.order[0]).toBe(FINE);
+		expect(await archivesOf(FINE)).toHaveLength(2);
+	});
+});
+
 describe("the record of earlier nights", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();

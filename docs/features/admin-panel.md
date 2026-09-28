@@ -114,7 +114,8 @@ nightly run at fifteen minutes, so each pass has a deadline of its own inside
 that, and no single step may wait more than a minute: a mailbox whose storage
 stops answering fails on its own, with the reason on that mailbox's backup
 settings, and the other mailboxes and the purge still run. A mailbox not
-reached in time is first in line the next night.
+reached in time is first in line the next night, ahead of one that had its
+turn and did not finish.
 
 ### Leftover attachments
 

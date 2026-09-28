@@ -270,10 +270,14 @@ are still checked, by the `tsc` that runs before the worker tests.
   Three things came out of it, all of which a rewrite could quietly undo:
   `backup-writer.ts` reads messages a page at a time (one Durable Object round
   trip per message was over 1500 per invocation, plus one R2 read each);
-  `backup-run.ts` takes the **most overdue mailbox first**, so a mailbox missed
-  tonight is first tomorrow rather than never; and the pass reports progress as
+  `backup-run.ts` takes the **mailbox whose turn is longest overdue first** --
+  by when its backup was last *begun*, not last succeeded, so a mailbox missed
+  tonight is first tomorrow rather than never, and one too big to finish in
+  the pass cannot take the front every night and starve the rest (it did,
+  once the pass had a deadline); and the pass reports progress as
   it goes into `MaintenanceRecord.backupProgress`, which is the only thing a
-  killed run leaves behind. `backup-pass-progress.test.ts` holds all three.
+  killed run leaves behind. `backup-pass-progress.test.ts` holds all three,
+  and `nightly-limits.test.ts` the mailbox that takes the whole pass.
   It was cut off again on 2026-09-22, differently: `exceededWallTime` at
   899968 ms with 716 ms of CPU -- fourteen minutes waiting on one call that
   never answered. Both mailboxes lost that night's archive, each left an

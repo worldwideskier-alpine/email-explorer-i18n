@@ -26,8 +26,7 @@ import type { Env } from "./types";
  * `lastRunAt` moves only on success. It is what decides the next run is due,
  * and moving it on a failure put a weekly or monthly backup off for the whole
  * interval after one transient error; a failed mailbox is due again the next
- * night. It is also what orders the pass, most overdue first, so the one that
- * failed goes to the front.
+ * night. The order of the pass is not taken from it: see mostOverdueFirst.
  */
 async function recordResult(
 	env: Env,
@@ -60,7 +59,7 @@ export interface BackupProgress {
 }
 
 /**
- * The most overdue first.
+ * The one whose turn is longest overdue first.
  *
  * The order used to be whatever `listMailboxes` returned, which is fine only
  * while every mailbox gets its turn. When an invocation stops finishing, it
@@ -69,18 +68,45 @@ export interface BackupProgress {
  * are never backed up again, silently, while their settings screen goes on
  * showing the last time they were.
  *
- * Sorting by when each last ran makes that self-correcting: a mailbox missed
- * tonight is at the front tomorrow. Never-run sorts first, because it has been
- * waiting longest of all.
+ * Sorting by when each last *succeeded* did not fix that; it moved it. A
+ * mailbox too big to finish inside the pass keeps its old success time, so it
+ * was first again every night, used the whole budget again, and every mailbox
+ * behind it was "not reached" for good. So the order is by when each was last
+ * *begun*: one that had its turn tonight, however it ended, goes behind one
+ * that did not get a turn at all. Ties -- both begun the same night, or
+ * neither ever -- go to the one whose last success is older. Never begun and
+ * never succeeded sorts first, having waited longest of all; a mailbox from
+ * before the attempt was recorded counts from its last success.
  */
 function mostOverdueFirst(
 	mailboxes: Awaited<ReturnType<typeof listMailboxes>>,
 ): typeof mailboxes {
+	// ISO-8601 UTC sorts correctly as text, and "" sorts before all of it.
+	const byText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 	return [...mailboxes].sort((a, b) => {
-		const at = a.settings.autoBackup?.lastRunAt ?? "";
-		const bt = b.settings.autoBackup?.lastRunAt ?? "";
-		// ISO-8601 UTC sorts correctly as text, and "" sorts before all of it.
-		return at < bt ? -1 : at > bt ? 1 : 0;
+		const ab = a.settings.autoBackup;
+		const bb = b.settings.autoBackup;
+		return (
+			byText(
+				ab?.lastAttemptAt ?? ab?.lastRunAt ?? "",
+				bb?.lastAttemptAt ?? bb?.lastRunAt ?? "",
+			) || byText(ab?.lastRunAt ?? "", bb?.lastRunAt ?? "")
+		);
+	});
+}
+
+/**
+ * Notes that this mailbox's turn has begun, before anything is written. It
+ * goes first because an invocation that is cut off records nothing after it,
+ * and a turn that left no trace would put this mailbox at the front again.
+ */
+async function recordAttempt(
+	env: Env,
+	mailboxId: string,
+	at: string,
+): Promise<void> {
+	await updateMailboxSettings(env, mailboxId, (settings) => {
+		settings.autoBackup = { ...settings.autoBackup, lastAttemptAt: at };
 	});
 }
 
@@ -136,6 +162,10 @@ export async function runScheduledBackups(
 			).catch(() => {});
 			continue;
 		}
+		await call(
+			recordAttempt(env, mailbox.id, now.toISOString()),
+			"recording the attempt",
+		).catch(() => {});
 		if (onProgress) {
 			await call(onProgress(where(0)), "recording progress").catch(() => {});
 		}

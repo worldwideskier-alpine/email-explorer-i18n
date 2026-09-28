@@ -173,6 +173,7 @@ function mergeAutoBackup(
 		),
 		keep: Math.max(previousKeep, requestedKeep),
 		lastRunAt: existing?.lastRunAt,
+		lastAttemptAt: existing?.lastAttemptAt,
 		lastResult: existing?.lastResult,
 	};
 }
@@ -213,7 +214,9 @@ export type SenderVerdict = "spam" | "inbox";
  * marking an email as spam or not-spam. Deterministic and free (no API
  * call): once a sender has been corrected once, every future message from
  * that exact address is routed straight to the corrected folder, skipping
- * the SPF/DKIM/DMARC check and the Claude second-stage classifier entirely.
+ * the SPF/DKIM/DMARC check and the Claude second-stage classifier entirely --
+ * except that "not spam" does not outrank a DMARC fail, which is what a
+ * forgery of the allowed address looks like (see the email handler).
  */
 function normalizeAddress(address: string): string {
 	return address.trim().toLowerCase();
