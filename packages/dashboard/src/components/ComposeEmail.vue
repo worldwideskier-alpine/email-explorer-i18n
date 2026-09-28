@@ -168,7 +168,7 @@
           </button>
           <button
             type="submit"
-            :disabled="isLoading"
+            :disabled="isLoading || isReadingAttachments"
             class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <svg v-if="!isLoading" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -541,6 +541,11 @@ const saveDraft = async () => {
 };
 
 const send = async () => {
+	// Not while a picked file is still being read: its encoding lands in
+	// `attachments` only when the read finishes, and a send before then went
+	// out without it and said "sent". The button waits too; this is the same
+	// for a form submitted from the keyboard.
+	if (isReadingAttachments.value) return;
 	error.value = null;
 	if (!currentMailbox.value) {
 		error.value = () => t("compose.noMailboxSelected");
