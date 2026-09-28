@@ -146,8 +146,8 @@ function serialize(node: Node, whitespace: Whitespace = "normal"): string {
 		// Only the characters CSS actually collapses, though. This used to use
 		// \s, which in JavaScript also matches the ideographic space U+3000 and
 		// the non-breaking space -- neither of which a browser collapses, and
-		// both of which are content. Folding them turned "魚田　様" into
-		// "魚田 様" and flattened every column a sender had lined up.
+		// both of which are content. Folding them turned "山田　様" into
+		// "山田 様" and flattened every column a sender had lined up.
 		return text.replace(COLLAPSIBLE, " ");
 	}
 	if (node.nodeType !== Node.ELEMENT_NODE) return "";

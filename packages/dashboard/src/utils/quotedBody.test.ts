@@ -18,17 +18,17 @@ describe("a plain-text message being quoted", () => {
 	 */
 	it("does not hand a <pre> to the editor", () => {
 		expect(
-			toQuotableHtml(asStored("魚田　様\n\nお世話になります。")),
+			toQuotableHtml(asStored("山田　様\n\nお世話になります。")),
 		).not.toContain("<pre");
 	});
 
 	it("becomes one paragraph per blank-line-separated block", () => {
 		expect(
 			toQuotableHtml(
-				asStored("魚田　様\n\nお世話になります。\n供述書をお送りください。"),
+				asStored("山田　様\n\nお世話になります。\n資料をお送りください。"),
 			),
 		).toBe(
-			"<p>魚田　様</p><p>お世話になります。<br>供述書をお送りください。</p>",
+			"<p>山田　様</p><p>お世話になります。<br>資料をお送りください。</p>",
 		);
 	});
 

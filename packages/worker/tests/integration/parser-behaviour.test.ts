@@ -251,7 +251,7 @@ describe("what the parser hands the ingest path", () => {
 				FOLDED_PASSING_AUTH,
 				"Content-Type: text/plain; charset=UTF-8",
 				"",
-				"魚田　様",
+				"山田　様",
 			]),
 		);
 		const stored = (await inbox()).find((e) => e.subject === "Encoded name");
@@ -264,6 +264,6 @@ describe("what the parser hands the ingest path", () => {
 		).json<{ body: string }>();
 		// The ideographic space is content, and the <pre> wrapper is what the
 		// reply composer later opens back out.
-		expect(full.body).toContain("魚田　様");
+		expect(full.body).toContain("山田　様");
 	});
 });

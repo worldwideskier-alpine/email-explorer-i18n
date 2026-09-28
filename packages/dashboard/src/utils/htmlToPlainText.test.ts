@@ -167,18 +167,18 @@ describe("preformatted text", () => {
 	 * switched the composer over.
 	 */
 	const PLAIN_TEXT_EMAIL =
-		'<pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">魚田　様\n\nお世話になります。\n供述書をお送りください。</pre>';
+		'<pre style="white-space: pre-wrap; font-family: inherit; margin: 0;">山田　様\n\nお世話になります。\n資料をお送りください。</pre>';
 
 	it("keeps the newlines inside a pre-wrap block", () => {
 		expect(htmlToPlainText(PLAIN_TEXT_EMAIL)).toBe(
-			"魚田　様\n\nお世話になります。\n供述書をお送りください。",
+			"山田　様\n\nお世話になります。\n資料をお送りください。",
 		);
 	});
 
 	it("keeps them when the block is quoted in a reply", () => {
 		expect(
 			htmlToPlainText(`<blockquote>${PLAIN_TEXT_EMAIL}</blockquote>`),
-		).toBe("> 魚田　様\n>\n> お世話になります。\n> 供述書をお送りください。");
+		).toBe("> 山田　様\n>\n> お世話になります。\n> 資料をお送りください。");
 	});
 
 	it("keeps the newlines in a bare <pre> with no style attribute", () => {
@@ -223,7 +223,7 @@ describe("space that is content, not layout", () => {
 	// JavaScript's \s covers these; CSS's white-space collapsing does not. A
 	// quoted Japanese letter loses its shape when they are folded.
 	it("keeps an ideographic space", () => {
-		expect(htmlToPlainText("<p>魚田　様</p>")).toBe("魚田　様");
+		expect(htmlToPlainText("<p>山田　様</p>")).toBe("山田　様");
 	});
 
 	it("keeps a run of ideographic spaces used to line a column up", () => {
