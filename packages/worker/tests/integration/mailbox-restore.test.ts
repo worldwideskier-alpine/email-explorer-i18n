@@ -78,10 +78,100 @@ describe("Restoring mail into a mailbox", () => {
 		await createDummyMailbox();
 	});
 
-	it("keeps the id the backup recorded", async () => {
+	/**
+	 * Not the recorded id itself, but one made from it and this mailbox --
+	 * the same one every time. R2 keys carry a message id and no mailbox, so
+	 * a message that kept its id shared every key under it with the original
+	 * wherever that still was.
+	 */
+	it("restores under an id of this mailbox's own, made from the recorded one", async () => {
 		const res = await importEmail({ id: ID.kept1 });
 		expect(res.status).toBe(201);
-		expect((await res.json<{ id: string }>()).id).toBe(ID.kept1);
+		const { id } = await res.json<{ id: string }>();
+		expect(id).not.toBe(ID.kept1);
+		expect(id).toMatch(
+			/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+		);
+		expect(await idsInMailbox()).toEqual([id]);
+	});
+
+	/**
+	 * The case that was not caught: a sent message with no attachments
+	 * stores nothing in R2, so its id looked unused to a restore into
+	 * another mailbox -- which then wrote `raw/{id}.eml` for it, and the
+	 * first mailbox's routes read, overwrote and deleted that copy by its id.
+	 */
+	it("writes nothing under the id another mailbox's message has", async () => {
+		// Another mailbox's sent message, with no attachments: nothing about
+		// it is stored in R2.
+		await env.MAILBOX.get(
+			env.MAILBOX.idFromName("elsewhere@example.com"),
+		).createEmail(
+			"sent",
+			{
+				id: ID.shared,
+				subject: "Sent from elsewhere",
+				sender: "elsewhere@example.com",
+				recipient: "someone@example.org",
+				date: "2026-08-01T10:00:00.000Z",
+				read: true,
+				starred: false,
+				body: "<p>hi</p>",
+			},
+			[],
+		);
+
+		const res = await importEmail({ id: ID.shared });
+		expect(res.status).toBe(201);
+		const { id } = await res.json<{ id: string }>();
+		expect(id).not.toBe(ID.shared);
+		expect(await env.BUCKET.head(`raw/${ID.shared}.eml`)).toBeNull();
+		expect(await env.BUCKET.head(`raw/${id}.eml`)).not.toBeNull();
+	});
+
+	// One backup restored into two mailboxes: each copy gets an id of its
+	// own, so neither's keys are the other's.
+	it("gives the same recorded id a different id in another mailbox", async () => {
+		const second = "second@example.com";
+		const made = await authenticatedFetch(
+			"http://local.test/api/v1/mailboxes",
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email: second, name: second }),
+			},
+		);
+		expect(made.status).toBe(201);
+
+		const here = await importEmail({ id: ID.kept1 });
+		const there = await authenticatedFetch(
+			`http://local.test/api/v1/admin/mailboxes/${second}/import`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					rawEmailBase64: rawEmail("Subject"),
+					id: ID.kept1,
+				}),
+			},
+		);
+		expect(there.status).toBe(201);
+		expect((await there.json<{ id: string }>()).id).not.toBe(
+			(await here.json<{ id: string }>()).id,
+		);
+	});
+
+	// And a message still here under the id it was exported with -- the
+	// original, or one restored before ids were made per mailbox -- is not
+	// restored beside itself.
+	it("finds a message already here under the recorded id", async () => {
+		const first = await importEmail({});
+		const { id: here } = await first.json<{ id: string }>();
+
+		const again = await importEmail({ id: here });
+		expect(again.status).toBe(200);
+		expect((await again.json<{ status: string }>()).status).toBe("duplicate");
+		expect(await idsInMailbox()).toEqual([here]);
 	});
 
 	// The whole point of carrying the id: a restore that is run twice, or
@@ -93,7 +183,7 @@ describe("Restoring mail into a mailbox", () => {
 		expect(again.status).toBe(200);
 		expect((await again.json<{ status: string }>()).status).toBe("duplicate");
 		// Said so, and meant it: one message, not two.
-		expect(await idsInMailbox()).toEqual([ID.kept2]);
+		expect(await idsInMailbox()).toHaveLength(1);
 	});
 
 	/**
@@ -110,6 +200,11 @@ describe("Restoring mail into a mailbox", () => {
 		const { id } = await res.json<{ id: string }>();
 		expect(id).not.toBe(ID.shared);
 		expect(id).toMatch(/^[0-9a-f-]{36}$/);
+		expect(
+			await (
+				await env.BUCKET.get(`attachments/${ID.shared}/a/file.pdf`)
+			)?.text(),
+		).toBe("theirs");
 	});
 
 	/** An id with a "/" in it names keys in somebody else's space. */
@@ -134,8 +229,9 @@ describe("Restoring mail into a mailbox", () => {
 		// "Sent" is the display name; the row holds the id, "sent".
 		const res = await importEmail({ folder: "Sent", id: ID.sent });
 		expect(res.status).toBe(201);
+		const { id } = await res.json<{ id: string }>();
 
-		const email = await (await getEmail(ID.sent)).json<{
+		const email = await (await getEmail(id)).json<{
 			folder_id: string;
 		}>();
 		expect(email.folder_id).toBe("sent");
@@ -148,9 +244,10 @@ describe("Restoring mail into a mailbox", () => {
 
 		const res = await importEmail({ folder: "領収書類", id: ID.custom });
 		expect(res.status).toBe(201);
+		const { id } = await res.json<{ id: string }>();
 
 		expect(await listFolders()).toContain("領収書類");
-		const email = await (await getEmail(ID.custom)).json<{
+		const email = await (await getEmail(id)).json<{
 			folder_id: string;
 		}>();
 		const folders = await authenticatedFetch(
@@ -171,8 +268,13 @@ describe("Restoring mail into a mailbox", () => {
 	});
 
 	it("puts read and starred back", async () => {
-		await importEmail({ id: ID.flagged, read: true, starred: true });
-		const email = await (await getEmail(ID.flagged)).json<{
+		const res = await importEmail({
+			id: ID.flagged,
+			read: true,
+			starred: true,
+		});
+		const { id } = await res.json<{ id: string }>();
+		const email = await (await getEmail(id)).json<{
 			read: boolean;
 			starred: boolean;
 		}>();
@@ -181,8 +283,12 @@ describe("Restoring mail into a mailbox", () => {
 	});
 
 	it("puts the original date back rather than stamping it now", async () => {
-		await importEmail({ id: ID.dated, date: "2026-08-01T10:00:00.000Z" });
-		const email = await (await getEmail(ID.dated)).json<{ date: string }>();
+		const res = await importEmail({
+			id: ID.dated,
+			date: "2026-08-01T10:00:00.000Z",
+		});
+		const { id } = await res.json<{ id: string }>();
+		const email = await (await getEmail(id)).json<{ date: string }>();
 		expect(email.date).toBe("2026-08-01T10:00:00.000Z");
 	});
 

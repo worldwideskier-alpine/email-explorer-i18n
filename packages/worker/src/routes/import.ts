@@ -23,8 +23,10 @@ const ImportEmailRequestSchema = z.object({
 	starred: z.boolean().optional(),
 	/**
 	 * The id this message had when it was exported. Restoring the same file
-	 * twice should not double the mailbox, so an id already present here is
-	 * reported back as a duplicate and nothing is written.
+	 * twice should not double the mailbox, so a message already restored
+	 * from it -- or still here under it -- is reported back as a duplicate
+	 * and nothing is written. The message is restored under an id made from
+	 * this one and the mailbox, never this one itself; see handle().
 	 */
 	id: z.string().optional(),
 });
@@ -52,6 +54,26 @@ const ErrorResponseSchema = z.object({
 /** The shape of an id this application mints (crypto.randomUUID). */
 const MINTED_ID =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The id a message recorded as `recordedId` is restored under in `mailboxId`:
+ * a digest of the two, shaped like the ids this mints. See handle().
+ */
+async function restoredIdFor(
+	mailboxId: string,
+	recordedId: string,
+): Promise<string> {
+	const digest = new Uint8Array(
+		await crypto.subtle.digest(
+			"SHA-256",
+			new TextEncoder().encode(`${mailboxId}\n${recordedId.toLowerCase()}`),
+		),
+	);
+	const hex = [...digest.slice(0, 16)]
+		.map((b) => b.toString(16).padStart(2, "0"))
+		.join("");
+	return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+}
 
 export class PostImportEmail extends OpenAPIRoute {
 	schema = {
@@ -154,30 +176,33 @@ export class PostImportEmail extends OpenAPIRoute {
 		const ns = c.env.MAILBOX;
 		const stub = ns.get(ns.idFromName(mailboxId));
 
-		// Already here, so the caller is replaying a backup this mailbox has
-		// already taken back. Saying so beats writing a second copy.
+		// Already here under the id it was exported with: the original is
+		// still in this mailbox, or a restore from before ids were made per
+		// mailbox took it back. Saying so beats writing a second copy.
 		if (requestedId && (await stub.getEmail(requestedId))) {
 			return c.json({ id: requestedId, status: "duplicate" }, 200);
 		}
 
-		// The id is only reused when nothing else owns it. R2 keys are not
-		// scoped per mailbox, so restoring one mailbox's backup into a
-		// different mailbox would otherwise overwrite the raw copy the
-		// original still points at. Attachments count as much as the raw
-		// copy: sent mail has no raw copy at all, and a message restored under
-		// its id shared the original's attachments -- deleting either deleted
-		// both. And it has to be an id of the kind this mints; one with a "/"
-		// in it would name keys in somebody else's space.
-		const idIsFree =
-			requestedId !== undefined &&
-			MINTED_ID.test(requestedId) &&
-			!(await c.env.BUCKET.head(`raw/${requestedId}.eml`)) &&
-			(
-				await c.env.BUCKET.list({
-					prefix: `attachments/${requestedId}/`,
-					limit: 1,
-				})
-			).objects.length === 0;
+		// Never the recorded id itself, but one made from it and this
+		// mailbox. R2 keys carry a message id and no mailbox, so a restored
+		// message that kept its id shared every key under it with the
+		// original -- and "nothing is stored under this id yet" could not
+		// tell a sent message without attachments, which stores nothing,
+		// from an id nobody uses. Restoring one mailbox's backup into another
+		// then wrote `raw/{id}.eml` for an id the first mailbox's row still
+		// named, and deleting, reading or purging there reached the copy
+		// here. An id made from the pair is this mailbox's alone, and the
+		// same every time, so feeding the same file in twice still finds
+		// what the first pass wrote. It also has to be an id of the kind this
+		// mints: one with a "/" in it would have named keys in somebody
+		// else's space.
+		const restoredId =
+			requestedId !== undefined && MINTED_ID.test(requestedId)
+				? await restoredIdFor(mailboxId, requestedId)
+				: undefined;
+		if (restoredId && (await stub.getEmail(restoredId))) {
+			return c.json({ id: restoredId, status: "duplicate" }, 200);
+		}
 
 		const parser = new PostalMime();
 		const parsedEmail = await parser.parse(rawEmail);
@@ -192,7 +217,7 @@ export class PostImportEmail extends OpenAPIRoute {
 				read,
 				starred,
 				rawEmail,
-				id: idIsFree ? requestedId : undefined,
+				id: restoredId,
 			},
 		);
 
