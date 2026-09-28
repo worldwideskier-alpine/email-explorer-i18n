@@ -111,8 +111,16 @@ jobs:
         run: |
           host="${PRODUCTION_URL#https://}"
           echo "::add-mask::${host%%/*}"
+      # wrangler prints the address it deployed to, and a fork that has not
+      # set PRODUCTION_URL has nothing masking it -- so its address went
+      # into a public log before its root existed, and whoever read that log
+      # and registered first became root. Filtered by the shape of the
+      # address, as the version check below filters account addresses.
       - name: Deploy Worker
-        run: pnpm run deploy-dev-worker
+        run: |
+          set -o pipefail
+          pnpm run deploy-dev-worker 2>&1 \
+            | sed -E 's/[A-Za-z0-9.-]+\.workers\.dev/(address withheld)/g'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

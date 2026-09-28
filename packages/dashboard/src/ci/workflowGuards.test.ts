@@ -106,6 +106,32 @@ describe("the deploy workflow", () => {
 		}
 	});
 
+	/**
+	 * wrangler prints the address it deployed to. A fork that has not set
+	 * PRODUCTION_URL has nothing masking it, and the first account to register
+	 * becomes root -- so a public log carrying the address, before its owner
+	 * had registered, was an invitation to take the deployment. The output is
+	 * filtered by the address's shape, and a failed deploy still fails.
+	 */
+	it("keeps the workers.dev address out of the deploy step's output", () => {
+		const job = deploy?.slice(deploy.indexOf("\n  deploy:")) ?? "";
+		const step =
+			job
+				.split(/\n {6}- /)
+				.find((one) => one.startsWith("name: Deploy Worker")) ?? "";
+		expect(step, "the Deploy Worker step").toContain("deploy-dev-worker");
+		expect(step).toContain("set -o pipefail");
+		const filter = /sed -E '(s\/[^']+)'/.exec(step)?.[1] ?? "";
+		const [, pattern, replacement] = filter.split("/");
+		const printed = "  https://my-worker.my-subdomain.workers.dev\n";
+		expect(
+			printed.replace(
+				new RegExp(pattern.replaceAll("\\.", "\\."), "g"),
+				replacement,
+			),
+		).not.toContain("workers.dev");
+	});
+
 	/** A tag can be moved to code nobody here has read; a commit cannot. */
 	it("runs actions pinned to a commit", () => {
 		for (const [path, source] of Object.entries(workflows)) {

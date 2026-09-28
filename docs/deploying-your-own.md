@@ -60,7 +60,7 @@ prints when it finishes.
 
 | Secret | What it is |
 |---|---|
-| `PRODUCTION_URL` | Where your deployment answers, e.g. `https://your-worker.your-subdomain.workers.dev`. The deploy then asks it what it is serving and fails the run if that is not the build it just made. Without it that check is skipped. |
+| `PRODUCTION_URL` | Where your deployment answers, e.g. `https://your-worker.your-subdomain.workers.dev`. The deploy then asks it what it is serving and fails the run if that is not the build it just made. Without it that check is skipped. The `workers.dev` address is kept out of the log either way; set this as well if you serve the Worker on a domain of your own, which the log would otherwise show. |
 | `ACCOUNT_RECOVERY_FROM` | Only if you want the password-reset sender fixed by the deployment rather than set on `/root` (step 7). Set it here rather than as a variable: a variable is printed in the deploy log, in every step's environment and in the bindings wrangler lists. If both exist, this one is used. |
 
 ## 5. Set the repository variables
@@ -110,6 +110,12 @@ the difference is otherwise invisible from here. It waits up to about a
 minute for Cloudflare to start serving the new build before calling it wrong.
 
 ## 7. Register, and make the accounts
+
+**Do this as soon as the first deploy has finished.** Until an account
+exists, whoever opens the address first and registers becomes root, and
+root is not something you can take back afterwards from the site. The
+deploy log withholds the `workers.dev` address, but that address is your
+Worker's name followed by your account's subdomain, and both can be guessed.
 
 Open your Worker's URL. The **first** account to register becomes root, and
 registration closes behind it. Root owns no mailbox: on `/root` it makes
