@@ -185,6 +185,68 @@ describe("the settings screen", () => {
 	});
 });
 
+/**
+ * Turning either nightly job off. Each section's save sat inside the half
+ * shown only while the switch was on, so turning the switch off hid the one
+ * button that could store "off": the screen showed it off, nothing was sent,
+ * and the purge went on deleting spam every night.
+ */
+describe("turning a nightly job off", () => {
+	/** The settings section whose heading reads `heading`. */
+	const sectionOf = (heading: string) =>
+		[...host.querySelectorAll("div.border-t")].find((d) =>
+			d.querySelector("h2")?.textContent?.includes(heading),
+		) as HTMLElement;
+
+	async function switchOffAndSave(heading: string) {
+		const section = sectionOf(heading);
+		expect(section, `the ${heading} section`).toBeTruthy();
+		const toggle = section.querySelector(
+			'input[type="checkbox"]',
+		) as HTMLInputElement;
+		expect(toggle.checked, "stored as on").toBe(true);
+		toggle.click();
+		await settle();
+		expect(toggle.checked).toBe(false);
+		const save = buttonIn(section, "Save");
+		expect(save, "a save button while the switch is off").toBeTruthy();
+		save.click();
+		await settle();
+	}
+
+	beforeEach(() => {
+		updateMailbox.mockImplementation(async (_id: string, sent: object) => ({
+			data: {
+				...structuredClone(stored),
+				settings: { ...stored.settings, ...sent },
+			},
+		}));
+	});
+
+	afterEach(() => {
+		stored.settings.autoBackup.enabled = false;
+	});
+
+	it("stores the spam purge as off", async () => {
+		await mountSettings();
+		await switchOffAndSave("Automatic spam deletion");
+		expect(updateMailbox).toHaveBeenCalledOnce();
+		expect(updateMailbox.mock.calls[0][1]).toMatchObject({
+			spamRetention: { enabled: false },
+		});
+	});
+
+	it("stores automatic backup as off", async () => {
+		stored.settings.autoBackup.enabled = true;
+		await mountSettings();
+		await switchOffAndSave("Automatic backup");
+		expect(updateMailbox).toHaveBeenCalledOnce();
+		expect(updateMailbox.mock.calls[0][1]).toMatchObject({
+			autoBackup: { enabled: false },
+		});
+	});
+});
+
 /** The spam purge section's own save button: the one beside its field. */
 async function saveSpamPurge() {
 	const field = host.querySelector("#spamPurgeDays");

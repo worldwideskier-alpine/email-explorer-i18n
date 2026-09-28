@@ -154,8 +154,11 @@
           </label>
         </div>
 
-        <div v-if="spamPurgeEnabled" class="mt-4 space-y-4">
-          <div>
+        <!-- The save stands outside the enabled half: inside it, turning the
+             switch off took the only button that stores "off" away with it,
+             and the purge went on deleting every night. -->
+        <div class="mt-4 space-y-4">
+          <div v-if="spamPurgeEnabled">
             <label for="spamPurgeDays" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("settings.spamPurgeDays") }}</label>
             <input
               id="spamPurgeDays"
@@ -167,7 +170,7 @@
             />
           </div>
 
-          <p v-if="!autoBackupEnabled" class="text-sm text-amber-700 dark:text-amber-400">{{ t("settings.spamPurgeNoBackupNote") }}</p>
+          <p v-if="spamPurgeEnabled && !autoBackupEnabled" class="text-sm text-amber-700 dark:text-amber-400">{{ t("settings.spamPurgeNoBackupNote") }}</p>
 
           <button
             type="button"
@@ -180,7 +183,7 @@
           <p v-if="spamPurgeMessage" class="text-sm text-green-600 dark:text-green-400">{{ spamPurgeMessage }}</p>
           <p v-if="spamPurgeError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ spamPurgeError }}</p>
 
-          <p class="text-sm" :class="spamPurgeLastOk === false ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'">
+          <p v-if="spamPurgeEnabled" class="text-sm" :class="spamPurgeLastOk === false ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'">
             {{ spamPurgeLastLine }}
           </p>
         </div>
@@ -214,35 +217,38 @@
           </label>
         </div>
 
-        <div v-if="autoBackupEnabled" class="mt-4 space-y-4">
-          <div class="flex flex-wrap gap-4">
-            <div>
-              <label for="backupFrequency" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("settings.autoBackupFrequency") }}</label>
-              <select
-                id="backupFrequency"
-                v-model="autoBackupFrequency"
-                class="mt-1 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
-              >
-                <option value="daily">{{ t("settings.autoBackupDaily") }}</option>
-                <option value="weekly">{{ t("settings.autoBackupWeekly") }}</option>
-                <option value="monthly">{{ t("settings.autoBackupMonthly") }}</option>
-              </select>
+        <!-- Save outside the enabled half, as for the spam purge above. -->
+        <div class="mt-4 space-y-4">
+          <template v-if="autoBackupEnabled">
+            <div class="flex flex-wrap gap-4">
+              <div>
+                <label for="backupFrequency" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("settings.autoBackupFrequency") }}</label>
+                <select
+                  id="backupFrequency"
+                  v-model="autoBackupFrequency"
+                  class="mt-1 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
+                >
+                  <option value="daily">{{ t("settings.autoBackupDaily") }}</option>
+                  <option value="weekly">{{ t("settings.autoBackupWeekly") }}</option>
+                  <option value="monthly">{{ t("settings.autoBackupMonthly") }}</option>
+                </select>
+              </div>
+              <div>
+                <label for="backupKeep" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("settings.autoBackupKeep") }}</label>
+                <input
+                  id="backupKeep"
+                  type="number"
+                  v-model.number="autoBackupKeep"
+                  :min="autoBackupKeepFloor"
+                  max="365"
+                  class="mt-1 w-28 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
+                />
+              </div>
             </div>
-            <div>
-              <label for="backupKeep" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("settings.autoBackupKeep") }}</label>
-              <input
-                id="backupKeep"
-                type="number"
-                v-model.number="autoBackupKeep"
-                :min="autoBackupKeepFloor"
-                max="365"
-                class="mt-1 w-28 bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm sm:text-sm p-2"
-              />
-            </div>
-          </div>
 
-          <p class="text-sm text-amber-700 dark:text-amber-400">{{ t("settings.autoBackupKeepNote", { keep: autoBackupKeepFloor }) }}</p>
-          <p class="text-sm text-gray-600 dark:text-gray-400">{{ t("settings.autoBackupWindowNote") }}</p>
+            <p class="text-sm text-amber-700 dark:text-amber-400">{{ t("settings.autoBackupKeepNote", { keep: autoBackupKeepFloor }) }}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ t("settings.autoBackupWindowNote") }}</p>
+          </template>
 
           <button
             type="button"
@@ -255,11 +261,11 @@
           <p v-if="autoBackupMessage" class="text-sm text-green-600 dark:text-green-400">{{ autoBackupMessage }}</p>
           <p v-if="autoBackupError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ autoBackupError }}</p>
 
-          <p class="text-sm" :class="autoBackupLastOk === false ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'">
+          <p v-if="autoBackupEnabled" class="text-sm" :class="autoBackupLastOk === false ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'">
             {{ autoBackupLastLine }}
           </p>
 
-          <div v-if="backups.length">
+          <div v-if="autoBackupEnabled && backups.length">
             <h3 class="text-base font-medium text-gray-900 dark:text-white mb-2">{{ t("settings.autoBackupStored") }}</h3>
             <ul class="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg">
               <li v-for="backup in backups" :key="backup.name" class="flex items-center justify-between gap-4 px-4 py-2">
