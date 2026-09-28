@@ -370,6 +370,51 @@ describe("what would otherwise escape both readings", () => {
 	});
 });
 
+/**
+ * The page's referrer policy is the one in force. The frame is this page's
+ * origin, so its requests name this page -- the open message's address, with
+ * the mailbox in it -- and a message could lift the policy that keeps that
+ * at home: measured, both of these sent it to the sender's server.
+ */
+describe("what goes with a request", () => {
+	const parsed = (body: string, options = {}) =>
+		new DOMParser().parseFromString(prepareFrame(body, options), "text/html");
+
+	for (const blockRemoteContent of [false, true]) {
+		const where = blockRemoteContent ? "in the spam folder" : "in the inbox";
+
+		it(`takes a message's own referrer policy away ${where}`, () => {
+			const doc = parsed(
+				`<img src="https://tracker.invalid/p.gif" referrerpolicy="unsafe-url">
+				 <a href="https://example.org/" referrerPolicy="unsafe-url">x</a>
+				 <link rel="stylesheet" href="https://example.org/a.css" referrerpolicy="origin">`,
+				{ blockRemoteContent },
+			);
+			expect(doc.querySelectorAll("[referrerpolicy]")).toHaveLength(0);
+		});
+
+		it(`takes a message's referrer meta away ${where}`, () => {
+			const doc = parsed(
+				`<html><head><meta name="referrer" content="unsafe-url"><meta name=" Referrer " content="origin"></head><body>x</body></html>`,
+				{ blockRemoteContent },
+			);
+			expect(
+				Array.from(doc.querySelectorAll("meta[name]")).filter((meta) =>
+					/referrer/i.test(meta.getAttribute("name") ?? ""),
+				),
+			).toHaveLength(0);
+		});
+	}
+
+	it("leaves every other meta and attribute alone", () => {
+		const doc = parsed(
+			`<meta name="viewport" content="width=device-width"><img src="https://example.org/a.png" alt="a">`,
+		);
+		expect(doc.querySelector('meta[name="viewport"]')).not.toBeNull();
+		expect(doc.querySelector("img")?.getAttribute("alt")).toBe("a");
+	});
+});
+
 describe("the last resort", () => {
 	/**
 	 * Markup that will not settle is shown as its words and nothing else.

@@ -5,7 +5,11 @@ import App from "./App.vue";
 import { i18n, initLocale } from "./i18n";
 import router from "./router";
 import { watchForANewBuild } from "./services/appUpdate";
+import { guardReferrerPolicy } from "./utils/referrerGuard";
 import "./assets/main.css";
+
+// Before anything parses a message: see referrerGuard.ts.
+guardReferrerPolicy();
 
 const app = createApp(App);
 

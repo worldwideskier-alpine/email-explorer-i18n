@@ -106,6 +106,34 @@ const SHADOW_ROOT_ATTRIBUTES = ["shadowrootmode", "shadowroot"];
  */
 const ANIMATED_ATTRIBUTES_REFUSED = new Set(["href", "xlink:href", "target"]);
 
+/**
+ * What says how much of this page's address goes with a request.
+ *
+ * The frame is this page's origin (`allow-same-origin`, which the inline
+ * pictures need to reach the API with the reader's session), so its requests
+ * name this page as their referrer, and the page's own `Referrer-Policy:
+ * same-origin` is what keeps that from leaving. A message could set its own:
+ * `referrerpolicy="unsafe-url"` on an image, or `<meta name="referrer">`.
+ * Measured in Chromium, each sent a server of the sender's choosing the full
+ * address of the open message -- `/mailbox/<the mailbox's address>/email/
+ * <its id>` -- where an image without either sent nothing. Taking both out
+ * leaves the page's policy in force, for links as well as fetches.
+ */
+const REFERRER_SAYS_OTHERWISE: readonly FrameRule[] = [
+	{
+		find: (doc) => Array.from(doc.querySelectorAll("[referrerpolicy]")),
+		fix: (element) => element.removeAttribute("referrerpolicy"),
+	},
+	{
+		find: (doc) =>
+			Array.from(doc.querySelectorAll("meta[name]")).filter(
+				(meta) =>
+					meta.getAttribute("name")?.trim().toLowerCase() === "referrer",
+			),
+		fix: (element) => element.remove(),
+	},
+];
+
 /** What no message needs and every other rule here would otherwise miss. */
 const WHAT_BOTH_READINGS_CANNOT_SEE_ALIKE: readonly FrameRule[] = [
 	{
@@ -148,6 +176,7 @@ function rulesFor(options: FrameOptions): {
 	return {
 		before: [
 			...WHAT_BOTH_READINGS_CANNOT_SEE_ALIKE,
+			...REFERRER_SAYS_OTHERWISE,
 			...(options.blockRemoteContent ? REMOTE_CONTENT_RULES : []),
 		],
 		links: [
