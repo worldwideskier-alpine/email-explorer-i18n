@@ -410,9 +410,21 @@ export class PostChangeEmail extends OpenAPIRoute {
 		// must still work when the password has been forgotten.
 		const token = crypto.randomUUID();
 		const expiresAt = Date.now() + 3600000; // 1 hour
+		// Bound to the password and address as they are now, so that
+		// changing either -- a password change, a reset, another address
+		// change -- takes every link issued before it out of use.
+		const stamp = await authDO.emailChangeStamp(session.userId);
+		if (!stamp) {
+			return c.json({ error: "Unauthorized" }, 401);
+		}
 		await c.env.BUCKET.put(
 			`email-change-tokens/${token}.json`,
-			JSON.stringify({ userId: session.userId, newEmail: address, expiresAt }),
+			JSON.stringify({
+				userId: session.userId,
+				newEmail: address,
+				expiresAt,
+				stamp,
+			}),
 			{ customMetadata: { expiresAt: expiresAt.toString() } },
 		);
 
@@ -485,20 +497,29 @@ export class PostConfirmEmailChange extends OpenAPIRoute {
 			userId: string;
 			newEmail: string;
 			expiresAt: number;
+			stamp?: string;
 		}>();
-		if (pending.expiresAt < Date.now()) {
+		// A link from before links were bound to the password has nothing to
+		// check it by, and is treated as the stale link it may be.
+		if (pending.expiresAt < Date.now() || !pending.stamp) {
 			await c.env.BUCKET.delete(key);
 			return c.json({ error: "Invalid or expired token" }, 401);
 		}
 
 		const authDO = getAuthDO(c.env);
-		const applied = await authDO.updateUserEmail(
+		const outcome = await authDO.confirmEmailChange(
 			pending.userId,
 			pending.newEmail,
+			pending.stamp,
 		);
 		await c.env.BUCKET.delete(key);
 
-		if (!applied) {
+		// The login is gone, or its password or address changed after the
+		// link went out: to whoever holds the link, the same as expired.
+		if (outcome === "stale") {
+			return c.json({ error: "Invalid or expired token" }, 401);
+		}
+		if (outcome === "taken") {
 			return c.json({ error: "Email already registered" }, 409);
 		}
 		return c.json({ status: "Sign-in address changed" });

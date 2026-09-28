@@ -194,6 +194,11 @@ are still checked, by the `tsc` that runs before the worker tests.
   not touch. The same holds for root's spare (`PostAccount` with `role:
   "root"`), which is the role for good. `proveCurrentPassword` in
   `routes/auth.ts`, under the account-change limit; `own-logins.test.ts`.
+  Moving a login to another address is confirmed by a mailed link, and the
+  link is bound to the password and address as they were when it went out
+  (`emailChangeStamp`): unbound, a link asked for by someone holding the
+  password survived the owner changing or resetting it, and moved the login
+  to their address anyway. `account-management.test.ts`.
 - **Ending a session ends its push subscription.** A notification carries
   the sender and subject of each new message, so a subscription is bound to
   the session that registered it and delivered to only while that session

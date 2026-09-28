@@ -226,3 +226,95 @@ describe("Changing your sign-in address", () => {
 		expect(res.status).toBe(409);
 	});
 });
+
+/**
+ * A confirmation link outlives nothing that changed after it was sent.
+ *
+ * The link was a bare token, good for an hour whatever happened meanwhile.
+ * Whoever held the password could ask for a change to an address of their
+ * own; the owner changing or resetting the password did nothing to it, and
+ * following the link moved the owner's login to that address -- where
+ * "forgot password" handed over the account.
+ */
+describe("An address-change link issued before a change", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await seedOwner();
+	});
+
+	/** Asks for a change to `to`, and returns the token the mail carried. */
+	async function requestChange(to: string): Promise<string> {
+		const before = new Set(
+			(await env.BUCKET.list({ prefix: "email-change-tokens/" })).objects.map(
+				(o) => o.key,
+			),
+		);
+		const res = await post("/api/v1/auth/change-email", {
+			currentPassword: PASSWORD,
+			newEmail: to,
+		});
+		expect(res.status, `asking to move to ${to}`).toBe(200);
+		const added = (
+			await env.BUCKET.list({ prefix: "email-change-tokens/" })
+		).objects.filter((o) => !before.has(o.key));
+		expect(added).toHaveLength(1);
+		return added[0].key
+			.replace("email-change-tokens/", "")
+			.replace(".json", "");
+	}
+
+	const confirm = (token: string) =>
+		SELF.fetch("http://local.test/api/v1/auth/confirm-email-change", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ token }),
+		});
+
+	it("is refused once the password has been changed", async () => {
+		const token = await requestChange("intruder@example.net");
+		const changed = await post("/api/v1/auth/change-password", {
+			currentPassword: PASSWORD,
+			newPassword: "a-brand-new-password",
+		});
+		expect(changed.status).toBe(200);
+
+		expect((await confirm(token)).status).toBe(401);
+		expect(await storedEmail()).toBe(EMAIL);
+	});
+
+	it("is refused once the password has been reset", async () => {
+		const token = await requestChange("intruder@example.net");
+		expect(await authStub().setUserPassword("user1", "reset-by-owner")).toBe(
+			"ok",
+		);
+
+		expect((await confirm(token)).status).toBe(401);
+		expect(await storedEmail()).toBe(EMAIL);
+	});
+
+	// Confirming the newer of two leaves the older unable to move the
+	// address back.
+	it("is refused once another link has moved the address", async () => {
+		const older = await requestChange("first@example.net");
+		const newer = await requestChange("second@example.net");
+		expect((await confirm(newer)).status).toBe(200);
+
+		expect((await confirm(older)).status).toBe(401);
+		expect(await storedEmail()).toBe("second@example.net");
+	});
+
+	it("is refused, not answered 'changed', for a login that is gone", async () => {
+		const token = await requestChange("elsewhere@example.net");
+		await runInDurableObject(authStub(), async (_i, state) => {
+			state.storage.sql.exec("DELETE FROM users WHERE id = 'user1'");
+		});
+
+		expect((await confirm(token)).status).toBe(401);
+	});
+
+	it("still works when nothing has changed", async () => {
+		const token = await requestChange("elsewhere@example.net");
+		expect((await confirm(token)).status).toBe(200);
+		expect(await storedEmail()).toBe("elsewhere@example.net");
+	});
+});

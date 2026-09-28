@@ -57,6 +57,20 @@ const SEARCH_LIMIT = 500;
  */
 const MAX_BOUND = 100;
 
+/** A digest of a login's password hash and address; see emailChangeStamp. */
+async function credentialStamp(row: {
+	email: string;
+	password_hash: string;
+}): Promise<string> {
+	const bytes = new TextEncoder().encode(
+		`${row.password_hash}\n${row.email.toLowerCase()}`,
+	);
+	const digest = await crypto.subtle.digest("SHA-256", bytes);
+	return [...new Uint8Array(digest)]
+		.map((b) => b.toString(16).padStart(2, "0"))
+		.join("");
+}
+
 /** `items` in runs of at most `size`. */
 function chunksOf<T>(items: readonly T[], size: number): T[][] {
 	const out: T[][] = [];
@@ -748,16 +762,54 @@ export class MailboxDO extends DurableObject<Env> {
 	}
 
 	/**
-	 * Auth operation: move an account to a different address.
+	 * What an address-change link is bound to: this login's password and
+	 * address as they are now, digested so the token file in R2 does not
+	 * carry the password hash itself.
 	 *
-	 * Returns false when the address already belongs to another account --
-	 * `email` is UNIQUE, and the caller needs to say so rather than fail.
+	 * The link used to be a bare token, good for an hour whatever happened
+	 * meanwhile. Somebody holding the password could ask for a change to an
+	 * address of their own, and the owner changing or resetting the password
+	 * did nothing to it -- the link went on to move the owner's login to the
+	 * other address, and "forgot password" there handed over the account. A
+	 * link bound to the password dies with it; bound to the address as well,
+	 * an older link cannot put back an address a newer one moved away from.
 	 */
-	async updateUserEmail(userId: string, newEmail: string): Promise<boolean> {
+	async emailChangeStamp(userId: string): Promise<string | null> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+		const row = this.#loginCredentials(userId);
+		return row ? await credentialStamp(row) : null;
+	}
+
+	/**
+	 * Auth operation: move a login to the address its confirmation link
+	 * names, if the login is still as it was when the link was issued.
+	 *
+	 * The digest is awaited, so the row is read again after it and compared:
+	 * a password changed while this waited is refused here, and the check and
+	 * the write that follows it are one synchronous step.
+	 */
+	async confirmEmailChange(
+		userId: string,
+		newEmail: string,
+		stamp: string,
+	): Promise<"changed" | "stale" | "taken"> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
+		const before = this.#loginCredentials(userId);
+		if (!before) return "stale";
+		const current = await credentialStamp(before);
+		const after = this.#loginCredentials(userId);
+		if (
+			!after ||
+			after.email !== before.email ||
+			after.password_hash !== before.password_hash ||
+			current !== stamp
+		) {
+			return "stale";
+		}
+
 		newEmail = newEmail.trim().toLowerCase();
-		if (this.#takenBy(newEmail, userId)) return false;
+		if (this.#takenBy(newEmail, userId)) return "taken";
 		try {
 			this.ctx.storage.sql.exec(
 				"UPDATE users SET email = ?, updated_at = ? WHERE id = ?",
@@ -766,10 +818,21 @@ export class MailboxDO extends DurableObject<Env> {
 				userId,
 			);
 		} catch (e) {
-			if (String(e).includes("UNIQUE")) return false;
+			if (String(e).includes("UNIQUE")) return "taken";
 			throw e;
 		}
-		return true;
+		return "changed";
+	}
+
+	#loginCredentials(
+		userId: string,
+	): { email: string; password_hash: string } | null {
+		const row = this.ctx.storage.sql
+			.exec("SELECT email, password_hash FROM users WHERE id = ?", userId)
+			.toArray()[0];
+		return row
+			? { email: String(row.email), password_hash: String(row.password_hash) }
+			: null;
 	}
 
 	/*
