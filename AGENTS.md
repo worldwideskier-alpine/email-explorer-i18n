@@ -363,6 +363,19 @@ are still checked, by the `tsc` that runs before the worker tests.
   otherwise) and SVG attributes that take `url()` are read as CSS. A policy of
   the frame's own does not help: a `<meta>` CSP in the `srcdoc` and the
   iframe's `csp` attribute were both measured holding nothing back.
+  The frame is this page's origin (`allow-same-origin`: the inline pictures
+  reach the API with the reader's session), which has two consequences, both
+  measured. Its requests name this page -- the open message's address, with
+  the mailbox in it -- as their referrer, so a message's own
+  `referrerpolicy` and `<meta name="referrer">` are taken out and the page's
+  `same-origin` holds. And Chromium applies a `<meta name="referrer">` that
+  **DOMParser** finds to the page that parsed it, for the life of the page:
+  one message changed the policy for every request after it, spam folder
+  included. `referrerGuard.ts` wraps DOMParser at start-up so every parse --
+  ours and the editor's -- puts the page's policy back. Second, a path here
+  named by a message is fetched with the reader's cookie, so the Worker
+  answers a request the browser marks as a picture, stylesheet or other
+  subresource (`Sec-Fetch-Dest`) only for an attachment (`loadableAs`).
 - **Dashboard theming.** `index.html` carries the only page background and it
   has both halves (`bg-gray-100 text-gray-900 dark:bg-gray-900
   dark:text-gray-100`); cards use `bg-white dark:bg-gray-800` and follow the

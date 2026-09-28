@@ -2692,6 +2692,34 @@ async function receiveEmail(
 	});
 }
 
+/** The one API a page may load as a subresource: an attachment, by path. */
+const ATTACHMENT_PATH =
+	/^\/api\/v1\/mailboxes\/[^/]+\/emails\/[^/]+\/attachments\/[^/]+$/;
+
+/**
+ * Whether a request is one this Worker answers, given what the browser says it
+ * is for.
+ *
+ * A message is shown in a frame of this page's origin -- the inline pictures
+ * reach the API with the reader's session cookie, which needs it -- so
+ * anything a message names by a path here is fetched as the reader. Measured
+ * in Chromium: `<img src="/api/v1/mailboxes/.../folders">` in an inbox message
+ * went out with the session cookie and was answered. Fifty of them pointed at
+ * the export would run fifty exports every time the message was opened.
+ * Chasing every place markup can name an address is what the frame's rules
+ * do for the spam folder; here the browser says it outright. The dashboard's
+ * own calls are `fetch`es (`Sec-Fetch-Dest: empty`) and a person opening
+ * `/docs` is a navigation (`document`); a picture, a stylesheet, a font or
+ * anything else a page loads on its own is refused, except an attachment,
+ * which is what an inline picture is. A browser that does not send the header
+ * is let through as before.
+ */
+function loadableAs(request: Request, pathname: string): boolean {
+	const dest = request.headers.get("Sec-Fetch-Dest");
+	if (!dest || dest === "empty" || dest === "document") return true;
+	return request.method === "GET" && ATTACHMENT_PATH.test(pathname);
+}
+
 const defaultOptions: EmailExplorerOptions = {
 	auth: {
 		enabled: true, // Auth is enabled by default for security
@@ -2752,6 +2780,13 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 
 			// Create a new request with context for middleware
 			const url = new URL(request.url);
+
+			if (!loadableAs(request, url.pathname)) {
+				return new Response(
+					JSON.stringify({ error: "Not loadable from a page" }),
+					{ status: 403, headers: { "Content-Type": "application/json" } },
+				);
+			}
 
 			// Check if auth is required (either globally enabled or auth-specific routes)
 			// Auth is enforced by default (when enabled is undefined) unless explicitly disabled
