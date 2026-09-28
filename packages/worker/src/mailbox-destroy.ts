@@ -52,6 +52,26 @@ async function listKeys(env: Env, prefix: string): Promise<string[]> {
 	return keys;
 }
 
+/** How many times the object's own wipe is asked for before giving up. */
+const WIPE_ATTEMPTS = 3;
+
+async function wipe(stub: { destroyMailbox(): Promise<void> }): Promise<void> {
+	let last: unknown;
+	for (let attempt = 1; attempt <= WIPE_ATTEMPTS; attempt++) {
+		try {
+			await stub.destroyMailbox();
+			return;
+		} catch (e) {
+			last = e;
+		}
+	}
+	throw new Error(
+		`the mailbox's messages could not be removed: ${String(
+			last instanceof Error ? last.message : last,
+		)}`,
+	);
+}
+
 export interface DestroyedMailbox {
 	mailboxId: string;
 	emails: number;
@@ -93,12 +113,13 @@ export async function destroyMailboxCompletely(
 	);
 	const objects = await deleteKeys(env, keys);
 
-	try {
-		await stub.destroyMailbox();
-	} catch {
-		// Already gone, or never existed. The bucket is what remains either
-		// way, and it has just been cleared.
-	}
+	// The messages themselves. A failure here used to be swallowed as
+	// "already gone, or never existed" -- which asking a stub never is, see
+	// above -- and the deletion answered "deleted" with every message, body
+	// and sender still in the object, the address unusable for good (it
+	// still holds mail) and nothing on any screen. So a failure is tried
+	// again, and then thrown for the caller to report.
+	await wipe(stub);
 
 	const authStub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
 	await authStub.revokeAllMailboxAccess(mailboxId);

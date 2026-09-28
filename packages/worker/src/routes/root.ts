@@ -585,6 +585,11 @@ export class DeleteAccount extends OpenAPIRoute {
 				description: "Person is protected from deletion",
 				...contentJson(ErrorResponseSchema),
 			},
+			"500": {
+				description:
+					"The person is gone, but some of their mailboxes could not be emptied",
+				...contentJson(ErrorResponseSchema),
+			},
 			...forbidden,
 		},
 	};
@@ -643,8 +648,17 @@ export class DeleteAccount extends OpenAPIRoute {
 				result.mailboxIds.map((id) => `mailboxes/${id}.json`),
 			);
 		}
+		// One mailbox that cannot be emptied does not stop the rest, and is
+		// not answered "deleted": the person is gone either way, but root is
+		// told the deletion did not finish, and the log names what is left.
+		const unfinished: string[] = [];
 		for (const mailboxId of result.mailboxIds) {
-			await destroyMailboxCompletely(c.env, mailboxId);
+			try {
+				await destroyMailboxCompletely(c.env, mailboxId);
+			} catch (e) {
+				console.error(`Deleting ${mailboxId} did not finish:`, e);
+				unfinished.push(mailboxId);
+			}
 		}
 		// Their sending key goes too. It is theirs, it is a credential, and
 		// leaving it behind after the account is gone leaves something nobody
@@ -657,6 +671,12 @@ export class DeleteAccount extends OpenAPIRoute {
 		// would have two answers and no way to tell which one happened.
 		await forgetPersonDeletionLockQuietly(c.env, personId);
 
+		if (unfinished.length > 0) {
+			return c.json(
+				{ error: "Some mailboxes could not be emptied", unfinished },
+				500,
+			);
+		}
 		return c.json({
 			status: "deleted",
 			mailboxes: result.mailboxIds.length,

@@ -188,6 +188,78 @@ describe("destroying a mailbox", () => {
 		).rejects.toThrow("storage unavailable");
 		expect(await bucket().head(`mailboxes/${mailboxId}.json`)).not.toBeNull();
 	});
+
+	/**
+	 * The object's own wipe failing used to be swallowed as "already gone",
+	 * and the deletion answered "deleted" with every message still in it.
+	 */
+	it("tries the wipe again, and says so if it never works", async () => {
+		let asked = 0;
+		const ns = env.MAILBOX;
+		const unwipeable = new Proxy(ns, {
+			get(target, property) {
+				if (property !== "get") {
+					const member = Reflect.get(target, property);
+					return typeof member === "function" ? member.bind(target) : member;
+				}
+				return (id: DurableObjectId) =>
+					new Proxy(target.get(id), {
+						get(stub, p) {
+							if (p === "destroyMailbox") {
+								return async () => {
+									asked += 1;
+									throw new Error("storage reset");
+								};
+							}
+							return Reflect.get(stub, p);
+						},
+					});
+			},
+		});
+
+		await expect(
+			destroyMailboxCompletely(
+				{ ...env, MAILBOX: unwipeable } as never,
+				mailboxId,
+			),
+		).rejects.toThrow("could not be removed: storage reset");
+		expect(asked).toBe(3);
+	});
+
+	it("goes on when a second try works", async () => {
+		let asked = 0;
+		const ns = env.MAILBOX;
+		const flaky = new Proxy(ns, {
+			get(target, property) {
+				if (property !== "get") {
+					const member = Reflect.get(target, property);
+					return typeof member === "function" ? member.bind(target) : member;
+				}
+				return (id: DurableObjectId) => {
+					const real = target.get(id);
+					return new Proxy(real, {
+						get(stub, p) {
+							if (p === "destroyMailbox") {
+								return async () => {
+									asked += 1;
+									if (asked === 1) throw new Error("storage reset");
+									return real.destroyMailbox();
+								};
+							}
+							return Reflect.get(stub, p);
+						},
+					});
+				};
+			},
+		});
+
+		const done = await destroyMailboxCompletely(
+			{ ...env, MAILBOX: flaky } as never,
+			mailboxId,
+		);
+		expect(done.mailboxId).toBe(mailboxId);
+		expect(asked).toBe(2);
+	});
 });
 
 describe("deleting unclaimed attachments", () => {
