@@ -159,6 +159,55 @@ describe("Sender-based spam verdict override", () => {
 		});
 	});
 
+	/**
+	 * The rule is matched against the From address, which the sender writes.
+	 * Taken on its own, it let anybody who put an allowed sender's address in
+	 * From into the inbox, with a notification -- a bank marked "not spam"
+	 * once, and every forgery of it after. A DMARC fail is that forgery.
+	 */
+	it("does not let a forgery of a not-spam sender through", async () => {
+		await simulateReceiveEmail(
+			buildRawEmail(
+				{
+					From: "statements@example.net",
+					To: mailboxId,
+					Subject: "Genuine, wrongly flagged",
+					"Content-Type": "text/plain",
+					"Authentication-Results": FAILING_AUTH_RESULTS,
+				},
+				"Hello",
+			),
+		);
+		const found = await findEmail("Genuine, wrongly flagged");
+		const verdictRes = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${found?.id}/spam-verdict`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ verdict: "not-spam" }),
+			},
+		);
+		expect(verdictRes.status).toBe(200);
+
+		await simulateReceiveEmail(
+			buildRawEmail(
+				{
+					From: "statements@example.net",
+					To: mailboxId,
+					Subject: "Forged, fails DMARC",
+					"Content-Type": "text/plain",
+					"Authentication-Results":
+						"mx.cloudflare.net; spf=pass smtp.mailfrom=attacker.example; dkim=none; dmarc=fail header.from=example.net",
+				},
+				"Please confirm your account",
+			),
+		);
+		expect(await findEmail("Forged, fails DMARC")).toEqual({
+			id: expect.any(String),
+			folder: "spam",
+		});
+	});
+
 	it("a spam verdict short-circuits before Claude is ever consulted", async () => {
 		await authenticatedFetch(
 			`http://local.test/api/v1/mailboxes/${mailboxId}`,

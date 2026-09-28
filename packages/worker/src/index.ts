@@ -2588,11 +2588,25 @@ async function receiveEmail(
 	// as spam or not-spam before (see PostEmailSpamVerdict). That's a
 	// stronger signal than any automated check, so it short-circuits
 	// everything below -- no auth check, no Claude call.
-	const senderOverride = await getSenderVerdictOverride(
+	//
+	// With one exception, for "not spam". The rule is matched against the
+	// From address, which whoever sends the message writes, so on its own it
+	// let a forgery of an allowed sender into the inbox, notification and
+	// all -- the one message the rule was never meant to admit. A DMARC fail
+	// is what that forgery looks like: the From domain's owner published
+	// how its mail is authenticated and this message is not. So a DMARC fail
+	// is not overridden. Anything short of it still is, which is what the
+	// rule is for -- a sender whose SPF is simply misconfigured.
+	const verdict = await getSenderVerdictOverride(
 		env,
 		mailboxId,
 		parsedEmail.from?.address,
 	);
+	const senderOverride =
+		verdict === "inbox" &&
+		summarizeAuthResults(parsedEmail.headers).dmarc === "fail"
+			? undefined
+			: verdict;
 
 	let folder: "inbox" | "spam" =
 		senderOverride ?? classifyByAuthResults(parsedEmail.headers);
