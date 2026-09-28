@@ -191,6 +191,21 @@ export const mailboxMigrations: Migration[] = [
             ALTER TABLE emails ADD COLUMN draft_reply_to TEXT;
         `,
 	},
+	{
+		/*
+		 * Every folder listing asked for one folder's mail and read the whole
+		 * table to find it, and every message opened, deleted or archived
+		 * asked for its attachments and read every attachment row there was.
+		 * Deleting a message also cascades into attachments by email_id, so
+		 * with no index there each delete -- the purge takes up to 99 at a
+		 * time -- scanned the lot.
+		 */
+		name: "11_listing_indexes",
+		sql: `
+            CREATE INDEX IF NOT EXISTS idx_attachments_email_id ON attachments(email_id);
+            CREATE INDEX IF NOT EXISTS idx_emails_folder_date ON emails(folder_id, date);
+        `,
+	},
 ];
 
 export const authMigrations: Migration[] = [
