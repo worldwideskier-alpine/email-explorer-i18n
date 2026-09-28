@@ -122,6 +122,17 @@ export async function ingestEmailIntoMailbox(
 				formatAddressList(addressesOf(parsedEmail.to).map(asHeaderAddress)) ||
 				mailboxId,
 			cc: formatAddressList(addressesOf(parsedEmail.cc).map(asHeaderAddress)),
+			// Only for the sender's own copy, which is what a Bcc: header in a
+			// restored sent message is. Received mail carries none worth
+			// believing: the sending server strips it, so one that arrives is
+			// the sender's invention.
+			...(folder === "sent"
+				? {
+						bcc: formatAddressList(
+							addressesOf(parsedEmail.bcc).map(asHeaderAddress),
+						),
+					}
+				: {}),
 			date: storedDate(overrides.date),
 			body:
 				parsedEmail.html ||

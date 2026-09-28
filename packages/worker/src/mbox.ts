@@ -25,6 +25,12 @@ export interface ExportedEmail {
 	subject?: string;
 	sender?: string;
 	recipient?: string;
+	cc?: string | null;
+	bcc?: string | null;
+	/** Bare Message-IDs, as the row keeps them: no angle brackets. */
+	in_reply_to?: string | null;
+	/** A JSON array of bare Message-IDs, as the row keeps it. */
+	email_references?: string | null;
 	date?: string;
 	read?: boolean;
 	starred?: boolean;
@@ -263,10 +269,27 @@ async function synthesizeMessage(
 	const headers = [
 		`From: ${email.sender ?? ""}`,
 		`To: ${email.recipient ?? ""}`,
+	];
+	// Everything the row knows about who else it went to and what it answered.
+	// Only From, To, Subject and Date used to be rebuilt, so a sent reply
+	// restored from the archive -- the only copy once the message is deleted
+	// -- came back without its Cc or Bcc and cut out of its thread. Bcc is
+	// written because this is the sender's own copy, which is the one place
+	// it belongs.
+	if (email.cc) headers.push(`Cc: ${headerSafe(email.cc)}`);
+	if (email.bcc) headers.push(`Bcc: ${headerSafe(email.bcc)}`);
+	if (email.in_reply_to) {
+		headers.push(`In-Reply-To: <${headerSafe(email.in_reply_to)}>`);
+	}
+	const references = messageIdsOf(email.email_references);
+	if (references.length > 0) {
+		headers.push(`References: ${references.map((id) => `<${id}>`).join(" ")}`);
+	}
+	headers.push(
 		`Subject: ${encodeHeader(email.subject ?? "")}`,
 		`Date: ${new Date(email.date ?? Date.now()).toUTCString()}`,
 		"MIME-Version: 1.0",
-	];
+	);
 	const body = email.body ?? "";
 
 	if (attachments.length === 0) {
@@ -390,6 +413,21 @@ async function synthesizeMessage(
  */
 function headerSafe(value: string): string {
 	return value.replace(/[\r\n]+/g, " ");
+}
+
+/** The References a row keeps, as a list; nothing for a value it cannot read. */
+function messageIdsOf(stored: string | null | undefined): string[] {
+	if (!stored) return [];
+	try {
+		const parsed: unknown = JSON.parse(stored);
+		return Array.isArray(parsed)
+			? parsed
+					.filter((id): id is string => typeof id === "string" && id !== "")
+					.map((id) => id.replace(/[\s<>]+/g, ""))
+			: [];
+	} catch {
+		return [];
+	}
 }
 
 /**
