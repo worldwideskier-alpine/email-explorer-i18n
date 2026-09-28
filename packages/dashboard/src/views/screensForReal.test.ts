@@ -290,3 +290,57 @@ describe("inline pictures", () => {
 		expect(sources[1]).toMatch(/att-ten$/);
 	});
 });
+
+/**
+ * No spam verdict on the mailbox's own mail. The verdict is recorded against
+ * the sender, and in Sent or Drafts that is the mailbox: the button used to
+ * be offered in Sent, and one press put the mailbox's own address on its
+ * block list.
+ */
+describe("the spam button", () => {
+	const row = (folder: string) => ({
+		id: `m-${folder}`,
+		subject: "s",
+		sender: "me@example.com",
+		recipient: "you@example.org",
+		date: "2026-09-01T00:00:00.000Z",
+		read: true,
+		starred: false,
+		folder_id: folder,
+	});
+	const spamButtons = () =>
+		host.querySelectorAll(
+			'[title="emailList.markSpam"], [title="emailDetail.markSpam"]',
+		);
+
+	for (const folder of ["sent", "draft"]) {
+		it(`is not in the ${folder} list`, async () => {
+			rows = [row(folder)];
+			await mountMailbox(`/mailbox/me%40example.com/emails/${folder}`);
+			expect(host.querySelector("li")).not.toBeNull();
+			expect(spamButtons()).toHaveLength(0);
+		});
+	}
+
+	it("is not on an open sent message", async () => {
+		stored = { ...row("sent"), body: "<p>x</p>", attachments: [] };
+		await mountMailbox("/mailbox/me%40example.com/email/m-sent");
+		expect(
+			host.querySelector(
+				'[title="emailDetail.delete"], [title="emailList.delete"]',
+			),
+		).not.toBeNull();
+		expect(spamButtons()).toHaveLength(0);
+	});
+
+	it("is still on received mail", async () => {
+		rows = [row("inbox")];
+		await mountMailbox("/mailbox/me%40example.com/emails/inbox");
+		expect(spamButtons()).toHaveLength(1);
+
+		unmount();
+		stored = { ...row("inbox"), body: "<p>x</p>", attachments: [] };
+		await mountMailbox("/mailbox/me%40example.com/email/m-inbox");
+		expect(spamButtons()).toHaveLength(1);
+	});
+});

@@ -1107,6 +1107,10 @@ class PostEmailSpamVerdict extends OpenAPIRoute {
 				...contentJson(SuccessResponseSchema),
 			},
 			"404": { description: "Not found", ...contentJson(ErrorResponseSchema) },
+			"409": {
+				description: "The message is this mailbox's own (Sent or Drafts)",
+				...contentJson(ErrorResponseSchema),
+			},
 		},
 	};
 
@@ -1122,6 +1126,25 @@ class PostEmailSpamVerdict extends OpenAPIRoute {
 		const email = (await stub.getEmail(id)) as any;
 		if (!email) {
 			return c.json({ error: "Email not found" }, 404);
+		}
+
+		// The verdict is recorded against the sender, and this mailbox's own
+		// mail has this mailbox as its sender: "spam" on a sent message put the
+		// mailbox's own address on its block list, which filed every later
+		// message from it as spam and moved the sent copy where the purge
+		// deletes. The screen does not offer it; this is for a request that
+		// does not come from the screen.
+		const own =
+			email.folder_id === "sent" ||
+			email.folder_id === "draft" ||
+			String(email.sender ?? "")
+				.trim()
+				.toLowerCase() === mailboxId.toLowerCase();
+		if (own) {
+			return c.json(
+				{ error: "This mailbox's own mail has no spam verdict" },
+				409,
+			);
 		}
 
 		const senderVerdict = verdict === "spam" ? "spam" : "inbox";

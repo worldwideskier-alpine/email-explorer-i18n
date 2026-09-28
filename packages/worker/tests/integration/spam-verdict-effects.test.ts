@@ -225,3 +225,66 @@ describe("Deleting an email", () => {
 		expect(await subscriptionCount()).toBe(1);
 	});
 });
+
+/**
+ * This mailbox's own mail has no spam verdict. The verdict is recorded
+ * against the sender, and a sent message's sender is the mailbox: one press
+ * of "spam" in Sent put the mailbox's own address on its block list, filing
+ * every later message from it as spam and moving the sent copy where the
+ * nightly purge deletes.
+ */
+describe("A spam verdict on the mailbox's own mail", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createMailbox();
+	});
+
+	async function insertOwn(id: string, folder: string, sender = mailboxId) {
+		await runInDurableObject(
+			env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId)),
+			async (_i, state) => {
+				state.storage.sql.exec(
+					`INSERT INTO emails (id, folder_id, subject, sender, recipient, date, body, read)
+					 VALUES (?, ?, 'Mine', ?, 'someone@example.org', ?, '<p>x</p>', 1)`,
+					id,
+					folder,
+					sender,
+					new Date().toISOString(),
+				);
+			},
+		);
+	}
+
+	const judge = (id: string) =>
+		authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${id}/spam-verdict`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ verdict: "spam" }),
+			},
+		);
+
+	async function blocked(): Promise<string[]> {
+		const stored = await env.BUCKET.get(`mailboxes/${mailboxId}.json`);
+		const settings = (await stored?.json()) as {
+			senderRules?: { block?: string[] };
+		};
+		return settings?.senderRules?.block ?? [];
+	}
+
+	for (const [where, folder, sender] of [
+		["in Sent", "sent", mailboxId],
+		["in Drafts", "draft", mailboxId],
+		// Moved out of Sent, it is still the mailbox's own.
+		["filed elsewhere", "archive", mailboxId.toUpperCase()],
+	] as const) {
+		it(`is refused ${where}, and blocks nobody`, async () => {
+			const id = crypto.randomUUID();
+			await insertOwn(id, folder, sender);
+
+			expect((await judge(id)).status).toBe(409);
+			expect(await blocked()).toEqual([]);
+		});
+	}
+});

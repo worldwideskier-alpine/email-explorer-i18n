@@ -62,7 +62,7 @@
                   </svg>
                 </button>
                 <button
-                  v-if="folderId !== 'draft'"
+                  v-if="hasSpamVerdict(email)"
                   @click.prevent="handleSpamVerdict(email)"
                   class="p-2 rounded-lg transition-all duration-200"
                   :class="isSpamRow(email)
@@ -263,6 +263,15 @@ const toggleStarStatus = (email: Email) =>
 // on an inbox row recorded its sender as trusted.
 const isSpamRow = (email: Email) =>
 	(email.folder_id ?? folderId.value) === "spam";
+
+/**
+ * Spam or not-spam is a verdict on the sender, and in Sent or Drafts the
+ * sender is this mailbox: the button used to be offered in Sent, and one
+ * press put the mailbox's own address on its block list. Asked per row,
+ * since a search lists mail from every folder.
+ */
+const hasSpamVerdict = (email: Email) =>
+	!["sent", "draft"].includes(email.folder_id ?? folderId.value);
 
 const handleSpamVerdict = (email: Email) =>
 	act(() =>
