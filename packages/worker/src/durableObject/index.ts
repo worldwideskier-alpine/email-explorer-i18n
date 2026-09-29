@@ -1350,7 +1350,13 @@ export class MailboxDO extends DurableObject<Env> {
 	 * promise about either. Ids with no row are skipped, as `getEmail`
 	 * returning null was skipped before.
 	 */
-	async getEmailsByIds(ids: string[]) {
+	async getEmailsByIds(ids: string[]): Promise<
+		(Record<string, unknown> & {
+			read: boolean;
+			starred: boolean;
+			attachments: Record<string, unknown>[];
+		})[]
+	> {
 		if (ids.length === 0) return [];
 
 		const emails: Record<string, SqlStorageValue>[] = [];
@@ -2101,7 +2107,7 @@ export class MailboxDO extends DurableObject<Env> {
 		// attachment objects in R2 with no row to reach them by. So the rows go
 		// in runs that fit, and the message and its rows are written together
 		// or not at all.
-		const columns = attachments.length ? Object.keys(attachments[0]).length : 1;
+		const columns = attachments[0] ? Object.keys(attachments[0]).length : 1;
 		const perStatement = Math.max(1, Math.floor(MAX_BOUND / columns));
 		this.ctx.storage.transactionSync(() => {
 			this.#qb

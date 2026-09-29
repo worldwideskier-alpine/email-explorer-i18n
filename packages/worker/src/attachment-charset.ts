@@ -49,7 +49,7 @@ function lower(byte: number): number {
 
 function decodeAscii(bytes: Uint8Array, from: number, to: number): string {
 	let out = "";
-	for (let at = from; at < to; at++) out += String.fromCharCode(bytes[at]);
+	for (let at = from; at < to; at++) out += String.fromCharCode(bytes[at] ?? 0);
 	return out;
 }
 
@@ -63,7 +63,7 @@ function endOfLine(bytes: Uint8Array, at: number): number {
 function startsWith(bytes: Uint8Array, at: number, ascii: string): boolean {
 	if (at + ascii.length > bytes.length) return false;
 	for (let n = 0; n < ascii.length; n++) {
-		if (lower(bytes[at + n]) !== ascii.charCodeAt(n)) return false;
+		if (lower(bytes[at + n] ?? 0) !== ascii.charCodeAt(n)) return false;
 	}
 	return true;
 }
@@ -74,7 +74,7 @@ function charsetOf(params: string[]): string | null {
 		// the same parameter -- while the value is kept exactly as written,
 		// because "Shift_JIS" is not ours to rewrite.
 		const match = /^\s*charset\s*=\s*"?([A-Za-z0-9._:+-]+)"?\s*$/i.exec(param);
-		if (match) return match[1];
+		if (match?.[1]) return match[1];
 	}
 	return null;
 }
@@ -207,7 +207,7 @@ export function charsetsForAttachments(
 
 	for (const [index, attachment] of attachments.entries()) {
 		const want = (attachment.mimeType ?? "").trim().toLowerCase();
-		if (files[index].type !== want) return nothing;
+		if (files[index]?.type !== want) return nothing;
 	}
 	return files.map((file) => file.charset);
 }

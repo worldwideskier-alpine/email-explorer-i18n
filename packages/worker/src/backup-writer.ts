@@ -18,6 +18,7 @@
 import { backupKey, backupKeyPrefix, keysToRotate } from "./auto-backup";
 import type { TimeLimits } from "./deadline";
 import { limitedBy } from "./deadline";
+import type { MailboxDO } from "./durableObject";
 import { renderMboxEntry } from "./mbox";
 import type { Env } from "./types";
 
@@ -350,10 +351,12 @@ export async function writeMailboxBackup(
 		// gives them back in that order, so the archive is written in the same
 		// order it always was.
 		for (let from = 0; from < ids.length; from += READ_BATCH) {
-			const page = await bounded(
+			// Typed from the method: through the RPC stub a row of unknown
+			// columns comes back as `unknown` as a whole.
+			const page = (await bounded(
 				stub.getEmailsByIds(ids.slice(from, from + READ_BATCH)),
 				"reading messages from the mailbox",
-			);
+			)) as Awaited<ReturnType<MailboxDO["getEmailsByIds"]>>;
 
 			for (const batch of renderBatches(page)) {
 				const rendered = await bounded(

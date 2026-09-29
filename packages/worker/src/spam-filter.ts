@@ -197,7 +197,7 @@ function joinAuthResults(headers: Header[]): string {
 /** The authserv-id: before the first `;`, less comments and any version. */
 function authservIdOf(authResults: string): string {
 	const [first] = resultSections(authResults);
-	return first.bare.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
+	return first?.bare.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
 }
 
 /**

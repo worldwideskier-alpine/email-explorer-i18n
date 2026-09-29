@@ -139,7 +139,7 @@ export const MONTHLY_TIERS = 12;
 function monthOf(key: string): string | null {
 	const name = key.slice(key.lastIndexOf("/") + 1);
 	const match = /^(\d{4}-\d{2})-\d{2}T/.exec(name);
-	return match ? match[1] : null;
+	return match?.[1] ?? null;
 }
 
 /**

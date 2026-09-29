@@ -54,7 +54,7 @@ export async function keepSentCopy(
 	prepared: PreparedAttachment[],
 ): Promise<boolean> {
 	try {
-		const rows = [];
+		const rows: Parameters<MailboxDO["createEmail"]>[2] = [];
 		for (const { attachment, bytes } of prepared) {
 			const attachmentId = crypto.randomUUID();
 			// The same name for key and row; see attachment-name.ts.

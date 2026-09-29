@@ -2,6 +2,12 @@
 	"extends": "../tsconfig.json",
 	"compilerOptions": {
 		"moduleResolution": "bundler",
+		// The Worker's own source is checked with it on (../tsconfig.json).
+		// Here it is off: a test reads `rows[0].id` of results it has just
+		// asserted on, and an undefined there fails the test when it runs,
+		// which is what the test is for. Turned on, it asked for a `?.` in
+		// ninety places that would each have made a failure less clear.
+		"strictNullChecks": false,
 		// The parent's Workers and node types as well: `types` replaces the
 		// list rather than adding to it, and without them every R2Bucket,
 		// ExecutionContext and Durable Object `ctx` was an error here.

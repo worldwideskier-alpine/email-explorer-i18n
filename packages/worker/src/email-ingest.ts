@@ -1,6 +1,7 @@
 import type PostalMime from "postal-mime";
 import { charsetsForAttachments, typeWithCharset } from "./attachment-charset";
 import { storableFilename } from "./attachment-name";
+import type { MailboxDO } from "./durableObject";
 import { plainTextToHtml } from "./plain-text-to-html";
 import { notifyNewEmail } from "./push-notify";
 import { asHeaderAddress, formatAddressList } from "./recipients";
@@ -56,7 +57,7 @@ export async function ingestEmailIntoMailbox(
 	const id = ns.idFromName(mailboxId);
 	const stub = ns.get(id);
 
-	const attachmentData = [];
+	const attachmentData: Parameters<MailboxDO["createEmail"]>[2] = [];
 	if (parsedEmail.attachments) {
 		// What the parser dropped. postal-mime gives a bare `text/plain` with
 		// the parameters gone, so a Shift_JIS attachment became indistinguishable

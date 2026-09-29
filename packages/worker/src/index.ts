@@ -1758,7 +1758,8 @@ class GetMailboxExport extends OpenAPIRoute {
 						controller.close();
 						return;
 					}
-					email = await stub.getEmail(ids[index++]);
+					const id = ids[index++];
+					email = id === undefined ? null : await stub.getEmail(id);
 				}
 				const folderId = String(
 					(email as { folder_id?: string }).folder_id ?? "inbox",
