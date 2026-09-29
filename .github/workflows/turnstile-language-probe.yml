@@ -39,6 +39,18 @@ jobs:
             ["page unset, browser ja-JP", "ja-JP", null],
           ]) {
             const ctx = await browser.newContext({ locale: browserLocale });
+            await ctx.addInitScript(() => {
+              let held;
+              Object.defineProperty(window, "turnstile", {
+                configurable: true,
+                get: () => held,
+                set: (v) => {
+                  const render = v.render.bind(v);
+                  v.render = (el, o) => { window.__tsOpts = { language: o.language, theme: o.theme, size: o.size }; return render(el, o); };
+                  held = v;
+                },
+              });
+            });
             if (pageLocale) {
               await ctx.addInitScript((l) => localStorage.setItem("email-explorer-locale", l), pageLocale);
             }
@@ -49,10 +61,14 @@ jobs:
             await page.waitForTimeout(12000);
             const frames = page.frames().filter((f) => f.url().includes("challenges.cloudflare.com"));
             const out = { label, bundle: scripts, htmlLang: await page.evaluate(() => document.documentElement.lang), frames: [] };
+            out.renderOptions = await page.evaluate(() => window.__tsOpts ?? null);
+            const shot = await page.locator("iframe[src*='challenges.cloudflare.com']").first().screenshot({ timeout: 5000 }).catch(() => null);
+            out.widgetPng = shot ? shot.toString("base64") : null;
             for (const f of frames) {
               let text = "";
               try { text = (await f.locator("body").innerText({ timeout: 3000 })).replace(/\s+/g, " ").slice(0, 200); } catch (e) { text = "(unreadable: " + e.message.split("\n")[0] + ")"; }
-              out.frames.push({ path: clean(new URL(f.url()).pathname), text });
+              const u = new URL(f.url());
+              out.frames.push({ path: clean(u.pathname + u.search + u.hash), text });
             }
             console.log(clean(JSON.stringify(out, null, 1)));
             await ctx.close();
