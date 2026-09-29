@@ -1,0 +1,38 @@
+# Temporary: asks Cloudflare's siteverify what it answers for a secret it
+# does not know, with and without a token, the way src/turnstile.ts asks.
+# Uses only made-up secrets and Cloudflare's published test secrets. Runs on
+# the working branch only, and is removed once it has answered.
+name: Siteverify probe
+on:
+  push:
+    branches: [claude/github-settings-migration-t81k5b]
+    paths: ['.github/workflows/siteverify-probe.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe
+        run: |
+          cat > "$RUNNER_TEMP/probe.mjs" <<'JS'
+          const URL_ = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+          const cases = [
+            ["well-formed secret nobody has, no token", "0x4AAAAAAAZZZZZZZZZZZZZZZZZZZZZZZZZZ", ""],
+            ["well-formed secret nobody has, a token", "0x4AAAAAAAZZZZZZZZZZZZZZZZZZZZZZZZZZ", "XXXX.DUMMY.TOKEN.XXXX"],
+            ["malformed secret, no token", "not-a-secret", ""],
+            ["empty secret, no token", "", ""],
+            ["test secret that always passes, no token", "1x0000000000000000000000000000000AA", ""],
+            ["test secret that always passes, dummy token", "1x0000000000000000000000000000000AA", "XXXX.DUMMY.TOKEN.XXXX"],
+            ["test secret that always fails, dummy token", "2x0000000000000000000000000000000AA", "XXXX.DUMMY.TOKEN.XXXX"],
+          ];
+          for (const [label, secret, token] of cases) {
+            const body = new URLSearchParams({ secret, response: token });
+            const r = await fetch(URL_, { method: "POST", body });
+            const text = await r.text();
+            let j; try { j = JSON.parse(text); } catch { j = { raw: text.slice(0, 120) }; }
+            console.log(JSON.stringify({ label, status: r.status, success: j.success, codes: j["error-codes"], raw: j.raw }));
+          }
+          JS
+          node "$RUNNER_TEMP/probe.mjs"
