@@ -42,6 +42,7 @@ import {
 	PostLogin,
 	PostLogout,
 	PostRegister,
+	sessionTokenFrom,
 } from "./routes/auth";
 import { PostDraftEmail, PutDraftEmail } from "./routes/drafts";
 import { PostImportEmail } from "./routes/import";
@@ -2376,22 +2377,12 @@ class GetAppSettings extends OpenAPIRoute {
 	}
 }
 
-// Helper function to extract session token
+// See sessionTokenFrom in routes/auth.ts.
 function getSessionToken(request: Request): string | null {
-	// Try Authorization header first
-	const authHeader = request.headers.get("Authorization");
-	if (authHeader?.startsWith("Bearer ")) {
-		return authHeader.substring(7);
-	}
-
-	// Try cookie
-	const cookie = request.headers.get("Cookie");
-	if (cookie) {
-		const match = cookie.match(/session=([^;]+)/);
-		return match ? match[1] : null;
-	}
-
-	return null;
+	return sessionTokenFrom(
+		request.headers.get("Authorization"),
+		request.headers.get("Cookie"),
+	);
 }
 
 // Helper function to validate session

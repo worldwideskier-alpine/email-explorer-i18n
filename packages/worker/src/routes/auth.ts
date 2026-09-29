@@ -112,22 +112,36 @@ function getAuthDO(env: Env) {
 	return env.MAILBOX.get(authId);
 }
 
-// Helper function to extract session token
-function getSessionToken(c: AppContext): string | null {
-	// Try Authorization header first
-	const authHeader = c.req.header("Authorization");
-	if (authHeader?.startsWith("Bearer ")) {
-		return authHeader.substring(7);
+/**
+ * The session token a request carries: the bearer token, or else the
+ * `session` cookie.
+ *
+ * The cookie is found by its whole name. `/session=([^;]+)/` also matched the
+ * end of any other cookie's name -- `user_session=`, `csession=` -- so another
+ * application on the same site setting one ahead of ours made every request
+ * here 401, and a sign-out ended that other token while ours lived on.
+ */
+export function sessionTokenFrom(
+	authorization: string | null | undefined,
+	cookie: string | null | undefined,
+): string | null {
+	if (authorization?.startsWith("Bearer ")) {
+		return authorization.substring(7);
 	}
-
-	// Try cookie
-	const cookie = c.req.header("Cookie");
-	if (cookie) {
-		const match = cookie.match(/session=([^;]+)/);
-		return match ? match[1] : null;
+	for (const pair of (cookie ?? "").split(";")) {
+		const at = pair.indexOf("=");
+		if (at > 0 && pair.slice(0, at).trim() === "session") {
+			return pair.slice(at + 1).trim() || null;
+		}
 	}
-
 	return null;
+}
+
+function getSessionToken(c: AppContext): string | null {
+	return sessionTokenFrom(
+		c.req.header("Authorization"),
+		c.req.header("Cookie"),
+	);
 }
 
 // Public routes
