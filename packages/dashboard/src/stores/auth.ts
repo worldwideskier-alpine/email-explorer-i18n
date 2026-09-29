@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 import { rebindPushSubscription } from "@/services/push";
+import { whenSessionEnds } from "@/services/sessionEnd";
 import { useEmailStore } from "@/stores/emails";
 import { useMailboxStore } from "@/stores/mailboxes";
 import { useSearchStore } from "@/stores/search";
@@ -77,6 +78,12 @@ export const useAuthStore = defineStore("auth", () => {
 				}
 			: null,
 	);
+
+	// A request refused for want of a session ends it here as well, so the
+	// next navigation goes to sign-in (see api.ts).
+	whenSessionEnds(() => {
+		session.value = null;
+	});
 
 	// Load session from localStorage on init
 	const storedSession = localStorage.getItem("session");

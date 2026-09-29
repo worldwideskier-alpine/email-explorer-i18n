@@ -67,6 +67,34 @@ describe("whether something is being written", () => {
 		expect(somethingIsBeingWritten(document)).toBe(true);
 	});
 
+	/**
+	 * The header's search box keeps its query after the search has run.
+	 * Counted, it held on every screen with the header: a session that ended
+	 * there never reached sign-in, and a new build was never picked up.
+	 */
+	it("does not count a box marked as not being writing", () => {
+		const box = field('<input type="text" value="invoice" data-not-writing>');
+		expect(somethingIsBeingWritten(document)).toBe(false);
+		box.focus();
+		expect(somethingIsBeingWritten(document)).toBe(false);
+	});
+
+	it("is told so by the header's search box", () => {
+		const header = Object.values(
+			import.meta.glob("../components/Header.vue", {
+				query: "?raw",
+				import: "default",
+				eager: true,
+			}) as Record<string, string>,
+		)[0];
+		const box = header.slice(
+			header.indexOf("<input"),
+			header.indexOf("/>", header.indexOf("<input")),
+		);
+		expect(box).toContain('v-model="searchQuery"');
+		expect(box).toContain("data-not-writing");
+	});
+
 	it("does not count a box nobody can type into", () => {
 		field('<input type="email" value="shown@example.com" disabled>');
 		expect(somethingIsBeingWritten(document)).toBe(false);
@@ -113,6 +141,24 @@ describe("a session that has ended", () => {
 		status = 401;
 		await api.listEmails("m@example.com", {}).catch(() => {});
 		expect(went).toEqual([]);
+	});
+
+	/**
+	 * Only the stored copy used to go. The router asks the one in memory, so
+	 * every navigation after went through while every request was refused --
+	 * "the next navigation goes to sign-in" was not so.
+	 */
+	it("is forgotten in memory too, so the next navigation goes to sign in", async () => {
+		const { whenSessionEnds } = await import("./sessionEnd");
+		let forgotten = 0;
+		whenSessionEnds(() => {
+			forgotten += 1;
+		});
+		document.body.innerHTML = "<textarea>half a message</textarea>";
+		status = 401;
+		await api.listEmails("m@example.com", {}).catch(() => {});
+		expect(went).toEqual([]);
+		expect(forgotten).toBe(1);
 	});
 
 	it("goes to sign in, and back here after, when nothing is being written", async () => {

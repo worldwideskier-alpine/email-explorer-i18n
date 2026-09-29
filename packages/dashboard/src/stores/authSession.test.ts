@@ -95,3 +95,26 @@ describe("the session a sign-in leaves behind", () => {
 		).not.toContain("isAdmin");
 	});
 });
+
+/**
+ * A session the server has stopped accepting. api.ts removed the stored copy
+ * on a 401 and left this one, which is the one the router asks -- so every
+ * navigation went on through while every request was refused.
+ */
+describe("a session the server no longer accepts", () => {
+	beforeEach(() => {
+		setActivePinia(createPinia());
+		localStorage.clear();
+	});
+
+	it("is forgotten in memory too", async () => {
+		const auth = useAuthStore();
+		await auth.login("someone@example.com", "password");
+		expect(auth.isAuthenticated).toBe(true);
+
+		const { sessionEnded } = await import("@/services/sessionEnd");
+		sessionEnded();
+
+		expect(auth.isAuthenticated).toBe(false);
+	});
+});

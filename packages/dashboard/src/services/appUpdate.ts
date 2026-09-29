@@ -85,9 +85,10 @@ export function somethingIsBeingWritten(doc: Document): boolean {
 	if (holds > 0) return true;
 	const active = doc.activeElement;
 	if (
-		active instanceof HTMLInputElement ||
-		active instanceof HTMLTextAreaElement ||
-		(active instanceof HTMLElement && active.isContentEditable)
+		(active instanceof HTMLInputElement ||
+			active instanceof HTMLTextAreaElement ||
+			(active instanceof HTMLElement && active.isContentEditable)) &&
+		!active.closest(NOT_WRITING)
 	) {
 		return true;
 	}
@@ -101,7 +102,9 @@ export function somethingIsBeingWritten(doc: Document): boolean {
 	// and so is a picked attachment. Only boxes someone can type into --
 	// a disabled one showing a stored value is not being written.
 	for (const field of doc.querySelectorAll("input")) {
-		if (field.disabled || field.readOnly) continue;
+		if (field.disabled || field.readOnly || field.closest(NOT_WRITING)) {
+			continue;
+		}
 		if (field.type === "file") {
 			if (field.files && field.files.length > 0) return true;
 		} else if (TYPED.has(field.type) && field.value.trim()) {
@@ -110,6 +113,14 @@ export function somethingIsBeingWritten(doc: Document): boolean {
 	}
 	return false;
 }
+
+/**
+ * A box whose text is not somebody's writing: the header's search box keeps
+ * the query after the search has run. Counted, it held on every screen that
+ * has the header, so a session that ended there never reached sign-in and a
+ * new build was never picked up.
+ */
+const NOT_WRITING = "[data-not-writing]";
 
 /** Input types somebody types words into. */
 const TYPED = new Set(["text", "email", "search", "url", "tel", "password"]);

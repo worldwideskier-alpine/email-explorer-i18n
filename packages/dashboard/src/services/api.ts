@@ -1,5 +1,6 @@
 import axios from "axios";
 import { somethingIsBeingWritten } from "./appUpdate";
+import { sessionEnded } from "./sessionEnd";
 
 /** Exported for tests, which answer its requests themselves. */
 export const apiClient = axios.create({
@@ -72,6 +73,9 @@ apiClient.interceptors.response.use(
 		);
 		if (error.response?.status === 401 && !handledByCaller) {
 			localStorage.removeItem("session");
+			// The one in memory too: the router asks that one, and with it left
+			// in place every navigation went through while every request failed.
+			sessionEnded();
 			// Not while somebody is writing. Navigating away threw the unsent
 			// message out with the session -- the one thing appUpdate.ts
 			// already refuses to do. The failed send says so, the text stays

@@ -25,6 +25,7 @@
       <input
         type="text"
         v-model="searchQuery"
+        data-not-writing
         @keyup.enter="performSearch"
         :placeholder="t('header.searchPlaceholder')"
         class="w-full ps-12 pe-4 py-3 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 rounded-xl text-gray-900 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-transparent transition-all duration-200"
