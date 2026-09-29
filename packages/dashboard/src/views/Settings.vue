@@ -82,10 +82,8 @@
           </span>
         </div>
         <form @submit.prevent="saveApiKey" class="flex flex-col sm:flex-row gap-2">
-          <input
-            type="password"
+          <SecretInput
             v-model="claudeApiKeyInput"
-            autocomplete="off"
             :placeholder="claudeApiKeyConfigured ? t('settings.spamFilterApiKeyPlaceholderConfigured') : t('settings.spamFilterApiKeyPlaceholderEmpty')"
             class="flex-grow bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-3"
           />
@@ -398,6 +396,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import RichTextEditor from "@/components/RichTextEditor.vue";
+import SecretInput from "@/components/SecretInput.vue";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
 import { useDateFormat } from "@/composables/useDateFormat";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";

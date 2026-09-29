@@ -55,6 +55,19 @@ const button = (text: string) =>
 		(b) => b.textContent?.trim() === text,
 	) as HTMLButtonElement | undefined;
 
+describe("the sending key's box", () => {
+	it("gives a password manager nothing to fill", async () => {
+		// A password box here was one the browser offered to save the key
+		// from, as this site's password -- and then filled into sign-in.
+		adminGetResendSettings.mockResolvedValue({ data: { source: "none" } });
+		await mountCard();
+		expect(host.querySelectorAll('input[type="password"]')).toHaveLength(0);
+		const box = host.querySelector("#resendApiKey") as HTMLInputElement;
+		expect(box.type).toBe("text");
+		expect(box.className).toContain("[-webkit-text-security:disc]");
+	});
+});
+
 describe("the sending key's status", () => {
 	it("is not said to be unset when it could not be asked", async () => {
 		adminGetResendSettings.mockRejectedValue(new Error("offline"));

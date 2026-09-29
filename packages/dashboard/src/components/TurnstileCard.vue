@@ -16,10 +16,10 @@
 
 		     No field here is type=password, and that is what keeps password
 		     managers out: with one, the browser took the pair for a sign-in
-		     form and put root's own address and password in as the keys, and
-		     would have offered to save the secret as a password. The secret is
-		     masked by CSS instead. The data-*ignore attributes are for the
-		     managers that look at more than the type. -->
+		     form and put root's own address and password in as the keys. The
+		     secret is a SecretInput; the site key carries the same ignore
+		     attributes, since it is the box a manager would take for the
+		     username. -->
 		<form
 			@submit.prevent="save"
 			@input="touched = true"
@@ -45,18 +45,12 @@
 				</div>
 				<div class="min-w-0">
 					<label for="turnstileSecretKey" class="block text-sm text-gray-700 dark:text-gray-300 mb-1">{{ t("root.turnstile.secretKey") }}</label>
-					<input
+					<SecretInput
 						id="turnstileSecretKey"
 						v-model="secretInput"
 						name="turnstile-secret-key"
-						autocomplete="off"
-						autocapitalize="off"
-						spellcheck="false"
-						data-1p-ignore
-						data-lpignore="true"
-						data-bwignore
 						placeholder="0x4AAAA..."
-						class="[-webkit-text-security:disc] w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+						class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
 					/>
 				</div>
 			</div>
@@ -110,6 +104,7 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import SecretInput from "@/components/SecretInput.vue";
 import TurnstileWidget from "@/components/TurnstileWidget.vue";
 import { useAppSettings } from "@/composables/useAppSettings";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";

@@ -34,11 +34,9 @@
 
 		<form @submit.prevent="save" class="flex flex-col sm:flex-row gap-2">
 			<label for="resendApiKey" class="sr-only">{{ t("admin.resend.title") }}</label>
-			<input
+			<SecretInput
 				id="resendApiKey"
-				type="password"
 				v-model="input"
-				autocomplete="off"
 				:placeholder="t('admin.resend.placeholder')"
 				class="flex-grow bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg shadow-sm sm:text-sm p-3"
 			/>
@@ -78,6 +76,7 @@
  */
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import SecretInput from "@/components/SecretInput.vue";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 
