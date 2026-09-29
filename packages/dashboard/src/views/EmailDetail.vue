@@ -437,10 +437,13 @@ onMounted(async () => {
 	} finally {
 		isLoading.value = false;
 	}
-	folderStore.fetchFolders(mailboxId);
+	// The folders are the sidebar's to load, per mailbox (Sidebar.vue); asked
+	// again here, a refusal was an unhandled rejection on every message.
 
+	// Not something the reader asked for, so a refusal is not reported: the
+	// message stays unread and is marked the next time it is opened.
 	if (email.value && !email.value.read) {
-		emailStore.updateEmail(mailboxId, emailId, { read: true });
+		emailStore.updateEmail(mailboxId, emailId, { read: true }).catch(() => {});
 	}
 });
 

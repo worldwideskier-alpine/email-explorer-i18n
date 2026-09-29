@@ -393,6 +393,12 @@ describe("moving an open message", () => {
 			],
 		);
 
+		// The sidebar loads the mailbox's folders (Sidebar.vue); it is not
+		// mounted here, so they are loaded the way it would.
+		const { useFolderStore } = await import("@/stores/folders");
+		await useFolderStore().fetchFolders("m@example.com");
+		await settle();
+
 		(host.querySelector('[title="Move to folder"]') as HTMLElement).click();
 		await settle();
 		const archive = [...host.querySelectorAll("button")].find(
