@@ -287,18 +287,10 @@ export default {
 	deleteFolder: (mailboxId: string, id: string) =>
 		apiClient.delete(`/api/v1/mailboxes/${seg(mailboxId)}/folders/${seg(id)}`),
 
-	// Contacts
+	// Contacts. Only listed here; the Worker's routes for making, changing
+	// and removing one have no screen.
 	listContacts: (mailboxId: string) =>
 		apiClient.get(`/api/v1/mailboxes/${seg(mailboxId)}/contacts`),
-	createContact: (mailboxId: string, contact: any) =>
-		apiClient.post(`/api/v1/mailboxes/${seg(mailboxId)}/contacts`, contact),
-	updateContact: (mailboxId: string, id: string, contact: any) =>
-		apiClient.put(
-			`/api/v1/mailboxes/${seg(mailboxId)}/contacts/${seg(id)}`,
-			contact,
-		),
-	deleteContact: (mailboxId: string, id: string) =>
-		apiClient.delete(`/api/v1/mailboxes/${seg(mailboxId)}/contacts/${seg(id)}`),
 
 	// Search
 	searchEmails: (mailboxId: string, params: any) =>
