@@ -6,7 +6,7 @@ secrets, and every push to `main` deploys your own instance to your own
 Cloudflare account.
 
 What you configure lives in GitHub's settings, or on your deployment's own
-screens, rather than in a tracked file, so pulling later updates from this
+screens, rather than in a tracked file, so syncing later updates from this
 repository never collides with it.
 
 ## What you need
@@ -19,17 +19,29 @@ repository never collides with it.
 
 ## 1. Fork
 
-Use the **Fork** button. A fork keeps the link to this repository, so
-`git pull` brings later fixes in.
+Use the **Fork** button. A fork keeps the link to this repository, which is
+what lets GitHub's **Sync fork** bring later fixes in (see
+[Keeping up to date](#keeping-up-to-date)).
 
 ## 2. Create the Cloudflare API token
 
-In the Cloudflare dashboard, **My Profile → API Tokens → Create Token**, using
-the *Edit Cloudflare Workers* template. It needs, at minimum, Workers Scripts
-Edit, Workers R2 Storage Edit and Workers KV Storage Edit on your account.
+In the Cloudflare dashboard, **My Profile → API Tokens → Create Token**. The
+workflow runs `wrangler deploy`, `wrangler r2 bucket info` / `create`,
+`wrangler secret put` and `wrangler deployments status`, and nothing else, so
+the token needs, at minimum, **Workers Scripts: Edit** and **Workers R2
+Storage: Edit** on your account. The *Edit Cloudflare Workers* template
+includes both, along with permissions this does not use: nothing here uses KV
+or Pages.
 
 Note your **Account ID** as well; it is on the right of any zone's overview
 page.
+
+**On an account that has never had a Worker**, choose its `workers.dev`
+subdomain once before the first deploy: open **Workers & Pages** in the
+Cloudflare dashboard and set it there. The Worker is published at
+`<worker-name>.<subdomain>.workers.dev`, and wrangler, finding no subdomain,
+asks for one interactively -- which it cannot do in a workflow, so the first
+deploy fails instead. It is set once per account, not per Worker.
 
 ## 3. Generate a push-notification key pair
 
@@ -150,13 +162,24 @@ rather than filed somewhere nobody watches.
 
 ## Keeping up to date
 
+On your fork's page on GitHub, **Sync fork → Update branch** merges this
+repository's `main` into yours. That changes your `main`, and a change to
+`main` deploys; if no run starts, run **Deploy to Cloudflare** by hand from the
+Actions tab. A sync that changes only documentation starts no run on purpose:
+the workflow skips pushes that touch nothing but `docs/` (other than
+`docs/readme/`), `README.md`, `LICENSE` and `.editorconfig`.
+
+From a clone of your fork, the same thing is:
+
 ```bash
 git remote add upstream https://github.com/worldwideskier-alpine/email-explorer-i18n.git
-git pull upstream main
+git fetch upstream
+git merge upstream/main
+git push origin main
 ```
 
 Your configuration is in GitHub's settings, not in the repository, so there is
-nothing here to conflict. Push, and the workflow redeploys.
+nothing here to conflict.
 
 ## What is optional
 

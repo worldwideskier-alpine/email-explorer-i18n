@@ -30,7 +30,7 @@ To enable Account Recovery, you need:
 1. **A sender address on a domain verified in [Resend](https://resend.com)**
    - Mail leaves through Resend, not through Cloudflare
    - Used as the "from" address for recovery emails
-   - Example: `noreply@yourdomain.com`
+   - Example: `noreply@example.com`
 
 2. **A Resend API key for each person who may need a reset**
    - A reset is the reset person's own mail, so it is sent with *their* key,
@@ -49,17 +49,41 @@ whole of it: the address is kept in the deployment's bucket, and "forgot
 password" turns on as soon as it is saved. It must be on a domain verified in
 Resend.
 
+What `/root` saves is one small object in the bucket,
+`settings/account-recovery.json`:
+
+```json
+{ "fromEmail": "noreply@example.com" }
+```
+
+The address is trimmed and lowercased when saved; saving it empty deletes the
+object. Behind the screen are `GET` and `PUT
+/api/v1/root/settings/account-recovery` (root only), which answer:
+
+```json
+{
+  "fromEmail": "noreply@example.com",
+  "setByDeployment": false,
+  "enabled": true
+}
+```
+
+`fromEmail` is what root saved (or `null`), `setByDeployment` whether the
+deployment's `ACCOUNT_RECOVERY_FROM` is set, and `enabled` whether "forgot
+password" is on from any source.
+
 Two other sources exist. The deployment's `ACCOUNT_RECOVERY_FROM` variable or
 secret (see [Deploying your own](../deploying-your-own.md)) takes precedence
 over `/root`, and `/root` says so when it does. An `accountRecovery` option in
 code, for somebody embedding the package, comes last: it is used only when
 neither of the others is set, because source code is what a fork inherits.
-The order is: the variable, then `/root`, then code.
+The order is: the variable, then `/root`, then code. A blank value counts as
+unset at every step.
 
 ```typescript
 export default EmailExplorer({
   accountRecovery: {
-    fromEmail: 'noreply@yourdomain.com'  // Your verified email address
+    fromEmail: 'noreply@example.com'  // Your verified email address
   }
 });
 ```
@@ -87,18 +111,22 @@ export default EmailExplorer({
 
 1. **User Requests Reset**
    - User clicks "Forgot your password?" on login page
-   - Enters their email address
+   - Enters their email address (and passes the Turnstile check, if root has
+     turned it on)
    - System generates a secure reset token
 
 2. **Email Sent**
-   - Reset link with token is sent to user's email
+   - Reset link with token is sent to user's email, in the language the page
+     was shown in
    - Link is valid for 1 hour
-   - User receives email from configured `fromEmail` address
+   - User receives email from the password reset sender, sent with the user's
+     own Resend key
 
 3. **User Resets Password**
    - User clicks link in email
    - Enters new password (minimum 8 characters)
-   - Password is updated in the system
+   - Password is updated in the system, and every session of the account ends
+     -- along with the push subscriptions those sessions registered
 
 4. **Confirmation**
    - User is redirected to login page
@@ -107,9 +135,11 @@ export default EmailExplorer({
 ### Technical Details
 
 **Token Generation:**
-- Cryptographically secure random tokens
-- Stored in R2 with 1-hour expiration
-- One-time use only
+- A random UUID from the Web Crypto API (`crypto.randomUUID()`)
+- Stored in the deployment's R2 bucket as `recovery-tokens/<token>.json`,
+  holding the account id, the address and the expiry time
+- Expires 1 hour after it was issued
+- One-time use only: the object is deleted before the password is set
 
 **Security Measures:**
 - Tokens are single-use
@@ -133,7 +163,7 @@ export default EmailExplorer({
 
 1. **Go to Login Page**
    - Navigate to your Email Explorer instance
-   - Click "Sign in to Email Explorer"
+   - The page headed "Sign in to Email Explorer" opens
 
 2. **Click "Forgot your password?"**
    - Link appears only when Account Recovery is enabled
@@ -144,7 +174,7 @@ export default EmailExplorer({
    - Click "Send Reset Link"
 
 4. **Check Your Email**
-   - Look for email from `noreply@yourdomain.com`
+   - Look for email from `noreply@example.com`
    - Check spam folder if not in inbox
    - Link is valid for 1 hour
 
@@ -160,15 +190,15 @@ export default EmailExplorer({
 
 ### Password Requirements
 
-- **Minimum Length:** 8 characters
-- **Recommended:** Mix of uppercase, lowercase, numbers, and symbols
-- **Unique:** Different from previous passwords
+- **Minimum Length:** 8 characters (the only rule enforced)
+- **Recommended:** Mix of uppercase, lowercase, numbers, and symbols, and
+  different from your previous passwords (not checked)
 
 ### What If You Don't Receive the Email?
 
 1. **Check Spam Folder**
    - Recovery emails may be filtered as spam
-   - Add `noreply@yourdomain.com` to contacts
+   - Add `noreply@example.com` to contacts
 
 2. **Verify Email Address**
    - Ensure you entered the correct email
@@ -193,19 +223,21 @@ export default EmailExplorer({
 - ✅ Log out from shared devices
 - ❌ Don't click reset links from suspicious emails
 
-**For Administrators:**
+**For root:**
 - ✅ Use a dedicated noreply email address
 - ✅ Monitor for abuse patterns
 - ✅ Keep Cloudflare updated
 - ✅ Review user access regularly
-- ❌ Don't share the `fromEmail` address
 
 ### Token Security
 
 - **Single Use:** Each token can only be used once
 - **Time Limited:** Tokens expire after 1 hour
 - **Cryptographically Secure:** Generated with Web Crypto API
-- **Stored Securely:** Tokens stored in R2 with encryption
+- **Stored as plain JSON:** The app does not encrypt or hash tokens. They sit
+  in the deployment's R2 bucket as written, so anyone who can read that bucket
+  -- that is, anyone holding the Cloudflare account -- can read an unexpired
+  one, the same line the README draws for everything else in the bucket
 
 ### Email Security
 
@@ -225,7 +257,7 @@ export default EmailExplorer({
 2. Check that the address is on a domain verified in Resend
 3. Reload the page
 
-### "Invalid or expired token"
+### "Invalid or expired token" / "Token has expired"
 
 **Problem:** Reset link doesn't work
 
@@ -255,7 +287,7 @@ export default EmailExplorer({
 1. Password must be at least 8 characters
 2. Ensure token hasn't expired (1 hour)
 3. Try requesting a new reset link
-4. Contact administrator if issue persists
+4. Ask root to set a new password for you on `/root` if the issue persists
 
 ### "Forgot password link not showing"
 
@@ -279,7 +311,9 @@ POST /api/v1/auth/forgot-password
 Content-Type: application/json
 
 {
-  "email": "user@example.com"
+  "email": "user@example.com",
+  "locale": "en",
+  "turnstileToken": "..."
 }
 
 Response:
@@ -287,6 +321,12 @@ Response:
   "status": "Password reset email sent"
 }
 ```
+
+`locale` (optional) is the language the mail is written in; the dashboard
+sends the one it is showing. `turnstileToken` is needed only when root has
+turned Turnstile on. The answer is the same whether or not the address has an
+account; other answers are `403` (the bot check failed), `429` (rate limited,
+with `Retry-After`) and `503` (no sender is set anywhere).
 
 ### Reset Password
 
@@ -305,7 +345,12 @@ Response:
 }
 ```
 
+A token that is unknown or already used answers `401` with "Invalid or
+expired token"; one past its hour answers `401` with "Token has expired".
+
 ### Check Settings
+
+Public: the sign-in pages read it before anybody is signed in.
 
 ```
 GET /api/v1/settings
@@ -313,14 +358,24 @@ GET /api/v1/settings
 Response:
 {
   "auth": {
-    "enabled": true,
-    "registerEnabled": true
+    "registerEnabled": false
   },
   "accountRecovery": {
     "enabled": true
+  },
+  "turnstile": {
+    "siteKey": null
   }
 }
 ```
+
+`accountRecovery.enabled` is what shows or hides "Forgot your password?".
+`turnstile.siteKey` is `null` until root turns Turnstile on.
+
+### The sender, on `/root`
+
+`GET` and `PUT /api/v1/root/settings/account-recovery`, root only; see
+[Configuration](#configuration).
 
 ## Related Documentation
 
@@ -334,9 +389,5 @@ For issues or questions about Account Recovery:
 
 1. **Check this guide** - Most common issues are covered above
 2. **Review logs** - Check Cloudflare Worker logs for errors
-3. **GitHub Issues** - [Report issues on GitHub](https://github.com/G4brym/email-explorer/issues)
-4. **Contact Admin** - Reach out to your Email Explorer administrator
-
----
-
-**Last Updated:** December 2024
+3. **GitHub Issues** - [Report issues on GitHub](https://github.com/worldwideskier-alpine/email-explorer-i18n/issues)
+4. **Contact root** - Reach out to whoever runs your deployment

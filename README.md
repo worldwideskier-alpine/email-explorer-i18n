@@ -41,11 +41,11 @@
 
 ### 実装上の約束ごと
 
-- ダッシュボード（`packages/dashboard`）は [vue-i18n](https://vue-i18n.intlify.dev/) を使用しています。翻訳文字列は `packages/dashboard/src/locales/<code>.json` に1言語1ファイルで置き、キー構成は `en.json` と完全に一致させます（1言語あたり342キー）。
+- ダッシュボード（`packages/dashboard`）は [vue-i18n](https://vue-i18n.intlify.dev/) を使用しています。翻訳文字列は `packages/dashboard/src/locales/<code>.json` に1言語1ファイルで置き、キー構成は `en.json` と完全に一致させます（キーの数は `en.json` が決め、`messages.test.ts` が全カタログの一致を検査します）。
 - **選択肢に出す言語は `locales/registry.ts` が唯一の情報源**です。カタログが無い言語を登録することも、登録されていないカタログを置くこともできません。`locales/messages.test.ts` が両方向を検査して落とします。英語へ素通しで落ちる言語を選択肢に出すくらいなら、出さないほうがましだからです。
 - **カタログの値に `@` と `|` を書いてはいけません。** vue-i18n は `@` をリンクキー、`|` を複数形の区切りとして解釈するため、素で入れるとそのメッセージは描画時にコンパイルエラーになります。厄介なのは、ビルドも型検査も他のテストも緑のまま画面だけが落ちることです（実際に `recipient@example.com` をプレースホルダに入れて作成画面を丸ごと壊しました）。`messages.test.ts` は全カタログの全メッセージを実際にコンパイルして、これを検出します。
 - カタログは `import.meta.glob` で**必要になった言語だけ**取得します。初回ロードでは既定言語と英語のフォールバックだけを読み、言語を選んだ時点でそのチャンクを1つ取りに行きます。73言語を最初から読むと初回の転送量が跳ね上がるためです。
-- 右横書きは**アラビア語・ペルシア語・ヘブライ語・ウルドゥー語の4言語**です。`registry.ts` の `dir: "rtl"` が `<html dir>` に反映され、**レイアウトは左右反転します**。方向を持つ余白・位置・枠線は論理プロパティ（`ms-`/`me-`/`ps-`/`pe-`/`start-`/`end-`/`border-e`）で書いてあり、行き先を指す矢印は `rtl:-scale-x-100` で向きを返します。中央寄せの `left-1/2` と `-translate-x-1/2` は左右対称なので物理のままです。
+- 右横書きは**アラビア語・中央クルド語・ペルシア語・ヘブライ語・ウルドゥー語の5言語**です。`registry.ts` の `dir: "rtl"` が `<html dir>` に反映され、**レイアウトは左右反転します**。方向を持つ余白・位置・枠線は論理プロパティ（`ms-`/`me-`/`ps-`/`pe-`/`start-`/`end-`/`border-e`）で書いてあり、行き先を指す矢印は `rtl:-scale-x-100` で向きを返します。中央寄せの `left-1/2` と `-translate-x-1/2` は左右対称なので物理のままです。
   
   RTL が1言語だった間はここを後回しにしていました。69分の1では実害が測れなかったためです。アラビア語を足した時点でその理由が消えたので、同じコミットで直しています。
 - `apiErrors` のキーだけはサーバが返す英語文字列そのままです（対応表として使うため）。値のみ翻訳しています。
@@ -62,19 +62,22 @@
 
 手順は **[docs/deploying-your-own.md](docs/deploying-your-own.md)** にまとめてあります。
 
-設定する値は次のとおりです。**どれも追跡されているファイルには入りません**。そのため、後から本リポジトリの更新を `git pull` しても、設定が衝突することはありません。
+GitHub 側で設定する値は次のとおりです。**どれも追跡されているファイルには入りません**。そのため、後から本リポジトリの更新をフォークに取り込んでも（GitHub の **Sync fork**、または upstream を fetch して merge）、設定が衝突することはありません。
 
 | 種別 | 名前 | 内容 |
 |---|---|---|
 | Secret | `CLOUDFLARE_API_TOKEN` | Cloudflare の API トークン |
 | Secret | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare のアカウント ID |
 | Secret | `VAPID_PRIVATE_KEY` | プッシュ通知の秘密鍵 |
+| Secret（任意） | `PRODUCTION_URL` | デプロイ先のURL。デプロイの最後のステップが、いま配信されているのが今回ビルドしたものかを確かめます。未設定ならそのステップは飛ばされ、その旨がログに出ます |
 | Variable | `WORKER_NAME` | Worker 名。公開URLもこれで決まります |
 | Variable | `R2_BUCKET_NAME` | メールと添付を置く R2 バケット名 |
 | Variable | `VAPID_PUBLIC_KEY` | プッシュ通知の公開鍵 |
-| Variable | `ACCOUNT_RECOVERY_FROM` | パスワード再設定メールの差出人（通常は未設定のまま、デプロイ後に `/root` で設定します） |
+| Secret または Variable（任意） | `ACCOUNT_RECOVERY_FROM` | パスワード再設定メールの差出人。**通常は設定せず、デプロイ後に `/root` で設定します**（値はバケットの `settings/account-recovery.json` に保存されます）。ここで設定すると `/root` の設定より優先され、`/root` にその旨が表示されます。設定するならシークレットを推奨します（変数は公開されるデプロイログに出るため）。両方あればシークレットが使われます |
 
-Resend の API キーだけはここに含みません。**管理画面（`/admin`）で設定します**（後述）。
+`PRODUCTION_URL` と `ACCOUNT_RECOVERY_FROM` がシークレットなのは秘密だからではなく、公開リポジトリの Actions ログでシークレットの値だけが `***` に伏せられるためです。
+
+Resend の API キーだけはここに含みません。**各自が自分の画面（管理者は `/admin`、特権管理者は `/root`）で設定します**（後述）。
 
 変数を設定しなかった項目は、`packages/worker/dev/wrangler.jsonc` に書かれている既定値、つまり**本デプロイの値**がそのまま使われます。デプロイのログは、項目ごとに「設定値を使ったか、既定値のままか」を1行ずつ出すので、初回はそこを確認してください。
 
@@ -94,13 +97,13 @@ GitHub Actions の消費分数を抑えるため、`main` への push で走る�
 
 | ワークフロー | 実行タイミング | 内容 |
 |---|---|---|
-| **Deploy to Cloudflare** | `main` への push（`docs/**`・`README.md`・`LICENSE`・`.editorconfig` のみの変更を除く）、Pull Request、手動 | lint → build → テスト → デプロイ |
+| **Deploy to Cloudflare** | `main` への push（`docs/**`（`docs/readme/**` は除外しない）・`README.md`・`LICENSE`・`.editorconfig` のみの変更を除く）、Pull Request（変更したパスに関係なく常に）、手動 | lint → build → テスト → デプロイ |
 
 Pull Request では Deploy to Cloudflare の `build-and-check` ジョブだけが走り、デプロイは `main` への push か、`main` での手動実行のときだけ行われます。以前あった Build ワークフローは、この `build-and-check` と同じ lint → build → テストを二重に回していたので削除しました。
 
 上流のnpmリリース自動化（Release / Changeset Check）は削除しました。本フォークはCloudflareへのデプロイで配布しており、`email-explorer` のnpmパッケージ名は上流のものだからです。
 
-`main` へ push すれば、そのままCloudflareへデプロイされます。ドキュメントだけの変更ではデプロイは走りません（デプロイしたい場合は Actions から Deploy to Cloudflare を手動実行してください）。
+`main` へ push すれば、そのままCloudflareへデプロイされます。上の除外に当たるファイルだけを変えた push ではワークフロー自体が走らず、チェックもデプロイも行われません（デプロイしたい場合は Actions から Deploy to Cloudflare を手動実行してください）。例外は `docs/readme/` で、`readmeDocs.test.ts` がそこを読むため、ここだけの変更でもワークフローが走り、テストを通ればデプロイまで進みます。
 
 ## バックアップと復元
 
@@ -132,7 +135,7 @@ Pull Request では Deploy to Cloudflare の `build-and-check` ジョブだけ�
 - **公開エンドポイント `GET /api/v1/settings` には載せません。** そこはログイン前に読めるので、送信が設定済みかどうかすら教える理由がありません。
 - 空文字で保存すると保存済みの鍵を消します。空文字を鍵として保存はしません（`Bearer ` を送って全メールが理由不明に失敗するため）。
 
-**この方式で弱くなる点を明記します。** Worker secret は書き込み専用で、Cloudflare の管理画面からも読み出せません。R2 に置くと平文でバケットに載り、**Cloudflare アカウントを持つ者は読めます**。ただしそれは自動バックアップの設計時点で既に「守れない」と明記した線の外側です。その線の内側 ── このアプリの管理者パスワードが漏れた場合 ── では実質中立で、そもそもその人物は全メールを読めて任意のメールボックスとして送れます。
+**この方式で弱くなる点を明記します。** Worker secret は書き込み専用で、Cloudflare の管理画面からも読み出せません。R2 に置くと平文でバケットに載り、**Cloudflare アカウントを持つ者は読めます**。ただしそれは自動バックアップの設計時点で既に「守れない」と明記した線の外側です。その線の内側 ── このアプリの管理者パスワードが漏れた場合 ── では実質中立で、そもそもその人物はその管理者のメールボックスを読め、そのメールボックスとして送れます（他の人のメールボックスには届きません）。
 
 ### 添付ファイルの送信
 
@@ -152,7 +155,9 @@ Pull Request では Deploy to Cloudflare の `build-and-check` ジョブだけ�
 
 #### この機能が守るもの、守らないもの
 
-**アプリ側でバックアップを消す手段はありません。** 削除エンドポイントもボタンも無く、消えるのは保存数を超えたぶんの回転だけです。したがって**このアプリの管理者パスワードが漏れた場合**、攻撃者はメールを破壊できてもその写しは壊せず、メールは戻せます。これがこの設計が想定している脅威です。
+**管理者（メールボックスの持ち主）がバックアップを消す手段はありません。** バックアップ単体の削除エンドポイントもボタンも無く、メールボックスを削除しても（完全削除を選んでも）アーカイブは残ります。管理者の操作で消えるのは保存数を超えたぶんの回転だけです。したがって**管理者のパスワードが漏れた場合**、攻撃者はメールを破壊できてもその写しは壊せず、メールは戻せます。これがこの設計が想定している脅威です。
+
+**例外は特権管理者（root）による人の削除です。** `/root` で人を削除すると、その人のログイン・メールボックス・メール・原本・添付と一緒に、**そのメールボックスの全アーカイブも消えます**。人ごとの削除ロック（既定で有効）を外し、さらに2回確認してからでないと実行できませんが、これは誤操作を防ぐもので権限ではありません。root のパスワードやセッションが漏れた場合、バックアップは守れません。
 
 **Cloudflare アカウントの喪失や乗っ取りは守れません。** それを持つ者はこのアプリを一切通らず R2 に直接届きます。バックアップは元のメールと同じバケットにあります。
 
@@ -181,13 +186,15 @@ Pull Request では Deploy to Cloudflare の `build-and-check` ジョブだけ�
 
 ### 迷惑メールの自動削除
 
-設定画面で有効にすると、**迷惑メールフォルダの中で指定した日数より古いメール**を毎日削除します。ゴミ箱への移動ではなく完全な削除で、メール本体・添付・R2 に置いた原本まで消えます。自動バックアップと同じ 1 日 1 回の cron が駆動します。
+設定画面で有効にすると、**迷惑メールフォルダに入ってから指定した日数を過ぎたメール**を毎日削除します。ゴミ箱への移動ではなく完全な削除で、メール本体・添付・R2 に置いた原本まで消えます。自動バックアップと同じ 1 日 1 回の cron が駆動します。
 
 #### なぜ完全削除で構わないのか
 
 **同じ実行の中で、バックアップを先に、削除を後に行うからです**（`scheduled-run.ts`）。今夜消えたメールは今夜のアーカイブに入っているので、そのアーカイブが残っている限り戻せます。順序が逆なら、削除の数分後に取られたアーカイブが「そのメールが無い最初の写し」になり、どこにも写しのない完全削除になります。
 
 この順序を型で縛る方法はない（同じ関数の中の2つの呼び出しでしかない）ので、**テストで縛っています**。`scheduled-order.test.ts` は呼び出し順ではなく結果を見ます ── 削除されたメールが、その実行が書いたアーカイブの中にあること。
+
+**順序だけでは足りないので、アーカイブの有無も見ます。** 今夜のアーカイブが無いことはあります（バックアップが失敗した、途中で打ち切られた、毎週・毎月の設定で今夜は対象外だった）。そのため自動バックアップが有効なメールボックスでは、**バケットにある最新のアーカイブより前に届いたメールだけ**を削除し、アーカイブが1つも無い間は何も消しません（`newestArchiveAt`、`spam-purge.test.ts`）。「届いた」は受信時に記録した `received_at` で判断し、メールの `date` は使いません。復元したメールは何年も前の日付を持っていて、それで比べると、どのアーカイブにも入っていないのに入っていることになるためです。
 
 **自動バックアップが無効なら、この保証はありません。** その場合は設定画面に「このまま削除されたメールは、どこにも残りません」と出ます。
 
@@ -199,7 +206,9 @@ Pull Request では Deploy to Cloudflare の `build-and-check` ジョブだけ�
 
 #### 日付の読み方
 
-**読めない日付のメールは消しません。** 受信したメールの日付は ISO の UTC ですが、インポートしたメールは元の `Date:` ヘッダを持ち、`+09:00` のようなオフセット付きだったり、そもそも壊れていたりします。文字列として比較すると、同じ時刻でも並ぶ位置が変わって別のメールが消えます。そのため日付は**解析して比較**し、解析できないものは残します（`expiredSpamIds`）。永遠に残る迷惑メールの保管コストと、消えたメールを比べた結果です。
+**日数は、メールが迷惑メールフォルダに入った時刻から数えます。** その時刻は `spam_since` に記録され、フォルダから出ると消えます。以前はメール自体の日付（`date`）から数えていたため、古い日付のメールを今日迷惑メールに移すと、その夜のうちに消えていました。`spam_since` を持つ前から迷惑メールフォルダにあったメールだけは、従来どおりメールの日付で数えます。
+
+**読めない日付のメールは消しません。** 比べる時刻は解析してから比較し、解析できないものは残します（`expiredSpamIds`）。特にメールの日付で数える古いメールでは、インポートしたメールが元の `Date:` ヘッダを持ち、`+09:00` のようなオフセット付きだったり、そもそも壊れていたりします。文字列として比較すると、同じ時刻でも並ぶ位置が変わって別のメールが消えます。永遠に残る迷惑メールの保管コストと、消えたメールを比べた結果です。
 
 **最終実行の結果（成功／失敗・件数・時刻）を設定画面に出します。** 黙って止まった削除は、開くまで気づきません。
 
@@ -254,7 +263,7 @@ This fork is deployed by forking it -- see **[Deploying your own](docs/deploying
 - 🚀 **[Getting Started](#getting-started)** - Deploy in minutes
 - 🔐 **[Authentication](docs/features/authentication.md)** - Setup your first account
 - 🔑 **[Account Recovery](docs/features/account-recovery.md)** - Password reset via email
-- 👥 **[Admin Panel](docs/features/admin-panel.md)** - Manage users and permissions
+- 👥 **[Admin Panel](docs/features/admin-panel.md)** - Accounts (root) and your own settings
 - ⚙️ **[Configuration](#configuration)** - Customize your deployment
 
 ## Overview
@@ -306,7 +315,7 @@ Email Explorer gives you a private, self-hosted email solution with a user-frien
 
 ## Key Features
 
-- **🔒 Secure & Private**: Self-hosted on your Cloudflare account. No third-party tracking or data scanning.
+- **🔒 Secure & Private**: Self-hosted on your Cloudflare account. No third-party tracking; mail is read by a third party only if you turn on the optional Claude spam check for a mailbox.
 - **🔐 Authentication**: The first account to register is root, which runs the deployment and makes everybody else's accounts; sessions end with a password change or reset.
 - **👥 Multi-User Support**: Each person holds their own mailboxes and nobody else's; a person can sign in with more than one address.
 - **✍️ Rich Text Editor**: Full-featured WYSIWYG editor with formatting, colors, links, lists, and more - just like Gmail or Outlook.
@@ -314,7 +323,7 @@ Email Explorer gives you a private, self-hosted email solution with a user-frien
 - **✉️ Email Management**: Send, receive, and organize emails with a clean and intuitive interface.
 - **📁 Folder Organization**: Create custom folders to organize your emails.
 - **📎 Attachment Support**: View and download attachments directly in the browser.
-- **🔍 Search**: Find emails quickly with full-text search across all your mailboxes.
+- **🔍 Search**: Find emails in a mailbox by words in the subject or body, narrowed by sender, recipient, folder or date.
 - **📧 Contacts**: Manage your contacts with an integrated address book.
 - **⚡ Serverless Architecture**: Each mailbox is its own Durable Object for optimal performance and isolation.
 
@@ -379,7 +388,7 @@ export default EmailExplorer({
 // With Account Recovery
 export default EmailExplorer({
   accountRecovery: {
-    fromEmail: 'noreply@yourdomain.com'  // Email address to send password reset links from
+    fromEmail: 'noreply@example.com'  // Email address to send password reset links from
   }
 })
 ```
@@ -427,7 +436,7 @@ Comprehensive user guides are available for all features:
 - **[Feature Documentation](docs/features/index.md)** - Complete user guides
   - [Authentication Guide](docs/features/authentication.md) - Account creation, login, and security
   - [Account Recovery Guide](docs/features/account-recovery.md) - Password reset via email
-  - [Admin Panel Guide](docs/features/admin-panel.md) - User management and permissions
+  - [Admin Panel Guide](docs/features/admin-panel.md) - Accounts, sign-in addresses and sending keys
   - [Rich Text Editor Guide](docs/features/rich-text-editor.md) - Email formatting and composition
   - [Reply & Forward Guide](docs/features/reply-forward.md) - Email responses and threading
 
@@ -468,8 +477,8 @@ Email Explorer is built with modern web technologies:
 - Reply and reply-all functionality
 - Forward emails to others
 - Rich text HTML composition
-- Email threading and conversation tracking
-- Attachment handling
+- Email threading headers on replies (In-Reply-To and References, from the original's Message-ID)
+- Attachments: received, downloaded, and attached when composing (up to 20 MB in total)
 
 ✅ **User Management**
 - Root creates and deletes accounts
@@ -479,7 +488,7 @@ Email Explorer is built with modern web technologies:
 ✅ **Organization**
 - Custom folder creation
 - Contact management
-- Full-text email search
+- Search within a mailbox (subject and body, by sender, recipient, folder or date)
 - Email filtering and organization
 
 ## Testing
@@ -519,32 +528,40 @@ pnpm --filter email-explorer test --watch
 
 Not implemented yet, roughly in the order they would be useful:
 
-- [ ] Attaching files when composing — the send API accepts attachments, but
-      the composer has no way to pick one
 - [ ] Drafts saved automatically rather than only on "save draft"
+- [ ] Attachments kept in a saved draft (a draft keeps the text, not the files)
 - [ ] A threaded conversation view — messages already carry their threading
       headers, the list just doesn't group by them
 - [ ] Email templates for quick responses
 - [ ] Two-factor authentication (2FA)
 - [ ] Keyboard shortcuts
-- [ ] Emoji picker and tables in the rich-text editor
-- [ ] Uploading an image into a message body (inserting one by URL works)
+- [ ] An emoji picker, and inserting a table in the rich-text editor (a table
+      in a message being replied to is already kept)
+- [ ] Uploading an image into a message body (there is no image button; an
+      `<img>` with a URL written in the HTML source view is kept)
 
 
 ## Known Limitations
 
 **Current Limitations:**
-- No email draft auto-save (manual save only)
-- Image uploads not yet supported (URLs work)
-- Single mailbox per user account (multiple access supported)
+- No email draft auto-save (manual save only), and a saved draft does not keep
+  attachments
+- Image uploads not supported (an image by URL only, through the HTML source
+  view)
+- A mailbox belongs to the person who created it; there is no giving another
+  person access to it. A person may create several mailboxes.
+- Search looks inside one mailbox at a time
 
 **Optional Features:**
 - Password reset via email requires a sender, set by root on `/root`
 
 **Browser Compatibility:**
-- Modern browsers required (Chrome 90+, Firefox 88+, Safari 14+)
+- Modern browsers required (Chrome 111+, Firefox 128+, Safari 16.4+ -- the
+  floor of Tailwind CSS 4, which the dashboard's styles are built with)
 - JavaScript must be enabled
-- Cookies must be enabled for authentication
+- Browser storage and cookies must be enabled: the session is kept in the
+  browser and sent as a bearer token, and the session cookie is what signs in
+  attachment downloads and `/docs`
 
 Please report any issues on this fork's [GitHub Issues](https://github.com/worldwideskier-alpine/email-explorer-i18n/issues) page.
 
@@ -564,20 +581,30 @@ Email Explorer takes security seriously:
   or not the address has an account, so it can't be used to find out which
   addresses are worth attacking.
 - The OpenAPI schema and docs (`/openapi.json`, `/docs`) require a session
-- HttpOnly, Secure, SameSite cookies prevent XSS/CSRF
-- 30-day session expiry for automatic logout
+- The session cookie is `HttpOnly; Secure; SameSite=Strict`, and it signs in
+  only a GET of an attachment, `/docs` and `/openapi.json` -- the requests
+  that cannot carry a header. Every other API request needs the session as
+  an `Authorization: Bearer` header, which a message's markup has no way to
+  add. The flags do not protect the token from a script in the page (the
+  dashboard keeps it in browser storage too); what does is that messages are
+  shown in a sandboxed frame and no message's code runs in the page
+- 30-day session expiry for automatic logout; changing or resetting a
+  password ends the account's other sessions
 - Session tokens use cryptographic randomness
 
 **🛡️ Data Protection**
 - All data stored in YOUR Cloudflare account
 - Email content rendered in sandboxed iframes
-- No third-party data sharing
+- No third-party data sharing beyond what you set up: outbound mail goes
+  through Resend, and a mailbox given an Anthropic API key also sends its
+  incoming mail (what passed the SPF/DKIM/DMARC check) to Claude for a spam
+  verdict
 - Root and administrator roles; a mailbox is reached only by the person who holds it
 
 **🔒 Best Practices**
 - Always use HTTPS (automatic with Cloudflare)
 - Keep dependencies updated
-- Regular security audits via GitHub Dependabot
+- Weekly dependency updates proposed by GitHub Dependabot
 - Comprehensive test coverage
 
 **⚠️ Security Recommendations**

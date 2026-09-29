@@ -15,14 +15,14 @@
  * states that are *not* already in Europe above -- Council of Europe
  * membership puts Armenia, Azerbaijan, Georgia, Turkey and Cyprus there, and
  * moving them now would break the one line Europe is drawn on. What remains
- * is Arabic, Hebrew and Persian. Persian is here rather than in South Asia
- * because Iran belongs to this group by every reading except the UN's
- * statistical one, and South Asia here is the subcontinent.
+ * is Arabic, Hebrew, Persian and Kurdish. Persian is here rather than in
+ * South Asia because Iran belongs to this group by every reading except the
+ * UN's statistical one, and South Asia here is the subcontinent.
  *
- * Kurdish is the arguable omission: it is an official language of Iraq
- * alongside Arabic, so the line above admits it. It is left out for now
- * because it was not in what was agreed, not because the principle excludes
- * it.
+ * Kurdish is inside the line because it is an official language of Iraq
+ * alongside Arabic, and it is carried as the written standard of that state,
+ * Central Kurdish (`ckb`) -- see its entry below for why Northern Kurdish is
+ * not.
  *
  * This list is what the picker offers, so an entry goes in with its catalogue
  * and not before: offering a language that falls straight back to English is
