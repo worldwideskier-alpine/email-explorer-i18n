@@ -3,7 +3,9 @@
 		"emailAddress": "Seoladh ríomhphoist",
 		"password": "Pasfhocal",
 		"confirmPassword": "Deimhnigh an pasfhocal",
-		"passwordsDoNotMatch": "Níl na pasfhocail mar an gcéanna"
+		"passwordsDoNotMatch": "Níl na pasfhocail mar an gcéanna",
+		"loadFailed": "Níorbh fhéidir é a luchtú. Seiceáil do cheangal agus bain triail eile as.",
+		"retry": "Bain triail eile as"
 	},
 	"login": {
 		"title": "Sínigh isteach in Email Explorer",

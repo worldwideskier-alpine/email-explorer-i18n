@@ -3,7 +3,9 @@
 		"emailAddress": "Email address",
 		"password": "Password",
 		"confirmPassword": "Kumpirmahin ang password",
-		"passwordsDoNotMatch": "Hindi magkatugma ang mga password"
+		"passwordsDoNotMatch": "Hindi magkatugma ang mga password",
+		"loadFailed": "Hindi ma-load. Tingnan ang iyong koneksyon at subukang muli.",
+		"retry": "Subukang muli"
 	},
 	"login": {
 		"title": "Mag-sign in sa Email Explorer",

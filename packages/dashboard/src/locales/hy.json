@@ -3,7 +3,9 @@
 		"emailAddress": "Էլ. փոստի հասցե",
 		"password": "Գաղտնաբառ",
 		"confirmPassword": "Հաստատեք գաղտնաբառը",
-		"passwordsDoNotMatch": "Գաղտնաբառերը չեն համընկնում"
+		"passwordsDoNotMatch": "Գաղտնաբառերը չեն համընկնում",
+		"loadFailed": "Չհաջողվեց բեռնել։ Ստուգեք կապը և նորից փորձեք։",
+		"retry": "Նորից փորձել"
 	},
 	"login": {
 		"title": "Մուտք գործեք Email Explorer",

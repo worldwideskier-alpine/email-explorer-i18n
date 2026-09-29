@@ -3,7 +3,9 @@
 		"emailAddress": "メールアドレス",
 		"password": "パスワード",
 		"confirmPassword": "パスワード（確認）",
-		"passwordsDoNotMatch": "パスワードが一致しません"
+		"passwordsDoNotMatch": "パスワードが一致しません",
+		"loadFailed": "読み込めませんでした。接続を確認して、もう一度お試しください。",
+		"retry": "再試行"
 	},
 	"login": {
 		"title": "Email Explorer にサインイン",

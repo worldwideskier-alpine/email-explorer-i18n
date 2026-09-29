@@ -3,7 +3,9 @@
 		"emailAddress": "El. pašto adresas",
 		"password": "Slaptažodis",
 		"confirmPassword": "Pakartokite slaptažodį",
-		"passwordsDoNotMatch": "Slaptažodžiai nesutampa"
+		"passwordsDoNotMatch": "Slaptažodžiai nesutampa",
+		"loadFailed": "Nepavyko įkelti. Patikrinkite ryšį ir bandykite dar kartą.",
+		"retry": "Bandyti dar kartą"
 	},
 	"login": {
 		"title": "Prisijungimas prie Email Explorer",

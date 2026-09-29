@@ -3,7 +3,9 @@
 		"emailAddress": "E-poštni naslov",
 		"password": "Geslo",
 		"confirmPassword": "Potrditev gesla",
-		"passwordsDoNotMatch": "Gesli se ne ujemata"
+		"passwordsDoNotMatch": "Gesli se ne ujemata",
+		"loadFailed": "Nalaganje ni uspelo. Preverite povezavo in poskusite znova.",
+		"retry": "Poskusi znova"
 	},
 	"login": {
 		"title": "Prijava v Email Explorer",

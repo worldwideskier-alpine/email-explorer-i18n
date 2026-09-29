@@ -3,7 +3,9 @@
 		"emailAddress": "E-mail-cím",
 		"password": "Jelszó",
 		"confirmPassword": "Jelszó megerősítése",
-		"passwordsDoNotMatch": "A jelszavak nem egyeznek"
+		"passwordsDoNotMatch": "A jelszavak nem egyeznek",
+		"loadFailed": "Nem sikerült betölteni. Ellenőrizze a kapcsolatot, és próbálja újra.",
+		"retry": "Újra"
 	},
 	"login": {
 		"title": "Bejelentkezés az Email Explorerbe",

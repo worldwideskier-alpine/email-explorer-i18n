@@ -8,6 +8,9 @@ export const useContactStore = defineStore("contacts", {
 	}),
 	actions: {
 		async fetchContacts(mailboxId: string) {
+			// Dropped first, so a failed load does not leave another
+			// mailbox's contacts on screen under this one.
+			this.contacts = [];
 			const response = await api.listContacts(mailboxId);
 			this.contacts = response.data;
 		},

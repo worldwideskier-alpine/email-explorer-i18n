@@ -3,7 +3,9 @@
 		"emailAddress": "Indirizzo e-mail",
 		"password": "Password",
 		"confirmPassword": "Conferma password",
-		"passwordsDoNotMatch": "Le password non coincidono"
+		"passwordsDoNotMatch": "Le password non coincidono",
+		"loadFailed": "Impossibile caricare. Controlla la connessione e riprova.",
+		"retry": "Riprova"
 	},
 	"login": {
 		"title": "Accedi a Email Explorer",

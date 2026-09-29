@@ -3,7 +3,9 @@
 		"emailAddress": "电子邮件地址",
 		"password": "密码",
 		"confirmPassword": "确认密码",
-		"passwordsDoNotMatch": "两次输入的密码不一致"
+		"passwordsDoNotMatch": "两次输入的密码不一致",
+		"loadFailed": "无法加载。请检查网络连接后重试。",
+		"retry": "重试"
 	},
 	"login": {
 		"title": "登录 Email Explorer",

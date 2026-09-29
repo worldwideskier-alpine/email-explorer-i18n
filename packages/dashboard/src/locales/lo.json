@@ -3,7 +3,9 @@
 		"emailAddress": "ທີ່ຢູ່ອີເມວ",
 		"password": "ລະຫັດຜ່ານ",
 		"confirmPassword": "ຢືນຢັນລະຫັດຜ່ານ",
-		"passwordsDoNotMatch": "ລະຫັດຜ່ານບໍ່ກົງກັນ"
+		"passwordsDoNotMatch": "ລະຫັດຜ່ານບໍ່ກົງກັນ",
+		"loadFailed": "ໂຫຼດບໍ່ໄດ້. ກວດເບິ່ງການເຊື່ອມຕໍ່ ແລ້ວລອງໃໝ່.",
+		"retry": "ລອງໃໝ່"
 	},
 	"login": {
 		"title": "ເຂົ້າສູ່ລະບົບ Email Explorer",

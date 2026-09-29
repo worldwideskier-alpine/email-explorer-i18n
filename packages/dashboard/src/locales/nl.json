@@ -3,7 +3,9 @@
 		"emailAddress": "E-mailadres",
 		"password": "Wachtwoord",
 		"confirmPassword": "Wachtwoord bevestigen",
-		"passwordsDoNotMatch": "De wachtwoorden komen niet overeen"
+		"passwordsDoNotMatch": "De wachtwoorden komen niet overeen",
+		"loadFailed": "Laden is mislukt. Controleer de verbinding en probeer het opnieuw.",
+		"retry": "Opnieuw proberen"
 	},
 	"login": {
 		"title": "Aanmelden bij Email Explorer",

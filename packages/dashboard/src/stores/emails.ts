@@ -29,6 +29,11 @@ export const useEmailStore = defineStore("emails", {
 		loadedPages: 1,
 		/** Which mailbox+folder the loaded pages belong to. */
 		listKey: "",
+		/**
+		 * The latest request for the list failed. Without it a list that could
+		 * not be loaded read as an empty folder.
+		 */
+		loadFailed: false,
 	}),
 	actions: {
 		/**
@@ -42,12 +47,19 @@ export const useEmailStore = defineStore("emails", {
 		async loadEmailPages(mailboxId: string, params: any, pages: number) {
 			const limit = PAGE_SIZE * pages;
 			const request = ++latestList;
-			const response = await api.listEmails(mailboxId, {
-				...params,
-				page: 1,
-				limit,
-			});
+			let response: Awaited<ReturnType<typeof api.listEmails>>;
+			try {
+				response = await api.listEmails(mailboxId, {
+					...params,
+					page: 1,
+					limit,
+				});
+			} catch (e) {
+				if (request === latestList) this.loadFailed = true;
+				throw e;
+			}
 			if (request !== latestList) return;
+			this.loadFailed = false;
 			this.emails = response.data;
 			this.loadedPages = pages;
 			this.hasMore = response.data.length >= limit;
@@ -58,6 +70,13 @@ export const useEmailStore = defineStore("emails", {
 			// already scrolled into view, so reload as many as are on screen.
 			const sameList = this.listKey === `${mailboxId}/${params?.folder ?? ""}`;
 			const pages = sameList ? Math.max(this.loadedPages, 1) : 1;
+			// Another folder's rows go before its request, not when it answers:
+			// a switch that failed left the previous folder's messages under
+			// the new folder's name.
+			if (!sameList) {
+				this.emails = [];
+				this.listKey = "";
+			}
 			this.isRefreshing = true;
 			try {
 				await this.loadEmailPages(mailboxId, params, pages);

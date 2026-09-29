@@ -3,7 +3,9 @@
 		"emailAddress": "Endereço de e-mail",
 		"password": "Palavra-passe",
 		"confirmPassword": "Confirmar a palavra-passe",
-		"passwordsDoNotMatch": "As palavras-passe não coincidem"
+		"passwordsDoNotMatch": "As palavras-passe não coincidem",
+		"loadFailed": "Não foi possível carregar. Verifique a ligação e tente novamente.",
+		"retry": "Tentar novamente"
 	},
 	"login": {
 		"title": "Iniciar sessão no Email Explorer",

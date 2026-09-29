@@ -3,7 +3,9 @@
 		"emailAddress": "Alamat e-mel",
 		"password": "Kata laluan",
 		"confirmPassword": "Sahkan kata laluan",
-		"passwordsDoNotMatch": "Kata laluan tidak sepadan"
+		"passwordsDoNotMatch": "Kata laluan tidak sepadan",
+		"loadFailed": "Tidak dapat dimuatkan. Semak sambungan anda dan cuba lagi.",
+		"retry": "Cuba lagi"
 	},
 	"login": {
 		"title": "Log masuk ke Email Explorer",

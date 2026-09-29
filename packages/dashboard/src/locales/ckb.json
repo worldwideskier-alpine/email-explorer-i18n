@@ -3,7 +3,9 @@
 		"emailAddress": "ناونیشانی ئیمەیڵ",
 		"password": "وشەی نهێنی",
 		"confirmPassword": "دووپاتکردنەوەی وشەی نهێنی",
-		"passwordsDoNotMatch": "وشە نهێنییەکان یەک ناگرنەوە"
+		"passwordsDoNotMatch": "وشە نهێنییەکان یەک ناگرنەوە",
+		"loadFailed": "بارکردن سەرکەوتوو نەبوو. پەیوەندییەکە بپشکنە و دووبارە هەوڵ بدەرەوە.",
+		"retry": "دووبارە هەوڵ بدەرەوە"
 	},
 	"login": {
 		"title": "چوونەژوورەوە بۆ Email Explorer",

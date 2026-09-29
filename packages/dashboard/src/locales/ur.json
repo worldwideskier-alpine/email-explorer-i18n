@@ -3,7 +3,9 @@
 		"emailAddress": "ای میل پتہ",
 		"password": "پاس ورڈ",
 		"confirmPassword": "پاس ورڈ کی تصدیق کریں",
-		"passwordsDoNotMatch": "پاس ورڈ مماثل نہیں ہیں"
+		"passwordsDoNotMatch": "پاس ورڈ مماثل نہیں ہیں",
+		"loadFailed": "لوڈ نہیں ہو سکا۔ کنکشن چیک کریں اور دوبارہ کوشش کریں۔",
+		"retry": "دوبارہ کوشش کریں"
 	},
 	"login": {
 		"title": "Email Explorer میں سائن ان کریں",

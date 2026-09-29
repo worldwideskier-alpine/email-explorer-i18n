@@ -3,7 +3,9 @@
 		"emailAddress": "כתובת דוא\"ל",
 		"password": "סיסמה",
 		"confirmPassword": "אישור סיסמה",
-		"passwordsDoNotMatch": "הסיסמאות אינן תואמות"
+		"passwordsDoNotMatch": "הסיסמאות אינן תואמות",
+		"loadFailed": "הטעינה נכשלה. בדקו את החיבור ונסו שוב.",
+		"retry": "לנסות שוב"
 	},
 	"login": {
 		"title": "התחברות ל-Email Explorer",

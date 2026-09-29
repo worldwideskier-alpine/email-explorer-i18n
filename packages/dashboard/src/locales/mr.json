@@ -3,7 +3,9 @@
 		"emailAddress": "ईमेल पत्ता",
 		"password": "पासवर्ड",
 		"confirmPassword": "पासवर्डची खात्री करा",
-		"passwordsDoNotMatch": "पासवर्ड जुळत नाहीत"
+		"passwordsDoNotMatch": "पासवर्ड जुळत नाहीत",
+		"loadFailed": "लोड करता आले नाही. कनेक्शन तपासा आणि पुन्हा प्रयत्न करा.",
+		"retry": "पुन्हा प्रयत्न करा"
 	},
 	"login": {
 		"title": "Email Explorer मध्ये साइन इन करा",

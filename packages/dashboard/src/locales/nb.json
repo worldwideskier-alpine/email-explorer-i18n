@@ -3,7 +3,9 @@
 		"emailAddress": "E-postadresse",
 		"password": "Passord",
 		"confirmPassword": "Bekreft passordet",
-		"passwordsDoNotMatch": "Passordene er ikke like"
+		"passwordsDoNotMatch": "Passordene er ikke like",
+		"loadFailed": "Kunne ikke lastes inn. Sjekk tilkoblingen og prøv igjen.",
+		"retry": "Prøv igjen"
 	},
 	"login": {
 		"title": "Logg inn på Email Explorer",

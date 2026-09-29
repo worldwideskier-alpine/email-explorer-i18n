@@ -3,7 +3,9 @@
 		"emailAddress": "Indirizz tal-email",
 		"password": "Password",
 		"confirmPassword": "Ikkonferma l-password",
-		"passwordsDoNotMatch": "Il-passwords ma jaqblux"
+		"passwordsDoNotMatch": "Il-passwords ma jaqblux",
+		"loadFailed": "Ma setax jitgħabba. Iċċekkja l-konnessjoni u erġa' pprova.",
+		"retry": "Erġa' pprova"
 	},
 	"login": {
 		"title": "Idħol f'Email Explorer",

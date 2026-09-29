@@ -3,7 +3,9 @@
 		"emailAddress": "Адреса за е-пошта",
 		"password": "Лозинка",
 		"confirmPassword": "Потврдете ја лозинката",
-		"passwordsDoNotMatch": "Лозинките не се совпаѓаат"
+		"passwordsDoNotMatch": "Лозинките не се совпаѓаат",
+		"loadFailed": "Не може да се вчита. Проверете ја врската и обидете се повторно.",
+		"retry": "Обиди се повторно"
 	},
 	"login": {
 		"title": "Најава на Email Explorer",

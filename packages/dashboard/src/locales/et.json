@@ -3,7 +3,9 @@
 		"emailAddress": "E-posti aadress",
 		"password": "Parool",
 		"confirmPassword": "Parooli kinnitus",
-		"passwordsDoNotMatch": "Paroolid ei kattu"
+		"passwordsDoNotMatch": "Paroolid ei kattu",
+		"loadFailed": "Laadimine ebaõnnestus. Kontrolli ühendust ja proovi uuesti.",
+		"retry": "Proovi uuesti"
 	},
 	"login": {
 		"title": "Logi sisse Email Explorerisse",

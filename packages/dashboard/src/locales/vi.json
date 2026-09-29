@@ -3,7 +3,9 @@
 		"emailAddress": "Địa chỉ email",
 		"password": "Mật khẩu",
 		"confirmPassword": "Xác nhận mật khẩu",
-		"passwordsDoNotMatch": "Mật khẩu không khớp"
+		"passwordsDoNotMatch": "Mật khẩu không khớp",
+		"loadFailed": "Không tải được. Hãy kiểm tra kết nối rồi thử lại.",
+		"retry": "Thử lại"
 	},
 	"login": {
 		"title": "Đăng nhập vào Email Explorer",

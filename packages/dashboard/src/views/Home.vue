@@ -74,7 +74,16 @@
         </div>
       </router-link>
     </div>
-    <div v-else class="text-center bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-xl p-12 border border-gray-200 dark:border-gray-700">
+    <div v-else-if="listState === 'failed'" class="text-center bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-12 border border-gray-200 dark:border-gray-700" role="alert">
+      <p class="text-gray-700 dark:text-gray-300 mb-4">{{ t("common.loadFailed") }}</p>
+      <button
+        @click="loadMailboxes"
+        class="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 dark:text-indigo-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+      >
+        {{ t("common.retry") }}
+      </button>
+    </div>
+    <div v-else-if="listState === 'loaded'" class="text-center bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-xl p-12 border border-gray-200 dark:border-gray-700">
       <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
         <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -196,9 +205,24 @@ const newMailboxName = ref("");
 const isCreatingMailbox = ref(false);
 const createError = useLocalizedMessage();
 
-onMounted(() => {
-	mailboxStore.fetchMailboxes();
-});
+/**
+ * Where the list stands. "No mailboxes yet" is said only once the list has
+ * come back empty: a list that could not be fetched used to read as an
+ * account with nothing in it, set-up instructions and all.
+ */
+const listState = ref<"loading" | "loaded" | "failed">("loading");
+
+const loadMailboxes = async () => {
+	listState.value = "loading";
+	try {
+		await mailboxStore.fetchMailboxes();
+		listState.value = "loaded";
+	} catch {
+		listState.value = "failed";
+	}
+};
+
+onMounted(loadMailboxes);
 
 const openCreateMailboxModal = () => {
 	isCreateModalOpen.value = true;

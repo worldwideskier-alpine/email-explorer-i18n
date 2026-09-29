@@ -3,7 +3,9 @@
 		"emailAddress": "इमेल ठेगाना",
 		"password": "पासवर्ड",
 		"confirmPassword": "पासवर्ड पुष्टि गर्नुहोस्",
-		"passwordsDoNotMatch": "पासवर्ड मिलेनन्"
+		"passwordsDoNotMatch": "पासवर्ड मिलेनन्",
+		"loadFailed": "लोड गर्न सकिएन। जडान जाँच गरी फेरि प्रयास गर्नुहोस्।",
+		"retry": "फेरि प्रयास गर्नुहोस्"
 	},
 	"login": {
 		"title": "Email Explorer मा साइन इन गर्नुहोस्",

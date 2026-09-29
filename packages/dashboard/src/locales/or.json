@@ -3,7 +3,9 @@
 		"emailAddress": "ଇମେଲ ଠିକଣା",
 		"password": "ପାସୱାର୍ଡ",
 		"confirmPassword": "ପାସୱାର୍ଡ ନିଶ୍ଚିତ କରନ୍ତୁ",
-		"passwordsDoNotMatch": "ପାସୱାର୍ଡ ମେଳ ଖାଉନାହିଁ"
+		"passwordsDoNotMatch": "ପାସୱାର୍ଡ ମେଳ ଖାଉନାହିଁ",
+		"loadFailed": "ଲୋଡ୍ କରିହେଲା ନାହିଁ। ସଂଯୋଗ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+		"retry": "ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ"
 	},
 	"login": {
 		"title": "Email Explorer ରେ ସାଇନ ଇନ କରନ୍ତୁ",

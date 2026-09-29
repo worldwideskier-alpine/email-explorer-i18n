@@ -3,7 +3,9 @@
 		"emailAddress": "عنوان البريد الإلكتروني",
 		"password": "كلمة المرور",
 		"confirmPassword": "تأكيد كلمة المرور",
-		"passwordsDoNotMatch": "كلمتا المرور غير متطابقتين"
+		"passwordsDoNotMatch": "كلمتا المرور غير متطابقتين",
+		"loadFailed": "تعذّر التحميل. تحقّق من الاتصال ثم حاول مرة أخرى.",
+		"retry": "إعادة المحاولة"
 	},
 	"login": {
 		"title": "تسجيل الدخول إلى Email Explorer",

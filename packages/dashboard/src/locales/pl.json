@@ -3,7 +3,9 @@
 		"emailAddress": "Adres e-mail",
 		"password": "Hasło",
 		"confirmPassword": "Potwierdź hasło",
-		"passwordsDoNotMatch": "Hasła nie są zgodne"
+		"passwordsDoNotMatch": "Hasła nie są zgodne",
+		"loadFailed": "Nie udało się wczytać. Sprawdź połączenie i spróbuj ponownie.",
+		"retry": "Spróbuj ponownie"
 	},
 	"login": {
 		"title": "Zaloguj się do Email Explorer",

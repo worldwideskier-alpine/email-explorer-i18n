@@ -3,7 +3,9 @@
 		"emailAddress": "ელფოსტის მისამართი",
 		"password": "პაროლი",
 		"confirmPassword": "დაადასტურეთ პაროლი",
-		"passwordsDoNotMatch": "პაროლები არ ემთხვევა"
+		"passwordsDoNotMatch": "პაროლები არ ემთხვევა",
+		"loadFailed": "ჩატვირთვა ვერ მოხერხდა. შეამოწმეთ კავშირი და სცადეთ ხელახლა.",
+		"retry": "ხელახლა ცდა"
 	},
 	"login": {
 		"title": "შედით Email Explorer-ში",

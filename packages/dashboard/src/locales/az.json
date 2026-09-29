@@ -3,7 +3,9 @@
 		"emailAddress": "E-poçt ünvanı",
 		"password": "Parol",
 		"confirmPassword": "Parolu təsdiqləyin",
-		"passwordsDoNotMatch": "Parollar uyğun gəlmir"
+		"passwordsDoNotMatch": "Parollar uyğun gəlmir",
+		"loadFailed": "Yükləmək mümkün olmadı. Bağlantını yoxlayın və yenidən cəhd edin.",
+		"retry": "Yenidən cəhd et"
 	},
 	"login": {
 		"title": "Email Explorer-ə daxil olun",

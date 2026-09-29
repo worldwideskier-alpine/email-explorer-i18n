@@ -3,7 +3,9 @@
 		"emailAddress": "E-mailová adresa",
 		"password": "Heslo",
 		"confirmPassword": "Potvrzení hesla",
-		"passwordsDoNotMatch": "Hesla se neshodují"
+		"passwordsDoNotMatch": "Hesla se neshodují",
+		"loadFailed": "Nepodařilo se načíst. Zkontrolujte připojení a zkuste to znovu.",
+		"retry": "Zkusit znovu"
 	},
 	"login": {
 		"title": "Přihlášení do Email Explorer",

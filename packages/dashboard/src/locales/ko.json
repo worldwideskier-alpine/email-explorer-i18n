@@ -3,7 +3,9 @@
 		"emailAddress": "이메일 주소",
 		"password": "비밀번호",
 		"confirmPassword": "비밀번호 확인",
-		"passwordsDoNotMatch": "비밀번호가 일치하지 않습니다"
+		"passwordsDoNotMatch": "비밀번호가 일치하지 않습니다",
+		"loadFailed": "불러오지 못했습니다. 연결을 확인한 후 다시 시도하세요.",
+		"retry": "다시 시도"
 	},
 	"login": {
 		"title": "Email Explorer에 로그인",

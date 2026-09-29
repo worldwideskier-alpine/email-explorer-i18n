@@ -3,7 +3,9 @@
 		"emailAddress": "Adresa e postës elektronike",
 		"password": "Fjalëkalimi",
 		"confirmPassword": "Konfirmoni fjalëkalimin",
-		"passwordsDoNotMatch": "Fjalëkalimet nuk përputhen"
+		"passwordsDoNotMatch": "Fjalëkalimet nuk përputhen",
+		"loadFailed": "Nuk u ngarkua. Kontrolloni lidhjen dhe provoni përsëri.",
+		"retry": "Provo përsëri"
 	},
 	"login": {
 		"title": "Hyrje në Email Explorer",

@@ -3,7 +3,9 @@
 		"emailAddress": "電郵地址",
 		"password": "密碼",
 		"confirmPassword": "再入一次密碼",
-		"passwordsDoNotMatch": "兩次入嘅密碼唔一樣"
+		"passwordsDoNotMatch": "兩次入嘅密碼唔一樣",
+		"loadFailed": "載入唔到。請檢查網絡連線，然後再試。",
+		"retry": "再試"
 	},
 	"login": {
 		"title": "登入 Email Explorer",

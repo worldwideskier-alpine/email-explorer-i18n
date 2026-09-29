@@ -3,7 +3,9 @@
 		"emailAddress": "E-pasta adrese",
 		"password": "Parole",
 		"confirmPassword": "Apstiprināt paroli",
-		"passwordsDoNotMatch": "Paroles nesakrīt"
+		"passwordsDoNotMatch": "Paroles nesakrīt",
+		"loadFailed": "Neizdevās ielādēt. Pārbaudiet savienojumu un mēģiniet vēlreiz.",
+		"retry": "Mēģināt vēlreiz"
 	},
 	"login": {
 		"title": "Pieteikšanās Email Explorer",

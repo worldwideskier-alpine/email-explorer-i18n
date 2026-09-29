@@ -3,7 +3,9 @@
 		"emailAddress": "Адреса е-поште",
 		"password": "Лозинка",
 		"confirmPassword": "Потврдите лозинку",
-		"passwordsDoNotMatch": "Лозинке се не подударају"
+		"passwordsDoNotMatch": "Лозинке се не подударају",
+		"loadFailed": "Учитавање није успело. Проверите везу и покушајте поново.",
+		"retry": "Покушај поново"
 	},
 	"login": {
 		"title": "Пријава на Email Explorer",

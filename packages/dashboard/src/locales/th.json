@@ -3,7 +3,9 @@
 		"emailAddress": "ที่อยู่อีเมล",
 		"password": "รหัสผ่าน",
 		"confirmPassword": "ยืนยันรหัสผ่าน",
-		"passwordsDoNotMatch": "รหัสผ่านไม่ตรงกัน"
+		"passwordsDoNotMatch": "รหัสผ่านไม่ตรงกัน",
+		"loadFailed": "โหลดไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
+		"retry": "ลองอีกครั้ง"
 	},
 	"login": {
 		"title": "ลงชื่อเข้าใช้ Email Explorer",

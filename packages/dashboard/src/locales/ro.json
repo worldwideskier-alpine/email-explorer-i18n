@@ -3,7 +3,9 @@
 		"emailAddress": "Adresă de e-mail",
 		"password": "Parolă",
 		"confirmPassword": "Confirmă parola",
-		"passwordsDoNotMatch": "Parolele nu coincid"
+		"passwordsDoNotMatch": "Parolele nu coincid",
+		"loadFailed": "Nu s-a putut încărca. Verificați conexiunea și încercați din nou.",
+		"retry": "Încearcă din nou"
 	},
 	"login": {
 		"title": "Autentificare în Email Explorer",

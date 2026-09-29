@@ -101,7 +101,16 @@
       </svg>
       {{ t("emailList.loadingMore") }}
     </div>
-    <div v-if="emails.length === 0" class="p-16 text-center">
+    <div v-if="emails.length === 0 && loadFailed" class="p-16 text-center" role="alert">
+      <p class="text-gray-700 dark:text-gray-300 mb-4">{{ t("common.loadFailed") }}</p>
+      <button
+        @click="handleRefresh"
+        class="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 dark:text-indigo-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+      >
+        {{ t("common.retry") }}
+      </button>
+    </div>
+    <div v-else-if="emails.length === 0" class="p-16 text-center">
       <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
         <svg class="w-10 h-10 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
@@ -131,7 +140,7 @@ const { t } = useI18n();
 const { error: showErrorToast } = useToast();
 const { formatListDate } = useDateFormat();
 const emailStore = useEmailStore();
-const { emails, isRefreshing, hasMore } = storeToRefs(emailStore);
+const { emails, isRefreshing, hasMore, loadFailed } = storeToRefs(emailStore);
 const folderStore = useFolderStore();
 const { folders } = storeToRefs(folderStore);
 const uiStore = useUIStore();
@@ -157,13 +166,19 @@ const folderName = computed(() => {
 	return foundFolder ? foundFolder.name : folderId.value;
 });
 
+/**
+ * Loads the list. A failure is not thrown on: the store records it and the
+ * screen says so where the rows would be, instead of an unhandled rejection
+ * and a folder that looked empty.
+ */
+const loadList = (folder: string) =>
+	emailStore
+		.fetchEmails(route.params.mailboxId as string, { folder })
+		.catch(() => {});
+
 const startAutoRefresh = () => {
 	if (refreshInterval) clearInterval(refreshInterval);
-	refreshInterval = setInterval(() => {
-		emailStore.fetchEmails(route.params.mailboxId as string, {
-			folder: folderId.value,
-		});
-	}, 30000);
+	refreshInterval = setInterval(() => loadList(folderId.value), 30000);
 };
 
 const stopAutoRefresh = () => {
@@ -173,11 +188,7 @@ const stopAutoRefresh = () => {
 	}
 };
 
-const handleRefresh = () => {
-	emailStore.fetchEmails(route.params.mailboxId as string, {
-		folder: folderId.value,
-	});
-};
+const handleRefresh = () => loadList(folderId.value);
 
 const loadMoreTrigger = ref<HTMLElement | null>(null);
 let observer: IntersectionObserver | null = null;
@@ -190,9 +201,13 @@ let observer: IntersectionObserver | null = null;
  * window) keeps loading instead of stalling until the reader scrolls again.
  */
 const loadMore = async () => {
-	await emailStore.fetchMoreEmails(route.params.mailboxId as string, {
-		folder: folderId.value,
-	});
+	// A page that did not arrive is asked for again when the sentinel is
+	// next reached; it is not worth an unhandled rejection meanwhile.
+	await emailStore
+		.fetchMoreEmails(route.params.mailboxId as string, {
+			folder: folderId.value,
+		})
+		.catch(() => {});
 	await nextTick();
 	const el = loadMoreTrigger.value;
 	if (el && observer && hasMore.value) {
@@ -215,9 +230,7 @@ onMounted(() => {
 		// is usually already there by the time it would come into view.
 		{ rootMargin: "300px" },
 	);
-	emailStore.fetchEmails(route.params.mailboxId as string, {
-		folder: folderId.value,
-	});
+	loadList(folderId.value);
 	startAutoRefresh();
 });
 
@@ -227,11 +240,7 @@ onUnmounted(() => {
 	observer = null;
 });
 
-watch(folderId, (newFolderId) => {
-	emailStore.fetchEmails(route.params.mailboxId as string, {
-		folder: newFolderId,
-	});
-});
+watch(folderId, (newFolderId) => loadList(newFolderId));
 
 /** Runs a row action and says so when it fails, rather than nothing. */
 const act = async (action: () => Promise<unknown>) => {

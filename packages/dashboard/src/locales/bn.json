@@ -3,7 +3,9 @@
 		"emailAddress": "ইমেল ঠিকানা",
 		"password": "পাসওয়ার্ড",
 		"confirmPassword": "পাসওয়ার্ড নিশ্চিত করুন",
-		"passwordsDoNotMatch": "পাসওয়ার্ড দুটি মিলছে না"
+		"passwordsDoNotMatch": "পাসওয়ার্ড দুটি মিলছে না",
+		"loadFailed": "লোড করা যায়নি। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।",
+		"retry": "আবার চেষ্টা করুন"
 	},
 	"login": {
 		"title": "Email Explorer-এ সাইন ইন করুন",

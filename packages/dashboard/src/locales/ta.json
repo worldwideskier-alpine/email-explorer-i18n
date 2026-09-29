@@ -3,7 +3,9 @@
 		"emailAddress": "மின்னஞ்சல் முகவரி",
 		"password": "கடவுச்சொல்",
 		"confirmPassword": "கடவுச்சொல்லை உறுதிப்படுத்தவும்",
-		"passwordsDoNotMatch": "கடவுச்சொற்கள் பொருந்தவில்லை"
+		"passwordsDoNotMatch": "கடவுச்சொற்கள் பொருந்தவில்லை",
+		"loadFailed": "ஏற்ற முடியவில்லை. இணைப்பைச் சரிபார்த்து மீண்டும் முயலவும்.",
+		"retry": "மீண்டும் முயல்க"
 	},
 	"login": {
 		"title": "Email Explorer இல் உள்நுழையவும்",

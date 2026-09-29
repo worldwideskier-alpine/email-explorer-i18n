@@ -3,7 +3,9 @@
 		"emailAddress": "Sähköpostiosoite",
 		"password": "Salasana",
 		"confirmPassword": "Vahvista salasana",
-		"passwordsDoNotMatch": "Salasanat eivät täsmää"
+		"passwordsDoNotMatch": "Salasanat eivät täsmää",
+		"loadFailed": "Lataus epäonnistui. Tarkista yhteys ja yritä uudelleen.",
+		"retry": "Yritä uudelleen"
 	},
 	"login": {
 		"title": "Kirjaudu Email Exploreriin",

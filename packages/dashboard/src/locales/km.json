@@ -3,7 +3,9 @@
 		"emailAddress": "អាសយដ្ឋានអ៊ីមែល",
 		"password": "ពាក្យសម្ងាត់",
 		"confirmPassword": "បញ្ជាក់ពាក្យសម្ងាត់",
-		"passwordsDoNotMatch": "ពាក្យសម្ងាត់មិនត្រូវគ្នា"
+		"passwordsDoNotMatch": "ពាក្យសម្ងាត់មិនត្រូវគ្នា",
+		"loadFailed": "មិនអាចផ្ទុកបានទេ។ សូមពិនិត្យការតភ្ជាប់ រួចព្យាយាមម្ដងទៀត។",
+		"retry": "ព្យាយាមម្ដងទៀត"
 	},
 	"login": {
 		"title": "ចូលទៅ Email Explorer",

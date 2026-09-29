@@ -3,7 +3,9 @@
 		"emailAddress": "ഇമെയിൽ വിലാസം",
 		"password": "പാസ്‌വേഡ്",
 		"confirmPassword": "പാസ്‌വേഡ് ഉറപ്പാക്കുക",
-		"passwordsDoNotMatch": "പാസ്‌വേഡുകൾ ചേരുന്നില്ല"
+		"passwordsDoNotMatch": "പാസ്‌വേഡുകൾ ചേരുന്നില്ല",
+		"loadFailed": "ലോഡ് ചെയ്യാനായില്ല. കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.",
+		"retry": "വീണ്ടും ശ്രമിക്കുക"
 	},
 	"login": {
 		"title": "Email Explorer ൽ സൈൻ ഇൻ ചെയ്യുക",

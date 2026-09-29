@@ -3,7 +3,9 @@
 		"emailAddress": "E-postadress",
 		"password": "Lösenord",
 		"confirmPassword": "Bekräfta lösenordet",
-		"passwordsDoNotMatch": "Lösenorden stämmer inte överens"
+		"passwordsDoNotMatch": "Lösenorden stämmer inte överens",
+		"loadFailed": "Det gick inte att läsa in. Kontrollera anslutningen och försök igen.",
+		"retry": "Försök igen"
 	},
 	"login": {
 		"title": "Logga in på Email Explorer",

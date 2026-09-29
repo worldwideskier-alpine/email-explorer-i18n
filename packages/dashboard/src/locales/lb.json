@@ -3,7 +3,9 @@
 		"emailAddress": "E-Mail-Adress",
 		"password": "Passwuert",
 		"confirmPassword": "Passwuert bestätegen",
-		"passwordsDoNotMatch": "D'Passwierder stëmmen net iwwereneen"
+		"passwordsDoNotMatch": "D'Passwierder stëmmen net iwwereneen",
+		"loadFailed": "Konnt net gelueden ginn. Kontrolléiert d'Verbindung a probéiert nach eng Kéier.",
+		"retry": "Nach eng Kéier probéieren"
 	},
 	"login": {
 		"title": "Bei Email Explorer umellen",

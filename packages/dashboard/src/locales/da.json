@@ -3,7 +3,9 @@
 		"emailAddress": "E-mailadresse",
 		"password": "Adgangskode",
 		"confirmPassword": "Bekræft adgangskoden",
-		"passwordsDoNotMatch": "Adgangskoderne stemmer ikke overens"
+		"passwordsDoNotMatch": "Adgangskoderne stemmer ikke overens",
+		"loadFailed": "Kunne ikke indlæses. Tjek forbindelsen, og prøv igen.",
+		"retry": "Prøv igen"
 	},
 	"login": {
 		"title": "Log ind på Email Explorer",

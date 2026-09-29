@@ -3,7 +3,9 @@
 		"emailAddress": "Netfang",
 		"password": "Lykilorð",
 		"confirmPassword": "Staðfestu lykilorðið",
-		"passwordsDoNotMatch": "Lykilorðin stemma ekki"
+		"passwordsDoNotMatch": "Lykilorðin stemma ekki",
+		"loadFailed": "Ekki tókst að hlaða. Athugaðu tenginguna og reyndu aftur.",
+		"retry": "Reyna aftur"
 	},
 	"login": {
 		"title": "Skrá inn í Email Explorer",

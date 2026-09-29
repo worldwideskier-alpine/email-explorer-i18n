@@ -3,7 +3,9 @@
 		"emailAddress": "電子郵件地址",
 		"password": "密碼",
 		"confirmPassword": "確認密碼",
-		"passwordsDoNotMatch": "兩次輸入的密碼不一致"
+		"passwordsDoNotMatch": "兩次輸入的密碼不一致",
+		"loadFailed": "無法載入。請檢查網路連線後再試一次。",
+		"retry": "再試一次"
 	},
 	"login": {
 		"title": "登入 Email Explorer",

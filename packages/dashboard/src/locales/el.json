@@ -3,7 +3,9 @@
 		"emailAddress": "Διεύθυνση ηλεκτρονικού ταχυδρομείου",
 		"password": "Κωδικός πρόσβασης",
 		"confirmPassword": "Επιβεβαίωση κωδικού",
-		"passwordsDoNotMatch": "Οι κωδικοί δεν ταιριάζουν"
+		"passwordsDoNotMatch": "Οι κωδικοί δεν ταιριάζουν",
+		"loadFailed": "Δεν ήταν δυνατή η φόρτωση. Ελέγξτε τη σύνδεση και δοκιμάστε ξανά.",
+		"retry": "Δοκιμάστε ξανά"
 	},
 	"login": {
 		"title": "Σύνδεση στο Email Explorer",

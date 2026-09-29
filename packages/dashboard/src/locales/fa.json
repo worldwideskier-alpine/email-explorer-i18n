@@ -3,7 +3,9 @@
 		"emailAddress": "نشانی ایمیل",
 		"password": "گذرواژه",
 		"confirmPassword": "تأیید گذرواژه",
-		"passwordsDoNotMatch": "گذرواژه‌ها یکسان نیستند"
+		"passwordsDoNotMatch": "گذرواژه‌ها یکسان نیستند",
+		"loadFailed": "بارگیری نشد. اتصال را بررسی کنید و دوباره امتحان کنید.",
+		"retry": "تلاش دوباره"
 	},
 	"login": {
 		"title": "ورود به Email Explorer",

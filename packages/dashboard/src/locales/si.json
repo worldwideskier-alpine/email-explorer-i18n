@@ -3,7 +3,9 @@
 		"emailAddress": "විද්‍යුත් තැපැල් ලිපිනය",
 		"password": "මුරපදය",
 		"confirmPassword": "මුරපදය තහවුරු කරන්න",
-		"passwordsDoNotMatch": "මුරපද නොගැළපේ"
+		"passwordsDoNotMatch": "මුරපද නොගැළපේ",
+		"loadFailed": "පූරණය කළ නොහැකි විය. සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න.",
+		"retry": "නැවත උත්සාහ කරන්න"
 	},
 	"login": {
 		"title": "Email Explorer වෙත පිවිසෙන්න",

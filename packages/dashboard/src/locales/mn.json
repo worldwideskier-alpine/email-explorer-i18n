@@ -3,7 +3,9 @@
 		"emailAddress": "Цахим шуудангийн хаяг",
 		"password": "Нууц үг",
 		"confirmPassword": "Нууц үгээ баталгаажуулна уу",
-		"passwordsDoNotMatch": "Нууц үг таарахгүй байна"
+		"passwordsDoNotMatch": "Нууц үг таарахгүй байна",
+		"loadFailed": "Ачаалж чадсангүй. Холболтоо шалгаад дахин оролдоно уу.",
+		"retry": "Дахин оролдох"
 	},
 	"login": {
 		"title": "Email Explorer-т нэвтрэх",

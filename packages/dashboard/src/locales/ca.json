@@ -3,7 +3,9 @@
 		"emailAddress": "Adreça electrònica",
 		"password": "Contrasenya",
 		"confirmPassword": "Confirmeu la contrasenya",
-		"passwordsDoNotMatch": "Les contrasenyes no coincideixen"
+		"passwordsDoNotMatch": "Les contrasenyes no coincideixen",
+		"loadFailed": "No s'ha pogut carregar. Comproveu la connexió i torneu-ho a provar.",
+		"retry": "Torna-ho a provar"
 	},
 	"login": {
 		"title": "Inicieu la sessió a Email Explorer",

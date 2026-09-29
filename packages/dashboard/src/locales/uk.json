@@ -3,7 +3,9 @@
 		"emailAddress": "Адреса електронної пошти",
 		"password": "Пароль",
 		"confirmPassword": "Підтвердьте пароль",
-		"passwordsDoNotMatch": "Паролі не збігаються"
+		"passwordsDoNotMatch": "Паролі не збігаються",
+		"loadFailed": "Не вдалося завантажити. Перевірте з'єднання й спробуйте ще раз.",
+		"retry": "Спробувати ще раз"
 	},
 	"login": {
 		"title": "Вхід до Email Explorer",

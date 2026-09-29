@@ -3,7 +3,9 @@
 		"emailAddress": "Adressa dad e-mail",
 		"password": "Pled-clav",
 		"confirmPassword": "Confermar il pled-clav",
-		"passwordsDoNotMatch": "Ils pleds-clav n'èn betg identics"
+		"passwordsDoNotMatch": "Ils pleds-clav n'èn betg identics",
+		"loadFailed": "I n'è betg reussì da chargiar. Controllai la connexiun e empruvai anc ina giada.",
+		"retry": "Empruvar anc ina giada"
 	},
 	"login": {
 		"title": "S'annunziar tar Email Explorer",

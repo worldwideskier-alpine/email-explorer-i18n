@@ -3,7 +3,9 @@
 		"emailAddress": "အီးမေးလ်လိပ်စာ",
 		"password": "စကားဝှက်",
 		"confirmPassword": "စကားဝှက်ကို အတည်ပြုပါ",
-		"passwordsDoNotMatch": "စကားဝှက်များ မတူညီပါ"
+		"passwordsDoNotMatch": "စကားဝှက်များ မတူညီပါ",
+		"loadFailed": "ဖွင့်၍ မရပါ။ ချိတ်ဆက်မှုကို စစ်ဆေးပြီး ထပ်ကြိုးစားပါ။",
+		"retry": "ထပ်ကြိုးစားရန်"
 	},
 	"login": {
 		"title": "Email Explorer သို့ ဝင်ရောက်ရန်",

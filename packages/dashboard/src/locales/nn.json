@@ -3,7 +3,9 @@
 		"emailAddress": "E-postadresse",
 		"password": "Passord",
 		"confirmPassword": "Stadfest passordet",
-		"passwordsDoNotMatch": "Passorda er ikkje like"
+		"passwordsDoNotMatch": "Passorda er ikkje like",
+		"loadFailed": "Kunne ikkje lastast inn. Sjekk tilkoplinga og prøv igjen.",
+		"retry": "Prøv igjen"
 	},
 	"login": {
 		"title": "Logg inn på Email Explorer",

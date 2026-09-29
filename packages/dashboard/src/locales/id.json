@@ -3,7 +3,9 @@
 		"emailAddress": "Alamat email",
 		"password": "Kata sandi",
 		"confirmPassword": "Konfirmasi kata sandi",
-		"passwordsDoNotMatch": "Kata sandi tidak cocok"
+		"passwordsDoNotMatch": "Kata sandi tidak cocok",
+		"loadFailed": "Gagal memuat. Periksa koneksi Anda, lalu coba lagi.",
+		"retry": "Coba lagi"
 	},
 	"login": {
 		"title": "Masuk ke Email Explorer",
