@@ -1,6 +1,7 @@
 import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
+import { MAILBOX_CLOSED } from "../durableObject";
 import type { Env, Session } from "../types";
 
 type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
@@ -69,7 +70,7 @@ export class PostDraftEmail extends OpenAPIRoute {
 		const draftId = crypto.randomUUID();
 		const draft_reply_to = await parentIn(stub, replyTo);
 
-		await stub.createEmail(
+		const answer = await stub.createEmail(
 			"draft",
 			{
 				id: draftId,
@@ -84,6 +85,8 @@ export class PostDraftEmail extends OpenAPIRoute {
 			},
 			[],
 		);
+		// Deleted since the question above.
+		if (answer === MAILBOX_CLOSED) return c.json({ error: "Not found" }, 404);
 
 		return c.json({ id: draftId, status: "saved" }, 201);
 	}

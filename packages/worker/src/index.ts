@@ -88,6 +88,8 @@ type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
 
 export { MailboxDO } from "./durableObject";
 
+import { MAILBOX_CLOSED } from "./durableObject";
+
 // Schemas
 const MailboxSchema = z.object({
 	id: z.string(),
@@ -545,6 +547,9 @@ class DeleteMailbox extends OpenAPIRoute {
 			const ns = c.env.MAILBOX;
 			const stub = ns.get(ns.idFromName(mailboxId));
 
+			// Closed before the ids are read, so that nothing delivered after
+			// the read is left behind by the wipe. See 12_mailbox_closed.
+			await stub.closeMailbox();
 			// Collect the ids first: destroying the DO takes the only record
 			// of which R2 objects belonged to this mailbox with it.
 			const emailIds = await stub.listAllEmailIds();
@@ -684,8 +689,9 @@ class PostMailbox extends OpenAPIRoute {
 		const id = ns.idFromName(email);
 		const stub = ns.get(id);
 
-		// Trigger first run of the durable object to initialize database
-		await stub.getFolders();
+		// Trigger first run of the durable object to initialize database, and
+		// take mail again if an earlier deletion closed it.
+		await stub.reopenMailbox();
 
 		if (kept) await c.env.BUCKET.delete(deletedMailboxKey(email));
 
@@ -2677,10 +2683,23 @@ async function receiveEmail(
 		}
 	}
 
-	await ingestEmailIntoMailbox(env, mailboxId, folder, parsedEmail, {
-		notify: true,
-		rawEmail,
-	});
+	try {
+		await ingestEmailIntoMailbox(env, mailboxId, folder, parsedEmail, {
+			notify: true,
+			rawEmail,
+		});
+	} catch (e) {
+		// Deleted while this message was on its way in: the settings were
+		// there when it was checked above, and are not now. Refused the same
+		// way as mail for an address that never existed.
+		if (String((e as Error)?.message).includes(MAILBOX_CLOSED)) {
+			const reason = `No mailbox exists for ${mailboxId}`;
+			console.error(`Rejected incoming email: ${reason} (deleted meanwhile)`);
+			event.setReject?.(reason);
+			return;
+		}
+		throw e;
+	}
 }
 
 /**

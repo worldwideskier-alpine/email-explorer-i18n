@@ -162,6 +162,23 @@ export function accountChangeThrottleRules(
 	];
 }
 
+/**
+ * Registration is reached without a session and costs a password hash when it
+ * goes ahead, so each address gets a few an hour, refused ones included. One
+ * rule, by address: there is no account yet to count against, and a form
+ * closed after root is refused before any hashing (registerFromForm).
+ */
+export function registerThrottleRules(ip: string): ThrottleRule[] {
+	return [
+		{
+			key: `register:ip:${ip}`,
+			limit: 10,
+			windowMs: HOUR,
+			lockMs: HOUR,
+		},
+	];
+}
+
 /** Retry-After is defined in whole seconds, and never below 1. */
 export function retryAfterSeconds(retryAfterMs: number): number {
 	return Math.max(1, Math.ceil(retryAfterMs / 1000));

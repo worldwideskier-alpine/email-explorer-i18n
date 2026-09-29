@@ -57,6 +57,9 @@ const SEARCH_LIMIT = 500;
  */
 const MAX_BOUND = 100;
 
+/** What createEmail answers for a mailbox being destroyed. */
+export const MAILBOX_CLOSED = "Mailbox is closed";
+
 /** A digest of a login's password hash and address; see emailChangeStamp. */
 async function credentialStamp(row: {
 	email: string;
@@ -254,11 +257,20 @@ export class MailboxDO extends DurableObject<Env> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
 		email = email.trim().toLowerCase();
+		const countUsers = () =>
+			Number(
+				this.ctx.storage.sql.exec("SELECT COUNT(*) AS n FROM users").one().n,
+			);
+		// Asked before the hash as well as after it. The hash is 100,000
+		// rounds of PBKDF2 in the object every sign-in waits on, and once root
+		// exists a smart-mode form is closed: spent on a refusal, it was work
+		// any stranger could order without limit.
+		if (onlyFirst && countUsers() > 0) return "closed";
 		const passwordHash = await hashPassword(password);
 
-		const count = Number(
-			this.ctx.storage.sql.exec("SELECT COUNT(*) AS n FROM users").one().n,
-		);
+		// And again here, with nothing awaited between this count and the
+		// insert, so two registrations at once cannot both be first.
+		const count = countUsers();
 		if (onlyFirst && count > 0) return "closed";
 		if (this.#takenBy(email)) {
 			throw new Error("UNIQUE constraint failed: users.email");
@@ -1681,6 +1693,32 @@ export class MailboxDO extends DurableObject<Env> {
 		if (this.#isAuthDO) throw new Error("Refusing to destroy the auth DO");
 		await this.ctx.storage.deleteAll();
 		this.#qb.migrations({ migrations: mailboxMigrations }).apply();
+		// Still closed afterwards: the wipe is not the end of the deletion's
+		// window, only of what was in the object. See 12_mailbox_closed.
+		this.#close();
+	}
+
+	/**
+	 * Takes no more mail until reopened. Asked first by every deletion that
+	 * destroys the mailbox, so that nothing written after it has read which
+	 * messages to remove is left behind by it.
+	 */
+	async closeMailbox(): Promise<void> {
+		if (this.#isAuthDO) throw new Error("Not a mailbox DO");
+		this.#close();
+	}
+
+	/** Takes mail again; called when the mailbox is created. */
+	async reopenMailbox(): Promise<void> {
+		if (this.#isAuthDO) throw new Error("Not a mailbox DO");
+		this.ctx.storage.sql.exec("DELETE FROM mailbox_closed");
+	}
+
+	#close(): void {
+		this.ctx.storage.sql.exec(
+			"INSERT OR REPLACE INTO mailbox_closed (id, closed_at) VALUES (1, ?)",
+			Date.now(),
+		);
 	}
 
 	// Auth operation: drop every claim on a mailbox that is going away.
@@ -2121,6 +2159,16 @@ export class MailboxDO extends DurableObject<Env> {
 		// or not at all.
 		const columns = attachments[0] ? Object.keys(attachments[0]).length : 1;
 		const perStatement = Math.max(1, Math.floor(MAX_BOUND / columns));
+		// In the same step as the write -- nothing is awaited between them --
+		// so a deletion cannot close the mailbox between the question and the
+		// insert. Answered rather than thrown: the caller has bucket objects
+		// to take back.
+		if (
+			this.ctx.storage.sql.exec("SELECT 1 FROM mailbox_closed").toArray()
+				.length > 0
+		) {
+			return MAILBOX_CLOSED;
+		}
 		this.ctx.storage.transactionSync(() => {
 			this.#qb
 				.insert({

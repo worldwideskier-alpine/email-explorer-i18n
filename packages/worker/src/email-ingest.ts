@@ -1,7 +1,8 @@
 import type PostalMime from "postal-mime";
 import { charsetsForAttachments, typeWithCharset } from "./attachment-charset";
 import { storableFilename } from "./attachment-name";
-import type { MailboxDO } from "./durableObject";
+import { MAILBOX_CLOSED, type MailboxDO } from "./durableObject";
+import { asMessageId, messageIdsIn } from "./message-id";
 import { plainTextToHtml } from "./plain-text-to-html";
 import { notifyNewEmail } from "./push-notify";
 import { asHeaderAddress, formatAddressList } from "./recipients";
@@ -98,58 +99,70 @@ export async function ingestEmailIntoMailbox(
 		}
 	}
 
-	// Strip angle brackets from message IDs since postal-mime returns raw RFC 2822
-	// values (e.g. "<msg@example.com>") but we store bare IDs to match outgoing emails
-	const stripBrackets = (s: string) => s.replace(/^</, "").replace(/>$/, "");
-	const inReplyTo = parsedEmail.inReplyTo
-		? stripBrackets(parsedEmail.inReplyTo)
-		: null;
-	const emailReferences = parsedEmail.references
-		? parsedEmail.references.split(/\s+/).filter(Boolean).map(stripBrackets)
-		: [];
+	// Stored bare -- postal-mime returns "<msg@example.com>", outgoing mail
+	// adds the brackets back -- and only if shaped like an id: see asMessageId.
+	const inReplyTo = asMessageId(parsedEmail.inReplyTo);
+	const emailReferences = messageIdsIn(parsedEmail.references);
 
-	await stub.createEmail(
-		folder,
-		{
-			id: messageId,
-			subject: parsedEmail.subject || "",
-			sender: asHeaderAddress(parsedEmail.from?.address || ""),
-			// The whole To: and Cc: lists, not just the first address, so
-			// "reply all" can reach everyone who saw the message. This does not
-			// decide which mailbox the message lands in -- that is the envelope
-			// recipient, settled before this is called -- it is only what gets
-			// shown and replied to.
-			recipient:
-				formatAddressList(addressesOf(parsedEmail.to).map(asHeaderAddress)) ||
-				mailboxId,
-			cc: formatAddressList(addressesOf(parsedEmail.cc).map(asHeaderAddress)),
-			// Only for the sender's own copy, which is what a Bcc: header in a
-			// restored sent message is. Received mail carries none worth
-			// believing: the sending server strips it, so one that arrives is
-			// the sender's invention.
-			...(folder === "sent"
-				? {
-						bcc: formatAddressList(
-							addressesOf(parsedEmail.bcc).map(asHeaderAddress),
-						),
-					}
-				: {}),
-			date: storedDate(overrides.date),
-			body:
-				parsedEmail.html ||
-				(parsedEmail.text ? plainTextToHtml(parsedEmail.text) : ""),
-			in_reply_to: inReplyTo,
-			email_references:
-				emailReferences.length > 0 ? JSON.stringify(emailReferences) : null,
-			thread_id: emailReferences[0] || inReplyTo || messageId,
-			// What a reply names as its parent. The row id is ours and means
-			// nothing to the sender's client.
-			message_id: parsedEmail.messageId
-				? stripBrackets(parsedEmail.messageId.trim())
-				: null,
-		},
-		attachmentData,
-	);
+	// What was put in the bucket above goes again if the row is not written:
+	// nothing else names it. A mailbox being destroyed refuses the row (see
+	// 12_mailbox_closed), and its deletion has already listed what to remove.
+	const written = [
+		...(raw ? [`raw/${messageId}.eml`] : []),
+		...attachmentData.map(
+			(att) => `attachments/${messageId}/${att.id}/${att.filename}`,
+		),
+	];
+	let answer: string | undefined;
+	try {
+		answer = await stub.createEmail(
+			folder,
+			{
+				id: messageId,
+				subject: parsedEmail.subject || "",
+				sender: asHeaderAddress(parsedEmail.from?.address || ""),
+				// The whole To: and Cc: lists, not just the first address, so
+				// "reply all" can reach everyone who saw the message. This does not
+				// decide which mailbox the message lands in -- that is the envelope
+				// recipient, settled before this is called -- it is only what gets
+				// shown and replied to.
+				recipient:
+					formatAddressList(addressesOf(parsedEmail.to).map(asHeaderAddress)) ||
+					mailboxId,
+				cc: formatAddressList(addressesOf(parsedEmail.cc).map(asHeaderAddress)),
+				// Only for the sender's own copy, which is what a Bcc: header in a
+				// restored sent message is. Received mail carries none worth
+				// believing: the sending server strips it, so one that arrives is
+				// the sender's invention.
+				...(folder === "sent"
+					? {
+							bcc: formatAddressList(
+								addressesOf(parsedEmail.bcc).map(asHeaderAddress),
+							),
+						}
+					: {}),
+				date: storedDate(overrides.date),
+				body:
+					parsedEmail.html ||
+					(parsedEmail.text ? plainTextToHtml(parsedEmail.text) : ""),
+				in_reply_to: inReplyTo,
+				email_references:
+					emailReferences.length > 0 ? JSON.stringify(emailReferences) : null,
+				thread_id: emailReferences[0] || inReplyTo || messageId,
+				// What a reply names as its parent. The row id is ours and means
+				// nothing to the sender's client.
+				message_id: asMessageId(parsedEmail.messageId),
+			},
+			attachmentData,
+		);
+	} catch (e) {
+		if (written.length > 0) await env.BUCKET.delete(written).catch(() => {});
+		throw e;
+	}
+	if (answer === MAILBOX_CLOSED) {
+		if (written.length > 0) await env.BUCKET.delete(written).catch(() => {});
+		throw new Error(MAILBOX_CLOSED);
+	}
 
 	if (overrides.read || overrides.starred) {
 		await stub.updateEmail(messageId, {

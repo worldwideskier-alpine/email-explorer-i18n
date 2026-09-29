@@ -2,6 +2,7 @@ import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
 import { sendsAsMailbox } from "../mailbox-access";
+import { asMessageId } from "../message-id";
 import { plainTextToHtml } from "../plain-text-to-html";
 import { formatAddressList } from "../recipients";
 import { sendEmail } from "../resend";
@@ -301,8 +302,6 @@ export function replyThreading(parent: {
 	references: string[];
 	thread_id: string;
 } {
-	const isMessageId = (value: unknown): value is string =>
-		typeof value === "string" && value.includes("@");
 	let earlier: unknown[] = [];
 	try {
 		const parsed = JSON.parse(parent.email_references ?? "[]");
@@ -311,8 +310,11 @@ export function replyThreading(parent: {
 		// A row whose references cannot be read still gets its reply threaded
 		// by In-Reply-To.
 	}
-	const in_reply_to = isMessageId(parent.message_id) ? parent.message_id : null;
-	const references = earlier.filter(isMessageId);
+	// Asked again here: rows stored before ingest checked are still there.
+	const in_reply_to = asMessageId(parent.message_id);
+	const references = earlier
+		.map(asMessageId)
+		.filter((id): id is string => id !== null);
 	if (in_reply_to && !references.includes(in_reply_to)) {
 		references.push(in_reply_to);
 	}

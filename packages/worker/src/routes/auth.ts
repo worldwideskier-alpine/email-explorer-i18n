@@ -9,6 +9,7 @@ import {
 	accountChangeThrottleRules,
 	clientIp,
 	loginThrottleRules,
+	registerThrottleRules,
 	retryAfterSeconds,
 } from "../throttle";
 import { turnstileRefusal } from "../turnstile";
@@ -249,6 +250,16 @@ export class PostRegister extends OpenAPIRoute {
 
 		const refused = await turnstileRefusal(c.env, c.req.raw, turnstileToken);
 		if (refused) return refused;
+
+		// After Turnstile, as for sign-in: a request without a good token
+		// spends nobody's allowance.
+		const retryAfterMs = await authDO.throttleTake(
+			registerThrottleRules(clientIp(c.req.raw)),
+		);
+		if (retryAfterMs > 0) {
+			c.header("Retry-After", String(retryAfterSeconds(retryAfterMs)));
+			return c.json({ error: "Too many attempts" }, 429);
+		}
 
 		try {
 			// Smart mode (the setting left unset) opens the form to the first

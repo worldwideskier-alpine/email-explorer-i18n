@@ -198,7 +198,11 @@ are still checked, by the `tsc` that runs before the worker tests.
   twice: 25 wrong passwords sent at once were all verified (the limit is 10)
   because the route asked "locked?", verified, then recorded; and four
   registrations to a new deployment all got in, because each was told it was
-  first. `throttleTake` checks and counts in one call, and a success hands
+  first. Registration also asks whether it is closed *before* hashing the
+  password (a smart-mode form is closed once root exists, and each refusal
+  cost a PBKDF2 in the object every sign-in waits on), and each address gets
+  ten attempts an hour (`registerThrottleRules`, `register-cost.test.ts`).
+  `throttleTake` checks and counts in one call, and a success hands
   back what it should not have cost through `throttleSettle` -- per rule:
   the account's key resets, the IP's key (shared by every account behind it)
   gets back only that attempt. `auth-concurrency.test.ts` holds both.
@@ -247,6 +251,12 @@ are still checked, by the `tsc` that runs before the worker tests.
   `routes/reply-forward.ts`). Mail sent from here has none we know -- Resend
   assigns it and does not say -- so a reply to it carries no In-Reply-To and
   keeps the thread through References.
+  An id is the sender's string and a reply writes it into two headers, so it
+  is kept only if it has an id's shape (`asMessageId`, `message-id.ts`):
+  postal-mime decodes RFC 2047 in those headers, and an encoded CR LF came out
+  as a real line break -- a `Bcc:` of the sender's choosing in our next reply.
+  Asked at ingest, when a reply is threaded and when the headers are written,
+  since rows from before are still there. `message-id-shape.test.ts`.
 - **A notification is dismissed only if it was sent.** Delivery sets
   `notified` when a device was told; mark-read, delete, bin and "spam" ask
   `takeNotified`, which clears it in the same step. A dismissal is a push that
@@ -275,6 +285,17 @@ are still checked, by the `tsc` that runs before the worker tests.
   all of this, and also that an original (`raw/{id}.eml`, named by id alone)
   is read or deleted only through the mailbox whose message it is, and that
   mail is sent only as the mailbox in the path.
+  A mailbox being destroyed is **closed** first (`closeMailbox`,
+  `12_mailbox_closed`) and `createEmail` refuses a closed one in the same
+  step as its write. Delivery checks the settings object and writes seconds
+  later (the spam check is between), and a deletion in that gap wiped the
+  object and then took the message: mail nobody held, an address nobody could
+  create again, bucket objects nothing named. Ingest takes back what it put
+  in the bucket when refused, and `PostMailbox` reopens.
+  `mailbox-closing.test.ts`. A person's deletion writes all their mailboxes
+  down as unfinished before removing anything, and the nightly run leaves
+  alone an address that has a settings object again -- somebody created it
+  since, and the run used to destroy their mailbox.
   Holding a deleted mailbox is not enough to act on it: the gate in `fetch()`
   answers 404 for a mailbox with no settings object, and so does the import
   route, which sits outside the gate. Anything that wrote a settings object
@@ -513,9 +534,13 @@ same settings without widening the deploy's token.)
 And it is not only what a step is *given* that gets published -- it is what
 the tools it runs decide to print. `wrangler deployments status` names the
 account that published a version, so adding that step put a personal address
-into a public log on its first run; its output is now filtered by the shape of
-an address rather than by any particular value. Before adding a step that
-prints a tool's output, read one run of it.
+into a public log on its first run. And a refused token makes wrangler print
+the owner's address from whichever step meets it first. So every step that
+runs wrangler pipes it through `scripts/withhold.mjs`, under `pipefail`,
+which strikes out anything shaped like an email or a `workers.dev` host
+(`log-redaction.mjs`); `workflowGuards.test.ts` holds that none is left out.
+An account *name* of the owner's own choosing has no shape to match. Before
+adding a step that prints a tool's output, read one run of it.
 
 Reply and forward call the real Resend API. Without outbound network that
 request returns 500 no matter what is in it; the tests stub `api.resend.com`

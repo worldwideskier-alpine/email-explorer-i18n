@@ -13,7 +13,7 @@
 
 import { storableFilename } from "./attachment-name";
 import { base64ToBytes } from "./base64";
-import type { MailboxDO } from "./durableObject";
+import { MAILBOX_CLOSED, type MailboxDO } from "./durableObject";
 import type { Env } from "./types";
 
 type SentRow = Omit<Parameters<MailboxDO["createEmail"]>[1], "id">;
@@ -73,7 +73,13 @@ export async function keepSentCopy(
 				disposition: attachment.disposition,
 			});
 		}
-		await stub.createEmail("sent", { id: messageId, ...row }, rows);
+		// A mailbox deleted while this was being sent keeps no copy.
+		if (
+			(await stub.createEmail("sent", { id: messageId, ...row }, rows)) ===
+			MAILBOX_CLOSED
+		) {
+			throw new Error(MAILBOX_CLOSED);
+		}
 		return true;
 	} catch (e) {
 		console.error(`Sent ${messageId}, but could not keep a copy:`, e);

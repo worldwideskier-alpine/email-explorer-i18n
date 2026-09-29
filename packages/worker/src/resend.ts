@@ -1,4 +1,5 @@
 import { getResendApiKey } from "./app-settings";
+import { asMessageId } from "./message-id";
 import type { Env } from "./types";
 
 interface ResendAttachment {
@@ -34,10 +35,15 @@ export async function sendEmail(
 	params: SendEmailParams,
 	personId?: string | null,
 ): Promise<void> {
+	// The last place a sender's string becomes one of our headers.
 	const headers: Record<string, string> = {};
-	if (params.inReplyTo) headers["In-Reply-To"] = `<${params.inReplyTo}>`;
-	if (params.references?.length) {
-		headers.References = params.references.map((id) => `<${id}>`).join(" ");
+	const inReplyTo = asMessageId(params.inReplyTo);
+	if (inReplyTo) headers["In-Reply-To"] = `<${inReplyTo}>`;
+	const references = (params.references ?? [])
+		.map(asMessageId)
+		.filter((id): id is string => id !== null);
+	if (references.length) {
+		headers.References = references.map((id) => `<${id}>`).join(" ");
 	}
 
 	// Resolved per send rather than captured once: the key can be changed on

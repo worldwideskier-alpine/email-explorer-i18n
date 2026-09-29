@@ -206,6 +206,24 @@ export const mailboxMigrations: Migration[] = [
             CREATE INDEX IF NOT EXISTS idx_emails_folder_date ON emails(folder_id, date);
         `,
 	},
+	{
+		/**
+		 * A mailbox being destroyed takes no more mail. Delivery checks that
+		 * the settings object exists and then writes here, sometimes seconds
+		 * later (the spam check sits between); a deletion in that gap wiped
+		 * the object and the message landed in it afterwards -- mail nobody
+		 * held, which made the address impossible for anyone to create again.
+		 * A row here is the object saying it is closed, asked in the same step
+		 * as the write (createEmail). Recreating the mailbox takes it away.
+		 */
+		name: "12_mailbox_closed",
+		sql: `
+            CREATE TABLE IF NOT EXISTS mailbox_closed (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                closed_at INTEGER NOT NULL
+            );
+        `,
+	},
 ];
 
 export const authMigrations: Migration[] = [

@@ -93,6 +93,11 @@ export async function destroyMailboxCompletely(
 	// failure here is a real one -- and carrying on to destroyMailbox would
 	// wipe the only record of which objects were this mailbox's, leaving its
 	// mail in the bucket with nothing naming it.
+	//
+	// Closed before they are read: mail delivered after the read would
+	// otherwise land in the object being wiped, or leave its bucket objects
+	// behind with nothing naming them. See 12_mailbox_closed.
+	await stub.closeMailbox();
 	const emailIds: string[] = await stub.listAllEmailIds();
 
 	const wanted = new Set(emailIds);
@@ -143,14 +148,15 @@ export const UNFINISHED_DELETIONS_KEY = "maintenance/unfinished-deletions.json";
 
 export async function rememberUnfinishedDeletion(
 	env: Env,
-	mailboxId: string,
+	...mailboxIds: string[]
 ): Promise<void> {
 	await rewriteJson<string[]>(
 		env.BUCKET,
 		UNFINISHED_DELETIONS_KEY,
 		(stored) => {
 			const ids = Array.isArray(stored) ? stored : [];
-			return ids.includes(mailboxId) ? undefined : [...ids, mailboxId];
+			const added = mailboxIds.filter((id) => !ids.includes(id));
+			return added.length === 0 ? undefined : [...ids, ...added];
 		},
 	);
 }
@@ -176,6 +182,16 @@ export async function finishUnfinishedDeletions(
 	let finished = 0;
 	for (const mailboxId of pending) {
 		if (pastDeadline(limits)) break;
+		// Created again since, by whoever may: a deletion takes the settings
+		// object first, and only PostMailbox writes one. What is there now
+		// is somebody's new mailbox -- this run used to destroy it, their
+		// mail and archives with it -- and creating it required the old one
+		// to hold no mail, so there is nothing of the deletion left to do.
+		if (await env.BUCKET.head(`mailboxes/${mailboxId}.json`)) {
+			await forgetUnfinishedDeletion(env, mailboxId);
+			finished += 1;
+			continue;
+		}
 		try {
 			// The deadline alone, not the per-call limit: this is one whole
 			// deletion, whose attachment scan alone can take more than a minute.
@@ -189,13 +205,21 @@ export async function finishUnfinishedDeletions(
 			continue;
 		}
 		finished += 1;
-		await rewriteJson<string[]>(env.BUCKET, UNFINISHED_DELETIONS_KEY, (now) =>
-			Array.isArray(now) && now.includes(mailboxId)
-				? now.filter((id) => id !== mailboxId)
-				: undefined,
-		);
+		await forgetUnfinishedDeletion(env, mailboxId);
 	}
 	return { finished, left: pending.length - finished };
+}
+
+/** Takes one mailbox off the list of unfinished deletions. */
+export async function forgetUnfinishedDeletion(
+	env: Env,
+	mailboxId: string,
+): Promise<void> {
+	await rewriteJson<string[]>(env.BUCKET, UNFINISHED_DELETIONS_KEY, (now) =>
+		Array.isArray(now) && now.includes(mailboxId)
+			? now.filter((id) => id !== mailboxId)
+			: undefined,
+	);
 }
 
 /**

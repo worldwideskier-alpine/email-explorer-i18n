@@ -107,37 +107,42 @@ describe("the deploy workflow", () => {
 	});
 
 	/**
-	 * wrangler prints the address it deployed to. A fork that has not set
-	 * PRODUCTION_URL has nothing masking it, and the first account to register
-	 * becomes root -- so a public log carrying the address, before its owner
-	 * had registered, was an invitation to take the deployment. The output is
-	 * filtered by the address's shape, and a failed deploy still fails.
+	 * wrangler decides what to print: the address it deployed to, and -- when
+	 * a token is refused -- the email of the account that owns it. A fork that
+	 * has not set PRODUCTION_URL has nothing masking the first, and the first
+	 * account to register becomes root; the second is somebody's address in a
+	 * public log. Only one step filtered the one and one the other. Now every
+	 * command a token-holding step runs goes through withhold.mjs (tested in
+	 * the worker's log-redaction.test.ts), except one whose output is thrown
+	 * away, and under pipefail so that a failed wrangler still fails.
 	 */
-	it("keeps the workers.dev address out of the deploy step's output", () => {
+	it("keeps every address out of what wrangler prints", () => {
 		const job = deploy?.slice(deploy.indexOf("\n  deploy:")) ?? "";
-		const step =
-			job
-				.split(/\n {6}- /)
-				.find((one) => one.startsWith("name: Deploy Worker")) ?? "";
-		expect(step, "the Deploy Worker step").toContain("deploy-dev-worker");
-		expect(step).toContain("set -o pipefail");
-		const filter = /sed -E '(s\/[^']+)'/.exec(step)?.[1] ?? "";
-		const [, pattern, replacement] = filter.split("/");
-		const printed = "  https://my-worker.my-subdomain.workers.dev\n";
-		expect(
-			printed.replace(
-				new RegExp(pattern.replaceAll("\\.", "\\."), "g"),
-				replacement,
-			),
-		).not.toContain("workers.dev");
+		const steps = job
+			.split(/\n {6}- /)
+			.filter((step) => step.includes("secrets.CLOUDFLARE_API_TOKEN"));
+		expect(steps.length).toBeGreaterThanOrEqual(4);
+		for (const step of steps) {
+			const name = step.split("\n")[0];
+			const script = step
+				.slice(step.indexOf("run: |"))
+				.replace(/\\\n\s*/g, " ");
+			const commands = script
+				.split("\n")
+				.filter((line) => !line.trim().startsWith("#"))
+				.filter((line) => /wrangler|deploy-dev-worker/.test(line));
+			expect(commands.length, name).toBeGreaterThan(0);
+			for (const command of commands) {
+				if (/> \/dev\/null 2>&1/.test(command)) continue;
+				expect(command, name).toMatch(/2>&1\s+\|\s+node \S*withhold\.mjs/);
+				// Its failure matters unless it says it does not.
+				if (!/\|\| true/.test(command)) {
+					expect(script, name).toContain("set -o pipefail");
+				}
+			}
+		}
 	});
 
-	/**
-	 * Every job reads the repository and nothing more. The job that checks
-	 * had no permissions of its own and ran with the repository's default
-	 * token, while running every install and build script there is; a token
-	 * that could write could push to main, which deploys.
-	 */
 	/**
 	 * Creating a bucket that is already there is an error, and the step
 	 * printed it on every deploy: an [ERROR] in every log that meant nothing.
@@ -155,6 +160,12 @@ describe("the deploy workflow", () => {
 		expect(step).toMatch(/r2 bucket info "\$bucket" > \/dev\/null 2>&1/);
 	});
 
+	/**
+	 * Every job reads the repository and nothing more. The job that checks
+	 * had no permissions of its own and ran with the repository's default
+	 * token, while running every install and build script there is; a token
+	 * that could write could push to main, which deploys.
+	 */
 	it("gives every job a token that can only read", () => {
 		const top = /^permissions:\n((?: {2}.*\n)+)/m.exec(deploy ?? "")?.[1];
 		expect(top?.trim()).toBe("contents: read");

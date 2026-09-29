@@ -37,6 +37,7 @@ import {
 } from "../deployment-config";
 import {
 	destroyMailboxCompletely,
+	forgetUnfinishedDeletion,
 	rememberUnfinishedDeletion,
 } from "../mailbox-destroy";
 import {
@@ -655,7 +656,14 @@ export class DeleteAccount extends OpenAPIRoute {
 		// if the invocation was cut off early -- receiving mail for a person
 		// who no longer existed, with no holder to read it and no retry, since
 		// asking again answers 404.
+		//
+		// And all of them are written down as unfinished before anything is
+		// removed, and each comes off once it is empty. The account rows are
+		// already gone, so asking again answers 404: a failure between here
+		// and the loop below -- the bulk delete throwing, the invocation cut
+		// off -- used to leave mail no run would ever come back for.
 		if (result.mailboxIds.length > 0) {
+			await rememberUnfinishedDeletion(c.env, ...result.mailboxIds);
 			await c.env.BUCKET.delete(
 				result.mailboxIds.map((id) => `mailboxes/${id}.json`),
 			);
@@ -668,14 +676,15 @@ export class DeleteAccount extends OpenAPIRoute {
 			try {
 				await destroyMailboxCompletely(c.env, mailboxId);
 			} catch (e) {
+				// Left on the list for the nightly run to finish. See
+				// finishUnfinishedDeletions.
 				console.error(`Deleting ${mailboxId} did not finish:`, e);
 				unfinished.push(mailboxId);
-				// The person is gone, so asking again answers 404: the nightly
-				// run is what finishes it. See finishUnfinishedDeletions.
-				await rememberUnfinishedDeletion(c.env, mailboxId).catch((err) =>
-					console.error(`Could not write down ${mailboxId}:`, err),
-				);
+				continue;
 			}
+			await forgetUnfinishedDeletion(c.env, mailboxId).catch((err) =>
+				console.error(`Could not strike ${mailboxId} off the list:`, err),
+			);
 		}
 		// Their sending key goes too. It is theirs, it is a credential, and
 		// leaving it behind after the account is gone leaves something nobody

@@ -1,6 +1,8 @@
 import { env, runInDurableObject, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
+import { MAILBOX_CLOSED } from "../../src/durableObject";
 import { resetLegacyGrantMemo } from "../../src/legacy-grants";
+import { UNFINISHED_DELETIONS_KEY } from "../../src/mailbox-destroy";
 import { LEGACY_ADMIN_PERSON_ID } from "../../src/people";
 import { createMailbox, mailboxId } from "./utils";
 
@@ -301,6 +303,26 @@ describe("what root does with accounts", () => {
 			prefix: `backups/${encodeURIComponent(mailboxId)}/`,
 		});
 		expect(archives.objects).toEqual([]);
+		// Written down as unfinished before anything was removed, and struck
+		// off once it was empty: nothing is left for the nightly run.
+		expect(await (await bucket.get(UNFINISHED_DELETIONS_KEY))?.json()).toEqual(
+			[],
+		);
+		// And the address takes no mail.
+		expect(
+			await env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId)).createEmail(
+				"inbox",
+				{
+					id: "late",
+					subject: "",
+					sender: "a@example.net",
+					recipient: mailboxId,
+					date: new Date().toISOString(),
+					body: "",
+				} as never,
+				[],
+			),
+		).toBe(MAILBOX_CLOSED);
 	});
 
 	/**

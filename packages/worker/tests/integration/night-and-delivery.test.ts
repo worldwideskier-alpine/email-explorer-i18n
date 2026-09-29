@@ -410,6 +410,12 @@ describe("a mailbox deletion that did not finish", () => {
 			},
 		);
 		expect(imported.status).toBe(201);
+		// Where a deletion is left when it does not finish: the person's
+		// deletion takes every settings object before emptying anything, so
+		// the address takes no mail. A settings object here would mean the
+		// address had been created again since, which the nightly run now
+		// leaves alone (mailbox-closing.test.ts).
+		await bucket().delete(`mailboxes/${mailboxId}.json`);
 	});
 
 	const held = async () =>
