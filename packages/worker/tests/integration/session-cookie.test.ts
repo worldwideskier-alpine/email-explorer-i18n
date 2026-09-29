@@ -26,8 +26,9 @@ describe("the session cookie", () => {
 	describe("on a request", () => {
 		beforeEach(testAuthBeforeAll);
 
+		// On one of the few requests a cookie signs in; see cookie-scope.test.ts.
 		it("signs the request in beside another site's session cookie", async () => {
-			const res = await SELF.fetch("http://local.test/api/v1/auth/me", {
+			const res = await SELF.fetch("http://local.test/openapi.json", {
 				headers: { Cookie: `user_session=theirs; session=${sessionToken}` },
 			});
 			expect(res.status).toBe(200);

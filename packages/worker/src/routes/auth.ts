@@ -141,11 +141,47 @@ export function sessionTokenFrom(
 	return null;
 }
 
-function getSessionToken(c: AppContext): string | null {
-	return sessionTokenFrom(
-		c.req.header("Authorization"),
-		c.req.header("Cookie"),
+/**
+ * The only requests a session cookie signs in: reading an attachment, and
+ * the API's own documentation. Everything else needs the bearer token.
+ *
+ * A message is shown in a frame of this page's origin, so what it names by a
+ * path here goes out with the reader's cookie -- but never with the bearer
+ * token, which only the dashboard's own script adds. Measured in Chromium, in
+ * the inbox: `<link rel=prefetch>` at the export answered the mailbox as
+ * mbox, and `<a ping>` at the logout signed the reader out when the link was
+ * tapped. The frame's rules take those out, and a rule missed or a browser
+ * feature not yet invented would undo that; this does not depend on either.
+ *
+ * What the cookie is still for is what cannot carry a header: an inline
+ * picture in a message (an attachment, `<img src>`) and `/docs` opened by
+ * hand, with the `/openapi.json` it fetches. All of them are reads, of what
+ * the reader could see anyway.
+ */
+function cookieSignsIn(request: Request): boolean {
+	if (request.method !== "GET") return false;
+	const { pathname } = new URL(request.url);
+	return (
+		ATTACHMENT_PATH.test(pathname) ||
+		pathname === "/docs" ||
+		pathname === "/openapi.json"
 	);
+}
+
+/** The one API a page may load as a subresource: an attachment, by path. */
+export const ATTACHMENT_PATH =
+	/^\/api\/v1\/mailboxes\/[^/]+\/emails\/[^/]+\/attachments\/[^/]+$/;
+
+/** The session token this request is signed in with; see cookieSignsIn. */
+export function sessionTokenOf(request: Request): string | null {
+	return sessionTokenFrom(
+		request.headers.get("Authorization"),
+		cookieSignsIn(request) ? request.headers.get("Cookie") : null,
+	);
+}
+
+function getSessionToken(c: AppContext): string | null {
+	return sessionTokenOf(c.req.raw);
 }
 
 /**

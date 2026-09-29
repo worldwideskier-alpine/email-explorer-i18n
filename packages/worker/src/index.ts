@@ -29,6 +29,7 @@ import { formatAddressList } from "./recipients";
 import { sendEmail } from "./resend";
 import { roleOf } from "./roles";
 import {
+	ATTACHMENT_PATH,
 	DeleteOwnLogin,
 	GetMe,
 	GetUsers,
@@ -39,7 +40,7 @@ import {
 	PostLogin,
 	PostLogout,
 	PostRegister,
-	sessionTokenFrom,
+	sessionTokenOf,
 } from "./routes/auth";
 import { PostDraftEmail, PutDraftEmail } from "./routes/drafts";
 import { PostImportEmail } from "./routes/import";
@@ -2391,20 +2392,12 @@ class GetAppSettings extends OpenAPIRoute {
 	}
 }
 
-// See sessionTokenFrom in routes/auth.ts.
-function getSessionToken(request: Request): string | null {
-	return sessionTokenFrom(
-		request.headers.get("Authorization"),
-		request.headers.get("Cookie"),
-	);
-}
-
 // Helper function to validate session
 async function validateSession(
 	request: Request,
 	env: Env,
 ): Promise<Session | null> {
-	const token = getSessionToken(request);
+	const token = sessionTokenOf(request);
 	if (!token) return null;
 
 	const authId = env.MAILBOX.idFromName("AUTH");
@@ -2689,10 +2682,6 @@ async function receiveEmail(
 		rawEmail,
 	});
 }
-
-/** The one API a page may load as a subresource: an attachment, by path. */
-const ATTACHMENT_PATH =
-	/^\/api\/v1\/mailboxes\/[^/]+\/emails\/[^/]+\/attachments\/[^/]+$/;
 
 /**
  * Whether a request is one this Worker answers, given what the browser says it

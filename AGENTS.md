@@ -411,6 +411,15 @@ are still checked, by the `tsc` that runs before the worker tests.
   named by a message is fetched with the reader's cookie, so the Worker
   answers a request the browser marks as a picture, stylesheet or other
   subresource (`Sec-Fetch-Dest`) only for an attachment (`loadableAs`).
+  That header does not cover everything: `<link rel=prefetch>` goes out as
+  `empty`, like the dashboard's own calls, and `<a ping>` as a POST when the
+  link is tapped. Measured in the inbox, the first read the whole export and
+  the second signed the reader out. So the cookie signs in only a GET of an
+  attachment, `/docs` and `/openapi.json` (`sessionTokenOf`,
+  `routes/auth.ts`) -- what cannot carry the bearer token -- and every other
+  route needs the header, which a message has no way to add. The frame takes
+  out every `<link>` but a stylesheet, and `ping` and `attributionsrc`, in
+  every folder (`REQUESTS_NOBODY_ASKED_FOR`). `cookie-scope.test.ts`.
 - **Dashboard theming.** `index.html` carries the only page background and it
   has both halves (`bg-gray-100 text-gray-900 dark:bg-gray-900
   dark:text-gray-100`); cards use `bg-white dark:bg-gray-800` and follow the

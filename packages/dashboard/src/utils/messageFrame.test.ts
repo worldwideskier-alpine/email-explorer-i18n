@@ -145,11 +145,50 @@ describe("what the frame is handed", () => {
 		);
 	});
 
-	it("leaves a message's <link> as it was written", () => {
+	it("leaves a message's stylesheet <link> as it was written", () => {
 		const doc = framed(
-			'<link rel="stylesheet" href="https://cdn.example/mail.css"><p>x</p>',
+			'<link rel="stylesheet" href="https://cdn.example/mail.css">' +
+				'<link rel="Alternate  StyleSheet" href="https://cdn.example/b.css"><p>x</p>',
 		);
-		expect(doc.querySelector("link")?.getAttribute("rel")).toBe("stylesheet");
+		expect(
+			[...doc.querySelectorAll("link")].map((l) => l.getAttribute("rel")),
+		).toEqual(["stylesheet", "Alternate  StyleSheet"]);
+	});
+
+	/**
+	 * Measured in Chromium, in the inbox: a prefetch at the export fetched the
+	 * mailbox as the reader when the message was opened, and a ping at the
+	 * logout signed the reader out when the link was tapped. Neither shows the
+	 * reader anything.
+	 */
+	it("takes out every other <link>, in the inbox too", () => {
+		for (const spam of [false, true]) {
+			const doc = framed(
+				'<link rel="prefetch" href="/api/v1/mailboxes/a%40b/export">' +
+					'<link rel="stylesheet prefetch" href="/x">' +
+					'<link rel="PRELOAD" as="fetch" href="/y">' +
+					'<link rel="prerender" href="/z"><link rel="preconnect" href="https://t.example">' +
+					'<link href="/no-rel"><p>body</p>',
+				spam,
+			);
+			expect(doc.querySelectorAll("link")).toHaveLength(0);
+			expect(doc.body.textContent).toContain("body");
+		}
+	});
+
+	it("takes a link's ping and attributionsrc away, and keeps the link", () => {
+		const doc = framed(
+			'<a href="https://shop.example/" ping="/api/v1/auth/logout" attributionsrc="/t">Shop</a>' +
+				'<map><area href="https://shop.example/" ping="/p"></map>' +
+				'<img src="https://cdn.example/i.png" attributionsrc="/t">',
+		);
+		expect(doc.querySelectorAll("[ping], [attributionsrc]")).toHaveLength(0);
+		expect(doc.querySelector("a")?.getAttribute("href")).toBe(
+			"https://shop.example/",
+		);
+		expect(doc.querySelector("img")?.getAttribute("src")).toBe(
+			"https://cdn.example/i.png",
+		);
 	});
 
 	/**

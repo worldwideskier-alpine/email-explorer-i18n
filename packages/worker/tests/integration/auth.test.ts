@@ -293,6 +293,7 @@ describe("Authentication & User Management Integration Tests", () => {
 				{
 					method: "POST",
 					headers: {
+						Authorization: `Bearer ${sessionToken}`,
 						Cookie: `session=${sessionToken}`,
 					},
 				},

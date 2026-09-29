@@ -134,6 +134,61 @@ const REFERRER_SAYS_OTHERWISE: readonly FrameRule[] = [
 	},
 ];
 
+/** Attributes that make a request of their own when the element is used. */
+const REPORTING_ATTRIBUTES = ["ping", "attributionsrc"];
+
+/**
+ * Requests a message would make as the reader without anyone asking for
+ * them, outside the spam folder too.
+ *
+ * The frame is this page's origin, so what a message names by a path here
+ * goes out with the reader's session cookie. Measured in Chromium, in the
+ * inbox: `<link rel=prefetch>` at the export fetched the whole mailbox the
+ * moment the message was opened (as `Sec-Fetch-Dest: empty`, which the
+ * Worker's subresource check lets through, since the dashboard's own calls
+ * say the same), and `<a ping>` at the logout signed the reader out when the
+ * link was tapped -- a POST the link's own new tab gives no sign of. The
+ * Worker no longer signs either in with the cookie (`sessionTokenOf`); these
+ * go anyway, because pointed elsewhere they report the open or the tap.
+ *
+ * A stylesheet link stays: it is how some mail is laid out, and a stylesheet
+ * is loaded as one (`style`), which the Worker refuses from a page. Every
+ * other `<link>` -- prefetch, preload, prerender, preconnect -- does nothing
+ * a reader can see. `attributionsrc` is a request of the same kind.
+ */
+const REQUESTS_NOBODY_ASKED_FOR: readonly FrameRule[] = [
+	{
+		find: (doc) =>
+			Array.from(doc.querySelectorAll("link")).filter(
+				(link) => !isStylesheet(link),
+			),
+		fix: (element) => element.remove(),
+	},
+	{
+		find: (doc) =>
+			Array.from(
+				doc.querySelectorAll(
+					REPORTING_ATTRIBUTES.map((name) => `[${name}]`).join(", "),
+				),
+			),
+		fix(element) {
+			for (const name of REPORTING_ATTRIBUTES) element.removeAttribute(name);
+		},
+	},
+];
+
+/** `rel` is a set of words, any case; `alternate stylesheet` is one too. */
+function isStylesheet(link: Element): boolean {
+	const words = (link.getAttribute("rel") ?? "")
+		.toLowerCase()
+		.split(/[\t\n\f\r ]+/)
+		.filter(Boolean);
+	return (
+		words.includes("stylesheet") &&
+		words.every((word) => word === "stylesheet" || word === "alternate")
+	);
+}
+
 /** What no message needs and every other rule here would otherwise miss. */
 const WHAT_BOTH_READINGS_CANNOT_SEE_ALIKE: readonly FrameRule[] = [
 	{
@@ -177,6 +232,7 @@ function rulesFor(options: FrameOptions): {
 		before: [
 			...WHAT_BOTH_READINGS_CANNOT_SEE_ALIKE,
 			...REFERRER_SAYS_OTHERWISE,
+			...REQUESTS_NOBODY_ASKED_FOR,
 			...(options.blockRemoteContent ? REMOTE_CONTENT_RULES : []),
 		],
 		links: [
