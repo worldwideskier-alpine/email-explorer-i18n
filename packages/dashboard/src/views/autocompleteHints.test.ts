@@ -91,14 +91,12 @@ describe("address and password fields", () => {
 			).toBe("off");
 		}
 		// An API key, not a password of yours: offering a saved one here
-		// would put a sign-in password where a Resend key belongs.
-		expect(
-			fields().find(
-				(f) =>
-					f.where.startsWith("../components/ResendKeyCard.vue:") &&
-					f.id === "resendApiKey",
-			)?.autocomplete,
-		).toBe("off");
+		// would put a sign-in password where a Resend key belongs. It is a
+		// SecretInput, which is no password box at all and says
+		// autocomplete="off" itself (secretInputs.test.ts).
+		expect(views["../components/ResendKeyCard.vue"]).toMatch(
+			/<SecretInput\b[^>]*\bid="resendApiKey"/s,
+		);
 	});
 
 	/**

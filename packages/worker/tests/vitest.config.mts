@@ -344,6 +344,15 @@ export default defineConfig({
 		}),
 	],
 	test: {
+		// Fifteen seconds, not vitest's five. Measured over the whole suite on
+		// a quiet machine: 24 tests take over 1.5s and one 4.6s with no budget
+		// of its own -- 35 sign-ins, each a real PBKDF2 at 100,000 iterations.
+		// The time is the work (hashing, real retry backoff, archives of a
+		// hundred and fifty messages), and a CI runner is slower by a factor
+		// nobody controls. A per-test budget has to be remembered on every new
+		// test, and forgetting it took a deploy down twice. A test that hangs
+		// now says so after fifteen seconds rather than five.
+		testTimeout: 15_000,
 		// Replaces the pool's removed `isolatedStorage`; see reset-storage.ts.
 		setupFiles: [fileURLToPath(new URL("./reset-storage.ts", import.meta.url))],
 	},
