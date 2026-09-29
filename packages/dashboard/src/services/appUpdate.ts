@@ -93,9 +93,11 @@ export function somethingIsBeingWritten(doc: Document): boolean {
 		return true;
 	}
 	for (const field of doc.querySelectorAll("textarea")) {
+		if (field.closest(NOT_WRITING)) continue;
 		if (field.value.trim()) return true;
 	}
 	for (const editor of doc.querySelectorAll('[contenteditable="true"]')) {
+		if (editor.closest(NOT_WRITING)) continue;
 		if ((editor.textContent ?? "").trim()) return true;
 	}
 	// A filled box is writing too: the composer's To and Subject are inputs,
@@ -116,7 +118,8 @@ export function somethingIsBeingWritten(doc: Document): boolean {
 
 /**
  * A box whose text is not somebody's writing: the header's search box keeps
- * the query after the search has run. Counted, it held on every screen that
+ * the query after the search has run, and the settings screen's name and
+ * signature arrive filled in with what is stored. Counted, it held on every screen that
  * has the header, so a session that ended there never reached sign-in and a
  * new build was never picked up.
  */

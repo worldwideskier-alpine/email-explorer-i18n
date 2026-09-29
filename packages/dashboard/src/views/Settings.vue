@@ -2,7 +2,14 @@
   <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
     <h1 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ t("settings.title") }}</h1>
     <div v-if="mailbox">
-      <form @submit.prevent="updateSettings" class="space-y-6">
+      <!-- The name and signature arrive filled in; they are somebody's
+           writing only once they are typed into. See profileTouched. -->
+      <form
+        @submit.prevent="updateSettings"
+        @input="profileTouched = true"
+        :data-not-writing="profileTouched ? undefined : ''"
+        class="space-y-6"
+      >
         <div>
           <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ t("settings.name") }}</label>
           <input type="text" id="name" v-model="nameInput" class="mt-1 block w-full bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-3" />
@@ -489,6 +496,13 @@ const saveFailed = (e: any) => {
 };
 
 const profileSaving = ref(false);
+/**
+ * Whether the name or signature has been typed into since it was loaded or
+ * saved. Filled in from the stored settings, they counted as writing the
+ * whole time this screen was open (appUpdate.ts), so a session that ended
+ * here never reached sign-in and a new build was never picked up.
+ */
+const profileTouched = ref(false);
 const profileError = useLocalizedMessage();
 // A save that worked said nothing at all, so it could not be told from one
 // that had not been pressed.
@@ -503,6 +517,7 @@ whenOpened((m) => {
 	// settings.fromName is the persisted field (see mergeMailboxSettings
 	// server-side); mailbox.name is only a projection of it.
 	nameInput.value = m.settings?.fromName || m.name || "";
+	profileTouched.value = false;
 });
 
 const claudeApiKeyInput = ref("");
@@ -859,6 +874,7 @@ const updateSettings = async () => {
 			},
 		});
 		profileMessage.value = () => t("settings.profileSaved");
+		profileTouched.value = false;
 	} catch (e) {
 		profileError.value = saveFailed(e);
 	} finally {

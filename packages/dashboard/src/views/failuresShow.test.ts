@@ -201,6 +201,40 @@ describe("the settings screen", () => {
 		expect(status()).toBe("Saved.");
 	});
 
+	/**
+	 * The name and signature arrive filled in, and counted as writing the
+	 * whole time the screen was open: a session that ended here never went to
+	 * sign-in, and a new build was never picked up.
+	 */
+	it("is writing only once the name or signature has been typed into", async () => {
+		const { somethingIsBeingWritten } = await import("@/services/appUpdate");
+		updateMailbox.mockImplementation(async () => ({
+			data: structuredClone(stored),
+		}));
+		await mountSettings();
+		// Loaded: a name in the box and a signature in the editor, as stored.
+		expect((host.querySelector("#name") as HTMLInputElement).value).toBe(
+			"Mine",
+		);
+		expect(
+			host.querySelector('[contenteditable="true"]')?.textContent,
+		).toContain("stored");
+		expect(somethingIsBeingWritten(document)).toBe(false);
+
+		const name = host.querySelector("#name") as HTMLInputElement;
+		name.value = "Being typed";
+		name.dispatchEvent(new Event("input", { bubbles: true }));
+		await nextTick();
+		expect(somethingIsBeingWritten(document)).toBe(true);
+
+		(name.closest("form") as HTMLFormElement).dispatchEvent(
+			new Event("submit"),
+		);
+		await settle();
+		expect(updateMailbox).toHaveBeenCalledOnce();
+		expect(somethingIsBeingWritten(document)).toBe(false);
+	});
+
 	it("says so when a save fails", async () => {
 		updateMailbox.mockRejectedValue({ response: { status: 500, data: {} } });
 		await mountSettings();

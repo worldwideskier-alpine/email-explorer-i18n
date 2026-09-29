@@ -45,6 +45,11 @@ vi.mock("@/components/EmailIframe.vue", () => ({
 
 const unhandled: unknown[] = [];
 const onUnhandled = (reason: unknown) => unhandled.push(reason);
+// Node's, reached without Node's types: src/ is type-checked against the DOM
+// config alone (see formContrast.test.ts), where `process` does not exist.
+type Listen = (event: string, listener: (reason: unknown) => void) => void;
+const node = (globalThis as unknown as { process: { on: Listen; off: Listen } })
+	.process;
 
 let host: HTMLElement;
 let unmount = () => {};
@@ -52,10 +57,10 @@ beforeEach(() => {
 	host = document.createElement("div");
 	document.body.appendChild(host);
 	unhandled.length = 0;
-	process.on("unhandledRejection", onUnhandled);
+	node.on("unhandledRejection", onUnhandled);
 });
 afterEach(() => {
-	process.off("unhandledRejection", onUnhandled);
+	node.off("unhandledRejection", onUnhandled);
 	unmount();
 	host.remove();
 });
