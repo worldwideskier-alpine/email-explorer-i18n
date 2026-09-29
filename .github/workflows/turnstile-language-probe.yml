@@ -45,8 +45,8 @@ jobs:
             const page = await ctx.newPage();
             const scripts = [];
             page.on("request", (r) => { if (/\/assets\/index-[\w-]+\.js$/.test(r.url())) scripts.push(r.url().split("/").pop()); });
-            await page.goto(base + "/login", { waitUntil: "networkidle" });
-            await page.waitForTimeout(8000);
+            await page.goto(base + "/login", { waitUntil: "load" });
+            await page.waitForTimeout(12000);
             const frames = page.frames().filter((f) => f.url().includes("challenges.cloudflare.com"));
             const out = { label, bundle: scripts, htmlLang: await page.evaluate(() => document.documentElement.lang), frames: [] };
             for (const f of frames) {
