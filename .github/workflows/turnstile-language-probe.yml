@@ -45,9 +45,12 @@ jobs:
                 configurable: true,
                 get: () => held,
                 set: (v) => {
-                  const render = v.render.bind(v);
-                  v.render = (el, o) => { window.__tsOpts = { language: o.language, theme: o.theme, size: o.size }; return render(el, o); };
-                  held = v;
+                  held = new Proxy(v, {
+                    get(t, k) {
+                      if (k !== "render") return Reflect.get(t, k);
+                      return (el, o) => { window.__tsOpts = { language: o && o.language, theme: o && o.theme, size: o && o.size }; return t.render(el, o); };
+                    },
+                  });
                 },
               });
             });
