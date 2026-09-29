@@ -293,11 +293,18 @@ export default defineConfig({
 					}
 					/*
 					 * Turnstile's siteverify, steered by what is sent to it, the way
-					 * the real one answers:
+					 * the real one answers -- in the real one's order, measured on
+					 * 2026-09-29 from a GitHub runner: no secret first, then no
+					 * token, and only then whether the secret is known. So with no
+					 * token it never says the secret is unknown. An earlier version
+					 * of this stub asked about the secret first, and a test that
+					 * relied on that passed while Cloudflare would have refused.
 					 *
+					 * - no secret is `missing-input-secret`;
+					 * - no token is `missing-input-response`, whatever the secret;
 					 * - a secret containing INVALID_SECRET is one Cloudflare does not
-					 *   know (`invalid-input-secret`), whatever the token;
-					 * - no token is `missing-input-response`;
+					 *   know (`invalid-input-secret`), answered with a 400 as the
+					 *   real one does;
 					 * - the token `PASS:<secret>` passes -- a token belongs to one
 					 *   widget, so it passes only with that widget's secret, which
 					 *   is what lets a test hand over a mismatched pair;
@@ -308,19 +315,24 @@ export default defineConfig({
 						const form = new URLSearchParams(await request.clone().text());
 						const secret = form.get("secret") ?? "";
 						const token = form.get("response") ?? "";
-						const answer = (success: boolean, codes: string[] = []) =>
+						const answer = (
+							success: boolean,
+							codes: string[] = [],
+							status = 200,
+						) =>
 							new Response(
 								JSON.stringify({
 									success,
 									"error-codes": codes,
 									hostname: "local.test",
 								}),
-								{ headers: { "content-type": "application/json" } },
+								{ status, headers: { "content-type": "application/json" } },
 							);
-						if (secret.includes("INVALID_SECRET")) {
-							return answer(false, ["invalid-input-secret"]);
-						}
+						if (!secret) return answer(false, ["missing-input-secret"], 400);
 						if (!token) return answer(false, ["missing-input-response"]);
+						if (secret.includes("INVALID_SECRET")) {
+							return answer(false, ["invalid-input-secret"], 400);
+						}
 						if (token === "UNANSWERED") {
 							return new Response("<html>bad gateway</html>", {
 								status: 502,

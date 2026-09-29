@@ -119,6 +119,9 @@ export async function siteverify(
 	return { verdict: "unanswered", codes };
 }
 
+/** Sent in place of a token that did not come; see turnstileRefusal. */
+const NO_TOKEN = "no-token";
+
 /**
  * Null when the request may go on; otherwise the response to send.
  *
@@ -126,9 +129,16 @@ export async function siteverify(
  * attempts: without this order a bot that cannot pass could still lock a real
  * address out by failing at it.
  *
- * Siteverify is asked even when there is no token. A widget whose secret has
- * gone renders nothing, and the one answer that must not refuse -- the secret
- * itself is unknown -- only comes back if the question is asked.
+ * Siteverify is asked even when there is no token, and asked *with* one: a
+ * stand-in (NO_TOKEN). A widget deleted in the Cloudflare dashboard renders
+ * nothing, so its sign-in page sends no token -- and siteverify, asked with
+ * none, says only `missing-input-response`, never that the secret is unknown.
+ * Measured on 2026-09-29 from a GitHub runner: an unknown secret answers
+ * `invalid-input-secret` with any token and `missing-input-response` without
+ * one. Without the stand-in, the one answer that must not refuse never came
+ * back for the one case that needed it, and a deleted widget locked everyone
+ * out, root included. With it, a known secret still refuses the stand-in
+ * (`invalid-input-response`), so a request with no token is still refused.
  */
 export async function turnstileRefusal(
 	env: Pick<Env, "BUCKET">,
@@ -140,7 +150,7 @@ export async function turnstileRefusal(
 
 	const result = await siteverify(
 		keys.secretKey,
-		token ?? "",
+		token || NO_TOKEN,
 		request.headers.get("CF-Connecting-IP"),
 	);
 	if (result.verdict === "passed") return null;

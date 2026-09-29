@@ -212,8 +212,13 @@ are still checked, by the `tsc` that runs before the worker tests.
   same pair): saved unchecked, a wrong one refuses every sign-in, root's with
   them, and the screen that undoes it is behind the sign-in. For the same
   reason `invalid-input-secret` -- a secret Cloudflare no longer knows, which
-  no visitor can bring about -- lets requests through, and siteverify is asked
-  even with no token so that answer can come back. The check runs before the
+  no visitor can bring about -- lets requests through. A request with no token
+  is asked with a stand-in (`NO_TOKEN`): measured from a GitHub runner,
+  siteverify asked with no token answers only `missing-input-response` and
+  never says the secret is unknown, so a widget deleted in the dashboard --
+  which renders nothing, so sends nothing -- locked everyone out. The tests'
+  stub answers in Cloudflare's measured order; an earlier one did not, and the
+  test for that case passed against it. The check runs before the
   throttle, so a bot without a token spends nobody's attempts. Registration
   starts the session itself: the form used to call `/login` next, which would
   need a second token. `turnstile.test.ts`; the tests' siteverify stub passes

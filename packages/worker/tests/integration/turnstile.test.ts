@@ -274,16 +274,33 @@ describe("once it is on", () => {
 		expect(me.status).toBe(200);
 	});
 
-	it("lets requests through when Cloudflare no longer knows the secret", async () => {
+	/*
+	 * Cloudflare no longer knows the stored secret. Refusing here would refuse
+	 * root, with the fix behind the refused sign-in.
+	 */
+	it("lets requests through when the widget was deleted, so no token comes", async () => {
 		await root();
-		// A widget deleted, or its secret rotated, after it was saved. Refusing
-		// here would refuse root, with the fix behind the refused sign-in.
+		// A deleted widget renders nothing, so the page sends no token -- and
+		// siteverify asked with no token says only that there is none, never
+		// that the secret is unknown. That case locked everyone out while the
+		// stub answered in a different order from Cloudflare.
 		await env.BUCKET.put(
 			TURNSTILE_KEY,
-			JSON.stringify({ siteKey: SITE, secretKey: "INVALID_SECRET-rotated" }),
+			JSON.stringify({ siteKey: SITE, secretKey: "INVALID_SECRET-deleted" }),
 		);
 		const errors = vi.spyOn(console, "error").mockImplementation(() => {});
 		expect((await rootLogin()).status).toBe(200);
 		expect(errors).toHaveBeenCalled();
+	});
+
+	it("lets requests through when only the secret was rotated", async () => {
+		await root();
+		// The widget is still there, so a token comes with the request.
+		await env.BUCKET.put(
+			TURNSTILE_KEY,
+			JSON.stringify({ siteKey: SITE, secretKey: "INVALID_SECRET-rotated" }),
+		);
+		vi.spyOn(console, "error").mockImplementation(() => {});
+		expect((await rootLogin("a-token-from-the-widget")).status).toBe(200);
 	});
 });
