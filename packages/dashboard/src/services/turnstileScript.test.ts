@@ -43,6 +43,25 @@ describe("loading Turnstile", () => {
 	});
 });
 
+describe("the widget's language", () => {
+	it("is the page's, by Turnstile's name for it", async () => {
+		const { turnstileLanguage } = await import("./turnstile");
+		expect(turnstileLanguage("ja")).toBe("ja");
+		expect(turnstileLanguage("de")).toBe("de");
+		expect(turnstileLanguage("zh-Hans")).toBe("zh-cn");
+		expect(turnstileLanguage("zh-Hant")).toBe("zh-tw");
+		expect(turnstileLanguage("yue")).toBe("zh-tw");
+		expect(turnstileLanguage("nb")).toBe("no");
+		expect(turnstileLanguage("fil")).toBe("tl");
+	});
+
+	it("is left to Turnstile where it does not have the page's", async () => {
+		const { turnstileLanguage } = await import("./turnstile");
+		expect(turnstileLanguage("is")).toBe("auto");
+		expect(turnstileLanguage("km")).toBe("auto");
+	});
+});
+
 describe("the page's policy", () => {
 	const policy = /Content-Security-Policy: (.*)/.exec(headers)?.[1] ?? "";
 	const directive = (name: string) =>

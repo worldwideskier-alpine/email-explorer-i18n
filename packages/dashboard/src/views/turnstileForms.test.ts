@@ -156,6 +156,22 @@ describe("sign-in with Turnstile on", () => {
 	});
 });
 
+describe("the widget's language", () => {
+	it("is the page's, and follows it when it changes", async () => {
+		// Left to "auto" it followed the browser, and a page in Japanese
+		// said "Success!".
+		await mount("/login", "0x4SITE");
+		expect(widgets.map((w) => w.language)).toEqual(["en"]);
+
+		const { i18n } = await import("@/i18n");
+		i18n.global.setLocaleMessage("ja", englishWith({}) as never);
+		i18n.global.locale.value = "ja" as never;
+		await settle();
+		expect(widgets.map((w) => w.language)).toEqual(["en", "ja"]);
+		i18n.global.locale.value = "en" as never;
+	});
+});
+
 describe("sign-in with Turnstile off", () => {
 	it("renders no widget, loads nothing from Cloudflare, and sends no token", async () => {
 		delete window.turnstile;

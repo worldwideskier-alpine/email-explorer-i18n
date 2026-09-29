@@ -15,16 +15,21 @@
  * (expired, reset, failed): a token passes siteverify once, so whoever sends
  * it resets the widget afterwards to get the next.
  */
-import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { loadTurnstile, type TurnstileApi } from "@/services/turnstile";
+import {
+	loadTurnstile,
+	type TurnstileApi,
+	turnstileLanguage,
+} from "@/services/turnstile";
 
 const props = defineProps<{ siteKey: string }>();
 const emit = defineEmits<{
 	token: [token: string | null];
 	failed: [code: string];
 }>();
-const { t } = useI18n();
+const { t, locale } = useI18n();
+const language = computed(() => turnstileLanguage(String(locale.value)));
 
 const container = ref<HTMLElement | null>(null);
 const failure = ref("");
@@ -64,6 +69,7 @@ function renderInto(api: TurnstileApi, container: HTMLElement) {
 	return api.render(container, {
 		sitekey: props.siteKey,
 		theme: "auto",
+		language: language.value,
 		// The normal widget is 300px wide, which is wider than a form on a
 		// 320px screen once the page's margins are taken off.
 		size: window.matchMedia?.("(max-width: 359px)").matches
@@ -91,7 +97,9 @@ function reset() {
 defineExpose({ reset });
 
 onMounted(render);
-watch(() => props.siteKey, render);
+// Drawn again when the language is changed on the page, since the widget's
+// words are fixed when it is drawn.
+watch([() => props.siteKey, language], render);
 onBeforeUnmount(() => {
 	unmounted = true;
 	remove();
