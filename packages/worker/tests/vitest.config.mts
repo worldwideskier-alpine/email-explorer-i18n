@@ -291,10 +291,16 @@ export default defineConfig({
 							},
 						);
 					}
-					// Miniflare's Request and node's fetch are typed from two copies of
-					// the streams types that disagree on one optional field; at run time
-					// they are the same undici Request.
-					return fetch(request as unknown as Request);
+					// Anything not stubbed above is refused, and says which host. It
+					// was handed to node's fetch, as though to reach the network --
+					// and measured, that never worked: node could not read
+					// Miniflare's Request, so every such call failed with "Failed to
+					// parse URL from [object Request]", which named nothing. Refusing
+					// on purpose keeps a test from ever reaching a real service, and
+					// says what to stub.
+					throw new Error(
+						`No network in the tests: ${new URL(request.url).host} is not stubbed in vitest.config.mts`,
+					);
 				},
 			},
 		}),
