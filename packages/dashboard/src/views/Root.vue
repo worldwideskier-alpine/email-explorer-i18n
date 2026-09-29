@@ -585,11 +585,14 @@ const recoveryError = useLocalizedMessage();
 async function loadRecovery() {
 	try {
 		recovery.value = (await api.getRecoverySender()).data ?? null;
-		recoveryInput.value = recovery.value?.fromEmail ?? "";
-		recoveryTouched.value = false;
 	} catch {
 		recovery.value = null;
+		return;
 	}
+	// Not over what somebody has already started typing: the answer can
+	// arrive after they have, and it wiped what they had typed.
+	if (recoveryTouched.value) return;
+	recoveryInput.value = recovery.value?.fromEmail ?? "";
 }
 
 async function writeRecovery(fromEmail: string, done: string) {

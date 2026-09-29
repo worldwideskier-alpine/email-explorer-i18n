@@ -223,6 +223,35 @@ describe("the password-reset sender on /root", () => {
 		expect(somethingIsBeingWritten(document)).toBe(false);
 	});
 
+	/**
+	 * The stored sender can arrive after somebody has started typing, and it
+	 * used to be written over what they had typed -- and to mark the box as
+	 * not written, so the page would reload over it too.
+	 */
+	it("keeps what was typed before the stored sender arrived", async () => {
+		const { somethingIsBeingWritten } = await import("@/services/appUpdate");
+		let answer: (value: unknown) => void = () => {};
+		getRecoverySender.mockReturnValue(new Promise((r) => (answer = r)));
+		await mountRoot();
+
+		type("#recoveryFrom", "typed@example.com");
+		answer({
+			data: {
+				fromEmail: "noreply@example.com",
+				setByDeployment: false,
+				enabled: true,
+			},
+		});
+		await settle();
+
+		expect(
+			(host.querySelector("#recoveryFrom") as HTMLInputElement).value,
+		).toBe("typed@example.com");
+		expect(somethingIsBeingWritten(document)).toBe(true);
+		// The status still says what is stored.
+		expect(host.textContent).toContain("root.recovery.current");
+	});
+
 	it("says when the deployment's own setting is the one in use", async () => {
 		getRecoverySender.mockResolvedValue({
 			data: { fromEmail: null, setByDeployment: true, enabled: true },
