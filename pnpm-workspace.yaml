@@ -2,6 +2,17 @@ packages:
   - "packages/*"
   - "packages/worker/dev"
 
+# Dependencies whose install scripts may run. pnpm 11 refuses to install until
+# each is decided; pnpm 10 skipped them and printed a warning on every run.
+# None is needed: esbuild and workerd take their binaries from the platform
+# packages they depend on, and @parcel/watcher is only a fallback. Skipped they
+# have always been, and everything builds, tests and deploys -- so `false` is
+# the behaviour there was, now said rather than warned about.
+allowBuilds:
+  '@parcel/watcher': false
+  esbuild: false
+  workerd: false
+
 overrides:
   # @cloudflare/vitest-pool-workers 0.22.0 -- still the latest -- pins a
   # miniflare that pins sharp 0.35.2, which carries the libheif advisory
