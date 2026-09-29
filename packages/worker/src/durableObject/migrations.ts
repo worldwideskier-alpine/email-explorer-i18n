@@ -403,4 +403,20 @@ export const authMigrations: Migration[] = [
             ALTER TABLE push_subscriptions ADD COLUMN session_id TEXT;
         `,
 	},
+	{
+		/**
+		 * Sign-in finds an account by address without regard to case (see
+		 * "One spelling per address" in AGENTS.md), and the UNIQUE index on
+		 * users.email compares as typed, so every sign-in, registration and
+		 * address change read every login. A NOCASE index is what that
+		 * question can use. And a session's push subscriptions are removed by
+		 * session_id -- at sign-out, expiry and the sign-in sweep -- which had
+		 * no index at all.
+		 */
+		name: "8_lookup_indexes",
+		sql: `
+            CREATE INDEX IF NOT EXISTS idx_users_email_nocase ON users(email COLLATE NOCASE);
+            CREATE INDEX IF NOT EXISTS idx_push_subscriptions_session_id ON push_subscriptions(session_id);
+        `,
+	},
 ];
