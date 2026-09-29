@@ -432,6 +432,7 @@
 		"thisIsYou": "Siz",
 		"confirmDeleteAgain": "Bu geri alınamaz. {email} hesabına ait her şey gerçekten silinsin mi?",
 		"deleted": "{email} silindi.",
+		"deletedUnfinished": "{email} silindi, ancak bazı posta kutuları henüz boşaltılamadı. Gece bakımı bunları kaldırmayı tamamlayacak.",
 		"lock": {
 			"label": "Silme kilidi",
 			"lockedHint": "Kilitli: silinemez",

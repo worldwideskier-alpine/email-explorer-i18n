@@ -432,6 +432,7 @@
 		"thisIsYou": "나",
 		"confirmDeleteAgain": "되돌릴 수 없습니다. 정말 {email} 의 모든 것을 삭제할까요?",
 		"deleted": "{email} 을(를) 삭제했습니다.",
+		"deletedUnfinished": "{email} 을(를) 삭제했지만 일부 메일함은 아직 비우지 못했습니다. 야간 유지 관리가 삭제를 마무리합니다.",
 		"lock": {
 			"label": "삭제 잠금",
 			"lockedHint": "잠김: 삭제할 수 없습니다",

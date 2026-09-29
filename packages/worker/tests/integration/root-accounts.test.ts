@@ -20,6 +20,13 @@ async function createUnownedMailbox() {
 	await env.BUCKET.put(`mailboxes/${mailboxId}.json`, JSON.stringify({}));
 }
 
+/** Which mailboxes the deployment's original person holds. */
+async function legacyHolds(): Promise<string[]> {
+	return env.MAILBOX.get(env.MAILBOX.idFromName("AUTH")).listPersonMailboxes(
+		LEGACY_ADMIN_PERSON_ID,
+	);
+}
+
 /**
  * The account tier above the mailboxes, and the migration into it.
  *
@@ -428,7 +435,9 @@ describe("mailboxes that predate the grant model", () => {
 	it("does not hand the estate to somebody who became an administrator later", async () => {
 		await register("first@example.com", "password123");
 		await createUser("first-spare@example.com", true, LEGACY_ADMIN_PERSON_ID);
-		await createMailbox();
+		// Nobody's: a mailbox somebody held already is skipped by the backfill
+		// whoever asks, and with one this test passed whatever the rule was.
+		await createUnownedMailbox();
 
 		// A second person, made an administrator so they can keep their own
 		// addresses, before the backfill has had a chance to run.
@@ -449,6 +458,8 @@ describe("mailboxes that predate the grant model", () => {
 			).getPersonMailboxes(latecomer);
 			expect(owned).toEqual([]);
 		});
+		// It ran, and the mailbox went where it belongs.
+		expect(await legacyHolds()).toEqual([mailboxId]);
 	});
 
 	/**
@@ -459,7 +470,7 @@ describe("mailboxes that predate the grant model", () => {
 	it("does not give the existing mailboxes to root", async () => {
 		await register("operator@example.com", "password123");
 		const rootSession = await signIn("operator@example.com");
-		await createMailbox();
+		await createUnownedMailbox();
 		await as(rootSession.id)("http://local.test/api/v1/mailboxes");
 
 		const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
@@ -484,10 +495,12 @@ describe("mailboxes that predate the grant model", () => {
 	it("does not adopt mailboxes made after it ran", async () => {
 		await register("first@example.com", "password123");
 		const firstSession = await signIn("first@example.com");
-		await createMailbox();
 		await as(firstSession.id)("http://local.test/api/v1/mailboxes");
 
+		// Made after the run, and held by nobody -- what a mailbox from before
+		// grants looks like, and the only kind the backfill would take.
 		const laterAdmin = await createUser("later@example.com", true);
+		await createUnownedMailbox();
 		resetLegacyGrantMemo();
 		await as(firstSession.id)("http://local.test/api/v1/mailboxes");
 
@@ -722,12 +735,13 @@ describe("mail that has lost its owner", () => {
 			LEGACY_ADMIN_PERSON_ID,
 		);
 		const session = await signIn("legacy@example.com");
-		await createMailbox();
+		await createUnownedMailbox();
 
 		// The backfill runs and records that it has.
 		expect(
 			(await as(session.id)("http://local.test/api/v1/mailboxes")).status,
 		).toBe(200);
+		expect(await legacyHolds()).toEqual([mailboxId]);
 
 		// Now the claims are gone but the mailbox is not -- the state that
 		// would otherwise be permanent.
@@ -774,8 +788,10 @@ describe("mail that has lost its owner", () => {
 			(await as(session.id)("http://local.test/api/v1/mailboxes")).status,
 		).toBe(200);
 
-		// Then somebody else's mailbox appears, claimed by nobody they know.
-		await createMailbox();
+		// Then a mailbox appears that nobody holds -- the kind the backfill
+		// takes, so that only "they still hold theirs" keeps it from running.
+		// One held by somebody else was skipped either way.
+		await createUnownedMailbox();
 		resetLegacyGrantMemo();
 
 		const listed = await (

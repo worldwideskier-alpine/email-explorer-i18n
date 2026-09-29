@@ -432,6 +432,7 @@
 		"thisIsYou": "Jūs",
 		"confirmDeleteAgain": "To nebeatšauksite. Tikrai ištrinti viską, kas priklauso {email}?",
 		"deleted": "{email} ištrintas.",
+		"deletedUnfinished": "{email} ištrintas, bet kai kurių jo pašto dėžučių dar nepavyko ištuštinti. Naktinė priežiūra užbaigs jų pašalinimą.",
 		"lock": {
 			"label": "Ištrynimo užraktas",
 			"lockedHint": "Užrakinta: ištrinti negalima",

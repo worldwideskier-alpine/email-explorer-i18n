@@ -432,6 +432,7 @@
 		"thisIsYou": "Vi",
 		"confirmDeleteAgain": "Tega ni mogoče razveljaviti. Res izbrišem vse, kar pripada {email}?",
 		"deleted": "{email} izbrisan.",
+		"deletedUnfinished": "{email} izbrisan, vendar nekaterih njegovih poštnih predalov še ni bilo mogoče izprazniti. Nočno vzdrževanje bo dokončalo njihovo odstranitev.",
 		"lock": {
 			"label": "Zaklep brisanja",
 			"lockedHint": "Zaklenjeno: ni mogoče izbrisati",

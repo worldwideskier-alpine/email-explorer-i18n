@@ -432,6 +432,7 @@
 		"thisIsYou": "Tusa",
 		"confirmDeleteAgain": "Ní féidir é seo a chur ar ceal. Gach rud le {email} a scriosadh i ndáiríre?",
 		"deleted": "{email} scriosta.",
+		"deletedUnfinished": "{email} scriosta, ach níorbh fhéidir cuid dá bhoscaí poist a fholmhú fós. Críochnóidh an chothabháil oíche iad a bhaint.",
 		"lock": {
 			"label": "Glas scriosta",
 			"lockedHint": "Faoi ghlas: ní féidir é a scriosadh",

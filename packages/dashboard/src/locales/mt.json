@@ -432,6 +432,7 @@
 		"thisIsYou": "Int",
 		"confirmDeleteAgain": "Dan ma jistax jitreġġa' lura. Verament tħassar kollox ta' {email}?",
 		"deleted": "{email} tħassar.",
+		"deletedUnfinished": "{email} tħassar, iżda xi wħud mill-kaxxi tal-posta tiegħu għadhom ma setgħux jitbattlu. Il-manutenzjoni ta' billejl se tlesti t-tneħħija tagħhom.",
 		"lock": {
 			"label": "Serratura tat-tħassir",
 			"lockedHint": "Msakkar: ma jistax jitħassar",

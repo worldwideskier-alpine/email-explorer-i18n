@@ -432,6 +432,7 @@
 		"thisIsYou": "Bạn",
 		"confirmDeleteAgain": "Không thể hoàn tác. Thật sự xóa mọi thứ của {email}?",
 		"deleted": "Đã xóa {email}.",
+		"deletedUnfinished": "Đã xóa {email}, nhưng một số hộp thư của tài khoản này chưa thể dọn sạch. Quá trình bảo trì ban đêm sẽ hoàn tất việc xóa chúng.",
 		"lock": {
 			"label": "Khóa xóa",
 			"lockedHint": "Đã khóa: không thể xóa",

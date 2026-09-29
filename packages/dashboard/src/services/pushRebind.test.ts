@@ -25,6 +25,7 @@ vi.mock("@/services/api", () => ({
 			},
 		})),
 		setAuthToken: vi.fn(),
+		clearAuthToken: vi.fn(),
 		getCurrentUser: vi.fn(async () => ({
 			data: { id: "user-1", email: "someone@example.com", role: "admin" },
 		})),

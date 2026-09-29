@@ -432,6 +432,7 @@
 		"thisIsYou": "Anda",
 		"confirmDeleteAgain": "Ini tidak boleh dibatalkan. Benar-benar padam segala milik {email}?",
 		"deleted": "{email} dipadam.",
+		"deletedUnfinished": "{email} dipadam, tetapi beberapa peti melnya belum dapat dikosongkan. Penyelenggaraan waktu malam akan menyelesaikan pembuangannya.",
 		"lock": {
 			"label": "Kunci pemadaman",
 			"lockedHint": "Berkunci: tidak boleh dipadam",

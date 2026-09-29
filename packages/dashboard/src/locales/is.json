@@ -432,6 +432,7 @@
 		"thisIsYou": "Þú",
 		"confirmDeleteAgain": "Þessu verður ekki snúið við. Á virkilega að eyða öllu sem tilheyrir {email}?",
 		"deleted": "{email} eytt.",
+		"deletedUnfinished": "{email} eytt, en ekki tókst enn að tæma sum pósthólf þess. Næturviðhaldið lýkur við að fjarlægja þau.",
 		"lock": {
 			"label": "Eyðingarlás",
 			"lockedHint": "Læst: ekki hægt að eyða",

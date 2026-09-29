@@ -432,6 +432,7 @@
 		"thisIsYou": "你",
 		"confirmDeleteAgain": "無法復原。確定要刪除 {email} 的全部內容嗎？",
 		"deleted": "已刪除 {email}。",
+		"deletedUnfinished": "已刪除 {email}，但部分郵箱尚未能清空。夜間維護會完成刪除。",
 		"lock": {
 			"label": "刪除鎖",
 			"lockedHint": "已鎖定：無法刪除",

@@ -432,6 +432,7 @@
 		"thisIsYou": "自分",
 		"confirmDeleteAgain": "取り消せません。本当に {email} のすべてを削除しますか。",
 		"deleted": "{email} を削除しました。",
+		"deletedUnfinished": "{email} を削除しましたが、一部のメールボックスはまだ空にできていません。夜間の保守処理が削除を完了します。",
 		"lock": {
 			"label": "削除ロック",
 			"lockedHint": "ロック中は削除できません",

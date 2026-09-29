@@ -432,6 +432,7 @@
 		"thisIsYou": "Siz",
 		"confirmDeleteAgain": "Bunu geri qaytarmaq olmaz. {email} ilə bağlı hər şey doğrudan silinsin?",
 		"deleted": "{email} silindi.",
+		"deletedUnfinished": "{email} silindi, lakin onun bəzi poçt qutuları hələ boşaldıla bilmədi. Gecə texniki xidməti onları silməyi başa çatdıracaq.",
 		"lock": {
 			"label": "Silinmə kilidi",
 			"lockedHint": "Kilidli: silinə bilməz",

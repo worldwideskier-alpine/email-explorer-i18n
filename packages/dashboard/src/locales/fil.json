@@ -432,6 +432,7 @@
 		"thisIsYou": "Ikaw",
 		"confirmDeleteAgain": "Hindi na ito maibabalik. Talagang burahin ang lahat ng kay {email}?",
 		"deleted": "Nabura ang {email}.",
+		"deletedUnfinished": "Nabura ang {email}, pero hindi pa naalisan ng laman ang ilan sa mga mailbox nito. Tatapusin ng pag-aayos tuwing gabi ang pag-alis sa mga ito.",
 		"lock": {
 			"label": "Lock sa pagbura",
 			"lockedHint": "Naka-lock: hindi mabubura",

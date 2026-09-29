@@ -139,9 +139,27 @@ describe("the backfill firing a second time", () => {
 			).status,
 		).toBe(204);
 
+		// A delete keeps the grant -- the archives and the address stay theirs
+		// -- so the person does not in fact hold nothing yet, and this test
+		// used to stop here: the override never fired, and the 403 below said
+		// nothing about what it would have reached. So the grant goes too, as
+		// it would for a mailbox whose owner gave it up, and a mailbox nobody
+		// holds is there for the run to find.
+		await runInDurableObject(authStub(), async (_i, state) => {
+			state.storage.sql.exec(
+				"DELETE FROM person_mailboxes WHERE person_id = ?",
+				LEGACY_ADMIN_PERSON_ID,
+			);
+		});
+		await env.BUCKET.put("mailboxes/orphan-box@test.com.json", "{}");
+
 		// A cold isolate, which is all it takes for the memo to be gone.
 		resetLegacyGrantMemo();
 
 		expect((await importInto(oldToken, "new-box@test.com")).status).toBe(403);
+		// The run did fire: the mailbox nobody held is the legacy person's now.
+		expect(
+			await authStub().listPersonMailboxes(LEGACY_ADMIN_PERSON_ID),
+		).toEqual(["orphan-box@test.com"]);
 	});
 });

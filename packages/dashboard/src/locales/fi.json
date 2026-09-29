@@ -432,6 +432,7 @@
 		"thisIsYou": "Sinä",
 		"confirmDeleteAgain": "Tätä ei voi perua. Poistetaanko todella kaikki, mikä kuuluu tilille {email}?",
 		"deleted": "{email} poistettu.",
+		"deletedUnfinished": "{email} poistettu, mutta joitakin sen postilaatikoita ei vielä voitu tyhjentää. Yöllinen ylläpito viimeistelee niiden poistamisen.",
 		"lock": {
 			"label": "Poistolukko",
 			"lockedHint": "Lukittu: ei voi poistaa",

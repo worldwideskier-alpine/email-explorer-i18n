@@ -856,12 +856,27 @@ async function removePerson(person: Person) {
 	try {
 		await api.deletePerson(person.personId);
 		message.value = () => t("root.deleted", { email: who });
-		await load();
-	} catch {
-		error.value = () => t("root.deleteFailed");
+	} catch (e: any) {
+		// Three answers that are not "could not delete", and each used to be
+		// shown as it, with the list left as it was. A 500 with `unfinished`
+		// means the person is gone and some mail is still being removed -- the
+		// retry root was invited to make answered 404. A 404 means they are
+		// gone already. A 423 means their lock was put back meanwhile.
+		const status = e?.response?.status;
+		if (status === 500 && Array.isArray(e?.response?.data?.unfinished)) {
+			message.value = () => t("root.deletedUnfinished", { email: who });
+		} else if (status === 404) {
+			message.value = () => t("root.deleted", { email: who });
+		} else if (status === 423) {
+			error.value = () => t("root.lock.lockedHint");
+		} else {
+			error.value = () => t("root.deleteFailed");
+		}
 	} finally {
 		busy.value = false;
 	}
+	// Whatever the answer: the list is the one place that shows what is so.
+	await load();
 }
 
 async function logout() {

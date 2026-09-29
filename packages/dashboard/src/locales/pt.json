@@ -432,6 +432,7 @@
 		"thisIsYou": "Você",
 		"confirmDeleteAgain": "Isto não se pode desfazer. Eliminar mesmo tudo o que pertence a {email}?",
 		"deleted": "{email} eliminado.",
+		"deletedUnfinished": "{email} eliminado, mas algumas das suas caixas de correio ainda não puderam ser esvaziadas. A manutenção noturna concluirá a sua remoção.",
 		"lock": {
 			"label": "Bloqueio de exclusão",
 			"lockedHint": "Bloqueado: não pode ser excluído",

@@ -432,6 +432,7 @@
 		"thisIsYou": "Ju",
 		"confirmDeleteAgain": "Kjo nuk kthehet. Vërtet të fshihet gjithçka e {email}?",
 		"deleted": "{email} u fshi.",
+		"deletedUnfinished": "{email} u fshi, por disa nga kutitë e tij postare ende nuk mund të zbrazeshin. Mirëmbajtja e natës do ta përfundojë heqjen e tyre.",
 		"lock": {
 			"label": "Kyçja e fshirjes",
 			"lockedHint": "I kyçur: nuk mund të fshihet",

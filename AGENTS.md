@@ -118,6 +118,10 @@ are still checked, by the `tsc` that runs before the worker tests.
   way root's reset mail could leave, because root had nowhere to set a key
   and no screen showed it. `resend-settings.test.ts` holds it; tests that
   send give their sender a key (`giveSendingKey`), as a real one would.
+  The tests' Resend stub refuses a request with no key, as Resend does, and
+  records what it took with whose key (`https://api.resend.com/__sent`);
+  `whose-key.test.ts` asks it. Before, it took anything, so a send billed to
+  somebody else passed every test.
 - **Roles.** `root` / `admin` / `member`, decided in `roles.ts`. Root is an
   **account id in `app_roles`, inside the auth Durable Object** -- not a
   deployment variable. This is software people fork and deploy: naming who
@@ -481,6 +485,22 @@ are still checked, by the `tsc` that runs before the worker tests.
   measure the *controls*, not only the page: a zero-width one loses
   functionality without moving the page a pixel. `reflow320.test.ts` carries
   the measurements and holds the places that were told they may shrink.
+
+- **One tab, two people.** Ending a session empties what was on screen
+  (`forgetThisPerson` in the auth store) and moves `sessionGeneration` on;
+  api.ts leaves an answer to a request sent under an ended session
+  unsettled, because the stores it would write into are the next person's --
+  a late mailbox list showed them the last one's, and a late 401 ended their
+  session. A message being written stays on screen when the session ends
+  (to be copied) and goes when the next one starts. A sign-out the server did
+  not hear is tried again and, failing that, sent the next time the
+  dashboard opens (`signOutPending`). `sessionHandover.test.ts`.
+- **Screens inside the mailbox frame are keyed by path.** They read their
+  message, folder or mailbox when first shown, and the router reuses a screen
+  when only the path's ids change: a notification for another message left
+  the open one showing, and a reply went to it. `Mailbox.vue`'s router-view
+  keys by `path` (not query, so typing a search is not a new screen);
+  `mailboxSwitch.test.ts`.
 
 ## Working here
 

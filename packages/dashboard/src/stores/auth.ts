@@ -3,7 +3,7 @@ import { computed, ref } from "vue";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 import { rebindPushSubscription } from "@/services/push";
-import { whenSessionEnds } from "@/services/sessionEnd";
+import { sessionEnded, whenSessionEnds } from "@/services/sessionEnd";
 import { useContactStore } from "@/stores/contacts";
 import { useEmailStore } from "@/stores/emails";
 import { useFolderStore } from "@/stores/folders";
@@ -37,6 +37,52 @@ export interface Session {
 	 */
 	role?: AccountRole;
 	expiresAt: number;
+}
+
+/** A sign-out the server has not heard about yet; see logout. */
+const PENDING_SIGN_OUT = "signOutPending";
+
+/** Whether the server took the sign-out. Tried twice, a second apart. */
+async function tellTheServer(send: () => Promise<unknown>): Promise<boolean> {
+	for (let attempt = 0; attempt < 2; attempt++) {
+		if (attempt > 0) await new Promise((r) => setTimeout(r, 1000));
+		try {
+			await send();
+			return true;
+		} catch (err: any) {
+			if (err?.response?.status === 401) return true;
+			console.error("Logout error:", err);
+		}
+	}
+	return false;
+}
+
+function rememberPendingSignOut(token: string) {
+	try {
+		localStorage.setItem(PENDING_SIGN_OUT, token);
+	} catch {
+		// Private browsing with storage refused: nothing more to be done.
+	}
+}
+
+/**
+ * Sends a sign-out that did not reach the server last time. With fetch and
+ * its own header rather than through api.ts, whose token is whoever is
+ * signed in now and whose 401 handling would end their session.
+ */
+async function finishPendingSignOut() {
+	const token = localStorage.getItem(PENDING_SIGN_OUT);
+	if (!token) return;
+	const sent = await tellTheServer(async () => {
+		const response = await fetch("/api/v1/auth/logout", {
+			method: "POST",
+			headers: { Authorization: `Bearer ${token}` },
+		});
+		if (!response.ok && response.status !== 401) {
+			throw new Error(`sign-out answered ${response.status}`);
+		}
+	});
+	if (sent) localStorage.removeItem(PENDING_SIGN_OUT);
 }
 
 export const useAuthStore = defineStore("auth", () => {
@@ -84,11 +130,31 @@ export const useAuthStore = defineStore("auth", () => {
 			: null,
 	);
 
+	/**
+	 * What this person had open goes with them. The stores outlive the
+	 * session in the tab, so the next person to sign in there saw the last
+	 * one's mailboxes and search results -- after a sign-out, and after a
+	 * session that simply ran out, which left everything in place. Answers
+	 * still on their way are dropped by api.ts (see sessionGeneration).
+	 *
+	 * The composer is not closed here: a session that ends while something
+	 * is being written leaves the text on screen to be copied (api.ts). It
+	 * goes when the next session starts, in adopt.
+	 */
+	function forgetThisPerson() {
+		session.value = null;
+		localStorage.removeItem("session");
+		api.clearAuthToken();
+		useSearchStore().$reset();
+		useEmailStore().$reset();
+		useMailboxStore().$reset();
+		useFolderStore().$reset();
+		useContactStore().$reset();
+	}
+
 	// A request refused for want of a session ends it here as well, so the
 	// next navigation goes to sign-in (see api.ts).
-	whenSessionEnds(() => {
-		session.value = null;
-	});
+	whenSessionEnds(forgetThisPerson);
 
 	// Load session from localStorage on init
 	const storedSession = localStorage.getItem("session");
@@ -135,6 +201,11 @@ export const useAuthStore = defineStore("auth", () => {
 	 * Naming what is kept is what makes "not kept" true rather than asserted.
 	 */
 	function adopt(started: Session) {
+		// A new person, or the same one again: nothing of what was on screen
+		// before carries over, the half-written message of an ended session
+		// and its original included.
+		forgetThisPerson();
+		useUIStore().$reset();
 		session.value = {
 			id: started.id,
 			userId: started.userId,
@@ -169,30 +240,31 @@ export const useAuthStore = defineStore("auth", () => {
 		}
 	}
 
+	/**
+	 * Signs out here and on the server.
+	 *
+	 * The server's half used to be allowed to fail in silence: the screen
+	 * signed out and the session, its cookie and its push subscription lived
+	 * on for thirty days -- on a shared computer, for whoever came next. So a
+	 * failure is tried once more, and one that still fails is written down
+	 * and sent again the next time this dashboard is opened
+	 * (finishPendingSignOut). A 401 means it is already over.
+	 */
 	async function logout() {
 		loading.value = true;
+		const ending = session.value?.id;
 		try {
-			if (session.value) {
-				await api.logout();
+			if (ending && !(await tellTheServer(() => api.logout()))) {
+				rememberPendingSignOut(ending);
 			}
-		} catch (err) {
-			console.error("Logout error:", err);
 		} finally {
-			session.value = null;
-			localStorage.removeItem("session");
-			api.clearAuthToken();
-			// What this person had open goes with them. The stores outlive the
-			// session in the tab, so the next person to sign in there saw the
-			// last one's search results until they searched for something.
-			useSearchStore().$reset();
-			useEmailStore().$reset();
-			useMailboxStore().$reset();
-			useFolderStore().$reset();
-			useContactStore().$reset();
+			sessionEnded();
 			useUIStore().$reset();
 			loading.value = false;
 		}
 	}
+
+	void finishPendingSignOut();
 
 	async function checkAuth() {
 		if (!session.value) return false;

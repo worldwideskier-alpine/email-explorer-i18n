@@ -432,6 +432,7 @@
 		"thisIsYou": "Jūs",
 		"confirmDeleteAgain": "To nevar atsaukt. Vai tiešām dzēst visu, kas pieder {email}?",
 		"deleted": "{email} izdzēsts.",
+		"deletedUnfinished": "{email} izdzēsts, taču dažas tā pastkastes vēl neizdevās iztukšot. Nakts apkope pabeigs to noņemšanu.",
 		"lock": {
 			"label": "Dzēšanas slēdzene",
 			"lockedHint": "Aizslēgts: nevar dzēst",

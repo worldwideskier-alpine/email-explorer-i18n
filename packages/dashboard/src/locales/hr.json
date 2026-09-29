@@ -432,6 +432,7 @@
 		"thisIsYou": "Vi",
 		"confirmDeleteAgain": "Ovo se ne može poništiti. Zaista obrisati sve što pripada {email}?",
 		"deleted": "{email} je obrisan.",
+		"deletedUnfinished": "{email} je obrisan, ali neki njegovi poštanski sandučići još nisu mogli biti ispražnjeni. Noćno održavanje dovršit će njihovo uklanjanje.",
 		"lock": {
 			"label": "Zaključavanje brisanja",
 			"lockedHint": "Zaključano: brisanje nije moguće",

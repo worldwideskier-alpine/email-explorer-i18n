@@ -432,6 +432,7 @@
 		"thisIsYou": "Du",
 		"confirmDeleteAgain": "Detta går inte att ångra. Ska verkligen allt som tillhör {email} raderas?",
 		"deleted": "{email} raderad.",
+		"deletedUnfinished": "{email} raderad, men några av brevlådorna kunde inte tömmas ännu. Nattunderhållet slutför borttagningen.",
 		"lock": {
 			"label": "Raderingslås",
 			"lockedHint": "Låst: kan inte raderas",

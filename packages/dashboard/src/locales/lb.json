@@ -432,6 +432,7 @@
 		"thisIsYou": "Dir",
 		"confirmDeleteAgain": "Dat léisst sech net réckgängeg maachen. Wierklech alles vum {email} läschen?",
 		"deleted": "{email} geläscht.",
+		"deletedUnfinished": "{email} geläscht, mee e puer vu senge Postfächer konnten nach net eidel gemaach ginn. Den nuetlechen Ënnerhalt mécht d'Ewechhuele fäerdeg.",
 		"lock": {
 			"label": "Läschspär",
 			"lockedHint": "Gespaart: kann net geläscht ginn",

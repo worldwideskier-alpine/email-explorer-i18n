@@ -1,6 +1,6 @@
 import axios from "axios";
 import { somethingIsBeingWritten } from "./appUpdate";
-import { sessionEnded } from "./sessionEnd";
+import { sessionEnded, sessionGeneration } from "./sessionEnd";
 
 /** Exported for tests, which answer its requests themselves. */
 export const apiClient = axios.create({
@@ -10,9 +10,26 @@ export const apiClient = axios.create({
 	},
 });
 
+/** The session a request was sent under; see sessionGeneration. */
+const SENT_UNDER = Symbol("sessionGeneration");
+type Stamped = { [SENT_UNDER]?: number };
+
+/**
+ * An answer to a request sent under a session that has since ended. It never
+ * settles: whatever awaited it belonged to that session, and neither its
+ * success nor its failure branch may write into the stores the next person
+ * is using.
+ */
+const sentUnderAnEndedSession = (config: unknown) => {
+	const sent = (config as Stamped | undefined)?.[SENT_UNDER];
+	return sent !== undefined && sent !== sessionGeneration();
+};
+const never = () => new Promise<never>(() => {});
+
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
 	(config) => {
+		(config as Stamped)[SENT_UNDER] = sessionGeneration();
 		const session = localStorage.getItem("session");
 		if (session) {
 			try {
@@ -65,8 +82,9 @@ export const leave = {
 
 // Response interceptor: a 401 anywhere else means the session is gone.
 apiClient.interceptors.response.use(
-	(response) => response,
+	(response) => (sentUnderAnEndedSession(response.config) ? never() : response),
 	async (error) => {
+		if (sentUnderAnEndedSession(error.config)) return never();
 		const url: string = error.config?.url ?? "";
 		const handledByCaller = OWN_401_HANDLING.some((path) =>
 			url.startsWith(path),

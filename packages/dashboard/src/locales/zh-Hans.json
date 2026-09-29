@@ -432,6 +432,7 @@
 		"thisIsYou": "你",
 		"confirmDeleteAgain": "无法撤销。确定要删除 {email} 的全部内容吗？",
 		"deleted": "已删除 {email}。",
+		"deletedUnfinished": "已删除 {email}，但部分邮箱尚未能清空。夜间维护会完成删除。",
 		"lock": {
 			"label": "删除锁",
 			"lockedHint": "已锁定：无法删除",

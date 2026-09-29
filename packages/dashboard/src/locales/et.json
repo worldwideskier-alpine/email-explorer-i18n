@@ -432,6 +432,7 @@
 		"thisIsYou": "Teie",
 		"confirmDeleteAgain": "Seda ei saa tagasi võtta. Kas kustutada tõesti kõik, mis kuulub kontole {email}?",
 		"deleted": "{email} kustutatud.",
+		"deletedUnfinished": "{email} kustutatud, kuid mõnda tema postkasti ei õnnestunud veel tühjendada. Öine hooldus lõpetab nende eemaldamise.",
 		"lock": {
 			"label": "Kustutamislukk",
 			"lockedHint": "Lukus: ei saa kustutada",

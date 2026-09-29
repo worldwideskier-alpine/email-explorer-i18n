@@ -432,6 +432,7 @@
 		"thisIsYou": "Vous",
 		"confirmDeleteAgain": "C'est irréversible. Supprimer vraiment tout ce qui appartient à {email} ?",
 		"deleted": "{email} supprimé.",
+		"deletedUnfinished": "{email} supprimé, mais certaines de ses boîtes aux lettres n'ont pas encore pu être vidées. La maintenance nocturne terminera leur suppression.",
 		"lock": {
 			"label": "Verrou de suppression",
 			"lockedHint": "Verrouillé : suppression impossible",

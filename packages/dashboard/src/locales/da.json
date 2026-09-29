@@ -432,6 +432,7 @@
 		"thisIsYou": "Dig",
 		"confirmDeleteAgain": "Dette kan ikke fortrydes. Skal alt vedrørende {email} virkelig slettes?",
 		"deleted": "{email} slettet.",
+		"deletedUnfinished": "{email} slettet, men nogle af deres postkasser kunne endnu ikke tømmes. Den natlige vedligeholdelse gør fjernelsen færdig.",
 		"lock": {
 			"label": "Sletningslås",
 			"lockedHint": "Låst: kan ikke slettes",

@@ -432,6 +432,7 @@
 		"thisIsYou": "U",
 		"confirmDeleteAgain": "Dit kan niet ongedaan worden gemaakt. Echt alles van {email} verwijderen?",
 		"deleted": "{email} verwijderd.",
+		"deletedUnfinished": "{email} verwijderd, maar sommige van de mailboxen konden nog niet worden geleegd. Het nachtelijke onderhoud rondt het verwijderen af.",
 		"lock": {
 			"label": "Verwijderslot",
 			"lockedHint": "Vergrendeld: kan niet worden verwijderd",

@@ -17,6 +17,9 @@ import { defineConfig } from "vitest/config";
  */
 const overloadAttempts = new Map<string, number>();
 
+/** Every message the Resend stub below accepted; see "/__sent". */
+const resendSent: { authorization: string; body: unknown }[] = [];
+
 export default defineConfig({
 	plugins: [
 		cloudflareTest({
@@ -52,7 +55,28 @@ export default defineConfig({
 				outboundService: async (request) => {
 					const url = new URL(request.url);
 					if (url.hostname === "api.resend.com") {
+						// What was sent, and with whose key, for a test to ask
+						// after. The key decides who pays, and "the person whose
+						// mail it is" was a rule nothing checked: this stub took
+						// any request, so a send with somebody else's key -- or
+						// none -- passed every test. See whose-key.test.ts.
+						if (url.pathname === "/__sent") {
+							return Response.json(resendSent);
+						}
+						const authorization = request.headers.get("Authorization");
+						// As Resend answers a request without a key.
+						if (!authorization?.startsWith("Bearer re_")) {
+							return Response.json(
+								{
+									statusCode: 401,
+									name: "missing_api_key",
+									message: "Missing API key in the authorization header",
+								},
+								{ status: 401 },
+							);
+						}
 						const body = await request.clone().text();
+						resendSent.push({ authorization, body: JSON.parse(body) });
 						// Nothing downstream keeps the request we sent to Resend --
 						// sendEmail discards the response on success -- so a test that
 						// needs to assert on the recipients puts this marker in the

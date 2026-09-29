@@ -4,7 +4,15 @@
     <div class="flex-1 flex flex-col min-w-0">
       <Header />
       <main class="flex-1 overflow-y-auto p-4 min-w-0">
-        <router-view />
+        <!-- A fresh screen for every path. The screens read their message,
+             folder or mailbox when first shown, and the router reuses a
+             screen when only the path's ids change: a notification for
+             another message left the open one showing, and a reply, move or
+             delete then went to it. Keyed by the path, not the query, so a
+             search being typed is not a new screen. -->
+        <router-view v-slot="{ Component, route: shown }">
+          <component :is="Component" :key="shown.path" />
+        </router-view>
       </main>
     </div>
     <ComposeEmail />

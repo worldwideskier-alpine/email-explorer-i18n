@@ -432,6 +432,7 @@
 		"thisIsYou": "Tu",
 		"confirmDeleteAgain": "Nu se poate anula. Chiar ștergi tot ce îi aparține lui {email}?",
 		"deleted": "{email} șters.",
+		"deletedUnfinished": "{email} șters, dar unele dintre cutiile sale poștale nu au putut fi golite încă. Întreținerea de noapte va finaliza eliminarea lor.",
 		"lock": {
 			"label": "Blocare la ștergere",
 			"lockedHint": "Blocat: nu poate fi șters",

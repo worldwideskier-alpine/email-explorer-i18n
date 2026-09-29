@@ -432,6 +432,7 @@
 		"thisIsYou": "Tú",
 		"confirmDeleteAgain": "Esto no se puede deshacer. ¿Eliminar de verdad todo lo de {email}?",
 		"deleted": "Se eliminó {email}.",
+		"deletedUnfinished": "Se eliminó {email}, pero aún no se pudieron vaciar algunos de sus buzones. El mantenimiento nocturno terminará de eliminarlos.",
 		"lock": {
 			"label": "Bloqueo de eliminación",
 			"lockedHint": "Bloqueado: no se puede eliminar",

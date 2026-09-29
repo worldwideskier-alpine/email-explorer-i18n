@@ -432,6 +432,7 @@
 		"thisIsYou": "Tu",
 		"confirmDeleteAgain": "Non è reversibile. Eliminare davvero tutto ciò che appartiene a {email}?",
 		"deleted": "{email} eliminato.",
+		"deletedUnfinished": "{email} eliminato, ma alcune delle sue caselle di posta non è stato ancora possibile svuotarle. La manutenzione notturna ne completerà la rimozione.",
 		"lock": {
 			"label": "Blocco eliminazione",
 			"lockedHint": "Bloccato: non eliminabile",

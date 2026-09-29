@@ -432,6 +432,7 @@
 		"thisIsYou": "Anda",
 		"confirmDeleteAgain": "Ini tidak bisa dibatalkan. Benar-benar hapus semua milik {email}?",
 		"deleted": "{email} dihapus.",
+		"deletedUnfinished": "{email} dihapus, tetapi beberapa kotak suratnya belum dapat dikosongkan. Pemeliharaan malam akan menyelesaikan penghapusannya.",
 		"lock": {
 			"label": "Kunci penghapusan",
 			"lockedHint": "Terkunci: tidak dapat dihapus",

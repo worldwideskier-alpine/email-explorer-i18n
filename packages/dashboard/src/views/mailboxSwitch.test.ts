@@ -1,7 +1,12 @@
 import { createPinia, setActivePinia } from "pinia";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick } from "vue";
-import { createMemoryHistory, createRouter, RouterView } from "vue-router";
+import {
+	createMemoryHistory,
+	createRouter,
+	RouterView,
+	useRoute,
+} from "vue-router";
 import { englishWith } from "@/testing/english";
 
 /**
@@ -105,5 +110,74 @@ describe("moving to another mailbox inside the page", () => {
 		expect(listFolders).toHaveBeenLastCalledWith("b@example.com");
 		expect(host.textContent).toContain("Folder of b@example.com");
 		expect(host.textContent).not.toContain("Folder of a@example.com");
+	});
+});
+
+/**
+ * The screens inside the frame read their message, folder or mailbox when
+ * they are first shown -- EmailDetail, EmailSource, Settings and Contacts on
+ * mount, EmailList by folder name alone. The frame's router-view reused them
+ * when only the path's ids changed, so a notification for another message
+ * left the open one on screen, and the next reply, move or delete went to
+ * the message shown rather than the one in the address bar. Inbox in one
+ * mailbox and inbox in the next were the same list.
+ */
+describe("the screen inside the mailbox frame", () => {
+	/** Reads the path once, as those screens do. */
+	const ReadsOnce = defineComponent({
+		setup() {
+			const route = useRoute();
+			const seen = `${route.params.mailboxId}|${route.params.id ?? route.params.folder}`;
+			return () => h("p", { class: "seen" }, seen);
+		},
+	});
+
+	it("is shown afresh for another message, folder or mailbox", async () => {
+		const pinia = createPinia();
+		setActivePinia(pinia);
+		const { default: Mailbox } = await import("./Mailbox.vue");
+		const router = createRouter({
+			history: createMemoryHistory(),
+			routes: [
+				{
+					path: "/mailbox/:mailboxId",
+					name: "Mailbox",
+					component: Mailbox,
+					children: [
+						{ path: "emails/:folder", name: "EmailList", component: ReadsOnce },
+						{ path: "email/:id", name: "EmailDetail", component: ReadsOnce },
+						{ path: "settings", name: "Settings", component: ReadsOnce },
+						{ path: "contacts", name: "Contacts", component: ReadsOnce },
+					],
+				},
+				{ path: "/:rest(.*)*", name: "Home", component: ReadsOnce },
+			],
+		});
+		const { i18n } = await import("@/i18n");
+		i18n.global.setLocaleMessage("en", englishWith({}) as never);
+		i18n.global.locale.value = "en" as never;
+		await router.push("/mailbox/a%40example.com/email/m1");
+		await router.isReady();
+		const app = createApp({ render: () => h(RouterView) });
+		app.use(pinia).use(router).use(i18n);
+		app.mount(host);
+		unmount = () => app.unmount();
+		await settle();
+		const seen = () => host.querySelector(".seen")?.textContent;
+		expect(seen()).toBe("a@example.com|m1");
+
+		await router.push("/mailbox/a%40example.com/email/m2");
+		await settle();
+		expect(seen()).toBe("a@example.com|m2");
+
+		await router.push("/mailbox/b%40example.com/email/m2");
+		await settle();
+		expect(seen()).toBe("b@example.com|m2");
+
+		await router.push("/mailbox/b%40example.com/emails/inbox");
+		await settle();
+		await router.push("/mailbox/a%40example.com/emails/inbox");
+		await settle();
+		expect(seen()).toBe("a@example.com|inbox");
 	});
 });

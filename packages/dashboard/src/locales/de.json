@@ -432,6 +432,7 @@
 		"thisIsYou": "Sie",
 		"confirmDeleteAgain": "Das lässt sich nicht rückgängig machen. Wirklich alles von {email} löschen?",
 		"deleted": "{email} gelöscht.",
+		"deletedUnfinished": "{email} gelöscht, aber einige der Postfächer konnten noch nicht geleert werden. Die nächtliche Wartung schließt das Entfernen ab.",
 		"lock": {
 			"label": "Löschsperre",
 			"lockedHint": "Gesperrt: Löschen nicht möglich",

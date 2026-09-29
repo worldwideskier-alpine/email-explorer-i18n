@@ -432,6 +432,7 @@
 		"thisIsYou": "You",
 		"confirmDeleteAgain": "This cannot be undone. Really delete everything belonging to {email}?",
 		"deleted": "Deleted {email}.",
+		"deletedUnfinished": "Deleted {email}, but some of their mailboxes could not be emptied yet. The nightly maintenance will finish removing them.",
 		"lock": {
 			"label": "Deletion lock",
 			"lockedHint": "Locked: cannot be deleted",

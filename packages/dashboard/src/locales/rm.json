@@ -432,6 +432,7 @@
 		"thisIsYou": "Vus",
 		"confirmDeleteAgain": "Quai na po betg vegnir revocà. Propi stizzar tut quai che tutga a {email}?",
 		"deleted": "{email} stizzà.",
+		"deletedUnfinished": "{email} stizzà, ma intginas da sias chaschettas da posta n'han anc betg pudì vegnir svidadas. Il mantegniment da notg vegn a terminar da las allontanar.",
 		"lock": {
 			"label": "Serra da stizzar",
 			"lockedHint": "Serrà: na po betg vegnir stizzà",

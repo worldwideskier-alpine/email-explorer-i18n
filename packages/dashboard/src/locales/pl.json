@@ -432,6 +432,7 @@
 		"thisIsYou": "Ty",
 		"confirmDeleteAgain": "Tego nie da się cofnąć. Naprawdę usunąć wszystko, co należy do {email}?",
 		"deleted": "Usunięto {email}.",
+		"deletedUnfinished": "Usunięto {email}, ale niektórych skrzynek pocztowych nie udało się jeszcze opróżnić. Nocna konserwacja dokończy ich usuwanie.",
 		"lock": {
 			"label": "Blokada usuwania",
 			"lockedHint": "Zablokowane: nie można usunąć",

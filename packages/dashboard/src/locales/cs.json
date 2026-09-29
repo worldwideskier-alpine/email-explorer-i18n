@@ -432,6 +432,7 @@
 		"thisIsYou": "Vy",
 		"confirmDeleteAgain": "Nelze vrátit zpět. Opravdu smazat vše, co patří {email}?",
 		"deleted": "{email} smazán.",
+		"deletedUnfinished": "{email} smazán, ale některé jeho poštovní schránky zatím nešlo vyprázdnit. Noční údržba jejich odstranění dokončí.",
 		"lock": {
 			"label": "Zámek smazání",
 			"lockedHint": "Uzamčeno: nelze smazat",

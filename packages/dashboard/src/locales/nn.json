@@ -432,6 +432,7 @@
 		"thisIsYou": "Deg",
 		"confirmDeleteAgain": "Dette kan ikkje angrast. Skal verkeleg alt som høyrer til {email} slettast?",
 		"deleted": "{email} sletta.",
+		"deletedUnfinished": "{email} sletta, men nokre av postkassene kunne ikkje tømmast enno. Det nattlege vedlikehaldet fullfører fjerninga.",
 		"lock": {
 			"label": "Slettelås",
 			"lockedHint": "Låst: kan ikkje slettast",
