@@ -1,0 +1,60 @@
+# Temporary: asks production whether files of earlier builds are still
+# served after a deploy. Runs on the working branch only, and is removed
+# once it has answered.
+name: Old assets probe
+on:
+  push:
+    branches: [claude/github-settings-migration-t81k5b]
+    paths: ['.github/workflows/old-assets-probe.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
+    steps:
+      - name: Keep the address out of the log
+        run: |
+          host="${PRODUCTION_URL#https://}"
+          echo "::add-mask::${host%%/*}"
+      - name: Install Chromium
+        run: |
+          cd "$RUNNER_TEMP"
+          npm init -y >/dev/null
+          npm i playwright@1.56.1 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+      - name: Probe
+        run: |
+          cd "$RUNNER_TEMP"
+          cat > probe.mjs <<'JS'
+          import { chromium } from "playwright";
+          const base = process.env.PRODUCTION_URL.replace(/\/$/, "");
+          // Current build's, then earlier builds' (from their deploy logs),
+          // then one that never existed.
+          const names = [
+            "index-nstQLO_h.js", "ja-CVOwvWUf.js",
+            "index-BDi1kqkC.js", "index-B_y8Wn6V.js", "index-gATzf9Vp.js", "ja-DC7bj5Kq.js",
+            "index-NeverExisted.js",
+          ];
+          const page0 = await fetch(base + "/");
+          const html = await page0.text();
+          console.log("served entry:", (html.match(/index-[\w-]+\.js/) || ["?"])[0]);
+          for (const n of names) {
+            const r = await fetch(`${base}/assets/${n}`, { headers: { "Sec-Fetch-Dest": "script", "Sec-Fetch-Mode": "cors", Accept: "*/*" } });
+            const body = await r.text();
+            console.log(`fetch ${n}: ${r.status} ${r.headers.get("content-type")} ${body.startsWith("<!") ? "(a page)" : body.length + " bytes"}`);
+          }
+          const browser = await chromium.launch();
+          const page = await browser.newPage();
+          await page.goto(base + "/login", { waitUntil: "load" });
+          for (const n of names) {
+            const out = await page.evaluate(async (u) => {
+              try { await import(u); return "imported"; } catch (e) { return "failed: " + String(e.message).slice(0, 160); }
+            }, `/assets/${n}`);
+            console.log(`import ${n}: ${out.replace(/https?:\/\/[^/\s]+/g, "(site)")}`);
+          }
+          await browser.close();
+          JS
+          node probe.mjs
