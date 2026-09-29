@@ -19,9 +19,17 @@
 				class="px-2 py-0.5 text-xs font-semibold text-green-800 bg-green-100 dark:bg-green-900/40 dark:text-green-300 rounded-full"
 			>{{ t("admin.resend.sourceStored") }}</span>
 			<span
-				v-else
+				v-else-if="source === 'none'"
 				class="px-2 py-0.5 text-xs font-semibold text-red-800 bg-red-100 dark:bg-red-900/40 dark:text-red-300 rounded-full"
 			>{{ t("admin.resend.sourceNone") }}</span>
+			<template v-else-if="source === 'unread'">
+				<span class="text-sm text-gray-700 dark:text-gray-300" role="alert">{{ t("common.loadFailed") }}</span>
+				<button
+					type="button"
+					@click="readStatus"
+					class="text-sm font-medium text-indigo-700 dark:text-indigo-300 hover:underline"
+				>{{ t("common.retry") }}</button>
+			</template>
 		</div>
 
 		<form @submit.prevent="save" class="flex flex-col sm:flex-row gap-2">
@@ -79,19 +87,28 @@ defineProps<{ plain?: boolean }>();
 
 const { t } = useI18n();
 
-const source = ref<"stored" | "none">("none");
+/**
+ * Whether a key is set, as the Worker said -- or "unread" when it could not
+ * be asked, and nothing yet while it is being asked. A failed request used to
+ * read as "none": "not set" in red to somebody who had a key, and no button
+ * to remove it.
+ */
+const source = ref<"stored" | "none" | "unread" | null>(null);
 const input = ref("");
 const saving = ref(false);
 const message = useLocalizedMessage();
 const error = useLocalizedMessage();
 
-onMounted(async () => {
+async function readStatus() {
+	source.value = null;
 	try {
 		source.value = (await api.adminGetResendSettings()).data.source;
 	} catch {
-		source.value = "none";
+		source.value = "unread";
 	}
-});
+}
+
+onMounted(readStatus);
 
 async function apply(apiKey: string, done: () => string) {
 	saving.value = true;
