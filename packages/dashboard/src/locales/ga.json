@@ -260,7 +260,16 @@
 		"Too many attempts": "An iomarca iarrachtaí. Bain triail as níos déanaí le do thoil.",
 		"Failed to send confirmation email": "Níorbh fhéidir an ríomhphost deimhnithe a sheoladh",
 		"Account recovery is not enabled": "Níl post amach cumraithe, mar sin níl sé seo ar fáil",
-		"User not found": "Úsáideoir gan aimsiú"
+		"User not found": "Úsáideoir gan aimsiú",
+		"Draft not found": "Níl an dréacht seo ann a thuilleadh. B'fhéidir gur seoladh nó gur scriosadh é.",
+		"Folder with this name already exists": "Tá fillteán leis an ainm seo ann cheana.",
+		"Folder is not empty": "Níl an fillteán seo folamh. Bog nó scrios a theachtaireachtaí ar dtús.",
+		"Folder not found": "Níl an fillteán sin ann a thuilleadh.",
+		"Email not found": "Níl an teachtaireacht seo ann a thuilleadh.",
+		"Original email not found": "Níl an teachtaireacht a bhfuil tú ag freagairt uirthi ann a thuilleadh.",
+		"Token has expired": "Tá an nasc seo imithe in éag.",
+		"That is the only way in": "Is é seo an t-aon seoladh síniú isteach atá agat, mar sin ní féidir é a bhaint.",
+		"You don't have access to this mailbox": "Níl rochtain agat ar an mbosca poist seo."
 	},
 	"admin": {
 		"title": "Painéal riaracháin",

@@ -260,7 +260,16 @@
 		"Too many attempts": "ઘણા બધા પ્રયાસ. કૃપા કરીને પછી પ્રયાસ કરો.",
 		"Failed to send confirmation email": "ખાતરીનો ઈમેલ મોકલી શકાયો નહીં",
 		"Account recovery is not enabled": "બહાર જતી ટપાલ ગોઠવાયેલી નથી, એટલે આ ઉપલબ્ધ નથી",
-		"User not found": "વપરાશકર્તા મળ્યા નહીં"
+		"User not found": "વપરાશકર્તા મળ્યા નહીં",
+		"Draft not found": "આ ડ્રાફ્ટ હવે અસ્તિત્વમાં નથી. તે મોકલાઈ ગયો અથવા કાઢી નખાયો હોઈ શકે.",
+		"Folder with this name already exists": "આ નામનું ફોલ્ડર પહેલેથી અસ્તિત્વમાં છે.",
+		"Folder is not empty": "આ ફોલ્ડર ખાલી નથી. પહેલાં તેના સંદેશા ખસેડો અથવા કાઢી નાખો.",
+		"Folder not found": "તે ફોલ્ડર હવે અસ્તિત્વમાં નથી.",
+		"Email not found": "આ સંદેશ હવે અસ્તિત્વમાં નથી.",
+		"Original email not found": "તમે જે સંદેશનો જવાબ આપી રહ્યા છો તે હવે અસ્તિત્વમાં નથી.",
+		"Token has expired": "આ લિંકની મુદત પૂરી થઈ ગઈ છે.",
+		"That is the only way in": "આ તમારું એકમાત્ર સાઇન-ઇન સરનામું છે, તેથી તેને દૂર કરી શકાતું નથી.",
+		"You don't have access to this mailbox": "તમને આ મેઇલબોક્સની ઍક્સેસ નથી."
 	},
 	"admin": {
 		"title": "સંચાલક પેનલ",

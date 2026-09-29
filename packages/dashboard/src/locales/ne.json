@@ -260,7 +260,16 @@
 		"Too many attempts": "धेरै प्रयास। कृपया पछि प्रयास गर्नुहोस्।",
 		"Failed to send confirmation email": "पुष्टि इमेल पठाउन सकिएन",
 		"Account recovery is not enabled": "बाहिर जाने चिठी मिलाइएको छैन, त्यसैले यो उपलब्ध छैन",
-		"User not found": "प्रयोगकर्ता भेटिएन"
+		"User not found": "प्रयोगकर्ता भेटिएन",
+		"Draft not found": "यो मस्यौदा अब छैन। यो पठाइएको वा मेटाइएको हुन सक्छ।",
+		"Folder with this name already exists": "यो नामको फोल्डर पहिले नै छ।",
+		"Folder is not empty": "यो फोल्डर खाली छैन। पहिले यसका सन्देशहरू सार्नुहोस् वा मेटाउनुहोस्।",
+		"Folder not found": "त्यो फोल्डर अब छैन।",
+		"Email not found": "यो सन्देश अब छैन।",
+		"Original email not found": "तपाईंले जवाफ दिँदै गरेको सन्देश अब छैन।",
+		"Token has expired": "यो लिङ्कको म्याद सकियो।",
+		"That is the only way in": "यो तपाईंको एकमात्र साइन-इन ठेगाना हो, त्यसैले हटाउन सकिँदैन।",
+		"You don't have access to this mailbox": "तपाईंसँग यो मेलबक्समा पहुँच छैन।"
 	},
 	"admin": {
 		"title": "प्रशासक प्यानल",

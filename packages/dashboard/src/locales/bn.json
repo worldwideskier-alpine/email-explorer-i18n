@@ -260,7 +260,16 @@
 		"Too many attempts": "অনেক বেশি চেষ্টা। অনুগ্রহ করে পরে চেষ্টা করুন।",
 		"Failed to send confirmation email": "নিশ্চিতকরণ ইমেল পাঠানো যায়নি",
 		"Account recovery is not enabled": "বাইরে যাওয়া চিঠি সেট করা নেই, তাই এটি পাওয়া যাচ্ছে না",
-		"User not found": "ব্যবহারকারী পাওয়া যায়নি"
+		"User not found": "ব্যবহারকারী পাওয়া যায়নি",
+		"Draft not found": "এই খসড়াটি আর নেই। এটি পাঠানো বা মুছে ফেলা হয়ে থাকতে পারে।",
+		"Folder with this name already exists": "এই নামে একটি ফোল্ডার আগে থেকেই আছে।",
+		"Folder is not empty": "এই ফোল্ডারটি খালি নয়। আগে এর বার্তাগুলো সরান বা মুছুন।",
+		"Folder not found": "সেই ফোল্ডারটি আর নেই।",
+		"Email not found": "এই বার্তাটি আর নেই।",
+		"Original email not found": "আপনি যে বার্তার উত্তর দিচ্ছেন সেটি আর নেই।",
+		"Token has expired": "এই লিংকের মেয়াদ শেষ হয়ে গেছে।",
+		"That is the only way in": "এটি আপনার একমাত্র সাইন-ইন ঠিকানা, তাই এটি সরানো যাবে না।",
+		"You don't have access to this mailbox": "এই মেলবক্সে আপনার প্রবেশাধিকার নেই।"
 	},
 	"admin": {
 		"title": "প্রশাসক প্যানেল",

@@ -260,7 +260,16 @@
 		"Too many attempts": "Shumë përpjekje. Ju lutemi provoni më vonë.",
 		"Failed to send confirmation email": "Mesazhi i konfirmimit nuk mundi të dërgohej",
 		"Account recovery is not enabled": "Posta dalëse nuk është konfiguruar, prandaj kjo nuk është e disponueshme",
-		"User not found": "Përdoruesi nuk u gjet"
+		"User not found": "Përdoruesi nuk u gjet",
+		"Draft not found": "Ky draft nuk ekziston më. Mund të jetë dërguar ose fshirë.",
+		"Folder with this name already exists": "Ekziston tashmë një dosje me këtë emër.",
+		"Folder is not empty": "Kjo dosje nuk është bosh. Së pari zhvendosni ose fshini mesazhet e saj.",
+		"Folder not found": "Ajo dosje nuk ekziston më.",
+		"Email not found": "Ky mesazh nuk ekziston më.",
+		"Original email not found": "Mesazhi të cilit po i përgjigjeni nuk ekziston më.",
+		"Token has expired": "Kjo lidhje ka skaduar.",
+		"That is the only way in": "Kjo është adresa juaj e vetme e hyrjes, prandaj nuk mund të hiqet.",
+		"You don't have access to this mailbox": "Nuk keni qasje në këtë kuti postare."
 	},
 	"admin": {
 		"title": "Paneli i administratorit",

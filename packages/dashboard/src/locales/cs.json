@@ -260,7 +260,16 @@
 		"Too many attempts": "Příliš mnoho pokusů. Zkuste to prosím později.",
 		"Failed to send confirmation email": "Potvrzovací e-mail se nepodařilo odeslat",
 		"Account recovery is not enabled": "Odchozí pošta není nastavena, takže tato funkce není dostupná",
-		"User not found": "Uživatel nebyl nalezen"
+		"User not found": "Uživatel nebyl nalezen",
+		"Draft not found": "Tento koncept už neexistuje. Mohl být odeslán nebo smazán.",
+		"Folder with this name already exists": "Složka s tímto názvem už existuje.",
+		"Folder is not empty": "Tato složka není prázdná. Nejprve přesuňte nebo smažte její zprávy.",
+		"Folder not found": "Tato složka už neexistuje.",
+		"Email not found": "Tato zpráva už neexistuje.",
+		"Original email not found": "Zpráva, na kterou odpovídáte, už neexistuje.",
+		"Token has expired": "Platnost tohoto odkazu vypršela.",
+		"That is the only way in": "Toto je vaše jediná přihlašovací adresa, proto ji nelze odebrat.",
+		"You don't have access to this mailbox": "K této schránce nemáte přístup."
 	},
 	"admin": {
 		"title": "Panel správce",

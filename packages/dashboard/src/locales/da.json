@@ -260,7 +260,16 @@
 		"Too many attempts": "For mange forsøg. Prøv igen senere.",
 		"Failed to send confirmation email": "Bekræftelsesmailen kunne ikke sendes",
 		"Account recovery is not enabled": "Udgående post er ikke sat op, så dette er ikke tilgængeligt",
-		"User not found": "Brugeren blev ikke fundet"
+		"User not found": "Brugeren blev ikke fundet",
+		"Draft not found": "Denne kladde findes ikke længere. Den kan være sendt eller slettet.",
+		"Folder with this name already exists": "Der findes allerede en mappe med dette navn.",
+		"Folder is not empty": "Denne mappe er ikke tom. Flyt eller slet dens beskeder først.",
+		"Folder not found": "Den mappe findes ikke længere.",
+		"Email not found": "Denne besked findes ikke længere.",
+		"Original email not found": "Beskeden, du svarer på, findes ikke længere.",
+		"Token has expired": "Dette link er udløbet.",
+		"That is the only way in": "Dette er din eneste login-adresse, så den kan ikke fjernes.",
+		"You don't have access to this mailbox": "Du har ikke adgang til denne postkasse."
 	},
 	"admin": {
 		"title": "Administrationspanel",

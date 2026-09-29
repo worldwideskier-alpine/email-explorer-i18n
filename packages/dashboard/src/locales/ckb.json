@@ -260,7 +260,16 @@
 		"Too many attempts": "هەوڵی زۆر. تکایە دواتر هەوڵ بدەرەوە.",
 		"Failed to send confirmation email": "ئیمەیڵی دووپاتکردنەوە نەنێردرا",
 		"Account recovery is not enabled": "پۆستی نێردراو ڕێک نەخراوە، بۆیە ئەمە بەردەست نییە",
-		"User not found": "بەکارهێنەر نەدۆزرایەوە"
+		"User not found": "بەکارهێنەر نەدۆزرایەوە",
+		"Draft not found": "ئەم ڕەشنووسە ئیتر بوونی نییە. لەوانەیە نێردرابێت یان سڕابێتەوە.",
+		"Folder with this name already exists": "بوخچەیەک بەم ناوە پێشتر هەیە.",
+		"Folder is not empty": "ئەم بوخچەیە بەتاڵ نییە. سەرەتا نامەکانی بگوازەرەوە یان بیانسڕەوە.",
+		"Folder not found": "ئەو بوخچەیە ئیتر بوونی نییە.",
+		"Email not found": "ئەم نامەیە ئیتر بوونی نییە.",
+		"Original email not found": "ئەو نامەیەی وەڵامی دەدەیتەوە ئیتر بوونی نییە.",
+		"Token has expired": "ماوەی ئەم بەستەرە بەسەرچووە.",
+		"That is the only way in": "ئەمە تاکە ناونیشانی چوونەژوورەوەتە، بۆیە ناسڕدرێتەوە.",
+		"You don't have access to this mailbox": "تۆ دەستگەیشتنت بەم سندوقی پۆستە نییە."
 	},
 	"admin": {
 		"title": "پانێڵی بەڕێوەبردن",

@@ -260,7 +260,16 @@
 		"Too many attempts": "Príliš veľa pokusov. Skúste to prosím neskôr.",
 		"Failed to send confirmation email": "Potvrdzovací e-mail sa nepodarilo odoslať",
 		"Account recovery is not enabled": "Odchádzajúca pošta nie je nastavená, takže táto funkcia nie je dostupná",
-		"User not found": "Používateľ sa nenašiel"
+		"User not found": "Používateľ sa nenašiel",
+		"Draft not found": "Tento koncept už neexistuje. Mohol byť odoslaný alebo odstránený.",
+		"Folder with this name already exists": "Priečinok s týmto názvom už existuje.",
+		"Folder is not empty": "Tento priečinok nie je prázdny. Najprv presuňte alebo odstráňte jeho správy.",
+		"Folder not found": "Tento priečinok už neexistuje.",
+		"Email not found": "Táto správa už neexistuje.",
+		"Original email not found": "Správa, na ktorú odpovedáte, už neexistuje.",
+		"Token has expired": "Platnosť tohto odkazu vypršala.",
+		"That is the only way in": "Toto je vaša jediná prihlasovacia adresa, preto ju nemožno odstrániť.",
+		"You don't have access to this mailbox": "K tejto schránke nemáte prístup."
 	},
 	"admin": {
 		"title": "Panel správcu",

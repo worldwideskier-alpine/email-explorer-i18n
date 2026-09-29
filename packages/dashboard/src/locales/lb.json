@@ -260,7 +260,16 @@
 		"Too many attempts": "Ze vill Versich. Probéiert w.e.g. méi spéit nach eng Kéier.",
 		"Failed to send confirmation email": "D'Bestätegungsmail konnt net geschéckt ginn",
 		"Account recovery is not enabled": "Erausgoend Post ass net agestallt, dofir ass dat net verfügbar",
-		"User not found": "Benotzer net fonnt"
+		"User not found": "Benotzer net fonnt",
+		"Draft not found": "Dësen Entworf gëtt et net méi. E gouf vläicht geschéckt oder geläscht.",
+		"Folder with this name already exists": "En Dossier mat dësem Numm gëtt et schonn.",
+		"Folder is not empty": "Dësen Dossier ass net eidel. Réckelt oder läscht fir d'éischt seng Messagen.",
+		"Folder not found": "Deen Dossier gëtt et net méi.",
+		"Email not found": "Dëse Message gëtt et net méi.",
+		"Original email not found": "De Message, op deen Dir äntwert, gëtt et net méi.",
+		"Token has expired": "Dëse Link ass ofgelaf.",
+		"That is the only way in": "Dëst ass Är eenzeg Umeldadress, dofir kann se net ewechgeholl ginn.",
+		"You don't have access to this mailbox": "Dir hutt keen Zougrëff op dës Mailbox."
 	},
 	"admin": {
 		"title": "Administratiounspanel",

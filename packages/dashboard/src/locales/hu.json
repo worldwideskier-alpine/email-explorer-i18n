@@ -260,7 +260,16 @@
 		"Too many attempts": "Túl sok kísérlet. Kérjük, próbálja később.",
 		"Failed to send confirmation email": "A megerősítő levelet nem sikerült elküldeni",
 		"Account recovery is not enabled": "A kimenő levelezés nincs beállítva, ezért ez nem érhető el",
-		"User not found": "A felhasználó nem található"
+		"User not found": "A felhasználó nem található",
+		"Draft not found": "Ez a piszkozat már nem létezik. Lehet, hogy elküldték vagy törölték.",
+		"Folder with this name already exists": "Már van ilyen nevű mappa.",
+		"Folder is not empty": "Ez a mappa nem üres. Előbb helyezze át vagy törölje az üzeneteit.",
+		"Folder not found": "Az a mappa már nem létezik.",
+		"Email not found": "Ez az üzenet már nem létezik.",
+		"Original email not found": "Az üzenet, amelyre válaszol, már nem létezik.",
+		"Token has expired": "Ez a hivatkozás lejárt.",
+		"That is the only way in": "Ez az egyetlen bejelentkezési címe, ezért nem távolítható el.",
+		"You don't have access to this mailbox": "Nincs hozzáférése ehhez a postafiókhoz."
 	},
 	"admin": {
 		"title": "Rendszergazdai panel",

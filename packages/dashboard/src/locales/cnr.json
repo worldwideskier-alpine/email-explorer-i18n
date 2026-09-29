@@ -260,7 +260,16 @@
 		"Too many attempts": "Previše pokušaja. Pokušajte kasnije.",
 		"Failed to send confirmation email": "Poruku za potvrdu nije bilo moguće poslati",
 		"Account recovery is not enabled": "Odlazna pošta nije podešena, pa ovo nije dostupno",
-		"User not found": "Korisnik nije pronađen"
+		"User not found": "Korisnik nije pronađen",
+		"Draft not found": "Ovaj nacrt više ne postoji. Možda je poslat ili izbrisan.",
+		"Folder with this name already exists": "Folder sa ovim nazivom već postoji.",
+		"Folder is not empty": "Ovaj folder nije prazan. Prvo premjestite ili izbrišite njegove poruke.",
+		"Folder not found": "Taj folder više ne postoji.",
+		"Email not found": "Ova poruka više ne postoji.",
+		"Original email not found": "Poruka na koju odgovarate više ne postoji.",
+		"Token has expired": "Ovaj link je istekao.",
+		"That is the only way in": "Ovo je vaša jedina adresa za prijavu, pa se ne može ukloniti.",
+		"You don't have access to this mailbox": "Nemate pristup ovom poštanskom sandučetu."
 	},
 	"admin": {
 		"title": "Administratorska tabla",

@@ -260,7 +260,16 @@
 		"Too many attempts": "Pārāk daudz mēģinājumu. Lūdzu, mēģiniet vēlāk.",
 		"Failed to send confirmation email": "Apstiprinājuma vēstuli neizdevās nosūtīt",
 		"Account recovery is not enabled": "Izejošais e-pasts nav konfigurēts, tāpēc tas nav pieejams",
-		"User not found": "Lietotājs nav atrasts"
+		"User not found": "Lietotājs nav atrasts",
+		"Draft not found": "Šī melnraksta vairs nav. Tas, iespējams, ir nosūtīts vai izdzēsts.",
+		"Folder with this name already exists": "Mape ar šādu nosaukumu jau pastāv.",
+		"Folder is not empty": "Šī mape nav tukša. Vispirms pārvietojiet vai izdzēsiet tās vēstules.",
+		"Folder not found": "Šīs mapes vairs nav.",
+		"Email not found": "Šīs vēstules vairs nav.",
+		"Original email not found": "Vēstules, uz kuru atbildat, vairs nav.",
+		"Token has expired": "Šīs saites derīguma termiņš ir beidzies.",
+		"That is the only way in": "Šī ir jūsu vienīgā pieteikšanās adrese, tāpēc to nevar noņemt.",
+		"You don't have access to this mailbox": "Jums nav piekļuves šai pastkastei."
 	},
 	"admin": {
 		"title": "Administratora panelis",

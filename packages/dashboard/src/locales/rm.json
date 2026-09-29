@@ -260,7 +260,16 @@
 		"Too many attempts": "Memia bleras emprovas. Emprova per plaschair pli tard.",
 		"Failed to send confirmation email": "L'e-mail da conferma n'ha betg pudì vegnir tramess",
 		"Account recovery is not enabled": "La posta che va ora n'è betg configurada, perquai n'è quai betg disponibel",
-		"User not found": "Utilisader betg chattà"
+		"User not found": "Utilisader betg chattà",
+		"Draft not found": "Quest sboz n'exista betg pli. El è forsa vegnì tramess u stizzà.",
+		"Folder with this name already exists": "I dat gia in ordinatur cun quest num.",
+		"Folder is not empty": "Quest ordinatur n'è betg vid. Spustai u stizzai l'emprim ses messadis.",
+		"Folder not found": "Quel ordinatur n'exista betg pli.",
+		"Email not found": "Quest messadi n'exista betg pli.",
+		"Original email not found": "Il messadi al qual Vus respundais n'exista betg pli.",
+		"Token has expired": "Questa colliaziun è scadida.",
+		"That is the only way in": "Quai è Vossa suletta adressa d'annunzia, perquai na po ella betg vegnir allontanada.",
+		"You don't have access to this mailbox": "Vus n'avais nagin access a questa chascha da posta."
 	},
 	"admin": {
 		"title": "Panel d'administraziun",

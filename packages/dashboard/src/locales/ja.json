@@ -260,7 +260,16 @@
 		"Too many attempts": "試行回数が多すぎます。しばらく時間をおいてからお試しください。",
 		"Failed to send confirmation email": "確認メールを送信できませんでした",
 		"Account recovery is not enabled": "メール送信が設定されていないため、この操作は行えません",
-		"User not found": "ユーザーが見つかりません"
+		"User not found": "ユーザーが見つかりません",
+		"Draft not found": "この下書きはもうありません。送信済みか削除された可能性があります。",
+		"Folder with this name already exists": "同じ名前のフォルダがすでにあります。",
+		"Folder is not empty": "このフォルダは空ではありません。先にメールを移動するか削除してください。",
+		"Folder not found": "そのフォルダはもうありません。",
+		"Email not found": "このメールはもうありません。",
+		"Original email not found": "返信しようとしているメールはもうありません。",
+		"Token has expired": "このリンクは有効期限が切れています。",
+		"That is the only way in": "これは唯一のサインイン用アドレスなので、削除できません。",
+		"You don't have access to this mailbox": "このメールボックスにアクセスする権限がありません。"
 	},
 	"admin": {
 		"title": "管理パネル",

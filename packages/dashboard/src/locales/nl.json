@@ -260,7 +260,16 @@
 		"Too many attempts": "Te veel pogingen. Probeer het later opnieuw.",
 		"Failed to send confirmation email": "De bevestigingsmail kon niet worden verstuurd",
 		"Account recovery is not enabled": "Uitgaande post is niet ingesteld, dus dit is niet beschikbaar",
-		"User not found": "Gebruiker niet gevonden"
+		"User not found": "Gebruiker niet gevonden",
+		"Draft not found": "Dit concept bestaat niet meer. Het is mogelijk verzonden of verwijderd.",
+		"Folder with this name already exists": "Er bestaat al een map met deze naam.",
+		"Folder is not empty": "Deze map is niet leeg. Verplaats of verwijder eerst de berichten erin.",
+		"Folder not found": "Die map bestaat niet meer.",
+		"Email not found": "Dit bericht bestaat niet meer.",
+		"Original email not found": "Het bericht waarop u antwoordt, bestaat niet meer.",
+		"Token has expired": "Deze link is verlopen.",
+		"That is the only way in": "Dit is uw enige aanmeldadres, dus het kan niet worden verwijderd.",
+		"You don't have access to this mailbox": "U hebt geen toegang tot deze mailbox."
 	},
 	"admin": {
 		"title": "Beheerpaneel",

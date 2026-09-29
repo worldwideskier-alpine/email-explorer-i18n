@@ -260,7 +260,16 @@
 		"Too many attempts": "For mange forsøk. Prøv igjen seinare.",
 		"Failed to send confirmation email": "Stadfestings-e-posten kunne ikkje sendast",
 		"Account recovery is not enabled": "Utgåande post er ikkje sett opp, så dette er ikkje tilgjengeleg",
-		"User not found": "Fann ikkje brukaren"
+		"User not found": "Fann ikkje brukaren",
+		"Draft not found": "Dette utkastet finst ikkje lenger. Det kan ha blitt sendt eller sletta.",
+		"Folder with this name already exists": "Det finst allereie ei mappe med dette namnet.",
+		"Folder is not empty": "Denne mappa er ikkje tom. Flytt eller slett meldingane i ho først.",
+		"Folder not found": "Den mappa finst ikkje lenger.",
+		"Email not found": "Denne meldinga finst ikkje lenger.",
+		"Original email not found": "Meldinga du svarar på, finst ikkje lenger.",
+		"Token has expired": "Denne lenkja har gått ut.",
+		"That is the only way in": "Dette er den einaste påloggingsadressa di, så ho kan ikkje fjernast.",
+		"You don't have access to this mailbox": "Du har ikkje tilgang til denne postkassa."
 	},
 	"admin": {
 		"title": "Administratorpanel",

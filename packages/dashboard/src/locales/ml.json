@@ -260,7 +260,16 @@
 		"Too many attempts": "ശ്രമങ്ങൾ വളരെ കൂടുതൽ. ദയവായി പിന്നീട് ശ്രമിക്കുക.",
 		"Failed to send confirmation email": "ഉറപ്പാക്കൽ ഇമെയിൽ അയയ്ക്കാനായില്ല",
 		"Account recovery is not enabled": "പുറത്തേക്കുള്ള കത്ത് ക്രമീകരിച്ചിട്ടില്ല, അതിനാൽ ഇത് ലഭ്യമല്ല",
-		"User not found": "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല"
+		"User not found": "ഉപയോക്താവിനെ കണ്ടെത്തിയില്ല",
+		"Draft not found": "ഈ ഡ്രാഫ്റ്റ് ഇനി ഇല്ല. അത് അയച്ചതോ ഇല്ലാതാക്കിയതോ ആകാം.",
+		"Folder with this name already exists": "ഈ പേരിൽ ഒരു ഫോൾഡർ ഇതിനകം ഉണ്ട്.",
+		"Folder is not empty": "ഈ ഫോൾഡർ ശൂന്യമല്ല. ആദ്യം അതിലെ സന്ദേശങ്ങൾ നീക്കുകയോ ഇല്ലാതാക്കുകയോ ചെയ്യുക.",
+		"Folder not found": "ആ ഫോൾഡർ ഇനി ഇല്ല.",
+		"Email not found": "ഈ സന്ദേശം ഇനി ഇല്ല.",
+		"Original email not found": "നിങ്ങൾ മറുപടി നൽകുന്ന സന്ദേശം ഇനി ഇല്ല.",
+		"Token has expired": "ഈ ലിങ്കിന്റെ കാലാവധി കഴിഞ്ഞു.",
+		"That is the only way in": "ഇത് നിങ്ങളുടെ ഏക സൈൻ-ഇൻ വിലാസമായതിനാൽ നീക്കം ചെയ്യാനാകില്ല.",
+		"You don't have access to this mailbox": "ഈ മെയിൽബോക്സിലേക്ക് നിങ്ങൾക്ക് ആക്സസ് ഇല്ല."
 	},
 	"admin": {
 		"title": "നിയന്ത്രണ പാനൽ",

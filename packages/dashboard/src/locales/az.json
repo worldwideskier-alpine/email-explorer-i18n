@@ -260,7 +260,16 @@
 		"Too many attempts": "Həddindən çox cəhd. Zəhmət olmasa sonra yenidən cəhd edin.",
 		"Failed to send confirmation email": "Təsdiq məktubu göndərilə bilmədi",
 		"Account recovery is not enabled": "Gedən poçt qurulmayıb, ona görə bu mümkün deyil",
-		"User not found": "İstifadəçi tapılmadı"
+		"User not found": "İstifadəçi tapılmadı",
+		"Draft not found": "Bu qaralama artıq yoxdur. Göndərilmiş və ya silinmiş ola bilər.",
+		"Folder with this name already exists": "Bu adda qovluq artıq var.",
+		"Folder is not empty": "Bu qovluq boş deyil. Əvvəlcə içindəki məktubları köçürün və ya silin.",
+		"Folder not found": "Həmin qovluq artıq yoxdur.",
+		"Email not found": "Bu məktub artıq yoxdur.",
+		"Original email not found": "Cavab verdiyiniz məktub artıq yoxdur.",
+		"Token has expired": "Bu keçidin müddəti bitib.",
+		"That is the only way in": "Bu sizin yeganə giriş ünvanınızdır, ona görə silinə bilməz.",
+		"You don't have access to this mailbox": "Bu poçt qutusuna girişiniz yoxdur."
 	},
 	"admin": {
 		"title": "İdarəetmə paneli",

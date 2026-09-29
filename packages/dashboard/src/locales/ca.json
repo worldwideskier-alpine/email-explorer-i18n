@@ -260,7 +260,16 @@
 		"Too many attempts": "Massa intents. Torneu-ho a provar més tard.",
 		"Failed to send confirmation email": "No s'ha pogut enviar el correu de confirmació",
 		"Account recovery is not enabled": "El correu de sortida no està configurat, així que això no està disponible",
-		"User not found": "No s'ha trobat l'usuari"
+		"User not found": "No s'ha trobat l'usuari",
+		"Draft not found": "Aquest esborrany ja no existeix. Potser s'ha enviat o suprimit.",
+		"Folder with this name already exists": "Ja hi ha una carpeta amb aquest nom.",
+		"Folder is not empty": "Aquesta carpeta no és buida. Primer moveu o suprimiu-ne els missatges.",
+		"Folder not found": "Aquesta carpeta ja no existeix.",
+		"Email not found": "Aquest missatge ja no existeix.",
+		"Original email not found": "El missatge al qual responeu ja no existeix.",
+		"Token has expired": "Aquest enllaç ha caducat.",
+		"That is the only way in": "És la vostra única adreça d'inici de sessió, per tant no es pot eliminar.",
+		"You don't have access to this mailbox": "No teniu accés a aquesta bústia."
 	},
 	"admin": {
 		"title": "Tauler d'administració",

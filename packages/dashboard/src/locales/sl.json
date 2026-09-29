@@ -260,7 +260,16 @@
 		"Too many attempts": "Preveč poskusov. Poskusite pozneje.",
 		"Failed to send confirmation email": "Potrditvenega sporočila ni bilo mogoče poslati",
 		"Account recovery is not enabled": "Odhodna pošta ni nastavljena, zato to ni na voljo",
-		"User not found": "Uporabnika ni bilo mogoče najti"
+		"User not found": "Uporabnika ni bilo mogoče najti",
+		"Draft not found": "Ta osnutek ne obstaja več. Morda je bil poslan ali izbrisan.",
+		"Folder with this name already exists": "Mapa s tem imenom že obstaja.",
+		"Folder is not empty": "Ta mapa ni prazna. Najprej premaknite ali izbrišite njena sporočila.",
+		"Folder not found": "Ta mapa ne obstaja več.",
+		"Email not found": "To sporočilo ne obstaja več.",
+		"Original email not found": "Sporočilo, na katero odgovarjate, ne obstaja več.",
+		"Token has expired": "Ta povezava je potekla.",
+		"That is the only way in": "To je vaš edini naslov za prijavo, zato ga ni mogoče odstraniti.",
+		"You don't have access to this mailbox": "Do tega poštnega predala nimate dostopa."
 	},
 	"admin": {
 		"title": "Skrbniška plošča",

@@ -260,7 +260,16 @@
 		"Too many attempts": "試得太多次。請遲啲再試。",
 		"Failed to send confirmation email": "寄唔到確認信",
 		"Account recovery is not enabled": "重未設定寄出嘅郵件，所以用唔到",
-		"User not found": "搵唔到呢個用戶"
+		"User not found": "搵唔到呢個用戶",
+		"Draft not found": "呢份草稿已經冇咗，可能已經寄咗或者刪咗。",
+		"Folder with this name already exists": "已經有同名嘅資料夾。",
+		"Folder is not empty": "呢個資料夾唔係空嘅。請先移走或者刪除入面嘅郵件。",
+		"Folder not found": "嗰個資料夾已經冇咗。",
+		"Email not found": "呢封郵件已經冇咗。",
+		"Original email not found": "你要回覆嘅郵件已經冇咗。",
+		"Token has expired": "呢條連結已經過期。",
+		"That is the only way in": "呢個係你唯一嘅登入地址，唔可以刪除。",
+		"You don't have access to this mailbox": "你冇權限存取呢個郵箱。"
 	},
 	"admin": {
 		"title": "管理面板",

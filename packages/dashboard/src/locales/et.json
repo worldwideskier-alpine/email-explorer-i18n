@@ -260,7 +260,16 @@
 		"Too many attempts": "Liiga palju katseid. Palun proovi hiljem uuesti.",
 		"Failed to send confirmation email": "Kinnituskirja ei õnnestunud saata",
 		"Account recovery is not enabled": "Väljuv post ei ole seadistatud, seega see pole saadaval",
-		"User not found": "Kasutajat ei leitud"
+		"User not found": "Kasutajat ei leitud",
+		"Draft not found": "Seda mustandit enam ei ole. Võimalik, et see saadeti või kustutati.",
+		"Folder with this name already exists": "Selle nimega kaust on juba olemas.",
+		"Folder is not empty": "See kaust pole tühi. Teisalda või kustuta kõigepealt selle kirjad.",
+		"Folder not found": "Seda kausta enam ei ole.",
+		"Email not found": "Seda kirja enam ei ole.",
+		"Original email not found": "Kirja, millele vastad, enam ei ole.",
+		"Token has expired": "Selle lingi kehtivus on lõppenud.",
+		"That is the only way in": "See on sinu ainus sisselogimisaadress, seega ei saa seda eemaldada.",
+		"You don't have access to this mailbox": "Sul pole sellele postkastile juurdepääsu."
 	},
 	"admin": {
 		"title": "Administraatori paneel",

@@ -260,7 +260,16 @@
 		"Too many attempts": "Terlalu banyak percubaan. Sila cuba lagi kemudian.",
 		"Failed to send confirmation email": "E-mel pengesahan gagal dihantar",
 		"Account recovery is not enabled": "Penghantaran surat keluar belum ditetapkan, jadi ini tidak tersedia",
-		"User not found": "Pengguna tidak dijumpai"
+		"User not found": "Pengguna tidak dijumpai",
+		"Draft not found": "Draf ini sudah tiada. Ia mungkin telah dihantar atau dipadamkan.",
+		"Folder with this name already exists": "Folder dengan nama ini sudah wujud.",
+		"Folder is not empty": "Folder ini tidak kosong. Alihkan atau padamkan mesejnya dahulu.",
+		"Folder not found": "Folder itu sudah tiada.",
+		"Email not found": "Mesej ini sudah tiada.",
+		"Original email not found": "Mesej yang anda balas sudah tiada.",
+		"Token has expired": "Pautan ini telah tamat tempoh.",
+		"That is the only way in": "Ini satu-satunya alamat log masuk anda, jadi ia tidak boleh dialih keluar.",
+		"You don't have access to this mailbox": "Anda tiada akses kepada peti mel ini."
 	},
 	"admin": {
 		"title": "Panel pentadbir",

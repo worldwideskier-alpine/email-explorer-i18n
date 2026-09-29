@@ -260,7 +260,16 @@
 		"Too many attempts": "嘗試次數過多。請稍後再試。",
 		"Failed to send confirmation email": "無法寄送確認郵件",
 		"Account recovery is not enabled": "尚未設定外寄郵件，因此這項功能無法使用",
-		"User not found": "找不到這位使用者"
+		"User not found": "找不到這位使用者",
+		"Draft not found": "此草稿已不存在，可能已寄出或被刪除。",
+		"Folder with this name already exists": "已有同名的資料夾。",
+		"Folder is not empty": "此資料夾不是空的。請先移動或刪除其中的郵件。",
+		"Folder not found": "該資料夾已不存在。",
+		"Email not found": "此郵件已不存在。",
+		"Original email not found": "你要回覆的郵件已不存在。",
+		"Token has expired": "此連結已過期。",
+		"That is the only way in": "這是你唯一的登入地址，無法刪除。",
+		"You don't have access to this mailbox": "你沒有存取此信箱的權限。"
 	},
 	"admin": {
 		"title": "管理面板",

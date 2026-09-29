@@ -411,6 +411,8 @@ describe("moving an open message", () => {
 		expect(moveEmail).toHaveBeenCalledOnce();
 		expect(router.currentRoute.value.name).toBe("EmailDetail");
 		// The server's words, through the catalogue, in a toast.
-		expect(document.body.textContent).toContain("Folder not found");
+		expect(document.body.textContent).toContain(
+			"That folder no longer exists.",
+		);
 	});
 });

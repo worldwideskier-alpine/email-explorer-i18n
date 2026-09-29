@@ -260,7 +260,16 @@
 		"Too many attempts": "Per daug bandymų. Bandykite vėliau.",
 		"Failed to send confirmation email": "Nepavyko išsiųsti patvirtinimo laiško",
 		"Account recovery is not enabled": "Siunčiamas paštas nesukonfigūruotas, todėl tai neprieinama",
-		"User not found": "Naudotojas nerastas"
+		"User not found": "Naudotojas nerastas",
+		"Draft not found": "Šio juodraščio nebėra. Jis galėjo būti išsiųstas arba ištrintas.",
+		"Folder with this name already exists": "Aplankas tokiu pavadinimu jau yra.",
+		"Folder is not empty": "Šis aplankas nėra tuščias. Pirmiausia perkelkite arba ištrinkite jo laiškus.",
+		"Folder not found": "To aplanko nebėra.",
+		"Email not found": "Šio laiško nebėra.",
+		"Original email not found": "Laiško, į kurį atsakote, nebėra.",
+		"Token has expired": "Šios nuorodos galiojimas baigėsi.",
+		"That is the only way in": "Tai vienintelis jūsų prisijungimo adresas, todėl jo pašalinti negalima.",
+		"You don't have access to this mailbox": "Neturite prieigos prie šios pašto dėžutės."
 	},
 	"admin": {
 		"title": "Administratoriaus skydelis",

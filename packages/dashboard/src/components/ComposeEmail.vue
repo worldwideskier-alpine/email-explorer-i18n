@@ -528,7 +528,10 @@ const saveDraft = async () => {
 		showSuccessToast(t("compose.draftSaved"));
 	} catch (e: any) {
 		const fromApi = e.response?.data?.error;
-		const errorMessage = () => fromApi || t("compose.unexpectedError");
+		// Through the catalogue like every other refusal; it was the server's
+		// English as it came ("Draft not found").
+		const errorMessage = () =>
+			translateApiError(fromApi, t("compose.unexpectedError"));
 		error.value = errorMessage;
 		showErrorToast(errorMessage());
 	} finally {

@@ -260,7 +260,16 @@
 		"Too many attempts": "උත්සාහ ඉතා වැඩියි. කරුණාකර පසුව උත්සාහ කරන්න.",
 		"Failed to send confirmation email": "තහවුරු කිරීමේ තැපෑල යැවීමට නොහැකි විය",
 		"Account recovery is not enabled": "පිටතට යන තැපැල් සකසා නැත, එබැවින් මෙය ලබාගත නොහැක",
-		"User not found": "පරිශීලකයා හමු නොවීය"
+		"User not found": "පරිශීලකයා හමු නොවීය",
+		"Draft not found": "මෙම කෙටුම්පත තවදුරටත් නැත. එය යවා හෝ මකා දමා තිබිය හැක.",
+		"Folder with this name already exists": "මෙම නමින් ෆෝල්ඩරයක් දැනටමත් ඇත.",
+		"Folder is not empty": "මෙම ෆෝල්ඩරය හිස් නැත. පළමුව එහි පණිවිඩ ගෙන යන්න හෝ මකන්න.",
+		"Folder not found": "එම ෆෝල්ඩරය තවදුරටත් නැත.",
+		"Email not found": "මෙම පණිවිඩය තවදුරටත් නැත.",
+		"Original email not found": "ඔබ පිළිතුරු දෙන පණිවිඩය තවදුරටත් නැත.",
+		"Token has expired": "මෙම සබැඳිය කල් ඉකුත් වී ඇත.",
+		"That is the only way in": "මෙය ඔබේ එකම පිවිසුම් ලිපිනය බැවින් එය ඉවත් කළ නොහැක.",
+		"You don't have access to this mailbox": "මෙම තැපැල් පෙට්ටියට ඔබට ප්‍රවේශය නැත."
 	},
 	"admin": {
 		"title": "පරිපාලක පුවරුව",

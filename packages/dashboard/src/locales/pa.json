@@ -260,7 +260,16 @@
 		"Too many attempts": "ਬਹੁਤ ਸਾਰੀਆਂ ਕੋਸ਼ਿਸ਼ਾਂ। ਕਿਰਪਾ ਕਰਕੇ ਬਾਅਦ ਵਿੱਚ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
 		"Failed to send confirmation email": "ਪੁਸ਼ਟੀ ਵਾਲੀ ਈਮੇਲ ਨਹੀਂ ਭੇਜੀ ਜਾ ਸਕੀ",
 		"Account recovery is not enabled": "ਬਾਹਰ ਜਾਣ ਵਾਲੀ ਡਾਕ ਲਾਈ ਨਹੀਂ ਹੋਈ, ਇਸ ਲਈ ਇਹ ਉਪਲਬਧ ਨਹੀਂ",
-		"User not found": "ਵਰਤੋਂਕਾਰ ਨਹੀਂ ਮਿਲਿਆ"
+		"User not found": "ਵਰਤੋਂਕਾਰ ਨਹੀਂ ਮਿਲਿਆ",
+		"Draft not found": "ਇਹ ਡਰਾਫ਼ਟ ਹੁਣ ਮੌਜੂਦ ਨਹੀਂ ਹੈ। ਹੋ ਸਕਦਾ ਹੈ ਇਹ ਭੇਜਿਆ ਜਾਂ ਮਿਟਾਇਆ ਗਿਆ ਹੋਵੇ।",
+		"Folder with this name already exists": "ਇਸ ਨਾਮ ਦਾ ਫੋਲਡਰ ਪਹਿਲਾਂ ਹੀ ਮੌਜੂਦ ਹੈ।",
+		"Folder is not empty": "ਇਹ ਫੋਲਡਰ ਖਾਲੀ ਨਹੀਂ ਹੈ। ਪਹਿਲਾਂ ਇਸਦੇ ਸੁਨੇਹੇ ਹਟਾਓ ਜਾਂ ਮਿਟਾਓ।",
+		"Folder not found": "ਉਹ ਫੋਲਡਰ ਹੁਣ ਮੌਜੂਦ ਨਹੀਂ ਹੈ।",
+		"Email not found": "ਇਹ ਸੁਨੇਹਾ ਹੁਣ ਮੌਜੂਦ ਨਹੀਂ ਹੈ।",
+		"Original email not found": "ਜਿਸ ਸੁਨੇਹੇ ਦਾ ਤੁਸੀਂ ਜਵਾਬ ਦੇ ਰਹੇ ਹੋ, ਉਹ ਹੁਣ ਮੌਜੂਦ ਨਹੀਂ ਹੈ।",
+		"Token has expired": "ਇਸ ਲਿੰਕ ਦੀ ਮਿਆਦ ਖਤਮ ਹੋ ਗਈ ਹੈ।",
+		"That is the only way in": "ਇਹ ਤੁਹਾਡਾ ਇੱਕੋ-ਇੱਕ ਸਾਈਨ-ਇਨ ਪਤਾ ਹੈ, ਇਸ ਲਈ ਇਸਨੂੰ ਹਟਾਇਆ ਨਹੀਂ ਜਾ ਸਕਦਾ।",
+		"You don't have access to this mailbox": "ਤੁਹਾਡੇ ਕੋਲ ਇਸ ਮੇਲਬਾਕਸ ਦੀ ਪਹੁੰਚ ਨਹੀਂ ਹੈ।"
 	},
 	"admin": {
 		"title": "ਪ੍ਰਬੰਧਕ ਪੈਨਲ",

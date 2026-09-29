@@ -260,7 +260,16 @@
 		"Too many attempts": "Превише покушаја. Покушајте касније.",
 		"Failed to send confirmation email": "Порука за потврду није могла да се пошаље",
 		"Account recovery is not enabled": "Одлазна пошта није подешена, па ово није доступно",
-		"User not found": "Корисник није пронађен"
+		"User not found": "Корисник није пронађен",
+		"Draft not found": "Ова радна верзија више не постоји. Можда је послата или обрисана.",
+		"Folder with this name already exists": "Фасцикла са овим називом већ постоји.",
+		"Folder is not empty": "Ова фасцикла није празна. Прво преместите или обришите поруке у њој.",
+		"Folder not found": "Та фасцикла више не постоји.",
+		"Email not found": "Ова порука више не постоји.",
+		"Original email not found": "Порука на коју одговарате више не постоји.",
+		"Token has expired": "Ова веза је истекла.",
+		"That is the only way in": "Ово је ваша једина адреса за пријаву, па се не може уклонити.",
+		"You don't have access to this mailbox": "Немате приступ овом поштанском сандучету."
 	},
 	"admin": {
 		"title": "Администраторска табла",

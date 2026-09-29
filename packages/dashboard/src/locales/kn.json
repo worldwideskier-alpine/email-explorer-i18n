@@ -260,7 +260,16 @@
 		"Too many attempts": "ಪ್ರಯತ್ನಗಳು ಬಹಳ ಹೆಚ್ಚು. ದಯವಿಟ್ಟು ನಂತರ ಪ್ರಯತ್ನಿಸಿ.",
 		"Failed to send confirmation email": "ಖಚಿತಪಡಿಸುವ ಇಮೇಲ್ ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ",
 		"Account recovery is not enabled": "ಹೊರಹೋಗುವ ಅಂಚೆ ಹೊಂದಿಸಿಲ್ಲ, ಆದ್ದರಿಂದ ಇದು ಲಭ್ಯವಿಲ್ಲ",
-		"User not found": "ಬಳಕೆದಾರರು ಸಿಗಲಿಲ್ಲ"
+		"User not found": "ಬಳಕೆದಾರರು ಸಿಗಲಿಲ್ಲ",
+		"Draft not found": "ಈ ಕರಡು ಇನ್ನು ಇಲ್ಲ. ಅದನ್ನು ಕಳುಹಿಸಲಾಗಿರಬಹುದು ಅಥವಾ ಅಳಿಸಲಾಗಿರಬಹುದು.",
+		"Folder with this name already exists": "ಈ ಹೆಸರಿನ ಫೋಲ್ಡರ್ ಈಗಾಗಲೇ ಇದೆ.",
+		"Folder is not empty": "ಈ ಫೋಲ್ಡರ್ ಖಾಲಿಯಾಗಿಲ್ಲ. ಮೊದಲು ಅದರ ಸಂದೇಶಗಳನ್ನು ಸರಿಸಿ ಅಥವಾ ಅಳಿಸಿ.",
+		"Folder not found": "ಆ ಫೋಲ್ಡರ್ ಇನ್ನು ಇಲ್ಲ.",
+		"Email not found": "ಈ ಸಂದೇಶ ಇನ್ನು ಇಲ್ಲ.",
+		"Original email not found": "ನೀವು ಉತ್ತರಿಸುತ್ತಿರುವ ಸಂದೇಶ ಇನ್ನು ಇಲ್ಲ.",
+		"Token has expired": "ಈ ಲಿಂಕ್‌ನ ಅವಧಿ ಮುಗಿದಿದೆ.",
+		"That is the only way in": "ಇದು ನಿಮ್ಮ ಏಕೈಕ ಸೈನ್-ಇನ್ ವಿಳಾಸ, ಆದ್ದರಿಂದ ಇದನ್ನು ತೆಗೆದುಹಾಕಲಾಗದು.",
+		"You don't have access to this mailbox": "ಈ ಮೇಲ್‌ಬಾಕ್ಸ್‌ಗೆ ನಿಮಗೆ ಪ್ರವೇಶವಿಲ್ಲ."
 	},
 	"admin": {
 		"title": "ನಿರ್ವಾಹಕ ಫಲಕ",

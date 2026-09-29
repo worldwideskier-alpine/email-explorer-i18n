@@ -260,7 +260,16 @@
 		"Too many attempts": "Prea multe încercări. Vă rugăm să încercați mai târziu.",
 		"Failed to send confirmation email": "Mesajul de confirmare nu a putut fi trimis",
 		"Account recovery is not enabled": "Trimiterea de mesaje nu este configurată, deci această funcție nu este disponibilă",
-		"User not found": "Utilizatorul nu a fost găsit"
+		"User not found": "Utilizatorul nu a fost găsit",
+		"Draft not found": "Această ciornă nu mai există. Este posibil să fi fost trimisă sau ștearsă.",
+		"Folder with this name already exists": "Există deja un dosar cu acest nume.",
+		"Folder is not empty": "Acest dosar nu este gol. Mutați sau ștergeți mai întâi mesajele din el.",
+		"Folder not found": "Acel dosar nu mai există.",
+		"Email not found": "Acest mesaj nu mai există.",
+		"Original email not found": "Mesajul la care răspundeți nu mai există.",
+		"Token has expired": "Acest link a expirat.",
+		"That is the only way in": "Aceasta este singura dvs. adresă de conectare, așa că nu poate fi eliminată.",
+		"You don't have access to this mailbox": "Nu aveți acces la această cutie poștală."
 	},
 	"admin": {
 		"title": "Panou de administrare",

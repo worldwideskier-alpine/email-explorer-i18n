@@ -260,7 +260,16 @@
 		"Too many attempts": "ព្យាយាមច្រើនពេក។ សូមព្យាយាមពេលក្រោយ។",
 		"Failed to send confirmation email": "មិនអាចផ្ញើអ៊ីមែលបញ្ជាក់បានទេ",
 		"Account recovery is not enabled": "មិនទាន់កំណត់ការផ្ញើសំបុត្រចេញទេ ដូច្នេះមុខងារនេះមិនអាចប្រើបានទេ",
-		"User not found": "រកមិនឃើញអ្នកប្រើ"
+		"User not found": "រកមិនឃើញអ្នកប្រើ",
+		"Draft not found": "សេចក្ដីព្រាងនេះលែងមានទៀតហើយ។ វាប្រហែលជាត្រូវបានផ្ញើ ឬលុបរួចហើយ។",
+		"Folder with this name already exists": "មានថតឯកសារឈ្មោះនេះរួចហើយ។",
+		"Folder is not empty": "ថតឯកសារនេះមិនទទេទេ។ សូមផ្លាស់ទី ឬលុបសាររបស់វាជាមុនសិន។",
+		"Folder not found": "ថតឯកសារនោះលែងមានទៀតហើយ។",
+		"Email not found": "សារនេះលែងមានទៀតហើយ។",
+		"Original email not found": "សារដែលអ្នកកំពុងឆ្លើយតបលែងមានទៀតហើយ។",
+		"Token has expired": "តំណនេះផុតកំណត់ហើយ។",
+		"That is the only way in": "នេះជាអាសយដ្ឋានចូលតែមួយគត់របស់អ្នក ដូច្នេះមិនអាចដកចេញបានទេ។",
+		"You don't have access to this mailbox": "អ្នកមិនមានសិទ្ធិចូលប្រអប់សំបុត្រនេះទេ។"
 	},
 	"admin": {
 		"title": "ផ្ទាំងគ្រប់គ្រង",

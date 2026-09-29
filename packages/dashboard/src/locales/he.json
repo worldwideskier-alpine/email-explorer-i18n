@@ -260,7 +260,16 @@
 		"Too many attempts": "יותר מדי ניסיונות. נסו שוב מאוחר יותר.",
 		"Failed to send confirmation email": "שליחת הודעת האישור נכשלה",
 		"Account recovery is not enabled": "דואר יוצא אינו מוגדר, ולכן זה לא זמין",
-		"User not found": "המשתמש לא נמצא"
+		"User not found": "המשתמש לא נמצא",
+		"Draft not found": "הטיוטה הזו כבר לא קיימת. ייתכן שנשלחה או נמחקה.",
+		"Folder with this name already exists": "כבר קיימת תיקייה בשם הזה.",
+		"Folder is not empty": "התיקייה הזו אינה ריקה. העבירו או מחקו קודם את ההודעות שבה.",
+		"Folder not found": "התיקייה הזו כבר לא קיימת.",
+		"Email not found": "ההודעה הזו כבר לא קיימת.",
+		"Original email not found": "ההודעה שאתם עונים עליה כבר לא קיימת.",
+		"Token has expired": "תוקף הקישור הזה פג.",
+		"That is the only way in": "זו כתובת הכניסה היחידה שלכם, ולכן אי אפשר להסיר אותה.",
+		"You don't have access to this mailbox": "אין לכם גישה לתיבת הדואר הזו."
 	},
 	"admin": {
 		"title": "לוח הניהול",

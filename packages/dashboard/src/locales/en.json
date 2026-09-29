@@ -260,7 +260,16 @@
 		"Too many attempts": "Too many attempts. Please try again later.",
 		"Failed to send confirmation email": "Could not send the confirmation email",
 		"Account recovery is not enabled": "Outbound mail is not configured, so this is unavailable",
-		"User not found": "User not found"
+		"User not found": "User not found",
+		"Draft not found": "This draft no longer exists. It may have been sent or deleted.",
+		"Folder with this name already exists": "A folder with this name already exists.",
+		"Folder is not empty": "This folder is not empty. Move or delete its messages first.",
+		"Folder not found": "That folder no longer exists.",
+		"Email not found": "This message no longer exists.",
+		"Original email not found": "The message you are replying to no longer exists.",
+		"Token has expired": "This link has expired.",
+		"That is the only way in": "This is your only sign-in address, so it cannot be removed.",
+		"You don't have access to this mailbox": "You don't have access to this mailbox."
 	},
 	"admin": {
 		"title": "Admin Panel",

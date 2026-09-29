@@ -260,7 +260,16 @@
 		"Too many attempts": "Çok fazla deneme. Lütfen daha sonra tekrar deneyin.",
 		"Failed to send confirmation email": "Onay e-postası gönderilemedi",
 		"Account recovery is not enabled": "Giden posta yapılandırılmadığı için bu kullanılamıyor",
-		"User not found": "Kullanıcı bulunamadı"
+		"User not found": "Kullanıcı bulunamadı",
+		"Draft not found": "Bu taslak artık yok. Gönderilmiş ya da silinmiş olabilir.",
+		"Folder with this name already exists": "Bu adda bir klasör zaten var.",
+		"Folder is not empty": "Bu klasör boş değil. Önce içindeki iletileri taşıyın veya silin.",
+		"Folder not found": "O klasör artık yok.",
+		"Email not found": "Bu ileti artık yok.",
+		"Original email not found": "Yanıtladığınız ileti artık yok.",
+		"Token has expired": "Bu bağlantının süresi doldu.",
+		"That is the only way in": "Bu tek oturum açma adresiniz olduğundan kaldırılamaz.",
+		"You don't have access to this mailbox": "Bu posta kutusuna erişiminiz yok."
 	},
 	"admin": {
 		"title": "Yönetim paneli",

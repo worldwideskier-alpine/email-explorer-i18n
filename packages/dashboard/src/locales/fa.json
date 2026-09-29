@@ -260,7 +260,16 @@
 		"Too many attempts": "تلاش بیش از اندازه. بعداً دوباره تلاش کنید.",
 		"Failed to send confirmation email": "ارسال نامهٔ تأیید ناموفق بود",
 		"Account recovery is not enabled": "ارسال نامه پیکربندی نشده، پس این در دسترس نیست",
-		"User not found": "کاربر پیدا نشد"
+		"User not found": "کاربر پیدا نشد",
+		"Draft not found": "این پیش‌نویس دیگر وجود ندارد. ممکن است ارسال یا حذف شده باشد.",
+		"Folder with this name already exists": "پوشه‌ای با این نام از قبل وجود دارد.",
+		"Folder is not empty": "این پوشه خالی نیست. ابتدا پیام‌های آن را منتقل یا حذف کنید.",
+		"Folder not found": "آن پوشه دیگر وجود ندارد.",
+		"Email not found": "این پیام دیگر وجود ندارد.",
+		"Original email not found": "پیامی که به آن پاسخ می‌دهید دیگر وجود ندارد.",
+		"Token has expired": "این پیوند منقضی شده است.",
+		"That is the only way in": "این تنها نشانی ورود شماست و نمی‌توان آن را حذف کرد.",
+		"You don't have access to this mailbox": "شما به این صندوق پستی دسترسی ندارید."
 	},
 	"admin": {
 		"title": "پنل مدیریت",

@@ -260,7 +260,16 @@
 		"Too many attempts": "尝试次数过多。请稍后再试。",
 		"Failed to send confirmation email": "无法发送确认邮件",
 		"Account recovery is not enabled": "尚未配置外发邮件，因此该功能不可用",
-		"User not found": "找不到该用户"
+		"User not found": "找不到该用户",
+		"Draft not found": "此草稿已不存在，可能已发送或被删除。",
+		"Folder with this name already exists": "已存在同名文件夹。",
+		"Folder is not empty": "此文件夹不为空。请先移动或删除其中的邮件。",
+		"Folder not found": "该文件夹已不存在。",
+		"Email not found": "此邮件已不存在。",
+		"Original email not found": "你要回复的邮件已不存在。",
+		"Token has expired": "此链接已过期。",
+		"That is the only way in": "这是你唯一的登录地址，无法删除。",
+		"You don't have access to this mailbox": "你没有访问此邮箱的权限。"
 	},
 	"admin": {
 		"title": "管理面板",

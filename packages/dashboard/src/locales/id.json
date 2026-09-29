@@ -260,7 +260,16 @@
 		"Too many attempts": "Terlalu banyak percobaan. Silakan coba lagi nanti.",
 		"Failed to send confirmation email": "Email konfirmasi gagal dikirim",
 		"Account recovery is not enabled": "Pengiriman surat keluar belum diatur, jadi fitur ini tidak tersedia",
-		"User not found": "Pengguna tidak ditemukan"
+		"User not found": "Pengguna tidak ditemukan",
+		"Draft not found": "Draf ini sudah tidak ada. Mungkin sudah dikirim atau dihapus.",
+		"Folder with this name already exists": "Folder dengan nama ini sudah ada.",
+		"Folder is not empty": "Folder ini tidak kosong. Pindahkan atau hapus pesannya terlebih dahulu.",
+		"Folder not found": "Folder itu sudah tidak ada.",
+		"Email not found": "Pesan ini sudah tidak ada.",
+		"Original email not found": "Pesan yang Anda balas sudah tidak ada.",
+		"Token has expired": "Tautan ini sudah kedaluwarsa.",
+		"That is the only way in": "Ini satu-satunya alamat masuk Anda, jadi tidak dapat dihapus.",
+		"You don't have access to this mailbox": "Anda tidak memiliki akses ke kotak surat ini."
 	},
 	"admin": {
 		"title": "Panel administrator",

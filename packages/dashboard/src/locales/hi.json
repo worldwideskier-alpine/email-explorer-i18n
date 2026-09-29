@@ -260,7 +260,16 @@
 		"Too many attempts": "बहुत सारे प्रयास। कृपया बाद में कोशिश करें।",
 		"Failed to send confirmation email": "पुष्टिकरण ईमेल नहीं भेजा जा सका",
 		"Account recovery is not enabled": "बाहर जाने वाली मेल सेट नहीं है, इसलिए यह उपलब्ध नहीं है",
-		"User not found": "उपयोगकर्ता नहीं मिला"
+		"User not found": "उपयोगकर्ता नहीं मिला",
+		"Draft not found": "यह ड्राफ़्ट अब मौजूद नहीं है। हो सकता है यह भेजा या हटाया जा चुका हो।",
+		"Folder with this name already exists": "इस नाम का फ़ोल्डर पहले से मौजूद है।",
+		"Folder is not empty": "यह फ़ोल्डर खाली नहीं है। पहले इसके संदेश हटाएँ या दूसरी जगह ले जाएँ।",
+		"Folder not found": "वह फ़ोल्डर अब मौजूद नहीं है।",
+		"Email not found": "यह संदेश अब मौजूद नहीं है।",
+		"Original email not found": "जिस संदेश का आप जवाब दे रहे हैं, वह अब मौजूद नहीं है।",
+		"Token has expired": "इस लिंक की समय-सीमा समाप्त हो गई है।",
+		"That is the only way in": "यह आपका एकमात्र साइन-इन पता है, इसलिए इसे हटाया नहीं जा सकता।",
+		"You don't have access to this mailbox": "आपको इस मेलबॉक्स की पहुँच नहीं है।"
 	},
 	"admin": {
 		"title": "प्रशासक पैनल",

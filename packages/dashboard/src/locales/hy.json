@@ -260,7 +260,16 @@
 		"Too many attempts": "Չափազանց շատ փորձեր։ Փորձեք ավելի ուշ։",
 		"Failed to send confirmation email": "Չհաջողվեց ուղարկել հաստատման նամակը",
 		"Account recovery is not enabled": "Ելքային փոստը կարգավորված չէ, ուստի սա հասանելի չէ",
-		"User not found": "Օգտատերը չի գտնվել"
+		"User not found": "Օգտատերը չի գտնվել",
+		"Draft not found": "Այս սևագիրն այլևս գոյություն չունի։ Հնարավոր է՝ ուղարկվել կամ ջնջվել է։",
+		"Folder with this name already exists": "Այս անունով թղթապանակ արդեն կա։",
+		"Folder is not empty": "Այս թղթապանակը դատարկ չէ։ Նախ տեղափոխեք կամ ջնջեք նրա նամակները։",
+		"Folder not found": "Այդ թղթապանակն այլևս գոյություն չունի։",
+		"Email not found": "Այս նամակն այլևս գոյություն չունի։",
+		"Original email not found": "Նամակը, որին պատասխանում եք, այլևս գոյություն չունի։",
+		"Token has expired": "Այս հղման ժամկետն անցել է։",
+		"That is the only way in": "Սա ձեր մուտքի միակ հասցեն է, ուստի հնարավոր չէ հեռացնել։",
+		"You don't have access to this mailbox": "Դուք մուտք չունեք այս փոստարկղ։"
 	},
 	"admin": {
 		"title": "Ադմինիստրատորի վահանակ",

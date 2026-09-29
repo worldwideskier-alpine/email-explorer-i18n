@@ -260,7 +260,16 @@
 		"Too many attempts": "Премногу обиди. Обидете се подоцна.",
 		"Failed to send confirmation email": "Пораката за потврда не можеше да се испрати",
 		"Account recovery is not enabled": "Појдовната пошта не е поставена, па ова не е достапно",
-		"User not found": "Корисникот не е пронајден"
+		"User not found": "Корисникот не е пронајден",
+		"Draft not found": "Оваа нацрт-порака веќе не постои. Можеби е испратена или избришана.",
+		"Folder with this name already exists": "Веќе постои папка со ова име.",
+		"Folder is not empty": "Оваа папка не е празна. Прво преместете ги или избришете ги пораките во неа.",
+		"Folder not found": "Таа папка веќе не постои.",
+		"Email not found": "Оваа порака веќе не постои.",
+		"Original email not found": "Пораката на која одговарате веќе не постои.",
+		"Token has expired": "Оваа врска е истечена.",
+		"That is the only way in": "Ова е вашата единствена адреса за најава, па не може да се отстрани.",
+		"You don't have access to this mailbox": "Немате пристап до ова поштенско сандаче."
 	},
 	"admin": {
 		"title": "Администраторска табла",

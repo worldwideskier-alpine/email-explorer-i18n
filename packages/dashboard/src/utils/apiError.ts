@@ -26,6 +26,17 @@ export function translateApiError(
 	 * like, and `rt` renders the entry the way `t` would have.
 	 */
 	const messages = i18n.global.tm("apiErrors") as Record<string, string>;
-	const translated = messages[key];
-	return translated === undefined ? key : i18n.global.rt(translated);
+	const say = (sentence: string): string | undefined => {
+		const translated = messages[sentence];
+		return translated === undefined ? undefined : i18n.global.rt(translated);
+	};
+	const translated = say(key);
+	if (translated !== undefined) return translated;
+	if (!message) return fallback;
+	// Not one the catalogues know: shown as it came, it was English in every
+	// language. The caller's fallback says it in the reader's language, and
+	// the server's words follow, since some carry the only reason there is --
+	// a sending service naming what it refused, say.
+	const general = say(fallback) ?? fallback;
+	return general === message ? general : `${general} (${message})`;
 }

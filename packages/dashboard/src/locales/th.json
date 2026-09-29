@@ -260,7 +260,16 @@
 		"Too many attempts": "พยายามมากเกินไป กรุณาลองใหม่ภายหลัง",
 		"Failed to send confirmation email": "ส่งอีเมลยืนยันไม่สำเร็จ",
 		"Account recovery is not enabled": "ยังไม่ได้ตั้งค่าการส่งจดหมายออก จึงใช้งานส่วนนี้ไม่ได้",
-		"User not found": "ไม่พบผู้ใช้"
+		"User not found": "ไม่พบผู้ใช้",
+		"Draft not found": "ฉบับร่างนี้ไม่มีอยู่แล้ว อาจถูกส่งหรือลบไปแล้ว",
+		"Folder with this name already exists": "มีโฟลเดอร์ชื่อนี้อยู่แล้ว",
+		"Folder is not empty": "โฟลเดอร์นี้ไม่ว่าง ย้ายหรือลบข้อความในโฟลเดอร์ก่อน",
+		"Folder not found": "โฟลเดอร์นั้นไม่มีอยู่แล้ว",
+		"Email not found": "ข้อความนี้ไม่มีอยู่แล้ว",
+		"Original email not found": "ข้อความที่คุณกำลังตอบกลับไม่มีอยู่แล้ว",
+		"Token has expired": "ลิงก์นี้หมดอายุแล้ว",
+		"That is the only way in": "นี่คือที่อยู่สำหรับลงชื่อเข้าใช้เพียงที่อยู่เดียวของคุณ จึงลบไม่ได้",
+		"You don't have access to this mailbox": "คุณไม่มีสิทธิ์เข้าถึงกล่องจดหมายนี้"
 	},
 	"admin": {
 		"title": "แผงผู้ดูแลระบบ",

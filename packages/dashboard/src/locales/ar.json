@@ -260,7 +260,16 @@
 		"Too many attempts": "محاولات كثيرة جدًا. يرجى المحاولة لاحقًا.",
 		"Failed to send confirmation email": "تعذّر إرسال رسالة التأكيد",
 		"Account recovery is not enabled": "البريد الصادر غير مهيأ، لذا هذه الميزة غير متاحة",
-		"User not found": "المستخدم غير موجود"
+		"User not found": "المستخدم غير موجود",
+		"Draft not found": "لم تعد هذه المسودة موجودة. ربما أُرسلت أو حُذفت.",
+		"Folder with this name already exists": "يوجد مجلد بهذا الاسم بالفعل.",
+		"Folder is not empty": "هذا المجلد ليس فارغًا. انقل رسائله أو احذفها أولًا.",
+		"Folder not found": "لم يعد ذلك المجلد موجودًا.",
+		"Email not found": "لم تعد هذه الرسالة موجودة.",
+		"Original email not found": "لم تعد الرسالة التي ترد عليها موجودة.",
+		"Token has expired": "انتهت صلاحية هذا الرابط.",
+		"That is the only way in": "هذا هو عنوان تسجيل الدخول الوحيد لديك، لذا لا يمكن إزالته.",
+		"You don't have access to this mailbox": "ليس لديك صلاحية الوصول إلى صندوق البريد هذا."
 	},
 	"admin": {
 		"title": "لوحة الإدارة",

@@ -72,10 +72,20 @@ describe("showing an API error in the reader's language", () => {
 		expect(translateApiError(sent, "unused")).toBe(de.apiErrors[sent]);
 	});
 
-	it("shows a message it has no translation for as it came", () => {
-		expect(translateApiError("Something nobody has translated", "x")).toBe(
-			"Something nobody has translated",
-		);
+	/**
+	 * One with no translation used to be shown as it came: English, in all
+	 * 73 languages. The reader's language comes first now -- the caller's
+	 * fallback -- and the server's words follow, because some are a reason
+	 * only they give (a sending service naming what it refused).
+	 */
+	it("says one it has no translation for in the reader's language first", () => {
+		expect(
+			translateApiError("Something nobody has translated", "失敗しました"),
+		).toBe("失敗しました (Something nobody has translated)");
+		// A fallback that is itself one of the worker's sentences is translated.
+		expect(
+			translateApiError("Something nobody has translated", "Login failed"),
+		).toBe(`${ja.apiErrors["Login failed"]} (Something nobody has translated)`);
 	});
 
 	it("uses the caller's fallback when the worker said nothing", () => {

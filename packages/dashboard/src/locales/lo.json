@@ -260,7 +260,16 @@
 		"Too many attempts": "ພະຍາຍາມຫຼາຍເທື່ອເກີນໄປ. ກະລຸນາລອງໃໝ່ພາຍຫຼັງ.",
 		"Failed to send confirmation email": "ສົ່ງອີເມວຢືນຢັນບໍ່ສຳເລັດ",
 		"Account recovery is not enabled": "ຍັງບໍ່ໄດ້ຕັ້ງຄ່າການສົ່ງຈົດໝາຍອອກ ຈຶ່ງໃຊ້ສ່ວນນີ້ບໍ່ໄດ້",
-		"User not found": "ບໍ່ພົບຜູ້ໃຊ້"
+		"User not found": "ບໍ່ພົບຜູ້ໃຊ້",
+		"Draft not found": "ສະບັບຮ່າງນີ້ບໍ່ມີແລ້ວ. ອາດຖືກສົ່ງ ຫຼື ລຶບໄປແລ້ວ.",
+		"Folder with this name already exists": "ມີໂຟນເດີຊື່ນີ້ຢູ່ແລ້ວ.",
+		"Folder is not empty": "ໂຟນເດີນີ້ບໍ່ຫວ່າງ. ກະລຸນາຍ້າຍ ຫຼື ລຶບຂໍ້ຄວາມໃນນັ້ນກ່ອນ.",
+		"Folder not found": "ໂຟນເດີນັ້ນບໍ່ມີແລ້ວ.",
+		"Email not found": "ຂໍ້ຄວາມນີ້ບໍ່ມີແລ້ວ.",
+		"Original email not found": "ຂໍ້ຄວາມທີ່ທ່ານກຳລັງຕອບບໍ່ມີແລ້ວ.",
+		"Token has expired": "ລິ້ງນີ້ໝົດອາຍຸແລ້ວ.",
+		"That is the only way in": "ນີ້ແມ່ນທີ່ຢູ່ເຂົ້າສູ່ລະບົບດຽວຂອງທ່ານ ຈຶ່ງລຶບອອກບໍ່ໄດ້.",
+		"You don't have access to this mailbox": "ທ່ານບໍ່ມີສິດເຂົ້າເຖິງກ່ອງຈົດໝາຍນີ້."
 	},
 	"admin": {
 		"title": "ແຜງຜູ້ດູແລລະບົບ",

@@ -260,7 +260,16 @@
 		"Too many attempts": "Napakaraming pagtatangka. Mangyaring subukan mamaya.",
 		"Failed to send confirmation email": "Hindi naipadala ang email ng kumpirmasyon",
 		"Account recovery is not enabled": "Hindi pa naka-set up ang papalabas na sulat, kaya hindi ito magagamit",
-		"User not found": "Hindi nakita ang user"
+		"User not found": "Hindi nakita ang user",
+		"Draft not found": "Wala na ang draft na ito. Maaaring naipadala na o nabura.",
+		"Folder with this name already exists": "May folder na sa pangalang ito.",
+		"Folder is not empty": "Hindi walang laman ang folder na ito. Ilipat o burahin muna ang mga mensahe nito.",
+		"Folder not found": "Wala na ang folder na iyon.",
+		"Email not found": "Wala na ang mensaheng ito.",
+		"Original email not found": "Wala na ang mensaheng sinasagot mo.",
+		"Token has expired": "Nag-expire na ang link na ito.",
+		"That is the only way in": "Ito ang tanging address mo sa pag-sign in, kaya hindi ito maaalis.",
+		"You don't have access to this mailbox": "Wala kang access sa mailbox na ito."
 	},
 	"admin": {
 		"title": "Panel ng administrador",

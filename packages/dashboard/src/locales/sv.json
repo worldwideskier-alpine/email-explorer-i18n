@@ -260,7 +260,16 @@
 		"Too many attempts": "För många försök. Försök igen senare.",
 		"Failed to send confirmation email": "Bekräftelsemejlet kunde inte skickas",
 		"Account recovery is not enabled": "Utgående post är inte konfigurerad, så det här är inte tillgängligt",
-		"User not found": "Användaren hittades inte"
+		"User not found": "Användaren hittades inte",
+		"Draft not found": "Det här utkastet finns inte längre. Det kan ha skickats eller tagits bort.",
+		"Folder with this name already exists": "Det finns redan en mapp med det här namnet.",
+		"Folder is not empty": "Den här mappen är inte tom. Flytta eller ta bort dess meddelanden först.",
+		"Folder not found": "Den mappen finns inte längre.",
+		"Email not found": "Det här meddelandet finns inte längre.",
+		"Original email not found": "Meddelandet du svarar på finns inte längre.",
+		"Token has expired": "Den här länken har upphört att gälla.",
+		"That is the only way in": "Det här är din enda inloggningsadress, så den kan inte tas bort.",
+		"You don't have access to this mailbox": "Du har inte åtkomst till den här brevlådan."
 	},
 	"admin": {
 		"title": "Administrationspanel",

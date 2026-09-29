@@ -260,7 +260,16 @@
 		"Too many attempts": "Of margar tilraunir. Reyndu aftur síðar.",
 		"Failed to send confirmation email": "Ekki tókst að senda staðfestingarpóstinn",
 		"Account recovery is not enabled": "Útsendur póstur er ekki uppsettur, svo þetta er ekki í boði",
-		"User not found": "Notandinn fannst ekki"
+		"User not found": "Notandinn fannst ekki",
+		"Draft not found": "Þessi drög eru ekki lengur til. Þau gætu hafa verið send eða eytt.",
+		"Folder with this name already exists": "Mappa með þessu nafni er þegar til.",
+		"Folder is not empty": "Þessi mappa er ekki tóm. Færðu eða eyddu skilaboðum hennar fyrst.",
+		"Folder not found": "Sú mappa er ekki lengur til.",
+		"Email not found": "Þessi skilaboð eru ekki lengur til.",
+		"Original email not found": "Skilaboðin sem þú svarar eru ekki lengur til.",
+		"Token has expired": "Þessi tengill er útrunninn.",
+		"That is the only way in": "Þetta er eina innskráningarnetfangið þitt og því er ekki hægt að fjarlægja það.",
+		"You don't have access to this mailbox": "Þú hefur ekki aðgang að þessu pósthólfi."
 	},
 	"admin": {
 		"title": "Stjórnborð",

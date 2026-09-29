@@ -260,7 +260,16 @@
 		"Too many attempts": "Wisq provi. Jekk jogħġbok erġa' pprova aktar tard.",
 		"Failed to send confirmation email": "L-email ta' konferma ma setgħetx tintbagħat",
 		"Account recovery is not enabled": "Il-posta li toħroġ mhijiex ikkonfigurata, u għalhekk dan mhux disponibbli",
-		"User not found": "L-utent ma nstabx"
+		"User not found": "L-utent ma nstabx",
+		"Draft not found": "Din l-abbozz m'għadux jeżisti. Seta' ntbagħat jew tħassar.",
+		"Folder with this name already exists": "Diġà teżisti folder b'dan l-isem.",
+		"Folder is not empty": "Din il-folder mhijiex vojta. L-ewwel ċaqlaq jew ħassar il-messaġġi tagħha.",
+		"Folder not found": "Dik il-folder m'għadhiex teżisti.",
+		"Email not found": "Dan il-messaġġ m'għadux jeżisti.",
+		"Original email not found": "Il-messaġġ li qed twieġeb m'għadux jeżisti.",
+		"Token has expired": "Din il-link skadiet.",
+		"That is the only way in": "Dan huwa l-uniku indirizz tad-dħul tiegħek, għalhekk ma jistax jitneħħa.",
+		"You don't have access to this mailbox": "M'għandekx aċċess għal din il-kaxxa postali."
 	},
 	"admin": {
 		"title": "Panel tal-amministrazzjoni",

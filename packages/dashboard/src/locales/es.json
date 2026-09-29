@@ -260,7 +260,16 @@
 		"Too many attempts": "Demasiados intentos. Inténtalo más tarde.",
 		"Failed to send confirmation email": "No se pudo enviar el correo de confirmación",
 		"Account recovery is not enabled": "El envío de correo no está configurado, así que esto no está disponible",
-		"User not found": "Usuario no encontrado"
+		"User not found": "Usuario no encontrado",
+		"Draft not found": "Este borrador ya no existe. Puede que se haya enviado o eliminado.",
+		"Folder with this name already exists": "Ya existe una carpeta con este nombre.",
+		"Folder is not empty": "Esta carpeta no está vacía. Mueve o elimina primero sus mensajes.",
+		"Folder not found": "Esa carpeta ya no existe.",
+		"Email not found": "Este mensaje ya no existe.",
+		"Original email not found": "El mensaje al que respondes ya no existe.",
+		"Token has expired": "Este enlace ha caducado.",
+		"That is the only way in": "Es tu única dirección de inicio de sesión, así que no se puede quitar.",
+		"You don't have access to this mailbox": "No tienes acceso a este buzón."
 	},
 	"admin": {
 		"title": "Panel de administración",

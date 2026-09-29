@@ -260,7 +260,16 @@
 		"Too many attempts": "Quá nhiều lần thử. Vui lòng thử lại sau.",
 		"Failed to send confirmation email": "Không gửi được email xác nhận",
 		"Account recovery is not enabled": "Chưa thiết lập thư gửi đi nên chức năng này không dùng được",
-		"User not found": "Không tìm thấy người dùng"
+		"User not found": "Không tìm thấy người dùng",
+		"Draft not found": "Bản nháp này không còn nữa. Có thể nó đã được gửi hoặc bị xóa.",
+		"Folder with this name already exists": "Đã có thư mục mang tên này.",
+		"Folder is not empty": "Thư mục này không trống. Hãy di chuyển hoặc xóa thư trong đó trước.",
+		"Folder not found": "Thư mục đó không còn nữa.",
+		"Email not found": "Thư này không còn nữa.",
+		"Original email not found": "Thư bạn đang trả lời không còn nữa.",
+		"Token has expired": "Liên kết này đã hết hạn.",
+		"That is the only way in": "Đây là địa chỉ đăng nhập duy nhất của bạn nên không thể xóa.",
+		"You don't have access to this mailbox": "Bạn không có quyền truy cập hộp thư này."
 	},
 	"admin": {
 		"title": "Bảng quản trị",

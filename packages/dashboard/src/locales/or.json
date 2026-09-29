@@ -260,7 +260,16 @@
 		"Too many attempts": "ବହୁତ ଚେଷ୍ଟା। ଦୟାକରି ପରେ ଚେଷ୍ଟା କରନ୍ତୁ।",
 		"Failed to send confirmation email": "ନିଶ୍ଚିତକରଣ ଇମେଲ ପଠାଯାଇପାରିଲା ନାହିଁ",
 		"Account recovery is not enabled": "ବାହାରକୁ ଯିବା ଚିଠି ସେଟ ହୋଇନାହିଁ, ତେଣୁ ଏହା ଉପଲବ୍ଧ ନାହିଁ",
-		"User not found": "ବ୍ୟବହାରକାରୀ ମିଳିଲେ ନାହିଁ"
+		"User not found": "ବ୍ୟବହାରକାରୀ ମିଳିଲେ ନାହିଁ",
+		"Draft not found": "ଏହି ଡ୍ରାଫ୍ଟ ଆଉ ନାହିଁ। ଏହା ପଠାଯାଇଥିବା କିମ୍ବା ବିଲୋପ ହୋଇଥିବା ସମ୍ଭବ।",
+		"Folder with this name already exists": "ଏହି ନାମରେ ଗୋଟିଏ ଫୋଲ୍ଡର ପୂର୍ବରୁ ଅଛି।",
+		"Folder is not empty": "ଏହି ଫୋଲ୍ଡର ଖାଲି ନୁହେଁ। ପ୍ରଥମେ ଏହାର ବାର୍ତ୍ତାଗୁଡ଼ିକ ଘୁଞ୍ଚାନ୍ତୁ କିମ୍ବା ବିଲୋପ କରନ୍ତୁ।",
+		"Folder not found": "ସେହି ଫୋଲ୍ଡର ଆଉ ନାହିଁ।",
+		"Email not found": "ଏହି ବାର୍ତ୍ତା ଆଉ ନାହିଁ।",
+		"Original email not found": "ଆପଣ ଯେଉଁ ବାର୍ତ୍ତାର ଉତ୍ତର ଦେଉଛନ୍ତି ତାହା ଆଉ ନାହିଁ।",
+		"Token has expired": "ଏହି ଲିଙ୍କର ମିଆଦ ସରିଯାଇଛି।",
+		"That is the only way in": "ଏହା ଆପଣଙ୍କ ଏକମାତ୍ର ସାଇନ୍-ଇନ୍ ଠିକଣା, ତେଣୁ ଏହାକୁ ହଟାଯାଇପାରିବ ନାହିଁ।",
+		"You don't have access to this mailbox": "ଏହି ମେଲବକ୍ସକୁ ଆପଣଙ୍କର ପ୍ରବେଶ ନାହିଁ।"
 	},
 	"admin": {
 		"title": "ପ୍ରଶାସକ ପ୍ୟାନେଲ",

@@ -178,6 +178,35 @@ describe("a reply saved as a draft", () => {
 	});
 });
 
+describe("a draft that is gone when it is saved", () => {
+	/**
+	 * Sent or deleted elsewhere, its save is answered 404 "Draft not found",
+	 * and that sentence was shown as it came: English in every language.
+	 */
+	it("says so through the catalogue", async () => {
+		const { i18n } = await import("@/i18n");
+		const { englishWith } = await import("@/testing/english");
+		i18n.global.setLocaleMessage("en", englishWith({}) as never);
+		i18n.global.locale.value = "en" as never;
+		updateDraft.mockRejectedValueOnce({
+			response: { status: 404, data: { error: "Draft not found" } },
+		});
+		await openComposer({
+			mode: "draft",
+			originalEmail: {
+				...PARENT,
+				id: "d1",
+				folder_id: "draft",
+				subject: "Kept",
+			},
+		});
+		await press("compose.saveDraft");
+		expect(updateDraft).toHaveBeenCalledOnce();
+		expect(document.body.textContent).toContain("This draft no longer exists.");
+		expect(document.body.textContent).not.toContain("Draft not found");
+	});
+});
+
 describe("reply-all", () => {
 	/** A `Set` kept `A@x` and `a@x` both, and the same person twice. */
 	it("names each person once, without regard to case", async () => {

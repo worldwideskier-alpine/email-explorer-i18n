@@ -260,7 +260,16 @@
 		"Too many attempts": "खूप प्रयत्न. कृपया नंतर प्रयत्न करा.",
 		"Failed to send confirmation email": "खात्रीचा ईमेल पाठवता आला नाही",
 		"Account recovery is not enabled": "बाहेर जाणारे टपाल लावलेले नाही, त्यामुळे हे उपलब्ध नाही",
-		"User not found": "वापरकर्ता सापडला नाही"
+		"User not found": "वापरकर्ता सापडला नाही",
+		"Draft not found": "हा मसुदा आता अस्तित्वात नाही. तो पाठवला किंवा हटवला गेला असू शकतो.",
+		"Folder with this name already exists": "या नावाचे फोल्डर आधीपासून आहे.",
+		"Folder is not empty": "हे फोल्डर रिकामे नाही. आधी त्यातील संदेश हलवा किंवा हटवा.",
+		"Folder not found": "ते फोल्डर आता अस्तित्वात नाही.",
+		"Email not found": "हा संदेश आता अस्तित्वात नाही.",
+		"Original email not found": "तुम्ही ज्या संदेशाला उत्तर देत आहात तो आता अस्तित्वात नाही.",
+		"Token has expired": "या दुव्याची मुदत संपली आहे.",
+		"That is the only way in": "हा तुमचा एकमेव साइन-इन पत्ता आहे, त्यामुळे तो काढता येत नाही.",
+		"You don't have access to this mailbox": "तुम्हाला या मेलबॉक्समध्ये प्रवेश नाही."
 	},
 	"admin": {
 		"title": "प्रशासक पॅनेल",

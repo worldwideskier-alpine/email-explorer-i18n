@@ -260,7 +260,16 @@
 		"Too many attempts": "Liian monta yritystä. Yritä myöhemmin uudelleen.",
 		"Failed to send confirmation email": "Vahvistusviestiä ei voitu lähettää",
 		"Account recovery is not enabled": "Lähtevää postia ei ole määritetty, joten tämä ei ole käytettävissä",
-		"User not found": "Käyttäjää ei löytynyt"
+		"User not found": "Käyttäjää ei löytynyt",
+		"Draft not found": "Tätä luonnosta ei enää ole. Se on ehkä lähetetty tai poistettu.",
+		"Folder with this name already exists": "Tämänniminen kansio on jo olemassa.",
+		"Folder is not empty": "Tämä kansio ei ole tyhjä. Siirrä tai poista sen viestit ensin.",
+		"Folder not found": "Sitä kansiota ei enää ole.",
+		"Email not found": "Tätä viestiä ei enää ole.",
+		"Original email not found": "Viestiä, johon vastaat, ei enää ole.",
+		"Token has expired": "Tämä linkki on vanhentunut.",
+		"That is the only way in": "Tämä on ainoa kirjautumisosoitteesi, joten sitä ei voi poistaa.",
+		"You don't have access to this mailbox": "Sinulla ei ole pääsyä tähän postilaatikkoon."
 	},
 	"admin": {
 		"title": "Ylläpitopaneeli",

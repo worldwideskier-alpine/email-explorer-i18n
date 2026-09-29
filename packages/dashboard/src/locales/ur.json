@@ -260,7 +260,16 @@
 		"Too many attempts": "بہت زیادہ کوششیں۔ براہ کرم بعد میں کوشش کریں۔",
 		"Failed to send confirmation email": "تصدیقی ای میل نہیں بھیجی جا سکی",
 		"Account recovery is not enabled": "باہر جانے والی ڈاک ترتیب نہیں دی گئی، اس لیے یہ دستیاب نہیں",
-		"User not found": "صارف نہیں ملا"
+		"User not found": "صارف نہیں ملا",
+		"Draft not found": "یہ مسودہ اب موجود نہیں ہے۔ ہو سکتا ہے یہ بھیجا یا حذف کیا جا چکا ہو۔",
+		"Folder with this name already exists": "اس نام کا فولڈر پہلے سے موجود ہے۔",
+		"Folder is not empty": "یہ فولڈر خالی نہیں ہے۔ پہلے اس کے پیغامات منتقل یا حذف کریں۔",
+		"Folder not found": "وہ فولڈر اب موجود نہیں ہے۔",
+		"Email not found": "یہ پیغام اب موجود نہیں ہے۔",
+		"Original email not found": "جس پیغام کا آپ جواب دے رہے ہیں وہ اب موجود نہیں ہے۔",
+		"Token has expired": "اس لنک کی میعاد ختم ہو گئی ہے۔",
+		"That is the only way in": "یہ آپ کا واحد سائن اِن پتہ ہے، اس لیے اسے ہٹایا نہیں جا سکتا۔",
+		"You don't have access to this mailbox": "آپ کو اس میل باکس تک رسائی حاصل نہیں ہے۔"
 	},
 	"admin": {
 		"title": "انتظامی پینل",

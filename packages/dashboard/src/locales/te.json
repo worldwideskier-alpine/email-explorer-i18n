@@ -260,7 +260,16 @@
 		"Too many attempts": "ప్రయత్నాలు చాలా ఎక్కువ. దయచేసి తర్వాత ప్రయత్నించండి.",
 		"Failed to send confirmation email": "నిర్ధారణ ఇమెయిల్‌ను పంపలేకపోయాము",
 		"Account recovery is not enabled": "బయటికి వెళ్లే మెయిల్ ఏర్పాటు కాలేదు, కాబట్టి ఇది అందుబాటులో లేదు",
-		"User not found": "వినియోగదారు కనబడలేదు"
+		"User not found": "వినియోగదారు కనబడలేదు",
+		"Draft not found": "ఈ డ్రాఫ్ట్ ఇక లేదు. ఇది పంపబడి లేదా తొలగించబడి ఉండవచ్చు.",
+		"Folder with this name already exists": "ఈ పేరుతో ఫోల్డర్ ఇప్పటికే ఉంది.",
+		"Folder is not empty": "ఈ ఫోల్డర్ ఖాళీగా లేదు. ముందుగా దానిలోని సందేశాలను తరలించండి లేదా తొలగించండి.",
+		"Folder not found": "ఆ ఫోల్డర్ ఇక లేదు.",
+		"Email not found": "ఈ సందేశం ఇక లేదు.",
+		"Original email not found": "మీరు ప్రత్యుత్తరం ఇస్తున్న సందేశం ఇక లేదు.",
+		"Token has expired": "ఈ లింక్ గడువు ముగిసింది.",
+		"That is the only way in": "ఇది మీ ఏకైక సైన్-ఇన్ చిరునామా, కాబట్టి దీన్ని తీసివేయలేరు.",
+		"You don't have access to this mailbox": "ఈ మెయిల్‌బాక్స్‌కు మీకు యాక్సెస్ లేదు."
 	},
 	"admin": {
 		"title": "నిర్వాహక ప్యానెల్",
