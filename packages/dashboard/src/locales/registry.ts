@@ -212,7 +212,8 @@ const BY_LOWER_CODE = new Map<string, Locale>(
  *
  * `navigator.languages` is in preference order and carries regions
  * (`ja-JP`, `pt-BR`), so each candidate is tried whole first -- that is what
- * separates `zh-TW` from `zh-CN` -- then as its base language. Trying every
+ * separates `zh-TW` from `zh-CN` -- then shorter a subtag at a time, down to
+ * its base language. Trying every
  * step for one candidate before moving to the next matters: someone whose
  * list is `["zh-TW", "en"]` must get Traditional Chinese, not English.
  */
@@ -224,12 +225,15 @@ export function resolveBrowserLocale(
 		const tag = candidate.trim().toLowerCase();
 		if (!tag) continue;
 
-		const whole = BY_LOWER_CODE.get(tag) ?? ALIASES[tag];
-		if (whole) return whole;
-
-		const base = tag.split("-")[0];
-		const stripped = BY_LOWER_CODE.get(base) ?? ALIASES[base];
-		if (stripped) return stripped;
+		// Whole, then one subtag shorter at a time. Cut straight to the base,
+		// `zh-Hant-TW` (script and place, as Safari sends it) became `zh` and
+		// opened in Simplified; one step shorter it is `zh-Hant`.
+		const parts = tag.split("-");
+		for (let length = parts.length; length > 0; length--) {
+			const prefix = parts.slice(0, length).join("-");
+			const found = BY_LOWER_CODE.get(prefix) ?? ALIASES[prefix];
+			if (found) return found;
+		}
 	}
 	return null;
 }

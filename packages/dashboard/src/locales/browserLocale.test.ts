@@ -41,6 +41,11 @@ describe("resolveBrowserLocale", () => {
 		// And a script subtag, which some browsers send instead.
 		expect(resolveBrowserLocale(["zh-Hant"])).toBe("zh-Hant");
 		expect(resolveBrowserLocale(["zh-Hans-CN"])).toBe("zh-Hans");
+		// Script and place together, as Safari and iOS send them. Neither
+		// whole tag is listed, and cut straight to `zh` they came out
+		// Simplified for the two places that write Traditional.
+		expect(resolveBrowserLocale(["zh-Hant-TW"])).toBe("zh-Hant");
+		expect(resolveBrowserLocale(["zh-Hant-HK"])).toBe("zh-Hant");
 	});
 
 	it("knows the older spellings still in circulation", () => {
