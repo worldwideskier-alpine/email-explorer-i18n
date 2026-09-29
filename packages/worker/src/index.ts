@@ -1,6 +1,5 @@
 import { contentJson, fromHono, OpenAPIRoute } from "chanfana";
 import { type Context, Hono } from "hono";
-import { cors } from "hono/cors";
 import PostalMime from "postal-mime";
 import { z } from "zod";
 import { getResendKeySource, setResendApiKey } from "./app-settings";
@@ -2452,7 +2451,6 @@ function requiresSession(pathname: string): boolean {
 }
 
 const app = new Hono<{ Bindings: Env; Variables: { session?: Session } }>();
-app.use("/api/*", cors());
 const openapi = fromHono(app);
 
 // Auth endpoints

@@ -34,3 +34,24 @@ describe("the session cookie", () => {
 		});
 	});
 });
+
+/**
+ * The API is this page's, and says so to nobody else. `cors()` stamped
+ * `Access-Control-Allow-Origin: *` on every answer while its preflight never
+ * got past the session gate (a preflight carries no credentials), so it let
+ * no other site call the API and suggested it could.
+ */
+describe("an answer to another site's script", () => {
+	beforeEach(testAuthBeforeAll);
+
+	it("does not invite it to read the answer", async () => {
+		const res = await SELF.fetch("http://local.test/api/v1/auth/me", {
+			headers: {
+				Authorization: `Bearer ${sessionToken}`,
+				Origin: "https://elsewhere.example",
+			},
+		});
+		expect(res.status).toBe(200);
+		expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
+	});
+});
