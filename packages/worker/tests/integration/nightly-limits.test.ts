@@ -33,6 +33,14 @@ import { authenticatedFetch, testAuthBeforeAll } from "./utils";
  */
 
 const NOW = new Date("2026-09-22T18:00:00.000Z");
+/**
+ * How long a call may take in these tests. It is the one limit for every
+ * call, the healthy mailbox's real ones included: at 200 ms those went over
+ * it when the whole suite ran at once, and the mailbox that should have been
+ * backed up was failed with the hung one. The hung call waits it out either
+ * way, so this is also what each such test costs.
+ */
+const CALL_LIMIT = 1500;
 const HUNG = "hung@example.com";
 const FINE = "fine@example.com";
 
@@ -164,7 +172,7 @@ describe("a call that never answers", () => {
 	it("fails its own mailbox, and the next one is still backed up", async () => {
 		const night = nightOfTheHang();
 		const summary = await runScheduledBackups(night.env, NOW, undefined, {
-			callLimitMs: 200,
+			callLimitMs: CALL_LIMIT,
 		});
 
 		expect(summary).toMatchObject({ ran: 1, failed: 1 });
@@ -185,7 +193,9 @@ describe("a call that never answers", () => {
 	// carry until its lifecycle rule gets to it.
 	it("aborts the upload it had begun", async () => {
 		const night = nightOfTheHang();
-		await runScheduledBackups(night.env, NOW, undefined, { callLimitMs: 200 });
+		await runScheduledBackups(night.env, NOW, undefined, {
+			callLimitMs: CALL_LIMIT,
+		});
 		expect(night.aborted).toEqual([
 			expect.stringContaining(backupKeyPrefix(HUNG)),
 		]);
@@ -193,7 +203,7 @@ describe("a call that never answers", () => {
 
 	it("leaves the night able to finish and say how it went", async () => {
 		const night = nightOfTheHang();
-		await runScheduledMaintenance(night.env, NOW, { callLimitMs: 200 });
+		await runScheduledMaintenance(night.env, NOW, { callLimitMs: CALL_LIMIT });
 
 		const record = await readMaintenanceRecord(env as never);
 		expect(record?.finishedAt).toBeTypeOf("string");
@@ -328,7 +338,7 @@ describe("a mailbox that uses up the pass", () => {
 		// FINE has a backup and HUNG has never had one, so HUNG is the more
 		// overdue of the two and goes first -- and takes the whole pass.
 		await runScheduledBackups(nightOfTheHang().env, night(20), undefined, {
-			callLimitMs: 200,
+			callLimitMs: CALL_LIMIT,
 		});
 		expect(await archivesOf(FINE)).toHaveLength(1);
 
