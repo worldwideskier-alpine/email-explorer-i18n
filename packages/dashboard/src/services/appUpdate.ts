@@ -161,21 +161,37 @@ async function servedPage(): Promise<string | null> {
 	}
 }
 
+/**
+ * Whether the server now answers with a build other than the one running.
+ * False when that cannot be known -- offline, or a page with no module
+ * scripts to compare.
+ */
+export async function aNewBuildIsServed(): Promise<boolean> {
+	const running = moduleScriptsOf(document);
+	if (running.length === 0) return false;
+
+	const html = await servedPage();
+	if (html === null) return false;
+
+	return looksLikeANewBuild(running, moduleScriptsIn(html));
+}
+
+/** How the page reloads; a test watches it rather than jsdom. */
+export const reloading = {
+	now() {
+		window.location.reload();
+	},
+};
+
 async function checkOnce(): Promise<void> {
 	const now = Date.now();
 	if (now - lastLookedAt < QUIET_PERIOD_MS) return;
 	lastLookedAt = now;
 
-	const running = moduleScriptsOf(document);
-	if (running.length === 0) return;
-
-	const html = await servedPage();
-	if (html === null) return;
-
-	if (!looksLikeANewBuild(running, moduleScriptsIn(html))) return;
+	if (!(await aNewBuildIsServed())) return;
 	if (somethingIsBeingWritten(document)) return;
 
-	window.location.reload();
+	reloading.now();
 }
 
 /**

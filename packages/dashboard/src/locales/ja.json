@@ -70,7 +70,8 @@
 			"westAsia": "西アジア・中東",
 			"southAsia": "南アジア",
 			"southeastAsia": "東南アジア"
-		}
+		},
+		"reloadForLanguage": "新しい版が出ています。ページを再読み込みすると、選んだ言語で表示されます。"
 	},
 	"home": {
 		"pageTitle": "メールボックス",

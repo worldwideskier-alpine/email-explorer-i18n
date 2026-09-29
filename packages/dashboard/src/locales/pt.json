@@ -70,7 +70,8 @@
 			"westAsia": "Ásia Ocidental e Médio Oriente",
 			"southAsia": "Ásia do Sul",
 			"southeastAsia": "Sudeste Asiático"
-		}
+		},
+		"reloadForLanguage": "Está disponível uma versão mais recente desta página. Recarregue a página e ela abrirá no idioma que escolheu."
 	},
 	"home": {
 		"pageTitle": "Caixas de correio",

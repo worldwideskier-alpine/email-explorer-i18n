@@ -70,7 +70,8 @@
 			"westAsia": "Asie occidentale et Moyen-Orient",
 			"southAsia": "Asie du Sud",
 			"southeastAsia": "Asie du Sud-Est"
-		}
+		},
+		"reloadForLanguage": "Une version plus récente de cette page est disponible. Rechargez la page et elle s'ouvrira dans la langue choisie."
 	},
 	"home": {
 		"pageTitle": "Boîtes aux lettres",

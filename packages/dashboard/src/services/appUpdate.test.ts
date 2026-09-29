@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+	aNewBuildIsServed,
 	looksLikeANewBuild,
 	moduleScriptsIn,
 	moduleScriptsOf,
@@ -147,5 +148,43 @@ describe("what a reload would cost", () => {
 			'<div contenteditable="true">   </div><textarea></textarea><p>読むだけ</p>';
 		(document.activeElement as HTMLElement | null)?.blur?.();
 		expect(somethingIsBeingWritten(document)).toBe(false);
+	});
+});
+
+describe("whether a newer build is served", () => {
+	const running = document.createElement("script");
+	running.type = "module";
+	running.setAttribute("src", "/assets/index-AAA111.js");
+	const served = (entry: string) =>
+		new Response(`<script type="module" src="/assets/${entry}"></script>`);
+
+	afterEach(() => {
+		running.remove();
+		vi.unstubAllGlobals();
+	});
+
+	it("says yes when the served page names another build, and no when it names this one", async () => {
+		document.head.appendChild(running);
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => served("index-ZZZ999.js")),
+		);
+		expect(await aNewBuildIsServed()).toBe(true);
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => served("index-AAA111.js")),
+		);
+		expect(await aNewBuildIsServed()).toBe(false);
+	});
+
+	it("says no when it cannot ask", async () => {
+		document.head.appendChild(running);
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async () => {
+				throw new TypeError("offline");
+			}),
+		);
+		expect(await aNewBuildIsServed()).toBe(false);
 	});
 });

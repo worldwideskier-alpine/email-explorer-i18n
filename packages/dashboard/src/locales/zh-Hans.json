@@ -70,7 +70,8 @@
 			"westAsia": "西亚和中东",
 			"southAsia": "南亚",
 			"southeastAsia": "东南亚"
-		}
+		},
+		"reloadForLanguage": "此页面有新版本。请重新加载页面，页面将以你选择的语言打开。"
 	},
 	"home": {
 		"pageTitle": "邮箱",

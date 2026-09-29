@@ -70,7 +70,8 @@
 			"westAsia": "L-Asja tal-Punent u l-Lvant Nofsani",
 			"southAsia": "Asja t'Isfel",
 			"southeastAsia": "Xlokk l-Asja"
-		}
+		},
+		"reloadForLanguage": "Hemm verżjoni ġdida ta' din il-paġna. Erġa' tella' l-paġna u tiftaħ bil-lingwa li għażilt."
 	},
 	"home": {
 		"pageTitle": "Kaxxi tal-ittri",

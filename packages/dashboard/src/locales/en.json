@@ -70,7 +70,8 @@
 			"westAsia": "West Asia",
 			"southAsia": "South Asia",
 			"southeastAsia": "Southeast Asia"
-		}
+		},
+		"reloadForLanguage": "A newer version of this page is available. Reload the page and it will open in the language you chose."
 	},
 	"home": {
 		"pageTitle": "Mailboxes",

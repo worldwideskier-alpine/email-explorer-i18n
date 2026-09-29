@@ -21,8 +21,14 @@
 
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-import { type Locale, setLocale } from "@/i18n";
+import { useToast } from "@/composables/useToast";
+import { type Locale, rememberLocale, setLocale } from "@/i18n";
 import { localesByRegion } from "@/locales/registry";
+import {
+	aNewBuildIsServed,
+	reloading,
+	somethingIsBeingWritten,
+} from "@/services/appUpdate";
 
 /**
  * The one language control, in two placements. A page with a row of actions
@@ -47,6 +53,7 @@ import { localesByRegion } from "@/locales/registry";
 defineProps<{ floating?: boolean }>();
 
 const { t, locale } = useI18n();
+const { warning } = useToast();
 const groups = localesByRegion();
 
 // Switching fetches the catalogue, so it lands a moment after the change.
@@ -55,10 +62,25 @@ const groups = localesByRegion();
 // back only when `locale` changes -- so a catalogue that failed to load left
 // the control naming a language the page was not in (see "Switches" in
 // AGENTS.md for the same thing with a checkbox). It is put back by hand.
+//
+// A page left open over a deploy is where a catalogue fails to load: it asks
+// for the one its own build named, and a deploy no longer serves an earlier
+// build's files -- measured on production, the page itself comes back in its
+// place. Picking a language then did nothing at all. The new build has the
+// catalogue, so the choice is kept and the page reloaded into it; over
+// somebody's writing it is not, and they are told a reload will do it.
 const onChange = (event: Event) => {
 	const select = event.target as HTMLSelectElement;
-	setLocale(select.value as Locale).catch(() => {
+	const chosen = select.value as Locale;
+	setLocale(chosen).catch(async () => {
 		select.value = locale.value;
+		if (!(await aNewBuildIsServed())) return;
+		rememberLocale(chosen);
+		if (!somethingIsBeingWritten(document)) {
+			reloading.now();
+			return;
+		}
+		warning(t("header.reloadForLanguage"), 10_000);
 	});
 };
 </script>

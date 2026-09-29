@@ -70,7 +70,8 @@
 			"westAsia": "Zahodna Azija in Bližnji vzhod",
 			"southAsia": "Južna Azija",
 			"southeastAsia": "Jugovzhodna Azija"
-		}
+		},
+		"reloadForLanguage": "Na voljo je novejša različica te strani. Znova naložite stran in odprla se bo v jeziku, ki ste ga izbrali."
 	},
 	"home": {
 		"pageTitle": "Poštni predali",

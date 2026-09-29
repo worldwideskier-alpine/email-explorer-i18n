@@ -70,7 +70,8 @@
 			"westAsia": "Westasien und Naher Osten",
 			"southAsia": "Südasien",
 			"southeastAsia": "Südostasien"
-		}
+		},
+		"reloadForLanguage": "Eine neuere Version dieser Seite ist verfügbar. Laden Sie die Seite neu, dann öffnet sie sich in der gewählten Sprache."
 	},
 	"home": {
 		"pageTitle": "Postfächer",

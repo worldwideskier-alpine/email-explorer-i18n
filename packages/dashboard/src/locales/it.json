@@ -70,7 +70,8 @@
 			"westAsia": "Asia occidentale e Medio Oriente",
 			"southAsia": "Asia meridionale",
 			"southeastAsia": "Sud-est asiatico"
-		}
+		},
+		"reloadForLanguage": "È disponibile una versione più recente di questa pagina. Ricarica la pagina e si aprirà nella lingua che hai scelto."
 	},
 	"home": {
 		"pageTitle": "Caselle",

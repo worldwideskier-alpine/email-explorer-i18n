@@ -70,7 +70,8 @@
 			"westAsia": "Nyugat-Ázsia és a Közel-Kelet",
 			"southAsia": "Dél-Ázsia",
 			"southeastAsia": "Délkelet-Ázsia"
-		}
+		},
+		"reloadForLanguage": "Az oldal újabb verziója érhető el. Töltse be újra az oldalt, és a választott nyelven fog megnyílni."
 	},
 	"home": {
 		"pageTitle": "Postaládák",

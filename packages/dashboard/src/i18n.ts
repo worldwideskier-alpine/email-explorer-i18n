@@ -93,12 +93,20 @@ export async function setLocale(locale: Locale): Promise<void> {
 	await loadLocale(locale);
 	if (request !== latestLocale) return;
 	i18n.global.locale.value = locale;
+	rememberLocale(locale);
+	applyDocumentLanguage(locale);
+}
+
+/**
+ * The language the next load of the page opens in. Also written ahead of a
+ * reload by a page that could not load a catalogue: see LanguageSwitcher.
+ */
+export function rememberLocale(locale: Locale): void {
 	try {
 		localStorage.setItem(STORAGE_KEY, locale);
 	} catch {
 		/* the choice just will not survive a reload */
 	}
-	applyDocumentLanguage(locale);
 }
 
 /**

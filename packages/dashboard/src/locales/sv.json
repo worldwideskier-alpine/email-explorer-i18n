@@ -70,7 +70,8 @@
 			"westAsia": "Västasien och Mellanöstern",
 			"southAsia": "Sydasien",
 			"southeastAsia": "Sydostasien"
-		}
+		},
+		"reloadForLanguage": "Det finns en nyare version av den här sidan. Läs in sidan igen så öppnas den på språket du valde."
 	},
 	"home": {
 		"pageTitle": "Brevlådor",

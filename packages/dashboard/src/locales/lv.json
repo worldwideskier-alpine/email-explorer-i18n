@@ -70,7 +70,8 @@
 			"westAsia": "Rietumāzija un Tuvie Austrumi",
 			"southAsia": "Dienvidāzija",
 			"southeastAsia": "Dienvidaustrumāzija"
-		}
+		},
+		"reloadForLanguage": "Ir pieejama jaunāka šīs lapas versija. Pārlādējiet lapu, un tā atvērsies jūsu izvēlētajā valodā."
 	},
 	"home": {
 		"pageTitle": "Pastkastes",

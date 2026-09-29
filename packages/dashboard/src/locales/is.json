@@ -70,7 +70,8 @@
 			"westAsia": "Vestur-Asía og Miðausturlönd",
 			"southAsia": "Suður-Asía",
 			"southeastAsia": "Suðaustur-Asía"
-		}
+		},
+		"reloadForLanguage": "Nýrri útgáfa af þessari síðu er í boði. Hladdu síðunni aftur inn og hún opnast á tungumálinu sem þú valdir."
 	},
 	"home": {
 		"pageTitle": "Pósthólf",

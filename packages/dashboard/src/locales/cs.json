@@ -70,7 +70,8 @@
 			"westAsia": "Západní Asie a Blízký východ",
 			"southAsia": "Jižní Asie",
 			"southeastAsia": "Jihovýchodní Asie"
-		}
+		},
+		"reloadForLanguage": "Je k dispozici novější verze této stránky. Obnovte stránku a otevře se v jazyce, který jste zvolili."
 	},
 	"home": {
 		"pageTitle": "Schránky",

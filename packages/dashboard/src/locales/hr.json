@@ -70,7 +70,8 @@
 			"westAsia": "Zapadna Azija i Bliski istok",
 			"southAsia": "Južna Azija",
 			"southeastAsia": "Jugoistočna Azija"
-		}
+		},
+		"reloadForLanguage": "Dostupna je novija verzija ove stranice. Ponovno učitajte stranicu i otvorit će se na jeziku koji ste odabrali."
 	},
 	"home": {
 		"pageTitle": "Poštanski sandučići",

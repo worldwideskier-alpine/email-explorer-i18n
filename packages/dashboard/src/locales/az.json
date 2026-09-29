@@ -70,7 +70,8 @@
 			"westAsia": "Qərbi Asiya və Yaxın Şərq",
 			"southAsia": "Cənubi Asiya",
 			"southeastAsia": "Cənub-Şərqi Asiya"
-		}
+		},
+		"reloadForLanguage": "Bu səhifənin daha yeni versiyası mövcuddur. Səhifəni yeniləyin və o, seçdiyiniz dildə açılacaq."
 	},
 	"home": {
 		"pageTitle": "Poçt qutuları",

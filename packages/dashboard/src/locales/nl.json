@@ -70,7 +70,8 @@
 			"westAsia": "West-Azië en het Midden-Oosten",
 			"southAsia": "Zuid-Azië",
 			"southeastAsia": "Zuidoost-Azië"
-		}
+		},
+		"reloadForLanguage": "Er is een nieuwere versie van deze pagina beschikbaar. Laad de pagina opnieuw, dan opent deze in de taal die u hebt gekozen."
 	},
 	"home": {
 		"pageTitle": "Postbussen",

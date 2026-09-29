@@ -70,7 +70,8 @@
 			"westAsia": "An Áise Thiar agus an Meánoirthear",
 			"southAsia": "Deisceart na hÁise",
 			"southeastAsia": "Oirdheisceart na hÁise"
-		}
+		},
+		"reloadForLanguage": "Tá leagan níos nuaí den leathanach seo ar fáil. Athlódáil an leathanach agus osclófar é sa teanga a roghnaigh tú."
 	},
 	"home": {
 		"pageTitle": "Boscaí poist",

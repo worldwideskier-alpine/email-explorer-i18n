@@ -70,7 +70,8 @@
 			"westAsia": "Asia de Vest și Orientul Mijlociu",
 			"southAsia": "Asia de Sud",
 			"southeastAsia": "Asia de Sud-Est"
-		}
+		},
+		"reloadForLanguage": "Este disponibilă o versiune mai nouă a acestei pagini. Reîncărcați pagina și se va deschide în limba pe care ați ales-o."
 	},
 	"home": {
 		"pageTitle": "Căsuțe poștale",

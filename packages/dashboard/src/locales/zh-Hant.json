@@ -70,7 +70,8 @@
 			"westAsia": "西亞與中東",
 			"southAsia": "南亞",
 			"southeastAsia": "東南亞"
-		}
+		},
+		"reloadForLanguage": "此頁面有新版本。請重新載入頁面，頁面將以您選擇的語言開啟。"
 	},
 	"home": {
 		"pageTitle": "信箱",

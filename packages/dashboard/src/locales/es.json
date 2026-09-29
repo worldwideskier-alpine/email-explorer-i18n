@@ -70,7 +70,8 @@
 			"westAsia": "Asia occidental y Oriente Medio",
 			"southAsia": "Asia del Sur",
 			"southeastAsia": "Sudeste Asiático"
-		}
+		},
+		"reloadForLanguage": "Hay una versión más reciente de esta página. Recarga la página y se abrirá en el idioma que elegiste."
 	},
 	"home": {
 		"pageTitle": "Buzones",

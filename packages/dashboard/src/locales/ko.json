@@ -70,7 +70,8 @@
 			"westAsia": "서아시아 및 중동",
 			"southAsia": "남아시아",
 			"southeastAsia": "동남아시아"
-		}
+		},
+		"reloadForLanguage": "이 페이지의 새 버전이 있습니다. 페이지를 새로 고치면 선택한 언어로 열립니다."
 	},
 	"home": {
 		"pageTitle": "메일함",

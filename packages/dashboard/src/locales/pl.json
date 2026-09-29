@@ -70,7 +70,8 @@
 			"westAsia": "Azja Zachodnia i Bliski Wschód",
 			"southAsia": "Azja Południowa",
 			"southeastAsia": "Azja Południowo-Wschodnia"
-		}
+		},
+		"reloadForLanguage": "Dostępna jest nowsza wersja tej strony. Odśwież stronę, a otworzy się w wybranym języku."
 	},
 	"home": {
 		"pageTitle": "Skrzynki",

@@ -70,7 +70,8 @@
 			"westAsia": "Länsi-Aasia ja Lähi-itä",
 			"southAsia": "Etelä-Aasia",
 			"southeastAsia": "Kaakkois-Aasia"
-		}
+		},
+		"reloadForLanguage": "Tästä sivusta on saatavilla uudempi versio. Päivitä sivu, niin se avautuu valitsemallasi kielellä."
 	},
 	"home": {
 		"pageTitle": "Postilaatikot",

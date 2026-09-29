@@ -70,7 +70,8 @@
 			"westAsia": "Lääne-Aasia ja Lähis-Ida",
 			"southAsia": "Lõuna-Aasia",
 			"southeastAsia": "Kagu-Aasia"
-		}
+		},
+		"reloadForLanguage": "Sellest lehest on saadaval uuem versioon. Laadi leht uuesti ja see avaneb sinu valitud keeles."
 	},
 	"home": {
 		"pageTitle": "Postkastid",

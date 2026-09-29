@@ -70,7 +70,8 @@
 			"westAsia": "Azia Perëndimore dhe Lindja e Mesme",
 			"southAsia": "Azia Jugore",
 			"southeastAsia": "Azia Juglindore"
-		}
+		},
+		"reloadForLanguage": "Ka një version më të ri të kësaj faqeje. Ringarkoni faqen dhe ajo do të hapet në gjuhën që zgjodhët."
 	},
 	"home": {
 		"pageTitle": "Kutitë postare",

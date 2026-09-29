@@ -70,7 +70,8 @@
 			"westAsia": "Tây Á và Trung Đông",
 			"southAsia": "Nam Á",
 			"southeastAsia": "Đông Nam Á"
-		}
+		},
+		"reloadForLanguage": "Đã có phiên bản mới hơn của trang này. Hãy tải lại trang, trang sẽ mở bằng ngôn ngữ bạn đã chọn."
 	},
 	"home": {
 		"pageTitle": "Hộp thư",

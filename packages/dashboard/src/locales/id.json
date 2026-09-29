@@ -70,7 +70,8 @@
 			"westAsia": "Asia Barat dan Timur Tengah",
 			"southAsia": "Asia Selatan",
 			"southeastAsia": "Asia Tenggara"
-		}
+		},
+		"reloadForLanguage": "Versi baru halaman ini tersedia. Muat ulang halaman dan halaman akan terbuka dalam bahasa yang Anda pilih."
 	},
 	"home": {
 		"pageTitle": "Kotak surat",

@@ -70,7 +70,8 @@
 			"westAsia": "Batı Asya ve Orta Doğu",
 			"southAsia": "Güney Asya",
 			"southeastAsia": "Güneydoğu Asya"
-		}
+		},
+		"reloadForLanguage": "Bu sayfanın daha yeni bir sürümü var. Sayfayı yeniden yükleyin; seçtiğiniz dilde açılacaktır."
 	},
 	"home": {
 		"pageTitle": "Posta kutuları",

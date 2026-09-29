@@ -70,7 +70,8 @@
 			"westAsia": "Vestasien og Mellemøsten",
 			"southAsia": "Sydasien",
 			"southeastAsia": "Sydøstasien"
-		}
+		},
+		"reloadForLanguage": "Der findes en nyere version af denne side. Genindlæs siden, så åbner den på det sprog, du har valgt."
 	},
 	"home": {
 		"pageTitle": "Postkasser",

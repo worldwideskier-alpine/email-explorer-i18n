@@ -70,7 +70,8 @@
 			"westAsia": "Kanlurang Asya at Gitnang Silangan",
 			"southAsia": "Timog Asya",
 			"southeastAsia": "Timog-Silangang Asya"
-		}
+		},
+		"reloadForLanguage": "May mas bagong bersyon ng page na ito. I-reload ang page at magbubukas ito sa wikang pinili mo."
 	},
 	"home": {
 		"pageTitle": "Mga mailbox",
