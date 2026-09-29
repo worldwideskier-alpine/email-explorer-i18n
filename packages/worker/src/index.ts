@@ -3,10 +3,8 @@ import { type Context, Hono } from "hono";
 import PostalMime from "postal-mime";
 import { z } from "zod";
 import { getResendKeySource, setResendApiKey } from "./app-settings";
-import { storableFilename } from "./attachment-name";
 import { backupKeyPrefix } from "./auto-backup";
 import { listBackups } from "./backup-writer";
-import { base64ToBytes } from "./base64";
 import { classifyWithClaude } from "./claude-spam-filter";
 import { recoveryFromEmail } from "./deployment-config";
 import { ingestEmailIntoMailbox } from "./email-ingest";
@@ -66,6 +64,7 @@ import {
 	PutRecoverySender,
 } from "./routes/root";
 import { runScheduledMaintenance } from "./scheduled-run";
+import { keepSentCopy, prepareAttachments } from "./sent-copy";
 import { slugify } from "./slugify";
 import {
 	classifyByAuthResults,
@@ -245,6 +244,8 @@ const SendEmailRequestSchema = z
 const SendEmailResponseSchema = z.object({
 	id: z.string(),
 	status: z.string(),
+	/** False when the message left but its copy in Sent could not be kept. */
+	saved: z.boolean().optional(),
 });
 
 const UpdateEmailStatusRequestSchema = z.object({
@@ -798,6 +799,12 @@ class PostEmail extends OpenAPIRoute {
 			return c.json({ error: "Not found" }, 404);
 		}
 
+		// Asked before the message leaves; see sent-copy.ts.
+		const prepared = prepareAttachments(attachments);
+		if (!prepared) {
+			return c.json({ error: "An attachment is not valid base64" }, 400);
+		}
+
 		try {
 			await sendEmail(
 				c.env,
@@ -830,31 +837,11 @@ class PostEmail extends OpenAPIRoute {
 		const id = ns.idFromName(mailboxId);
 		const stub = ns.get(id);
 
-		const attachmentData = [];
-		if (attachments) {
-			for (const att of attachments) {
-				const attachmentId = crypto.randomUUID();
-				// The same name for key and row; see attachment-name.ts.
-				const filename = storableFilename(att.filename);
-				const key = `attachments/${messageId}/${attachmentId}/${filename}`;
-				const decoded = base64ToBytes(att.content);
-				await c.env.BUCKET.put(key, decoded);
-				attachmentData.push({
-					id: attachmentId,
-					email_id: messageId,
-					filename,
-					mimetype: att.type,
-					size: decoded.length,
-					content_id: att.contentId || null,
-					disposition: att.disposition,
-				});
-			}
-		}
-
-		await stub.createEmail(
-			"sent",
+		const saved = await keepSentCopy(
+			c.env,
+			stub,
+			messageId,
 			{
-				id: messageId,
 				subject,
 				sender: from,
 				recipient: formatAddressList(to) ?? "",
@@ -866,10 +853,11 @@ class PostEmail extends OpenAPIRoute {
 				email_references: references ? JSON.stringify(references) : null,
 				thread_id: thread_id || in_reply_to || messageId,
 			},
-			attachmentData,
+			prepared,
 		);
 
-		return c.json({ id: messageId, status: "sent" }, 201);
+		// Sent either way: a 500 here would invite a second send.
+		return c.json({ id: messageId, status: "sent", saved }, 201);
 	}
 }
 

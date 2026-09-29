@@ -1,12 +1,11 @@
 import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
-import { storableFilename } from "../attachment-name";
-import { base64ToBytes } from "../base64";
 import { sendsAsMailbox } from "../mailbox-access";
 import { plainTextToHtml } from "../plain-text-to-html";
 import { formatAddressList } from "../recipients";
 import { sendEmail } from "../resend";
+import { keepSentCopy, prepareAttachments } from "../sent-copy";
 import type { Env, Session } from "../types";
 
 type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
@@ -44,6 +43,8 @@ const SendEmailRequestSchema = z
 const SendEmailResponseSchema = z.object({
 	id: z.string(),
 	status: z.string(),
+	/** False when the message left but its copy in Sent could not be kept. */
+	saved: z.boolean().optional(),
 });
 
 const ErrorResponseSchema = z.object({
@@ -106,6 +107,12 @@ export class PostReplyEmail extends OpenAPIRoute {
 		const { in_reply_to, references, thread_id } =
 			replyThreading(originalEmail);
 
+		// Asked before the message leaves; see sent-copy.ts.
+		const prepared = prepareAttachments(attachments);
+		if (!prepared) {
+			return c.json({ error: "An attachment is not valid base64" }, 400);
+		}
+
 		try {
 			await sendEmail(
 				c.env,
@@ -134,31 +141,11 @@ export class PostReplyEmail extends OpenAPIRoute {
 
 		const messageId = crypto.randomUUID();
 
-		const attachmentData = [];
-		if (attachments) {
-			for (const att of attachments) {
-				const attachmentId = crypto.randomUUID();
-				// The same name for key and row; see attachment-name.ts.
-				const filename = storableFilename(att.filename);
-				const key = `attachments/${messageId}/${attachmentId}/${filename}`;
-				const decoded = base64ToBytes(att.content);
-				await c.env.BUCKET.put(key, decoded);
-				attachmentData.push({
-					id: attachmentId,
-					email_id: messageId,
-					filename,
-					mimetype: att.type,
-					size: decoded.length,
-					content_id: att.contentId || null,
-					disposition: att.disposition,
-				});
-			}
-		}
-
-		await stub.createEmail(
-			"sent",
+		const saved = await keepSentCopy(
+			c.env,
+			stub,
+			messageId,
 			{
-				id: messageId,
 				subject,
 				sender: from,
 				recipient: formatAddressList(to) ?? "",
@@ -170,10 +157,11 @@ export class PostReplyEmail extends OpenAPIRoute {
 				email_references: references.length ? JSON.stringify(references) : null,
 				thread_id: thread_id,
 			},
-			attachmentData,
+			prepared,
 		);
 
-		return c.json({ id: messageId, status: "sent" }, 201);
+		// Sent either way: a 500 here would invite a second send.
+		return c.json({ id: messageId, status: "sent", saved }, 201);
 	}
 }
 
@@ -232,6 +220,12 @@ export class PostForwardEmail extends OpenAPIRoute {
 
 		// Forwarded emails don't have threading headers
 
+		// Asked before the message leaves; see sent-copy.ts.
+		const prepared = prepareAttachments(attachments);
+		if (!prepared) {
+			return c.json({ error: "An attachment is not valid base64" }, 400);
+		}
+
 		try {
 			await sendEmail(
 				c.env,
@@ -258,31 +252,11 @@ export class PostForwardEmail extends OpenAPIRoute {
 
 		const messageId = crypto.randomUUID();
 
-		const attachmentData = [];
-		if (attachments) {
-			for (const att of attachments) {
-				const attachmentId = crypto.randomUUID();
-				// The same name for key and row; see attachment-name.ts.
-				const filename = storableFilename(att.filename);
-				const key = `attachments/${messageId}/${attachmentId}/${filename}`;
-				const decoded = base64ToBytes(att.content);
-				await c.env.BUCKET.put(key, decoded);
-				attachmentData.push({
-					id: attachmentId,
-					email_id: messageId,
-					filename,
-					mimetype: att.type,
-					size: decoded.length,
-					content_id: att.contentId || null,
-					disposition: att.disposition,
-				});
-			}
-		}
-
-		await stub.createEmail(
-			"sent",
+		const saved = await keepSentCopy(
+			c.env,
+			stub,
+			messageId,
 			{
-				id: messageId,
 				subject,
 				sender: from,
 				recipient: formatAddressList(to) ?? "",
@@ -294,10 +268,11 @@ export class PostForwardEmail extends OpenAPIRoute {
 				email_references: null,
 				thread_id: messageId,
 			},
-			attachmentData,
+			prepared,
 		);
 
-		return c.json({ id: messageId, status: "sent" }, 201);
+		// Sent either way: a 500 here would invite a second send.
+		return c.json({ id: messageId, status: "sent", saved }, 201);
 	}
 }
 
