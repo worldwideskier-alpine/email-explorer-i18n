@@ -1,4 +1,4 @@
-import { SELF } from "cloudflare:test";
+import { env, runInDurableObject, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 
 describe("Authentication & User Management Integration Tests", () => {
@@ -32,7 +32,7 @@ describe("Authentication & User Management Integration Tests", () => {
 	};
 
 	describe("Registration Flow", () => {
-		it("should allow first user registration and make them admin", async () => {
+		it("makes the first account to register root", async () => {
 			const response = await SELF.fetch(
 				"http://local.test/api/v1/auth/register",
 				{
@@ -74,8 +74,14 @@ describe("Authentication & User Management Integration Tests", () => {
 			expect(response.status).toBe(400);
 		});
 
-		it("should reject duplicate email registration", async () => {
-			// Register first user
+		/*
+		 * This used to send the same address to the public form twice and
+		 * expect "Registration is closed" -- which the form says to any second
+		 * address, so it was the smart-mode test below under another name.
+		 * The place a second login at a taken address can be asked for is
+		 * adding a login, so that is where it is asked, in another spelling.
+		 */
+		it("refuses a second login at an address that already signs in", async () => {
 			await SELF.fetch("http://local.test/api/v1/auth/register", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -84,23 +90,43 @@ describe("Authentication & User Management Integration Tests", () => {
 					password: "password123",
 				}),
 			});
+			const login = await SELF.fetch("http://local.test/api/v1/auth/login", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					email: "duplicate@example.com",
+					password: "password123",
+				}),
+			});
+			const token = (await login.json<{ id: string }>()).id;
 
-			// Try to register same email again
-			const response = await SELF.fetch(
-				"http://local.test/api/v1/auth/register",
+			const response = await authenticatedFetch(
+				"http://local.test/api/v1/auth/admin/register",
+				token,
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
-						email: "duplicate@example.com",
+						email: "Duplicate@Example.com",
 						password: "password456",
+						currentPassword: "password123",
 					}),
 				},
 			);
 
-			expect(response.status).toBe(403);
+			expect(response.status).toBe(400);
 			const body = await response.json<any>();
-			expect(body.error).toContain("Registration is closed");
+			expect(body.error).toBe("Email already registered");
+			// And the address still signs in with its own password only.
+			const withNew = await SELF.fetch("http://local.test/api/v1/auth/login", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					email: "duplicate@example.com",
+					password: "password456",
+				}),
+			});
+			expect(withNew.status).toBe(401);
 		});
 
 		it("should close public registration after first user (smart mode)", async () => {
@@ -341,7 +367,7 @@ describe("Authentication & User Management Integration Tests", () => {
 			adminSessionToken = loginBody.id;
 		});
 
-		it("should allow admin to register new users", async () => {
+		it("adds a login for the signed-in person, without the legacy admin flag", async () => {
 			const response = await authenticatedFetch(
 				"http://local.test/api/v1/auth/admin/register",
 				adminSessionToken,
@@ -360,7 +386,7 @@ describe("Authentication & User Management Integration Tests", () => {
 			const body = await response.json<any>();
 			expect(body).toMatchObject({
 				email: "newuser@example.com",
-				isAdmin: false, // Admin-created users are not admin by default
+				isAdmin: false, // The is_admin column is written only for the first account.
 			});
 		});
 
@@ -381,7 +407,7 @@ describe("Authentication & User Management Integration Tests", () => {
 			expect(response.status).toBe(401);
 		});
 
-		it("should allow admin to list all users", async () => {
+		it("lists the signed-in person's own logins", async () => {
 			// Create additional user
 			await authenticatedFetch(
 				"http://local.test/api/v1/auth/admin/register",
@@ -551,9 +577,13 @@ describe("Authentication & User Management Integration Tests", () => {
 			expect(loginBody.passwordHash).toBeUndefined();
 		});
 
-		it("should hash passwords (same password should produce same hash)", async () => {
-			// This tests that password hashing is deterministic
-			// Register user
+		/*
+		 * This was called "same password should produce same hash" and
+		 * checked only that signing in worked. The opposite is what should
+		 * hold: the hash is salted, so the same password stored twice is two
+		 * different hashes, and neither contains the password.
+		 */
+		it("stores a salted hash, not the password", async () => {
 			await SELF.fetch("http://local.test/api/v1/auth/register", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -562,8 +592,6 @@ describe("Authentication & User Management Integration Tests", () => {
 					password: "testpassword",
 				}),
 			});
-
-			// Login should work with same password
 			const response = await SELF.fetch("http://local.test/api/v1/auth/login", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -572,8 +600,42 @@ describe("Authentication & User Management Integration Tests", () => {
 					password: "testpassword",
 				}),
 			});
-
 			expect(response.status).toBe(200);
+			const token = (await response.json<{ id: string }>()).id;
+			// A second login with the same password.
+			const added = await authenticatedFetch(
+				"http://local.test/api/v1/auth/admin/register",
+				token,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						email: "hash-too@example.com",
+						password: "testpassword",
+						currentPassword: "testpassword",
+					}),
+				},
+			);
+			expect(added.status).toBe(201);
+
+			const hashes = await runInDurableObject(
+				env.MAILBOX.get(env.MAILBOX.idFromName("AUTH")),
+				async (_instance, state) =>
+					state.storage.sql
+						.exec(
+							"SELECT password_hash FROM users WHERE email IN (?, ?)",
+							"hash@example.com",
+							"hash-too@example.com",
+						)
+						.toArray()
+						.map((row) => String(row.password_hash)),
+			);
+			expect(hashes).toHaveLength(2);
+			for (const hash of hashes) {
+				expect(hash).toMatch(/^pbkdf2-sha256\$/);
+				expect(hash).not.toContain("testpassword");
+			}
+			expect(hashes[0]).not.toBe(hashes[1]);
 		});
 
 		it("should reject requests with invalid JSON", async () => {
@@ -591,7 +653,7 @@ describe("Authentication & User Management Integration Tests", () => {
 	});
 
 	describe("Edge Cases", () => {
-		it("should handle concurrent registrations gracefully", async () => {
+		it("lets only one of two registrations sent at once in", async () => {
 			// Try to register two users simultaneously
 			const promises = [
 				SELF.fetch("http://local.test/api/v1/auth/register", {
@@ -614,9 +676,10 @@ describe("Authentication & User Management Integration Tests", () => {
 
 			const responses = await Promise.all(promises);
 
-			// One should succeed (become admin), one should fail (registration closed)
-			const statuses = responses.map((r) => r.status);
-			expect(statuses).toContain(201); // At least one success
+			// One becomes root and the form closes behind it. "At least one
+			// 201" was also true of both getting in, which is the failure.
+			const statuses = responses.map((r) => r.status).sort();
+			expect(statuses).toEqual([201, 403]);
 		});
 
 		it("should handle missing fields in requests", async () => {

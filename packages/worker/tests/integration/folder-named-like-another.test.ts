@@ -70,6 +70,13 @@ describe("a folder named like another folder's id", () => {
  * The sort direction goes into the SQL as text. The route's schema allows
  * only ASC and DESC, and the object took that on trust; it checks for itself
  * now, as it already did for the column.
+ *
+ * The payload has to be one that would *show*. `DESC, (SELECT 1)` written
+ * into the query sorts exactly as the default does, so a test built on it
+ * could only fail if something else happened to refuse it -- today that is
+ * workers-qb's own ORDER BY pattern, which is not this object's check and
+ * may not always be there. `ASC, (SELECT 1)` is valid SQL that turns the
+ * order round: interpolated, the oldest message comes first.
  */
 describe("a sort direction that is not one", () => {
 	beforeEach(async () => {
@@ -83,12 +90,26 @@ describe("a sort direction that is not one", () => {
 			const mailbox = instance as unknown as Mailbox & {
 				getEmails: (o: Record<string, unknown>) => Promise<{ id: string }[]>;
 			};
-			await mailbox.createEmail("inbox", message("one"), []);
+			await mailbox.createEmail(
+				"inbox",
+				{ ...message("older"), date: "2026-01-01T00:00:00.000Z" },
+				[],
+			);
+			await mailbox.createEmail(
+				"inbox",
+				{ ...message("newer"), date: "2026-02-01T00:00:00.000Z" },
+				[],
+			);
+			// What the default is, so the assertion below means something.
+			expect(
+				(await mailbox.getEmails({ folder: "inbox" })).map((e) => e.id),
+			).toEqual(["newer", "older"]);
+
 			const listed = await mailbox.getEmails({
 				folder: "inbox",
-				sortDirection: "DESC, (SELECT 1)",
+				sortDirection: "ASC, (SELECT 1)",
 			});
-			expect(listed.map((e) => e.id)).toEqual(["one"]);
+			expect(listed.map((e) => e.id)).toEqual(["newer", "older"]);
 		});
 	});
 });

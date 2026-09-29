@@ -1,4 +1,8 @@
-import { env, runInDurableObject } from "cloudflare:test";
+import {
+	createExecutionContext,
+	env,
+	runInDurableObject,
+} from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { recordSenderVerdict } from "../../src/mailbox-settings";
 import { purgeMailboxSpam } from "../../src/spam-purge-run";
@@ -7,6 +11,7 @@ import {
 	createDummyMailbox,
 	mailboxId,
 	personId,
+	sessionToken,
 	testAuthBeforeAll,
 } from "./utils";
 
@@ -107,6 +112,59 @@ describe("saving one section of a mailbox's settings", () => {
 					? mergeMailboxSettings(existing, { fromName: "Saved" })
 					: undefined,
 		);
+
+		const stored = await settings();
+		expect(stored.fromName).toBe("Saved");
+		expect(stored.senderRules?.block).toEqual(["spammer@example.org"]);
+	});
+
+	/**
+	 * The same race through the route a screen saves with. The one above calls
+	 * `rewriteJson` itself, so it holds that helper and not that the save uses
+	 * it: PUT /api/v1/mailboxes/:id going back to a read and a plain put would
+	 * have left it passing. Here the verdict lands between the route's read and
+	 * its write.
+	 */
+	it("keeps a verdict given while the save route was writing", async () => {
+		const key = `mailboxes/${mailboxId}.json`;
+		let raced = 0;
+		const racing = new Proxy(bucket(), {
+			get(target, property) {
+				if (property === "put") {
+					return async (...args: Parameters<R2Bucket["put"]>) => {
+						if (raced === 0 && args[0] === key) {
+							raced++;
+							await recordSenderVerdict(
+								{ BUCKET: target },
+								mailboxId,
+								"Spammer@Example.org",
+								"spam",
+							);
+						}
+						return target.put(...args);
+					};
+				}
+				const member = Reflect.get(target, property);
+				return typeof member === "function" ? member.bind(target) : member;
+			},
+		});
+
+		const worker = await import("../../dev/index");
+		const saved = await worker.default.fetch(
+			new Request(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${sessionToken}`,
+				},
+				body: JSON.stringify({ settings: { fromName: "Saved" } }),
+			}),
+			{ ...env, BUCKET: racing },
+			createExecutionContext(),
+		);
+		expect(saved.status).toBe(200);
+		// The other writer really did come between, or this proves nothing.
+		expect(raced).toBe(1);
 
 		const stored = await settings();
 		expect(stored.fromName).toBe("Saved");

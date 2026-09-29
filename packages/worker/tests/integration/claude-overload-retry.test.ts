@@ -91,6 +91,11 @@ async function health(): Promise<{
 	return body.spamCheck ?? { lastFailureReason: null, lastSuccessAt: null };
 }
 
+/** How often the stub was asked about a tag; see vitest.config.mts. */
+async function claudeCalls(tag: string): Promise<number> {
+	return (await fetch(`https://api.anthropic.com/__calls/${tag}`)).json();
+}
+
 describe("an overloaded API", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
@@ -176,10 +181,22 @@ describe("an overloaded API", () => {
 	 * doing it, so the refusals are answered once.
 	 */
 	it("does not retry a refusal about the key itself", async () => {
-		const subject = "Bad key TRIGGER_CLAUDE_401";
+		const subject = "Bad key TRIGGER_CLAUDE_401 TRIGGER_CLAUDE_COUNT_BADKEY";
 		await deliver(subject);
 
 		expect(await folderOf(subject)).toBe("inbox");
 		expect((await health()).lastFailureReason).toBe("unauthorized");
+		// The folder and the reason are the same after one attempt or three;
+		// only the count tells them apart.
+		expect(await claudeCalls("BADKEY")).toBe(1);
+	});
+
+	// The count above means something only if a retried failure counts more.
+	it("counts every attempt of one it does retry", async () => {
+		const subject =
+			"Overloaded always TRIGGER_CLAUDE_OVERLOAD_COUNTED_99 TRIGGER_CLAUDE_COUNT_OVERLOADED";
+		await deliver(subject);
+
+		expect(await claudeCalls("OVERLOADED")).toBe(3);
 	});
 });

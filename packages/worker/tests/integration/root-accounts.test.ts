@@ -52,9 +52,10 @@ async function createUser(
 	email: string,
 	isAdmin: boolean,
 	personId?: string,
+	password = "password123",
 ): Promise<string> {
 	const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
-	const user = await stub.register(email, "password123", isAdmin, personId);
+	const user = await stub.register(email, password, isAdmin, personId);
 	return user.id;
 }
 
@@ -143,23 +144,42 @@ describe("what root does with accounts", () => {
 	 * recovery mail lands in a mailbox they cannot open until they sign in is
 	 * otherwise locked out for good.
 	 */
+	/*
+	 * Root's password and the account's are different here on purpose. With
+	 * both "password123", a route that checked the account's own password --
+	 * which is exactly what root is not being told -- passed as well.
+	 */
 	it("sets a password without being told the old one", async () => {
-		const userId = await createUser("hanako@example.com", true);
-		const res = await as(root)(
-			`http://local.test/api/v1/root/accounts/${userId}/password`,
-			{
+		const userId = await createUser(
+			"hanako@example.com",
+			true,
+			undefined,
+			"hanakos-own-password",
+		);
+		const setTo = (currentPassword: string) =>
+			as(root)(`http://local.test/api/v1/root/accounts/${userId}/password`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					password: "brand-new-password",
-					currentPassword: "password123",
+					currentPassword,
 				}),
-			},
-		);
-		expect(res.status).toBe(200);
+			});
+
+		// The account's own password is not root's, and buys nothing.
+		expect((await setTo("hanakos-own-password")).status).toBe(403);
+		expect(
+			(await signIn("hanako@example.com", "hanakos-own-password")).id,
+		).toBeTruthy();
+
+		// Root's is what is asked for.
+		expect((await setTo("password123")).status).toBe(200);
 		expect(
 			(await signIn("hanako@example.com", "brand-new-password")).id,
 		).toBeTruthy();
+		expect(
+			(await signIn("hanako@example.com", "hanakos-own-password")).id,
+		).toBeFalsy();
 	});
 
 	/**

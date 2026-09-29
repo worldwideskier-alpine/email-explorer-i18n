@@ -39,6 +39,35 @@ async function simulateReceiveEmail(
 	);
 }
 
+/** A message written here and sent, which nothing stores an original of. */
+async function composeOne(subject: string): Promise<string> {
+	const sent = await authenticatedFetch(
+		`http://local.test/api/v1/mailboxes/${mailboxId}/emails`,
+		{
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				to: ["recipient@example.net"],
+				from: mailboxId,
+				subject,
+				text: "Written here",
+			}),
+		},
+	);
+	expect(sent.status).toBe(201);
+	const { id } = await sent.json<{ id: string }>();
+	// It is a message the mailbox has, so a 404 for its source is about the
+	// source and not about the message.
+	expect(
+		(
+			await authenticatedFetch(
+				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${id}`,
+			)
+		).status,
+	).toBe(200);
+	return id;
+}
+
 describe("Original message source", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
@@ -118,44 +147,53 @@ describe("Original message source", () => {
 		expect(sourceText).toContain("Inbound body");
 	});
 
-	it("returns 404 when no raw source was stored (e.g. a locally composed reply)", async () => {
+	/*
+	 * A message that exists and has no original. This used to ask about an id
+	 * with no message at all, which is a different 404 -- the one answered
+	 * before the bucket is looked at -- so the case in its name was never
+	 * reached.
+	 */
+	it("returns 404 when no raw source was stored (e.g. a locally composed message)", async () => {
+		await createDummyMailbox();
+		const id = await composeOne("Composed here");
+
+		const sourceResponse = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${id}/source`,
+		);
+		expect(sourceResponse.status).toBe(404);
+		expect(await sourceResponse.json()).toEqual({
+			error: "Original source not available",
+		});
+	});
+
+	it("returns 404 for a message the mailbox does not have", async () => {
 		await createDummyMailbox();
 
 		const sourceResponse = await authenticatedFetch(
 			`http://local.test/api/v1/mailboxes/${mailboxId}/emails/nonexistent-id/source`,
 		);
 		expect(sourceResponse.status).toBe(404);
+		expect(await sourceResponse.json()).toEqual({ error: "Not found" });
 	});
 
 	describe("Backfilling source onto an already-imported email (PUT .../source)", () => {
+		/*
+		 * The message used to be a received one, and ingest always stores an
+		 * original, so "had none" was not true of it: the test overwrote a
+		 * source rather than attaching one. A composed message has none.
+		 */
 		it("attaches raw source to an existing email that had none", async () => {
 			await createDummyMailbox();
+			const id = await composeOne("Backfill target");
 
-			const rawEmail = buildRawEmail(
-				{
-					From: "sender@example.com",
-					To: mailboxId,
-					Subject: "Backfill target",
-					"Content-Type": "text/plain",
-					"Authentication-Results":
-						"mx.cloudflare.net; spf=pass; dkim=pass; dmarc=pass",
-				},
-				"Original body",
-			);
-			await simulateReceiveEmail(rawEmail);
+			const source = () =>
+				authenticatedFetch(
+					`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${id}/source`,
+				);
+			expect((await source()).status).toBe(404);
 
-			const listResponse = await authenticatedFetch(
-				`http://local.test/api/v1/mailboxes/${mailboxId}/emails?folder=inbox`,
-			);
-			const emails = await listResponse.json<any[]>();
-			const received = emails.find((e: any) => e.subject === "Backfill target");
-			expect(received).toBeDefined();
-
-			// Confirm no source yet (real inbound path always writes one, so
-			// this specifically checks the pre-backfill baseline via a plain
-			// import-without-raw simulation isn't needed -- overwriting is fine).
 			const putResponse = await authenticatedFetch(
-				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${received.id}/source`,
+				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${id}/source`,
 				{
 					method: "PUT",
 					headers: { "Content-Type": "application/json" },
@@ -166,9 +204,7 @@ describe("Original message source", () => {
 			);
 			expect(putResponse.status).toBe(204);
 
-			const sourceResponse = await authenticatedFetch(
-				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${received.id}/source`,
-			);
+			const sourceResponse = await source();
 			expect(sourceResponse.status).toBe(200);
 			const sourceText = await sourceResponse.text();
 			expect(sourceText).toContain("X-Backfilled: true");

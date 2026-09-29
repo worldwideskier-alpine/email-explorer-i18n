@@ -1,4 +1,4 @@
-import { SELF } from "cloudflare:test";
+import { env, runInDurableObject, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { resetLegacyGrantMemo } from "../../src/legacy-grants";
 
@@ -20,6 +20,12 @@ import { resetLegacyGrantMemo } from "../../src/legacy-grants";
  * The parity is asserted by comparing status codes rather than by asserting a
  * particular one: what matters is not that restore returns 201, it is that it
  * returns the same thing to both of them.
+ *
+ * And the two have to differ in the way that mattered. Made the same way,
+ * through root, neither carries the flag, so a check on `session.isAdmin`
+ * refused them both alike -- parity held, and every capability but restore
+ * could have been taken from both without a test noticing. So "A" carries
+ * the legacy flag, as the first account used to, and "B" does not.
  */
 
 const login = async (email: string, password = "password123") => {
@@ -62,11 +68,14 @@ async function setUpTwoAdministrators() {
 	await SELF.fetch("http://local.test/api/v1/auth/register", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ email: "root@test.com", password: "password123" }),
+		body: JSON.stringify({
+			email: "root@example.com",
+			password: "password123",
+		}),
 	});
-	const rootToken = await login("root@test.com");
+	const rootToken = await login("root@example.com");
 
-	for (const email of ["a@test.com", "b@test.com"]) {
+	for (const email of ["a@example.com", "b@example.com"]) {
 		const created = await as(rootToken)(
 			"http://local.test/api/v1/root/accounts",
 			{
@@ -78,8 +87,36 @@ async function setUpTwoAdministrators() {
 		expect(created.status).toBe(201);
 	}
 
-	const a = { token: await login("a@test.com"), mailbox: "a-box@test.com" };
-	const b = { token: await login("b@test.com"), mailbox: "b-box@test.com" };
+	// The one difference there used to be between administrators.
+	const flagged = await runInDurableObject(
+		env.MAILBOX.get(env.MAILBOX.idFromName("AUTH")),
+		async (_instance, state) => {
+			state.storage.sql.exec(
+				"UPDATE users SET is_admin = 1 WHERE email = ?",
+				"a@example.com",
+			);
+			return state.storage.sql
+				.exec(
+					"SELECT email, is_admin FROM users WHERE email IN (?, ?) ORDER BY email",
+					"a@example.com",
+					"b@example.com",
+				)
+				.toArray();
+		},
+	);
+	expect(flagged).toEqual([
+		{ email: "a@example.com", is_admin: 1 },
+		{ email: "b@example.com", is_admin: 0 },
+	]);
+
+	const a = {
+		token: await login("a@example.com"),
+		mailbox: "a-box@example.com",
+	};
+	const b = {
+		token: await login("b@example.com"),
+		mailbox: "b-box@example.com",
+	};
 
 	for (const who of [a, b]) {
 		const made = await as(who.token)("http://local.test/api/v1/mailboxes", {
@@ -117,7 +154,9 @@ const CAPABILITIES: Array<{
 			{
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ name: "renamed" }),
+				// `settings`, as the route's schema asks. `{ name }` was refused
+				// with 400 -- to both, so the parity test was content with it.
+				body: JSON.stringify({ settings: { fromName: "renamed" } }),
 			},
 		],
 	},
@@ -178,12 +217,18 @@ describe("two administrators, on their own mailboxes", () => {
 	it("are both allowed, not both refused", async () => {
 		const { a, b } = await setUpTwoAdministrators();
 
-		for (const who of [a, b]) {
-			const [url, init] = CAPABILITIES[CAPABILITIES.length - 1].request(
-				who.mailbox,
-			);
-			const res = await as(who.token)(url, init);
-			expect([who.mailbox, res.status]).toEqual([who.mailbox, 201]);
+		// Every capability, not only restore: equal refusals of any other row
+		// would have satisfied the parity above just as well.
+		for (const capability of CAPABILITIES) {
+			for (const who of [a, b]) {
+				const [url, init] = capability.request(who.mailbox);
+				const res = await as(who.token)(url, init);
+				expect([capability.name, who.mailbox, res.ok]).toEqual([
+					capability.name,
+					who.mailbox,
+					true,
+				]);
+			}
 		}
 	});
 });

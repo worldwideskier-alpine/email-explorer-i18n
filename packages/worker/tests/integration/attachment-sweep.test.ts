@@ -31,11 +31,17 @@ import {
  * back.
  */
 
+/*
+ * In the message, where Cloudflare's MX puts it and where ingest reads it.
+ * It used to be passed as the event's `headers`, which the handler never
+ * looks at, so the verdict decided nothing.
+ */
 const PASSING_AUTH =
 	"mx.cloudflare.net; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
 
 const raw = (to: string, filename: string) =>
 	[
+		`Authentication-Results: ${PASSING_AUTH}`,
 		"From: sender@legit.com",
 		`To: ${to}`,
 		"Subject: with an attachment",
@@ -67,7 +73,6 @@ async function receive(message: string, to: string) {
 			}),
 			rawSize: bytes.length,
 			to,
-			headers: new Headers({ "Authentication-Results": PASSING_AUTH }),
 			setReject: () => {},
 		} as never,
 		env,

@@ -57,6 +57,11 @@ async function findEmail(
 	return undefined;
 }
 
+/** How often the Claude stub was asked about a tag; see vitest.config.mts. */
+async function claudeCalls(tag: string): Promise<number> {
+	return (await fetch(`https://api.anthropic.com/__calls/${tag}`)).json();
+}
+
 describe("Sender-based spam verdict override", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
@@ -273,9 +278,12 @@ describe("Sender-based spam verdict override", () => {
 					"Content-Type": "text/plain",
 					"Authentication-Results": PASSING_AUTH_RESULTS,
 				},
-				"Hello",
+				"Hello TRIGGER_CLAUDE_COUNT_VERDICTBEFORE",
 			),
 		);
+		// Before any verdict this sender's mail is asked about, so a count of
+		// nothing below is the verdict's doing and not a key that never took.
+		expect(await claudeCalls("VERDICTBEFORE")).toBe(1);
 		const found = await findEmail("Initial");
 		await authenticatedFetch(
 			`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${found?.id}/spam-verdict`,
@@ -286,9 +294,9 @@ describe("Sender-based spam verdict override", () => {
 			},
 		);
 
-		// No TRIGGER_CLAUDE_SPAM marker -- the stub would say NOT_SPAM if Claude
-		// were consulted. Landing in spam anyway proves the sender override
-		// took precedence and Claude was never called.
+		// Landing in spam says the verdict won, not that Claude was left
+		// alone: asked and then overruled lands in the same place. The count
+		// is what says it was never asked.
 		await simulateReceiveEmail(
 			buildRawEmail(
 				{
@@ -298,13 +306,14 @@ describe("Sender-based spam verdict override", () => {
 					"Content-Type": "text/plain",
 					"Authentication-Results": PASSING_AUTH_RESULTS,
 				},
-				"Hello again",
+				"Hello again TRIGGER_CLAUDE_COUNT_VERDICTAFTER",
 			),
 		);
 		expect(await findEmail("Follow-up, Claude would clear this")).toEqual({
 			id: expect.any(String),
 			folder: "spam",
 		});
+		expect(await claudeCalls("VERDICTAFTER")).toBe(0);
 	});
 
 	it("returns 404 for an unknown email id", async () => {

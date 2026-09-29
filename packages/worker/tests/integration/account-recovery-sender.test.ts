@@ -76,11 +76,31 @@ describe("the password-reset sender", () => {
 			enabled: true,
 		});
 		expect(await settings()).toBe(true);
-		expect((await forgotPassword("test@example.com")).status).not.toBe(503);
-		// The same answer for an address with no account.
-		expect((await forgotPassword("nobody@example.com")).status).toBe(
-			(await forgotPassword("test@example.com")).status,
-		);
+		expect((await forgotPassword("nobody@example.com")).status).not.toBe(503);
+	});
+
+	/**
+	 * The same answer for an address with an account as for one without.
+	 * Both sides have to be real: this used to compare two addresses neither
+	 * of which had an account, which is one answer asked twice.
+	 */
+	it("answers a known address as it answers an unknown one", async () => {
+		const token = await root();
+		await setSender(token, "noreply@example.com");
+
+		const known = await forgotPassword("op@example.com");
+		// The known side really went down the known path: a reset was issued.
+		const issued = await env.BUCKET.list({ prefix: "recovery-tokens/" });
+		expect(issued.objects).toHaveLength(1);
+		const unknown = await forgotPassword("nobody@example.com");
+		expect(
+			(await env.BUCKET.list({ prefix: "recovery-tokens/" })).objects,
+		).toHaveLength(1);
+
+		expect([unknown.status, await unknown.json()]).toEqual([
+			known.status,
+			await known.json(),
+		]);
 	});
 
 	it("is turned off again by clearing it", async () => {

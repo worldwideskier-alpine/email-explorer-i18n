@@ -20,6 +20,27 @@ const overloadAttempts = new Map<string, number>();
 /** Every message the Resend stub below accepted; see "/__sent". */
 const resendSent: { authorization: string; body: unknown }[] = [];
 
+/**
+ * How many times the Anthropic stub was asked about each counted tag; see
+ * "/__calls". A verdict says what the classifier decided, never how often it
+ * was asked, so "not retried" and "never consulted" were claims no test
+ * could check. Keyed by tag, which each test makes its own: the count lives
+ * for the life of this process.
+ */
+const claudeCalls = new Map<string, number>();
+
+/**
+ * Every push the recording push service took; see "/__received". The two
+ * headers are the salt and the sender's key, which the `aesgcm` encoding
+ * carries outside the body and a reader needs to decrypt it.
+ */
+const pushesReceived: {
+	path: string;
+	body: string;
+	encryption: string | null;
+	cryptoKey: string | null;
+}[] = [];
+
 export default defineConfig({
 	plugins: [
 		cloudflareTest({
@@ -44,11 +65,6 @@ export default defineConfig({
 				},
 				r2Persist: false,
 				compatibilityFlags: ["nodejs_compat", "nodejs_als"],
-				serviceBindings: {
-					async SEND_EMAIL() {
-						return {};
-					},
-				},
 				// Reply/forward routes call the real Resend API over fetch();
 				// stub it out so integration tests don't need network access
 				// or a real API key.
@@ -104,17 +120,43 @@ export default defineConfig({
 					if (url.hostname === "push-down.example.test") {
 						return new Response(null, { status: 503 });
 					}
+					// One that takes the message and keeps it, so a test holding
+					// the subscription's private key can read what was sent.
+					// "/__received" answers what arrived, as base64, by path.
+					if (url.hostname === "push-record.example.test") {
+						if (url.pathname === "/__received") {
+							return Response.json(pushesReceived);
+						}
+						const bytes = new Uint8Array(await request.arrayBuffer());
+						pushesReceived.push({
+							path: url.pathname,
+							body: Buffer.from(bytes).toString("base64"),
+							encryption: request.headers.get("Encryption"),
+							cryptoKey: request.headers.get("Crypto-Key"),
+						});
+						return new Response(null, { status: 201 });
+					}
 					// The Claude spam classifier calls the real Anthropic API over
 					// fetch(); stub it too. Tests steer the verdict by including a
 					// marker string in the email body/subject, which ends up in the
 					// request's message content.
 					if (url.hostname === "api.anthropic.com") {
+						if (url.pathname.startsWith("/__calls/")) {
+							const tag = url.pathname.slice("/__calls/".length);
+							return Response.json(claudeCalls.get(tag) ?? 0);
+						}
 						const body = await request.clone().text();
 						// The key-check endpoint sends a fixed message of its own, so
 						// a marker cannot be planted in it. The key can be: it is
 						// what that endpoint is testing, and it reaches here in the
 						// header.
 						const steer = `${body} ${request.headers.get("x-api-key") ?? ""}`;
+						// Counted before anything answers, so every attempt counts
+						// whatever it is answered with.
+						const counted = /TRIGGER_CLAUDE_COUNT_([A-Z0-9]+)/.exec(steer)?.[1];
+						if (counted) {
+							claudeCalls.set(counted, (claudeCalls.get(counted) ?? 0) + 1);
+						}
 						if (body.includes("TRIGGER_CLAUDE_ERROR")) {
 							return new Response("mock error", { status: 500 });
 						}

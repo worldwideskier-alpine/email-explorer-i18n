@@ -847,15 +847,51 @@ describe("API Integration Tests", () => {
 			const postBody = await postResponse.json<any>();
 			const emailId = postBody.id;
 
+			const folderOf = async () =>
+				(
+					await (
+						await authenticatedFetch(
+							`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${emailId}`,
+						)
+					).json<{ folder_id: string }>()
+				).folder_id;
+			const before = await folderOf();
+			expect(before).toBeTruthy();
+
+			// A string, as the schema asks for. The number 999 this used to send
+			// was refused by the schema before the route ran, so the test passed
+			// whatever the route did about a folder that does not exist.
 			const moveResponse = await authenticatedFetch(
 				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${emailId}/move`,
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ folderId: 999 }), // Non-existent folder
+					body: JSON.stringify({ folderId: "no-such-folder" }),
 				},
 			);
 			expect(moveResponse.status).toBe(400);
+			expect(await moveResponse.json()).toEqual({ error: "Folder not found" });
+			expect(await folderOf()).toBe(before);
+		});
+
+		/*
+		 * BUG: moving a message that does not exist answers 200 "moved".
+		 * `MailboxDO.moveEmail` checks only the folder and then runs an UPDATE
+		 * that matches no row, and the route declares a 404 it never sends.
+		 * Kept as the behaviour it should have; remove `.fails` once the route
+		 * answers 404.
+		 */
+		it.fails("should return 404 when moving a message that does not exist", async () => {
+			await createMailbox();
+			const moveResponse = await authenticatedFetch(
+				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/no-such-email/move`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ folderId: "archive" }),
+				},
+			);
+			expect(moveResponse.status).toBe(404);
 		});
 	});
 
