@@ -366,7 +366,12 @@ describe("a mailbox that uses up the pass", () => {
 		const second = await passWithHang(night(22));
 		expect(second.order[0]).toBe(FINE);
 		expect(await archivesOf(FINE)).toHaveLength(2);
-	});
+		// Its own waiting is about 4.5 seconds of real time -- HUNG's call
+		// runs out its limit on the first night and the pass runs out its
+		// deadline on the other two -- which left the default 5 seconds a few
+		// hundred milliseconds for everything else. Measured at 5049 ms here,
+		// and timed out in CI on a busy runner.
+	}, 20_000);
 });
 
 /**
