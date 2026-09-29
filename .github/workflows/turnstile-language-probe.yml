@@ -52,8 +52,10 @@ jobs:
             await page.waitForTimeout(12000);
             const frames = page.frames().filter((f) => f.url().includes("challenges.cloudflare.com"));
             const out = { label, bundle: scripts, htmlLang: await page.evaluate(() => document.documentElement.lang), frames: [] };
-            out.errors = errors.map(clean);
-            const shot = await page.locator("iframe[src*='challenges.cloudflare.com']").first().screenshot({ timeout: 5000 }).catch(() => null);
+            out.errors = errors.length;
+            const box = await page.locator("form div.flex.justify-center").first().boundingBox().catch(() => null);
+            const shot = box ? await page.screenshot({ clip: { x: box.x, y: box.y, width: Math.max(box.width, 310), height: Math.max(box.height, 70) } }).catch(() => null) : null;
+            out.box = box;
             out.widgetPng = shot ? shot.toString("base64") : null;
             for (const f of frames) {
               let text = "";
