@@ -420,6 +420,16 @@ are still checked, by the `tsc` that runs before the worker tests.
   route needs the header, which a message has no way to add. The frame takes
   out every `<link>` but a stylesheet, and `ping` and `attributionsrc`, in
   every folder (`REQUESTS_NOBODY_ASKED_FOR`). `cookie-scope.test.ts`.
+- **The reply editor is this page, not the frame.** A reply or forward puts
+  the original into tiptap, outside the sandbox, so what the editor's schema
+  lets through of a message is this page's markup. Tiptap's highlight wrote
+  `<mark data-color>` into `style` whole: measured in Chromium, a value with a
+  `;` in it laid a `position: fixed` layer over the dashboard and fetched a
+  picture from the sender the moment the reply opened, and would have gone
+  out in the reply too. Both colour marks take a colour and nothing else, on
+  the way in and on the way out (`utils/editorColours.ts`,
+  `editorColours.test.ts`). A new extension that copies an attribute into
+  `style` needs the same.
 - **Dashboard theming.** `index.html` carries the only page background and it
   has both halves (`bg-gray-100 text-gray-900 dark:bg-gray-900
   dark:text-gray-100`); cards use `bg-white dark:bg-gray-800` and follow the

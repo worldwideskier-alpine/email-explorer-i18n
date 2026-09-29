@@ -331,8 +331,6 @@
 </template>
 
 <script setup lang="ts">
-import { Color } from "@tiptap/extension-color";
-import Highlight from "@tiptap/extension-highlight";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import { TableKit } from "@tiptap/extension-table";
@@ -343,6 +341,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/vue-3";
 import { onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { ColourHighlight, TextColour } from "@/utils/editorColours";
 
 const props = defineProps<{
 	modelValue: string;
@@ -409,10 +408,9 @@ const editor = useEditor({
 		}),
 		Image,
 		TextStyle,
-		Color,
-		Highlight.configure({
-			multicolor: true,
-		}),
+		// Only a colour, from a message being replied to: see editorColours.
+		TextColour,
+		ColourHighlight,
 		// Without this, a table in the message being replied to is dropped and
 		// the reply carries its cells as loose text -- an invoice or a quote
 		// comes back to the sender unreadable.
