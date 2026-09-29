@@ -176,8 +176,9 @@ are still checked, by the `tsc` that runs before the worker tests.
   the browser take its form for a sign-in form -- it filled root's own address
   and password into the Turnstile keys, and it offers to save an API key as
   this site's password, which it then fills into sign-in. `SecretInput.vue` is
-  a text box masked by CSS (`-webkit-text-security`, which Firefox has not been
-  checked for) with the password managers' ignore attributes.
+  a text box masked by CSS (`-webkit-text-security`; measured masking in
+  Chromium 141, Firefox 142 and WebKit 26 with the production stylesheet) with
+  the password managers' ignore attributes.
   `secretInputs.test.ts` holds that every `type="password"` box in the
   dashboard says `current-password` or `new-password`, so a new key field made
   as a password box fails there.
