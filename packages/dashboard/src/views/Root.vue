@@ -286,7 +286,14 @@
           <template v-else-if="recovery.fromEmail">{{ t("root.recovery.current", { address: recovery.fromEmail }) }}</template>
           <template v-else>{{ t("root.recovery.off") }}</template>
         </p>
-        <form @submit.prevent="saveRecovery" class="mt-3 flex flex-wrap items-center gap-2">
+        <!-- Arrives filled in with the stored sender; writing only once typed
+             into. See recoveryTouched. -->
+        <form
+          @submit.prevent="saveRecovery"
+          @input="recoveryTouched = true"
+          :data-not-writing="recoveryTouched ? undefined : ''"
+          class="mt-3 flex flex-wrap items-center gap-2"
+        >
           <label for="recoveryFrom" class="sr-only">{{ t("root.recovery.title") }}</label>
           <input
             id="recoveryFrom"
@@ -558,6 +565,14 @@ interface RecoverySender {
 }
 const recovery = ref<RecoverySender | null>(null);
 const recoveryInput = ref("");
+/**
+ * Whether the sender has been typed into since it was loaded or saved. Filled
+ * in from what is stored, it counted as writing the whole time this screen
+ * was open (appUpdate.ts): a session that ended here did not go to sign-in,
+ * and a new build was never picked up. The same as the settings screen's
+ * name and signature.
+ */
+const recoveryTouched = ref(false);
 const recoverySaving = ref(false);
 const recoveryMessage = useLocalizedMessage();
 const recoveryError = useLocalizedMessage();
@@ -566,6 +581,7 @@ async function loadRecovery() {
 	try {
 		recovery.value = (await api.getRecoverySender()).data ?? null;
 		recoveryInput.value = recovery.value?.fromEmail ?? "";
+		recoveryTouched.value = false;
 	} catch {
 		recovery.value = null;
 	}
@@ -578,6 +594,7 @@ async function writeRecovery(fromEmail: string, done: string) {
 	try {
 		recovery.value = (await api.setRecoverySender(fromEmail)).data ?? null;
 		recoveryInput.value = recovery.value?.fromEmail ?? "";
+		recoveryTouched.value = false;
 		recoveryMessage.value = () => t(done);
 	} catch (e: any) {
 		const fromApi = e?.response?.data?.error;

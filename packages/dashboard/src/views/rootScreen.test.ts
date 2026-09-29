@@ -118,7 +118,7 @@ async function mountRoot() {
 const type = (selector: string, value: string) => {
 	const input = host.querySelector(selector) as HTMLInputElement;
 	input.value = value;
-	input.dispatchEvent(new Event("input"));
+	input.dispatchEvent(new Event("input", { bubbles: true }));
 };
 
 const formOf = (selector: string): HTMLFormElement => {
@@ -184,6 +184,43 @@ describe("the password-reset sender on /root", () => {
 		expect(setRecoverySender).toHaveBeenCalledWith("noreply@example.com");
 		expect(host.textContent).toContain("root.recovery.current");
 		expect(host.textContent).not.toContain("root.recovery.off");
+	});
+
+	/**
+	 * A sender that is set arrives in the box, and a filled box counted as
+	 * writing the whole time the screen was open: a session that ended here
+	 * did not go to sign-in, and a new build was never picked up.
+	 */
+	it("is writing only once the sender has been typed into", async () => {
+		const { somethingIsBeingWritten } = await import("@/services/appUpdate");
+		getRecoverySender.mockResolvedValue({
+			data: {
+				fromEmail: "noreply@example.com",
+				setByDeployment: false,
+				enabled: true,
+			},
+		});
+		setRecoverySender.mockResolvedValue({
+			data: {
+				fromEmail: "reset@example.com",
+				setByDeployment: false,
+				enabled: true,
+			},
+		});
+		await mountRoot();
+		expect(
+			(host.querySelector("#recoveryFrom") as HTMLInputElement).value,
+		).toBe("noreply@example.com");
+		expect(somethingIsBeingWritten(document)).toBe(false);
+
+		type("#recoveryFrom", "reset@example.com");
+		await nextTick();
+		expect(somethingIsBeingWritten(document)).toBe(true);
+
+		formOf("#recoveryFrom").dispatchEvent(new Event("submit"));
+		await settle();
+		expect(setRecoverySender).toHaveBeenCalledWith("reset@example.com");
+		expect(somethingIsBeingWritten(document)).toBe(false);
 	});
 
 	it("says when the deployment's own setting is the one in use", async () => {
