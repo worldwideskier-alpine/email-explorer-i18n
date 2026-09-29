@@ -40,3 +40,25 @@ function commaSeparated(value: string): string[] {
 	parts.push(current);
 	return parts;
 }
+
+/**
+ * Each address once, the first spelling kept, and none that is in `already`.
+ *
+ * Compared without case, as mail servers do in practice: `A@x` and `a@x`
+ * were both kept by a `Set`, and reply-all sent the same person two copies --
+ * or one in To and another in Cc.
+ */
+export function uniqueAddresses(
+	addresses: string[],
+	already: string[] = [],
+): string[] {
+	const seen = new Set(already.map((a) => a.trim().toLowerCase()));
+	const out: string[] = [];
+	for (const address of addresses) {
+		const key = address.trim().toLowerCase();
+		if (seen.has(key)) continue;
+		seen.add(key);
+		out.push(address);
+	}
+	return out;
+}

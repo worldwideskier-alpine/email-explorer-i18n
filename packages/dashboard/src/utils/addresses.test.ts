@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { splitAddresses } from "./addresses";
+import { splitAddresses, uniqueAddresses } from "./addresses";
 
 describe("an address field split into addresses", () => {
 	it("splits at commas and drops the empty ones", () => {
@@ -29,5 +29,20 @@ describe("an address field split into addresses", () => {
 		expect(
 			splitAddresses('"Doe, John" <john@example.com>, e@example.com'),
 		).toEqual(['"Doe, John" <john@example.com>', "e@example.com"]);
+	});
+});
+
+describe("addresses made unique", () => {
+	it("compares without case and keeps the first spelling", () => {
+		expect(uniqueAddresses(["A@x.org", "b@x.org", "a@x.org"])).toEqual([
+			"A@x.org",
+			"b@x.org",
+		]);
+	});
+
+	it("leaves out what is already elsewhere", () => {
+		expect(uniqueAddresses(["C@x.org", "d@x.org"], ["c@x.org"])).toEqual([
+			"d@x.org",
+		]);
 	});
 });

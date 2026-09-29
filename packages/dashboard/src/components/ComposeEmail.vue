@@ -198,7 +198,7 @@ import api from "@/services/api";
 import { useEmailStore } from "@/stores/emails";
 import { useMailboxStore } from "@/stores/mailboxes";
 import { useUIStore } from "@/stores/ui";
-import { splitAddresses } from "@/utils/addresses";
+import { splitAddresses, uniqueAddresses } from "@/utils/addresses";
 import { translateApiError } from "@/utils/apiError";
 import {
 	fileToAttachment,
@@ -447,8 +447,9 @@ watch(isComposeModalOpen, (isOpen) => {
 				...splitAddresses(original.recipient || ""),
 			].filter(isOther);
 			const ccList = splitAddresses(original.cc || "").filter(isOther);
-			to.value = Array.from(new Set(toList)).join(", ");
-			cc.value = Array.from(new Set(ccList)).join(", ");
+			const toUnique = uniqueAddresses(toList);
+			to.value = toUnique.join(", ");
+			cc.value = uniqueAddresses(ccList, toUnique).join(", ");
 			showCcBcc.value = cc.value.length > 0;
 			subject.value = replySubject(original.subject);
 			body.value = `<p><br></p>${sigBlock}${quotedBlock(original)}`;

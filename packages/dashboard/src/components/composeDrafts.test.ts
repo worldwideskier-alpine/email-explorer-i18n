@@ -178,6 +178,26 @@ describe("a reply saved as a draft", () => {
 	});
 });
 
+describe("reply-all", () => {
+	/** A `Set` kept `A@x` and `a@x` both, and the same person twice. */
+	it("names each person once, without regard to case", async () => {
+		await openComposer({
+			mode: "reply-all",
+			originalEmail: {
+				...PARENT,
+				sender: "Them@Example.org",
+				recipient: "m@example.com, them@example.org, Other@example.org",
+				cc: "other@example.org, third@example.org, THIRD@example.org",
+			},
+		});
+		// Split: an email field with `multiple` drops the spaces after commas.
+		const list = (id: string) =>
+			(host.querySelector(`#${id}`) as HTMLInputElement).value.split(/,\s*/);
+		expect(list("to")).toEqual(["Them@Example.org", "Other@example.org"]);
+		expect(list("cc")).toEqual(["third@example.org"]);
+	});
+});
+
 describe("the subject of a reply", () => {
 	/** `AW:` came back as `Re: AW: ...`; see subjectPrefix.ts. */
 	it("does not stack Re: on a German AW:", async () => {
