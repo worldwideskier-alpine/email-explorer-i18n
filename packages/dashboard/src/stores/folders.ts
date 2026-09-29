@@ -2,14 +2,30 @@ import { defineStore } from "pinia";
 import api from "@/services/api";
 import type { Folder } from "@/types";
 
+/** Which request for folders is the latest; see fetchFolders. */
+let latestFolders = 0;
+
 export const useFolderStore = defineStore("folders", {
 	state: () => ({
 		folders: [] as Folder[],
+		/** Whose folders these are. */
+		mailboxId: "",
 	}),
 	actions: {
+		/**
+		 * Another mailbox's folders go before its request, and an answer for
+		 * a mailbox no longer asked about is dropped -- the same as the
+		 * mailbox itself (mailboxes.ts). Otherwise a sidebar moved to a new
+		 * mailbox listed the last one's folders until, or unless, it answered.
+		 */
 		async fetchFolders(mailboxId: string) {
+			if (this.mailboxId !== mailboxId) {
+				this.folders = [];
+				this.mailboxId = mailboxId;
+			}
+			const request = ++latestFolders;
 			const response = await api.listFolders(mailboxId);
-			this.folders = response.data;
+			if (request === latestFolders) this.folders = response.data;
 		},
 		async createFolder(mailboxId: string, name: string) {
 			const response = await api.createFolder(mailboxId, name);

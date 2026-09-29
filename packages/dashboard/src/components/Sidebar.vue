@@ -140,7 +140,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { computed, onMounted, watch } from "vue";
+import { computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useFolderStore } from "@/stores/folders";
@@ -166,9 +166,15 @@ const customFolders = computed(() => {
 	);
 });
 
-onMounted(() => {
-	folderStore.fetchFolders(route.params.mailboxId as string);
-});
+// Per mailbox, for the same reason as Mailbox.vue: this sidebar is reused
+// when a notification moves the page to another mailbox.
+watch(
+	() => route.params.mailboxId as string,
+	(id) => {
+		if (id) folderStore.fetchFolders(id).catch(() => {});
+	},
+	{ immediate: true },
+);
 
 const openComposeModal = () => {
 	uiStore.openComposeModal();
