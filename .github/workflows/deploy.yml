@@ -119,10 +119,19 @@ jobs:
       - run: pnpm run build
       - name: Ensure R2 bucket exists
         working-directory: packages/worker/dev
-        # Creating a bucket that is already there is an error, and an error
-        # here is not a reason to stop; the deploy below fails loudly if the
-        # bucket really is missing.
-        run: npx wrangler r2 bucket create "${R2_BUCKET_NAME:-email-explorer-ja}" || true
+        # Asked first, and created only when it is not there. Creating one
+        # that is already there is an error, and it put an [ERROR] in every
+        # deploy's log that meant nothing -- the kind that teaches a reader
+        # to skip the next one. Only info's exit status is wanted, so what it
+        # prints is thrown away. A create that fails is still not a reason to
+        # stop: the deploy below fails loudly if the bucket really is missing.
+        run: |
+          bucket="${R2_BUCKET_NAME:-email-explorer-ja}"
+          if npx wrangler r2 bucket info "$bucket" > /dev/null 2>&1; then
+            echo "The R2 bucket is there."
+          else
+            npx wrangler r2 bucket create "$bucket" || true
+          fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

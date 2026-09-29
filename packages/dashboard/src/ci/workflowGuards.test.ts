@@ -138,6 +138,23 @@ describe("the deploy workflow", () => {
 	 * token, while running every install and build script there is; a token
 	 * that could write could push to main, which deploys.
 	 */
+	/**
+	 * Creating a bucket that is already there is an error, and the step
+	 * printed it on every deploy: an [ERROR] in every log that meant nothing.
+	 * It asks first now, and keeps what the question prints out of the log.
+	 */
+	it("creates the bucket only when it is not there", () => {
+		const step =
+			(deploy ?? "")
+				.split(/\n {6}- /)
+				.find((s) => s.startsWith("name: Ensure R2 bucket exists")) ?? "";
+		const asked = step.indexOf("r2 bucket info");
+		const created = step.indexOf("r2 bucket create");
+		expect(asked, "no r2 bucket info").toBeGreaterThan(-1);
+		expect(created).toBeGreaterThan(asked);
+		expect(step).toMatch(/r2 bucket info "\$bucket" > \/dev\/null 2>&1/);
+	});
+
 	it("gives every job a token that can only read", () => {
 		const top = /^permissions:\n((?: {2}.*\n)+)/m.exec(deploy ?? "")?.[1];
 		expect(top?.trim()).toBe("contents: read");

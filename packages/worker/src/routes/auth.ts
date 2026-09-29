@@ -243,7 +243,15 @@ export class PostRegister extends OpenAPIRoute {
 				authDO,
 				await authDO.login(email, password),
 			);
-			return c.json({ ...user, session }, 201);
+			// The role, as every other route that answers with a user gives
+			// it; the schema said so and this one left it out.
+			const role =
+				session?.role ??
+				roleOf(
+					await authDO.getPersonId(user.id),
+					await authDO.getRootPersonId(),
+				);
+			return c.json({ ...user, role, session }, 201);
 		} catch (error: any) {
 			if (error.message?.includes("UNIQUE constraint failed")) {
 				return c.json({ error: "Email already registered" }, 400);

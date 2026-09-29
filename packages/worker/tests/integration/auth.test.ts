@@ -50,6 +50,9 @@ describe("Authentication & User Management Integration Tests", () => {
 			expect(body).toMatchObject({
 				email: "admin@example.com",
 				isAdmin: true,
+				// Said by the schema, as the other routes that answer with a
+				// user say it; this one used to leave it out.
+				role: "root",
 			});
 			expect(body.id).toBeDefined();
 			expect(body.createdAt).toBeDefined();
