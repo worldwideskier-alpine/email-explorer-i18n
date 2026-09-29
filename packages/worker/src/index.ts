@@ -1741,12 +1741,18 @@ class GetMailboxExport extends OpenAPIRoute {
 		let index = 0;
 		const body = new ReadableStream({
 			async pull(controller) {
-				if (index >= ids.length) {
-					controller.close();
-					return;
+				// A message deleted since the ids were listed comes back as
+				// nothing, and is passed over here rather than by returning: a
+				// pull that hands over no chunk is not necessarily followed by
+				// another, and the runtime ended the download as hung.
+				let email: Awaited<ReturnType<typeof stub.getEmail>> = null;
+				while (!email) {
+					if (index >= ids.length) {
+						controller.close();
+						return;
+					}
+					email = await stub.getEmail(ids[index++]);
 				}
-				const email = await stub.getEmail(ids[index++]);
-				if (!email) return;
 				const folderId = String(
 					(email as { folder_id?: string }).folder_id ?? "inbox",
 				);

@@ -1,4 +1,4 @@
-import { SELF } from "cloudflare:test";
+import { env, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
 	authenticatedFetch,
@@ -178,5 +178,41 @@ describe("Exporting a mailbox as mbox", () => {
 			`http://local.test/api/v1/mailboxes/${mailboxId}/export`,
 		);
 		expect(res.status).toBe(401);
+	});
+});
+
+/**
+ * Mail deleted while the download is under way.
+ *
+ * The ids are listed first and each message is read as the download reaches
+ * it. One deleted in between came back as nothing, and the stream's pull
+ * returned without handing over a chunk -- which a stream is not obliged to
+ * follow with another pull, so the download could stop there, open, for good.
+ */
+describe("an export while mail is being deleted", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createDummyMailbox();
+	});
+
+	it("finishes, with the mail that is still there", async () => {
+		const ids: string[] = [];
+		for (const n of [1, 2, 3, 4, 5, 6])
+			ids.push(await importEmail(`message ${n}`));
+
+		const res = await exportMbox();
+		expect(res.status).toBe(200);
+		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+		for (const id of ids.slice(1, 5)) await stub.deleteEmail(id);
+
+		const outcome = await Promise.race([
+			res.text(),
+			new Promise<string>((resolve) =>
+				setTimeout(() => resolve("still open"), 3000),
+			),
+		]);
+		expect(outcome).not.toBe("still open");
+		expect(outcome).toContain("message 6");
+		for (const n of [2, 3, 4, 5]) expect(outcome).not.toContain(`message ${n}`);
 	});
 });
