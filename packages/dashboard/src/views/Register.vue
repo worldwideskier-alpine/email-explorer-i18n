@@ -71,10 +71,17 @@
 					</div>
 				</div>
 
+				<TurnstileWidget
+					v-if="siteKey"
+					ref="widget"
+					:site-key="siteKey"
+					@token="token = $event"
+				/>
+
 				<div>
 					<button
 						type="submit"
-						:disabled="authStore.loading || password !== confirmPassword"
+						:disabled="authStore.loading || password !== confirmPassword || !ready"
 						class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
 					>
 						{{ authStore.loading ? t("register.creatingAccount") : t("register.createAccount") }}
@@ -92,14 +99,17 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+import TurnstileWidget from "@/components/TurnstileWidget.vue";
 import { useAppSettings } from "@/composables/useAppSettings";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
+import { useTurnstileGate } from "@/composables/useTurnstileGate";
 import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const { t } = useI18n();
 const { isRegistrationEnabled } = useAppSettings();
+const { siteKey, token, widget, ready, spent, current } = useTurnstileGate();
 
 const email = ref("");
 const password = ref("");
@@ -112,13 +122,14 @@ async function handleRegister() {
 	}
 
 	try {
-		await authStore.register(email.value, password.value);
+		await authStore.register(email.value, password.value, current());
 		successMessage.value = () => t("register.accountCreated");
 		setTimeout(() => {
 			router.push("/");
 		}, 1000);
 	} catch (error) {
-		// Error is handled by store
+		// The message is the store's; the token is spent either way.
+		spent(error);
 	}
 }
 </script>

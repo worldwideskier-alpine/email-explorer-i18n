@@ -269,7 +269,8 @@
 		"Original email not found": "Il-messaġġ li qed twieġeb m'għadux jeżisti.",
 		"Token has expired": "Din il-link skadiet.",
 		"That is the only way in": "Dan huwa l-uniku indirizz tad-dħul tiegħek, għalhekk ma jistax jitneħħa.",
-		"You don't have access to this mailbox": "M'għandekx aċċess għal din il-kaxxa postali."
+		"You don't have access to this mailbox": "M'għandekx aċċess għal din il-kaxxa postali.",
+		"Bot check failed": "Il-verifika kontra l-bots ma għaddietx. Jekk jogħġbok erġa' pprova."
 	},
 	"admin": {
 		"title": "Panel tal-amministrazzjoni",
@@ -476,6 +477,33 @@
 			"current": "Qed jintbagħat minn {address}.",
 			"off": "Mhux issettjat: “Insejt il-password” mitfi.",
 			"byDeployment": "L-issettjar tal-istallazzjoni nfisha qed jintuża u għandu prijorità fuq dan."
+		},
+		"turnstile": {
+			"title": "Protezzjoni kontra l-bots għad-dħul (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "Mixgħula (ċavetta tas-sit {siteKey}, ċavetta sigrieta {secret})",
+			"off": "Mitfija",
+			"description": "Jiċċekkja li min juża l-formoli tad-dħul, tar-reġistrazzjoni u tar-reset tal-password mhuwiex bot. Oħloq widget taħt “Turnstile” fid-dashboard ta' Cloudflare (bid-dominju ta' dan is-sit fost il-hostnames tiegħu), imbagħad daħħal iċ-ċavetta tas-sit u ċ-ċavetta sigrieta li jagħtik. Ladarba jiddaħħlu t-tnejn, iċ-ċwievet jiġu ċċekkjati hawn, u ċwievet li ma jgħaddux ma jistgħux jiġu ssejvjati. Iċ-ċavetta sigrieta ma tintweriex aktar wara li tiġi ssejvjata (ħlief l-aħħar 4 karattri tagħha).",
+			"siteKey": "Ċavetta tas-sit",
+			"secretKey": "Ċavetta sigrieta",
+			"enterBoth": "Daħħal iż-żewġ ċwievet biex jibda l-iċċekkjar.",
+			"waiting": "Qed nistennew lil Turnstile…",
+			"checking": "Qed niċċekkjaw iċ-ċwievet…",
+			"passed": "Iċ-ċwievet jaħdmu. Issejvja biex tixgħelha.",
+			"badSecret": "Cloudflare ma jagħrafx din iċ-ċavetta sigrieta.",
+			"mismatch": "Iċ-ċavetta tas-sit u ċ-ċavetta sigrieta mhumiex mill-istess widget.",
+			"unanswered": "Cloudflare ma weġibx. Erġa' pprova ftit wara.",
+			"refused": "Cloudflare ma aċċettax il-verifika ({codes}).",
+			"widgetFailed": "Il-widget ma setax jintwera b'din iċ-ċavetta tas-sit. Iċċekkja ċ-ċavetta tas-sit, u li d-dominju ta' dan is-sit huwa fost il-hostnames tal-widget.",
+			"notChecked": "Il-verifika skadiet. Qed niċċekkjaw mill-ġdid — issejvja ladarba tgħaddi.",
+			"save": "Iċċekkja u ssejvja",
+			"remove": "Neħħi",
+			"saved": "Issejvjata. Il-formoli tad-dħul, tar-reġistrazzjoni u tar-reset tal-password issa jitolbu l-verifika.",
+			"removed": "Imneħħija. Il-protezzjoni kontra l-bots hija mitfija.",
+			"failed": "Ma setgħetx tiġi ssejvjata."
 		}
+	},
+	"turnstile": {
+		"failed": "Il-verifika kontra l-bots ma setgħetx tintwera ({code}). Erġa' tella' l-paġna u erġa' pprova."
 	}
 }

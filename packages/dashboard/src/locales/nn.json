@@ -269,7 +269,8 @@
 		"Original email not found": "Meldinga du svarar på, finst ikkje lenger.",
 		"Token has expired": "Denne lenkja har gått ut.",
 		"That is the only way in": "Dette er den einaste påloggingsadressa di, så ho kan ikkje fjernast.",
-		"You don't have access to this mailbox": "Du har ikkje tilgang til denne postkassa."
+		"You don't have access to this mailbox": "Du har ikkje tilgang til denne postkassa.",
+		"Bot check failed": "Robotsjekken vart ikkje bestått. Prøv igjen."
 	},
 	"admin": {
 		"title": "Administratorpanel",
@@ -476,6 +477,33 @@
 			"current": "Sender frå {address}.",
 			"off": "Ikkje sett: «Gløymt passord» er slått av.",
 			"byDeployment": "Utrullinga si eiga innstilling vert brukt og går føre denne."
+		},
+		"turnstile": {
+			"title": "Robotvern for innlogging (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "På (nettstadnøkkel {siteKey}, hemmeleg nøkkel {secret})",
+			"off": "Av",
+			"description": "Sjekkar at den som brukar skjemaa for innlogging, registrering og tilbakestilling av passord, ikkje er ein robot. Opprett ein widget under «Turnstile» i Cloudflare-dashbordet (med domenet til denne nettstaden blant vertsnamna), og skriv inn nettstadnøkkelen og den hemmelege nøkkelen du får. Når begge er fylte inn, vert nøklane sjekka her, og nøklar som ikkje består, kan ikkje lagrast. Den hemmelege nøkkelen vert ikkje vist igjen etter lagring (berre dei siste 4 teikna).",
+			"siteKey": "Nettstadnøkkel",
+			"secretKey": "Hemmeleg nøkkel",
+			"enterBoth": "Fyll inn begge nøklane for å starte sjekken.",
+			"waiting": "Ventar på Turnstile…",
+			"checking": "Sjekkar nøklane…",
+			"passed": "Nøklane fungerer. Lagre for å slå det på.",
+			"badSecret": "Cloudflare kjenner ikkje att denne hemmelege nøkkelen.",
+			"mismatch": "Nettstadnøkkelen og den hemmelege nøkkelen er ikkje frå same widget.",
+			"unanswered": "Cloudflare svarte ikkje. Prøv igjen om litt.",
+			"refused": "Cloudflare godtok ikkje sjekken ({codes}).",
+			"widgetFailed": "Widgeten kunne ikkje visast med denne nettstadnøkkelen. Sjekk nettstadnøkkelen, og at domenet til denne nettstaden er blant vertsnamna til widgeten.",
+			"notChecked": "Sjekken har gått ut. Sjekkar på nytt – lagre når han er bestått.",
+			"save": "Sjekk og lagre",
+			"remove": "Fjern",
+			"saved": "Lagra. Skjemaa for innlogging, registrering og tilbakestilling av passord ber no om sjekken.",
+			"removed": "Fjerna. Robotvernet er av.",
+			"failed": "Kunne ikkje lagrast."
 		}
+	},
+	"turnstile": {
+		"failed": "Robotsjekken kunne ikkje visast ({code}). Last inn sida på nytt og prøv igjen."
 	}
 }

@@ -269,7 +269,8 @@
 		"Original email not found": "Níl an teachtaireacht a bhfuil tú ag freagairt uirthi ann a thuilleadh.",
 		"Token has expired": "Tá an nasc seo imithe in éag.",
 		"That is the only way in": "Is é seo an t-aon seoladh síniú isteach atá agat, mar sin ní féidir é a bhaint.",
-		"You don't have access to this mailbox": "Níl rochtain agat ar an mbosca poist seo."
+		"You don't have access to this mailbox": "Níl rochtain agat ar an mbosca poist seo.",
+		"Bot check failed": "Níor éirigh leis an bhfíorú frithbhota. Bain triail eile as le do thoil."
 	},
 	"admin": {
 		"title": "Painéal riaracháin",
@@ -476,6 +477,33 @@
 			"current": "Á sheoladh ó {address}.",
 			"off": "Gan socrú: tá “Dearmad ar phasfhocal” múchta.",
 			"byDeployment": "Tá socrú féin an imscartha in úsáid agus tá tosaíocht aige ar an gceann seo."
+		},
+		"turnstile": {
+			"title": "Cosaint frithbhota don síniú isteach (Cloudflare Turnstile)",
+			"statusLabel": "Stádas",
+			"on": "Ar siúl (eochair suímh {siteKey}, eochair rúnda {secret})",
+			"off": "Múchta",
+			"description": "Deimhníonn sé nach bot é an té a úsáideann na foirmeacha sínithe isteach, cláraithe agus athshocraithe pasfhocail. Cruthaigh giuirléid faoi “Turnstile” i bpainéal rialaithe Cloudflare (le fearann an tsuímh seo i measc a hóstainmneacha), ansin cuir isteach an eochair suímh agus an eochair rúnda a thugann sí duit. Nuair a bheidh an dá cheann curtha isteach, seiceáiltear na heochracha anseo, agus ní féidir eochracha nach n-éiríonn leo a shábháil. Ní thaispeántar an eochair rúnda arís tar éis í a shábháil (ach amháin a 4 charachtar deiridh).",
+			"siteKey": "Eochair suímh",
+			"secretKey": "Eochair rúnda",
+			"enterBoth": "Cuir isteach an dá eochair chun an fíorú a thosú.",
+			"waiting": "Ag fanacht ar Turnstile…",
+			"checking": "Ag seiceáil na n-eochracha…",
+			"passed": "Oibríonn na heochracha. Sábháil chun an chosaint a chur ar siúl.",
+			"badSecret": "Ní aithníonn Cloudflare an eochair rúnda seo.",
+			"mismatch": "Níl an eochair suímh agus an eochair rúnda ón ngiuirléid chéanna.",
+			"unanswered": "Níor fhreagair Cloudflare. Bain triail eile as i gceann nóiméid.",
+			"refused": "Níor ghlac Cloudflare leis an bhfíorú ({codes}).",
+			"widgetFailed": "Níorbh fhéidir an ghiuirléid a thaispeáint leis an eochair suímh seo. Seiceáil an eochair suímh, agus go bhfuil fearann an tsuímh seo i measc óstainmneacha na giuirléide.",
+			"notChecked": "Tá an fíorú imithe in éag. Á sheiceáil arís — sábháil nuair a éireoidh leis.",
+			"save": "Seiceáil agus sábháil",
+			"remove": "Bain",
+			"saved": "Sábháilte. Iarrann na foirmeacha sínithe isteach, cláraithe agus athshocraithe pasfhocail an fíorú anois.",
+			"removed": "Bainte. Tá an chosaint frithbhota múchta.",
+			"failed": "Níorbh fhéidir é a shábháil."
 		}
+	},
+	"turnstile": {
+		"failed": "Níorbh fhéidir an fíorú frithbhota a thaispeáint ({code}). Athlódáil an leathanach agus bain triail eile as."
 	}
 }

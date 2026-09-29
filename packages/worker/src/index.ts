@@ -51,17 +51,21 @@ import {
 import { PostForwardEmail, PostReplyEmail } from "./routes/reply-forward";
 import {
 	DeleteAccount,
+	DeleteTurnstile,
 	GetAccounts,
 	GetAttachmentSweep,
 	GetMaintenance,
 	GetMaintenanceHistory,
 	GetRecoverySender,
+	GetTurnstile,
 	PostAccount,
 	PostAccountLock,
 	PostAccountPassword,
 	PostAttachmentPurge,
 	PostAttachmentRepair,
+	PostTurnstileVerify,
 	PutRecoverySender,
+	PutTurnstile,
 } from "./routes/root";
 import { runScheduledMaintenance } from "./scheduled-run";
 import { keepSentCopy, prepareAttachments } from "./sent-copy";
@@ -76,6 +80,7 @@ import {
 	passwordResetThrottleRules,
 	retryAfterSeconds,
 } from "./throttle";
+import { storedTurnstile, turnstileRefusal } from "./turnstile";
 import type { EmailExplorerOptions, Env, Session } from "./types";
 
 type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
@@ -165,6 +170,8 @@ const ForgotPasswordRequestSchema = z.object({
 	// a 400 and no mail is sent at all. Anything else -- an older cached page,
 	// a direct API call -- falls back (see resolveMailLocale).
 	locale: z.enum(MAIL_LOCALES).optional(),
+	// From the Turnstile widget, when root has turned it on; see turnstile.ts.
+	turnstileToken: z.string().optional(),
 });
 
 const ResetPasswordRequestSchema = z.object({
@@ -178,6 +185,11 @@ const AppSettingsResponseSchema = z.object({
 	}),
 	accountRecovery: z.object({
 		enabled: z.boolean(),
+	}),
+	// The site key the sign-in forms render the widget with, or null when
+	// root has not turned Turnstile on. Public by nature: it is in the page.
+	turnstile: z.object({
+		siteKey: z.string().nullable(),
 	}),
 });
 
@@ -2051,6 +2063,10 @@ class PostForgotPassword extends OpenAPIRoute {
 				description: "Bad request",
 				...contentJson(ErrorResponseSchema),
 			},
+			"403": {
+				description: "The bot check failed",
+				...contentJson(ErrorResponseSchema),
+			},
 			"429": {
 				description: "Too many requests",
 				...contentJson(ErrorResponseSchema),
@@ -2069,7 +2085,11 @@ class PostForgotPassword extends OpenAPIRoute {
 		}
 
 		const data = await this.getValidatedData<typeof this.schema>();
-		const { email, locale } = data.body;
+		const { email, locale, turnstileToken } = data.body;
+
+		// Before the throttle; see turnstileRefusal.
+		const refused = await turnstileRefusal(c.env, c.req.raw, turnstileToken);
+		if (refused) return refused;
 
 		const ns = c.env.MAILBOX;
 		const authId = ns.idFromName("AUTH");
@@ -2364,6 +2384,9 @@ class GetAppSettings extends OpenAPIRoute {
 			accountRecovery: {
 				enabled: accountRecoveryEnabled,
 			},
+			turnstile: {
+				siteKey: (await storedTurnstile(c.env))?.siteKey ?? null,
+			},
 		});
 	}
 }
@@ -2459,6 +2482,10 @@ openapi.post("/api/v1/root/accounts/:personId/lock", PostAccountLock);
 openapi.delete("/api/v1/root/accounts/:personId", DeleteAccount);
 openapi.get("/api/v1/root/settings/account-recovery", GetRecoverySender);
 openapi.put("/api/v1/root/settings/account-recovery", PutRecoverySender);
+openapi.get("/api/v1/root/settings/turnstile", GetTurnstile);
+openapi.put("/api/v1/root/settings/turnstile", PutTurnstile);
+openapi.delete("/api/v1/root/settings/turnstile", DeleteTurnstile);
+openapi.post("/api/v1/root/settings/turnstile/verify", PostTurnstileVerify);
 openapi.get("/api/v1/root/attachments", GetAttachmentSweep);
 openapi.post("/api/v1/root/attachments/repair", PostAttachmentRepair);
 openapi.post("/api/v1/root/attachments/purge", PostAttachmentPurge);

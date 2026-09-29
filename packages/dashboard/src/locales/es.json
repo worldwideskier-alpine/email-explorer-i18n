@@ -269,7 +269,8 @@
 		"Original email not found": "El mensaje al que respondes ya no existe.",
 		"Token has expired": "Este enlace ha caducado.",
 		"That is the only way in": "Es tu única dirección de inicio de sesión, así que no se puede quitar.",
-		"You don't have access to this mailbox": "No tienes acceso a este buzón."
+		"You don't have access to this mailbox": "No tienes acceso a este buzón.",
+		"Bot check failed": "No se superó la verificación antibots. Inténtalo de nuevo."
 	},
 	"admin": {
 		"title": "Panel de administración",
@@ -476,6 +477,33 @@
 			"current": "Se envía desde {address}.",
 			"off": "Sin configurar: «Olvidé mi contraseña» está desactivado.",
 			"byDeployment": "Se usa la configuración propia del despliegue, que tiene prioridad sobre esta."
+		},
+		"turnstile": {
+			"title": "Protección contra bots para el inicio de sesión (Cloudflare Turnstile)",
+			"statusLabel": "Estado",
+			"on": "Activada (clave del sitio {siteKey}, clave secreta {secret})",
+			"off": "Desactivada",
+			"description": "Comprueba que quien usa los formularios de inicio de sesión, registro y restablecimiento de contraseña no es un bot. Crea un widget en «Turnstile» en el panel de Cloudflare (con el dominio de este sitio entre sus nombres de host) e introduce la clave del sitio y la clave secreta que te dé. Cuando hayas introducido ambas, las claves se comprueban aquí y las que no superen la verificación no se pueden guardar. La clave secreta no vuelve a mostrarse después de guardarla (solo sus 4 últimos caracteres).",
+			"siteKey": "Clave del sitio",
+			"secretKey": "Clave secreta",
+			"enterBoth": "Introduce ambas claves para iniciar la verificación.",
+			"waiting": "Esperando a Turnstile…",
+			"checking": "Comprobando las claves…",
+			"passed": "Las claves funcionan. Guarda para activarla.",
+			"badSecret": "Cloudflare no reconoce esta clave secreta.",
+			"mismatch": "La clave del sitio y la clave secreta no son del mismo widget.",
+			"unanswered": "Cloudflare no respondió. Inténtalo de nuevo en un momento.",
+			"refused": "Cloudflare no aceptó la verificación ({codes}).",
+			"widgetFailed": "No se pudo mostrar el widget con esta clave del sitio. Revisa la clave del sitio y que el dominio de este sitio esté entre los nombres de host del widget.",
+			"notChecked": "La verificación ha caducado. Verificando de nuevo — guarda cuando se supere.",
+			"save": "Comprobar y guardar",
+			"remove": "Quitar",
+			"saved": "Guardado. Los formularios de inicio de sesión, registro y restablecimiento de contraseña ahora piden la verificación.",
+			"removed": "Quitado. La protección contra bots está desactivada.",
+			"failed": "No se pudo guardar."
 		}
+	},
+	"turnstile": {
+		"failed": "No se pudo mostrar la verificación antibots ({code}). Recarga la página e inténtalo de nuevo."
 	}
 }

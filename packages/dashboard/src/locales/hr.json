@@ -269,7 +269,8 @@
 		"Original email not found": "Poruka na koju odgovarate više ne postoji.",
 		"Token has expired": "Ova je poveznica istekla.",
 		"That is the only way in": "Ovo je vaša jedina adresa za prijavu pa se ne može ukloniti.",
-		"You don't have access to this mailbox": "Nemate pristup ovom poštanskom pretincu."
+		"You don't have access to this mailbox": "Nemate pristup ovom poštanskom pretincu.",
+		"Bot check failed": "Provjera protiv botova nije prošla. Pokušajte ponovno."
 	},
 	"admin": {
 		"title": "Administratorska ploča",
@@ -476,6 +477,33 @@
 			"current": "Šalje se s {address}.",
 			"off": "Nije postavljeno: „Zaboravljena lozinka” je isključeno.",
 			"byDeployment": "Koristi se vlastita postavka implementacije, koja ima prednost pred ovom."
+		},
+		"turnstile": {
+			"title": "Zaštita prijave od botova (Cloudflare Turnstile)",
+			"statusLabel": "Stanje",
+			"on": "Uključeno (ključ web-mjesta {siteKey}, tajni ključ {secret})",
+			"off": "Isključeno",
+			"description": "Provjerava da onaj tko koristi obrasce za prijavu, registraciju i ponovno postavljanje lozinke nije bot. Izradite widget pod „Turnstile” na nadzornoj ploči Cloudflare (s domenom ove stranice među njegovim nazivima hostova), a zatim unesite ključ web-mjesta i tajni ključ koje dobijete. Kad unesete oba, ključevi se ovdje provjeravaju, a ključevi koji ne prođu ne mogu se spremiti. Tajni ključ nakon spremanja više se ne prikazuje (samo njegova zadnja 4 znaka).",
+			"siteKey": "Ključ web-mjesta",
+			"secretKey": "Tajni ključ",
+			"enterBoth": "Unesite oba ključa za početak provjere.",
+			"waiting": "Čeka se Turnstile…",
+			"checking": "Provjeravaju se ključevi…",
+			"passed": "Ključevi rade. Spremite kako biste uključili zaštitu.",
+			"badSecret": "Cloudflare ne prepoznaje ovaj tajni ključ.",
+			"mismatch": "Ključ web-mjesta i tajni ključ nisu iz istog widgeta.",
+			"unanswered": "Cloudflare nije odgovorio. Pokušajte ponovno za trenutak.",
+			"refused": "Cloudflare nije prihvatio provjeru ({codes}).",
+			"widgetFailed": "Widget se nije mogao prikazati s ovim ključem web-mjesta. Provjerite ključ web-mjesta i je li domena ove stranice među nazivima hostova widgeta.",
+			"notChecked": "Provjera je istekla. Ponovno se provjerava — spremite kad prođe.",
+			"save": "Provjeri i spremi",
+			"remove": "Ukloni",
+			"saved": "Spremljeno. Obrasci za prijavu, registraciju i ponovno postavljanje lozinke sada traže provjeru.",
+			"removed": "Uklonjeno. Zaštita od botova je isključena.",
+			"failed": "Spremanje nije uspjelo."
 		}
+	},
+	"turnstile": {
+		"failed": "Provjera protiv botova nije se mogla prikazati ({code}). Ponovno učitajte stranicu i pokušajte ponovno."
 	}
 }

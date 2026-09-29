@@ -269,7 +269,8 @@
 		"Original email not found": "Az üzenet, amelyre válaszol, már nem létezik.",
 		"Token has expired": "Ez a hivatkozás lejárt.",
 		"That is the only way in": "Ez az egyetlen bejelentkezési címe, ezért nem távolítható el.",
-		"You don't have access to this mailbox": "Nincs hozzáférése ehhez a postafiókhoz."
+		"You don't have access to this mailbox": "Nincs hozzáférése ehhez a postafiókhoz.",
+		"Bot check failed": "A robotellenőrzés nem sikerült. Kérjük, próbálja újra."
 	},
 	"admin": {
 		"title": "Rendszergazdai panel",
@@ -476,6 +477,33 @@
 			"current": "Küldés innen: {address}.",
 			"off": "Nincs beállítva: az „Elfelejtett jelszó” ki van kapcsolva.",
 			"byDeployment": "A telepítés saját beállítása van érvényben, és elsőbbséget élvez ezzel szemben."
+		},
+		"turnstile": {
+			"title": "Robotvédelem a bejelentkezéshez (Cloudflare Turnstile)",
+			"statusLabel": "Állapot",
+			"on": "Bekapcsolva (webhelykulcs: {siteKey}, titkos kulcs: {secret})",
+			"off": "Kikapcsolva",
+			"description": "Ellenőrzi, hogy aki a bejelentkezési, regisztrációs és jelszó-visszaállítási űrlapot használja, nem robot. Hozzon létre egy widgetet a Cloudflare irányítópultján a „Turnstile” alatt (a gépnevei között ennek a webhelynek a domainjével), majd adja meg a kapott webhelykulcsot és titkos kulcsot. Amint mindkettőt megadta, a kulcsok itt ellenőrzésre kerülnek, és az ellenőrzésen át nem menő kulcsok nem menthetők. A titkos kulcs mentés után nem jelenik meg újra (csak az utolsó 4 karaktere).",
+			"siteKey": "Webhelykulcs",
+			"secretKey": "Titkos kulcs",
+			"enterBoth": "Az ellenőrzés indításához adja meg mindkét kulcsot.",
+			"waiting": "Várakozás a Turnstile-ra…",
+			"checking": "A kulcsok ellenőrzése…",
+			"passed": "A kulcsok működnek. A bekapcsoláshoz mentse.",
+			"badSecret": "A Cloudflare nem ismeri fel ezt a titkos kulcsot.",
+			"mismatch": "A webhelykulcs és a titkos kulcs nem ugyanahhoz a widgethez tartozik.",
+			"unanswered": "A Cloudflare nem válaszolt. Próbálja újra egy kis idő múlva.",
+			"refused": "A Cloudflare nem fogadta el az ellenőrzést ({codes}).",
+			"widgetFailed": "A widget nem jeleníthető meg ezzel a webhelykulccsal. Ellenőrizze a webhelykulcsot, és hogy ennek a webhelynek a domainje szerepel-e a widget gépnevei között.",
+			"notChecked": "Az ellenőrzés lejárt. Újraellenőrzés folyamatban — mentse, amint sikerült.",
+			"save": "Ellenőrzés és mentés",
+			"remove": "Eltávolítás",
+			"saved": "Mentve. A bejelentkezési, regisztrációs és jelszó-visszaállítási űrlapok mostantól kérik az ellenőrzést.",
+			"removed": "Eltávolítva. A robotvédelem ki van kapcsolva.",
+			"failed": "A mentés nem sikerült."
 		}
+	},
+	"turnstile": {
+		"failed": "A robotellenőrzés nem jeleníthető meg ({code}). Töltse be újra az oldalt, és próbálja újra."
 	}
 }

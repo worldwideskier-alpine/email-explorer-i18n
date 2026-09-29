@@ -269,7 +269,8 @@
 		"Original email not found": "Beskeden, du svarer på, findes ikke længere.",
 		"Token has expired": "Dette link er udløbet.",
 		"That is the only way in": "Dette er din eneste login-adresse, så den kan ikke fjernes.",
-		"You don't have access to this mailbox": "Du har ikke adgang til denne postkasse."
+		"You don't have access to this mailbox": "Du har ikke adgang til denne postkasse.",
+		"Bot check failed": "Bottjekket blev ikke bestået. Prøv igen."
 	},
 	"admin": {
 		"title": "Administrationspanel",
@@ -476,6 +477,33 @@
 			"current": "Sender fra {address}.",
 			"off": "Ikke angivet: »Glemt adgangskode« er slået fra.",
 			"byDeployment": "Udrulningens egen indstilling bruges og går forud for denne."
+		},
+		"turnstile": {
+			"title": "Botbeskyttelse af login (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "Slået til (webstedsnøgle {siteKey}, hemmelig nøgle {secret})",
+			"off": "Slået fra",
+			"description": "Kontrollerer, at den, der bruger formularerne til login, oprettelse af konto og nulstilling af adgangskode, ikke er en bot. Opret en widget under »Turnstile« i Cloudflare-dashboardet (med dette websteds domæne blandt dens værtsnavne), og indtast derefter den webstedsnøgle og hemmelige nøgle, den giver dig. Når begge er indtastet, kontrolleres nøglerne her, og nøgler, der ikke består, kan ikke gemmes. Den hemmelige nøgle vises ikke igen, når den er gemt (kun dens sidste 4 tegn).",
+			"siteKey": "Webstedsnøgle",
+			"secretKey": "Hemmelig nøgle",
+			"enterBoth": "Indtast begge nøgler for at starte kontrollen.",
+			"waiting": "Venter på Turnstile…",
+			"checking": "Kontrollerer nøglerne…",
+			"passed": "Nøglerne virker. Gem for at slå beskyttelsen til.",
+			"badSecret": "Cloudflare genkender ikke denne hemmelige nøgle.",
+			"mismatch": "Webstedsnøglen og den hemmelige nøgle er ikke fra samme widget.",
+			"unanswered": "Cloudflare svarede ikke. Prøv igen om lidt.",
+			"refused": "Cloudflare accepterede ikke kontrollen ({codes}).",
+			"widgetFailed": "Widgetten kunne ikke vises med denne webstedsnøgle. Tjek webstedsnøglen, og at dette websteds domæne er blandt widgettens værtsnavne.",
+			"notChecked": "Kontrollen er udløbet. Kontrollerer igen — gem, når den er bestået.",
+			"save": "Kontrollér og gem",
+			"remove": "Fjern",
+			"saved": "Gemt. Formularerne til login, oprettelse af konto og nulstilling af adgangskode kræver nu kontrollen.",
+			"removed": "Fjernet. Botbeskyttelse er slået fra.",
+			"failed": "Kunne ikke gemmes."
 		}
+	},
+	"turnstile": {
+		"failed": "Bottjekket kunne ikke vises ({code}). Genindlæs siden, og prøv igen."
 	}
 }

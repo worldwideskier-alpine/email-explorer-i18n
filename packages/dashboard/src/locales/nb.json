@@ -269,7 +269,8 @@
 		"Original email not found": "Meldingen du svarer på, finnes ikke lenger.",
 		"Token has expired": "Denne lenken har utløpt.",
 		"That is the only way in": "Dette er din eneste påloggingsadresse, så den kan ikke fjernes.",
-		"You don't have access to this mailbox": "Du har ikke tilgang til denne postkassen."
+		"You don't have access to this mailbox": "Du har ikke tilgang til denne postkassen.",
+		"Bot check failed": "Robotsjekken ble ikke bestått. Prøv igjen."
 	},
 	"admin": {
 		"title": "Administratorpanel",
@@ -476,6 +477,33 @@
 			"current": "Sender fra {address}.",
 			"off": "Ikke angitt: «Glemt passord» er slått av.",
 			"byDeployment": "Utrullingens egen innstilling brukes og går foran denne."
+		},
+		"turnstile": {
+			"title": "Robotbeskyttelse for innlogging (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "På (nettstedsnøkkel {siteKey}, hemmelig nøkkel {secret})",
+			"off": "Av",
+			"description": "Sjekker at den som bruker skjemaene for innlogging, registrering og tilbakestilling av passord, ikke er en robot. Opprett en widget under «Turnstile» i Cloudflare-dashbordet (med dette nettstedets domene blant vertsnavnene), og skriv inn nettstedsnøkkelen og den hemmelige nøkkelen du får. Når begge er fylt inn, sjekkes nøklene her, og nøkler som ikke består, kan ikke lagres. Den hemmelige nøkkelen vises ikke igjen etter lagring (bare de siste 4 tegnene).",
+			"siteKey": "Nettstedsnøkkel",
+			"secretKey": "Hemmelig nøkkel",
+			"enterBoth": "Fyll inn begge nøklene for å starte sjekken.",
+			"waiting": "Venter på Turnstile…",
+			"checking": "Sjekker nøklene…",
+			"passed": "Nøklene fungerer. Lagre for å slå det på.",
+			"badSecret": "Cloudflare kjenner ikke igjen denne hemmelige nøkkelen.",
+			"mismatch": "Nettstedsnøkkelen og den hemmelige nøkkelen er ikke fra samme widget.",
+			"unanswered": "Cloudflare svarte ikke. Prøv igjen om litt.",
+			"refused": "Cloudflare godtok ikke sjekken ({codes}).",
+			"widgetFailed": "Widgeten kunne ikke vises med denne nettstedsnøkkelen. Sjekk nettstedsnøkkelen, og at dette nettstedets domene er blant widgetens vertsnavn.",
+			"notChecked": "Sjekken er utløpt. Sjekker på nytt – lagre når den er bestått.",
+			"save": "Sjekk og lagre",
+			"remove": "Fjern",
+			"saved": "Lagret. Skjemaene for innlogging, registrering og tilbakestilling av passord ber nå om sjekken.",
+			"removed": "Fjernet. Robotbeskyttelsen er av.",
+			"failed": "Kunne ikke lagres."
 		}
+	},
+	"turnstile": {
+		"failed": "Robotsjekken kunne ikke vises ({code}). Last inn siden på nytt og prøv igjen."
 	}
 }

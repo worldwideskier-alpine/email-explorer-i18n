@@ -269,7 +269,8 @@
 		"Original email not found": "Skilaboðin sem þú svarar eru ekki lengur til.",
 		"Token has expired": "Þessi tengill er útrunninn.",
 		"That is the only way in": "Þetta er eina innskráningarnetfangið þitt og því er ekki hægt að fjarlægja það.",
-		"You don't have access to this mailbox": "Þú hefur ekki aðgang að þessu pósthólfi."
+		"You don't have access to this mailbox": "Þú hefur ekki aðgang að þessu pósthólfi.",
+		"Bot check failed": "Róbotaprófið stóðst ekki. Reyndu aftur."
 	},
 	"admin": {
 		"title": "Stjórnborð",
@@ -476,6 +477,33 @@
 			"current": "Sent frá {address}.",
 			"off": "Ekki stillt: „Gleymt lykilorð“ er óvirkt.",
 			"byDeployment": "Eigin stilling uppsetningarinnar er í notkun og gengur fyrir þessari."
+		},
+		"turnstile": {
+			"title": "Róbotavörn við innskráningu (Cloudflare Turnstile)",
+			"statusLabel": "Staða",
+			"on": "Virkt (vefsvæðislykill {siteKey}, leynilykill {secret})",
+			"off": "Óvirkt",
+			"description": "Gengur úr skugga um að sá sem notar eyðublöðin fyrir innskráningu, nýskráningu og endurstillingu lykilorðs sé ekki róbot. Búðu til græju undir „Turnstile“ á stjórnborði Cloudflare (með lén þessa vefs á meðal hýsilnafna hennar) og sláðu svo inn vefsvæðislykilinn og leynilykilinn sem hún gefur þér. Þegar báðir hafa verið slegnir inn eru lyklarnir prófaðir hér og ekki er hægt að vista lykla sem standast ekki. Leynilykillinn er ekki sýndur aftur eftir vistun (aðeins síðustu 4 stafirnir í honum).",
+			"siteKey": "Vefsvæðislykill",
+			"secretKey": "Leynilykill",
+			"enterBoth": "Sláðu inn báða lyklana til að hefja prófið.",
+			"waiting": "Beðið eftir Turnstile…",
+			"checking": "Lyklarnir eru prófaðir…",
+			"passed": "Lyklarnir virka. Vistaðu til að virkja vörnina.",
+			"badSecret": "Cloudflare þekkir ekki þennan leynilykil.",
+			"mismatch": "Vefsvæðislykillinn og leynilykillinn eru ekki úr sömu græjunni.",
+			"unanswered": "Cloudflare svaraði ekki. Reyndu aftur eftir smástund.",
+			"refused": "Cloudflare samþykkti ekki prófið ({codes}).",
+			"widgetFailed": "Ekki tókst að birta græjuna með þessum vefsvæðislykli. Athugaðu vefsvæðislykilinn og hvort lén þessa vefs sé á meðal hýsilnafna græjunnar.",
+			"notChecked": "Prófið er útrunnið. Prófað aftur — vistaðu þegar það stenst.",
+			"save": "Prófa og vista",
+			"remove": "Fjarlægja",
+			"saved": "Vistað. Eyðublöðin fyrir innskráningu, nýskráningu og endurstillingu lykilorðs biðja nú um prófið.",
+			"removed": "Fjarlægt. Róbotavörn er óvirk.",
+			"failed": "Ekki tókst að vista."
 		}
+	},
+	"turnstile": {
+		"failed": "Ekki tókst að birta róbotaprófið ({code}). Hladdu síðunni aftur inn og reyndu á ný."
 	}
 }

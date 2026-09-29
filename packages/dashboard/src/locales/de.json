@@ -269,7 +269,8 @@
 		"Original email not found": "Die Nachricht, auf die Sie antworten, existiert nicht mehr.",
 		"Token has expired": "Dieser Link ist abgelaufen.",
 		"That is the only way in": "Dies ist Ihre einzige Anmeldeadresse und kann daher nicht entfernt werden.",
-		"You don't have access to this mailbox": "Sie haben keinen Zugriff auf dieses Postfach."
+		"You don't have access to this mailbox": "Sie haben keinen Zugriff auf dieses Postfach.",
+		"Bot check failed": "Die Bot-Prüfung wurde nicht bestanden. Bitte versuchen Sie es erneut."
 	},
 	"admin": {
 		"title": "Admin-Panel",
@@ -476,6 +477,33 @@
 			"current": "Gesendet wird von {address}.",
 			"off": "Nicht festgelegt: „Passwort vergessen“ ist deaktiviert.",
 			"byDeployment": "Die eigene Einstellung der Bereitstellung wird verwendet und hat Vorrang vor dieser."
+		},
+		"turnstile": {
+			"title": "Bot-Schutz für die Anmeldung (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "Aktiviert (Websiteschlüssel {siteKey}, geheimer Schlüssel {secret})",
+			"off": "Deaktiviert",
+			"description": "Stellt sicher, dass die Formulare für Anmeldung, Registrierung und Zurücksetzen des Passworts nicht von einem Bot verwendet werden. Erstellen Sie im Cloudflare-Dashboard unter „Turnstile“ ein Widget (mit der Domain dieser Website unter seinen Hostnamen) und geben Sie dann den Websiteschlüssel und den geheimen Schlüssel ein, die es Ihnen liefert. Sobald beide eingegeben sind, werden die Schlüssel hier geprüft; Schlüssel, die die Prüfung nicht bestehen, können nicht gespeichert werden. Der geheime Schlüssel wird nach dem Speichern nicht mehr angezeigt (nur seine letzten 4 Zeichen).",
+			"siteKey": "Websiteschlüssel",
+			"secretKey": "Geheimer Schlüssel",
+			"enterBoth": "Geben Sie beide Schlüssel ein, um die Prüfung zu starten.",
+			"waiting": "Warte auf Turnstile…",
+			"checking": "Schlüssel werden geprüft…",
+			"passed": "Die Schlüssel funktionieren. Speichern Sie, um den Schutz zu aktivieren.",
+			"badSecret": "Cloudflare erkennt diesen geheimen Schlüssel nicht.",
+			"mismatch": "Websiteschlüssel und geheimer Schlüssel stammen nicht vom selben Widget.",
+			"unanswered": "Cloudflare hat nicht geantwortet. Versuchen Sie es gleich noch einmal.",
+			"refused": "Cloudflare hat die Prüfung nicht akzeptiert ({codes}).",
+			"widgetFailed": "Das Widget konnte mit diesem Websiteschlüssel nicht angezeigt werden. Prüfen Sie den Websiteschlüssel und ob die Domain dieser Website unter den Hostnamen des Widgets steht.",
+			"notChecked": "Die Prüfung ist abgelaufen. Es wird erneut geprüft — speichern Sie, sobald sie bestanden ist.",
+			"save": "Prüfen und speichern",
+			"remove": "Entfernen",
+			"saved": "Gespeichert. Die Formulare für Anmeldung, Registrierung und Zurücksetzen des Passworts verlangen jetzt die Prüfung.",
+			"removed": "Entfernt. Der Bot-Schutz ist deaktiviert.",
+			"failed": "Speichern nicht möglich."
 		}
+	},
+	"turnstile": {
+		"failed": "Die Bot-Prüfung konnte nicht angezeigt werden ({code}). Laden Sie die Seite neu und versuchen Sie es erneut."
 	}
 }

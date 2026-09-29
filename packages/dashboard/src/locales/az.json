@@ -269,7 +269,8 @@
 		"Original email not found": "Cavab verdiyiniz məktub artıq yoxdur.",
 		"Token has expired": "Bu keçidin müddəti bitib.",
 		"That is the only way in": "Bu sizin yeganə giriş ünvanınızdır, ona görə silinə bilməz.",
-		"You don't have access to this mailbox": "Bu poçt qutusuna girişiniz yoxdur."
+		"You don't have access to this mailbox": "Bu poçt qutusuna girişiniz yoxdur.",
+		"Bot check failed": "Bot yoxlamasından keçilmədi. Zəhmət olmasa yenidən cəhd edin."
 	},
 	"admin": {
 		"title": "İdarəetmə paneli",
@@ -476,6 +477,33 @@
 			"current": "{address} ünvanından göndərilir.",
 			"off": "Təyin edilməyib: “Parolu unutmusunuz” söndürülüb.",
 			"byDeployment": "Yerləşdirmənin öz ayarı istifadə olunur və bundan üstündür."
+		},
+		"turnstile": {
+			"title": "Giriş üçün bot qorunması (Cloudflare Turnstile)",
+			"statusLabel": "Vəziyyət",
+			"on": "Aktiv (sayt açarı {siteKey}, gizli açar {secret})",
+			"off": "Söndürülüb",
+			"description": "Giriş, qeydiyyat və parol sıfırlama formalarından istifadə edənin bot olmadığını yoxlayır. Cloudflare idarəetmə panelində “Turnstile” bölməsində vidcet yaradın (host adları arasında bu saytın domeni olsun), sonra onun verdiyi sayt açarını və gizli açarı daxil edin. Hər ikisi daxil edildikdən sonra açarlar burada yoxlanılır; yoxlamadan keçməyən açarları saxlamaq olmur. Gizli açar saxlandıqdan sonra bir daha göstərilmir (yalnız son 4 simvolu).",
+			"siteKey": "Sayt açarı",
+			"secretKey": "Gizli açar",
+			"enterBoth": "Yoxlamanı başlatmaq üçün hər iki açarı daxil edin.",
+			"waiting": "Turnstile gözlənilir…",
+			"checking": "Açarlar yoxlanılır…",
+			"passed": "Açarlar işləyir. Aktivləşdirmək üçün saxlayın.",
+			"badSecret": "Cloudflare bu gizli açarı tanımır.",
+			"mismatch": "Sayt açarı və gizli açar eyni vidcetə aid deyil.",
+			"unanswered": "Cloudflare cavab vermədi. Bir az sonra yenidən cəhd edin.",
+			"refused": "Cloudflare yoxlamanı qəbul etmədi ({codes}).",
+			"widgetFailed": "Bu sayt açarı ilə vidcet göstərilə bilmədi. Sayt açarını və bu saytın domeninin vidcetin host adları arasında olub-olmadığını yoxlayın.",
+			"notChecked": "Yoxlamanın vaxtı bitib. Yenidən yoxlanılır — keçdikdən sonra saxlayın.",
+			"save": "Yoxla və saxla",
+			"remove": "Sil",
+			"saved": "Saxlanıldı. Giriş, qeydiyyat və parol sıfırlama formaları indi yoxlama tələb edir.",
+			"removed": "Silindi. Bot qorunması söndürülüb.",
+			"failed": "Saxlamaq mümkün olmadı."
 		}
+	},
+	"turnstile": {
+		"failed": "Bot yoxlaması göstərilə bilmədi ({code}). Səhifəni yeniləyin və yenidən cəhd edin."
 	}
 }

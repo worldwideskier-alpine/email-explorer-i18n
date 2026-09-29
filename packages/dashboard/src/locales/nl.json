@@ -269,7 +269,8 @@
 		"Original email not found": "Het bericht waarop u antwoordt, bestaat niet meer.",
 		"Token has expired": "Deze link is verlopen.",
 		"That is the only way in": "Dit is uw enige aanmeldadres, dus het kan niet worden verwijderd.",
-		"You don't have access to this mailbox": "U hebt geen toegang tot deze mailbox."
+		"You don't have access to this mailbox": "U hebt geen toegang tot deze mailbox.",
+		"Bot check failed": "De botcontrole is niet geslaagd. Probeer het opnieuw."
 	},
 	"admin": {
 		"title": "Beheerpaneel",
@@ -476,6 +477,33 @@
 			"current": "Verzonden vanaf {address}.",
 			"off": "Niet ingesteld: ‘Wachtwoord vergeten’ staat uit.",
 			"byDeployment": "De eigen instelling van de implementatie wordt gebruikt en gaat hiervoor."
+		},
+		"turnstile": {
+			"title": "Botbescherming voor aanmelden (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "Aan (sitesleutel {siteKey}, geheime sleutel {secret})",
+			"off": "Uit",
+			"description": "Controleert of wie de formulieren voor aanmelden, registreren en wachtwoordherstel gebruikt geen bot is. Maak in het Cloudflare-dashboard onder ‘Turnstile’ een widget aan (met het domein van deze site bij de hostnamen) en vul de sitesleutel en geheime sleutel in die je krijgt. Zodra beide zijn ingevuld, worden de sleutels hier gecontroleerd; sleutels die niet slagen, kunnen niet worden opgeslagen. De geheime sleutel wordt na het opslaan niet meer getoond (alleen de laatste 4 tekens).",
+			"siteKey": "Sitesleutel",
+			"secretKey": "Geheime sleutel",
+			"enterBoth": "Vul beide sleutels in om de controle te starten.",
+			"waiting": "Wachten op Turnstile…",
+			"checking": "Sleutels controleren…",
+			"passed": "De sleutels werken. Sla op om het aan te zetten.",
+			"badSecret": "Cloudflare herkent deze geheime sleutel niet.",
+			"mismatch": "De sitesleutel en de geheime sleutel horen niet bij dezelfde widget.",
+			"unanswered": "Cloudflare antwoordde niet. Probeer het zo meteen opnieuw.",
+			"refused": "Cloudflare heeft de controle niet geaccepteerd ({codes}).",
+			"widgetFailed": "De widget kon met deze sitesleutel niet worden weergegeven. Controleer de sitesleutel en of het domein van deze site bij de hostnamen van de widget staat.",
+			"notChecked": "De controle is verlopen. Opnieuw controleren — sla op zodra die slaagt.",
+			"save": "Controleren en opslaan",
+			"remove": "Verwijderen",
+			"saved": "Opgeslagen. De formulieren voor aanmelden, registreren en wachtwoordherstel vragen nu om de controle.",
+			"removed": "Verwijderd. Botbescherming staat uit.",
+			"failed": "Opslaan is niet gelukt."
 		}
+	},
+	"turnstile": {
+		"failed": "De botcontrole kon niet worden weergegeven ({code}). Laad de pagina opnieuw en probeer het nog eens."
 	}
 }

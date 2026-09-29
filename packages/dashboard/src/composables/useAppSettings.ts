@@ -8,6 +8,10 @@ interface AppSettings {
 	accountRecovery: {
 		enabled: boolean;
 	};
+	// Absent from a Worker older than the page.
+	turnstile?: {
+		siteKey: string | null;
+	};
 }
 
 const settings = ref<AppSettings | null>(null);
@@ -37,6 +41,9 @@ export function useAppSettings() {
 		return settings.value?.accountRecovery.enabled ?? false;
 	};
 
+	/** The site key the sign-in forms render Turnstile with, or null. */
+	const turnstileSiteKey = () => settings.value?.turnstile?.siteKey ?? null;
+
 	return {
 		settings: readonly(settings),
 		isLoading: readonly(isLoading),
@@ -44,5 +51,6 @@ export function useAppSettings() {
 		fetchSettings,
 		isRegistrationEnabled,
 		isAccountRecoveryEnabled,
+		turnstileSiteKey,
 	};
 }

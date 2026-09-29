@@ -269,7 +269,8 @@
 		"Original email not found": "Mesej yang anda balas sudah tiada.",
 		"Token has expired": "Pautan ini telah tamat tempoh.",
 		"That is the only way in": "Ini satu-satunya alamat log masuk anda, jadi ia tidak boleh dialih keluar.",
-		"You don't have access to this mailbox": "Anda tiada akses kepada peti mel ini."
+		"You don't have access to this mailbox": "Anda tiada akses kepada peti mel ini.",
+		"Bot check failed": "Semakan bot tidak lulus. Sila cuba lagi."
 	},
 	"admin": {
 		"title": "Panel pentadbir",
@@ -476,6 +477,33 @@
 			"current": "Dihantar daripada {address}.",
 			"off": "Tidak ditetapkan: “Lupa kata laluan” dimatikan.",
 			"byDeployment": "Tetapan penggunaan itu sendiri sedang digunakan dan diutamakan berbanding tetapan ini."
+		},
+		"turnstile": {
+			"title": "Perlindungan bot untuk log masuk (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "Hidup (kunci tapak {siteKey}, kunci rahsia {secret})",
+			"off": "Mati",
+			"description": "Memastikan sesiapa yang menggunakan borang log masuk, pendaftaran dan tetapan semula kata laluan bukan bot. Cipta widget di bawah “Turnstile” dalam papan pemuka Cloudflare (dengan domain tapak ini antara nama hosnya), kemudian masukkan kunci tapak dan kunci rahsia yang diberikannya. Setelah kedua-duanya dimasukkan, kunci itu disemak di sini, dan kunci yang tidak lulus tidak boleh disimpan. Kunci rahsia tidak dipaparkan lagi selepas disimpan (hanya 4 aksara terakhirnya).",
+			"siteKey": "Kunci tapak",
+			"secretKey": "Kunci rahsia",
+			"enterBoth": "Masukkan kedua-dua kunci untuk memulakan semakan.",
+			"waiting": "Menunggu Turnstile…",
+			"checking": "Menyemak kunci…",
+			"passed": "Kunci berfungsi. Simpan untuk menghidupkannya.",
+			"badSecret": "Cloudflare tidak mengenali kunci rahsia ini.",
+			"mismatch": "Kunci tapak dan kunci rahsia bukan daripada widget yang sama.",
+			"unanswered": "Cloudflare tidak menjawab. Cuba lagi sebentar lagi.",
+			"refused": "Cloudflare tidak menerima semakan ({codes}).",
+			"widgetFailed": "Widget tidak dapat dipaparkan dengan kunci tapak ini. Semak kunci tapak, dan pastikan domain tapak ini berada antara nama hos widget.",
+			"notChecked": "Semakan telah tamat tempoh. Menyemak semula — simpan sebaik sahaja ia lulus.",
+			"save": "Semak dan simpan",
+			"remove": "Buang",
+			"saved": "Disimpan. Borang log masuk, pendaftaran dan tetapan semula kata laluan kini meminta semakan.",
+			"removed": "Dibuang. Perlindungan bot dimatikan.",
+			"failed": "Tidak dapat disimpan."
 		}
+	},
+	"turnstile": {
+		"failed": "Semakan bot tidak dapat dipaparkan ({code}). Muat semula halaman dan cuba lagi."
 	}
 }

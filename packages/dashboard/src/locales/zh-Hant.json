@@ -269,7 +269,8 @@
 		"Original email not found": "你要回覆的郵件已不存在。",
 		"Token has expired": "此連結已過期。",
 		"That is the only way in": "這是你唯一的登入地址，無法刪除。",
-		"You don't have access to this mailbox": "你沒有存取此信箱的權限。"
+		"You don't have access to this mailbox": "你沒有存取此信箱的權限。",
+		"Bot check failed": "未通過人機驗證。請再試一次。"
 	},
 	"admin": {
 		"title": "管理面板",
@@ -476,6 +477,33 @@
 			"current": "正從 {address} 寄出。",
 			"off": "未設定：「忘記密碼」已關閉。",
 			"byDeployment": "正在使用部署本身的設定，其優先於此設定。"
+		},
+		"turnstile": {
+			"title": "登入防機器人保護（Cloudflare Turnstile）",
+			"statusLabel": "狀態",
+			"on": "已啟用（網站金鑰 {siteKey}，秘密金鑰 {secret}）",
+			"off": "已停用",
+			"description": "確認使用登入、註冊與密碼重設表單的不是機器人。請在 Cloudflare 儀表板的「Turnstile」中建立小工具（在其主機名稱中加入本網站的網域），然後輸入它提供的網站金鑰與秘密金鑰。兩者都輸入後，會當場驗證金鑰，未通過驗證的金鑰無法儲存。儲存後不再顯示秘密金鑰（僅顯示末 4 個字元）。",
+			"siteKey": "網站金鑰",
+			"secretKey": "秘密金鑰",
+			"enterBoth": "輸入兩組金鑰後即開始驗證。",
+			"waiting": "正在等待 Turnstile…",
+			"checking": "正在驗證金鑰…",
+			"passed": "金鑰有效。儲存後即可啟用。",
+			"badSecret": "Cloudflare 無法辨識此秘密金鑰。",
+			"mismatch": "網站金鑰與秘密金鑰不屬於同一個小工具。",
+			"unanswered": "Cloudflare 沒有回應。請稍後再試。",
+			"refused": "Cloudflare 未通過驗證（{codes}）。",
+			"widgetFailed": "無法以此網站金鑰顯示小工具。請檢查網站金鑰，以及小工具的主機名稱中是否包含本網站的網域。",
+			"notChecked": "驗證已過期，正在重新驗證。通過後請儲存。",
+			"save": "驗證並儲存",
+			"remove": "刪除",
+			"saved": "已儲存。登入、註冊與密碼重設表單現在需要通過驗證。",
+			"removed": "已刪除。防機器人保護已停用。",
+			"failed": "儲存失敗。"
 		}
+	},
+	"turnstile": {
+		"failed": "無法顯示人機驗證（{code}）。請重新載入頁面後再試一次。"
 	}
 }

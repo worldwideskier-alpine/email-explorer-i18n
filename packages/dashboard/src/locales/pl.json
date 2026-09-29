@@ -269,7 +269,8 @@
 		"Original email not found": "Wiadomość, na którą odpowiadasz, już nie istnieje.",
 		"Token has expired": "Ten link wygasł.",
 		"That is the only way in": "To Twój jedyny adres logowania, więc nie można go usunąć.",
-		"You don't have access to this mailbox": "Nie masz dostępu do tej skrzynki pocztowej."
+		"You don't have access to this mailbox": "Nie masz dostępu do tej skrzynki pocztowej.",
+		"Bot check failed": "Weryfikacja antybotowa nie powiodła się. Spróbuj ponownie."
 	},
 	"admin": {
 		"title": "Panel administracyjny",
@@ -476,6 +477,33 @@
 			"current": "Wysyłane z {address}.",
 			"off": "Nie ustawiono: „Nie pamiętam hasła” jest wyłączone.",
 			"byDeployment": "Używane jest ustawienie samego wdrożenia, które ma pierwszeństwo przed tym."
+		},
+		"turnstile": {
+			"title": "Ochrona logowania przed botami (Cloudflare Turnstile)",
+			"statusLabel": "Stan",
+			"on": "Włączona (klucz witryny {siteKey}, tajny klucz {secret})",
+			"off": "Wyłączona",
+			"description": "Sprawdza, czy z formularzy logowania, rejestracji i resetowania hasła nie korzysta bot. Utwórz widżet w sekcji „Turnstile” w panelu Cloudflare (z domeną tej witryny wśród jego nazw hostów), a następnie wpisz otrzymany klucz witryny i tajny klucz. Gdy oba zostaną wpisane, klucze są tu sprawdzane, a kluczy, które nie przejdą sprawdzenia, nie można zapisać. Po zapisaniu tajny klucz nie jest już wyświetlany (tylko jego ostatnie 4 znaki).",
+			"siteKey": "Klucz witryny",
+			"secretKey": "Tajny klucz",
+			"enterBoth": "Wpisz oba klucze, aby rozpocząć sprawdzanie.",
+			"waiting": "Oczekiwanie na Turnstile…",
+			"checking": "Sprawdzanie kluczy…",
+			"passed": "Klucze działają. Zapisz, aby włączyć ochronę.",
+			"badSecret": "Cloudflare nie rozpoznaje tego tajnego klucza.",
+			"mismatch": "Klucz witryny i tajny klucz nie pochodzą z tego samego widżetu.",
+			"unanswered": "Cloudflare nie odpowiedział. Spróbuj ponownie za chwilę.",
+			"refused": "Cloudflare nie zaakceptował weryfikacji ({codes}).",
+			"widgetFailed": "Nie udało się wyświetlić widżetu z tym kluczem witryny. Sprawdź klucz witryny oraz to, czy domena tej witryny jest wśród nazw hostów widżetu.",
+			"notChecked": "Weryfikacja wygasła. Trwa ponowne sprawdzanie — zapisz, gdy się powiedzie.",
+			"save": "Sprawdź i zapisz",
+			"remove": "Usuń",
+			"saved": "Zapisano. Formularze logowania, rejestracji i resetowania hasła wymagają teraz weryfikacji.",
+			"removed": "Usunięto. Ochrona przed botami jest wyłączona.",
+			"failed": "Nie udało się zapisać."
 		}
+	},
+	"turnstile": {
+		"failed": "Nie udało się wyświetlić weryfikacji antybotowej ({code}). Odśwież stronę i spróbuj ponownie."
 	}
 }

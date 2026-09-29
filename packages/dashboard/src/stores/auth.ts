@@ -100,13 +100,20 @@ export const useAuthStore = defineStore("auth", () => {
 		}
 	}
 
-	async function register(email: string, password: string) {
+	async function register(
+		email: string,
+		password: string,
+		turnstileToken?: string,
+	) {
 		loading.value = true;
 		error.value = null;
 		try {
-			const response = await api.register(email, password);
-			// After registration, login
-			await login(email, password);
+			const response = await api.register(email, password, turnstileToken);
+			// The Worker signs the new account in itself. Asking /login next
+			// would need a second Turnstile token, and the widget's one has just
+			// been spent on this request.
+			if (response.data?.session) adopt(response.data.session);
+			else await login(email, password);
 			return response.data;
 		} catch (err: any) {
 			const fromApi = err.response?.data?.error;
@@ -117,32 +124,42 @@ export const useAuthStore = defineStore("auth", () => {
 		}
 	}
 
-	async function login(email: string, password: string) {
+	/**
+	 * Keeps a session the Worker has just started.
+	 *
+	 * Field by field, not the whole response. It used to be
+	 * `session.value = response.data`, and the Worker's login response still
+	 * carries `isAdmin`. So the flag went on living in the reactive session
+	 * and in localStorage no matter what this file said about it, and the
+	 * type saying it was gone only meant a cast would reach a real value.
+	 * Naming what is kept is what makes "not kept" true rather than asserted.
+	 */
+	function adopt(started: Session) {
+		session.value = {
+			id: started.id,
+			userId: started.userId,
+			email: started.email,
+			role: started.role,
+			expiresAt: started.expiresAt,
+		};
+		// Store session in localStorage
+		localStorage.setItem("session", JSON.stringify(session.value));
+		// Set default auth header for future requests
+		api.setAuthToken(started.id);
+		void rebindPushSubscription();
+		return session.value;
+	}
+
+	async function login(
+		email: string,
+		password: string,
+		turnstileToken?: string,
+	) {
 		loading.value = true;
 		error.value = null;
 		try {
-			const response = await api.login(email, password);
-			// Field by field, not the whole response.
-			//
-			// It used to be `session.value = response.data`, and the Worker's
-			// login response still carries `isAdmin`. So the flag went on
-			// living in the reactive session and in localStorage no matter
-			// what this file said about it, and the type saying it was gone
-			// only meant a cast would reach a real value. Naming what is kept
-			// is what makes "not kept" true rather than asserted.
-			session.value = {
-				id: response.data.id,
-				userId: response.data.userId,
-				email: response.data.email,
-				role: response.data.role,
-				expiresAt: response.data.expiresAt,
-			};
-			// Store session in localStorage
-			localStorage.setItem("session", JSON.stringify(session.value));
-			// Set default auth header for future requests
-			api.setAuthToken(response.data.id);
-			void rebindPushSubscription();
-			return session.value;
+			const response = await api.login(email, password, turnstileToken);
+			return adopt(response.data);
 		} catch (err: any) {
 			const fromApi = err.response?.data?.error;
 			error.value = () => translateApiError(fromApi, "Login failed");

@@ -269,7 +269,8 @@
 		"Original email not found": "Mesajul la care răspundeți nu mai există.",
 		"Token has expired": "Acest link a expirat.",
 		"That is the only way in": "Aceasta este singura dvs. adresă de conectare, așa că nu poate fi eliminată.",
-		"You don't have access to this mailbox": "Nu aveți acces la această cutie poștală."
+		"You don't have access to this mailbox": "Nu aveți acces la această cutie poștală.",
+		"Bot check failed": "Verificarea anti-bot nu a fost trecută. Vă rugăm să încercați din nou."
 	},
 	"admin": {
 		"title": "Panou de administrare",
@@ -476,6 +477,33 @@
 			"current": "Se trimite de la {address}.",
 			"off": "Nesetat: „Am uitat parola” este dezactivat.",
 			"byDeployment": "Se folosește setarea proprie a implementării, care are prioritate față de aceasta."
+		},
+		"turnstile": {
+			"title": "Protecție anti-bot pentru autentificare (Cloudflare Turnstile)",
+			"statusLabel": "Stare",
+			"on": "Activată (cheia site-ului {siteKey}, cheia secretă {secret})",
+			"off": "Dezactivată",
+			"description": "Verifică faptul că cel care folosește formularele de autentificare, înregistrare și resetare a parolei nu este un bot. Creați un widget la „Turnstile” în panoul de control Cloudflare (cu domeniul acestui site printre numele de gazdă), apoi introduceți cheia site-ului și cheia secretă primite. După ce le introduceți pe amândouă, cheile sunt verificate aici, iar cheile care nu trec verificarea nu pot fi salvate. Cheia secretă nu mai este afișată după salvare (doar ultimele 4 caractere).",
+			"siteKey": "Cheia site-ului",
+			"secretKey": "Cheia secretă",
+			"enterBoth": "Introduceți ambele chei pentru a începe verificarea.",
+			"waiting": "Se așteaptă Turnstile…",
+			"checking": "Se verifică cheile…",
+			"passed": "Cheile funcționează. Salvați pentru a activa protecția.",
+			"badSecret": "Cloudflare nu recunoaște această cheie secretă.",
+			"mismatch": "Cheia site-ului și cheia secretă nu provin de la același widget.",
+			"unanswered": "Cloudflare nu a răspuns. Încercați din nou peste câteva momente.",
+			"refused": "Cloudflare nu a acceptat verificarea ({codes}).",
+			"widgetFailed": "Widgetul nu a putut fi afișat cu această cheie a site-ului. Verificați cheia site-ului și dacă domeniul acestui site se află printre numele de gazdă ale widgetului.",
+			"notChecked": "Verificarea a expirat. Se verifică din nou — salvați după ce trece.",
+			"save": "Verifică și salvează",
+			"remove": "Elimină",
+			"saved": "Salvat. Formularele de autentificare, înregistrare și resetare a parolei cer acum verificarea.",
+			"removed": "Eliminat. Protecția anti-bot este dezactivată.",
+			"failed": "Nu s-a putut salva."
 		}
+	},
+	"turnstile": {
+		"failed": "Verificarea anti-bot nu a putut fi afișată ({code}). Reîncărcați pagina și încercați din nou."
 	}
 }

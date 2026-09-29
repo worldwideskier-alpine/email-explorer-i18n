@@ -269,7 +269,8 @@
 		"Original email not found": "你要回覆嘅郵件已經冇咗。",
 		"Token has expired": "呢條連結已經過期。",
 		"That is the only way in": "呢個係你唯一嘅登入地址，唔可以刪除。",
-		"You don't have access to this mailbox": "你冇權限存取呢個郵箱。"
+		"You don't have access to this mailbox": "你冇權限存取呢個郵箱。",
+		"Bot check failed": "機械人檢查唔通過。請再試一次。"
 	},
 	"admin": {
 		"title": "管理面板",
@@ -476,6 +477,33 @@
 			"current": "而家由 {address} 寄出。",
 			"off": "未設定：「唔記得密碼」已經熄咗。",
 			"byDeployment": "而家用緊部署本身嘅設定，佢比呢個設定優先。"
+		},
+		"turnstile": {
+			"title": "登入嘅防機械人保護（Cloudflare Turnstile）",
+			"statusLabel": "狀態",
+			"on": "開咗（網站金鑰 {siteKey}，秘密金鑰 {secret}）",
+			"off": "熄咗",
+			"description": "檢查用登入、註冊同重設密碼表格嘅唔係機械人。請喺 Cloudflare 控制台嘅「Turnstile」開一個小工具（主機名稱要包括呢個網站嘅網域），然後輸入佢畀你嘅網站金鑰同秘密金鑰。兩個都輸入咗之後，會即刻喺度檢查金鑰，唔通過嘅金鑰儲存唔到。儲存之後唔會再顯示秘密金鑰（淨係顯示最尾 4 個字元）。",
+			"siteKey": "網站金鑰",
+			"secretKey": "秘密金鑰",
+			"enterBoth": "輸入兩個金鑰就會開始檢查。",
+			"waiting": "等緊 Turnstile…",
+			"checking": "檢查緊金鑰…",
+			"passed": "金鑰用得。儲存咗就會開。",
+			"badSecret": "Cloudflare 認唔到呢個秘密金鑰。",
+			"mismatch": "網站金鑰同秘密金鑰唔係嚟自同一個小工具。",
+			"unanswered": "Cloudflare 冇回應。請等陣再試。",
+			"refused": "Cloudflare 唔接受呢次檢查（{codes}）。",
+			"widgetFailed": "用呢個網站金鑰顯示唔到小工具。請檢查網站金鑰，同埋小工具嘅主機名稱有冇包括呢個網站嘅網域。",
+			"notChecked": "檢查已經過期，而家再檢查緊。通過咗就請儲存。",
+			"save": "檢查同儲存",
+			"remove": "刪除",
+			"saved": "已儲存。登入、註冊同重設密碼表格而家要做檢查。",
+			"removed": "已刪除。防機械人保護已經熄咗。",
+			"failed": "儲存唔到。"
 		}
+	},
+	"turnstile": {
+		"failed": "顯示唔到機械人檢查（{code}）。請重新載入頁面再試。"
 	}
 }

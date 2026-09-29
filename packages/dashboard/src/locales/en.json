@@ -269,7 +269,8 @@
 		"Original email not found": "The message you are replying to no longer exists.",
 		"Token has expired": "This link has expired.",
 		"That is the only way in": "This is your only sign-in address, so it cannot be removed.",
-		"You don't have access to this mailbox": "You don't have access to this mailbox."
+		"You don't have access to this mailbox": "You don't have access to this mailbox.",
+		"Bot check failed": "The bot check did not pass. Please try again."
 	},
 	"admin": {
 		"title": "Admin Panel",
@@ -476,6 +477,33 @@
 			"current": "Sending from {address}.",
 			"off": "Not set: “Forgot password” is off.",
 			"byDeployment": "The deployment's own setting is in use and takes precedence over this one."
+		},
+		"turnstile": {
+			"title": "Bot protection for sign-in (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "On (site key {siteKey}, secret key {secret})",
+			"off": "Off",
+			"description": "Checks that whoever uses the sign-in, registration and password-reset forms is not a bot. Create a widget under “Turnstile” in the Cloudflare dashboard (with this site's domain among its hostnames), then enter the site key and secret key it gives you. Once both are entered, the keys are checked here, and keys that do not pass cannot be saved. The secret key is not shown again after saving (only its last 4 characters).",
+			"siteKey": "Site key",
+			"secretKey": "Secret key",
+			"enterBoth": "Enter both keys to start the check.",
+			"waiting": "Waiting for Turnstile…",
+			"checking": "Checking the keys…",
+			"passed": "The keys work. Save to turn it on.",
+			"badSecret": "Cloudflare does not recognise this secret key.",
+			"mismatch": "The site key and secret key are not from the same widget.",
+			"unanswered": "Cloudflare did not answer. Try again in a moment.",
+			"refused": "Cloudflare did not accept the check ({codes}).",
+			"widgetFailed": "The widget could not be shown with this site key. Check the site key, and that this site's domain is among the widget's hostnames.",
+			"notChecked": "The check has expired. Checking again — save once it passes.",
+			"save": "Check and save",
+			"remove": "Remove",
+			"saved": "Saved. The sign-in, registration and password-reset forms now ask for the check.",
+			"removed": "Removed. Bot protection is off.",
+			"failed": "Could not save."
 		}
+	},
+	"turnstile": {
+		"failed": "The bot check could not be shown ({code}). Reload the page and try again."
 	}
 }

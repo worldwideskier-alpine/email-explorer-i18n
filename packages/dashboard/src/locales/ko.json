@@ -269,7 +269,8 @@
 		"Original email not found": "답장하려는 메일은 더 이상 없습니다.",
 		"Token has expired": "이 링크는 만료되었습니다.",
 		"That is the only way in": "유일한 로그인 주소이므로 삭제할 수 없습니다.",
-		"You don't have access to this mailbox": "이 메일함에 접근할 권한이 없습니다."
+		"You don't have access to this mailbox": "이 메일함에 접근할 권한이 없습니다.",
+		"Bot check failed": "봇 확인을 통과하지 못했습니다. 다시 시도해 주세요."
 	},
 	"admin": {
 		"title": "관리자 패널",
@@ -476,6 +477,33 @@
 			"current": "{address}에서 발송합니다.",
 			"off": "설정되지 않음: ‘비밀번호 찾기’가 꺼져 있습니다.",
 			"byDeployment": "배포 자체의 설정이 사용 중이며 이 설정보다 우선합니다."
+		},
+		"turnstile": {
+			"title": "로그인 봇 방지(Cloudflare Turnstile)",
+			"statusLabel": "상태",
+			"on": "켜짐(사이트 키 {siteKey}, 비밀 키 {secret})",
+			"off": "꺼짐",
+			"description": "로그인, 가입, 비밀번호 재설정 양식을 사용하는 사람이 봇이 아닌지 확인합니다. Cloudflare 대시보드의 ‘Turnstile’에서 위젯을 만들고(호스트 이름에 이 사이트의 도메인 포함), 발급된 사이트 키와 비밀 키를 입력하세요. 둘 다 입력하면 이 자리에서 키를 확인하며, 확인을 통과하지 못한 키는 저장할 수 없습니다. 비밀 키는 저장한 뒤에는 다시 표시되지 않습니다(마지막 4자만 표시).",
+			"siteKey": "사이트 키",
+			"secretKey": "비밀 키",
+			"enterBoth": "두 키를 모두 입력하면 확인이 시작됩니다.",
+			"waiting": "Turnstile을 기다리는 중…",
+			"checking": "키를 확인하는 중…",
+			"passed": "키가 작동합니다. 저장하면 켜집니다.",
+			"badSecret": "Cloudflare가 이 비밀 키를 인식하지 못합니다.",
+			"mismatch": "사이트 키와 비밀 키가 같은 위젯의 것이 아닙니다.",
+			"unanswered": "Cloudflare가 응답하지 않았습니다. 잠시 후 다시 시도하세요.",
+			"refused": "Cloudflare가 확인을 받아들이지 않았습니다({codes}).",
+			"widgetFailed": "이 사이트 키로는 위젯을 표시할 수 없었습니다. 사이트 키와, 위젯의 호스트 이름에 이 사이트의 도메인이 포함되어 있는지 확인하세요.",
+			"notChecked": "확인이 만료되어 다시 확인하고 있습니다. 통과하면 저장하세요.",
+			"save": "확인 후 저장",
+			"remove": "삭제",
+			"saved": "저장했습니다. 이제 로그인, 가입, 비밀번호 재설정 양식에서 확인을 요구합니다.",
+			"removed": "삭제했습니다. 봇 방지가 꺼졌습니다.",
+			"failed": "저장하지 못했습니다."
 		}
+	},
+	"turnstile": {
+		"failed": "봇 확인을 표시하지 못했습니다({code}). 페이지를 새로 고친 후 다시 시도하세요."
 	}
 }

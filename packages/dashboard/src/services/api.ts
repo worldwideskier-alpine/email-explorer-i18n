@@ -106,16 +106,25 @@ export default {
 	getAppSettings: () => apiClient.get("/api/v1/settings"),
 
 	// Auth
-	register: (email: string, password: string) =>
-		apiClient.post("/api/v1/auth/register", { email, password }),
-	login: (email: string, password: string) =>
-		apiClient.post("/api/v1/auth/login", { email, password }),
+	// turnstileToken: from the widget, when root has turned Turnstile on.
+	register: (email: string, password: string, turnstileToken?: string) =>
+		apiClient.post("/api/v1/auth/register", {
+			email,
+			password,
+			turnstileToken,
+		}),
+	login: (email: string, password: string, turnstileToken?: string) =>
+		apiClient.post("/api/v1/auth/login", { email, password, turnstileToken }),
 	logout: () => apiClient.post("/api/v1/auth/logout"),
 	getCurrentUser: () => apiClient.get("/api/v1/auth/me"),
 	// The locale travels with the request because the recovery mail is written
 	// server-side: it should arrive in the language the user is reading.
-	forgotPassword: (email: string, locale: string) =>
-		apiClient.post("/api/v1/auth/forgot-password", { email, locale }),
+	forgotPassword: (email: string, locale: string, turnstileToken?: string) =>
+		apiClient.post("/api/v1/auth/forgot-password", {
+			email,
+			locale,
+			turnstileToken,
+		}),
 	resetPassword: (token: string, newPassword: string) =>
 		apiClient.post("/api/v1/auth/reset-password", { token, newPassword }),
 	changePassword: (currentPassword: string, newPassword: string) =>
@@ -342,6 +351,16 @@ export default {
 	// "" clears it, which turns "forgot password" off.
 	setRecoverySender: (fromEmail: string) =>
 		apiClient.put("/api/v1/root/settings/account-recovery", { fromEmail }),
+	getTurnstile: () => apiClient.get("/api/v1/root/settings/turnstile"),
+	verifyTurnstile: (siteKey: string, secretKey: string, token: string) =>
+		apiClient.post("/api/v1/root/settings/turnstile/verify", {
+			siteKey,
+			secretKey,
+			token,
+		}),
+	setTurnstile: (siteKey: string, secretKey: string) =>
+		apiClient.put("/api/v1/root/settings/turnstile", { siteKey, secretKey }),
+	deleteTurnstile: () => apiClient.delete("/api/v1/root/settings/turnstile"),
 	// The lock that makes deleting a person two acts instead of one. The
 	// Worker refuses the delete below with 423 while it is on, so hiding the
 	// button is the courtesy and this is the guard.

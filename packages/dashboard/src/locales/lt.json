@@ -269,7 +269,8 @@
 		"Original email not found": "Laiško, į kurį atsakote, nebėra.",
 		"Token has expired": "Šios nuorodos galiojimas baigėsi.",
 		"That is the only way in": "Tai vienintelis jūsų prisijungimo adresas, todėl jo pašalinti negalima.",
-		"You don't have access to this mailbox": "Neturite prieigos prie šios pašto dėžutės."
+		"You don't have access to this mailbox": "Neturite prieigos prie šios pašto dėžutės.",
+		"Bot check failed": "Robotų patikra nepavyko. Bandykite dar kartą."
 	},
 	"admin": {
 		"title": "Administratoriaus skydelis",
@@ -476,6 +477,33 @@
 			"current": "Siunčiama iš {address}.",
 			"off": "Nenustatyta: „Pamiršau slaptažodį“ išjungta.",
 			"byDeployment": "Naudojamas paties diegimo nustatymas, kuris turi pirmenybę prieš šį."
+		},
+		"turnstile": {
+			"title": "Prisijungimo apsauga nuo robotų (Cloudflare Turnstile)",
+			"statusLabel": "Būsena",
+			"on": "Įjungta (svetainės raktas {siteKey}, slaptasis raktas {secret})",
+			"off": "Išjungta",
+			"description": "Patikrina, kad prisijungimo, registracijos ir slaptažodžio atkūrimo formomis besinaudojantis asmuo nėra robotas. Sukurkite valdiklį Cloudflare valdymo skydelio skiltyje „Turnstile“ (jo pagrindinio kompiuterio vardų sąraše nurodę šios svetainės domeną), tada įveskite gautą svetainės raktą ir slaptąjį raktą. Įvedus abu, raktai patikrinami čia pat, o patikros nepraėjusių raktų įrašyti negalima. Įrašius slaptasis raktas nebėra rodomas (tik paskutiniai 4 jo simboliai).",
+			"siteKey": "Svetainės raktas",
+			"secretKey": "Slaptasis raktas",
+			"enterBoth": "Įveskite abu raktus, kad prasidėtų patikra.",
+			"waiting": "Laukiama Turnstile…",
+			"checking": "Tikrinami raktai…",
+			"passed": "Raktai veikia. Įrašykite, kad įjungtumėte.",
+			"badSecret": "Cloudflare neatpažįsta šio slaptojo rakto.",
+			"mismatch": "Svetainės raktas ir slaptasis raktas nėra iš to paties valdiklio.",
+			"unanswered": "Cloudflare neatsakė. Po akimirkos bandykite dar kartą.",
+			"refused": "Cloudflare nepriėmė patikros ({codes}).",
+			"widgetFailed": "Su šiuo svetainės raktu valdiklio parodyti nepavyko. Patikrinkite svetainės raktą ir ar šios svetainės domenas yra tarp valdiklio pagrindinio kompiuterio vardų.",
+			"notChecked": "Patikros galiojimas baigėsi. Tikrinama iš naujo — įrašykite, kai patikra bus sėkminga.",
+			"save": "Patikrinti ir įrašyti",
+			"remove": "Pašalinti",
+			"saved": "Įrašyta. Prisijungimo, registracijos ir slaptažodžio atkūrimo formos dabar prašo patikros.",
+			"removed": "Pašalinta. Apsauga nuo robotų išjungta.",
+			"failed": "Nepavyko įrašyti."
 		}
+	},
+	"turnstile": {
+		"failed": "Nepavyko parodyti robotų patikros ({code}). Įkelkite puslapį iš naujo ir bandykite dar kartą."
 	}
 }

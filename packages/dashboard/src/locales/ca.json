@@ -269,7 +269,8 @@
 		"Original email not found": "El missatge al qual responeu ja no existeix.",
 		"Token has expired": "Aquest enllaç ha caducat.",
 		"That is the only way in": "És la vostra única adreça d'inici de sessió, per tant no es pot eliminar.",
-		"You don't have access to this mailbox": "No teniu accés a aquesta bústia."
+		"You don't have access to this mailbox": "No teniu accés a aquesta bústia.",
+		"Bot check failed": "No s'ha superat la comprovació antibots. Torneu-ho a provar."
 	},
 	"admin": {
 		"title": "Tauler d'administració",
@@ -476,6 +477,33 @@
 			"current": "S'envia des de {address}.",
 			"off": "Sense definir: «He oblidat la contrasenya» està desactivat.",
 			"byDeployment": "S'utilitza la configuració pròpia del desplegament, que té prioritat sobre aquesta."
+		},
+		"turnstile": {
+			"title": "Protecció contra bots per a l'inici de sessió (Cloudflare Turnstile)",
+			"statusLabel": "Estat",
+			"on": "Activada (clau del lloc {siteKey}, clau secreta {secret})",
+			"off": "Desactivada",
+			"description": "Comprova que qui fa servir els formularis d'inici de sessió, de registre i de restabliment de contrasenya no és un bot. Creeu un giny a «Turnstile» al tauler de Cloudflare (amb el domini d'aquest lloc entre els seus noms d'amfitrió) i introduïu la clau del lloc i la clau secreta que us doni. Quan hi hàgiu introduït totes dues, les claus es comproven aquí, i les que no superin la comprovació no es poden desar. La clau secreta no es torna a mostrar després de desar-la (només els seus 4 últims caràcters).",
+			"siteKey": "Clau del lloc",
+			"secretKey": "Clau secreta",
+			"enterBoth": "Introduïu totes dues claus per començar la comprovació.",
+			"waiting": "S'està esperant Turnstile…",
+			"checking": "S'estan comprovant les claus…",
+			"passed": "Les claus funcionen. Deseu per activar-la.",
+			"badSecret": "Cloudflare no reconeix aquesta clau secreta.",
+			"mismatch": "La clau del lloc i la clau secreta no són del mateix giny.",
+			"unanswered": "Cloudflare no ha respost. Torneu-ho a provar d'aquí a un moment.",
+			"refused": "Cloudflare no ha acceptat la comprovació ({codes}).",
+			"widgetFailed": "No s'ha pogut mostrar el giny amb aquesta clau del lloc. Comproveu la clau del lloc i que el domini d'aquest lloc sigui entre els noms d'amfitrió del giny.",
+			"notChecked": "La comprovació ha caducat. S'està comprovant de nou — deseu quan se superi.",
+			"save": "Comprova i desa",
+			"remove": "Elimina",
+			"saved": "S'ha desat. Els formularis d'inici de sessió, de registre i de restabliment de contrasenya ara demanen la comprovació.",
+			"removed": "S'ha eliminat. La protecció contra bots està desactivada.",
+			"failed": "No s'ha pogut desar."
 		}
+	},
+	"turnstile": {
+		"failed": "No s'ha pogut mostrar la comprovació antibots ({code}). Torneu a carregar la pàgina i torneu-ho a provar."
 	}
 }

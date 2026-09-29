@@ -269,7 +269,8 @@
 		"Original email not found": "Zpráva, na kterou odpovídáte, už neexistuje.",
 		"Token has expired": "Platnost tohoto odkazu vypršela.",
 		"That is the only way in": "Toto je vaše jediná přihlašovací adresa, proto ji nelze odebrat.",
-		"You don't have access to this mailbox": "K této schránce nemáte přístup."
+		"You don't have access to this mailbox": "K této schránce nemáte přístup.",
+		"Bot check failed": "Kontrola proti botům neprošla. Zkuste to prosím znovu."
 	},
 	"admin": {
 		"title": "Panel správce",
@@ -476,6 +477,33 @@
 			"current": "Odesílá se z {address}.",
 			"off": "Nenastaveno: „Zapomenuté heslo“ je vypnuto.",
 			"byDeployment": "Používá se vlastní nastavení nasazení, které má přednost před tímto."
+		},
+		"turnstile": {
+			"title": "Ochrana přihlášení proti botům (Cloudflare Turnstile)",
+			"statusLabel": "Stav",
+			"on": "Zapnuto (klíč webu {siteKey}, tajný klíč {secret})",
+			"off": "Vypnuto",
+			"description": "Ověřuje, že formuláře pro přihlášení, registraci a obnovení hesla nepoužívá bot. V panelu Cloudflare vytvořte v části „Turnstile“ widget (s doménou tohoto webu mezi jeho názvy hostitelů) a zadejte klíč webu a tajný klíč, které vám vydá. Jakmile zadáte oba, klíče se zde ověří a klíče, které neprojdou, nelze uložit. Tajný klíč se po uložení už nezobrazuje (jen jeho poslední 4 znaky).",
+			"siteKey": "Klíč webu",
+			"secretKey": "Tajný klíč",
+			"enterBoth": "Zadejte oba klíče a kontrola se spustí.",
+			"waiting": "Čeká se na Turnstile…",
+			"checking": "Ověřují se klíče…",
+			"passed": "Klíče fungují. Uložením ochranu zapnete.",
+			"badSecret": "Cloudflare tento tajný klíč nezná.",
+			"mismatch": "Klíč webu a tajný klíč nepatří ke stejnému widgetu.",
+			"unanswered": "Cloudflare neodpověděl. Zkuste to za chvíli znovu.",
+			"refused": "Cloudflare kontrolu nepřijal ({codes}).",
+			"widgetFailed": "S tímto klíčem webu se widget nepodařilo zobrazit. Zkontrolujte klíč webu a to, zda je doména tohoto webu mezi názvy hostitelů widgetu.",
+			"notChecked": "Platnost kontroly vypršela. Probíhá nová kontrola — uložte, až projde.",
+			"save": "Ověřit a uložit",
+			"remove": "Odebrat",
+			"saved": "Uloženo. Formuláře pro přihlášení, registraci a obnovení hesla nyní vyžadují kontrolu.",
+			"removed": "Odebráno. Ochrana proti botům je vypnutá.",
+			"failed": "Uložení se nezdařilo."
 		}
+	},
+	"turnstile": {
+		"failed": "Kontrolu proti botům se nepodařilo zobrazit ({code}). Obnovte stránku a zkuste to znovu."
 	}
 }

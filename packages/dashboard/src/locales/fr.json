@@ -269,7 +269,8 @@
 		"Original email not found": "Le message auquel vous répondez n'existe plus.",
 		"Token has expired": "Ce lien a expiré.",
 		"That is the only way in": "C'est votre seule adresse de connexion, elle ne peut donc pas être supprimée.",
-		"You don't have access to this mailbox": "Vous n'avez pas accès à cette boîte aux lettres."
+		"You don't have access to this mailbox": "Vous n'avez pas accès à cette boîte aux lettres.",
+		"Bot check failed": "La vérification anti-robot a échoué. Veuillez réessayer."
 	},
 	"admin": {
 		"title": "Panneau d'administration",
@@ -476,6 +477,33 @@
 			"current": "Envoi depuis {address}.",
 			"off": "Non défini : « Mot de passe oublié » est désactivé.",
 			"byDeployment": "Le réglage propre au déploiement est utilisé et prévaut sur celui-ci."
+		},
+		"turnstile": {
+			"title": "Protection anti-robot de la connexion (Cloudflare Turnstile)",
+			"statusLabel": "État",
+			"on": "Activée (clé de site {siteKey}, clé secrète {secret})",
+			"off": "Désactivée",
+			"description": "Vérifie que la personne qui utilise les formulaires de connexion, d'inscription et de réinitialisation du mot de passe n'est pas un robot. Créez un widget sous « Turnstile » dans le tableau de bord Cloudflare (avec le domaine de ce site parmi ses noms d'hôte), puis saisissez la clé de site et la clé secrète qu'il vous fournit. Une fois les deux saisies, les clés sont vérifiées ici, et des clés qui ne passent pas la vérification ne peuvent pas être enregistrées. La clé secrète n'est plus affichée après l'enregistrement (seuls ses 4 derniers caractères le sont).",
+			"siteKey": "Clé de site",
+			"secretKey": "Clé secrète",
+			"enterBoth": "Saisissez les deux clés pour lancer la vérification.",
+			"waiting": "En attente de Turnstile…",
+			"checking": "Vérification des clés…",
+			"passed": "Les clés fonctionnent. Enregistrez pour activer la protection.",
+			"badSecret": "Cloudflare ne reconnaît pas cette clé secrète.",
+			"mismatch": "La clé de site et la clé secrète ne proviennent pas du même widget.",
+			"unanswered": "Cloudflare n'a pas répondu. Réessayez dans un instant.",
+			"refused": "Cloudflare n'a pas accepté la vérification ({codes}).",
+			"widgetFailed": "Impossible d'afficher le widget avec cette clé de site. Vérifiez la clé de site, et que le domaine de ce site figure parmi les noms d'hôte du widget.",
+			"notChecked": "La vérification a expiré. Nouvelle vérification en cours — enregistrez une fois qu'elle a réussi.",
+			"save": "Vérifier et enregistrer",
+			"remove": "Supprimer",
+			"saved": "Enregistré. Les formulaires de connexion, d'inscription et de réinitialisation du mot de passe demandent désormais la vérification.",
+			"removed": "Supprimé. La protection anti-robot est désactivée.",
+			"failed": "Enregistrement impossible."
 		}
+	},
+	"turnstile": {
+		"failed": "Impossible d'afficher la vérification anti-robot ({code}). Rechargez la page et réessayez."
 	}
 }

@@ -68,6 +68,31 @@ Repeated failed sign-ins lock an address for a while. Attempts are counted per
 address and per client network (an IPv4 address, or an IPv6 /64), so a
 password can be guessed at speed neither from one machine nor from many.
 
+### Bot protection (Cloudflare Turnstile)
+
+Root can put [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)
+in front of the sign-in, registration and "forgot password" forms. It is off
+until root sets it.
+
+1. In the Cloudflare dashboard, open **Turnstile** and add a widget. Put your
+   deployment's domain among its hostnames.
+2. On `/root`, under **Bot protection for sign-in**, enter the site key and
+   the secret key the widget was given.
+3. The widget appears on that card and the pair is checked with Cloudflare
+   at once. When it passes, choose **Check and save**.
+
+A pair that does not pass cannot be saved: a site key from one widget with
+the secret of another, a mistyped secret, or a widget that does not list
+your domain (it will not appear at all). That check is what keeps a wrong
+pair from refusing every sign-in, root's included.
+
+Once it is on, each of those forms shows the widget and cannot be sent until
+it has passed. A request without a passing token is refused before it counts
+against the sign-in limit, so a bot cannot lock a real address out either.
+If Cloudflare says the stored secret itself is not valid -- the widget was
+deleted or its secret rotated -- requests are let through rather than
+refused, and the Worker's log says so; set a new pair on `/root`.
+
 ## Your Account (`/account`)
 
 - **Change password.** Asks for the current one, and signs out every other
@@ -105,6 +130,16 @@ The session ended: 30 days passed, you signed out elsewhere, your password
 was changed or reset, or root deleted the account. Sign in again. If you were
 writing something when it happened, the page stays until you move away, so
 the text can be copied first.
+
+### "The bot check did not pass"
+
+Let the widget finish (it may ask you to tick a box) and send the form again.
+If the widget does not appear at all, reload the page.
+
+If nobody can sign in because the widget no longer lists your domain, remove
+the object `settings/turnstile.json` from the deployment's R2 bucket in the
+Cloudflare dashboard. That turns the check off; sign in and set it again on
+`/root`.
 
 ### Keep getting signed out
 

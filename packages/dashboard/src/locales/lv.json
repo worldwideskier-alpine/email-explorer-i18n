@@ -269,7 +269,8 @@
 		"Original email not found": "Vēstules, uz kuru atbildat, vairs nav.",
 		"Token has expired": "Šīs saites derīguma termiņš ir beidzies.",
 		"That is the only way in": "Šī ir jūsu vienīgā pieteikšanās adrese, tāpēc to nevar noņemt.",
-		"You don't have access to this mailbox": "Jums nav piekļuves šai pastkastei."
+		"You don't have access to this mailbox": "Jums nav piekļuves šai pastkastei.",
+		"Bot check failed": "Robotu pārbaude netika izieta. Lūdzu, mēģiniet vēlreiz."
 	},
 	"admin": {
 		"title": "Administratora panelis",
@@ -476,6 +477,33 @@
 			"current": "Sūta no {address}.",
 			"off": "Nav iestatīts: “Aizmirsu paroli” ir izslēgts.",
 			"byDeployment": "Tiek izmantots paša izvietojuma iestatījums, un tam ir priekšroka pār šo."
+		},
+		"turnstile": {
+			"title": "Pieteikšanās aizsardzība pret robotiem (Cloudflare Turnstile)",
+			"statusLabel": "Statuss",
+			"on": "Ieslēgta (vietnes atslēga {siteKey}, slepenā atslēga {secret})",
+			"off": "Izslēgta",
+			"description": "Pārbauda, vai pieteikšanās, reģistrācijas un paroles atiestatīšanas veidlapas neizmanto robots. Izveidojiet logrīku sadaļā “Turnstile” Cloudflare vadības panelī (starp tā resursdatoru nosaukumiem norādot šīs vietnes domēnu) un ievadiet tā izsniegto vietnes atslēgu un slepeno atslēgu. Kad abas ir ievadītas, atslēgas tiek pārbaudītas šeit, un atslēgas, kas pārbaudi neiztur, nevar saglabāt. Pēc saglabāšanas slepenā atslēga vairs netiek rādīta (tikai tās pēdējās 4 rakstzīmes).",
+			"siteKey": "Vietnes atslēga",
+			"secretKey": "Slepenā atslēga",
+			"enterBoth": "Ievadiet abas atslēgas, lai sāktu pārbaudi.",
+			"waiting": "Gaida Turnstile…",
+			"checking": "Pārbauda atslēgas…",
+			"passed": "Atslēgas darbojas. Saglabājiet, lai aizsardzību ieslēgtu.",
+			"badSecret": "Cloudflare neatpazīst šo slepeno atslēgu.",
+			"mismatch": "Vietnes atslēga un slepenā atslēga nav no viena logrīka.",
+			"unanswered": "Cloudflare neatbildēja. Pēc brīža mēģiniet vēlreiz.",
+			"refused": "Cloudflare nepieņēma pārbaudi ({codes}).",
+			"widgetFailed": "Ar šo vietnes atslēgu logrīku neizdevās parādīt. Pārbaudiet vietnes atslēgu un to, vai šīs vietnes domēns ir starp logrīka resursdatoru nosaukumiem.",
+			"notChecked": "Pārbaudes derīgums ir beidzies. Notiek atkārtota pārbaude — saglabājiet, kad tā būs izieta.",
+			"save": "Pārbaudīt un saglabāt",
+			"remove": "Noņemt",
+			"saved": "Saglabāts. Pieteikšanās, reģistrācijas un paroles atiestatīšanas veidlapās tagad tiek prasīta pārbaude.",
+			"removed": "Noņemts. Aizsardzība pret robotiem ir izslēgta.",
+			"failed": "Neizdevās saglabāt."
 		}
+	},
+	"turnstile": {
+		"failed": "Robotu pārbaudi neizdevās parādīt ({code}). Pārlādējiet lapu un mēģiniet vēlreiz."
 	}
 }

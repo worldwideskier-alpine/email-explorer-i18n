@@ -90,6 +90,19 @@ set, "forgot password" is off. If the deployment sets `ACCOUNT_RECOVERY_FROM`
 (see [Deploying your own](../deploying-your-own.md)), that one is used and
 this section says so.
 
+### Bot protection for sign-in (Cloudflare Turnstile)
+
+Puts Cloudflare Turnstile in front of signing in, registering and asking for
+a reset link. Off until set here. See
+[Authentication](./authentication.md#bot-protection-cloudflare-turnstile) for
+how to create the widget and what happens when it is on.
+
+Enter the widget's **site key** and **secret key**. As soon as both are in,
+the widget appears on this card and the pair is checked with Cloudflare;
+**Check and save** becomes available only once that check has passed, and
+saving turns the protection on. The secret is not shown again, only its last
+four characters. **Remove** turns it off.
+
 ### Deleting a person
 
 Deleting a person takes everything of theirs: their logins, their mailboxes,

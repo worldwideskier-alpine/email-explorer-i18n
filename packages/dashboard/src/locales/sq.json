@@ -269,7 +269,8 @@
 		"Original email not found": "Mesazhi të cilit po i përgjigjeni nuk ekziston më.",
 		"Token has expired": "Kjo lidhje ka skaduar.",
 		"That is the only way in": "Kjo është adresa juaj e vetme e hyrjes, prandaj nuk mund të hiqet.",
-		"You don't have access to this mailbox": "Nuk keni qasje në këtë kuti postare."
+		"You don't have access to this mailbox": "Nuk keni qasje në këtë kuti postare.",
+		"Bot check failed": "Kontrolli kundër robotëve nuk kaloi. Provoni përsëri."
 	},
 	"admin": {
 		"title": "Paneli i administratorit",
@@ -476,6 +477,33 @@
 			"current": "Dërgohet nga {address}.",
 			"off": "E pacaktuar: “Harrova fjalëkalimin” është i çaktivizuar.",
 			"byDeployment": "Përdoret cilësimi i vetë instalimit, i cili ka përparësi mbi këtë."
+		},
+		"turnstile": {
+			"title": "Mbrojtje nga robotët për hyrjen (Cloudflare Turnstile)",
+			"statusLabel": "Gjendja",
+			"on": "Aktiv (çelësi i sajtit {siteKey}, çelësi sekret {secret})",
+			"off": "Joaktiv",
+			"description": "Kontrollon që ai që përdor formularët e hyrjes, regjistrimit dhe rivendosjes së fjalëkalimit nuk është robot. Krijoni një widget te “Turnstile” në panelin e Cloudflare (me domenin e këtij sajti ndër emrat e tij të hostit), pastaj vendosni çelësin e sajtit dhe çelësin sekret që ju jep. Pasi të vendosen të dy, çelësat kontrollohen këtu dhe çelësat që nuk kalojnë nuk mund të ruhen. Çelësi sekret nuk shfaqet më pas ruajtjes (vetëm 4 karakteret e fundit të tij).",
+			"siteKey": "Çelësi i sajtit",
+			"secretKey": "Çelësi sekret",
+			"enterBoth": "Vendosni të dy çelësat që të fillojë kontrolli.",
+			"waiting": "Në pritje të Turnstile…",
+			"checking": "Po kontrollohen çelësat…",
+			"passed": "Çelësat funksionojnë. Ruajeni për ta aktivizuar.",
+			"badSecret": "Cloudflare nuk e njeh këtë çelës sekret.",
+			"mismatch": "Çelësi i sajtit dhe çelësi sekret nuk janë nga i njëjti widget.",
+			"unanswered": "Cloudflare nuk u përgjigj. Provoni përsëri pas pak.",
+			"refused": "Cloudflare nuk e pranoi kontrollin ({codes}).",
+			"widgetFailed": "Widget-i nuk u shfaq dot me këtë çelës sajti. Kontrolloni çelësin e sajtit dhe që domeni i këtij sajti të jetë ndër emrat e hostit të widget-it.",
+			"notChecked": "Kontrolli ka skaduar. Po kontrollohet përsëri — ruajeni sapo të kalojë.",
+			"save": "Kontrollo dhe ruaj",
+			"remove": "Hiq",
+			"saved": "U ruajt. Formularët e hyrjes, regjistrimit dhe rivendosjes së fjalëkalimit tani kërkojnë kontrollin.",
+			"removed": "U hoq. Mbrojtja nga robotët është joaktive.",
+			"failed": "Nuk u ruajt dot."
 		}
+	},
+	"turnstile": {
+		"failed": "Kontrolli kundër robotëve nuk u shfaq dot ({code}). Ringarkoni faqen dhe provoni përsëri."
 	}
 }

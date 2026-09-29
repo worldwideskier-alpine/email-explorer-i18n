@@ -269,7 +269,8 @@
 		"Original email not found": "Správa, na ktorú odpovedáte, už neexistuje.",
 		"Token has expired": "Platnosť tohto odkazu vypršala.",
 		"That is the only way in": "Toto je vaša jediná prihlasovacia adresa, preto ju nemožno odstrániť.",
-		"You don't have access to this mailbox": "K tejto schránke nemáte prístup."
+		"You don't have access to this mailbox": "K tejto schránke nemáte prístup.",
+		"Bot check failed": "Kontrola proti robotom neprešla. Skúste to znova."
 	},
 	"admin": {
 		"title": "Panel správcu",
@@ -476,6 +477,33 @@
 			"current": "Odosiela sa z {address}.",
 			"off": "Nenastavené: „Zabudnuté heslo“ je vypnuté.",
 			"byDeployment": "Používa sa vlastné nastavenie nasadenia, ktoré má prednosť pred týmto."
+		},
+		"turnstile": {
+			"title": "Ochrana prihlásenia pred robotmi (Cloudflare Turnstile)",
+			"statusLabel": "Stav",
+			"on": "Zapnuté (kľúč lokality {siteKey}, tajný kľúč {secret})",
+			"off": "Vypnuté",
+			"description": "Overuje, že formuláre na prihlásenie, registráciu a obnovenie hesla nepoužíva robot. V ovládacom paneli Cloudflare vytvorte v časti „Turnstile“ widget (medzi jeho názvy hostiteľov uveďte doménu tejto stránky) a potom zadajte kľúč lokality a tajný kľúč, ktoré vám poskytne. Keď zadáte oba, kľúče sa tu overia a kľúče, ktoré neprejdú, sa nedajú uložiť. Tajný kľúč sa po uložení už nezobrazí (iba jeho posledné 4 znaky).",
+			"siteKey": "Kľúč lokality",
+			"secretKey": "Tajný kľúč",
+			"enterBoth": "Zadajte oba kľúče a overenie sa spustí.",
+			"waiting": "Čaká sa na Turnstile…",
+			"checking": "Overujú sa kľúče…",
+			"passed": "Kľúče fungujú. Uložením ochranu zapnete.",
+			"badSecret": "Cloudflare nepozná tento tajný kľúč.",
+			"mismatch": "Kľúč lokality a tajný kľúč nepochádzajú z toho istého widgetu.",
+			"unanswered": "Cloudflare neodpovedal. Skúste to o chvíľu znova.",
+			"refused": "Cloudflare kontrolu neprijal ({codes}).",
+			"widgetFailed": "S týmto kľúčom lokality sa widget nepodarilo zobraziť. Skontrolujte kľúč lokality a to, či je doména tejto stránky medzi názvami hostiteľov widgetu.",
+			"notChecked": "Platnosť overenia vypršala. Overuje sa znova — uložte, keď prejde.",
+			"save": "Overiť a uložiť",
+			"remove": "Odstrániť",
+			"saved": "Uložené. Formuláre na prihlásenie, registráciu a obnovenie hesla teraz vyžadujú kontrolu.",
+			"removed": "Odstránené. Ochrana pred robotmi je vypnutá.",
+			"failed": "Uloženie sa nepodarilo."
 		}
+	},
+	"turnstile": {
+		"failed": "Kontrolu proti robotom sa nepodarilo zobraziť ({code}). Znova načítajte stránku a skúste to znova."
 	}
 }

@@ -269,7 +269,8 @@
 		"Original email not found": "Thư bạn đang trả lời không còn nữa.",
 		"Token has expired": "Liên kết này đã hết hạn.",
 		"That is the only way in": "Đây là địa chỉ đăng nhập duy nhất của bạn nên không thể xóa.",
-		"You don't have access to this mailbox": "Bạn không có quyền truy cập hộp thư này."
+		"You don't have access to this mailbox": "Bạn không có quyền truy cập hộp thư này.",
+		"Bot check failed": "Không vượt qua được bước kiểm tra bot. Vui lòng thử lại."
 	},
 	"admin": {
 		"title": "Bảng quản trị",
@@ -476,6 +477,33 @@
 			"current": "Đang gửi từ {address}.",
 			"off": "Chưa đặt: “Quên mật khẩu” đang tắt.",
 			"byDeployment": "Đang dùng thiết lập riêng của bản triển khai, và thiết lập đó được ưu tiên hơn thiết lập này."
+		},
+		"turnstile": {
+			"title": "Chống bot cho đăng nhập (Cloudflare Turnstile)",
+			"statusLabel": "Trạng thái",
+			"on": "Bật (khóa trang web {siteKey}, khóa bí mật {secret})",
+			"off": "Tắt",
+			"description": "Kiểm tra để bảo đảm người dùng các biểu mẫu đăng nhập, đăng ký và đặt lại mật khẩu không phải là bot. Hãy tạo một widget trong mục “Turnstile” trên bảng điều khiển Cloudflare (có tên miền của trang web này trong danh sách tên máy chủ của widget), rồi nhập khóa trang web và khóa bí mật được cấp. Khi đã nhập cả hai, các khóa sẽ được kiểm tra ngay tại đây, và khóa không vượt qua kiểm tra thì không lưu được. Sau khi lưu, khóa bí mật sẽ không hiển thị lại (chỉ hiện 4 ký tự cuối).",
+			"siteKey": "Khóa trang web",
+			"secretKey": "Khóa bí mật",
+			"enterBoth": "Nhập cả hai khóa để bắt đầu kiểm tra.",
+			"waiting": "Đang chờ Turnstile…",
+			"checking": "Đang kiểm tra các khóa…",
+			"passed": "Các khóa hoạt động. Hãy lưu để bật.",
+			"badSecret": "Cloudflare không nhận ra khóa bí mật này.",
+			"mismatch": "Khóa trang web và khóa bí mật không thuộc cùng một widget.",
+			"unanswered": "Cloudflare không phản hồi. Hãy thử lại sau giây lát.",
+			"refused": "Cloudflare không chấp nhận bước kiểm tra ({codes}).",
+			"widgetFailed": "Không hiển thị được widget với khóa trang web này. Hãy kiểm tra khóa trang web, và xem tên miền của trang web này có nằm trong danh sách tên máy chủ của widget không.",
+			"notChecked": "Lượt kiểm tra đã hết hạn. Đang kiểm tra lại — hãy lưu khi kiểm tra thành công.",
+			"save": "Kiểm tra và lưu",
+			"remove": "Xóa",
+			"saved": "Đã lưu. Các biểu mẫu đăng nhập, đăng ký và đặt lại mật khẩu giờ yêu cầu kiểm tra.",
+			"removed": "Đã xóa. Chống bot đang tắt.",
+			"failed": "Không lưu được."
 		}
+	},
+	"turnstile": {
+		"failed": "Không hiển thị được bước kiểm tra bot ({code}). Hãy tải lại trang rồi thử lại."
 	}
 }

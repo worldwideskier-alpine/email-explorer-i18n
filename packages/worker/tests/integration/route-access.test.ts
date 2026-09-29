@@ -50,6 +50,10 @@ const TABLE: Record<string, Access> = {
 	"POST /api/v1/root/attachments/purge": "root",
 	"GET /api/v1/root/settings/account-recovery": "root",
 	"PUT /api/v1/root/settings/account-recovery": "root",
+	"GET /api/v1/root/settings/turnstile": "root",
+	"PUT /api/v1/root/settings/turnstile": "root",
+	"DELETE /api/v1/root/settings/turnstile": "root",
+	"POST /api/v1/root/settings/turnstile/verify": "root",
 
 	"POST /api/v1/admin/mailboxes/:mailboxId/import": "holder",
 	"GET /api/v1/mailboxes/:mailboxId": "holder",

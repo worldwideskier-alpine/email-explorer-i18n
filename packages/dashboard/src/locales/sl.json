@@ -269,7 +269,8 @@
 		"Original email not found": "Sporočilo, na katero odgovarjate, ne obstaja več.",
 		"Token has expired": "Ta povezava je potekla.",
 		"That is the only way in": "To je vaš edini naslov za prijavo, zato ga ni mogoče odstraniti.",
-		"You don't have access to this mailbox": "Do tega poštnega predala nimate dostopa."
+		"You don't have access to this mailbox": "Do tega poštnega predala nimate dostopa.",
+		"Bot check failed": "Preverjanje proti robotom ni uspelo. Poskusite znova."
 	},
 	"admin": {
 		"title": "Skrbniška plošča",
@@ -476,6 +477,33 @@
 			"current": "Pošilja se z {address}.",
 			"off": "Ni nastavljeno: »Pozabljeno geslo« je izklopljeno.",
 			"byDeployment": "Uporablja se lastna nastavitev namestitve, ki ima prednost pred to."
+		},
+		"turnstile": {
+			"title": "Zaščita prijave pred roboti (Cloudflare Turnstile)",
+			"statusLabel": "Stanje",
+			"on": "Vklopljeno (ključ spletnega mesta {siteKey}, skrivni ključ {secret})",
+			"off": "Izklopljeno",
+			"description": "Preverja, da obrazcev za prijavo, registracijo in ponastavitev gesla ne uporablja robot. V nadzorni plošči Cloudflare pod »Turnstile« ustvarite gradnik (med njegova imena gostiteljev dodajte domeno tega spletnega mesta), nato vnesite ključ spletnega mesta in skrivni ključ, ki ju dobite. Ko sta vnesena oba, se ključa preverita tukaj, ključev, ki preverjanja ne prestanejo, pa ni mogoče shraniti. Skrivni ključ se po shranjevanju ne prikaže več (le njegovi zadnji 4 znaki).",
+			"siteKey": "Ključ spletnega mesta",
+			"secretKey": "Skrivni ključ",
+			"enterBoth": "Vnesite oba ključa, da se preverjanje začne.",
+			"waiting": "Čakanje na Turnstile…",
+			"checking": "Preverjanje ključev…",
+			"passed": "Ključa delujeta. Shranite, da zaščito vklopite.",
+			"badSecret": "Cloudflare tega skrivnega ključa ne prepozna.",
+			"mismatch": "Ključ spletnega mesta in skrivni ključ nista iz istega gradnika.",
+			"unanswered": "Cloudflare se ni odzval. Poskusite znova čez trenutek.",
+			"refused": "Cloudflare ni sprejel preverjanja ({codes}).",
+			"widgetFailed": "Gradnika s tem ključem spletnega mesta ni bilo mogoče prikazati. Preverite ključ spletnega mesta in ali je domena tega spletnega mesta med imeni gostiteljev gradnika.",
+			"notChecked": "Preverjanje je poteklo. Ponovno preverjanje poteka — shranite, ko uspe.",
+			"save": "Preveri in shrani",
+			"remove": "Odstrani",
+			"saved": "Shranjeno. Obrazci za prijavo, registracijo in ponastavitev gesla zdaj zahtevajo preverjanje.",
+			"removed": "Odstranjeno. Zaščita pred roboti je izklopljena.",
+			"failed": "Shranjevanje ni uspelo."
 		}
+	},
+	"turnstile": {
+		"failed": "Preverjanja proti robotom ni bilo mogoče prikazati ({code}). Znova naložite stran in poskusite znova."
 	}
 }

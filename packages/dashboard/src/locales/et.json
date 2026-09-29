@@ -269,7 +269,8 @@
 		"Original email not found": "Kirja, millele vastad, enam ei ole.",
 		"Token has expired": "Selle lingi kehtivus on lõppenud.",
 		"That is the only way in": "See on sinu ainus sisselogimisaadress, seega ei saa seda eemaldada.",
-		"You don't have access to this mailbox": "Sul pole sellele postkastile juurdepääsu."
+		"You don't have access to this mailbox": "Sul pole sellele postkastile juurdepääsu.",
+		"Bot check failed": "Robotikontroll ei läinud läbi. Palun proovi uuesti."
 	},
 	"admin": {
 		"title": "Administraatori paneel",
@@ -476,6 +477,33 @@
 			"current": "Saadetakse aadressilt {address}.",
 			"off": "Määramata: „Unustasin parooli“ on välja lülitatud.",
 			"byDeployment": "Kasutusel on juurutuse enda säte, mis on selle ees eelistatud."
+		},
+		"turnstile": {
+			"title": "Sisselogimise kaitse robotite eest (Cloudflare Turnstile)",
+			"statusLabel": "Olek",
+			"on": "Sees (saidi võti {siteKey}, salajane võti {secret})",
+			"off": "Väljas",
+			"description": "Kontrollib, et sisselogimise, registreerimise ja parooli lähtestamise vorme ei kasuta robot. Loo Cloudflare'i juhtpaneelil jaotises „Turnstile“ vidin (mille hostinimede hulgas on selle saidi domeen) ja sisesta seejärel saidi võti ning salajane võti, mille see annab. Kui mõlemad on sisestatud, kontrollitakse võtmeid siin ja võtmeid, mis kontrolli ei läbi, ei saa salvestada. Salajast võtit pärast salvestamist enam ei näidata (ainult selle viimast 4 märki).",
+			"siteKey": "Saidi võti",
+			"secretKey": "Salajane võti",
+			"enterBoth": "Kontrolli alustamiseks sisesta mõlemad võtmed.",
+			"waiting": "Ootan Turnstile'i…",
+			"checking": "Kontrollin võtmeid…",
+			"passed": "Võtmed töötavad. Sisselülitamiseks salvesta.",
+			"badSecret": "Cloudflare ei tunne seda salajast võtit.",
+			"mismatch": "Saidi võti ja salajane võti ei ole samast vidinast.",
+			"unanswered": "Cloudflare ei vastanud. Proovi hetke pärast uuesti.",
+			"refused": "Cloudflare ei aktsepteerinud kontrolli ({codes}).",
+			"widgetFailed": "Vidinat ei õnnestunud selle saidi võtmega kuvada. Kontrolli saidi võtit ja seda, et selle saidi domeen on vidina hostinimede hulgas.",
+			"notChecked": "Kontroll on aegunud. Kontrollin uuesti — salvesta, kui see läbib.",
+			"save": "Kontrolli ja salvesta",
+			"remove": "Eemalda",
+			"saved": "Salvestatud. Sisselogimise, registreerimise ja parooli lähtestamise vormid nõuavad nüüd kontrolli.",
+			"removed": "Eemaldatud. Robotikaitse on väljas.",
+			"failed": "Salvestamine ebaõnnestus."
 		}
+	},
+	"turnstile": {
+		"failed": "Robotikontrolli ei õnnestunud kuvada ({code}). Laadi leht uuesti ja proovi siis veel kord."
 	}
 }

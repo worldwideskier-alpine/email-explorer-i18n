@@ -269,7 +269,8 @@
 		"Original email not found": "Viestiä, johon vastaat, ei enää ole.",
 		"Token has expired": "Tämä linkki on vanhentunut.",
 		"That is the only way in": "Tämä on ainoa kirjautumisosoitteesi, joten sitä ei voi poistaa.",
-		"You don't have access to this mailbox": "Sinulla ei ole pääsyä tähän postilaatikkoon."
+		"You don't have access to this mailbox": "Sinulla ei ole pääsyä tähän postilaatikkoon.",
+		"Bot check failed": "Bottitarkistus ei mennyt läpi. Yritä uudelleen."
 	},
 	"admin": {
 		"title": "Ylläpitopaneeli",
@@ -476,6 +477,33 @@
 			"current": "Lähetetään osoitteesta {address}.",
 			"off": "Ei asetettu: ”Unohtuiko salasana” on pois käytöstä.",
 			"byDeployment": "Käyttöönoton oma asetus on käytössä ja menee tämän edelle."
+		},
+		"turnstile": {
+			"title": "Kirjautumisen bottisuojaus (Cloudflare Turnstile)",
+			"statusLabel": "Tila",
+			"on": "Käytössä (sivustoavain {siteKey}, salainen avain {secret})",
+			"off": "Pois käytöstä",
+			"description": "Varmistaa, ettei kirjautumis-, rekisteröitymis- ja salasanan nollauslomakkeita käytä botti. Luo Cloudflaren hallintapaneelissa kohdassa ”Turnstile” widget (jonka isäntänimiin kuuluu tämän sivuston verkkotunnus) ja syötä sitten sen antama sivustoavain ja salainen avain. Kun molemmat on syötetty, avaimet tarkistetaan tässä, eikä tarkistusta läpäisemättömiä avaimia voi tallentaa. Salaista avainta ei näytetä uudelleen tallennuksen jälkeen (vain sen viimeiset 4 merkkiä).",
+			"siteKey": "Sivustoavain",
+			"secretKey": "Salainen avain",
+			"enterBoth": "Aloita tarkistus syöttämällä molemmat avaimet.",
+			"waiting": "Odotetaan Turnstilea…",
+			"checking": "Tarkistetaan avaimia…",
+			"passed": "Avaimet toimivat. Ota suojaus käyttöön tallentamalla.",
+			"badSecret": "Cloudflare ei tunnista tätä salaista avainta.",
+			"mismatch": "Sivustoavain ja salainen avain eivät ole samasta widgetistä.",
+			"unanswered": "Cloudflare ei vastannut. Yritä hetken kuluttua uudelleen.",
+			"refused": "Cloudflare ei hyväksynyt tarkistusta ({codes}).",
+			"widgetFailed": "Widgetiä ei voitu näyttää tällä sivustoavaimella. Tarkista sivustoavain ja se, että tämän sivuston verkkotunnus on widgetin isäntänimien joukossa.",
+			"notChecked": "Tarkistus on vanhentunut. Tarkistetaan uudelleen — tallenna, kun se menee läpi.",
+			"save": "Tarkista ja tallenna",
+			"remove": "Poista",
+			"saved": "Tallennettu. Kirjautumis-, rekisteröitymis- ja salasanan nollauslomakkeet vaativat nyt tarkistuksen.",
+			"removed": "Poistettu. Bottisuojaus on pois käytöstä.",
+			"failed": "Tallentaminen ei onnistunut."
 		}
+	},
+	"turnstile": {
+		"failed": "Bottitarkistusta ei voitu näyttää ({code}). Päivitä sivu ja yritä uudelleen."
 	}
 }

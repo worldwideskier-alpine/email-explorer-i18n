@@ -193,6 +193,19 @@ are still checked, by the `tsc` that runs before the worker tests.
   Creating a mailbox is the same shape: the address is claimed in one call
   to the auth object (`claimMailboxForPersonOf`) before anything is written,
   because two people creating the same new address at once both got it.
+- **Turnstile guards the forms a stranger reaches** -- sign-in, registration,
+  the reset request -- once root sets it on `/root` (`turnstile.ts`, kept in
+  `settings/turnstile.json`). A pair is saved only after it passed siteverify
+  on that screen (`PostTurnstileVerify`, then `PutTurnstile` checks it is the
+  same pair): saved unchecked, a wrong one refuses every sign-in, root's with
+  them, and the screen that undoes it is behind the sign-in. For the same
+  reason `invalid-input-secret` -- a secret Cloudflare no longer knows, which
+  no visitor can bring about -- lets requests through, and siteverify is asked
+  even with no token so that answer can come back. The check runs before the
+  throttle, so a bot without a token spends nobody's attempts. Registration
+  starts the session itself: the form used to call `/login` next, which would
+  need a second token. `turnstile.test.ts`; the tests' siteverify stub passes
+  `PASS:<secret>` only.
 - **Adding or removing a sign-in address asks for the password.** It outlasts
   the session it is done from: with a session alone, a thief added a login of
   their own to the owner's person, which a reset of the owner's password does

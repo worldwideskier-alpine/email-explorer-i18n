@@ -3,9 +3,9 @@
 # index.html (run_worker_first only routes /api/*, /docs and /openapi.json to
 # it), so this is the only place a header can be attached to the page.
 /*
-  # script-src 'self' is the one that matters: no inline script, no eval, and
-  # nothing from another origin can run, which is what an injected payload
-  # would need.
+  # script-src is the one that matters: no inline script, no eval, and
+  # nothing from any origin but this one and Cloudflare's Turnstile can run,
+  # which is what an injected payload would need.
   #
   # 'unsafe-inline' is unavoidable for styles. The email body is rendered in
   # an iframe built with srcdoc, and a srcdoc frame inherits this policy --
@@ -16,7 +16,12 @@
   # img-src is wide open for the same reason: mail loads images from
   # wherever the sender put them. That is a privacy cost (a tracking pixel
   # tells the sender the message was opened), not a way to run code.
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self' data:; media-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  #
+  # challenges.cloudflare.com, in script-src and frame-src, is Turnstile: its
+  # script and the frame the widget lives in. Only the sign-in forms and
+  # /root load it, and only once root has turned it on. A message cannot use
+  # it: its frame runs no scripts and has its own frames taken out.
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; font-src 'self' data:; media-src 'self' data: blob: https:; connect-src 'self'; frame-src 'self' blob: https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
   # Belt and braces with frame-ancestors, for anything that predates CSP.
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff

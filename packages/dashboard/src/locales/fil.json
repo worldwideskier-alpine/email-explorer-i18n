@@ -269,7 +269,8 @@
 		"Original email not found": "Wala na ang mensaheng sinasagot mo.",
 		"Token has expired": "Nag-expire na ang link na ito.",
 		"That is the only way in": "Ito ang tanging address mo sa pag-sign in, kaya hindi ito maaalis.",
-		"You don't have access to this mailbox": "Wala kang access sa mailbox na ito."
+		"You don't have access to this mailbox": "Wala kang access sa mailbox na ito.",
+		"Bot check failed": "Hindi pumasa ang bot check. Mangyaring subukan muli."
 	},
 	"admin": {
 		"title": "Panel ng administrador",
@@ -476,6 +477,33 @@
 			"current": "Ipinapadala mula sa {address}.",
 			"off": "Hindi nakatakda: naka-off ang “Nakalimutan ang password”.",
 			"byDeployment": "Ang sariling setting ng deployment ang ginagamit at inuuna ito kaysa rito."
+		},
+		"turnstile": {
+			"title": "Proteksyon laban sa bot para sa pag-sign in (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "Naka-on (site key {siteKey}, secret key {secret})",
+			"off": "Naka-off",
+			"description": "Tinitiyak na hindi bot ang gumagamit ng mga form sa pag-sign in, pagpaparehistro at pag-reset ng password. Gumawa ng widget sa ilalim ng “Turnstile” sa Cloudflare dashboard (kasama ang domain ng site na ito sa mga hostname nito), pagkatapos ay ilagay ang site key at secret key na ibibigay nito. Kapag nailagay na ang dalawa, susuriin dito ang mga key, at hindi mase-save ang mga key na hindi pumasa. Hindi na muling ipapakita ang secret key pagkatapos i-save (ang huling 4 na character lang nito).",
+			"siteKey": "Site key",
+			"secretKey": "Secret key",
+			"enterBoth": "Ilagay ang dalawang key para simulan ang pagsusuri.",
+			"waiting": "Hinihintay ang Turnstile…",
+			"checking": "Sinusuri ang mga key…",
+			"passed": "Gumagana ang mga key. I-save para i-on ito.",
+			"badSecret": "Hindi kilala ng Cloudflare ang secret key na ito.",
+			"mismatch": "Hindi galing sa iisang widget ang site key at secret key.",
+			"unanswered": "Hindi sumagot ang Cloudflare. Subukang muli maya-maya.",
+			"refused": "Hindi tinanggap ng Cloudflare ang pagsusuri ({codes}).",
+			"widgetFailed": "Hindi maipakita ang widget gamit ang site key na ito. Tingnan ang site key, at kung kasama ang domain ng site na ito sa mga hostname ng widget.",
+			"notChecked": "Nag-expire na ang pagsusuri. Sinusuri muli — i-save kapag pumasa na.",
+			"save": "Suriin at i-save",
+			"remove": "Alisin",
+			"saved": "Na-save. Hinihingi na ngayon ng mga form sa pag-sign in, pagpaparehistro at pag-reset ng password ang pagsusuri.",
+			"removed": "Inalis. Naka-off ang proteksyon laban sa bot.",
+			"failed": "Hindi ma-save."
 		}
+	},
+	"turnstile": {
+		"failed": "Hindi maipakita ang bot check ({code}). I-reload ang page at subukang muli."
 	}
 }

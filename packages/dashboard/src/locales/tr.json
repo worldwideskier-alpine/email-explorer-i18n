@@ -269,7 +269,8 @@
 		"Original email not found": "Yanıtladığınız ileti artık yok.",
 		"Token has expired": "Bu bağlantının süresi doldu.",
 		"That is the only way in": "Bu tek oturum açma adresiniz olduğundan kaldırılamaz.",
-		"You don't have access to this mailbox": "Bu posta kutusuna erişiminiz yok."
+		"You don't have access to this mailbox": "Bu posta kutusuna erişiminiz yok.",
+		"Bot check failed": "Bot doğrulaması geçilemedi. Lütfen tekrar deneyin."
 	},
 	"admin": {
 		"title": "Yönetim paneli",
@@ -476,6 +477,33 @@
 			"current": "{address} adresinden gönderiliyor.",
 			"off": "Ayarlanmamış: “Parolamı unuttum” kapalı.",
 			"byDeployment": "Dağıtımın kendi ayarı kullanılıyor ve bu ayardan önceliklidir."
+		},
+		"turnstile": {
+			"title": "Giriş için bot koruması (Cloudflare Turnstile)",
+			"statusLabel": "Durum",
+			"on": "Açık (site anahtarı {siteKey}, gizli anahtar {secret})",
+			"off": "Kapalı",
+			"description": "Giriş, kayıt ve parola sıfırlama formlarını kullananın bot olmadığını doğrular. Cloudflare panelinde “Turnstile” altında bir widget oluşturun (ana makine adları arasında bu sitenin alan adı bulunsun), ardından size verilen site anahtarını ve gizli anahtarı girin. İkisi de girildiğinde anahtarlar burada doğrulanır; doğrulamadan geçmeyen anahtarlar kaydedilemez. Gizli anahtar kaydedildikten sonra bir daha gösterilmez (yalnızca son 4 karakteri gösterilir).",
+			"siteKey": "Site anahtarı",
+			"secretKey": "Gizli anahtar",
+			"enterBoth": "Doğrulamayı başlatmak için iki anahtarı da girin.",
+			"waiting": "Turnstile bekleniyor…",
+			"checking": "Anahtarlar doğrulanıyor…",
+			"passed": "Anahtarlar çalışıyor. Açmak için kaydedin.",
+			"badSecret": "Cloudflare bu gizli anahtarı tanımıyor.",
+			"mismatch": "Site anahtarı ile gizli anahtar aynı widget'a ait değil.",
+			"unanswered": "Cloudflare yanıt vermedi. Biraz sonra tekrar deneyin.",
+			"refused": "Cloudflare doğrulamayı kabul etmedi ({codes}).",
+			"widgetFailed": "Widget bu site anahtarıyla gösterilemedi. Site anahtarını ve bu sitenin alan adının widget'ın ana makine adları arasında olup olmadığını kontrol edin.",
+			"notChecked": "Doğrulamanın süresi doldu. Yeniden doğrulanıyor; geçtiğinde kaydedin.",
+			"save": "Doğrula ve kaydet",
+			"remove": "Kaldır",
+			"saved": "Kaydedildi. Giriş, kayıt ve parola sıfırlama formları artık doğrulama istiyor.",
+			"removed": "Kaldırıldı. Bot koruması kapalı.",
+			"failed": "Kaydedilemedi."
 		}
+	},
+	"turnstile": {
+		"failed": "Bot doğrulaması gösterilemedi ({code}). Sayfayı yeniden yükleyip tekrar deneyin."
 	}
 }

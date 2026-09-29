@@ -269,7 +269,8 @@
 		"Original email not found": "你要回复的邮件已不存在。",
 		"Token has expired": "此链接已过期。",
 		"That is the only way in": "这是你唯一的登录地址，无法删除。",
-		"You don't have access to this mailbox": "你没有访问此邮箱的权限。"
+		"You don't have access to this mailbox": "你没有访问此邮箱的权限。",
+		"Bot check failed": "未通过人机验证。请重试。"
 	},
 	"admin": {
 		"title": "管理面板",
@@ -476,6 +477,33 @@
 			"current": "正在从 {address} 发送。",
 			"off": "未设置：“忘记密码”已关闭。",
 			"byDeployment": "正在使用部署自身的设置，它优先于此设置。"
+		},
+		"turnstile": {
+			"title": "登录防机器人保护（Cloudflare Turnstile）",
+			"statusLabel": "状态",
+			"on": "已启用（站点密钥 {siteKey}，秘密密钥 {secret}）",
+			"off": "已停用",
+			"description": "确认使用登录、注册和密码重置表单的不是机器人。请在 Cloudflare 控制台的“Turnstile”中创建一个小组件（在其主机名中加入本站的域名），然后输入它提供的站点密钥和秘密密钥。两者都输入后，会当场验证密钥，未通过验证的密钥无法保存。保存后不再显示秘密密钥（仅显示末尾 4 个字符）。",
+			"siteKey": "站点密钥",
+			"secretKey": "秘密密钥",
+			"enterBoth": "输入两个密钥后即开始验证。",
+			"waiting": "正在等待 Turnstile…",
+			"checking": "正在验证密钥…",
+			"passed": "密钥有效。保存后即可启用。",
+			"badSecret": "Cloudflare 无法识别此秘密密钥。",
+			"mismatch": "站点密钥和秘密密钥不属于同一个小组件。",
+			"unanswered": "Cloudflare 没有响应。请稍后重试。",
+			"refused": "Cloudflare 未通过验证（{codes}）。",
+			"widgetFailed": "无法用此站点密钥显示小组件。请检查站点密钥，以及小组件的主机名中是否包含本站的域名。",
+			"notChecked": "验证已过期，正在重新验证。通过后请保存。",
+			"save": "验证并保存",
+			"remove": "删除",
+			"saved": "已保存。登录、注册和密码重置表单现在需要通过验证。",
+			"removed": "已删除。防机器人保护已停用。",
+			"failed": "保存失败。"
 		}
+	},
+	"turnstile": {
+		"failed": "无法显示人机验证（{code}）。请重新加载页面后重试。"
 	}
 }

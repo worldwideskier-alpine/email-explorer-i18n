@@ -269,7 +269,8 @@
 		"Original email not found": "Il messadi al qual Vus respundais n'exista betg pli.",
 		"Token has expired": "Questa colliaziun è scadida.",
 		"That is the only way in": "Quai è Vossa suletta adressa d'annunzia, perquai na po ella betg vegnir allontanada.",
-		"You don't have access to this mailbox": "Vus n'avais nagin access a questa chascha da posta."
+		"You don't have access to this mailbox": "Vus n'avais nagin access a questa chascha da posta.",
+		"Bot check failed": "La controlla da bots n'è betg reussida. Empruvai per plaschair anc ina giada."
 	},
 	"admin": {
 		"title": "Panel d'administraziun",
@@ -476,6 +477,33 @@
 			"current": "Vegn tramess da {address}.",
 			"off": "Betg definì: «Emblidà il pled-clav» è deactivà.",
 			"byDeployment": "La cumposiziun agena da l'installaziun vegn duvrada ed ha la precedenza envers questa."
+		},
+		"turnstile": {
+			"title": "Protecziun cunter bots per s'annunziar (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "Activà (clav da la pagina {siteKey}, clav secreta {secret})",
+			"off": "Deactivà",
+			"description": "Controllescha che quel che dovra ils formulars per s'annunziar, per sa registrar e per reinizialisar il pled-clav n'è betg in bot. Creai in widget sut «Turnstile» en il dashboard da Cloudflare (cun il domain da questa pagina tranter ses nums da host) ed endatai lura la clav da la pagina e la clav secreta che Vus survegnis. Uschespert che omaduas èn endatadas, vegnan las clavs controlladas qua; clavs che na passan betg na pon betg vegnir memorisadas. La clav secreta na vegn betg pli mussada suenter la memorisaziun (mo ses ultims 4 caracters).",
+			"siteKey": "Clav da la pagina",
+			"secretKey": "Clav secreta",
+			"enterBoth": "Endatai omaduas clavs per cumenzar la controlla.",
+			"waiting": "Spetgar sin Turnstile…",
+			"checking": "Las clavs vegnan controlladas…",
+			"passed": "Las clavs funcziunan. Memorisai per l'activar.",
+			"badSecret": "Cloudflare na renconuscha betg questa clav secreta.",
+			"mismatch": "La clav da la pagina e la clav secreta na derivan betg dal medem widget.",
+			"unanswered": "Cloudflare n'ha betg respundì. Empruvai anc ina giada en in mument.",
+			"refused": "Cloudflare n'ha betg acceptà la controlla ({codes}).",
+			"widgetFailed": "Il widget n'ha betg pudì vegnir mussà cun questa clav da la pagina. Controllai la clav da la pagina e sch'il domain da questa pagina è tranter ils nums da host dal widget.",
+			"notChecked": "La controlla è scadida. Ella vegn repetida — memorisai uschespert ch'ella è reussida.",
+			"save": "Controllar e memorisar",
+			"remove": "Allontanar",
+			"saved": "Memorisà. Ils formulars per s'annunziar, per sa registrar e per reinizialisar il pled-clav dumondan ussa la controlla.",
+			"removed": "Allontanà. La protecziun cunter bots è deactivada.",
+			"failed": "Betg reussì da memorisar."
 		}
+	},
+	"turnstile": {
+		"failed": "La controlla da bots n'ha betg pudì vegnir mussada ({code}). Chargiai danovamain la pagina ed empruvai anc ina giada."
 	}
 }

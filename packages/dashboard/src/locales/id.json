@@ -269,7 +269,8 @@
 		"Original email not found": "Pesan yang Anda balas sudah tidak ada.",
 		"Token has expired": "Tautan ini sudah kedaluwarsa.",
 		"That is the only way in": "Ini satu-satunya alamat masuk Anda, jadi tidak dapat dihapus.",
-		"You don't have access to this mailbox": "Anda tidak memiliki akses ke kotak surat ini."
+		"You don't have access to this mailbox": "Anda tidak memiliki akses ke kotak surat ini.",
+		"Bot check failed": "Pemeriksaan bot tidak lolos. Silakan coba lagi."
 	},
 	"admin": {
 		"title": "Panel administrator",
@@ -476,6 +477,33 @@
 			"current": "Dikirim dari {address}.",
 			"off": "Belum diatur: “Lupa kata sandi” nonaktif.",
 			"byDeployment": "Pengaturan milik deployment sendiri yang dipakai dan lebih diutamakan daripada ini."
+		},
+		"turnstile": {
+			"title": "Perlindungan bot untuk masuk (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "Aktif (kunci situs {siteKey}, kunci rahasia {secret})",
+			"off": "Nonaktif",
+			"description": "Memeriksa bahwa siapa pun yang memakai formulir masuk, pendaftaran, dan reset kata sandi bukan bot. Buat widget di bagian “Turnstile” pada dasbor Cloudflare (dengan domain situs ini di antara nama host-nya), lalu masukkan kunci situs dan kunci rahasia yang diberikannya. Setelah keduanya dimasukkan, kunci langsung diperiksa di sini, dan kunci yang tidak lolos tidak dapat disimpan. Kunci rahasia tidak ditampilkan lagi setelah disimpan (hanya 4 karakter terakhirnya).",
+			"siteKey": "Kunci situs",
+			"secretKey": "Kunci rahasia",
+			"enterBoth": "Masukkan kedua kunci untuk memulai pemeriksaan.",
+			"waiting": "Menunggu Turnstile…",
+			"checking": "Memeriksa kunci…",
+			"passed": "Kunci berfungsi. Simpan untuk mengaktifkannya.",
+			"badSecret": "Cloudflare tidak mengenali kunci rahasia ini.",
+			"mismatch": "Kunci situs dan kunci rahasia bukan dari widget yang sama.",
+			"unanswered": "Cloudflare tidak menjawab. Coba lagi sebentar lagi.",
+			"refused": "Cloudflare tidak menerima pemeriksaan ({codes}).",
+			"widgetFailed": "Widget tidak dapat ditampilkan dengan kunci situs ini. Periksa kunci situs, dan pastikan domain situs ini ada di antara nama host widget.",
+			"notChecked": "Pemeriksaan sudah kedaluwarsa. Memeriksa ulang — simpan setelah lolos.",
+			"save": "Periksa dan simpan",
+			"remove": "Hapus",
+			"saved": "Tersimpan. Formulir masuk, pendaftaran, dan reset kata sandi kini meminta pemeriksaan.",
+			"removed": "Dihapus. Perlindungan bot nonaktif.",
+			"failed": "Tidak dapat disimpan."
 		}
+	},
+	"turnstile": {
+		"failed": "Pemeriksaan bot tidak dapat ditampilkan ({code}). Muat ulang halaman lalu coba lagi."
 	}
 }

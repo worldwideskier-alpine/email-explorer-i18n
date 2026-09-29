@@ -269,7 +269,8 @@
 		"Original email not found": "De Message, op deen Dir äntwert, gëtt et net méi.",
 		"Token has expired": "Dëse Link ass ofgelaf.",
 		"That is the only way in": "Dëst ass Är eenzeg Umeldadress, dofir kann se net ewechgeholl ginn.",
-		"You don't have access to this mailbox": "Dir hutt keen Zougrëff op dës Mailbox."
+		"You don't have access to this mailbox": "Dir hutt keen Zougrëff op dës Mailbox.",
+		"Bot check failed": "De Bot-Test ass net bestanen. Probéiert w.e.g. nach eng Kéier."
 	},
 	"admin": {
 		"title": "Administratiounspanel",
@@ -476,6 +477,33 @@
 			"current": "Et gëtt vun {address} geschéckt.",
 			"off": "Net festgeluecht: „Passwuert vergiess“ ass ausgeschalt.",
 			"byDeployment": "Déi eege Astellung vum Deployment gëtt benotzt an huet Virrang virun dëser."
+		},
+		"turnstile": {
+			"title": "Bot-Schutz fir d'Umeldung (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "Un (Site-Schlëssel {siteKey}, geheime Schlëssel {secret})",
+			"off": "Aus",
+			"description": "Préift, datt deen, deen d'Formulairen fir d'Umeldung, d'Registréierung an d'Zrécksetze vum Passwuert benotzt, kee Bot ass. Leet am Cloudflare-Dashboard ënner „Turnstile“ e Widget un (mat der Domain vun dëser Säit ënner sengen Hostnimm), a gitt dann de Site-Schlëssel an de geheime Schlëssel an, déi et Iech gëtt. Soubal béid aginn sinn, ginn d'Schlësselen hei gepréift, a Schlësselen, déi net duerchkommen, kënnen net gespäichert ginn. De geheime Schlëssel gëtt nom Späicheren net méi ugewisen (just seng lescht 4 Zeechen).",
+			"siteKey": "Site-Schlëssel",
+			"secretKey": "Geheime Schlëssel",
+			"enterBoth": "Gitt béid Schlësselen an, fir den Test ze starten.",
+			"waiting": "Et gëtt op Turnstile gewaart…",
+			"checking": "D'Schlësselen ginn gepréift…",
+			"passed": "D'Schlësselen funktionéieren. Späichert, fir de Schutz unzeschalten.",
+			"badSecret": "Cloudflare erkennt dëse geheime Schlëssel net.",
+			"mismatch": "De Site-Schlëssel an de geheime Schlëssel sinn net vum selwechte Widget.",
+			"unanswered": "Cloudflare huet net geäntwert. Probéiert et an engem Moment nach eng Kéier.",
+			"refused": "Cloudflare huet den Test net ugeholl ({codes}).",
+			"widgetFailed": "De Widget konnt mat dësem Site-Schlëssel net ugewise ginn. Kontrolléiert de Site-Schlëssel, an ob d'Domain vun dëser Säit ënner den Hostnimm vum Widget ass.",
+			"notChecked": "Den Test ass ofgelaf. E gëtt nach eng Kéier gemaach — späichert, soubal e bestanen ass.",
+			"save": "Préiwen a späicheren",
+			"remove": "Ewechhuelen",
+			"saved": "Gespäichert. D'Formulairen fir d'Umeldung, d'Registréierung an d'Zrécksetze vum Passwuert froen elo no dem Test.",
+			"removed": "Ewechgeholl. De Bot-Schutz ass ausgeschalt.",
+			"failed": "Konnt net gespäichert ginn."
 		}
+	},
+	"turnstile": {
+		"failed": "De Bot-Test konnt net ugewise ginn ({code}). Luet d'Säit nei a probéiert nach eng Kéier."
 	}
 }

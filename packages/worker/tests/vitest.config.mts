@@ -291,6 +291,44 @@ export default defineConfig({
 							},
 						);
 					}
+					/*
+					 * Turnstile's siteverify, steered by what is sent to it, the way
+					 * the real one answers:
+					 *
+					 * - a secret containing INVALID_SECRET is one Cloudflare does not
+					 *   know (`invalid-input-secret`), whatever the token;
+					 * - no token is `missing-input-response`;
+					 * - the token `PASS:<secret>` passes -- a token belongs to one
+					 *   widget, so it passes only with that widget's secret, which
+					 *   is what lets a test hand over a mismatched pair;
+					 * - UNANSWERED gets a page instead of JSON;
+					 * - anything else is `invalid-input-response`.
+					 */
+					if (url.hostname === "challenges.cloudflare.com") {
+						const form = new URLSearchParams(await request.clone().text());
+						const secret = form.get("secret") ?? "";
+						const token = form.get("response") ?? "";
+						const answer = (success: boolean, codes: string[] = []) =>
+							new Response(
+								JSON.stringify({
+									success,
+									"error-codes": codes,
+									hostname: "local.test",
+								}),
+								{ headers: { "content-type": "application/json" } },
+							);
+						if (secret.includes("INVALID_SECRET")) {
+							return answer(false, ["invalid-input-secret"]);
+						}
+						if (!token) return answer(false, ["missing-input-response"]);
+						if (token === "UNANSWERED") {
+							return new Response("<html>bad gateway</html>", {
+								status: 502,
+							});
+						}
+						if (token === `PASS:${secret}`) return answer(true);
+						return answer(false, ["invalid-input-response"]);
+					}
 					// Anything not stubbed above is refused, and says which host. It
 					// was handed to node's fetch, as though to reach the network --
 					// and measured, that never worked: node could not read

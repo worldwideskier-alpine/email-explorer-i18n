@@ -11,6 +11,7 @@ import {
 	loginThrottleRules,
 	retryAfterSeconds,
 } from "../throttle";
+import { turnstileRefusal } from "../turnstile";
 import type { Env, Session } from "../types";
 
 type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
@@ -19,6 +20,8 @@ type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
 const RegisterRequestSchema = z.object({
 	email: z.string().email(),
 	password: z.string().min(8),
+	// From the Turnstile widget, when root has turned it on; see turnstile.ts.
+	turnstileToken: z.string().optional(),
 });
 
 /**
@@ -58,6 +61,7 @@ export async function proveCurrentPassword(
 const LoginRequestSchema = z.object({
 	email: z.string().email(),
 	password: z.string(),
+	turnstileToken: z.string().optional(),
 });
 
 const SessionResponseSchema = z.object({
@@ -144,6 +148,26 @@ function getSessionToken(c: AppContext): string | null {
 	);
 }
 
+/**
+ * Hands a new session to the browser: the cookie, and the session with its
+ * role, which the dashboard decides which screen to open from before it has
+ * asked anything else.
+ */
+async function startSession(
+	c: AppContext,
+	authDO: ReturnType<typeof getAuthDO>,
+	session: Awaited<ReturnType<ReturnType<typeof getAuthDO>["login"]>>,
+) {
+	if (!session) return null;
+	const cookie = `session=${session.id}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${30 * 24 * 60 * 60}`;
+	c.header("Set-Cookie", cookie);
+	const [personId, rootPersonId] = await Promise.all([
+		authDO.getPersonId(session.userId),
+		authDO.getRootPersonId(),
+	]);
+	return { ...session, role: roleOf(personId, rootPersonId) };
+}
+
 // Public routes
 export class PostRegister extends OpenAPIRoute {
 	schema = {
@@ -155,15 +179,21 @@ export class PostRegister extends OpenAPIRoute {
 		},
 		responses: {
 			"201": {
-				description: "User registered successfully",
-				...contentJson(UserResponseSchema),
+				description: "User registered and signed in",
+				...contentJson(
+					UserResponseSchema.extend({
+						session: SessionResponseSchema.extend({
+							role: z.enum(["root", "admin"]),
+						}).nullable(),
+					}),
+				),
 			},
 			"400": {
 				description: "Bad request",
 				...contentJson(ErrorResponseSchema),
 			},
 			"403": {
-				description: "Registration disabled",
+				description: "Registration disabled, or the bot check failed",
 				...contentJson(ErrorResponseSchema),
 			},
 		},
@@ -171,7 +201,7 @@ export class PostRegister extends OpenAPIRoute {
 
 	async handle(c: AppContext) {
 		const data = await this.getValidatedData<typeof this.schema>();
-		const { email, password } = data.body;
+		const { email, password, turnstileToken } = data.body;
 
 		const authDO = getAuthDO(c.env);
 		const registerEnabled = c.env.config?.auth?.registerEnabled;
@@ -180,6 +210,9 @@ export class PostRegister extends OpenAPIRoute {
 		if (registerEnabled === false) {
 			return c.json({ error: "Registration is disabled" }, 403);
 		}
+
+		const refused = await turnstileRefusal(c.env, c.req.raw, turnstileToken);
+		if (refused) return refused;
 
 		try {
 			// Smart mode (the setting left unset) opens the form to the first
@@ -202,7 +235,15 @@ export class PostRegister extends OpenAPIRoute {
 				);
 			}
 
-			return c.json(user, 201);
+			// Signed in at once, which the form did by asking /login next. With
+			// Turnstile on that second request would need a second token, and
+			// the one the widget gave has just been spent here.
+			const session = await startSession(
+				c,
+				authDO,
+				await authDO.login(email, password),
+			);
+			return c.json({ ...user, session }, 201);
 		} catch (error: any) {
 			if (error.message?.includes("UNIQUE constraint failed")) {
 				return c.json({ error: "Email already registered" }, 400);
@@ -229,6 +270,10 @@ export class PostLogin extends OpenAPIRoute {
 				description: "Unauthorized",
 				...contentJson(ErrorResponseSchema),
 			},
+			"403": {
+				description: "The bot check failed",
+				...contentJson(ErrorResponseSchema),
+			},
 			"429": {
 				description: "Too many failed attempts",
 				...contentJson(ErrorResponseSchema),
@@ -238,7 +283,11 @@ export class PostLogin extends OpenAPIRoute {
 
 	async handle(c: AppContext) {
 		const data = await this.getValidatedData<typeof this.schema>();
-		const { email, password } = data.body;
+		const { email, password, turnstileToken } = data.body;
+
+		// Before the throttle; see turnstileRefusal.
+		const refused = await turnstileRefusal(c.env, c.req.raw, turnstileToken);
+		if (refused) return refused;
 
 		const authDO = getAuthDO(c.env);
 		const rules = loginThrottleRules(email, clientIp(c.req.raw));
@@ -262,18 +311,7 @@ export class PostLogin extends OpenAPIRoute {
 		// near-lockout. The address's own IP only gets this attempt back.
 		await authDO.throttleSettle(rules);
 
-		// Set cookie
-		const cookie = `session=${session.id}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${30 * 24 * 60 * 60}`;
-		c.header("Set-Cookie", cookie);
-
-		// The role travels with the session from here on: the dashboard
-		// decides which screen to open from this response, before it has
-		// asked anything else.
-		const [personId, rootPersonId] = await Promise.all([
-			authDO.getPersonId(session.userId),
-			authDO.getRootPersonId(),
-		]);
-		return c.json({ ...session, role: roleOf(personId, rootPersonId) });
+		return c.json(await startSession(c, authDO, session));
 	}
 }
 

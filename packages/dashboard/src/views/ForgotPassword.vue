@@ -40,10 +40,17 @@
 					</div>
 				</div>
 
+				<TurnstileWidget
+					v-if="siteKey && !successMessage"
+					ref="widget"
+					:site-key="siteKey"
+					@token="token = $event"
+				/>
+
 				<div v-if="!successMessage">
 					<button
 						type="submit"
-						:disabled="isLoading"
+						:disabled="isLoading || !ready"
 						class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
 					>
 						{{ isLoading ? t("forgotPassword.sending") : t("forgotPassword.sendResetLink") }}
@@ -67,14 +74,18 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+import TurnstileWidget from "@/components/TurnstileWidget.vue";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import { useToast } from "@/composables/useToast";
+import { useTurnstileGate } from "@/composables/useTurnstileGate";
 import api from "@/services/api";
 import { translateApiError } from "@/utils/apiError";
 
 const router = useRouter();
 const { t, locale } = useI18n();
 const { success, error: showError } = useToast();
+
+const { siteKey, token, widget, ready, spent, current } = useTurnstileGate();
 
 const email = ref("");
 const isLoading = ref(false);
@@ -86,12 +97,13 @@ async function handleForgotPassword() {
 	isLoading.value = true;
 
 	try {
-		await api.forgotPassword(email.value, locale.value);
+		await api.forgotPassword(email.value, locale.value, current());
 		const sentTo = email.value;
 		successMessage.value = () =>
 			t("forgotPassword.linkSent", { email: sentTo });
 		success(t("forgotPassword.linkSentToast"));
 	} catch (e: any) {
+		spent(e);
 		const fromApi = e.response?.data?.error;
 		// Through the catalogue: "Too many requests" is translated there, and
 		// was shown in English in every language.

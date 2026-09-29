@@ -269,7 +269,8 @@
 		"Original email not found": "Poruka na koju odgovarate više ne postoji.",
 		"Token has expired": "Ovaj link je istekao.",
 		"That is the only way in": "Ovo je vaša jedina adresa za prijavu, pa se ne može ukloniti.",
-		"You don't have access to this mailbox": "Nemate pristup ovom poštanskom sandučiću."
+		"You don't have access to this mailbox": "Nemate pristup ovom poštanskom sandučiću.",
+		"Bot check failed": "Provjera za botove nije prošla. Pokušajte ponovo."
 	},
 	"admin": {
 		"title": "Administratorska ploča",
@@ -476,6 +477,33 @@
 			"current": "Šalje se s {address}.",
 			"off": "Nije postavljeno: „Zaboravljena lozinka” je isključeno.",
 			"byDeployment": "Koristi se vlastita postavka instalacije, koja ima prednost pred ovom."
+		},
+		"turnstile": {
+			"title": "Zaštita prijave od botova (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "Uključeno (ključ stranice {siteKey}, tajni ključ {secret})",
+			"off": "Isključeno",
+			"description": "Provjerava da onaj ko koristi obrasce za prijavu, registraciju i ponovno postavljanje lozinke nije bot. Napravite widget pod „Turnstile” na Cloudflare kontrolnoj ploči (s domenom ove stranice među njegovim nazivima hostova), pa unesite ključ stranice i tajni ključ koje vam da. Kada unesete oba, ključevi se provjeravaju ovdje, a ključeve koji ne prođu nije moguće sačuvati. Tajni ključ se nakon čuvanja više ne prikazuje (samo njegova posljednja 4 znaka).",
+			"siteKey": "Ključ stranice",
+			"secretKey": "Tajni ključ",
+			"enterBoth": "Unesite oba ključa da započne provjera.",
+			"waiting": "Čeka se Turnstile…",
+			"checking": "Provjeravaju se ključevi…",
+			"passed": "Ključevi rade. Sačuvajte da uključite zaštitu.",
+			"badSecret": "Cloudflare ne prepoznaje ovaj tajni ključ.",
+			"mismatch": "Ključ stranice i tajni ključ nisu iz istog widgeta.",
+			"unanswered": "Cloudflare nije odgovorio. Pokušajte ponovo za trenutak.",
+			"refused": "Cloudflare nije prihvatio provjeru ({codes}).",
+			"widgetFailed": "Widget nije bilo moguće prikazati s ovim ključem stranice. Provjerite ključ stranice i da li je domena ove stranice među nazivima hostova widgeta.",
+			"notChecked": "Provjera je istekla. Ponovo se provjerava — sačuvajte kada prođe.",
+			"save": "Provjeri i sačuvaj",
+			"remove": "Ukloni",
+			"saved": "Sačuvano. Obrasci za prijavu, registraciju i ponovno postavljanje lozinke sada traže provjeru.",
+			"removed": "Uklonjeno. Zaštita od botova je isključena.",
+			"failed": "Nije bilo moguće sačuvati."
 		}
+	},
+	"turnstile": {
+		"failed": "Provjeru za botove nije bilo moguće prikazati ({code}). Osvježite stranicu i pokušajte ponovo."
 	}
 }

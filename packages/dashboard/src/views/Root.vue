@@ -320,6 +320,10 @@
         <p v-if="recoveryError" class="mt-2 text-sm text-red-600 dark:text-red-400" role="alert">{{ recoveryError }}</p>
       </div>
 
+      <!-- Turnstile on the forms a stranger can reach, beside the other
+           settings of the sign-in and reset flow. -->
+      <TurnstileCard class="mt-6" />
+
       <!-- Root's own sending key, beside the address its resets come from:
            the two together decide whether root's own reset mail can go out.
            Root cannot open /admin, which is where this used to be only. -->
@@ -403,6 +407,7 @@ import { useRouter } from "vue-router";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
 import ResendKeyCard from "@/components/ResendKeyCard.vue";
 import ToggleSwitch from "@/components/ToggleSwitch.vue";
+import TurnstileCard from "@/components/TurnstileCard.vue";
 import { useDateFormat } from "@/composables/useDateFormat";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";

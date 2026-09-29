@@ -48,10 +48,17 @@
 					</div>
 				</div>
 
+				<TurnstileWidget
+					v-if="siteKey"
+					ref="widget"
+					:site-key="siteKey"
+					@token="token = $event"
+				/>
+
 				<div>
 					<button
 						type="submit"
-						:disabled="authStore.loading"
+						:disabled="authStore.loading || !ready"
 						class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
 					>
 						{{ authStore.loading ? t("login.signingIn") : t("login.signIn") }}
@@ -74,7 +81,9 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
+import TurnstileWidget from "@/components/TurnstileWidget.vue";
 import { useAppSettings } from "@/composables/useAppSettings";
+import { useTurnstileGate } from "@/composables/useTurnstileGate";
 import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
@@ -99,15 +108,18 @@ const authStore = useAuthStore();
 const { t } = useI18n();
 const { isRegistrationEnabled, isAccountRecoveryEnabled } = useAppSettings();
 
+const { siteKey, token, widget, ready, spent, current } = useTurnstileGate();
+
 const email = ref("");
 const password = ref("");
 
 async function handleLogin() {
 	try {
-		await authStore.login(email.value, password.value);
+		await authStore.login(email.value, password.value, current());
 		router.push(afterLogin());
 	} catch (error) {
-		// Error is handled by store
+		// The message is the store's; the token is spent either way.
+		spent(error);
 	}
 }
 </script>

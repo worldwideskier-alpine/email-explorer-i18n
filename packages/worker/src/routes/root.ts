@@ -44,6 +44,15 @@ import {
 	readMaintenanceRecord,
 } from "../maintenance-record";
 import { roleOf } from "../roles";
+import {
+	pairWasVerified,
+	rememberVerifiedPair,
+	secretTail,
+	siteverify,
+	storedTurnstile,
+	TURNSTILE_KEY,
+	TURNSTILE_VERIFIED_KEY,
+} from "../turnstile";
 import type { Env, Session } from "../types";
 import { proveCurrentPassword } from "./auth";
 
@@ -776,4 +785,173 @@ async function recoverySenderState(env: Env) {
 		setByDeployment: Boolean(env.ACCOUNT_RECOVERY_FROM?.trim()),
 		enabled: (await recoveryFromEmail(env)) !== undefined,
 	};
+}
+
+const TurnstileStateSchema = z.object({
+	/** The site key in force, shown whole: it is in every sign-in page. */
+	siteKey: z.string().nullable(),
+	/** The secret in force, as its last four characters only. */
+	secretKey: z.string().nullable(),
+});
+
+const TurnstilePairSchema = z.object({
+	siteKey: z.string().trim().min(1),
+	secretKey: z.string().trim().min(1),
+});
+
+async function turnstileState(env: Env) {
+	const keys = await storedTurnstile(env);
+	return {
+		siteKey: keys?.siteKey ?? null,
+		secretKey: keys ? secretTail(keys.secretKey) : null,
+	};
+}
+
+/** Whether the sign-in forms ask for Turnstile, and with which keys. */
+export class GetTurnstile extends OpenAPIRoute {
+	schema = {
+		summary: "The sign-in bot check (root only)",
+		operationId: "getTurnstile",
+		tags: ["Root"],
+		responses: {
+			"200": {
+				description: "The keys in force, the secret masked",
+				...contentJson(TurnstileStateSchema),
+			},
+			...forbidden,
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = requireRoot(c);
+		if (session instanceof Response) return session;
+		return c.json(await turnstileState(c.env));
+	}
+}
+
+/**
+ * The check `/root` runs by itself once both keys are typed in: the widget has
+ * rendered there with the site key and handed over a token, and this asks
+ * siteverify about it with the secret. A pair from two different widgets, a
+ * mistyped secret, or a site key whose widget does not list this hostname all
+ * stop here -- the last before it gets this far, since the widget will not
+ * render at all.
+ */
+export class PostTurnstileVerify extends OpenAPIRoute {
+	schema = {
+		summary: "Check a Turnstile key pair before saving it (root only)",
+		operationId: "verifyTurnstile",
+		tags: ["Root"],
+		request: {
+			body: contentJson(
+				TurnstilePairSchema.extend({ token: z.string().min(1) }),
+			),
+		},
+		responses: {
+			"200": {
+				description: "The pair works; it may be saved",
+				...contentJson(SuccessResponseSchema),
+			},
+			"400": {
+				description: "Cloudflare refused it",
+				...contentJson(
+					z.object({
+						error: z.string(),
+						verdict: z.string(),
+						codes: z.array(z.string()),
+					}),
+				),
+			},
+			...forbidden,
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = requireRoot(c);
+		if (session instanceof Response) return session;
+
+		const { siteKey, secretKey, token } = (
+			await this.getValidatedData<typeof this.schema>()
+		).body;
+		const result = await siteverify(
+			secretKey,
+			token,
+			c.req.header("CF-Connecting-IP"),
+		);
+		if (result.verdict !== "passed") {
+			return c.json(
+				{
+					error: "Turnstile refused the keys",
+					verdict: result.verdict,
+					codes: result.codes,
+				},
+				400,
+			);
+		}
+		await rememberVerifiedPair(c.env, { siteKey, secretKey });
+		return c.json({ status: "verified" });
+	}
+}
+
+/**
+ * Turns the check on with a pair that has just passed PostTurnstileVerify.
+ * Nothing else is accepted: saving a pair that was never seen to work is how
+ * a deployment refuses every sign-in, root's included.
+ */
+export class PutTurnstile extends OpenAPIRoute {
+	schema = {
+		summary: "Turn the sign-in bot check on (root only)",
+		operationId: "setTurnstile",
+		tags: ["Root"],
+		request: { body: contentJson(TurnstilePairSchema) },
+		responses: {
+			"200": {
+				description: "Saved",
+				...contentJson(TurnstileStateSchema),
+			},
+			"409": {
+				description: "This pair has not passed the check",
+				...contentJson(ErrorResponseSchema),
+			},
+			...forbidden,
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = requireRoot(c);
+		if (session instanceof Response) return session;
+
+		const { siteKey, secretKey } = (
+			await this.getValidatedData<typeof this.schema>()
+		).body;
+		const keys = { siteKey, secretKey };
+		if (!(await pairWasVerified(c.env, keys))) {
+			return c.json({ error: "These keys have not been checked" }, 409);
+		}
+		await c.env.BUCKET.put(TURNSTILE_KEY, JSON.stringify(keys));
+		await c.env.BUCKET.delete(TURNSTILE_VERIFIED_KEY);
+		return c.json(await turnstileState(c.env));
+	}
+}
+
+export class DeleteTurnstile extends OpenAPIRoute {
+	schema = {
+		summary: "Turn the sign-in bot check off (root only)",
+		operationId: "deleteTurnstile",
+		tags: ["Root"],
+		responses: {
+			"200": {
+				description: "Removed",
+				...contentJson(TurnstileStateSchema),
+			},
+			...forbidden,
+		},
+	};
+
+	async handle(c: AppContext) {
+		const session = requireRoot(c);
+		if (session instanceof Response) return session;
+		await c.env.BUCKET.delete([TURNSTILE_KEY, TURNSTILE_VERIFIED_KEY]);
+		return c.json(await turnstileState(c.env));
+	}
 }

@@ -269,7 +269,8 @@
 		"Original email not found": "Meddelandet du svarar på finns inte längre.",
 		"Token has expired": "Den här länken har upphört att gälla.",
 		"That is the only way in": "Det här är din enda inloggningsadress, så den kan inte tas bort.",
-		"You don't have access to this mailbox": "Du har inte åtkomst till den här brevlådan."
+		"You don't have access to this mailbox": "Du har inte åtkomst till den här brevlådan.",
+		"Bot check failed": "Robotkontrollen godkändes inte. Försök igen."
 	},
 	"admin": {
 		"title": "Administrationspanel",
@@ -476,6 +477,33 @@
 			"current": "Skickar från {address}.",
 			"off": "Inte angivet: ”Glömt lösenord” är avstängt.",
 			"byDeployment": "Driftsättningens egen inställning används och går före den här."
+		},
+		"turnstile": {
+			"title": "Robotskydd för inloggning (Cloudflare Turnstile)",
+			"statusLabel": "Status",
+			"on": "På (webbplatsnyckel {siteKey}, hemlig nyckel {secret})",
+			"off": "Av",
+			"description": "Kontrollerar att den som använder formulären för inloggning, registrering och återställning av lösenord inte är en robot. Skapa en widget under ”Turnstile” i instrumentpanelen i Cloudflare (med den här webbplatsens domän bland dess värdnamn) och ange sedan webbplatsnyckeln och den hemliga nyckeln du får. När båda är angivna kontrolleras nycklarna här, och nycklar som inte godkänns kan inte sparas. Den hemliga nyckeln visas inte igen när den har sparats (bara dess sista 4 tecken).",
+			"siteKey": "Webbplatsnyckel",
+			"secretKey": "Hemlig nyckel",
+			"enterBoth": "Ange båda nycklarna för att starta kontrollen.",
+			"waiting": "Väntar på Turnstile…",
+			"checking": "Kontrollerar nycklarna…",
+			"passed": "Nycklarna fungerar. Spara för att slå på skyddet.",
+			"badSecret": "Cloudflare känner inte igen den här hemliga nyckeln.",
+			"mismatch": "Webbplatsnyckeln och den hemliga nyckeln kommer inte från samma widget.",
+			"unanswered": "Cloudflare svarade inte. Försök igen om en stund.",
+			"refused": "Cloudflare godkände inte kontrollen ({codes}).",
+			"widgetFailed": "Widgeten kunde inte visas med den här webbplatsnyckeln. Kontrollera webbplatsnyckeln och att den här webbplatsens domän finns bland widgetens värdnamn.",
+			"notChecked": "Kontrollen har gått ut. Kontrollerar igen – spara när den har godkänts.",
+			"save": "Kontrollera och spara",
+			"remove": "Ta bort",
+			"saved": "Sparat. Formulären för inloggning, registrering och återställning av lösenord kräver nu kontrollen.",
+			"removed": "Borttaget. Robotskyddet är avstängt.",
+			"failed": "Det gick inte att spara."
 		}
+	},
+	"turnstile": {
+		"failed": "Robotkontrollen kunde inte visas ({code}). Läs in sidan igen och försök på nytt."
 	}
 }
