@@ -90,6 +90,12 @@ async function liveSessions(): Promise<string[]> {
 	);
 }
 
+/** What a real link carries: the login as it was when the link went out. */
+const ownerStamp = async () =>
+	(await env.MAILBOX.get(env.MAILBOX.idFromName("AUTH")).emailChangeStamp(
+		"owner",
+	)) as string;
+
 async function resetWithToken(newPassword: string) {
 	const token = crypto.randomUUID();
 	await env.BUCKET.put(
@@ -97,6 +103,7 @@ async function resetWithToken(newPassword: string) {
 		JSON.stringify({
 			userId: "owner",
 			email: EMAIL,
+			stamp: await ownerStamp(),
 			expiresAt: Date.now() + 60_000,
 		}),
 	);
@@ -147,6 +154,7 @@ describe("a password reset", () => {
 			JSON.stringify({
 				userId: "owner",
 				email: EMAIL,
+				stamp: await ownerStamp(),
 				expiresAt: Date.now() + 60_000,
 			}),
 		);
@@ -167,6 +175,7 @@ describe("a password reset", () => {
 			JSON.stringify({
 				userId: "owner",
 				email: EMAIL,
+				stamp: await ownerStamp(),
 				expiresAt: Date.now() - 1,
 			}),
 		);
@@ -323,5 +332,75 @@ describe("unsubscribing", () => {
 			endpoint: "https://push.example.net/phone",
 		});
 		expect(await deliveredTo()).toEqual([]);
+	});
+});
+
+/**
+ * A reset link is bound to the login as it was when it went out. It used to
+ * be a bare token: changing the password meanwhile left it working for the
+ * rest of its hour, and two uses at once both got through, because the route
+ * read the token and deleted it in two steps.
+ */
+describe("a reset link", () => {
+	beforeEach(async () => {
+		await seedOwnerWithSessions({ mine: Date.now() + DAY });
+	});
+
+	async function link(): Promise<string> {
+		const token = crypto.randomUUID();
+		await env.BUCKET.put(
+			`recovery-tokens/${token}.json`,
+			JSON.stringify({
+				userId: "owner",
+				email: EMAIL,
+				stamp: await ownerStamp(),
+				expiresAt: Date.now() + 60_000,
+			}),
+		);
+		return token;
+	}
+	const use = (token: string, newPassword: string) =>
+		SELF.fetch(`${API}/auth/reset-password`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ token, newPassword }),
+		});
+
+	it("works once when used twice at once", async () => {
+		const token = await link();
+		const answers = await Promise.all([
+			use(token, "first-new-password"),
+			use(token, "second-new-password"),
+		]);
+		expect(answers.map((a) => a.status).sort()).toEqual([200, 401]);
+	});
+
+	it("stops working when the password is changed meanwhile", async () => {
+		const token = await link();
+		const changed = await as("mine", "/auth/change-password", {
+			currentPassword: PASSWORD,
+			newPassword: "changed-by-the-owner",
+		});
+		expect(changed.status).toBe(200);
+		expect((await use(token, "the-links-password")).status).toBe(401);
+		const login = await SELF.fetch(`${API}/auth/login`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ email: EMAIL, password: "changed-by-the-owner" }),
+		});
+		expect(login.status).toBe(200);
+	});
+
+	it("from before links were bound is refused", async () => {
+		const token = crypto.randomUUID();
+		await env.BUCKET.put(
+			`recovery-tokens/${token}.json`,
+			JSON.stringify({
+				userId: "owner",
+				email: EMAIL,
+				expiresAt: Date.now() + 60_000,
+			}),
+		);
+		expect((await use(token, "anything-at-all")).status).toBe(401);
 	});
 });

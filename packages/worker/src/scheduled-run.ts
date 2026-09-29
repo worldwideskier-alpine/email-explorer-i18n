@@ -133,7 +133,11 @@ export async function runScheduledMaintenance(
 				record.backupProgress = { ...progress, at: new Date().toISOString() };
 				await note(env, record);
 			},
-			{ deadline: backupsBy, callLimitMs: limits.callLimitMs },
+			{
+				deadline: backupsBy,
+				callLimitMs: limits.callLimitMs,
+				recordBy: purgeBy,
+			},
 		);
 		record.backups = {
 			finishedAt: new Date().toISOString(),
@@ -156,6 +160,7 @@ export async function runScheduledMaintenance(
 		summary.spamPurge = await runScheduledSpamPurge(env, now, {
 			deadline: purgeBy,
 			callLimitMs: limits.callLimitMs,
+			recordBy: deletionsBy,
 		});
 		record.spamPurge = {
 			finishedAt: new Date().toISOString(),

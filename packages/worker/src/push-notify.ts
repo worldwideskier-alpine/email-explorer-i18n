@@ -62,7 +62,15 @@ export async function notifyMailboxSubscribers(
 					},
 				});
 
-				const res = await fetch(endpoint, { method: "POST", headers, body });
+				// Bounded: this runs inside mail delivery, and a push service
+				// that does not answer held the delivery for as long as it
+				// liked. A notification that could not be sent is only that.
+				const res = await fetch(endpoint, {
+					method: "POST",
+					headers,
+					body,
+					signal: AbortSignal.timeout(PUSH_TIMEOUT_MS),
+				});
 
 				if (res.status === 404 || res.status === 410) {
 					await authDO.forgetGonePushEndpoint(sub.endpoint);
@@ -76,6 +84,9 @@ export async function notifyMailboxSubscribers(
 	);
 	return accepted.filter(Boolean).length;
 }
+
+/** How long one push service is waited for. */
+const PUSH_TIMEOUT_MS = 10_000;
 
 /**
  * Deep link to a single email's body (`email/:id` under `/mailbox/:mailboxId`

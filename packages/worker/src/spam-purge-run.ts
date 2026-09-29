@@ -18,7 +18,7 @@
 
 import { backupKeyPrefix } from "./auto-backup";
 import type { TimeLimits } from "./deadline";
-import { limitedBy, pastDeadline } from "./deadline";
+import { limitedBy, pastDeadline, recordingWithin } from "./deadline";
 import { listMailboxes, updateMailboxSettings } from "./mailbox-records";
 import type { SpamRetentionSettings } from "./spam-retention";
 import { expiredSpamIds, retentionCutoff } from "./spam-retention";
@@ -61,7 +61,12 @@ export async function newestArchiveAt(
 	env: Env,
 	mailboxId: string,
 ): Promise<number | null> {
-	let newest: string | null = null;
+	// The newest by the moment each key names, not the greatest key: any
+	// object under the prefix whose name is not a stamp -- one put there by
+	// hand, or by a later version -- sorted above the real ones, read as no
+	// archive at all, and the purge then deleted nothing, every night, with
+	// nothing to say why.
+	let newest: number | null = null;
 	let cursor: string | undefined;
 	do {
 		const page = await env.BUCKET.list({
@@ -69,14 +74,18 @@ export async function newestArchiveAt(
 			cursor,
 		});
 		for (const object of page.objects) {
-			if (newest === null || object.key > newest) newest = object.key;
+			const at = archiveStampOf(object.key);
+			if (at !== null && (newest === null || at > newest)) newest = at;
 		}
 		cursor = page.truncated ? page.cursor : undefined;
 	} while (cursor);
-	if (newest === null) return null;
+	return newest;
+}
 
+/** When an archive's run began, from its key; null for a key that is not one. */
+function archiveStampOf(key: string): number | null {
 	const stamp =
-		/(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})-(\d{3})Z\.mbox$/.exec(newest);
+		/(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})-(\d{3})Z\.mbox$/.exec(key);
 	if (!stamp) return null;
 	const [, day, h, m, sec, ms] = stamp;
 	const at = Date.parse(`${day}T${h}:${m}:${sec}.${ms}Z`);
@@ -107,9 +116,18 @@ export async function purgeMailboxSpam(
 	now: Date,
 	days: unknown,
 	archivedBefore?: number,
+	/**
+	 * Each call is held to the per-call limit and the deadline, and a pass
+	 * past its deadline stops between runs. Given only the deadline as a
+	 * whole, one call that did not answer held the purge until then -- every
+	 * mailbox after it went without, in the same order every night -- and
+	 * the purge left behind went on deleting after the pass had moved on.
+	 */
+	limits: TimeLimits = {},
 ): Promise<number> {
+	const call = limitedBy(limits);
 	const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
-	const listed = await stub.listSpamEmailDates();
+	const listed = await call(stub.listSpamEmailDates(), "listing the spam");
 	// Old enough by the date the message carries, and -- when backups are on
 	// -- here since before the newest archive by when it actually arrived.
 	// The two are different clocks for a restored message, and only arrival
@@ -139,9 +157,11 @@ export async function purgeMailboxSpam(
 	// runs stays where it was put.
 	let deleted = 0;
 	for (let from = 0; from < expired.length; from += PURGE_RUN) {
-		const gone = await stub.deleteEmailsIn(
-			expired.slice(from, from + PURGE_RUN),
-			"spam",
+		// What is left waits for tomorrow, when it is due again.
+		if (pastDeadline(limits)) break;
+		const gone = await call(
+			stub.deleteEmailsIn(expired.slice(from, from + PURGE_RUN), "spam"),
+			"deleting a run of spam",
 		);
 		const keys: string[] = [];
 		for (const { id, attachments } of gone) {
@@ -150,8 +170,10 @@ export async function purgeMailboxSpam(
 			}
 			keys.push(`raw/${id}.eml`);
 		}
-		await deleteKeys(env, keys);
+		// The rows are gone already: counted whether or not their objects go
+		// too, which leaves them for the sweep rather than a wrong total.
 		deleted += gone.length;
+		await call(deleteKeys(env, keys), "deleting the spam's objects");
 	}
 
 	return deleted;
@@ -178,11 +200,7 @@ export async function runScheduledSpamPurge(
 ): Promise<SpamPurgeSummary> {
 	// As in the backup pass: the deadline decides which mailboxes are
 	// started, and the calls around that are held to the per-call limit.
-	const call = limitedBy({ callLimitMs: limits.callLimitMs });
-	const untilDeadline = limitedBy({
-		deadline: limits.deadline,
-		callLimitMs: Number.POSITIVE_INFINITY,
-	});
+	const call = recordingWithin(limits);
 	const mailboxes = await call(listMailboxes(env), "listing mailboxes");
 	const summary: SpamPurgeSummary = {
 		considered: mailboxes.length,
@@ -191,7 +209,14 @@ export async function runScheduledSpamPurge(
 		failed: 0,
 	};
 
-	for (const mailbox of mailboxes) {
+	// Longest since its last run first, as the backups go: in the order the
+	// bucket lists them, a mailbox that used the whole pass every night kept
+	// every mailbox after it from ever being purged.
+	const lastRun = (mailbox: (typeof mailboxes)[number]) =>
+		Date.parse(mailbox.settings.spamRetention?.lastRunAt ?? "") || 0;
+	const inTurn = [...mailboxes].sort((a, b) => lastRun(a) - lastRun(b));
+
+	for (const mailbox of inTurn) {
 		const retention = mailbox.settings.spamRetention;
 		if (!retention?.enabled) continue;
 		// Not started is not failed: nothing was deleted, which is the safe
@@ -206,9 +231,13 @@ export async function runScheduledSpamPurge(
 						"finding the newest archive",
 					)) ?? Number.NEGATIVE_INFINITY)
 				: undefined;
-			const deleted = await untilDeadline(
-				purgeMailboxSpam(env, mailbox.id, now, retention.days, archivedBefore),
-				"deleting old spam",
+			const deleted = await purgeMailboxSpam(
+				env,
+				mailbox.id,
+				now,
+				retention.days,
+				archivedBefore,
+				limits,
 			);
 			summary.ran += 1;
 			summary.deleted += deleted;

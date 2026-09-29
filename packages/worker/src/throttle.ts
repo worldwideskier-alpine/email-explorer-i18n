@@ -129,35 +129,53 @@ export function passwordResetThrottleRules(
 
 /**
  * Two things are being limited here. Guessing the current password from a
- * stolen session -- the change-password and change-email routes both ask for
- * it, and both sit behind a session, so this is the fallback if one leaks.
- * And using a logged-in account to send confirmation mail at whatever address
- * the caller names.
+ * stolen session -- the routes that ask for it all sit behind a session, so
+ * this is the fallback if one leaks. And using a logged-in account to send
+ * confirmation mail at whatever address the caller names.
  *
- * That second one is why `sendsMail` exists. A changed password is a success
- * that clears the slate like a login does; a sent confirmation is the very
- * thing being limited, so it stays counted. Change-email used to reset both
- * keys after every send, which left the mail it sent unlimited.
+ * They are two sets of keys, because they end differently. A right password
+ * clears the guessing count, the way a login does; a sent confirmation is the
+ * very thing being limited, so it stays counted. They used to share keys, and
+ * `sendsMail` only decided whether this route cleared them -- so any other
+ * route that asked for the password and got it right (changing it, adding a
+ * sign-in address, setting a sending key) cleared the mail count too, and the
+ * limit on confirmation mail was as many as anybody liked.
  */
 export function accountChangeThrottleRules(
 	userId: string,
 	ip: string,
 	{ sendsMail }: { sendsMail: boolean },
 ): ThrottleRule[] {
-	return [
+	const guessing: ThrottleRule[] = [
 		{
 			key: `account:user:${userId}`,
 			limit: 10,
 			windowMs: HOUR,
 			lockMs: HOUR,
-			onSuccess: sendsMail ? undefined : "reset",
+			onSuccess: "reset",
 		},
 		{
 			key: `account:ip:${ip}`,
 			limit: 20,
 			windowMs: HOUR,
 			lockMs: HOUR,
-			onSuccess: sendsMail ? undefined : "refund",
+			onSuccess: "refund",
+		},
+	];
+	if (!sendsMail) return guessing;
+	return [
+		...guessing,
+		{
+			key: `account-mail:user:${userId}`,
+			limit: 10,
+			windowMs: HOUR,
+			lockMs: HOUR,
+		},
+		{
+			key: `account-mail:ip:${ip}`,
+			limit: 20,
+			windowMs: HOUR,
+			lockMs: HOUR,
 		},
 	];
 }

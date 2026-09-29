@@ -108,6 +108,16 @@ export async function hashPassword(password: string): Promise<string> {
 	].join("$");
 }
 
+/**
+ * As long as verifying a password takes, for a sign-in to an address with no
+ * account. Without it an unknown address answered at once and a known one
+ * after 100,000 rounds of PBKDF2, and the difference said which addresses
+ * have accounts as plainly as a message would have.
+ */
+export async function verifyNothing(password: string): Promise<void> {
+	await deriveKey(password, new Uint8Array(SALT_BYTES), PBKDF2_ITERATIONS);
+}
+
 export async function verifyPassword(
 	password: string,
 	stored: string,

@@ -271,7 +271,10 @@ describe("mail sent through a mailbox", () => {
 		const keyed = await second(`${API}/admin/settings/resend`, {
 			method: "PUT",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ apiKey: "re_placeholder_for_tests" }),
+			body: JSON.stringify({
+				apiKey: "re_placeholder_for_tests",
+				currentPassword: "password123",
+			}),
 		});
 		expect(keyed.status).toBe(200);
 	});

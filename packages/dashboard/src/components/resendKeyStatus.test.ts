@@ -1,3 +1,4 @@
+import { createPinia, setActivePinia } from "pinia";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, nextTick } from "vue";
 import { englishWith } from "@/testing/english";
@@ -10,10 +11,16 @@ import { englishWith } from "@/testing/english";
  */
 
 const adminGetResendSettings = vi.fn();
+const adminSetResendApiKey = vi.fn(async () => ({
+	data: { source: "stored" },
+}));
 vi.mock("@/services/api", () => ({
 	default: {
 		adminGetResendSettings: (...a: unknown[]) => adminGetResendSettings(...a),
-		adminSetResendApiKey: vi.fn(),
+		adminSetResendApiKey: (...a: unknown[]) =>
+			adminSetResendApiKey(...(a as [])),
+		setAuthToken: vi.fn(),
+		clearAuthToken: vi.fn(),
 	},
 }));
 
@@ -41,7 +48,20 @@ async function mountCard() {
 	const { i18n } = await import("@/i18n");
 	i18n.global.setLocaleMessage("en", englishWith({}) as never);
 	i18n.global.locale.value = "en" as never;
-	const app = createApp(ResendKeyCard).use(i18n);
+	// Signed in, as on the screens the card sits on.
+	localStorage.setItem(
+		"session",
+		JSON.stringify({
+			id: "s",
+			userId: "u",
+			email: "me@example.com",
+			role: "admin",
+			expiresAt: Date.now() + 60_000,
+		}),
+	);
+	const pinia = createPinia();
+	setActivePinia(pinia);
+	const app = createApp(ResendKeyCard).use(pinia).use(i18n);
 	app.mount(host);
 	unmount = () => app.unmount();
 	await settle();
@@ -56,15 +76,50 @@ const button = (text: string) =>
 	) as HTMLButtonElement | undefined;
 
 describe("the sending key's box", () => {
-	it("gives a password manager nothing to fill", async () => {
-		// A password box here was one the browser offered to save the key
-		// from, as this site's password -- and then filled into sign-in.
+	it("gives a password manager only this account's own sign-in", async () => {
+		// The key as a password box was one the browser offered to save as
+		// this site's password -- and then filled into sign-in. Setting a key
+		// now asks for the current password, so the one password box here is
+		// that, after a username box holding this account's own address:
+		// what a browser pairs is the real sign-in, not the key.
 		adminGetResendSettings.mockResolvedValue({ data: { source: "none" } });
 		await mountCard();
-		expect(host.querySelectorAll('input[type="password"]')).toHaveLength(0);
+		const passwords = host.querySelectorAll('input[type="password"]');
+		expect(passwords).toHaveLength(1);
+		expect(passwords[0].getAttribute("autocomplete")).toBe("current-password");
+		const fields = [...host.querySelectorAll("input")];
+		const username =
+			fields[fields.indexOf(passwords[0] as HTMLInputElement) - 1];
+		expect(username.getAttribute("autocomplete")).toBe("username");
+		expect(username.value).toBe("me@example.com");
+
 		const box = host.querySelector("#resendApiKey") as HTMLInputElement;
+		expect(fields.indexOf(box)).toBeGreaterThan(
+			fields.indexOf(passwords[0] as HTMLInputElement),
+		);
 		expect(box.type).toBe("text");
 		expect(box.className).toContain("[-webkit-text-security:disc]");
+	});
+
+	it("is set with the current password, and removed without one", async () => {
+		adminGetResendSettings.mockResolvedValue({ data: { source: "stored" } });
+		await mountCard();
+		const type = (selector: string, value: string) => {
+			const field = host.querySelector(selector) as HTMLInputElement;
+			field.value = value;
+			field.dispatchEvent(new Event("input"));
+		};
+		type("#resendApiKey", "re_new_key");
+		await settle();
+		expect(button("Save")?.disabled).toBe(true);
+		type("#resendCurrentPassword", "my-password");
+		await settle();
+		button("Save")?.click();
+		await settle();
+		expect(adminSetResendApiKey).toHaveBeenLastCalledWith(
+			"re_new_key",
+			"my-password",
+		);
 	});
 });
 

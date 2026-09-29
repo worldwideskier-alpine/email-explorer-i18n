@@ -555,8 +555,8 @@ export class PostChangeEmail extends OpenAPIRoute {
 			return c.json({ error: "Failed to send confirmation email" }, 500);
 		}
 
-		// Settles nothing -- the rules were made with sendsMail -- but it is
-		// the rules that say so, not the absence of this line.
+		// Clears the guessing count, as a right password does anywhere, and
+		// leaves the mail count as it is: see accountChangeThrottleRules.
 		await authDO.throttleSettle(rules);
 		return c.json({ status: "Confirmation email sent" });
 	}

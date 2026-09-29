@@ -2,7 +2,7 @@ import { DurableObject } from "cloudflare:workers";
 import { DOQB } from "workers-qb";
 import type { ClassifyInput, ClassifyResult } from "../claude-spam-filter";
 import { classifyWithClaude } from "../claude-spam-filter";
-import { hashPassword, verifyPassword } from "../password";
+import { hashPassword, verifyNothing, verifyPassword } from "../password";
 import type { ThrottleRule } from "../throttle";
 import type { Env, Session, User } from "../types";
 import { authMigrations, mailboxMigrations } from "./migrations";
@@ -322,7 +322,10 @@ export class MailboxDO extends DurableObject<Env> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
 		const user = this.#userRowByEmail(email);
-		if (!user) return null;
+		if (!user) {
+			await verifyNothing(password);
+			return null;
+		}
 		const { valid, needsRehash } = await verifyPassword(
 			password,
 			String(user.password_hash),
@@ -1039,6 +1042,47 @@ export class MailboxDO extends DurableObject<Env> {
 	 * the old sessions alive resets nothing -- whoever prompted the reset
 	 * keeps the access they already had.
 	 */
+	/**
+	 * Auth operation: set the password a reset link was issued for, if the
+	 * login is still as it was when the link went out.
+	 *
+	 * The link used to be a bare token: a password changed meanwhile, or the
+	 * address moved, left it working for the rest of its hour, and two uses
+	 * at once both got through (the route read the token, then deleted it).
+	 * Bound to the stamp, the first use changes the password and with it the
+	 * stamp, so the second is refused here -- the row is read again after
+	 * every await and compared, and that check and the write are one step.
+	 */
+	async resetPasswordWithStamp(
+		userId: string,
+		password: string,
+		stamp: string,
+	): Promise<"ok" | "stale"> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		const before = this.#loginCredentials(userId);
+		if (!before) return "stale";
+		const current = await credentialStamp(before);
+		const hashed = await hashPassword(password);
+		const after = this.#loginCredentials(userId);
+		if (
+			!after ||
+			after.email !== before.email ||
+			after.password_hash !== before.password_hash ||
+			current !== stamp
+		) {
+			return "stale";
+		}
+		this.ctx.storage.sql.exec(
+			"UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
+			hashed,
+			Date.now(),
+			userId,
+		);
+		this.#endSessions(userId, null);
+		return "ok";
+	}
+
 	async setUserPassword(
 		userId: string,
 		password: string,
@@ -1987,20 +2031,28 @@ export class MailboxDO extends DurableObject<Env> {
 	 * as an error and reach the person as a 500.
 	 */
 	async updateContact(id: number, contact: { name?: string; email?: string }) {
-		try {
-			this.#qb
-				.update({
-					tableName: "contacts",
-					data: contact,
-					where: {
-						conditions: "id = ?",
-						params: [id],
-					},
-				})
-				.execute();
-		} catch (e) {
-			if (String(e).includes("UNIQUE")) return "taken" as const;
-			throw e;
+		// Only the fields given. A body with the address alone came through
+		// with `name: undefined`, which set the name to NULL -- or, the column
+		// being NOT NULL, answered 500 -- when it meant "leave the name".
+		const given = Object.fromEntries(
+			Object.entries(contact).filter(([, value]) => value !== undefined),
+		);
+		if (Object.keys(given).length > 0) {
+			try {
+				this.#qb
+					.update({
+						tableName: "contacts",
+						data: given,
+						where: {
+							conditions: "id = ?",
+							params: [id],
+						},
+					})
+					.execute();
+			} catch (e) {
+				if (String(e).includes("UNIQUE")) return "taken" as const;
+				throw e;
+			}
 		}
 		const query = this.#qb
 			.select("contacts")

@@ -1,4 +1,10 @@
-import { env, runInDurableObject, SELF } from "cloudflare:test";
+import {
+	createExecutionContext,
+	env,
+	runInDurableObject,
+	SELF,
+	waitOnExecutionContext,
+} from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
 	authenticatedFetch,
@@ -122,15 +128,22 @@ describe("a password reset", () => {
 		await keyOf(String(theirs), HOLDER_KEY);
 		await keyOf(String(await auth.getPersonId(rootLogin.userId)), OTHER_KEY);
 
-		const asked = await SELF.fetch(
-			"http://local.test/api/v1/auth/forgot-password",
-			{
+		// Sent after the answer (see PostForgotPassword), so asked of the
+		// Worker directly, with a context whose background work can be waited
+		// for.
+		const worker = await import("../../dev/index");
+		const ctx = createExecutionContext();
+		const asked = await worker.default.fetch(
+			new Request("http://local.test/api/v1/auth/forgot-password", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ email: address }),
-			},
+			}),
+			env,
+			ctx,
 		);
 		expect(asked.status).toBe(200);
+		await waitOnExecutionContext(ctx);
 		expect((await sentTo(address)).map((one) => one.authorization)).toEqual([
 			`Bearer ${HOLDER_KEY}`,
 		]);

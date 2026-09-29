@@ -1,7 +1,13 @@
 import { env, runInDurableObject, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { getResendApiKey, getResendKeySource } from "../../src/app-settings";
-import { authenticatedFetch, personId, testAuthBeforeAll } from "./utils";
+import { hashPassword } from "../../src/password";
+import {
+	authenticatedFetch,
+	personId,
+	testAuthBeforeAll,
+	userId,
+} from "./utils";
 
 /**
  * The outbound mail key: one per person, settable on their own screen.
@@ -33,13 +39,14 @@ const plainUserToken = "another_persons_token";
 async function makeOtherPerson(): Promise<void> {
 	const ns = (env as unknown as { MAILBOX: DurableObjectNamespace }).MAILBOX;
 	const stub = ns.get(ns.idFromName("AUTH"));
+	const hash = await hashPassword(PASSWORD);
 	await runInDurableObject(stub, async (_i, state) => {
 		const now = Date.now();
 		state.storage.sql.exec(
 			"INSERT OR REPLACE into users (id, email, password_hash, is_admin, person_id, created_at, updated_at) values (?, ?, ?, ?, ?, ?, ?)",
 			"user2",
 			"plain@example.com",
-			"bb",
+			hash,
 			0,
 			OTHER_PERSON,
 			now,
@@ -63,16 +70,36 @@ const asOtherPerson = (url: string, options: RequestInit = {}) =>
 
 const RESEND_URL = "http://local.test/api/v1/admin/settings/resend";
 
-const setKey = (apiKey: string) =>
+/** The fixture login's password, given a real hash by giveFixtureAPassword. */
+const PASSWORD = "the-fixture-password";
+
+async function giveFixtureAPassword(): Promise<void> {
+	const hash = await hashPassword(PASSWORD);
+	const stub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
+	await runInDurableObject(stub, async (_i, state) => {
+		state.storage.sql.exec(
+			"UPDATE users SET password_hash = ? WHERE id = ?",
+			hash,
+			userId,
+		);
+	});
+}
+
+/** null sends no password at all. */
+const setKey = (apiKey: string, currentPassword: string | null = PASSWORD) =>
 	authenticatedFetch(RESEND_URL, {
 		method: "PUT",
 		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ apiKey }),
+		body: JSON.stringify({
+			apiKey,
+			...(currentPassword === null ? {} : { currentPassword }),
+		}),
 	});
 
 describe("the outbound mail API key", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
+		await giveFixtureAPassword();
 		await bucket().delete(LEGACY_KEY);
 		await bucket().delete(OWN_KEY);
 	});
@@ -171,7 +198,10 @@ describe("the outbound mail API key", () => {
 		const write = await asOtherPerson(RESEND_URL, {
 			method: "PUT",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ apiKey: "re_belonging_to_somebody_else" }),
+			body: JSON.stringify({
+				apiKey: "re_belonging_to_somebody_else",
+				currentPassword: PASSWORD,
+			}),
 		});
 		expect(write.status).toBe(200);
 
@@ -223,5 +253,36 @@ describe("the outbound mail API key", () => {
 		await bucket().put(OWN_KEY, "this is not json");
 		expect(await getResendApiKey(env as never, personId)).toBeUndefined();
 		expect(await getResendKeySource(env as never, personId)).toBe("none");
+	});
+});
+
+/**
+ * A key is set with the password as well as the session. With the session
+ * alone, a thief put in a key of their own, and this person's mail went out
+ * through the thief's Resend account -- whose dashboard shows every message
+ * sent. Taking a key away sends nothing anywhere and needs only the session.
+ */
+describe("setting a key", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await giveFixtureAPassword();
+		await bucket().delete(OWN_KEY);
+	});
+
+	it("is refused without the current password, and stores nothing", async () => {
+		expect((await setKey("re_a_thiefs_key", null)).status).toBe(403);
+		expect((await setKey("re_a_thiefs_key", "a-guess")).status).toBe(403);
+		expect(await getResendApiKey(env as never, personId)).toBeUndefined();
+	});
+
+	it("is taken with it", async () => {
+		expect((await setKey(SECRET)).status).toBe(200);
+		expect(await getResendApiKey(env as never, personId)).toBe(SECRET);
+	});
+
+	it("can be taken away with the session alone", async () => {
+		await setKey(SECRET);
+		expect((await setKey("", null)).status).toBe(200);
+		expect(await getResendApiKey(env as never, personId)).toBeUndefined();
 	});
 });

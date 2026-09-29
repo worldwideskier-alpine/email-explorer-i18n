@@ -128,8 +128,16 @@ export function somethingIsBeingWritten(doc: Document): boolean {
  */
 const NOT_WRITING = "[data-not-writing]";
 
-/** Input types somebody types words into. */
-const TYPED = new Set(["text", "email", "search", "url", "tel", "password"]);
+/**
+ * Input types somebody types words into.
+ *
+ * Not a password box. The browser fills a current-password box itself, on
+ * every screen that has one, and fills it again after a reload -- counted,
+ * /account and /admin were always "being written", and a tab left on either
+ * kept the old build for good. What is in one costs nothing to type again.
+ * A focused one still counts, like any field being typed into.
+ */
+const TYPED = new Set(["text", "email", "search", "url", "tel"]);
 
 let holds = 0;
 

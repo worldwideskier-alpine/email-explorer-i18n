@@ -332,7 +332,8 @@ export default defineConfig({
 					 * - the token `PASS:<secret>` passes -- a token belongs to one
 					 *   widget, so it passes only with that widget's secret, which
 					 *   is what lets a test hand over a mismatched pair;
-					 * - UNANSWERED gets a page instead of JSON;
+					 * - UNANSWERED gets a page instead of JSON, and INTERNAL_ERROR
+					 *   Cloudflare's `internal-error`;
 					 * - anything else is `invalid-input-response`.
 					 */
 					if (url.hostname === "challenges.cloudflare.com") {
@@ -361,6 +362,10 @@ export default defineConfig({
 							return new Response("<html>bad gateway</html>", {
 								status: 502,
 							});
+						}
+						// What Cloudflare answers when siteverify itself fails.
+						if (token === "INTERNAL_ERROR") {
+							return answer(false, ["internal-error"], 500);
 						}
 						if (token === `PASS:${secret}`) return answer(true);
 						return answer(false, ["invalid-input-response"]);

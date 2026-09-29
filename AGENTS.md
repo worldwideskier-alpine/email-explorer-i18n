@@ -226,7 +226,10 @@ are still checked, by the `tsc` that runs before the worker tests.
   never says the secret is unknown, so a widget deleted in the dashboard --
   which renders nothing, so sends nothing -- locked everyone out. The tests'
   stub answers in Cloudflare's measured order; an earlier one did not, and the
-  test for that case passed against it. The check runs before the
+  test for that case passed against it. A siteverify that does not answer, or
+  answers `internal-error`, lets the request through as well, logged: an
+  outage of Cloudflare's refused every sign-in, root's included, for as long
+  as it lasted. The check runs before the
   throttle, so a bot without a token spends nobody's attempts. Registration
   starts the session itself: the form used to call `/login` next, which would
   need a second token. `turnstile.test.ts`; the tests' siteverify stub passes
@@ -242,6 +245,20 @@ are still checked, by the `tsc` that runs before the worker tests.
   (`emailChangeStamp`): unbound, a link asked for by someone holding the
   password survived the owner changing or resetting it, and moved the login
   to their address anyway. `account-management.test.ts`.
+  A reset link is bound the same way (`resetPasswordWithStamp`): it dies with
+  a password change, and two uses at once no longer both get through.
+  Setting a Resend key asks for the password too -- with a session alone a
+  thief put in a key of their own and read the owner's mail in their Resend
+  dashboard -- and `ResendKeyCard` puts a `username` box holding the
+  account's own address before its password box, so a browser pairs the real
+  sign-in and not the key. Confirmation mail is counted on keys of its own
+  (`account-mail:`): sharing the guessing keys, any right password elsewhere
+  cleared it (`account-mail-limit.test.ts`).
+  What an answer says without meaning to: a sign-in to an unknown address
+  spends a PBKDF2 all the same (`verifyNothing`), a reset request answers
+  before its token and mail, which go in `waitUntil`, and the auth object not
+  answering is a 503, not the 401 the dashboard signs out on
+  (`auth-quiet-signals.test.ts`).
 - **Ending a session ends its push subscription.** A notification carries
   the sender and subject of each new message, so a subscription is bound to
   the session that registered it and delivered to only while that session
@@ -355,6 +372,10 @@ are still checked, by the `tsc` that runs before the worker tests.
   the previous record into `maintenance/history.json` (two weeks) before
   writing its own, which `/root` lists when a night did not end well.
   `nightly-limits.test.ts` holds both, with that night's own record.
+  The spam purge is held the same way, call by call, and takes the mailbox
+  purged longest ago first; and recording after a pass's deadline has an end
+  of its own (`recordBy`), since one record per mailbox left over was a
+  minute each. `nightly-purge-limits.test.ts`.
 - **An attachment object is reachable only through its row.** Every writer
   names one `attachments/{emailId}/{attachmentId}/{filename}` and every reader
   — download, archive, delete — rebuilds that name from the row, so an object

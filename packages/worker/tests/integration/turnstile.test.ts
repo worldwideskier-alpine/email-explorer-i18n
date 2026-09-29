@@ -216,10 +216,27 @@ describe("once it is on", () => {
 		expect((await rootLogin(`PASS:${SECRET}`)).status).toBe(200);
 	});
 
-	it("refuses when siteverify gives no answer", async () => {
+	/*
+	 * Cloudflare's outage, not the visitor's doing. Refused, it refused every
+	 * sign-in for as long as it lasted, root's too; the throttle still
+	 * stands, and the log says why the check was skipped.
+	 */
+	it("lets requests through when siteverify gives no answer, and says so", async () => {
 		const token = await root();
 		await turnOn(token);
-		expect((await rootLogin("UNANSWERED")).status).toBe(403);
+		const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+		expect((await rootLogin("UNANSWERED")).status).toBe(200);
+		expect(errors).toHaveBeenCalled();
+	});
+
+	it("lets requests through when siteverify has trouble of its own", async () => {
+		const token = await root();
+		await turnOn(token);
+		const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+		expect((await rootLogin("INTERNAL_ERROR")).status).toBe(200);
+		expect(errors).toHaveBeenCalled();
+		// And a token that is simply wrong is still refused.
+		expect((await rootLogin("forged")).status).toBe(403);
 	});
 
 	it("spends nobody's attempts on a request it refused", async () => {

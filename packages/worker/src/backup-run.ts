@@ -16,7 +16,7 @@ import type { AutoBackupSettings } from "./auto-backup";
 import { isBackupDue, normalizeKeep } from "./auto-backup";
 import { writeMailboxBackup } from "./backup-writer";
 import type { TimeLimits } from "./deadline";
-import { limitedBy, pastDeadline } from "./deadline";
+import { pastDeadline, recordingWithin } from "./deadline";
 import { listMailboxes, updateMailboxSettings } from "./mailbox-records";
 import type { Env } from "./types";
 
@@ -131,7 +131,7 @@ export async function runScheduledBackups(
 	// The deadline decides which mailboxes are *started*; refusing to write
 	// down that one was not reached, because time is up, would lose exactly
 	// the fact the deadline exists to produce.
-	const call = limitedBy({ callLimitMs: limits.callLimitMs });
+	const call = recordingWithin(limits);
 	const mailboxes = await call(listMailboxes(env), "listing mailboxes");
 	const summary: BackupPassSummary = {
 		considered: mailboxes.length,

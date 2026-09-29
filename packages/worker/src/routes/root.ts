@@ -341,22 +341,36 @@ export class GetAccounts extends OpenAPIRoute {
 		const session = requireRoot(c);
 		if (session instanceof Response) return session;
 
-		const rootPersonId = await authDO(c.env).getRootPersonId();
 		const people = await authDO(c.env).listPeople();
-
-		// One read for all of them. The locks are not an authentication fact,
-		// so they are not in the account rows; they are also not per-person
-		// objects, which would have made this list one subrequest per person.
-		const locks = await readPersonDeletionLocks(c.env);
-
-		return c.json(
-			people.map((person) => ({
-				...person,
-				role: roleOf(person.personId, rootPersonId),
-				deletionLocked: isPersonDeletionLocked(locks, person.personId),
-			})),
-		);
+		return c.json(await describePeople(c.env, people));
 	}
+}
+
+/**
+ * People as the account list shows them. One definition for the list and
+ * for the answer to making one: the answer used to be a shape of its own,
+ * without the logins or the lock, and with only the new address for a
+ * spare -- not the person the schema promised.
+ */
+async function describePeople(
+	env: Env,
+	people: {
+		personId: string;
+		emails: string[];
+		logins: { id: string; email: string }[];
+		createdAt: number;
+	}[],
+) {
+	const rootPersonId = await authDO(env).getRootPersonId();
+	// One read for all of them. The locks are not an authentication fact, so
+	// they are not in the account rows; they are also not per-person objects,
+	// which would have made this list one subrequest per person.
+	const locks = await readPersonDeletionLocks(env);
+	return people.map((person) => ({
+		...person,
+		role: roleOf(person.personId, rootPersonId),
+		deletionLocked: isPersonDeletionLocked(locks, person.personId),
+	}));
 }
 
 /**
@@ -438,15 +452,14 @@ export class PostAccount extends OpenAPIRoute {
 				personId,
 			);
 			const created = await authDO(c.env).getPersonId(user.id);
-			return c.json(
-				{
-					personId: created ?? "",
-					emails: [user.email],
-					role,
-					createdAt: user.createdAt,
-				},
-				201,
+			const [person] = await describePeople(
+				c.env,
+				(await authDO(c.env).listPeople()).filter(
+					(one) => one.personId === created,
+				),
 			);
+			if (!person) return c.json({ error: "Registration failed" }, 400);
+			return c.json(person, 201);
 		} catch (e) {
 			if (String(e).includes("UNIQUE")) {
 				return c.json({ error: "Email already registered" }, 400);

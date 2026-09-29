@@ -40,6 +40,7 @@ import {
 	PostLogin,
 	PostLogout,
 	PostRegister,
+	proveCurrentPassword,
 	sessionTokenOf,
 } from "./routes/auth";
 import { PostDraftEmail, PutDraftEmail } from "./routes/drafts";
@@ -339,14 +340,12 @@ class GetMailboxes extends OpenAPIRoute {
 		// into this and an empty mailbox list. Runs once; see legacy-grants.
 		await ensureLegacyMailboxGrants(c.env);
 
-		// With authentication switched off there is nobody to ask about, so
-		// everything is on show. That is the deployment's own choice.
+		// Unreachable today -- the gate in fetch() answers 401 first -- and
+		// it used to list every mailbox in the deployment, "authentication
+		// switched off" being an option that no longer exists. A route that
+		// loses its gate should show nothing, not everything.
 		if (!session) {
-			return c.json(
-				(await listMailboxes(c.env)).map((m) =>
-					summary(m.id, m.settings as { fromName?: string }),
-				),
-			);
+			return c.json({ error: "Unauthorized" }, 401);
 		}
 
 		// Otherwise: the mailboxes this person holds. It used to be
@@ -1655,6 +1654,10 @@ class GetAttachment extends OpenAPIRoute {
 			"Content-Disposition",
 			`attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(downloadName)}`,
 		);
+		// The type is the sender's too, and without this a browser may read
+		// the bytes as something else -- an attachment that says text/plain
+		// but is script, loaded by a page of this origin.
+		headers.set("X-Content-Type-Options", "nosniff");
 
 		return new Response(attachmentObj.body, {
 			headers,
@@ -2053,6 +2056,70 @@ class PutEmailSource extends OpenAPIRoute {
 	}
 }
 
+/**
+ * Stores a reset token for this login and mails the link, through the key of
+ * the person being reset. Run after the answer; see PostForgotPassword.
+ */
+async function sendPasswordReset(
+	env: Env,
+	fromEmail: string,
+	user: { id: string; email: string },
+	to: string,
+	locale: Parameters<typeof buildPasswordResetEmail>[0],
+	origin: string,
+): Promise<void> {
+	try {
+		await storeAndSendPasswordReset(env, fromEmail, user, to, locale, origin);
+	} catch (e) {
+		// Nobody is waiting to be told, and telling them would re-open the
+		// enumeration the route closes. The operator sees it in the logs.
+		console.error("Failed to send recovery email:", e);
+	}
+}
+
+async function storeAndSendPasswordReset(
+	env: Env,
+	fromEmail: string,
+	user: { id: string; email: string },
+	to: string,
+	locale: Parameters<typeof buildPasswordResetEmail>[0],
+	origin: string,
+): Promise<void> {
+	const authStub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
+	// Valid for an hour.
+	const token = crypto.randomUUID();
+	const expiresAt = Date.now() + 3600000;
+	// Bound to the password and address as they are now; see
+	// resetPasswordWithStamp.
+	const stamp = await authStub.emailChangeStamp(user.id);
+	if (!stamp) return;
+	await env.BUCKET.put(
+		`recovery-tokens/${token}.json`,
+		JSON.stringify({ userId: user.id, email: user.email, expiresAt, stamp }),
+		{ customMetadata: { expiresAt: expiresAt.toString() } },
+	);
+
+	const message = buildPasswordResetEmail(
+		locale,
+		`${origin}/reset-password?token=${token}`,
+	);
+	// The reset belongs to the person being reset, so it goes through their
+	// key. Somebody with no key cannot be sent one -- which is a service that
+	// has stopped, not a lockout: root sets a password directly, with no mail
+	// involved at all.
+	await sendEmail(
+		env,
+		{
+			from: fromEmail,
+			to,
+			subject: message.subject,
+			html: message.html,
+			text: message.text,
+		},
+		await authStub.getPersonId(user.id),
+	);
+}
+
 class PostForgotPassword extends OpenAPIRoute {
 	schema = {
 		summary: "Request password reset email",
@@ -2113,61 +2180,20 @@ class PostForgotPassword extends OpenAPIRoute {
 			return c.json({ error: "Too many requests" }, 429);
 		}
 
+		// Deliberately the same response for an address with an account and
+		// one without, and at the same moment: telling the caller which
+		// addresses have accounts hands an attacker the list of names worth
+		// guessing passwords for. The answer used to come straight back for an
+		// unknown address and only after the token was stored and the mail
+		// sent for a known one -- a difference of a Resend round trip, which
+		// answered the question as plainly as the words would have. So the
+		// work is done after the answer, for the address that has it.
 		const user = await authStub.getUserByEmail(email);
-		if (!user) {
-			// Deliberately the same response an existing address gets. Telling
-			// the caller which addresses have accounts hands an attacker the
-			// list of names worth guessing passwords for.
-			return c.json({ status: "Password reset email sent" });
-		}
-
-		// Generate reset token (valid for 1 hour)
-		const token = crypto.randomUUID();
-		const expiresAt = Date.now() + 3600000; // 1 hour
-
-		// Store token in R2
-		const tokenKey = `recovery-tokens/${token}.json`;
-		await c.env.BUCKET.put(
-			tokenKey,
-			JSON.stringify({
-				userId: user.id,
-				email: user.email,
-				expiresAt,
-			}),
-			{
-				customMetadata: {
-					expiresAt: expiresAt.toString(),
-				},
-			},
-		);
-
-		// Send recovery email
-		const resetLink = `${new URL(c.req.url).origin}/reset-password?token=${token}`;
-
-		const message = buildPasswordResetEmail(locale, resetLink);
-
-		try {
-			// The reset belongs to the person being reset, so it goes through
-			// their key. Somebody with no key cannot be sent one -- which is a
-			// service that has stopped, not a lockout: root sets a password
-			// directly, with no mail involved at all.
-			await sendEmail(
-				c.env,
-				{
-					from: fromEmail,
-					to: email,
-					subject: message.subject,
-					html: message.html,
-					text: message.text,
-				},
-				await authStub.getPersonId(user.id),
+		if (user) {
+			const origin = new URL(c.req.url).origin;
+			c.executionCtx.waitUntil(
+				sendPasswordReset(c.env, fromEmail, user, email, locale, origin),
 			);
-		} catch (e) {
-			// Also indistinguishable from the unknown-address case: a send only
-			// ever fails for an address that does exist, so surfacing the
-			// failure would re-open the enumeration this route just closed.
-			// The operator still sees it in the Worker's logs.
-			console.error("Failed to send recovery email:", e);
 		}
 
 		return c.json({ status: "Password reset email sent" });
@@ -2223,9 +2249,12 @@ class PostResetPassword extends OpenAPIRoute {
 			userId: string;
 			email: string;
 			expiresAt: number;
+			stamp?: string;
 		}>();
 
-		if (tokenData.expiresAt < Date.now()) {
+		// A link from before links were bound has nothing to be checked
+		// against, and is an hour old at most: asked for again, it is bound.
+		if (tokenData.expiresAt < Date.now() || !tokenData.stamp) {
 			await c.env.BUCKET.delete(tokenKey);
 			return c.json({ error: "Token has expired" }, 401);
 		}
@@ -2242,13 +2271,21 @@ class PostResetPassword extends OpenAPIRoute {
 		// registered with them. A reset is what somebody does when they think
 		// somebody else has their password, and a reset that leaves the
 		// sessions that somebody already holds has reset nothing.
-		let result: "ok" | "not-found";
+		//
+		// And only if the login is as it was when the link went out: see
+		// resetPasswordWithStamp, which is also what makes a second use of
+		// the same link fail when both arrive at once.
+		let result: "ok" | "stale";
 		try {
-			result = await authStub.setUserPassword(tokenData.userId, newPassword);
+			result = await authStub.resetPasswordWithStamp(
+				tokenData.userId,
+				newPassword,
+				tokenData.stamp,
+			);
 		} catch (e) {
 			return c.json({ error: "Failed to update password" }, 500);
 		}
-		if (result === "not-found") {
+		if (result === "stale") {
 			return c.json({ error: "Invalid or expired token" }, 401);
 		}
 
@@ -2307,7 +2344,13 @@ class PutResendSettings extends OpenAPIRoute {
 		operationId: "putResendSettings",
 		tags: ["Admin"],
 		request: {
-			body: contentJson(z.object({ apiKey: z.string() })),
+			body: contentJson(
+				z.object({
+					apiKey: z.string(),
+					// Asked for when a key is set; see handle().
+					currentPassword: z.string().optional(),
+				}),
+			),
 		},
 		responses: {
 			"200": {
@@ -2316,6 +2359,14 @@ class PutResendSettings extends OpenAPIRoute {
 			},
 			"401": {
 				description: "Unauthorized",
+				...contentJson(ErrorResponseSchema),
+			},
+			"403": {
+				description: "The current password is wrong",
+				...contentJson(ErrorResponseSchema),
+			},
+			"429": {
+				description: "Too many attempts at the current password",
 				...contentJson(ErrorResponseSchema),
 			},
 			"409": {
@@ -2335,6 +2386,20 @@ class PutResendSettings extends OpenAPIRoute {
 		}
 
 		const data = await this.getValidatedData<typeof this.schema>();
+		// Setting a key asks for the password, as adding a sign-in address
+		// does. With a session alone, a thief put in a key of their own: this
+		// person's mail then went out through the thief's Resend account,
+		// whose dashboard shows every message sent -- recipients, subject and
+		// body -- for as long as nobody noticed. Taking a key away sends
+		// nothing anywhere, and is left to the session.
+		if (data.body.apiKey) {
+			const refused = await proveCurrentPassword(
+				c,
+				session,
+				data.body.currentPassword ?? "",
+			);
+			if (refused) return refused;
+		}
 		// An empty string clears the stored key rather than storing an empty
 		// one, which would send `Bearer ` and fail every message.
 		await setResendApiKey(c.env, session.personId, data.body.apiKey || null);
@@ -2399,10 +2464,19 @@ class GetAppSettings extends OpenAPIRoute {
 }
 
 // Helper function to validate session
+/**
+ * The session a request carries, null when it carries none that is valid,
+ * or "unanswered" when the auth object could not be asked.
+ *
+ * The last used to be null as well, and a 401 is what the dashboard signs
+ * out on: a deploy restarting the object, or any moment it did not answer,
+ * signed out everybody who happened to make a request just then -- and a
+ * sign-out while writing loses nothing only because the composer holds on.
+ */
 async function validateSession(
 	request: Request,
 	env: Env,
-): Promise<Session | null> {
+): Promise<Session | null | "unanswered"> {
 	const token = sessionTokenOf(request);
 	if (!token) return null;
 
@@ -2423,8 +2497,9 @@ async function validateSession(
 			personId: personId ?? undefined,
 			role: roleOf(personId, rootPersonId),
 		};
-	} catch {
-		return null;
+	} catch (e) {
+		console.error("Could not validate a session:", e);
+		return "unanswered";
 	}
 }
 
@@ -2723,8 +2798,20 @@ async function receiveEmail(
 function loadableAs(request: Request, pathname: string): boolean {
 	const dest = request.headers.get("Sec-Fetch-Dest");
 	if (!dest || dest === "empty" || dest === "document") return true;
-	return request.method === "GET" && ATTACHMENT_PATH.test(pathname);
+	return (
+		request.method === "GET" &&
+		ATTACHMENT_PATH.test(pathname) &&
+		ATTACHMENT_LOADABLE_AS.has(dest)
+	);
 }
+
+/**
+ * What an attachment is loaded as by a page: a picture in a message, or its
+ * sound or film. Not as a script, a stylesheet or a worker -- the bytes are
+ * the sender's, and this origin running them as code was one missing header
+ * away. A download is a fetch (`empty`) and opening one is a navigation.
+ */
+const ATTACHMENT_LOADABLE_AS = new Set(["image", "audio", "video", "track"]);
 
 const defaultOptions: EmailExplorerOptions = {
 	auth: {
@@ -2800,6 +2887,18 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 			// no option that says otherwise: see EmailExplorerOptions.
 			if (!isPublicRoute(url.pathname)) {
 				const session = await validateSession(request, env);
+				if (session === "unanswered") {
+					return new Response(
+						JSON.stringify({ error: "Try again in a moment" }),
+						{
+							status: 503,
+							headers: {
+								"Content-Type": "application/json",
+								"Retry-After": "5",
+							},
+						},
+					);
+				}
 				if (!session) {
 					return new Response(JSON.stringify({ error: "Unauthorized" }), {
 						status: 401,

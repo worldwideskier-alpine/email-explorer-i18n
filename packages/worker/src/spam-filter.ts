@@ -101,8 +101,12 @@ function spfVerdict(authResults: string): string | undefined {
 	const withSpf = resultSections(authResults).filter(
 		(section) => resultOf(section, "spf") !== undefined,
 	);
+	// A property of its own, not the tail of another's value: the HELO name
+	// is whatever the sender says, and `\b` matched `smtp.mailfrom=` inside
+	// `smtp.helo=x.smtp.mailfrom=...`, so the sender's HELO result could be
+	// read as the envelope sender's.
 	const section =
-		withSpf.find((s) => /\bsmtp\.mailfrom=/i.test(s.bare)) ?? withSpf[0];
+		withSpf.find((s) => /(?:^|\s)smtp\.mailfrom=/i.test(s.bare)) ?? withSpf[0];
 	return section && resultOf(section, "spf");
 }
 

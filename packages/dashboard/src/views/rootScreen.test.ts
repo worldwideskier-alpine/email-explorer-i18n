@@ -280,11 +280,17 @@ describe("root's own sending key on /root", () => {
 		expect(host.textContent).toContain("admin.resend.sourceNone");
 
 		type("#resendApiKey", "  re_roots_own  ");
+		type("#resendCurrentPassword", "roots-password");
 		await nextTick();
 		formOf("#resendApiKey").dispatchEvent(new Event("submit"));
 		await settle();
 
-		expect(setResendApiKey).toHaveBeenCalledWith("re_roots_own");
+		// With root's own password: a key is set with the password, not the
+		// session alone.
+		expect(setResendApiKey).toHaveBeenCalledWith(
+			"re_roots_own",
+			"roots-password",
+		);
 		expect(host.textContent).toContain("admin.resend.sourceStored");
 		expect(host.textContent).not.toContain("admin.resend.sourceNone");
 		expect(host.textContent).toContain("admin.resend.saved");

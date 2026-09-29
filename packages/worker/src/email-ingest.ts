@@ -225,5 +225,9 @@ export function addressesOf(
 export function storedDate(given: string | undefined): string {
 	if (!given) return new Date().toISOString();
 	const at = Date.parse(given);
-	return Number.isFinite(at) ? new Date(at).toISOString() : given;
+	// Kept, but not with a line break in it: it goes into the archive as a
+	// header, where one would split the message.
+	return Number.isFinite(at)
+		? new Date(at).toISOString()
+		: given.replace(/[\r\n]+/g, " ");
 }

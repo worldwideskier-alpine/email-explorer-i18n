@@ -328,8 +328,12 @@ export default {
 	// the response says only whether one is set. There is one source and no
 	// fallback: mail goes out with its owner's key or not at all.
 	adminGetResendSettings: () => apiClient.get("/api/v1/admin/settings/resend"),
-	adminSetResendApiKey: (apiKey: string) =>
-		apiClient.put("/api/v1/admin/settings/resend", { apiKey }),
+	// Setting one asks for the current password; taking it away does not.
+	adminSetResendApiKey: (apiKey: string, currentPassword?: string) =>
+		apiClient.put("/api/v1/admin/settings/resend", {
+			apiKey,
+			...(currentPassword ? { currentPassword } : {}),
+		}),
 	// Root: the people using this deployment. Nothing here returns mail; see
 	// routes/root.ts in the Worker for why that is deliberate. There is no
 	// transfer: the role belongs to a person, so root's spare login carries

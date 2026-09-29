@@ -409,7 +409,7 @@ async function synthesizeMessage(
 /**
  * Header values must not carry a CR or LF: one would end the header early and
  * splice whatever followed into the message. Folder names come from the user,
- * so they are the one field here that could contain either.
+ * and a date given to the import route was kept as it came.
  */
 function headerSafe(value: string): string {
 	return value.replace(/[\r\n]+/g, " ");
@@ -475,7 +475,12 @@ export async function renderMboxEntry(
 		`X-Email-Explorer-Read: ${email.read ? "1" : "0"}`,
 		`X-Email-Explorer-Starred: ${email.starred ? "1" : "0"}`,
 	];
-	if (email.date) headers.push(`X-Email-Explorer-Date: ${email.date}`);
+	// headerSafe as well: a date is normally ours, but an imported message
+	// kept whatever string it was given, line breaks and all, and one would
+	// have split this message's headers in the archive.
+	if (email.date) {
+		headers.push(`X-Email-Explorer-Date: ${headerSafe(email.date)}`);
+	}
 	// Where ours stop. A message may begin with lines of the same shape --
 	// whoever wrote it chose its headers -- and without a marker the reader
 	// took those as ours too: the id and folder it restored under were the

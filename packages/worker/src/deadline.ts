@@ -69,6 +69,22 @@ export interface TimeLimits {
 	deadline?: number;
 	/** Absent means CALL_LIMIT_MS. Tests pass a small one. */
 	callLimitMs?: number;
+	/**
+	 * When even writing down how it went must stop. Recording is allowed
+	 * past `deadline` -- "not reached" is the fact the deadline exists to
+	 * produce -- but each record was a call of up to a minute, one per
+	 * mailbox, so a pass with many left over ran on for as many minutes and
+	 * took the rest of the night with it. Absent means no end.
+	 */
+	recordBy?: number;
+}
+
+/** The limit for recording what happened: the per-call limit, up to recordBy. */
+export function recordingWithin(limits: TimeLimits = {}) {
+	return limitedBy({
+		callLimitMs: limits.callLimitMs,
+		deadline: limits.recordBy,
+	});
 }
 
 /** A `within` bound to one pass's limits: the per-call limit or what is left, whichever is less. */

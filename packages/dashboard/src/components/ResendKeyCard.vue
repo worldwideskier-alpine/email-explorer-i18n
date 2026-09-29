@@ -32,7 +32,34 @@
 			</template>
 		</div>
 
-		<form @submit.prevent="save" class="flex flex-col sm:flex-row gap-2">
+		<form @submit.prevent="save" class="flex flex-col sm:flex-row sm:flex-wrap gap-2">
+			<!-- Setting a key asks for the password: with a session alone, a
+			     thief put in a key of their own and read this person's mail in
+			     their Resend dashboard.
+
+			     A password box is what made browsers take this form for a
+			     sign-in, and they filled and saved the key as the password. So
+			     the pair they see is the real one: this account's own address,
+			     in a username box just before the password, where browsers look
+			     for it. The key box comes after, and stays a SecretInput. -->
+			<input
+				type="text"
+				autocomplete="username"
+				:value="ownAddress"
+				readonly
+				tabindex="-1"
+				aria-hidden="true"
+				class="sr-only"
+			/>
+			<label for="resendCurrentPassword" class="sr-only">{{ t("account.currentPassword") }}</label>
+			<input
+				id="resendCurrentPassword"
+				v-model="currentPassword"
+				type="password"
+				autocomplete="current-password"
+				:placeholder="t('account.currentPassword')"
+				class="sm:w-48 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg shadow-sm sm:text-sm p-3"
+			/>
 			<label for="resendApiKey" class="sr-only">{{ t("admin.resend.title") }}</label>
 			<SecretInput
 				id="resendApiKey"
@@ -42,7 +69,7 @@
 			/>
 			<button
 				type="submit"
-				:disabled="!input.trim() || saving"
+				:disabled="!input.trim() || !currentPassword || saving"
 				class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex-shrink-0"
 			>
 				{{ t("admin.resend.submit") }}
@@ -74,11 +101,13 @@
  * only there, root's reset mail could go out only through the deployment-wide
  * key left over from before keys were per person, which no screen showed.
  */
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import SecretInput from "@/components/SecretInput.vue";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
+import { useAuthStore } from "@/stores/auth";
+import { translateApiError } from "@/utils/apiError";
 
 // The card takes the look of the screen it sits on: /admin's cards carry a
 // bold heading and a deep shadow, /root's a lighter one of each.
@@ -94,6 +123,8 @@ const { t } = useI18n();
  */
 const source = ref<"stored" | "none" | "unread" | null>(null);
 const input = ref("");
+const currentPassword = ref("");
+const ownAddress = computed(() => useAuthStore().session?.email ?? "");
 const saving = ref(false);
 const message = useLocalizedMessage();
 const error = useLocalizedMessage();
@@ -114,17 +145,29 @@ async function apply(apiKey: string, done: () => string) {
 	message.value = "";
 	error.value = "";
 	try {
-		source.value = (await api.adminSetResendApiKey(apiKey)).data.source;
+		source.value = (
+			await api.adminSetResendApiKey(
+				apiKey,
+				apiKey ? currentPassword.value : undefined,
+			)
+		).data.source;
 		input.value = "";
+		currentPassword.value = "";
 		message.value = done;
-	} catch {
-		error.value = () => t("admin.resend.failed");
+	} catch (e: any) {
+		// A wrong password says so, in the reader's language; see apiErrors.
+		const fromApi = e?.response?.data?.error;
+		error.value = () => translateApiError(fromApi, t("admin.resend.failed"));
 	} finally {
 		saving.value = false;
 	}
 }
 
-const save = () => apply(input.value.trim(), () => t("admin.resend.saved"));
+function save() {
+	// Enter in the key box submits past the disabled button.
+	if (!input.value.trim() || !currentPassword.value) return;
+	apply(input.value.trim(), () => t("admin.resend.saved"));
+}
 
 function clear() {
 	if (!confirm(t("admin.resend.confirmRemove"))) return;

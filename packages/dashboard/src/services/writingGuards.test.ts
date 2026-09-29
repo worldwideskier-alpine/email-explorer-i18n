@@ -72,6 +72,18 @@ describe("whether something is being written", () => {
 	 * Counted, it held on every screen with the header: a session that ended
 	 * there never reached sign-in, and a new build was never picked up.
 	 */
+	/**
+	 * The browser fills a current-password box itself, on /account and
+	 * /admin, and again after every reload: counted, a tab left on either
+	 * never picked up a new build.
+	 */
+	it("does not count a filled password box that is not being typed into", () => {
+		field(
+			'<input type="password" autocomplete="current-password" value="filled-by-the-browser">',
+		);
+		expect(somethingIsBeingWritten(document)).toBe(false);
+	});
+
 	it("does not count a box marked as not being writing", () => {
 		const box = field('<input type="text" value="invoice" data-not-writing>');
 		expect(somethingIsBeingWritten(document)).toBe(false);

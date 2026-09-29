@@ -79,7 +79,8 @@ async function readPair(
  *   (`invalid-input-secret`) -- the widget was deleted or its secret rotated.
  *   Nothing a visitor sends can bring this about.
  * - `refused`: anything else Cloudflare said no to, a missing token included.
- * - `unanswered`: no usable answer came back.
+ * - `unanswered`: no usable answer came back, or Cloudflare said it had
+ *   trouble of its own (`internal-error`).
  */
 export type Verdict = "passed" | "secret-invalid" | "refused" | "unanswered";
 
@@ -115,6 +116,9 @@ export async function siteverify(
 	if (codes.includes("invalid-input-secret")) {
 		return { verdict: "secret-invalid", codes };
 	}
+	// Cloudflare's own trouble, which it says in words rather than by not
+	// answering: the same as no answer.
+	if (codes.includes("internal-error")) return { verdict: "unanswered", codes };
 	if (answer?.success === false) return { verdict: "refused", codes };
 	return { verdict: "unanswered", codes };
 }
@@ -164,7 +168,16 @@ export async function turnstileRefusal(
 		return null;
 	}
 	if (result.verdict === "unanswered") {
-		console.error("Turnstile: siteverify gave no answer", result.codes);
+		// Let through, for the reason above: refusing while siteverify is
+		// down or failing refused every sign-in for as long as it lasted,
+		// root's with them -- an outage of Cloudflare's became one of this
+		// deployment, with nothing on this side to do about it. No visitor
+		// can bring it about, and the throttle still stands.
+		console.error(
+			"Turnstile: siteverify gave no usable answer; letting the request through",
+			result.codes,
+		);
+		return null;
 	}
 	return Response.json({ error: "Bot check failed" }, { status: 403 });
 }
