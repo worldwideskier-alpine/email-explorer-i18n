@@ -4,9 +4,12 @@ import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
 import api from "@/services/api";
 import { rebindPushSubscription } from "@/services/push";
 import { whenSessionEnds } from "@/services/sessionEnd";
+import { useContactStore } from "@/stores/contacts";
 import { useEmailStore } from "@/stores/emails";
+import { useFolderStore } from "@/stores/folders";
 import { useMailboxStore } from "@/stores/mailboxes";
 import { useSearchStore } from "@/stores/search";
+import { useUIStore } from "@/stores/ui";
 import { translateApiError } from "@/utils/apiError";
 
 export interface User {
@@ -165,6 +168,9 @@ export const useAuthStore = defineStore("auth", () => {
 			useSearchStore().$reset();
 			useEmailStore().$reset();
 			useMailboxStore().$reset();
+			useFolderStore().$reset();
+			useContactStore().$reset();
+			useUIStore().$reset();
 			loading.value = false;
 		}
 	}

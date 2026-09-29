@@ -128,8 +128,24 @@ describe("signing out", () => {
 		useSearchStore().mailboxId = "theirs@example.com";
 		useMailboxStore().currentMailbox = { id: "theirs@example.com" } as never;
 		useEmailStore().emails = [{ id: "e" }] as never;
+		// And the sidebar's folders, the contacts and an open composer, which
+		// used to stay: the next person saw the last one's folder names.
+		const { useFolderStore } = await import("@/stores/folders");
+		const { useContactStore } = await import("@/stores/contacts");
+		const { useUIStore } = await import("@/stores/ui");
+		useFolderStore().folders = [{ id: "f", name: "Their folder" }] as never;
+		useContactStore().contacts = [{ id: "c" }] as never;
+		useUIStore().openComposeModal({
+			mode: "reply",
+			originalEmail: { id: "theirs" },
+		});
 
 		await useAuthStore().logout();
+
+		expect(useFolderStore().folders).toEqual([]);
+		expect(useContactStore().contacts).toEqual([]);
+		expect(useUIStore().isComposeModalOpen).toBe(false);
+		expect(useUIStore().composeOptions.originalEmail).toBeNull();
 
 		expect(useSearchStore().results).toEqual([]);
 		expect(useSearchStore().mailboxId).toBe("");
