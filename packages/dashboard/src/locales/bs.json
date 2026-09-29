@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Broj dana",
 		"spamPurgeNoBackupNote": "Automatska rezervna kopija je isključena. Poruke obrisane u međuvremenu nigdje se ne čuvaju.",
 		"spamPurgeSaved": "Sačuvano.",
+		"profileSaved": "Sačuvano.",
 		"spamPurgeNeverRun": "Još nije pokrenuto.",
 		"spamPurgeLastOk": "Posljednje izvođenje {at}: obrisano {deleted}.",
 		"spamPurgeLastFailed": "Zadnje {at}: neuspješno ({error})"

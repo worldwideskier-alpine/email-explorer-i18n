@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Số ngày giữ lại",
 		"spamPurgeNoBackupNote": "Sao lưu tự động đang tắt. Thư bị xoá trong lúc đó sẽ không được giữ ở đâu cả.",
 		"spamPurgeSaved": "Đã lưu.",
+		"profileSaved": "Đã lưu.",
 		"spamPurgeNeverRun": "Chưa từng chạy.",
 		"spamPurgeLastOk": "Lần chạy gần nhất {at}: đã xoá {deleted}.",
 		"spamPurgeLastFailed": "Lần cuối {at}: thất bại ({error})"

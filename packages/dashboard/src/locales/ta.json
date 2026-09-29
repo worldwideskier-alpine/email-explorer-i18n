@@ -237,6 +237,7 @@
 		"spamPurgeDays": "வைத்திருக்கும் நாட்கள்",
 		"spamPurgeNoBackupNote": "தானியங்கி காப்புப் பிரதி அணைக்கப்பட்டுள்ளது. அப்போது நீக்கப்படும் அஞ்சல்கள் எங்கும் இருக்காது.",
 		"spamPurgeSaved": "சேமிக்கப்பட்டது.",
+		"profileSaved": "சேமிக்கப்பட்டது.",
 		"spamPurgeNeverRun": "இதுவரை ஒருமுறையும் இயங்கவில்லை.",
 		"spamPurgeLastOk": "கடைசி இயக்கம் {at}: {deleted} நீக்கப்பட்டது.",
 		"spamPurgeLastFailed": "கடைசியாக {at}: தோல்வி ({error})"

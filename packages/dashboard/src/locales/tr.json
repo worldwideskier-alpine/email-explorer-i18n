@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Saklama günü",
 		"spamPurgeNoBackupNote": "Otomatik yedekleme kapalı. Bu sırada silinen iletiler hiçbir yerde saklanmaz.",
 		"spamPurgeSaved": "Kaydedildi.",
+		"profileSaved": "Kaydedildi.",
 		"spamPurgeNeverRun": "Henüz çalışmadı.",
 		"spamPurgeLastOk": "Son çalışma {at}: {deleted} silindi.",
 		"spamPurgeLastFailed": "Son çalışma {at}: başarısız ({error})"

@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Aufbewahrungstage",
 		"spamPurgeNoBackupNote": "Die automatische Sicherung ist ausgeschaltet. Nachrichten, die währenddessen gelöscht werden, bleiben nirgendwo erhalten.",
 		"spamPurgeSaved": "Gespeichert.",
+		"profileSaved": "Gespeichert.",
 		"spamPurgeNeverRun": "Bisher nicht gelaufen.",
 		"spamPurgeLastOk": "Letzter Lauf {at}: {deleted} gelöscht.",
 		"spamPurgeLastFailed": "Letzter Lauf {at}: fehlgeschlagen ({error})"

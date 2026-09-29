@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Antal dage",
 		"spamPurgeNoBackupNote": "Automatisk sikkerhedskopi er slået fra. Mails, der slettes imens, gemmes ingen steder.",
 		"spamPurgeSaved": "Gemt.",
+		"profileSaved": "Gemt.",
 		"spamPurgeNeverRun": "Er ikke kørt endnu.",
 		"spamPurgeLastOk": "Sidste kørsel {at}: {deleted} slettet.",
 		"spamPurgeLastFailed": "Sidste kørsel {at}: mislykkedes ({error})"

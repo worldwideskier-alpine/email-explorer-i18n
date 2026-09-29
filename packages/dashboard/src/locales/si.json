@@ -237,6 +237,7 @@
 		"spamPurgeDays": "තබා ගන්නා දින",
 		"spamPurgeNoBackupNote": "ස්වයංක්‍රීය උපස්ථය ක්‍රියාවිරහිතයි. එවිට මකා දමන තැපැල් කිසිම තැනක ඉතිරි නොවේ.",
 		"spamPurgeSaved": "සුරකින ලදි.",
+		"profileSaved": "සුරකින ලදි.",
 		"spamPurgeNeverRun": "තවම වරක්වත් ක්‍රියාත්මක වී නැත.",
 		"spamPurgeLastOk": "අවසන් ධාවනය {at}: {deleted} ක් මකා දමන ලදී.",
 		"spamPurgeLastFailed": "අවසන් වරට {at}: අසාර්ථකයි ({error})"

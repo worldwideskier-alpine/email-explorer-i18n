@@ -237,6 +237,7 @@
 		"spamPurgeDays": "राख्ने दिन",
 		"spamPurgeNoBackupNote": "स्वतः ब्याकअप बन्द छ। यस अवधिमा मेटिएका मेल कतै पनि रहँदैनन्।",
 		"spamPurgeSaved": "सुरक्षित गरियो।",
+		"profileSaved": "सुरक्षित गरियो।",
 		"spamPurgeNeverRun": "अझै एक पटक पनि चलेको छैन।",
 		"spamPurgeLastOk": "अन्तिम पटक {at}: {deleted} मेटियो।",
 		"spamPurgeLastFailed": "अन्तिम पटक {at}: असफल ({error})"

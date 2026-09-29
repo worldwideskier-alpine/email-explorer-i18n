@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Dis da mantegniment",
 		"spamPurgeNoBackupNote": "La copia da segirezza automatica è deactivada. Ils messadis stizzads en quest temp na vegnan mantegnids naginas parts.",
 		"spamPurgeSaved": "Memorisà.",
+		"profileSaved": "Memorisà.",
 		"spamPurgeNeverRun": "Anc betg ì.",
 		"spamPurgeLastOk": "Ultima execuziun {at}: {deleted} stizzads.",
 		"spamPurgeLastFailed": "Ultim decurs {at}: fallì ({error})"

@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Jiem ta' żamma",
 		"spamPurgeNoBackupNote": "Il-backup awtomatiku huwa mitfi. Il-messaġġi mħassra f'dak il-ħin ma jinżammu mkien.",
 		"spamPurgeSaved": "Salvat.",
+		"profileSaved": "Salvat.",
 		"spamPurgeNeverRun": "Għadu ma ħadimx.",
 		"spamPurgeLastOk": "L-aħħar ħidma {at}: {deleted} imħassra.",
 		"spamPurgeLastFailed": "L-aħħar {at}: falla ({error})"

@@ -237,6 +237,7 @@
 		"spamPurgeDays": "保留天数",
 		"spamPurgeNoBackupNote": "自动备份已关闭。在此状态下删除的邮件不会保留在任何地方。",
 		"spamPurgeSaved": "已保存。",
+		"profileSaved": "已保存。",
 		"spamPurgeNeverRun": "尚未运行过。",
 		"spamPurgeLastOk": "上次执行 {at}：已删除 {deleted} 封",
 		"spamPurgeLastFailed": "上次运行 {at}：失败（{error}）"

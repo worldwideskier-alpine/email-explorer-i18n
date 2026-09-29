@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Ditë ruajtjeje",
 		"spamPurgeNoBackupNote": "Kopja rezervë automatike është e çaktivizuar. Mesazhet e fshira ndërkohë nuk ruhen askund.",
 		"spamPurgeSaved": "U ruajt.",
+		"profileSaved": "U ruajt.",
 		"spamPurgeNeverRun": "Nuk është ekzekutuar ende.",
 		"spamPurgeLastOk": "Ekzekutimi i fundit {at}: u fshinë {deleted}.",
 		"spamPurgeLastFailed": "Herën e fundit {at}: dështoi ({error})"

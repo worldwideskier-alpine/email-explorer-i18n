@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Zile de păstrare",
 		"spamPurgeNoBackupNote": "Copia de rezervă automată este dezactivată. Mesajele șterse în acest timp nu se păstrează nicăieri.",
 		"spamPurgeSaved": "Salvat.",
+		"profileSaved": "Salvat.",
 		"spamPurgeNeverRun": "Nu a rulat încă.",
 		"spamPurgeLastOk": "Ultima rulare {at}: {deleted} șterse.",
 		"spamPurgeLastFailed": "Ultima rulare {at}: eșuată ({error})"

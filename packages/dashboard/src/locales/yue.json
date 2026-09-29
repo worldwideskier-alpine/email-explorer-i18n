@@ -237,6 +237,7 @@
 		"spamPurgeDays": "保留日數",
 		"spamPurgeNoBackupNote": "自動備份已經閂咗。喺呢個狀態下刪咗嘅郵件唔會留喺任何地方。",
 		"spamPurgeSaved": "已儲存。",
+		"profileSaved": "已儲存。",
 		"spamPurgeNeverRun": "重未行過。",
 		"spamPurgeLastOk": "上次執行 {at}：已刪除 {deleted} 封",
 		"spamPurgeLastFailed": "上次執行 {at}：失敗（{error}）"

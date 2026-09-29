@@ -237,6 +237,7 @@
 		"spamPurgeDays": "သိမ်းထားမည့် ရက်",
 		"spamPurgeNoBackupNote": "အလိုအလျောက် အရန်ကူးယူခြင်း ပိတ်ထားသည်။ ထိုအချိန်တွင် ဖျက်လိုက်သော စာများသည် မည်သည့်နေရာတွင်မျှ ကျန်မည်မဟုတ်ပါ။",
 		"spamPurgeSaved": "သိမ်းဆည်းပြီး။",
+		"profileSaved": "သိမ်းဆည်းပြီး။",
 		"spamPurgeNeverRun": "မလုပ်ဆောင်ရသေးပါ။",
 		"spamPurgeLastOk": "နောက်ဆုံး လုပ်ဆောင်ချိန် {at}: {deleted} စောင် ဖျက်ပြီး",
 		"spamPurgeLastFailed": "နောက်ဆုံး {at}: မအောင်မြင် ({error})"

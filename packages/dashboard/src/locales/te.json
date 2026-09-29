@@ -237,6 +237,7 @@
 		"spamPurgeDays": "ఉంచే రోజులు",
 		"spamPurgeNoBackupNote": "స్వయంచాలక బ్యాకప్ ఆఫ్‌లో ఉంది. ఆ సమయంలో తొలగించిన మెయిల్‌లు ఎక్కడా ఉండవు.",
 		"spamPurgeSaved": "భద్రపరచబడింది.",
+		"profileSaved": "భద్రపరచబడింది.",
 		"spamPurgeNeverRun": "ఇంకా ఒక్కసారి కూడా నడవలేదు.",
 		"spamPurgeLastOk": "చివరి అమలు {at}: {deleted} తొలగించబడ్డాయి.",
 		"spamPurgeLastFailed": "చివరిసారి {at}: విఫలం ({error})"

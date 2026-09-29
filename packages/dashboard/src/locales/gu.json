@@ -237,6 +237,7 @@
 		"spamPurgeDays": "રાખવાના દિવસો",
 		"spamPurgeNoBackupNote": "આપમેળે બેકઅપ બંધ છે. આ દરમિયાન કાઢી નાખેલા મેલ ક્યાંય રહેતા નથી.",
 		"spamPurgeSaved": "સાચવ્યું.",
+		"profileSaved": "સાચવ્યું.",
 		"spamPurgeNeverRun": "હજી એક વાર પણ ચાલ્યું નથી.",
 		"spamPurgeLastOk": "છેલ્લી વખત {at}: {deleted} કાઢી નાખ્યા.",
 		"spamPurgeLastFailed": "છેલ્લે {at}: નિષ્ફળ ({error})"

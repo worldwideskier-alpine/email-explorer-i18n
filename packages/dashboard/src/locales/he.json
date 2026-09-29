@@ -237,6 +237,7 @@
 		"spamPurgeDays": "ימי שמירה",
 		"spamPurgeNoBackupNote": "הגיבוי האוטומטי כבוי. הודעות שנמחקות בזמן הזה אינן נשמרות בשום מקום.",
 		"spamPurgeSaved": "נשמר.",
+		"profileSaved": "נשמר.",
 		"spamPurgeNeverRun": "עדיין לא רץ.",
 		"spamPurgeLastOk": "הרצה אחרונה {at}: נמחקו {deleted}.",
 		"spamPurgeLastFailed": "הרצה אחרונה {at}: נכשלה ({error})"

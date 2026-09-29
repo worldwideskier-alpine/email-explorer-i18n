@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Laethanta coinneála",
 		"spamPurgeNoBackupNote": "Tá an cúltaca uathoibríoch múchta. Ní choinnítear in aon áit teachtaireachtaí a scriostar ansin.",
 		"spamPurgeSaved": "Sábháilte.",
+		"profileSaved": "Sábháilte.",
 		"spamPurgeNeverRun": "Níor rith sé fós.",
 		"spamPurgeLastOk": "Rith deireanach {at}: {deleted} scriosta.",
 		"spamPurgeLastFailed": "Rith deiridh {at}: theip air ({error})"

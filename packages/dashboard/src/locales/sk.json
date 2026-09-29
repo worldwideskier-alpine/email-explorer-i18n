@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Počet dní",
 		"spamPurgeNoBackupNote": "Automatická záloha je vypnutá. Správy zmazané v tomto čase sa nikde neuchovávajú.",
 		"spamPurgeSaved": "Uložené.",
+		"profileSaved": "Uložené.",
 		"spamPurgeNeverRun": "Zatiaľ nebežalo.",
 		"spamPurgeLastOk": "Posledný beh {at}: zmazaných {deleted}.",
 		"spamPurgeLastFailed": "Posledný beh {at}: zlyhalo ({error})"

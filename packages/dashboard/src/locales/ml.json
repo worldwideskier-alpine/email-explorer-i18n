@@ -237,6 +237,7 @@
 		"spamPurgeDays": "സൂക്ഷിക്കുന്ന ദിവസങ്ങൾ",
 		"spamPurgeNoBackupNote": "സ്വയമേവയുള്ള ബാക്കപ്പ് ഓഫാണ്. ആ സമയത്ത് ഇല്ലാതാക്കുന്ന മെയിലുകൾ എവിടെയും ശേഷിക്കില്ല.",
 		"spamPurgeSaved": "സൂക്ഷിച്ചു.",
+		"profileSaved": "സൂക്ഷിച്ചു.",
 		"spamPurgeNeverRun": "ഇതുവരെ പ്രവർത്തിച്ചിട്ടില്ല.",
 		"spamPurgeLastOk": "അവസാന പ്രവർത്തനം {at}: {deleted} ഇല്ലാതാക്കി.",
 		"spamPurgeLastFailed": "അവസാനം {at}: പരാജയപ്പെട്ടു ({error})"

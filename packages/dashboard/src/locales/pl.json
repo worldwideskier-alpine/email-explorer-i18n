@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Liczba dni",
 		"spamPurgeNoBackupNote": "Automatyczna kopia zapasowa jest wyłączona. Wiadomości usunięte w tym czasie nie są nigdzie zachowywane.",
 		"spamPurgeSaved": "Zapisano.",
+		"profileSaved": "Zapisano.",
 		"spamPurgeNeverRun": "Jeszcze nie uruchomiono.",
 		"spamPurgeLastOk": "Ostatnie uruchomienie {at}: usunięto {deleted}.",
 		"spamPurgeLastFailed": "Ostatnio {at}: niepowodzenie ({error})"

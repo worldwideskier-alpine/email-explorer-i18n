@@ -31,6 +31,7 @@
 
         <div class="flex items-center justify-end gap-3">
           <p v-if="profileError" class="text-sm text-red-600 dark:text-red-400" role="alert">{{ profileError }}</p>
+          <p v-if="profileMessage" class="text-sm text-green-600 dark:text-green-400" role="status">{{ profileMessage }}</p>
           <button type="submit" :disabled="profileSaving" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50">{{ t("settings.save") }}</button>
         </div>
       </form>
@@ -489,6 +490,9 @@ const saveFailed = (e: any) => {
 
 const profileSaving = ref(false);
 const profileError = useLocalizedMessage();
+// A save that worked said nothing at all, so it could not be told from one
+// that had not been pressed.
+const profileMessage = useLocalizedMessage();
 
 whenOpened((m) => {
 	if (m.settings?.signature) {
@@ -844,6 +848,7 @@ const updateSettings = async () => {
 	if (!mailbox.value || profileSaving.value) return;
 	profileSaving.value = true;
 	profileError.value = "";
+	profileMessage.value = "";
 	try {
 		await mailboxStore.updateMailbox(route.params.mailboxId as string, {
 			fromName: nameInput.value.trim(),
@@ -853,6 +858,7 @@ const updateSettings = async () => {
 				html: signatureHtml.value,
 			},
 		});
+		profileMessage.value = () => t("settings.profileSaved");
 	} catch (e) {
 		profileError.value = saveFailed(e);
 	} finally {

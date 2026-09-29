@@ -237,6 +237,7 @@
 		"spamPurgeDays": "보관 일수",
 		"spamPurgeNoBackupNote": "자동 백업이 꺼져 있습니다. 이 상태에서 삭제된 메일은 어디에도 남지 않습니다.",
 		"spamPurgeSaved": "저장했습니다.",
+		"profileSaved": "저장했습니다.",
 		"spamPurgeNeverRun": "아직 한 번도 실행되지 않았습니다.",
 		"spamPurgeLastOk": "마지막 실행 {at}: {deleted}통 삭제",
 		"spamPurgeLastFailed": "마지막 실행 {at}: 실패({error})"

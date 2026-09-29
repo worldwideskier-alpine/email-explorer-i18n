@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Bewaardagen",
 		"spamPurgeNoBackupNote": "Automatische back-up staat uit. Berichten die dan worden verwijderd, blijven nergens bewaard.",
 		"spamPurgeSaved": "Opgeslagen.",
+		"profileSaved": "Opgeslagen.",
 		"spamPurgeNeverRun": "Nog niet uitgevoerd.",
 		"spamPurgeLastOk": "Laatste uitvoering {at}: {deleted} verwijderd.",
 		"spamPurgeLastFailed": "Laatste run {at}: mislukt ({error})"

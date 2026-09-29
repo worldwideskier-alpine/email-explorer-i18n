@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Պահպանման օրեր",
 		"spamPurgeNoBackupNote": "Ավտոմատ պահուստավորումն անջատված է։ Այդ ընթացքում ջնջված նամակները ոչ մի տեղ չեն պահվում։",
 		"spamPurgeSaved": "Պահպանվեց։",
+		"profileSaved": "Պահպանվեց։",
 		"spamPurgeNeverRun": "Դեռ չի գործարկվել։",
 		"spamPurgeLastOk": "Վերջին կատարումը {at}՝ ջնջվել է {deleted}։",
 		"spamPurgeLastFailed": "Վերջին անգամ {at}՝ ձախողվեց ({error})"

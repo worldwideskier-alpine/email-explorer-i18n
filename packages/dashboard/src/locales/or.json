@@ -237,6 +237,7 @@
 		"spamPurgeDays": "ରଖିବା ଦିନ",
 		"spamPurgeNoBackupNote": "ସ୍ୱୟଂଚାଳିତ ବ୍ୟାକଅପ ବନ୍ଦ ଅଛି। ଏହି ସମୟରେ ବିଲୋପ ହୋଇଥିବା ମେଲ କେଉଁଠି ରହେ ନାହିଁ।",
 		"spamPurgeSaved": "ସଞ୍ଚିତ ହେଲା।",
+		"profileSaved": "ସଞ୍ଚିତ ହେଲା।",
 		"spamPurgeNeverRun": "ଏପର୍ଯ୍ୟନ୍ତ ଥରେ ବି ଚାଲିନାହିଁ।",
 		"spamPurgeLastOk": "ଶେଷ ଥର {at}: {deleted} ବିଲୋପ ହେଲା।",
 		"spamPurgeLastFailed": "ଶେଷ ଥର {at}: ବିଫଳ ({error})"

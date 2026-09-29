@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Days to keep",
 		"spamPurgeNoBackupNote": "Automatic backup is off. Mail deleted while it is off is not kept anywhere.",
 		"spamPurgeSaved": "Saved.",
+		"profileSaved": "Saved.",
 		"spamPurgeNeverRun": "It has not run yet.",
 		"spamPurgeLastOk": "Last run {at}: {deleted} deleted.",
 		"spamPurgeLastFailed": "Last run {at}: failed ({error})"

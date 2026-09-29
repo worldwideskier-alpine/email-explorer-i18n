@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Število dni",
 		"spamPurgeNoBackupNote": "Samodejna varnostna kopija je izklopljena. Sporočila, izbrisana medtem, se nikjer ne hranijo.",
 		"spamPurgeSaved": "Shranjeno.",
+		"profileSaved": "Shranjeno.",
 		"spamPurgeNeverRun": "Še ni bilo izvedeno.",
 		"spamPurgeLastOk": "Zadnji zagon {at}: izbrisanih {deleted}.",
 		"spamPurgeLastFailed": "Zadnjič {at}: ni uspelo ({error})"

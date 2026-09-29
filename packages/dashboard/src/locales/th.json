@@ -237,6 +237,7 @@
 		"spamPurgeDays": "จำนวนวันที่เก็บไว้",
 		"spamPurgeNoBackupNote": "การสำรองข้อมูลอัตโนมัติปิดอยู่ อีเมลที่ถูกลบในช่วงนี้จะไม่ถูกเก็บไว้ที่ใดเลย",
 		"spamPurgeSaved": "บันทึกแล้ว",
+		"profileSaved": "บันทึกแล้ว",
 		"spamPurgeNeverRun": "ยังไม่เคยทำงาน",
 		"spamPurgeLastOk": "ทำงานล่าสุด {at}: ลบแล้ว {deleted} ฉบับ",
 		"spamPurgeLastFailed": "ครั้งล่าสุด {at}: ล้มเหลว ({error})"

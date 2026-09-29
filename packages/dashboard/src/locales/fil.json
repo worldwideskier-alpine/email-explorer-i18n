@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Bilang ng araw",
 		"spamPurgeNoBackupNote": "Naka-off ang awtomatikong backup. Ang mga mensaheng nabura habang naka-off ay hindi naiingatan kahit saan.",
 		"spamPurgeSaved": "Na-save.",
+		"profileSaved": "Na-save.",
 		"spamPurgeNeverRun": "Hindi pa tumatakbo.",
 		"spamPurgeLastOk": "Huling takbo {at}: {deleted} ang nabura.",
 		"spamPurgeLastFailed": "Huling takbo {at}: nabigo ({error})"

@@ -237,6 +237,7 @@
 		"spamPurgeDays": "ڕۆژانی پاراستن",
 		"spamPurgeNoBackupNote": "پاڵپشتی خۆکار کوژاوەتەوە. ئەو نامانەی لەو کاتەدا دەسڕێنەوە لە ھیچ شوێنێک نامێننەوە.",
 		"spamPurgeSaved": "پاشەکەوت کرا.",
+		"profileSaved": "پاشەکەوت کرا.",
 		"spamPurgeNeverRun": "هێشتا جێبەجێ نەکراوە.",
 		"spamPurgeLastOk": "دوایین جاری کارکردن {at}: {deleted} سڕایەوە.",
 		"spamPurgeLastFailed": "دوایین جێبەجێکردن {at}: سەرکەوتوو نەبوو ({error})"

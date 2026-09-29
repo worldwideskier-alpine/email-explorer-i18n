@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Дзён захоўвання",
 		"spamPurgeNoBackupNote": "Аўтаматычнае рэзервовае капіраванне выключана. Лісты, выдаленыя ў гэты час, нідзе не захоўваюцца.",
 		"spamPurgeSaved": "Захавана.",
+		"profileSaved": "Захавана.",
 		"spamPurgeNeverRun": "Яшчэ не выконвалася.",
 		"spamPurgeLastOk": "Апошні запуск {at}: выдалена {deleted}.",
 		"spamPurgeLastFailed": "Апошні запуск {at}: няўдала ({error})"

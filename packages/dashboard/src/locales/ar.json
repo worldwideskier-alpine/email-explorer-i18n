@@ -237,6 +237,7 @@
 		"spamPurgeDays": "أيام الاحتفاظ",
 		"spamPurgeNoBackupNote": "النسخ الاحتياطي التلقائي متوقف. الرسائل المحذوفة في هذه الحالة لا تُحفظ في أي مكان.",
 		"spamPurgeSaved": "تم الحفظ.",
+		"profileSaved": "تم الحفظ.",
 		"spamPurgeNeverRun": "لم يُشغَّل بعد.",
 		"spamPurgeLastOk": "آخر تشغيل {at}: حُذفت {deleted}.",
 		"spamPurgeLastFailed": "آخر تشغيل {at}: فشل ({error})"

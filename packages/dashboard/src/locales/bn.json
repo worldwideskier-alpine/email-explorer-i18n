@@ -237,6 +237,7 @@
 		"spamPurgeDays": "রাখার দিন",
 		"spamPurgeNoBackupNote": "স্বয়ংক্রিয় ব্যাকআপ বন্ধ আছে। এই সময়ে মুছে ফেলা মেল কোথাও রাখা হয় না।",
 		"spamPurgeSaved": "সংরক্ষিত হয়েছে।",
+		"profileSaved": "সংরক্ষিত হয়েছে।",
 		"spamPurgeNeverRun": "এখনো একবারও চলেনি।",
 		"spamPurgeLastOk": "শেষ চালানো {at}: {deleted} মুছে ফেলা হয়েছে।",
 		"spamPurgeLastFailed": "শেষবার {at}: ব্যর্থ ({error})"

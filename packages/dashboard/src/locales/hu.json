@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Megőrzés napokban",
 		"spamPurgeNoBackupNote": "Az automatikus mentés ki van kapcsolva. Az ilyenkor törölt levelek sehol nem maradnak meg.",
 		"spamPurgeSaved": "Mentve.",
+		"profileSaved": "Mentve.",
 		"spamPurgeNeverRun": "Még nem futott.",
 		"spamPurgeLastOk": "Utolsó futás {at}: {deleted} törölve.",
 		"spamPurgeLastFailed": "Utolsó futás {at}: sikertelen ({error})"

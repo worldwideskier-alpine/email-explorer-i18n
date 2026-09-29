@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Dies de conservació",
 		"spamPurgeNoBackupNote": "La còpia de seguretat automàtica està desactivada. Els missatges eliminats mentrestant no es conserven enlloc.",
 		"spamPurgeSaved": "Desat.",
+		"profileSaved": "Desat.",
 		"spamPurgeNeverRun": "Encara no s'ha executat.",
 		"spamPurgeLastOk": "Última execució {at}: {deleted} eliminats.",
 		"spamPurgeLastFailed": "Darrera execució {at}: ha fallat ({error})"

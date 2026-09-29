@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Hari simpanan",
 		"spamPurgeNoBackupNote": "Sandaran automatik dimatikan. E-mel yang dipadam ketika itu tidak disimpan di mana-mana.",
 		"spamPurgeSaved": "Disimpan.",
+		"profileSaved": "Disimpan.",
 		"spamPurgeNeverRun": "Belum pernah dijalankan.",
 		"spamPurgeLastOk": "Larian terakhir {at}: {deleted} dipadam.",
 		"spamPurgeLastFailed": "Kali terakhir {at}: gagal ({error})"

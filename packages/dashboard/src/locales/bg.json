@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Дни за пазене",
 		"spamPurgeNoBackupNote": "Автоматичното резервно копие е изключено. Писмата, изтрити междувременно, не се пазят никъде.",
 		"spamPurgeSaved": "Записано.",
+		"profileSaved": "Записано.",
 		"spamPurgeNeverRun": "Още не е изпълнявано.",
 		"spamPurgeLastOk": "Последно изпълнение {at}: изтрити {deleted}.",
 		"spamPurgeLastFailed": "Последно {at}: неуспешно ({error})"

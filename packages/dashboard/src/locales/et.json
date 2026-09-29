@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Säilitamise päevad",
 		"spamPurgeNoBackupNote": "Automaatne varundamine on välja lülitatud. Sel ajal kustutatud kirju ei säilitata kusagil.",
 		"spamPurgeSaved": "Salvestatud.",
+		"profileSaved": "Salvestatud.",
 		"spamPurgeNeverRun": "Pole veel käivitunud.",
 		"spamPurgeLastOk": "Viimane käivitus {at}: {deleted} kustutatud.",
 		"spamPurgeLastFailed": "Viimane {at}: ebaõnnestus ({error})"

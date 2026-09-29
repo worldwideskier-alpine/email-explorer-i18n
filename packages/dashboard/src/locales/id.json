@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Hari penyimpanan",
 		"spamPurgeNoBackupNote": "Pencadangan otomatis mati. Surel yang dihapus saat itu tidak disimpan di mana pun.",
 		"spamPurgeSaved": "Tersimpan.",
+		"profileSaved": "Tersimpan.",
 		"spamPurgeNeverRun": "Belum pernah berjalan.",
 		"spamPurgeLastOk": "Jalan terakhir {at}: {deleted} dihapus.",
 		"spamPurgeLastFailed": "Terakhir {at}: gagal ({error})"

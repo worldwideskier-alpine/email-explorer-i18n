@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Број денови",
 		"spamPurgeNoBackupNote": "Автоматската резервна копија е исклучена. Пораките избришани во меѓувреме не се чуваат никаде.",
 		"spamPurgeSaved": "Зачувано.",
+		"profileSaved": "Зачувано.",
 		"spamPurgeNeverRun": "Сè уште не е извршено.",
 		"spamPurgeLastOk": "Последно извршување {at}: избришани {deleted}.",
 		"spamPurgeLastFailed": "Последно {at}: неуспешно ({error})"

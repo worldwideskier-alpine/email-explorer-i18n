@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Дней хранения",
 		"spamPurgeNoBackupNote": "Автоматическое резервное копирование выключено. Письма, удалённые в это время, нигде не сохраняются.",
 		"spamPurgeSaved": "Сохранено.",
+		"profileSaved": "Сохранено.",
 		"spamPurgeNeverRun": "Ещё ни разу не выполнялось.",
 		"spamPurgeLastOk": "Последний запуск {at}: удалено {deleted}.",
 		"spamPurgeLastFailed": "Последний запуск {at}: неудачно ({error})"

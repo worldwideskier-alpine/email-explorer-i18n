@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Glabāšanas dienas",
 		"spamPurgeNoBackupNote": "Automātiskā dublēšana ir izslēgta. Šajā laikā dzēstās vēstules netiek nekur saglabātas.",
 		"spamPurgeSaved": "Saglabāts.",
+		"profileSaved": "Saglabāts.",
 		"spamPurgeNeverRun": "Vēl nav darbojies.",
 		"spamPurgeLastOk": "Pēdējā izpilde {at}: dzēstas {deleted}.",
 		"spamPurgeLastFailed": "Pēdējoreiz {at}: neizdevās ({error})"

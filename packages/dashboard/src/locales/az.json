@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Saxlama günləri",
 		"spamPurgeNoBackupNote": "Avtomatik ehtiyat nüsxə söndürülüb. Bu vaxt silinən məktublar heç yerdə saxlanmır.",
 		"spamPurgeSaved": "Saxlanıldı.",
+		"profileSaved": "Saxlanıldı.",
 		"spamPurgeNeverRun": "Hələ işə salınmayıb.",
 		"spamPurgeLastOk": "Son işləmə {at}: {deleted} silindi.",
 		"spamPurgeLastFailed": "Son işə salma {at}: alınmadı ({error})"

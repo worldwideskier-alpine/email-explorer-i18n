@@ -237,6 +237,7 @@
 		"spamPurgeDays": "ຈຳນວນມື້ທີ່ເກັບໄວ້",
 		"spamPurgeNoBackupNote": "ການສຳຮອງຂໍ້ມູນອັດຕະໂນມັດປິດຢູ່. ອີເມວທີ່ຖືກລຶບໃນຊ່ວງນີ້ຈະບໍ່ຖືກເກັບໄວ້ບ່ອນໃດເລີຍ.",
 		"spamPurgeSaved": "ບັນທຶກແລ້ວ.",
+		"profileSaved": "ບັນທຶກແລ້ວ.",
 		"spamPurgeNeverRun": "ຍັງບໍ່ເຄີຍເຮັດວຽກ.",
 		"spamPurgeLastOk": "ເຮັດວຽກຫຼ້າສຸດ {at}: ລຶບແລ້ວ {deleted}.",
 		"spamPurgeLastFailed": "ຄັ້ງລ່າສຸດ {at}: ລົ້ມເຫລວ ({error})"

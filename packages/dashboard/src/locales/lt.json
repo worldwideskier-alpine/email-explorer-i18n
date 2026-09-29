@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Saugojimo dienos",
 		"spamPurgeNoBackupNote": "Automatinė atsarginė kopija išjungta. Tuo metu ištrinti laiškai niekur neišsaugomi.",
 		"spamPurgeSaved": "Išsaugota.",
+		"profileSaved": "Išsaugota.",
 		"spamPurgeNeverRun": "Dar nevykdyta.",
 		"spamPurgeLastOk": "Paskutinis vykdymas {at}: ištrinta {deleted}.",
 		"spamPurgeLastFailed": "Paskutinis {at}: nepavyko ({error})"

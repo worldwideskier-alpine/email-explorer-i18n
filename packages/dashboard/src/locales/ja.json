@@ -237,6 +237,7 @@
 		"spamPurgeDays": "保持日数",
 		"spamPurgeNoBackupNote": "自動バックアップが無効です。このまま削除されたメールは、どこにも残りません。",
 		"spamPurgeSaved": "保存しました。",
+		"profileSaved": "保存しました。",
 		"spamPurgeNeverRun": "まだ一度も実行されていません。",
 		"spamPurgeLastOk": "最終実行 {at}：{deleted} 通を削除しました",
 		"spamPurgeLastFailed": "最終実行 {at}：失敗（{error}）"

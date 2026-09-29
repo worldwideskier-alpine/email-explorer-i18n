@@ -237,6 +237,7 @@
 		"spamPurgeDays": "رکھنے کے دن",
 		"spamPurgeNoBackupNote": "خودکار بیک اپ بند ہے۔ اس دوران حذف ہونے والی میلیں کہیں محفوظ نہیں رہتیں۔",
 		"spamPurgeSaved": "محفوظ ہو گیا۔",
+		"profileSaved": "محفوظ ہو گیا۔",
 		"spamPurgeNeverRun": "ابھی ایک بار بھی نہیں چلا۔",
 		"spamPurgeLastOk": "آخری عمل {at}: {deleted} حذف ہوئیں۔",
 		"spamPurgeLastFailed": "آخری بار {at}: ناکام ({error})"

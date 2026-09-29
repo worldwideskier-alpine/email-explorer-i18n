@@ -181,6 +181,26 @@ describe("the settings screen", () => {
 		);
 	});
 
+	// The name and signature's save said nothing when it worked, so it could
+	// not be told from one that had not been pressed.
+	it("says so when the name and signature are saved", async () => {
+		updateMailbox.mockImplementation(async () => ({
+			data: structuredClone(stored),
+		}));
+		await mountSettings();
+		const form = (host.querySelector("#name") as HTMLElement).closest(
+			"form",
+		) as HTMLFormElement;
+		const status = () => form.querySelector('[role="status"]')?.textContent;
+		expect(status()).toBeUndefined();
+
+		form.dispatchEvent(new Event("submit"));
+		await settle();
+
+		expect(updateMailbox).toHaveBeenCalledOnce();
+		expect(status()).toBe("Saved.");
+	});
+
 	it("says so when a save fails", async () => {
 		updateMailbox.mockRejectedValue({ response: { status: 500, data: {} } });
 		await mountSettings();

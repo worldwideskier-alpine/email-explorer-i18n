@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Dias de retenção",
 		"spamPurgeNoBackupNote": "A cópia de segurança automática está desativada. As mensagens eliminadas assim não ficam guardadas em lado nenhum.",
 		"spamPurgeSaved": "Guardado.",
+		"profileSaved": "Guardado.",
 		"spamPurgeNeverRun": "Ainda não foi executado.",
 		"spamPurgeLastOk": "Última execução {at}: {deleted} eliminadas.",
 		"spamPurgeLastFailed": "Última execução {at}: falhou ({error})"

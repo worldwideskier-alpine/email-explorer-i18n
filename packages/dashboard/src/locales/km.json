@@ -237,6 +237,7 @@
 		"spamPurgeDays": "ចំនួនថ្ងៃរក្សាទុក",
 		"spamPurgeNoBackupNote": "ការបម្រុងទុកស្វ័យប្រវត្តិត្រូវបានបិទ។ សំបុត្រដែលលុបនៅពេលនោះមិនត្រូវបានរក្សាទុកនៅកន្លែងណាទេ។",
 		"spamPurgeSaved": "បានរក្សាទុក។",
+		"profileSaved": "បានរក្សាទុក។",
 		"spamPurgeNeverRun": "មិនទាន់ដំណើរការនៅឡើយទេ។",
 		"spamPurgeLastOk": "ដំណើរការចុងក្រោយ {at}៖ បានលុប {deleted}។",
 		"spamPurgeLastFailed": "លើកចុងក្រោយ {at}៖ បរាជ័យ ({error})"

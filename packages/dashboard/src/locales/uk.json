@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Днів зберігання",
 		"spamPurgeNoBackupNote": "Автоматичне резервне копіювання вимкнено. Листи, видалені в цей час, ніде не зберігаються.",
 		"spamPurgeSaved": "Збережено.",
+		"profileSaved": "Збережено.",
 		"spamPurgeNeverRun": "Ще жодного разу не виконувалось.",
 		"spamPurgeLastOk": "Останній запуск {at}: видалено {deleted}.",
 		"spamPurgeLastFailed": "Останній запуск {at}: невдало ({error})"

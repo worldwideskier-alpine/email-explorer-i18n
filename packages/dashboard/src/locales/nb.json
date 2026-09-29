@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Antall dager",
 		"spamPurgeNoBackupNote": "Automatisk sikkerhetskopi er av. E-post som slettes imens, blir ikke tatt vare på noe sted.",
 		"spamPurgeSaved": "Lagret.",
+		"profileSaved": "Lagret.",
 		"spamPurgeNeverRun": "Har ikke kjørt ennå.",
 		"spamPurgeLastOk": "Siste kjøring {at}: {deleted} slettet.",
 		"spamPurgeLastFailed": "Siste kjøring {at}: mislyktes ({error})"

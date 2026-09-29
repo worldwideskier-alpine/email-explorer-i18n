@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Ημέρες διατήρησης",
 		"spamPurgeNoBackupNote": "Το αυτόματο αντίγραφο ασφαλείας είναι απενεργοποιημένο. Τα μηνύματα που διαγράφονται τότε δεν φυλάσσονται πουθενά.",
 		"spamPurgeSaved": "Αποθηκεύτηκε.",
+		"profileSaved": "Αποθηκεύτηκε.",
 		"spamPurgeNeverRun": "Δεν έχει εκτελεστεί ακόμη.",
 		"spamPurgeLastOk": "Τελευταία εκτέλεση {at}: διαγράφηκαν {deleted}.",
 		"spamPurgeLastFailed": "Τελευταία {at}: απέτυχε ({error})"

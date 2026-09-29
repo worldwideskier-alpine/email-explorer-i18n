@@ -237,6 +237,7 @@
 		"spamPurgeDays": "ਰੱਖਣ ਦੇ ਦਿਨ",
 		"spamPurgeNoBackupNote": "ਆਪਣੇ-ਆਪ ਬੈਕਅੱਪ ਬੰਦ ਹੈ। ਇਸ ਦੌਰਾਨ ਮਿਟਾਏ ਮੇਲ ਕਿਤੇ ਵੀ ਨਹੀਂ ਰਹਿੰਦੇ।",
 		"spamPurgeSaved": "ਸੰਭਾਲਿਆ ਗਿਆ।",
+		"profileSaved": "ਸੰਭਾਲਿਆ ਗਿਆ।",
 		"spamPurgeNeverRun": "ਹਾਲੇ ਇੱਕ ਵਾਰ ਵੀ ਨਹੀਂ ਚੱਲਿਆ।",
 		"spamPurgeLastOk": "ਆਖਰੀ ਵਾਰ {at}: {deleted} ਮਿਟਾਏ।",
 		"spamPurgeLastFailed": "ਆਖਰੀ ਵਾਰ {at}: ਅਸਫਲ ({error})"

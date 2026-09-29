@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Хадгалах хоног",
 		"spamPurgeNoBackupNote": "Автомат нөөцлөлт унтраалттай байна. Энэ үед устгасан захидал хаана ч үлдэхгүй.",
 		"spamPurgeSaved": "Хадгаллаа.",
+		"profileSaved": "Хадгаллаа.",
 		"spamPurgeNeverRun": "Хараахан ажиллаагүй байна.",
 		"spamPurgeLastOk": "Сүүлд ажилласан {at}: {deleted} устгав.",
 		"spamPurgeLastFailed": "Сүүлд {at}: амжилтгүй ({error})"

@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Antal dagar",
 		"spamPurgeNoBackupNote": "Automatisk säkerhetskopiering är avstängd. Meddelanden som raderas då sparas ingenstans.",
 		"spamPurgeSaved": "Sparat.",
+		"profileSaved": "Sparat.",
 		"spamPurgeNeverRun": "Har inte körts än.",
 		"spamPurgeLastOk": "Senaste körning {at}: {deleted} raderade.",
 		"spamPurgeLastFailed": "Senaste körning {at}: misslyckades ({error})"

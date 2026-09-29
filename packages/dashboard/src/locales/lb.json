@@ -237,6 +237,7 @@
 		"spamPurgeDays": "Deeg behalen",
 		"spamPurgeNoBackupNote": "Den automatesche Backup ass ausgeschalt. Mailen, déi dann geläscht ginn, bleiwen néierens erhalen.",
 		"spamPurgeSaved": "Gespäichert.",
+		"profileSaved": "Gespäichert.",
 		"spamPurgeNeverRun": "Nach net gelaf.",
 		"spamPurgeLastOk": "Leschte Laf {at}: {deleted} geläscht.",
 		"spamPurgeLastFailed": "Leschte Laf {at}: feelgeschloen ({error})"
