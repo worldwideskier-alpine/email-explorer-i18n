@@ -178,6 +178,19 @@ describe("a reply saved as a draft", () => {
 	});
 });
 
+describe("the subject of a reply", () => {
+	/** `AW:` came back as `Re: AW: ...`; see subjectPrefix.ts. */
+	it("does not stack Re: on a German AW:", async () => {
+		await openComposer({
+			mode: "reply",
+			originalEmail: { ...PARENT, subject: "AW: Question" },
+		});
+		expect((host.querySelector("#subject") as HTMLInputElement).value).toBe(
+			"AW: Question",
+		);
+	});
+});
+
 describe("a reply with nothing to reply to", () => {
 	/**
 	 * Its own reason was thrown translated and then dropped by a catch that

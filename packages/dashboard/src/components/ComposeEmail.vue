@@ -212,6 +212,7 @@ import {
 	plainTextToSimpleHtml,
 } from "@/utils/htmlToPlainText";
 import { plainTextToParagraphs, toQuotableHtml } from "@/utils/quotedBody";
+import { forwardSubject, replySubject } from "@/utils/subjectPrefix";
 import RichTextEditor from "./RichTextEditor.vue";
 
 const uiStore = useUIStore();
@@ -428,9 +429,7 @@ watch(isComposeModalOpen, (isOpen) => {
 		} else if (options.mode === "reply" && original) {
 			replyToId.value = original.id;
 			to.value = original.sender;
-			subject.value = original.subject.startsWith("Re: ")
-				? original.subject
-				: `Re: ${original.subject}`;
+			subject.value = replySubject(original.subject);
 			body.value = `<p><br></p>${sigBlock}${quotedBlock(original)}`;
 		} else if (options.mode === "reply-all" && original) {
 			replyToId.value = original.id;
@@ -451,15 +450,11 @@ watch(isComposeModalOpen, (isOpen) => {
 			to.value = Array.from(new Set(toList)).join(", ");
 			cc.value = Array.from(new Set(ccList)).join(", ");
 			showCcBcc.value = cc.value.length > 0;
-			subject.value = original.subject.startsWith("Re: ")
-				? original.subject
-				: `Re: ${original.subject}`;
+			subject.value = replySubject(original.subject);
 			body.value = `<p><br></p>${sigBlock}${quotedBlock(original)}`;
 		} else if (options.mode === "forward" && original) {
 			to.value = "";
-			subject.value = original.subject.startsWith("Fwd: ")
-				? original.subject
-				: `Fwd: ${original.subject}`;
+			subject.value = forwardSubject(original.subject);
 			body.value = `<p><br></p>${sigBlock}<div style="border: 1px solid #ddd; padding: 1em; background-color: #f9f9f9; margin: 1em 0;"><p><strong>${t("compose.forwardedMessage")}</strong><br><strong>${t("compose.forwardFrom")}</strong> ${escapeHtml(original.sender)}<br><strong>${t("compose.forwardDate")}</strong> ${formatFullDate(original.date)}<br><strong>${t("compose.forwardSubject")}</strong> ${escapeHtml(original.subject)}</p>${quotedBody(original)}</div>`;
 		} else {
 			to.value = "";
