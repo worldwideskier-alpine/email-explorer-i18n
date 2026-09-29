@@ -49,7 +49,19 @@ async function render() {
 		return;
 	}
 	if (unmounted || !container.value) return;
-	widgetId = api.render(container.value, {
+	try {
+		widgetId = renderInto(api, container.value);
+	} catch {
+		// Turnstile throws rather than calling error-callback for a site key
+		// it cannot even read -- an address a browser filled in, say -- and
+		// the check then sat on "waiting" for good.
+		failure.value = "sitekey";
+		emit("failed", "sitekey");
+	}
+}
+
+function renderInto(api: TurnstileApi, container: HTMLElement) {
+	return api.render(container, {
 		sitekey: props.siteKey,
 		theme: "auto",
 		// The normal widget is 300px wide, which is wider than a form on a

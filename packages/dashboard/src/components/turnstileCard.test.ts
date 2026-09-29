@@ -183,6 +183,43 @@ describe("the Turnstile card", () => {
 		expect(button(text("save")).disabled).toBe(true);
 	});
 
+	it("does not wipe what was typed before the stored keys arrived", async () => {
+		let answer: (value: unknown) => void = () => {};
+		getTurnstile.mockReturnValue(new Promise((r) => (answer = r)));
+		await mountCard();
+		type("turnstileSecretKey", "0x4TYPED");
+		answer({ data: { siteKey: "0x4SITE", secretKey: "...bnQA" } });
+		await settle();
+		expect(input("turnstileSecretKey").value).toBe("0x4TYPED");
+		expect(host.textContent).toContain("...bnQA");
+	});
+
+	it("gives a password manager nothing to fill", async () => {
+		// With the secret as a password field, the browser took the pair for
+		// a sign-in form and filled in root's own address and password.
+		await mountCard();
+		expect(host.querySelectorAll('input[type="password"]')).toHaveLength(0);
+		for (const id of ["turnstileSiteKey", "turnstileSecretKey"]) {
+			expect(input(id).type).toBe("text");
+			expect(input(id).getAttribute("autocomplete")).toBe("off");
+		}
+		// Masked all the same, by CSS.
+		expect(input("turnstileSecretKey").className).toContain(
+			"[-webkit-text-security:disc]",
+		);
+	});
+
+	it("says so when Turnstile throws on the site key instead of answering", async () => {
+		turnstile.render.mockImplementationOnce(() => {
+			throw new Error('[Cloudflare Turnstile] Invalid input for "sitekey"');
+		});
+		await mountCard();
+		await enterPair("someone@example.com", "password123");
+		expect(host.textContent).toContain(text("widgetFailed"));
+		expect(host.textContent).not.toContain(text("waiting"));
+		expect(button(text("save")).disabled).toBe(true);
+	});
+
 	it("says so when the widget will not render with the site key", async () => {
 		await mountCard();
 		await enterPair("0x4WRONG", "0x4SECRET");

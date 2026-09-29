@@ -12,7 +12,14 @@
 		<p class="text-sm text-gray-600 dark:text-gray-400 mt-2">{{ t("root.turnstile.description") }}</p>
 
 		<!-- Arrives with the stored site key filled in; writing only once typed
-		     into. See Root.vue's recoveryTouched. -->
+		     into. See Root.vue's recoveryTouched.
+
+		     No field here is type=password, and that is what keeps password
+		     managers out: with one, the browser took the pair for a sign-in
+		     form and put root's own address and password in as the keys, and
+		     would have offered to save the secret as a password. The secret is
+		     masked by CSS instead. The data-*ignore attributes are for the
+		     managers that look at more than the type. -->
 		<form
 			@submit.prevent="save"
 			@input="touched = true"
@@ -25,8 +32,13 @@
 					<input
 						id="turnstileSiteKey"
 						v-model="siteKeyInput"
+						name="turnstile-site-key"
 						autocomplete="off"
+						autocapitalize="off"
 						spellcheck="false"
+						data-1p-ignore
+						data-lpignore="true"
+						data-bwignore
 						placeholder="0x4AAAA..."
 						class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
 					/>
@@ -36,10 +48,15 @@
 					<input
 						id="turnstileSecretKey"
 						v-model="secretInput"
-						type="password"
+						name="turnstile-secret-key"
 						autocomplete="off"
+						autocapitalize="off"
+						spellcheck="false"
+						data-1p-ignore
+						data-lpignore="true"
+						data-bwignore
 						placeholder="0x4AAAA..."
-						class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+						class="[-webkit-text-security:disc] w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
 					/>
 				</div>
 			</div>
@@ -220,9 +237,11 @@ async function load() {
 	} catch {
 		stored.value = null;
 	}
+	// Not over what somebody has already started typing: the answer can
+	// arrive after they have.
+	if (touched.value) return;
 	siteKeyInput.value = stored.value?.siteKey ?? "";
 	secretInput.value = "";
-	touched.value = false;
 }
 
 function settled(now: Stored) {
