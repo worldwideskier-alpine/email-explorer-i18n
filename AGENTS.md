@@ -4,7 +4,8 @@ Orientation for anyone — human or agent — working in this repository.
 
 ## What this is
 
-A multilingual (Japanese / English / German) fork of
+A multilingual fork (73 languages, listed in
+`packages/dashboard/src/locales/registry.ts`) of
 [G4brym/email-explorer](https://github.com/G4brym/email-explorer), a
 self-hosted email client that runs entirely on Cloudflare. It receives mail
 through Cloudflare Email Routing, stores it in Durable Objects and R2, and
@@ -59,7 +60,7 @@ packages/worker/       The Worker: Hono + chanfana API, MailboxDO, mail ingestio
   dev/                 THIS deployment: wrangler.jsonc and EmailExplorer() options
   scripts/             Deploy-time tooling, run by node, not bundled
 packages/dashboard/    The Vue 3 SPA, built into the Worker's assets
-  src/locales/         ja / en / de message catalogues
+  src/locales/         the 73 message catalogues, and registry.ts naming them
   src/**/*.test.ts     Vitest on jsdom
 docs/features/         User-facing guides, linked from the README
 docs/deploying-your-own.md  How someone forks this and runs their own
@@ -170,6 +171,16 @@ are still checked, by the `tsc` that runs before the worker tests.
   what the other writer left. R2 does have that; an earlier note here said it
   did not. Settings saves also merge onto what is stored, so a save carries
   only the section it changes.
+- **A secret that is not a password is a `SecretInput`**, never
+  `type="password"`: an API key, the Turnstile secret. A password box makes
+  the browser take its form for a sign-in form -- it filled root's own address
+  and password into the Turnstile keys, and it offers to save an API key as
+  this site's password, which it then fills into sign-in. `SecretInput.vue` is
+  a text box masked by CSS (`-webkit-text-security`, which Firefox has not been
+  checked for) with the password managers' ignore attributes.
+  `secretInputs.test.ts` holds that every `type="password"` box in the
+  dashboard says `current-password` or `new-password`, so a new key field made
+  as a password box fails there.
 - **Switches.** Never `<input type=checkbox :checked="…">`: the browser owns a
   checkbox's `checked` and flips it before any handler runs, while Vue writes
   a DOM property back only when the *bound* value changed -- so dismissing a
@@ -510,6 +521,14 @@ types `env` as `Cloudflare.Env` since 0.22; `tests/bindings.d.ts` fills that
 in. Before it did, `env` was untyped, 182 errors went unreported, and a
 `@ts-expect-error` sat on nearly every binding -- and `singleWorker: true`,
 an option 0.22 no longer has, went on being passed and ignored.
+
+A test has fifteen seconds, not vitest's five (`testTimeout` in
+`tests/vitest.config.mts`). Measured over the whole suite on a quiet machine,
+24 tests took over 1.5s and one took 4.6s with no budget of its own -- 35
+sign-ins, each a real PBKDF2 at 100,000 iterations. The time is the work, CI
+is slower by a factor nobody controls, and a per-test budget forgotten took a
+deploy down twice. The per-test budgets that were already there stay, each
+with the waiting it accounts for.
 
 ### Dashboard tests
 

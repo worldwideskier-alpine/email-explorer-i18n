@@ -13,7 +13,7 @@ src/components/    Shared pieces -- the composer, the rich-text editor, dialogs
 src/stores/        Pinia stores; emails.ts holds the list/pagination logic
 src/services/      api.ts, the single axios client (bearer token + session cookie)
 src/utils/         Logic with no UI, unit tested -- e.g. htmlToPlainText.ts
-src/locales/       ja / en / de message catalogues; every string lives here
+src/locales/       the 73 message catalogues (registry.ts names them); every string lives here
 public/            PWA manifest, icons and the service worker
 ```
 
