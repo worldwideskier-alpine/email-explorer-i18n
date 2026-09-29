@@ -13,9 +13,12 @@ export default defineConfig({
 		// gzipped); the catalogues are already their own chunks. Splitting the
 		// app further -- the editor behind compose, say -- would have a page
 		// left open over a deploy ask for a chunk of the build before it, and
-		// whether a deploy still serves those has not been measured here. So
-		// it stays one piece on purpose, and the limit is set just above it:
-		// the warning still comes if the app grows past it.
+		// a deploy does not serve those: measured on production on 2026-09-29,
+		// three earlier builds' entry chunks and an earlier catalogue all came
+		// back as the page itself (200, text/html), and a dynamic import of
+		// each failed in Chromium. So it stays one piece on purpose, and the
+		// limit is set just above it: the warning still comes if the app grows
+		// past it.
 		chunkSizeWarningLimit: 1000,
 	},
 	resolve: {
