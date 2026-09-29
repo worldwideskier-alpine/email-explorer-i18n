@@ -36,7 +36,38 @@ const HOUR = 60 * MINUTE;
  * still counted.
  */
 export function clientIp(request: Request): string {
-	return request.headers.get("CF-Connecting-IP") ?? "unknown";
+	const ip = request.headers.get("CF-Connecting-IP");
+	return ip ? throttleAddress(ip) : "unknown";
+}
+
+/**
+ * The part of an address that one client actually holds.
+ *
+ * An IPv6 subscriber is handed a whole /64 and picks any of its 2^64
+ * addresses at will, so counting the full address let one client move to a
+ * fresh counter on every attempt and the per-IP rule caught nothing. The /64
+ * is what a single subscriber cannot step out of. IPv4 is counted as it is.
+ */
+export function throttleAddress(ip: string): string {
+	if (!ip.includes(":")) return ip;
+	// IPv4 written as IPv6 ("::ffff:192.0.2.1") is one IPv4 client; by its
+	// /64 every such client would share one counter.
+	if (ip.includes(".")) return ip.slice(ip.lastIndexOf(":") + 1);
+	const [head, tail] = ip.toLowerCase().split("::", 2);
+	const left = head ? head.split(":") : [];
+	const right = tail ? tail.split(":") : [];
+	const groups =
+		tail === undefined
+			? left
+			: [
+					...left,
+					...Array(Math.max(0, 8 - left.length - right.length)).fill("0"),
+					...right,
+				];
+	const prefix = groups
+		.slice(0, 4)
+		.map((g) => Number.parseInt(g || "0", 16).toString(16));
+	return `${prefix.join(":")}::/64`;
 }
 
 /**
