@@ -1,4 +1,9 @@
-import { createExecutionContext, env, SELF } from "cloudflare:test";
+import {
+	createExecutionContext,
+	env,
+	SELF,
+	waitOnExecutionContext,
+} from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { recoveryFromEmail } from "../../src/deployment-config";
 
@@ -88,11 +93,28 @@ describe("the password-reset sender", () => {
 		const token = await root();
 		await setSender(token, "noreply@example.com");
 
-		const known = await forgotPassword("op@example.com");
+		// Asked of the Worker directly: the token is stored after the answer
+		// (see PostForgotPassword), and a context can be waited on for it.
+		const ask = async (email: string) => {
+			const worker = await import("../../dev/index");
+			const ctx = createExecutionContext();
+			const answer = await worker.default.fetch(
+				new Request("http://local.test/api/v1/auth/forgot-password", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ email }),
+				}),
+				env,
+				ctx,
+			);
+			await waitOnExecutionContext(ctx);
+			return answer;
+		};
+		const known = await ask("op@example.com");
 		// The known side really went down the known path: a reset was issued.
 		const issued = await env.BUCKET.list({ prefix: "recovery-tokens/" });
 		expect(issued.objects).toHaveLength(1);
-		const unknown = await forgotPassword("nobody@example.com");
+		const unknown = await ask("nobody@example.com");
 		expect(
 			(await env.BUCKET.list({ prefix: "recovery-tokens/" })).objects,
 		).toHaveLength(1);

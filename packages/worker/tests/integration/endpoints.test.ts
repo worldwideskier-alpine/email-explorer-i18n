@@ -875,13 +875,10 @@ describe("API Integration Tests", () => {
 		});
 
 		/*
-		 * BUG: moving a message that does not exist answers 200 "moved".
-		 * `MailboxDO.moveEmail` checks only the folder and then runs an UPDATE
-		 * that matches no row, and the route declares a 404 it never sends.
-		 * Kept as the behaviour it should have; remove `.fails` once the route
-		 * answers 404.
+		 * It answered 200 "moved": `MailboxDO.moveEmail` checked only the
+		 * folder, and the UPDATE matched no row.
 		 */
-		it.fails("should return 404 when moving a message that does not exist", async () => {
+		it("should return 404 when moving a message that does not exist", async () => {
 			await createMailbox();
 			const moveResponse = await authenticatedFetch(
 				`http://local.test/api/v1/mailboxes/${mailboxId}/emails/no-such-email/move`,

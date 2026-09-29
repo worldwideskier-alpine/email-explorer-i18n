@@ -1073,10 +1073,13 @@ class PostMoveEmail extends OpenAPIRoute {
 			return c.json({ error: "Cannot move a message into drafts" }, 400);
 		}
 
-		const success = await stub.moveEmail(id, folderId);
+		const moved = await stub.moveEmail(id, folderId);
 
-		if (!success) {
+		if (moved === "no-folder") {
 			return c.json({ error: "Folder not found" }, 400);
+		}
+		if (moved === "no-message") {
+			return c.json({ error: "Not found" }, 404);
 		}
 
 		// Binning or filing something as spam means the user has dealt with it,

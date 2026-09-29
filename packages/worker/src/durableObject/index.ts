@@ -2071,7 +2071,15 @@ export class MailboxDO extends DurableObject<Env> {
 		return cursor.rowsWritten > 0;
 	}
 
-	async moveEmail(id: string, folderId: string) {
+	/**
+	 * "moved", or what was missing: the folder or the message. A message
+	 * that did not exist used to answer "moved" -- only the folder was
+	 * checked, and the UPDATE below matched nothing and said so to nobody.
+	 */
+	async moveEmail(
+		id: string,
+		folderId: string,
+	): Promise<"moved" | "no-folder" | "no-message"> {
 		const folder = this.#qb
 			.select("folders")
 			.fields(["id"])
@@ -2079,13 +2087,13 @@ export class MailboxDO extends DurableObject<Env> {
 			.one();
 
 		if (!folder.results) {
-			return false;
+			return "no-folder";
 		}
 
 		// Retention runs from when a message became spam, not from its date:
 		// an old message filed as spam today is not already expired. Moving
 		// spam to spam keeps its clock; leaving spam stops it.
-		this.ctx.storage.sql.exec(
+		const cursor = this.ctx.storage.sql.exec(
 			`UPDATE emails
 			    SET spam_since = CASE
 			            WHEN ?1 != 'spam' THEN NULL
@@ -2099,7 +2107,7 @@ export class MailboxDO extends DurableObject<Env> {
 			id,
 		);
 
-		return true;
+		return cursor.rowsWritten > 0 ? "moved" : "no-message";
 	}
 
 	/** Records that a new-mail notification went out for this message. */
