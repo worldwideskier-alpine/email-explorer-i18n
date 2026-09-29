@@ -2,6 +2,7 @@
 	"name": "email-explorer-root",
 	"version": "0.0.0",
 	"private": true,
+	"packageManager": "pnpm@10.33.0",
 	"scripts": {
 		"lint": "npx @biomejs/biome check packages/dashboard/src packages/worker/src packages/worker/scripts packages/worker/tests || (npx @biomejs/biome check --write packages/dashboard/src packages/worker/src/ packages/worker/scripts packages/worker/tests; exit 1)",
 		"build-dashboard": "pnpm run --filter email-explorer-dashboard build",

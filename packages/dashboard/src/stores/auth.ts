@@ -66,12 +66,14 @@ export const useAuthStore = defineStore("auth", () => {
 	 * field; nothing here keeps it.
 	 */
 	/**
-	 * Which screen this account belongs on. Decided by the Worker from the
-	 * deployment's configuration -- see roles.ts there -- and only ever used
-	 * here to pick a view. The server checks it again on every root-only
-	 * request, because a typed URL skips this entirely.
+	 * Which screen this account belongs on. Decided by the Worker -- see
+	 * roles.ts there -- and only ever used here to pick a view. The server
+	 * checks it again on every root-only request, because a typed URL skips
+	 * this entirely. A session stored without one is read as an
+	 * administrator's, the role that is not root; the "member" it used to
+	 * fall back to is gone.
 	 */
-	const role = computed(() => session.value?.role ?? "member");
+	const role = computed<AccountRole>(() => session.value?.role ?? "admin");
 	const isRoot = computed(() => role.value === "root");
 	const currentUser = computed(() =>
 		session.value
@@ -190,12 +192,10 @@ export const useAuthStore = defineStore("auth", () => {
 			// Update session with fresh data.
 			//
 			// The role has to be refreshed here as well as at sign-in. It is
-			// decided by the deployment's configuration, so it can change
-			// while somebody is signed in -- naming a root address for the
-			// first time is exactly that -- and a session stored before the
-			// change would otherwise keep its old role until the person
-			// happened to sign out. They would set the variable, redeploy,
-			// reload, and see no difference.
+			// the Worker's answer, and a session is kept for thirty days: one
+			// stored by an older build, or before the person it belongs to
+			// changed, would otherwise keep what it was stored with until
+			// they happened to sign out.
 			session.value = {
 				...session.value,
 				email: response.data.email,

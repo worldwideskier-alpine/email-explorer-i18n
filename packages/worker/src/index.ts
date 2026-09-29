@@ -1964,7 +1964,7 @@ const PutEmailSourceRequestSchema = z.object({
 class PutEmailSource extends OpenAPIRoute {
 	schema = {
 		summary:
-			"Attach the raw original message source to an already-imported email (admin only, backfill)",
+			"Attach the raw original message source to an already-imported email (the mailbox's holder; backfill)",
 		operationId: "putEmailSource",
 		tags: ["Admin"],
 		request: {
@@ -1985,7 +1985,7 @@ class PutEmailSource extends OpenAPIRoute {
 				...contentJson(ErrorResponseSchema),
 			},
 			"403": {
-				description: "Forbidden - Admin privileges required",
+				description: "Forbidden - not this mailbox's holder",
 				...contentJson(ErrorResponseSchema),
 			},
 			"404": { description: "Not found", ...contentJson(ErrorResponseSchema) },
@@ -2256,10 +2256,6 @@ class GetResendSettings extends OpenAPIRoute {
 				description: "Unauthorized",
 				...contentJson(ErrorResponseSchema),
 			},
-			"403": {
-				description: "Forbidden - Admin privileges required",
-				...contentJson(ErrorResponseSchema),
-			},
 		},
 	};
 
@@ -2295,8 +2291,8 @@ class PutResendSettings extends OpenAPIRoute {
 				description: "Unauthorized",
 				...contentJson(ErrorResponseSchema),
 			},
-			"403": {
-				description: "Forbidden - Admin privileges required",
+			"409": {
+				description: "The account belongs to no person",
 				...contentJson(ErrorResponseSchema),
 			},
 		},

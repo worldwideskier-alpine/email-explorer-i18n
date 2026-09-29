@@ -326,13 +326,13 @@ Before deploying Email Explorer, make sure you have:
 - **Domain Name** - Added to your Cloudflare account
 - **Email Routing** - [Enable Email Routing](https://developers.cloudflare.com/email-routing/) for receiving emails
 - **Resend account** - For sending mail (optional: without it you can read but not send)
-- **Node.js 18+** - For local development (not required for deployment)
+- **Node.js 20.19+ or 22.12+** - For local development (not required for deployment); Vite needs one of these
 
 **Cloudflare Services Used:**
 - Workers (Compute)
 - Durable Objects (State management)
 - R2 (Object storage)
-- D1 (SQL database via Durable Objects)
+- SQLite inside each Durable Object (not D1, which is not used)
 - Email Routing (Receive emails)
 - Resend (Send emails; outside Cloudflare)
 
@@ -358,10 +358,9 @@ export default EmailExplorer({
   auth: {
     enabled: true
     // registerEnabled not specified = smart mode
-  },
-  accountRecovery: {
-    fromEmail: 'noreply@yourdomain.com'  // Optional: enable password reset via email
   }
+  // No accountRecovery: root sets the password-reset sender on /root.
+  // Written here, it is inherited by every fork of yours.
 })
 ```
 
@@ -454,7 +453,7 @@ Email Explorer is built with modern web technologies:
 - **Hono** - Fast, lightweight web framework
 - **Cloudflare Durable Objects** - Distributed state management
 - **Cloudflare R2** - Object storage for attachments
-- **Cloudflare D1** - SQL database (via Durable Objects)
+- **Durable Object SQLite** - Each mailbox's messages, folders and contacts
 - **Cloudflare Email Routing** - Receiving mail
 - **Resend** - Sending mail
 

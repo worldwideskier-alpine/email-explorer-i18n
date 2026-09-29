@@ -8,10 +8,10 @@
  * person who can create and delete every account should not also be a second
  * pair of eyes on every conversation.
  *
- * Who root is comes from the deployment's configuration, not from a column
- * anyone here can write; see roles.ts. Every route in this file therefore
- * refuses everyone on a deployment that has not named one, which is the state
- * a deployment upgrading into this starts in.
+ * Who root is is a person id in the auth object, set once, by the first
+ * account ever registered, and by nothing here; see roles.ts. Every route in
+ * this file therefore refuses everyone on a deployment that has no root yet,
+ * which is the state a new deployment starts in.
  */
 
 import { contentJson, OpenAPIRoute } from "chanfana";

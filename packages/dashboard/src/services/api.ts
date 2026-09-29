@@ -184,7 +184,7 @@ export default {
 			responseType: "blob",
 		}),
 
-	// One message back into the mailbox, admin only. A restore posts these one
+	// One message back into the mailbox, by its holder. A restore posts these one
 	// at a time rather than handing over the whole archive: an mbox can be far
 	// larger than a Worker request may carry, and a message at a time is what
 	// lets the page show progress and pick up where it stopped.
@@ -305,8 +305,9 @@ export default {
 		apiClient.get(`/api/v1/mailboxes/${seg(mailboxId)}/search`, { params }),
 
 	// Admin
-	// The key is never returned by either of these; the response says only
-	// whether one is set and which of the two sources it came from.
+	// The signed-in person's own key. It is never returned by either of these;
+	// the response says only whether one is set. There is one source and no
+	// fallback: mail goes out with its owner's key or not at all.
 	adminGetResendSettings: () => apiClient.get("/api/v1/admin/settings/resend"),
 	adminSetResendApiKey: (apiKey: string) =>
 		apiClient.put("/api/v1/admin/settings/resend", { apiKey }),

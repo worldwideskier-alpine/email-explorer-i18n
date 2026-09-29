@@ -6,12 +6,17 @@ name: Deploy to Cloudflare
 on:
   push:
     branches: [main]
-    # A commit that only touches these can't change what gets deployed.
-    paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'LICENSE'
-      - '.editorconfig'
+    # A commit that only touches the excluded files can't change what gets
+    # deployed. docs/readme/ is taken back in: readmeDocs.test.ts reads it,
+    # and a push that broke a summary went unchecked until the next code
+    # push failed on it. Later patterns override earlier ones.
+    paths:
+      - '**'
+      - '!docs/**'
+      - 'docs/readme/**'
+      - '!README.md'
+      - '!LICENSE'
+      - '!.editorconfig'
   pull_request:
     branches: [main]
   workflow_dispatch: {}
@@ -38,9 +43,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The version is the root package.json's packageManager: one exact
+      # release, the same here as on a contributor's machine.
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-        with:
-          version: 10
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
@@ -91,9 +96,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # The version is the root package.json's packageManager: one exact
+      # release, the same here as on a contributor's machine.
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
-        with:
-          version: 10
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22

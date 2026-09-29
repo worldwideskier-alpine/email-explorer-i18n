@@ -1,223 +1,54 @@
-# Email Explorer Integration Tests
+# Worker tests
 
-## Overview
+Vitest on `@cloudflare/vitest-pool-workers`, so the tests run inside workerd
+with the Durable Objects and the R2 bucket of `dev/wrangler.jsonc` -- the same
+configuration the deployment uses, not a copy of it.
 
-This directory contains integration tests for the Email Explorer project, using Vitest and the Cloudflare Workers test environment.
-
-## Test Structure
-
-### `integration/endpoints.test.ts`
-Tests for the original mailbox, email, folder, and contact endpoints.
-
-### `integration/auth.test.ts`
-Comprehensive tests for the authentication and user management feature, including:
-
-- **Registration Flow Tests**
-  - First user registration (becomes admin)
-  - Password validation
-  - Duplicate email prevention
-  - Smart mode registration closure
-
-- **Login Flow Tests**
-  - Valid credential authentication
-  - Invalid password rejection
-  - Non-existent email handling
-  - Session cookie creation
-
-- **Session Management Tests**
-  - Current user retrieval
-  - Invalid session rejection
-  - Logout and session invalidation
-
-- **Admin Operations Tests**
-  - Admin user registration
-  - User listing
-  - Mailbox access grant/revoke
-  - Role validation (owner, admin, write, read)
-
-- **Authorization & Permissions Tests**
-  - Non-admin access denial to admin endpoints
-  - Admin-only endpoint protection
-
-- **Security Tests**
-  - Password hash not exposed in responses
-  - Password hashing verification
-  - Invalid JSON request handling
-
-- **Edge Cases Tests**
-  - Concurrent registration handling
-  - Missing field validation
-  - Empty email/password handling
-
-## Running Tests
-
-### Run all tests
 ```bash
-pnpm --filter email-explorer test
+pnpm --filter email-explorer test                 # type-check, then every test
+cd packages/worker && npx vitest run --config tests/vitest.config.mts tests/integration/auth.test.ts
 ```
 
-### Run auth tests only
-```bash
-pnpm --filter email-explorer test auth
-```
+`test` runs `tsc` over the source, the tests (`tests/tsconfig.json`) and the
+config (`tests/tsconfig.node.json`) before vitest, so a test that does not
+type-check fails the run. CI runs this through `pnpm test` at the root, in
+`.github/workflows/deploy.yml`, before anything is deployed.
 
-### Run tests in watch mode
-```bash
-pnpm --filter email-explorer test --watch
-```
+## Layout
 
-### Run with coverage
-```bash
-pnpm --filter email-explorer test --coverage
-```
+- `unit/` -- pure functions: address parsing, spam prompts, mbox, the
+  nightly limits' arithmetic, and so on.
+- `integration/` -- the Worker as a whole, through `SELF.fetch` or its
+  `email()` and `scheduled()` entry points, one file per behaviour.
+  `route-access.test.ts` holds the table of every route and who may reach it;
+  a new route fails it until it is put there.
 
-## Test Environment
+## What the setup gives you
 
-The tests use:
-- **Vitest** - Fast unit test framework
-- **@cloudflare/vitest-pool-workers** - Cloudflare Workers test environment
-- **Miniflare** - Local Cloudflare Workers simulator
+- **Storage is wiped after every test** (`tests/reset-storage.ts`, through
+  `setupFiles`). The pool dropped `isolatedStorage` in 0.22, so state made in
+  `beforeAll` does not survive into the tests after it: set up in
+  `beforeEach`.
+- **A signed-in person** from `testAuthBeforeAll()` in `integration/utils.ts`:
+  a session whose token is `sessionToken`, sent by `authenticatedFetch()` as a
+  Bearer token, and a sending key (`giveSendingKey`) as a real person would
+  have set.
+- **A mailbox** held by that person, from `createDummyMailbox()` (through the
+  API) or `createMailbox()` (straight into the bucket, with its grant).
+- **Resend is stubbed** through the pool's `outboundService`: nothing leaves
+  the machine, and a test reads the request the Worker sent.
 
-### Configuration
+## Things that will bite
 
-Tests are configured in `tests/vitest.config.mts`:
-- Uses `dev/wrangler.jsonc` for worker configuration
-- Single worker mode for consistency
-- NodeJS compatibility enabled
-
-### Test-Specific Entry Point
-
-Due to Node.js module compatibility issues with the `mimetext` package (which requires `node:os`), tests use a separate entry point:
-
-- **Production**: `src/index.ts` - Full functionality including email sending
-- **Testing**: `src/index.test.ts` - Auth-only routes, no mimetext imports
-
-The test entry point includes:
-- ✅ All authentication routes
-- ✅ Session management
-- ✅ Admin operations
-- ❌ Email sending routes (to avoid mimetext)
-- ❌ Email receiving (mocked)
-
-This allows auth tests to run without Node.js module compatibility issues while maintaining full production functionality.
-
-## Writing Tests
-
-### Basic Test Structure
-
-```typescript
-import { SELF, env } from "cloudflare:test";
-import { describe, expect, it } from "vitest";
-
-describe("Feature Tests", () => {
-  it("should test something", async () => {
-    const response = await SELF.fetch("http://local.test/api/v1/endpoint");
-    expect(response.status).toBe(200);
-  });
-});
-```
-
-### Helper Functions
-
-#### Authenticated Requests
-```typescript
-const authenticatedFetch = (url: string, sessionToken: string, options: RequestInit = {}) => {
-  return SELF.fetch(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-      Authorization: `Bearer ${sessionToken}`,
-    },
-  });
-};
-```
-
-#### Extract Session Cookie
-```typescript
-const extractSessionCookie = (response: Response): string | null => {
-  const setCookie = response.headers.get("Set-Cookie");
-  if (!setCookie) return null;
-  const match = setCookie.match(/session=([^;]+)/);
-  return match ? match[1] : null;
-};
-```
-
-## Test Data
-
-### Default Test User
-- Email: `testadmin@example.com`
-- Password: `adminpass123`
-- Role: Admin (first user)
-
-### Default Test Mailbox
-- ID: `test@example.com`
-
-## Coverage Goals
-
-Aim for comprehensive coverage of:
-- ✅ Happy path scenarios
-- ✅ Error handling
-- ✅ Edge cases
-- ✅ Security validations
-- ✅ Authorization checks
-- ✅ Data validation
-
-## Debugging Tests
-
-### Enable Debug Logging
-Set `DEBUG=1` environment variable:
-```bash
-DEBUG=1 pnpm test
-```
-
-### Inspect Worker State
-Use `env` object to access bindings:
-```typescript
-// Access R2 bucket
-await env.BUCKET.put("key", "value");
-
-// Access Durable Object
-const id = env.MAILBOX.idFromName("test");
-const stub = env.MAILBOX.get(id);
-```
-
-## Troubleshooting
-
-### "Could not read file: wrangler.jsonc"
-- Check that `dev/wrangler.jsonc` exists
-- Verify path in `tests/vitest.config.mts`
-
-### Tests timeout
-- Increase timeout in test: `it("test", async () => {...}, 10000)`
-- Check for unresolved promises
-
-### Durable Object errors
-- Ensure migrations are up to date
-- Check that DO class is exported correctly
-- Verify bindings in wrangler.jsonc
-
-## CI/CD Integration
-
-Tests run automatically on:
-- Pull requests
-- Main branch commits
-- Release tags
-
-See `.github/workflows/test.yml` for configuration.
-
-## Best Practices
-
-1. **Isolation** - Each test should be independent
-2. **Cleanup** - Clean up resources after tests (if needed)
-3. **Descriptive names** - Use clear, descriptive test names
-4. **One assertion per concept** - Focus tests on single behaviors
-5. **Arrange-Act-Assert** - Follow AAA pattern
-6. **Mock external dependencies** - Don't rely on external services
-
-## Future Enhancements
-
-- [ ] Add performance benchmarks
-- [ ] Add load testing
-- [ ] Add E2E tests with real browser
-- [ ] Add mutation testing
-- [ ] Add visual regression tests
+- An error thrown by a Durable Object through a route leaves the pool hanging
+  rather than failing the test. When a Durable Object method is what is being
+  tested, call it on the instance with `runInDurableObject`, which fails
+  properly (`many-attachments.test.ts` does both).
+- An RPC stub cannot be wrapped in a `Proxy`: every property of it is a
+  remote call, `bind` included. To give a route a mailbox that misbehaves,
+  hand it a plain object with just the methods the route calls
+  (`draft-save-gone.test.ts`, `nightly-limits.test.ts`).
+- Time inside workerd moves only across I/O. A test about a deadline moves
+  `Date.now` itself rather than waiting (`nightly-limits.test.ts`).
+- The first account registered becomes root. A test about an administrator
+  registers someone first or seeds the auth object directly.

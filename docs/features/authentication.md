@@ -1,262 +1,118 @@
 # Authentication Guide
 
-Email Explorer uses a secure authentication system to protect your emails and data. This guide will help you create an account, log in, and manage your session.
+How accounts, signing in and sessions work, and what the two roles can do.
 
 ## Creating Your Account
 
-### First User Registration
+### The first account
 
-When Email Explorer is first deployed, nobody has an account, and the first person to register becomes **root** -- the account that runs the deployment. Registration closes behind them.
+A new deployment has no accounts. The first person to register becomes
+**root** -- the account that runs the deployment -- and registration closes
+behind them. There is no other way to become root: nothing on the site hands
+the role to an existing account.
 
-**To create the first account:**
+1. Open your deployment's URL; you are sent to the sign-in page
+2. Choose **Create a new account**
+3. Enter an email address (your sign-in address) and a password of at least
+   8 characters
+4. Submit -- you are signed in as root
 
-1. Navigate to your Email Explorer URL
-2. You'll be redirected to the login page
-3. Click **"Create a new account"** or **"Register"**
-4. Fill in the registration form:
-   - **Email address**: Your email address (will be your username)
-   - **Password**: Choose a strong password (minimum 8 characters)
-5. Click **"Create Account"**
+### Everybody else
 
-**Congratulations!** You're now registered and automatically logged in as root, the account that runs the deployment.
+Every other account is made by root, on `/root`. Someone who tries to register
+after the first account sees "Registration is closed" and should ask whoever
+runs the deployment.
 
-### Additional User Registration
+## Roles
 
-After the first user registers, **public registration is automatically closed** for security. Every other account is created by root, on `/root`.
+There are two, different in kind rather than in degree.
 
-If you need an account and see "Registration is closed":
-- Ask whoever runs the deployment (root) to create one for you
+- **Root** runs the deployment: makes and deletes accounts, sets passwords,
+  and sees the nightly maintenance record. Root holds no mailbox and reads no
+  mail; its screen does not list anyone's mailboxes.
+- **Administrator** is one of the people using it: registers the addresses
+  they use, reads and sends their own mail, and sees nothing of anybody
+  else's. Each sets their own outbound mail key on `/admin`.
 
-## Logging In
+A role belongs to a **person**, not to a sign-in address. A person can sign in
+through several addresses, and root keeps the role going by adding a spare
+address to their own person rather than by handing it to somebody else.
 
-### Standard Login Process
+See the [Admin Panel Guide](./admin-panel.md) for what each screen offers.
 
-1. Navigate to your Email Explorer URL
-2. Enter your credentials:
-   - **Email**: The email address you registered with
-   - **Password**: Your account password
-3. Click **"Log In"**
+## Signing In
 
-If successful, you'll be redirected to your mailbox dashboard.
+1. Open your deployment's URL
+2. Enter your sign-in address and password
+3. Choose **Log In**
 
-### Session Management
+A sign-in that fails says "Invalid credentials" whether the address or the
+password was wrong, so the page does not tell a stranger which addresses
+exist.
 
-When you log in:
-- A secure session is created that lasts **30 days**
-- Your session is stored securely using HttpOnly cookies
-- You stay logged in even if you close your browser
-- Your session automatically expires after 30 days for security
+### Sessions
 
-### Failed Login
+- A session lasts **30 days from signing in**, and then you sign in again.
+- The Worker sets it as an `HttpOnly; Secure; SameSite=Strict` cookie, and
+  the dashboard also keeps the same token in the browser's storage and sends
+  it with each request. So a script running in the page could read it: the
+  cookie flags are not the protection here. What is, is that nothing but this
+  deployment's own code runs in the page -- messages are shown in a sandboxed
+  frame that runs no scripts.
+- Signing out ends the session on the server at once, along with the
+  notification subscription that browser registered.
 
-If login fails, you'll see an error message:
-- **"Invalid credentials"**: Check your email and password
-- **"User not found"**: The email address isn't registered
-- **Connection error**: Check your internet connection
+### Rate limiting
 
-## Staying Logged In
+Repeated failed sign-ins lock an address for a while. Attempts are counted per
+address and per client network (an IPv4 address, or an IPv6 /64), so a
+password can be guessed at speed neither from one machine nor from many.
 
-### How Sessions Work
+## Your Account (`/account`)
 
-Email Explorer uses session-based authentication:
-- When you log in, a secure session token is created
-- This token is stored in your browser as a cookie
-- The token is automatically sent with every request
-- Sessions expire after 30 days of inactivity
+- **Change password.** Asks for the current one, and signs out every other
+  browser you are signed in on.
+- **Change sign-in address.** A confirmation link is mailed to the new
+  address; nothing changes until it is opened. The link stops working if the
+  password or the address changes first.
+- Adding or removing a sign-in address asks for your password, because it
+  outlasts the session it is done from.
 
-### Session Security Features
+## Forgotten Password
 
-Your session is protected with:
-- **HttpOnly Cookies**: JavaScript cannot access your session (prevents XSS attacks)
-- **Secure Flag**: Session only sent over HTTPS
-- **SameSite Protection**: Prevents cross-site request forgery (CSRF)
-- **30-Day Expiry**: Automatic logout after this period
+"Forgot password" on the sign-in page mails a reset link, if the deployment
+has an address to send it from. See [Account Recovery](./account-recovery.md)
+for how that address is set. Root can also set a password for any account on
+`/root`.
 
-## Logging Out
-
-To end your session and log out:
-
-1. Click your email address or user icon in the top-right corner
-2. Click **"Logout"** or **"Sign Out"**
-3. Your session is immediately invalidated
-4. You'll be redirected to the login page
-
-**Important**: Always log out when using a shared or public computer!
+A reset ends every session of that account.
 
 ## Password Requirements
 
-To keep your account secure, passwords must:
-- Be at least **8 characters long**
-- Should include a mix of:
-  - Uppercase letters (A-Z)
-  - Lowercase letters (a-z)
-  - Numbers (0-9)
-  - Special characters (!@#$%^&*)
-
-**Best Practices**:
-- Use a unique password (don't reuse from other sites)
-- Consider using a password manager
-- Never share your password with anyone
-- Change your password if you suspect it's compromised
+At least **8 characters**. Longer is better; a password manager helps.
+Passwords are hashed with PBKDF2-SHA256 at 100,000 iterations and a salt of
+their own, and appear in no response.
 
 ## Troubleshooting
 
-### "Registration is closed" Error
+### "Registration is closed"
 
-**Cause**: The first user has already registered, and smart mode has closed public registration.
+The first account already exists. Ask root to make one for you.
 
-**Solution**: Contact your administrator to create an account for you.
+### Sent back to the sign-in page
 
-### "Session expired" or Automatic Logout
+The session ended: 30 days passed, you signed out elsewhere, your password
+was changed or reset, or root deleted the account. Sign in again. If you were
+writing something when it happened, the page stays until you move away, so
+the text can be copied first.
 
-**Cause**: Your session has expired after 30 days.
+### Keep getting signed out
 
-**Solution**: Simply log in again with your credentials.
-
-### "Unauthorized" Errors
-
-**Causes**:
-- Your session expired
-- You're not logged in
-- Your session cookie was cleared
-
-**Solution**: Log in again to create a new session.
-
-### Can't Remember Password
-
-**Current Status**: Password reset functionality is not yet available.
-
-**Temporary Solution**: 
-- Contact your administrator to reset your password
-- They can create a new account or update your password
-
-**Future**: Password reset via email is planned for a future update.
-
-### Login Page Doesn't Load
-
-**Troubleshooting Steps**:
-1. Check your internet connection
-2. Verify the URL is correct
-3. Try clearing your browser cache
-4. Try a different browser
-5. Contact your administrator if the service is down
-
-### Session Not Persisting
-
-If you keep getting logged out:
-
-**Check**:
-- Are cookies enabled in your browser?
-- Are you in private/incognito mode? (sessions won't persist)
-- Is your browser blocking third-party cookies?
-
-**Solution**:
-- Enable cookies for the Email Explorer domain
-- Use regular browser mode (not private)
-- Add Email Explorer to your browser's allowed sites
-
-## User Roles
-
-### Regular User
-
-Most users have regular user privileges:
-- Access to assigned mailboxes
-- Can read and send emails
-- Can organize folders and contacts
-- Cannot create other users
-- Cannot grant access to mailboxes
-
-### Administrator
-
-The first registered user becomes an administrator with additional privileges:
-- All regular user capabilities
-- Access to the Admin Panel
-- Can create new users
-- Can grant/revoke mailbox access
-- Can assign user roles
-
-**See Also**: [Admin Panel Guide](./admin-panel.md) for administrator features
-
-## Security Features
-
-### What We Do to Protect Your Account
-
-1. **Password Hashing**: Passwords are never stored in plain text. They are
-   hashed with PBKDF2-SHA256 at 100,000 iterations, with a salt unique to
-   each account, so two people who happen to pick the same password do not
-   end up with the same hash.
-2. **Rate Limiting**: Repeated failed sign-ins lock an address for a while.
-   Attempts are counted per address and per IP, so a password cannot be
-   guessed at speed from one machine or from many.
-3. **Secure Sessions**: Session tokens use cryptographic randomness
-4. **HTTPS Only**: All communications are encrypted
-5. **Cookie Security**: HttpOnly, Secure, and SameSite flags enabled
-6. **Session Expiry**: Automatic logout after 30 days
-7. **No Password Exposure**: Passwords never appear in API responses
-
-### What You Should Do
-
-1. **Use a Strong Password**: Follow the password requirements
-2. **Log Out on Shared Devices**: Always log out on public computers
-3. **Keep Your Credentials Private**: Never share your password
-4. **Report Suspicious Activity**: Contact your admin if something seems wrong
-5. **Use HTTPS**: Always access Email Explorer via https://
-
-## Privacy
-
-### What Information Do We Store?
-
-- Email address (your username)
-- Password hash (not your actual password)
-- Session information (for keeping you logged in)
-- Your emails and mailbox data
-
-### What Information Is Never Stored?
-
-- Plain text passwords
-- Unnecessary personal information
-- Browsing history outside Email Explorer
-
-## Frequently Asked Questions
-
-### Can I change my email address?
-
-Not currently. Your email address is your permanent username.
-
-### Can I change my password?
-
-Password change functionality is planned for a future update. For now, contact your administrator.
-
-### Can I have multiple accounts?
-
-Yes, administrators can create multiple accounts for you with different email addresses.
-
-### What happens if I forget my password?
-
-Contact your administrator - they can help reset your password or create a new account.
-
-### Can I stay logged in forever?
-
-No, for security reasons, sessions expire after 30 days. You'll need to log in again after that.
-
-### Is my data encrypted?
-
-Yes, all communication between your browser and Email Explorer uses HTTPS encryption.
-
-### Can administrators see my password?
-
-No, administrators cannot see your password. Passwords are hashed and never stored or displayed in plain text.
-
-### What if someone gets my session cookie?
-
-Session cookies have security protections, but if compromised, log out immediately to invalidate the session.
+Check that the browser keeps site data for your deployment; a private window
+forgets it when it closes.
 
 ## Next Steps
 
-- **New User**: Visit the [Reply & Forward](./reply-forward.md) guide to start using email
-- **Administrator**: Check out the [Admin Panel](./admin-panel.md) guide
-- **Compose Emails**: Learn about the [Rich Text Editor](./rich-text-editor.md)
-
----
-
-**Need Help?** Contact your system administrator or check the troubleshooting section above.
+- [Reply & Forward](./reply-forward.md)
+- [Admin Panel](./admin-panel.md)
+- [Rich Text Editor](./rich-text-editor.md)

@@ -5,10 +5,9 @@ file. You fork it, set a handful of values as GitHub repository variables and
 secrets, and every push to `main` deploys your own instance to your own
 Cloudflare account.
 
-What you configure lives in GitHub's settings rather than in a tracked file,
-so pulling later updates from this repository never collides with it. (One
-exception, if you want the "forgot password" flow off rather than on: see
-step 5.)
+What you configure lives in GitHub's settings, or on your deployment's own
+screens, rather than in a tracked file, so pulling later updates from this
+repository never collides with it.
 
 ## What you need
 
@@ -65,11 +64,10 @@ prints when it finishes.
 
 ## 5. Set the repository variables
 
-**Settings → Secrets and variables → Actions → Variables**. All four are
-optional; each one you leave out keeps the default checked into
-`packages/worker/dev/wrangler.jsonc`, which is this repository's own
-deployment. **You want to set all four**, or you will deploy under this
-repository's names.
+**Settings → Secrets and variables → Actions → Variables**. Each one you
+leave out keeps the default checked into `packages/worker/dev/wrangler.jsonc`,
+which is this repository's own deployment. **Set the first three**, or you
+will deploy under this repository's names; the fourth is usually left unset.
 
 | Variable | What it is |
 |---|---|

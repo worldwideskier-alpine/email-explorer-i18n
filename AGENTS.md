@@ -516,7 +516,7 @@ reached, and a second copy of the editor's Link extension.
   the code beats a restatement of the code.
 - A message shown to the user is never stored as an already-translated string.
   `t("...")` returns a plain string, so `message.value = t("...")` freezes it
-  at whichever of the 69 languages was current: the line stays behind when the
+  at whichever of the 73 languages was current: the line stays behind when the
   language changes while every `t(...)` in the template follows. Store how to
   produce it — `useLocalizedMessage` for a message set by an action,
   `computed` for one derived from state. `storedMessages.test.ts` fails on the
