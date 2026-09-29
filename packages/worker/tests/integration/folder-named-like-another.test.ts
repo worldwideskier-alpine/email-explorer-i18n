@@ -65,3 +65,30 @@ describe("a folder named like another folder's id", () => {
 		});
 	});
 });
+
+/**
+ * The sort direction goes into the SQL as text. The route's schema allows
+ * only ASC and DESC, and the object took that on trust; it checks for itself
+ * now, as it already did for the column.
+ */
+describe("a sort direction that is not one", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createMailbox();
+	});
+
+	it("is read as the default, not written into the query", async () => {
+		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+		await runInDurableObject(stub, async (instance) => {
+			const mailbox = instance as unknown as Mailbox & {
+				getEmails: (o: Record<string, unknown>) => Promise<{ id: string }[]>;
+			};
+			await mailbox.createEmail("inbox", message("one"), []);
+			const listed = await mailbox.getEmails({
+				folder: "inbox",
+				sortDirection: "DESC, (SELECT 1)",
+			});
+			expect(listed.map((e) => e.id)).toEqual(["one"]);
+		});
+	});
+});

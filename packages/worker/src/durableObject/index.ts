@@ -1268,8 +1268,12 @@ export class MailboxDO extends DurableObject<Env> {
 			page = 1,
 			limit = 25,
 			sortColumn: rawSortColumn = "date",
-			sortDirection = "DESC",
+			sortDirection: rawSortDirection = "DESC",
 		} = options;
+		// Checked here as the column is, not left to the route's schema: it
+		// goes into the SQL as text, and this method is reachable from more
+		// than one route.
+		const sortDirection = rawSortDirection === "ASC" ? "ASC" : "DESC";
 
 		const sortColumn: SortColumn = ALLOWED_SORT_COLUMNS.includes(
 			rawSortColumn as SortColumn,
