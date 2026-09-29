@@ -1,9 +1,10 @@
-import { env, SELF } from "cloudflare:test";
+import { createExecutionContext, env, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
 	authenticatedFetch,
 	createDummyMailbox,
 	mailboxId,
+	sessionToken,
 	testAuthBeforeAll,
 } from "./utils";
 
@@ -196,14 +197,38 @@ describe("an export while mail is being deleted", () => {
 	});
 
 	it("finishes, with the mail that is still there", async () => {
-		const ids: string[] = [];
-		for (const n of [1, 2, 3, 4, 5, 6])
-			ids.push(await importEmail(`message ${n}`));
+		for (const n of [1, 2, 3, 4, 5, 6]) await importEmail(`message ${n}`);
+		const real = env.MAILBOX;
+		const ours = real.idFromName(mailboxId);
+		const listed: string[] = await real.get(ours).listEmailIdsByDate();
+		// Deleted after the listing, before the download reached them: every
+		// message but the first and the last, several in a row.
+		const gone = new Set(listed.slice(1, -1));
 
-		const res = await exportMbox();
+		const MAILBOX = {
+			idFromName: (name: string) => real.idFromName(name),
+			get: (doId: DurableObjectId) => {
+				const stub = real.get(doId);
+				if (!doId.equals(ours)) return stub;
+				// Only what the route asks of this mailbox: an RPC stub cannot
+				// be wrapped in a Proxy, since every property is a remote call.
+				return {
+					listEmailIdsByDate: () => stub.listEmailIdsByDate(),
+					getFolders: () => stub.getFolders(),
+					getEmail: async (id: string) =>
+						gone.has(id) ? null : stub.getEmail(id),
+				};
+			},
+		};
+		const worker = await import("../../dev/index");
+		const res = await worker.default.fetch(
+			new Request(`http://local.test/api/v1/mailboxes/${mailboxId}/export`, {
+				headers: { Authorization: `Bearer ${sessionToken}` },
+			}),
+			{ ...env, MAILBOX } as never,
+			createExecutionContext(),
+		);
 		expect(res.status).toBe(200);
-		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
-		for (const id of ids.slice(1, 5)) await stub.deleteEmail(id);
 
 		const outcome = await Promise.race([
 			res.text(),
@@ -212,7 +237,9 @@ describe("an export while mail is being deleted", () => {
 			),
 		]);
 		expect(outcome).not.toBe("still open");
-		expect(outcome).toContain("message 6");
-		for (const n of [2, 3, 4, 5]) expect(outcome).not.toContain(`message ${n}`);
+		expect(outcome.match(/^From /gm)).toHaveLength(2);
+		for (const id of [listed[0], listed[listed.length - 1]]) {
+			expect(outcome).toContain(`X-Email-Explorer-Id: ${id}`);
+		}
 	});
 });
