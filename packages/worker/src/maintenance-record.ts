@@ -66,6 +66,11 @@ export interface MaintenanceRecord {
 	backupProgress?: MaintenanceProgress;
 	backups?: MaintenancePhase;
 	spamPurge?: MaintenancePhase;
+	/**
+	 * Mailbox deletions root left unfinished, finished tonight and still left.
+	 * `left: -1` with an error: the list itself could not be read.
+	 */
+	unfinishedDeletions?: { finished: number; left: number; error?: string };
 }
 
 export async function readMaintenanceRecord(

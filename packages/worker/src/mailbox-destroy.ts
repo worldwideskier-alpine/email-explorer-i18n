@@ -29,6 +29,9 @@
  * ticked.
  */
 
+import type { TimeLimits } from "./deadline";
+import { pastDeadline, within } from "./deadline";
+import { rewriteJson } from "./r2-json";
 import type { Env } from "./types";
 
 /** R2 accepts up to 1000 keys per delete; stay well inside it. */
@@ -125,6 +128,74 @@ export async function destroyMailboxCompletely(
 	await authStub.revokeAllMailboxAccess(mailboxId);
 
 	return { mailboxId, emails: emailIds.length, objects };
+}
+
+/**
+ * Mailboxes whose deletion did not finish, for the nightly run to finish.
+ *
+ * When a mailbox's own object could not be wiped, its person was already
+ * gone -- the account rows go first, so that nobody can reach the mail while
+ * the rest is removed -- and asking again answered 404. The messages stayed,
+ * and the address could be given to nobody. So the mailbox is written down
+ * here and every night tries it again until it goes.
+ */
+export const UNFINISHED_DELETIONS_KEY = "maintenance/unfinished-deletions.json";
+
+export async function rememberUnfinishedDeletion(
+	env: Env,
+	mailboxId: string,
+): Promise<void> {
+	await rewriteJson<string[]>(
+		env.BUCKET,
+		UNFINISHED_DELETIONS_KEY,
+		(stored) => {
+			const ids = Array.isArray(stored) ? stored : [];
+			return ids.includes(mailboxId) ? undefined : [...ids, mailboxId];
+		},
+	);
+}
+
+export interface UnfinishedDeletionsSummary {
+	finished: number;
+	left: number;
+}
+
+/**
+ * Tries each unfinished deletion again, within the pass's deadline. One that
+ * still fails stays on the list for the next night; one finished comes off.
+ */
+export async function finishUnfinishedDeletions(
+	env: Env,
+	limits: TimeLimits = {},
+): Promise<UnfinishedDeletionsSummary> {
+	const stored = await env.BUCKET.get(UNFINISHED_DELETIONS_KEY);
+	const ids = stored ? await stored.json<unknown>().catch(() => []) : [];
+	const pending = Array.isArray(ids)
+		? ids.filter((id): id is string => typeof id === "string")
+		: [];
+	let finished = 0;
+	for (const mailboxId of pending) {
+		if (pastDeadline(limits)) break;
+		try {
+			// The deadline alone, not the per-call limit: this is one whole
+			// deletion, whose attachment scan alone can take more than a minute.
+			await within(
+				destroyMailboxCompletely(env, mailboxId),
+				(limits.deadline ?? Number.POSITIVE_INFINITY) - Date.now(),
+				`finishing the deletion of ${mailboxId}`,
+			);
+		} catch (e) {
+			console.error(`Deleting ${mailboxId} did not finish again:`, e);
+			continue;
+		}
+		finished += 1;
+		await rewriteJson<string[]>(env.BUCKET, UNFINISHED_DELETIONS_KEY, (now) =>
+			Array.isArray(now) && now.includes(mailboxId)
+				? now.filter((id) => id !== mailboxId)
+				: undefined,
+		);
+	}
+	return { finished, left: pending.length - finished };
 }
 
 /**

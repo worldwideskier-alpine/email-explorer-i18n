@@ -35,7 +35,10 @@ import {
 	recoveryFromEmail,
 	storedRecoverySender,
 } from "../deployment-config";
-import { destroyMailboxCompletely } from "../mailbox-destroy";
+import {
+	destroyMailboxCompletely,
+	rememberUnfinishedDeletion,
+} from "../mailbox-destroy";
 import {
 	readMaintenanceHistory,
 	readMaintenanceRecord,
@@ -658,6 +661,11 @@ export class DeleteAccount extends OpenAPIRoute {
 			} catch (e) {
 				console.error(`Deleting ${mailboxId} did not finish:`, e);
 				unfinished.push(mailboxId);
+				// The person is gone, so asking again answers 404: the nightly
+				// run is what finishes it. See finishUnfinishedDeletions.
+				await rememberUnfinishedDeletion(c.env, mailboxId).catch((err) =>
+					console.error(`Could not write down ${mailboxId}:`, err),
+				);
 			}
 		}
 		// Their sending key goes too. It is theirs, it is a credential, and

@@ -6,7 +6,14 @@ import {
 import { beforeEach, describe, expect, it } from "vitest";
 import { deleteUnclaimedAttachments } from "../../src/attachment-sweep";
 import { runScheduledBackups } from "../../src/backup-run";
-import { destroyMailboxCompletely } from "../../src/mailbox-destroy";
+import {
+	destroyMailboxCompletely,
+	finishUnfinishedDeletions,
+	rememberUnfinishedDeletion,
+	UNFINISHED_DELETIONS_KEY,
+} from "../../src/mailbox-destroy";
+import { readMaintenanceRecord } from "../../src/maintenance-record";
+import { runScheduledMaintenance } from "../../src/scheduled-run";
 import {
 	authenticatedFetch,
 	createDummyMailbox,
@@ -370,5 +377,105 @@ describe("the push public key", () => {
 	it("is withheld when there is no private key to send with", async () => {
 		expect(await ask(env)).not.toBe("");
 		expect(await ask({ ...env, VAPID_PRIVATE_KEY: "" })).toBe("");
+	});
+});
+
+/**
+ * A deletion that did not finish is finished later.
+ *
+ * The person goes first, so asking again answers 404: a mailbox whose own
+ * object could not be wiped kept its messages, and its address could be given
+ * to nobody, with no way on any screen to try again. It is written down, and
+ * the nightly run tries it until it goes.
+ */
+describe("a mailbox deletion that did not finish", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createDummyMailbox();
+		const raw = btoa(
+			[
+				"From: a@example.org",
+				`To: ${mailboxId}`,
+				"Subject: kept",
+				"",
+				"x",
+			].join("\r\n"),
+		);
+		const imported = await authenticatedFetch(
+			`http://local.test/api/v1/admin/mailboxes/${mailboxId}/import`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ folder: "inbox", rawEmailBase64: raw }),
+			},
+		);
+		expect(imported.status).toBe(201);
+	});
+
+	const held = async () =>
+		(await env.MAILBOX.get(
+			env.MAILBOX.idFromName(mailboxId),
+		).listAllEmailIds()) as string[];
+	const pending = async () =>
+		((await (await bucket().get(UNFINISHED_DELETIONS_KEY))?.json()) as
+			| string[]
+			| undefined) ?? [];
+
+	it("is written down once, however often it is written", async () => {
+		await rememberUnfinishedDeletion(env as never, mailboxId);
+		await rememberUnfinishedDeletion(env as never, mailboxId);
+		expect(await pending()).toEqual([mailboxId]);
+	});
+
+	it("is finished and taken off the list", async () => {
+		await rememberUnfinishedDeletion(env as never, mailboxId);
+		expect(await held()).toHaveLength(1);
+
+		expect(await finishUnfinishedDeletions(env as never)).toEqual({
+			finished: 1,
+			left: 0,
+		});
+		expect(await held()).toEqual([]);
+		expect(await pending()).toEqual([]);
+	});
+
+	it("is finished by the nightly run, and the record says so", async () => {
+		await rememberUnfinishedDeletion(env as never, mailboxId);
+
+		await runScheduledMaintenance(env as never, new Date());
+
+		expect(await held()).toEqual([]);
+		const record = await readMaintenanceRecord(env as never);
+		expect(record?.unfinishedDeletions).toEqual({ finished: 1, left: 0 });
+		expect(record?.finishedAt).toBeTypeOf("string");
+	});
+
+	it("stays on the list while it still fails", async () => {
+		await rememberUnfinishedDeletion(env as never, mailboxId);
+		const ns = env.MAILBOX;
+		const unwipeable = new Proxy(ns, {
+			get(target, property) {
+				if (property !== "get") {
+					const member = Reflect.get(target, property);
+					return typeof member === "function" ? member.bind(target) : member;
+				}
+				return (id: DurableObjectId) =>
+					new Proxy(target.get(id), {
+						get(stub, p) {
+							if (p === "destroyMailbox") {
+								return async () => {
+									throw new Error("storage reset");
+								};
+							}
+							return Reflect.get(stub, p);
+						},
+					});
+			},
+		});
+
+		expect(
+			await finishUnfinishedDeletions({ ...env, MAILBOX: unwipeable } as never),
+		).toEqual({ finished: 0, left: 1 });
+		expect(await pending()).toEqual([mailboxId]);
 	});
 });

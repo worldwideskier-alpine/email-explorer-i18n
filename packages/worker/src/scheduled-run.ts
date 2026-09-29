@@ -31,6 +31,8 @@
 import type { BackupPassSummary } from "./backup-run";
 import { runScheduledBackups } from "./backup-run";
 import { within } from "./deadline";
+import type { UnfinishedDeletionsSummary } from "./mailbox-destroy";
+import { finishUnfinishedDeletions } from "./mailbox-destroy";
 import type { MaintenanceRecord } from "./maintenance-record";
 import { archiveLastRun, writeMaintenanceRecord } from "./maintenance-record";
 import type { SpamPurgeSummary } from "./spam-purge-run";
@@ -40,6 +42,7 @@ import type { Env } from "./types";
 export interface MaintenanceSummary {
 	backups?: BackupPassSummary;
 	spamPurge?: SpamPurgeSummary;
+	unfinishedDeletions?: UnfinishedDeletionsSummary;
 	backupError?: string;
 }
 
@@ -59,6 +62,8 @@ const message = (e: unknown): string =>
  */
 export const BACKUPS_BY_MS = 10 * 60_000;
 export const PURGE_BY_MS = 13 * 60_000;
+/** Deletions left unfinished by root (see mailbox-destroy.ts) go last. */
+export const DELETIONS_BY_MS = 14 * 60_000;
 
 /** How long a write of the record itself may take before it is let go. */
 const NOTE_LIMIT_MS = 10_000;
@@ -67,6 +72,7 @@ const NOTE_LIMIT_MS = 10_000;
 export interface MaintenanceLimits {
 	backupsByMs?: number;
 	purgeByMs?: number;
+	deletionsByMs?: number;
 	callLimitMs?: number;
 }
 
@@ -103,6 +109,7 @@ export async function runScheduledMaintenance(
 	const started = Date.now();
 	const backupsBy = started + (limits.backupsByMs ?? BACKUPS_BY_MS);
 	const purgeBy = started + (limits.purgeByMs ?? PURGE_BY_MS);
+	const deletionsBy = started + (limits.deletionsByMs ?? DELETIONS_BY_MS);
 
 	const summary: MaintenanceSummary = {};
 	// Last night's record moves into the history before tonight's replaces
@@ -144,6 +151,7 @@ export async function runScheduledMaintenance(
 	}
 	await note(env, record);
 
+	let purgeFailure: unknown;
 	try {
 		summary.spamPurge = await runScheduledSpamPurge(env, now, {
 			deadline: purgeBy,
@@ -161,12 +169,22 @@ export async function runScheduledMaintenance(
 			failed: 0,
 			error: message(e),
 		};
-		record.finishedAt = new Date().toISOString();
-		await note(env, record);
-		throw e;
+		purgeFailure = e;
+	}
+
+	// Whatever the purge did: a deletion left half done is somebody's mail
+	// still stored after they were deleted, and nothing else finishes it.
+	try {
+		summary.unfinishedDeletions = await finishUnfinishedDeletions(env, {
+			deadline: deletionsBy,
+		});
+		record.unfinishedDeletions = summary.unfinishedDeletions;
+	} catch (e) {
+		record.unfinishedDeletions = { finished: 0, left: -1, error: message(e) };
 	}
 
 	record.finishedAt = new Date().toISOString();
 	await note(env, record);
+	if (purgeFailure !== undefined) throw purgeFailure;
 	return summary;
 }

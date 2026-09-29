@@ -157,6 +157,11 @@ are still checked, by the `tsc` that runs before the worker tests.
   map holding one person and answers 200, which is the same loss with a
   cheerful face. The writers go through `rewriteJson`, which throws on a
   failed read; the forgiving read wraps `readLocksToWrite`.
+  A person's deletion removes the account rows first, so a mailbox whose own
+  object then could not be wiped was beyond reach -- asking again answered
+  404, and its messages stayed. It is answered 500, written down
+  (`maintenance/unfinished-deletions.json`) and finished by the nightly run,
+  last in the order and within its own deadline (`finishUnfinishedDeletions`).
 - **A shared R2 object is rewritten conditionally.** A mailbox's settings
   object has four writers -- a save, a spam verdict, the nightly backup and
   purge -- and each put back the whole object it had read, so two at once
