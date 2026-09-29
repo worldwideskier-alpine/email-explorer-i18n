@@ -2344,10 +2344,10 @@ class GetAppSettings extends OpenAPIRoute {
 			const authId = ns.idFromName("AUTH");
 			const authStub = ns.get(authId);
 			try {
-				const users = await authStub.getUsers();
-				userCount = users.length;
-			} catch (e) {
-				// If we can't get users, assume there are users (safer default)
+				userCount = (await authStub.hasUsers()) ? 1 : 0;
+			} catch {
+				// Unknown reads as "somebody is registered": the safe answer,
+				// since the other one opens the first registration -- root.
 				userCount = 1;
 			}
 		}

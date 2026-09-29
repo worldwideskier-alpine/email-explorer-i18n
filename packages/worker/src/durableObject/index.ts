@@ -141,22 +141,18 @@ export class MailboxDO extends DurableObject<Env> {
 		return crypto.randomUUID();
 	}
 
-	// Auth operation: check if any users exist
+	/**
+	 * Whether anybody has an account yet: what the public settings ask, to say
+	 * whether the first registration is open. One row, not the whole table --
+	 * that endpoint is answered to anyone, and it used to fetch every login's
+	 * address from the object that also holds the sessions and the throttle.
+	 */
 	async hasUsers(): Promise<boolean> {
-		if (!this.#isAuthDO) return false;
-		const result = this.#qb.select("users").fields(["COUNT(*) as count"]).one();
-		return (result.results?.count as number) > 0;
-	}
-
-	// Auth operation: check if user is admin
-	async isAdmin(userId: string): Promise<boolean> {
-		if (!this.#isAuthDO) return false;
-		const result = this.#qb
-			.select("users")
-			.fields(["is_admin"])
-			.where("id = ?", userId)
-			.one();
-		return result.results?.is_admin === 1;
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+		return (
+			this.ctx.storage.sql.exec("SELECT 1 FROM users LIMIT 1").toArray()
+				.length > 0
+		);
 	}
 
 	/**
@@ -671,25 +667,6 @@ export class MailboxDO extends DurableObject<Env> {
 		return Array.from(byPerson.values());
 	}
 
-	async getUsers(): Promise<User[]> {
-		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-
-		const result = this.#qb
-			.select("users")
-			.fields(["id", "email", "is_admin", "created_at", "updated_at"])
-			.execute();
-
-		return (
-			result.results?.map((user) => ({
-				id: String(user.id),
-				email: String(user.email),
-				isAdmin: user.is_admin === 1,
-				createdAt: Number(user.created_at),
-				updatedAt: Number(user.updated_at),
-			})) ?? []
-		);
-	}
-
 	// Auth operation: get user by email
 	async getUserByEmail(email: string): Promise<User | null> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
@@ -929,16 +906,6 @@ export class MailboxDO extends DurableObject<Env> {
 			mailboxId,
 		);
 		return true;
-	}
-
-	/** The same, addressed by one of the person's logins. */
-	async giveMailboxToPersonOf(
-		userId: string,
-		mailboxId: string,
-	): Promise<void> {
-		const personId = await this.getPersonId(userId);
-		if (!personId) return;
-		await this.giveMailboxToPerson(personId, mailboxId);
 	}
 
 	/**
