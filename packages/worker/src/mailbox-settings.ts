@@ -11,6 +11,7 @@ import {
 } from "./auto-backup";
 import { maskSecret } from "./mask-secret";
 import { rewriteJson } from "./r2-json";
+import { asHeaderAddress } from "./recipients";
 import { normalizeRetentionDays } from "./spam-retention";
 import type { Env } from "./types";
 
@@ -219,7 +220,11 @@ export type SenderVerdict = "spam" | "inbox";
  * forgery of the allowed address looks like (see the email handler).
  */
 function normalizeAddress(address: string): string {
-	return address.trim().toLowerCase();
+	// In the form a stored message's sender takes, which is what a verdict is
+	// recorded from. The lookup is given postal-mime's reading of the next
+	// message, which drops the quotes round a local part like "a,b"; without
+	// putting them back the two never matched for such a sender.
+	return asHeaderAddress(address.trim()).toLowerCase();
 }
 
 /**

@@ -111,6 +111,50 @@ describe("Sender-based spam verdict override", () => {
 		});
 	});
 
+	// A local part that has to be quoted is stored quoted (asHeaderAddress),
+	// and so the verdict was recorded quoted; postal-mime hands the next
+	// message's address over with the quotes gone, and the two never met.
+	it("remembers a sender whose address has a quoted local part", async () => {
+		const from = '"offers, daily"@example.net';
+		await simulateReceiveEmail(
+			buildRawEmail(
+				{
+					From: from,
+					To: mailboxId,
+					Subject: "Quoted first",
+					"Content-Type": "text/plain",
+					"Authentication-Results": PASSING_AUTH_RESULTS,
+				},
+				"Hello",
+			),
+		);
+		const found = await findEmail("Quoted first");
+		expect(found?.folder).toBe("inbox");
+		const verdictRes = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}/emails/${found?.id}/spam-verdict`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ verdict: "spam" }),
+			},
+		);
+		expect(verdictRes.status).toBe(200);
+
+		await simulateReceiveEmail(
+			buildRawEmail(
+				{
+					From: from,
+					To: mailboxId,
+					Subject: "Quoted second",
+					"Content-Type": "text/plain",
+					"Authentication-Results": PASSING_AUTH_RESULTS,
+				},
+				"Hello again",
+			),
+		);
+		expect((await findEmail("Quoted second"))?.folder).toBe("spam");
+	});
+
 	it("moves an email to inbox and remembers the sender when marked not-spam", async () => {
 		await simulateReceiveEmail(
 			buildRawEmail(
