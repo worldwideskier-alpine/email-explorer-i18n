@@ -174,7 +174,6 @@ const ResetPasswordRequestSchema = z.object({
 
 const AppSettingsResponseSchema = z.object({
 	auth: z.object({
-		enabled: z.boolean(),
 		registerEnabled: z.boolean(),
 	}),
 	accountRecovery: z.object({
@@ -2333,21 +2332,17 @@ class GetAppSettings extends OpenAPIRoute {
 
 	async handle(c: AppContext) {
 		const config = c.env.config || {};
-		const authEnabled = config.auth?.enabled !== false;
 
 		// Check if there are any users in the system
 		let userCount = 0;
-		if (authEnabled) {
-			const ns = c.env.MAILBOX;
-			const authId = ns.idFromName("AUTH");
-			const authStub = ns.get(authId);
-			try {
-				userCount = (await authStub.hasUsers()) ? 1 : 0;
-			} catch {
-				// Unknown reads as "somebody is registered": the safe answer,
-				// since the other one opens the first registration -- root.
-				userCount = 1;
-			}
+		const ns = c.env.MAILBOX;
+		const authStub = ns.get(ns.idFromName("AUTH"));
+		try {
+			userCount = (await authStub.hasUsers()) ? 1 : 0;
+		} catch {
+			// Unknown reads as "somebody is registered": the safe answer,
+			// since the other one opens the first registration -- root.
+			userCount = 1;
 		}
 
 		// Registration is enabled if:
@@ -2364,7 +2359,6 @@ class GetAppSettings extends OpenAPIRoute {
 
 		return c.json({
 			auth: {
-				enabled: authEnabled,
 				registerEnabled,
 			},
 			accountRecovery: {
@@ -2436,16 +2430,6 @@ const PUBLIC_ROUTES = new Set([
 // Helper function to check if route is public
 function isPublicRoute(pathname: string): boolean {
 	return PUBLIC_ROUTES.has(pathname);
-}
-
-// Helper function to check if route requires session (auth routes)
-function requiresSession(pathname: string): boolean {
-	const authRoutes = [
-		"/api/v1/auth/me",
-		"/api/v1/auth/logout",
-		"/api/v1/auth/admin",
-	];
-	return authRoutes.some((route) => pathname.startsWith(route));
 }
 
 const app = new Hono<{ Bindings: Env; Variables: { session?: Session } }>();
@@ -2709,18 +2693,20 @@ function loadableAs(request: Request, pathname: string): boolean {
 
 const defaultOptions: EmailExplorerOptions = {
 	auth: {
-		enabled: true, // Auth is enabled by default for security
-		registerEnabled: undefined, // Smart mode: first user becomes admin, then registration closes
+		registerEnabled: undefined, // Smart mode: the first account becomes root, then registration closes
 	},
 };
 
 export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 	// Merge user options with defaults
+	// Only the options there are. A configuration written for an older
+	// version may still pass `auth.enabled: false`; it is dropped here
+	// rather than carried along, so nothing can read it as a switch.
 	const options: EmailExplorerOptions = {
 		..._options,
 		auth: {
 			...defaultOptions.auth,
-			..._options.auth,
+			registerEnabled: _options.auth?.registerEnabled,
 		},
 	};
 
@@ -2775,13 +2761,9 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 				);
 			}
 
-			// Check if auth is required (either globally enabled or auth-specific routes)
-			// Auth is enforced by default (when enabled is undefined) unless explicitly disabled
-			const needsAuth =
-				(options.auth?.enabled !== false && !isPublicRoute(url.pathname)) ||
-				requiresSession(url.pathname);
-
-			if (needsAuth) {
+			// Everything but the exact public routes needs a session. There is
+			// no option that says otherwise: see EmailExplorerOptions.
+			if (!isPublicRoute(url.pathname)) {
 				const session = await validateSession(request, env);
 				if (!session) {
 					return new Response(JSON.stringify({ error: "Unauthorized" }), {

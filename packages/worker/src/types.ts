@@ -1,6 +1,8 @@
 export interface EmailExplorerOptions {
 	auth?: {
-		enabled?: boolean;
+		// There is no `enabled`. Turning the session check off turned off the
+		// mailbox-holder check with it, since that runs once a session is
+		// known -- anybody who could guess an address read the mailbox.
 		registerEnabled?: boolean;
 	};
 	accountRecovery?: {

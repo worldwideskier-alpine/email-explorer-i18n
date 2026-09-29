@@ -40,9 +40,6 @@ To enable Account Recovery, you need:
      page answers the same whatever happened, so that it cannot be used to
      find out which addresses have accounts.
 
-3. **Authentication Enabled**
-   - Account Recovery requires `auth.enabled: true`
-
 ## Configuration
 
 ### Enable Account Recovery
@@ -61,9 +58,6 @@ The order is: the variable, then `/root`, then code.
 
 ```typescript
 export default EmailExplorer({
-  auth: {
-    enabled: true
-  },
   accountRecovery: {
     fromEmail: 'noreply@yourdomain.com'  // Your verified email address
   }
@@ -83,9 +77,6 @@ no sender anywhere the flow is off. In code, that is omitting the option:
 
 ```typescript
 export default EmailExplorer({
-  auth: {
-    enabled: true
-  }
   // accountRecovery not specified = disabled
 });
 ```

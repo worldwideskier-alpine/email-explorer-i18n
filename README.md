@@ -355,10 +355,7 @@ recovery sender -- are set in GitHub instead, see
 ```typescript
 // Recommended: Smart Mode (Default)
 export default EmailExplorer({
-  auth: {
-    enabled: true
-    // registerEnabled not specified = smart mode
-  }
+  // auth.registerEnabled not specified = smart mode.
   // No accountRecovery: root sets the password-reset sender on /root.
   // Written here, it is inherited by every fork of yours.
 })
@@ -375,36 +372,28 @@ export default EmailExplorer({
 // Open Registration (Development/Testing)
 export default EmailExplorer({
   auth: {
-    enabled: true,
     registerEnabled: true  // Anyone can register
-  }
-})
-
-// No Authentication -- DO NOT deploy this anywhere reachable.
-// It turns off the whole gate, including the check that you hold a mailbox:
-// anybody who can guess an address can read that mailbox.
-export default EmailExplorer({
-  auth: {
-    enabled: false
   }
 })
 
 // With Account Recovery
 export default EmailExplorer({
-  auth: {
-    enabled: true
-  },
   accountRecovery: {
     fromEmail: 'noreply@yourdomain.com'  // Email address to send password reset links from
   }
 })
 ```
 
+There is no option that turns sign-in off. There used to be
+(`auth.enabled: false`), and it turned off the check that you hold a mailbox
+along with it, so anybody who could guess an address could read, delete and
+send as that mailbox. A configuration that still passes it is signed in like
+any other.
+
 **Configuration Options:**
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `auth.enabled` | boolean | `true` | Enable/disable authentication |
 | `auth.registerEnabled` | boolean | `undefined` (smart mode) | Control user registration |
 | `accountRecovery.fromEmail` | string | `undefined` | A password-reset sender in code. Normally not used: root sets the sender on `/root` |
 
