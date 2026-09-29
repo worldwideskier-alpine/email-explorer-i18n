@@ -121,7 +121,10 @@ export function somethingIsBeingWritten(doc: Document): boolean {
  * the query after the search has run, and the settings screen's name and
  * signature arrive filled in with what is stored. Counted, it held on every screen that
  * has the header, so a session that ended there never reached sign-in and a
- * new build was never picked up.
+ * new build was never picked up. The sign-in, registration and reset-request
+ * forms are the same: a browser fills them itself, and puts it back after a
+ * reload -- counted, a sign-in page left open over a deploy kept the old
+ * build, and showed an old Turnstile widget after the fix had shipped.
  */
 const NOT_WRITING = "[data-not-writing]";
 

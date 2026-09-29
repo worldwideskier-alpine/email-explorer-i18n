@@ -216,6 +216,25 @@ describe("registration with Turnstile on", () => {
 	});
 });
 
+describe("a form the browser filled in", () => {
+	// Counted as writing, a sign-in page left open over a deploy stayed on
+	// the old build: the new Turnstile language fix did not reach it until
+	// it was reloaded by hand. The browser puts its fill back after a reload.
+	for (const [path, fields] of [
+		["/login", ["email", "password"]],
+		["/register", ["email", "password", "confirm-password"]],
+		["/forgot-password", ["email"]],
+	] as const) {
+		it(`does not hold ${path} on an old build`, async () => {
+			const { somethingIsBeingWritten } = await import("@/services/appUpdate");
+			await mount(path, null);
+			for (const id of fields) fill(id, "filled@example.com");
+			(host.querySelector(`#${fields[0]}`) as HTMLInputElement).focus();
+			expect(somethingIsBeingWritten(document)).toBe(false);
+		});
+	}
+});
+
 describe("the reset request with Turnstile on", () => {
 	it("sends the token with the request", async () => {
 		await mount("/forgot-password", "0x4SITE");

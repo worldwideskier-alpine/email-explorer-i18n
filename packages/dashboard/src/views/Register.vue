@@ -24,7 +24,11 @@
 					</router-link>
 				</p>
 			</div>
-			<form class="mt-8 space-y-6" @submit.prevent="handleRegister">
+			<!-- Not writing, for appUpdate.ts: what is in these boxes is mostly
+			     the browser's own fill, which it puts back after a reload, and
+			     counted as writing it kept a page open from before a deploy on
+			     the old build for good. -->
+			<form class="mt-8 space-y-6" data-not-writing @submit.prevent="handleRegister">
 				<div v-if="authStore.error" class="rounded-md bg-red-50 p-4">
 					<p class="text-sm text-red-800">{{ authStore.error }}</p>
 				</div>
