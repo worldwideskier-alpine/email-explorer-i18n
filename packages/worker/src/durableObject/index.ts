@@ -1244,14 +1244,22 @@ export class MailboxDO extends DurableObject<Env> {
 	 * form stopped type-checking at workers-qb 1.15. Splitting it costs nothing
 	 * here -- it is a lookup on a five-row table in the same SQLite instance.
 	 */
+	/**
+	 * A folder by its id, or failing that by its name. Both were matched at
+	 * once and the first row taken, and names are unique only as typed: a
+	 * folder of one's own called "inbox" (the built-in one is "Inbox") was
+	 * what "inbox" found, and the inbox listed that folder's mail.
+	 */
 	#resolveFolderId(folder: string): string | undefined {
-		const resolved = this.#qb
-			.select<{ id: string }>("folders")
-			.fields(["id"])
-			.where("name = ? OR id = ?", [folder, folder])
-			.limit(1)
-			.execute();
-		return resolved.results?.[0]?.id;
+		const resolved = this.ctx.storage.sql
+			.exec<{ id: string }>(
+				"SELECT id FROM folders WHERE id = ? OR name = ? ORDER BY (id = ?) DESC LIMIT 1",
+				folder,
+				folder,
+				folder,
+			)
+			.toArray();
+		return resolved[0]?.id;
 	}
 
 	async getEmails(options: GetEmailsOptions = {}) {
