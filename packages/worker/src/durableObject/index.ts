@@ -1907,17 +1907,28 @@ export class MailboxDO extends DurableObject<Env> {
 		}
 	}
 
+	/**
+	 * The contact as it now is, null when there is no such contact, or
+	 * "taken" when another contact already has the address -- the same clash
+	 * createContact answers with null, which here used to leave the object
+	 * as an error and reach the person as a 500.
+	 */
 	async updateContact(id: number, contact: { name?: string; email?: string }) {
-		this.#qb
-			.update({
-				tableName: "contacts",
-				data: contact,
-				where: {
-					conditions: "id = ?",
-					params: [id],
-				},
-			})
-			.execute();
+		try {
+			this.#qb
+				.update({
+					tableName: "contacts",
+					data: contact,
+					where: {
+						conditions: "id = ?",
+						params: [id],
+					},
+				})
+				.execute();
+		} catch (e) {
+			if (String(e).includes("UNIQUE")) return "taken" as const;
+			throw e;
+		}
 		const query = this.#qb
 			.select("contacts")
 			.fields(["id", "name", "email"])

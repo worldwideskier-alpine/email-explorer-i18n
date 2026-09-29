@@ -1431,6 +1431,10 @@ class PutContact extends OpenAPIRoute {
 		responses: {
 			"200": { description: "Updated contact", ...contentJson(ContactSchema) },
 			"404": { description: "Not found", ...contentJson(ErrorResponseSchema) },
+			"409": {
+				description: "Another contact has this address",
+				...contentJson(ErrorResponseSchema),
+			},
 		},
 	};
 
@@ -1456,6 +1460,9 @@ class PutContact extends OpenAPIRoute {
 
 		if (!updatedContact) {
 			return c.json({ error: "Contact not found" }, 404);
+		}
+		if (updatedContact === "taken") {
+			return c.json({ error: "Contact already exists" }, 409);
 		}
 
 		return c.json(updatedContact);
