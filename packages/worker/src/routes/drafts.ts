@@ -130,7 +130,7 @@ export class PutDraftEmail extends OpenAPIRoute {
 			return c.json({ error: "Draft not found" }, 404);
 		}
 
-		await stub.updateDraftContent(id, {
+		const saved = await stub.updateDraftContent(id, {
 			subject,
 			sender: from,
 			recipient: to,
@@ -141,6 +141,10 @@ export class PutDraftEmail extends OpenAPIRoute {
 				? { draft_reply_to: await parentIn(stub, replyTo) }
 				: {}),
 		});
+		// Sent or deleted since it was looked up above.
+		if (!saved) {
+			return c.json({ error: "Draft not found" }, 404);
+		}
 
 		return c.json({ id, status: "saved" }, 200);
 	}

@@ -1451,7 +1451,12 @@ export class MailboxDO extends DurableObject<Env> {
 			})
 			.execute();
 
-		return this.getEmail(id);
+		// Null when that wrote nothing: the draft was sent or deleted after
+		// the route looked, and the save must not be reported as made. Read
+		// in the same turn as the write, so nothing can move it in between.
+		const email = await this.getEmail(id);
+		const folder = (email as { folder_id?: unknown } | null)?.folder_id;
+		return folder === "draft" ? email : null;
 	}
 
 	/**
