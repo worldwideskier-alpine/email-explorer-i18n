@@ -433,15 +433,19 @@ export async function writeMailboxBackup(
 		throw e;
 	}
 
-	return {
-		key,
-		messages,
-		bytes,
-		removed: await bounded(
-			rotate(env, mailboxId, keep),
-			"removing old archives",
-		),
-	};
+	// The archive is whole by now, and this mailbox's backup has happened.
+	// Held to the deadline too, the rotation was refused at once whenever the
+	// pass's time ran out just after the upload finished, and a backup that
+	// was sitting in the bucket was recorded as failed and retried as if it
+	// were not. So the per-call limit alone, and a rotation that fails costs
+	// nothing but a spare archive: the next one removes everything beyond
+	// `keep`, not one at a time.
+	const removed = await limitedBy({ callLimitMs: limits.callLimitMs })(
+		rotate(env, mailboxId, keep),
+		"removing old archives",
+	).catch(() => 0);
+
+	return { key, messages, bytes, removed };
 }
 
 /**

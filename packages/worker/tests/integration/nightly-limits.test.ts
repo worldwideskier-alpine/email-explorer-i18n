@@ -1,5 +1,5 @@
 import { createExecutionContext, env } from "cloudflare:test";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { backupKeyPrefix } from "../../src/auto-backup";
 import { runScheduledBackups } from "../../src/backup-run";
 import { OutOfTime, within } from "../../src/deadline";
@@ -226,6 +226,68 @@ describe("a pass whose time has run out", () => {
 			expect(settings.autoBackup?.lastResult?.reason).toBe("not-reached");
 			expect(settings.autoBackup?.lastRunAt).toBeUndefined();
 		}
+	});
+});
+
+/**
+ * An archive completed as the pass's time ran out.
+ *
+ * Removing the old archives came after the upload was completed and was held
+ * to the deadline too, so with no time left it was refused at once -- and the
+ * mailbox was recorded as failed, and not counted as done, with tonight's
+ * archive sitting in the bucket.
+ */
+describe("an archive finished as the time runs out", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await makeMailbox(FINE);
+	});
+
+	it("is recorded as the backup it is", async () => {
+		const realNow = Date.now.bind(Date);
+		let late = 0;
+		const clock = vi
+			.spyOn(Date, "now")
+			.mockImplementation(() => realNow() + late);
+		const BUCKET = new Proxy(bucket(), {
+			get(target, prop) {
+				if (prop === "createMultipartUpload") {
+					return async (key: string) => {
+						const upload = await target.createMultipartUpload(key);
+						return {
+							key: upload.key,
+							uploadId: upload.uploadId,
+							uploadPart: (n: number, part: Uint8Array) =>
+								upload.uploadPart(n, part),
+							complete: async (parts: R2UploadedPart[]) => {
+								const done = await upload.complete(parts);
+								// The deadline passes the moment the archive is whole.
+								late = 120_000;
+								return done;
+							},
+							abort: () => upload.abort(),
+						};
+					};
+				}
+				const value = Reflect.get(target, prop);
+				return typeof value === "function" ? value.bind(target) : value;
+			},
+		});
+		try {
+			const summary = await runScheduledBackups(
+				{ ...env, BUCKET } as never,
+				NOW,
+				undefined,
+				{ deadline: Date.now() + 60_000 },
+			);
+			expect(summary).toMatchObject({ ran: 1, failed: 0 });
+		} finally {
+			clock.mockRestore();
+		}
+		expect(await archivesOf(FINE)).toHaveLength(1);
+		const settings = await settingsOf(FINE);
+		expect(settings.autoBackup?.lastResult?.ok).toBe(true);
+		expect(settings.autoBackup?.lastRunAt).toBe(NOW.toISOString());
 	});
 });
 
