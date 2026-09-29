@@ -349,6 +349,12 @@ export class MailboxDO extends DurableObject<Env> {
 			now,
 		);
 		this.ctx.storage.sql.exec("DELETE FROM sessions WHERE expires_at < ?", now);
+		// And any whose session is gone already -- an expired one presented
+		// before that took its push row with it, which it now does. A row
+		// with no session at all is left to the rules for those.
+		this.ctx.storage.sql.exec(
+			"DELETE FROM push_subscriptions WHERE session_id IS NOT NULL AND session_id NOT IN (SELECT id FROM sessions)",
+		);
 
 		this.#qb
 			.insert({
@@ -397,6 +403,12 @@ export class MailboxDO extends DurableObject<Env> {
 					},
 				})
 				.execute();
+			// With its session, as signing out does. Left here, nothing found
+			// it again: the sign-in sweep reaches push rows through sessions.
+			this.ctx.storage.sql.exec(
+				"DELETE FROM push_subscriptions WHERE session_id = ?",
+				sessionId,
+			);
 			return null;
 		}
 

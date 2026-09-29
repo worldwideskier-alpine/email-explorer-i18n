@@ -71,6 +71,16 @@ async function deliveredTo(): Promise<string[]> {
 		.sort();
 }
 
+/** Every stored subscription row, delivered to or not. */
+async function pushRows(): Promise<string[]> {
+	return await runInDurableObject(authStub(), async (_i, state) =>
+		state.storage.sql
+			.exec("SELECT endpoint FROM push_subscriptions ORDER BY endpoint")
+			.toArray()
+			.map((r) => String(r.endpoint)),
+	);
+}
+
 async function liveSessions(): Promise<string[]> {
 	return await runInDurableObject(authStub(), async (_i, state) =>
 		state.storage.sql
@@ -236,6 +246,39 @@ describe("a session ending by itself", () => {
 			);
 		});
 		expect(await deliveredTo()).toEqual([]);
+	});
+
+	// Nothing is delivered to it, but the row stayed: the expired session
+	// was deleted when it was presented, and the sign-in sweep finds push
+	// rows only through sessions that still exist, so it never found these.
+	it("an expired session that is presented takes its subscription with it", async () => {
+		await seedOwnerWithSessions({ mine: Date.now() + DAY });
+		await subscribe("mine", "phone");
+		await runInDurableObject(authStub(), async (_i, state) => {
+			state.storage.sql.exec(
+				"UPDATE sessions SET expires_at = ? WHERE id = 'mine'",
+				Date.now() - 1,
+			);
+		});
+		expect((await as("mine", "/auth/logout")).status).toBe(401);
+		expect(await pushRows()).toEqual([]);
+	});
+
+	it("a subscription whose session is already gone is swept at the next sign-in", async () => {
+		await seedOwnerWithSessions({});
+		await runInDurableObject(authStub(), async (_i, state) => {
+			state.storage.sql.exec(
+				"INSERT INTO push_subscriptions (id, user_id, session_id, endpoint, p256dh, auth, created_at) VALUES ('left', 'owner', 'long-gone', 'https://push.example.net/old', 'p', 'a', ?)",
+				Date.now(),
+			);
+		});
+		const login = await SELF.fetch(`${API}/auth/login`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
+		});
+		expect(login.status).toBe(200);
+		expect(await pushRows()).toEqual([]);
 	});
 
 	it("subscribing again from a new session brings the browser back", async () => {
