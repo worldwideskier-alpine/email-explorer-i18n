@@ -102,7 +102,7 @@ const MailboxDetailsSchema = z.object({
 	id: z.string(),
 	email: z.string(),
 	name: z.string(),
-	settings: z.record(z.any()),
+	settings: z.record(z.string(), z.any()),
 	/**
 	 * Whether the second-stage spam check is still working. Timestamps and a
 	 * reason code -- never the API key, and never the upstream error text.
@@ -124,7 +124,7 @@ const MailboxDetailsSchema = z.object({
 });
 
 const UpdateMailboxRequestSchema = z.object({
-	settings: z.record(z.any()),
+	settings: z.record(z.string(), z.any()),
 });
 
 /**
@@ -159,7 +159,7 @@ async function mailboxResponse(
 const CreateMailboxRequestSchema = z.object({
 	email: z.string().email(),
 	name: z.string().min(1),
-	settings: z.record(z.any()).optional(),
+	settings: z.record(z.string(), z.any()).optional(),
 });
 
 const ErrorResponseSchema = z.object({
