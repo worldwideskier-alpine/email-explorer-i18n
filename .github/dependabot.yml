@@ -35,7 +35,7 @@ updates:
     # deploys straight to production, and a breaking bump of postal-mime or
     # zod is not something to wave through alongside a routine patch. They
     # come as one pull request to be read one by one, not one pull request
-    # each. They are deliberately not ignored (one exception, below) --
+    # each. They are deliberately not ignored (two exceptions, below) --
     # upstream is active, and a security fix sometimes lands only in a new
     # major.
     groups:
@@ -47,14 +47,23 @@ updates:
         update-types: ["minor", "patch"]
       majors:
         update-types: ["major"]
-    # The one major that is ignored. @types/node describes a Node, and the one
+    # The majors that are ignored. @types/node describes a Node, and the one
     # that matters is the one CI and the deploy run (node-version in
     # deploy.yml), not the newest: typed for Node 26 while running Node 22,
     # an API Node 22 does not have compiles and then fails at run time. It
     # carries no code, so no security fix waits in its next major. Move it
     # with node-version, by hand.
+    #
+    # vitest follows @cloudflare/vitest-pool-workers, which runs the worker
+    # suite and names the vitest it takes (^4.1.0 in 0.22.0, still the
+    # latest). vitest 5 under it started no test at all (#48); both suites
+    # stay on one vitest. Move it when the pool's peer range does.
     ignore:
       - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vitest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitest/*"
         update-types: ["version-update:semver-major"]
   - package-ecosystem: "github-actions"
     directory: "/"
