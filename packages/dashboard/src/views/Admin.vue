@@ -139,6 +139,17 @@
 				{{ t("admin.users.loadingUsers") }}
 			</div>
 
+			<!-- A list that could not be loaded is not an empty one: shown as
+			     one, it said this person had no way to sign in at all. -->
+			<div v-else-if="loginsFailed" class="flex flex-wrap items-center gap-3 py-4" role="alert">
+				<span class="text-sm text-gray-700 dark:text-gray-300">{{ t("common.loadFailed") }}</span>
+				<button
+					type="button"
+					@click="loadLogins"
+					class="text-sm font-medium text-indigo-700 dark:text-indigo-300 hover:underline"
+				>{{ t("common.retry") }}</button>
+			</div>
+
 			<ul v-else class="divide-y divide-gray-200 dark:divide-gray-700">
 				<li
 					v-for="login in logins"
@@ -208,6 +219,7 @@ const registerSuccess = useLocalizedMessage();
 
 const logins = ref<Login[]>([]);
 const loginsLoading = ref(false);
+const loginsFailed = ref(false);
 const removing = ref<string | null>(null);
 
 onMounted(() => {
@@ -249,11 +261,16 @@ async function handleAddLogin() {
 
 async function loadLogins() {
 	loginsLoading.value = true;
+	loginsFailed.value = false;
 	try {
 		const response = await api.listOwnLogins();
 		logins.value = response.data;
 	} catch (error: any) {
 		console.error("Failed to load logins:", error);
+		// Not the list from before either: a refresh after a removal would go
+		// on showing the address that was removed.
+		logins.value = [];
+		loginsFailed.value = true;
 	} finally {
 		loginsLoading.value = false;
 	}

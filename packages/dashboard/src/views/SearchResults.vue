@@ -6,6 +6,17 @@
     <div v-if="isLoading" class="p-4 text-center text-gray-500 dark:text-gray-400">
       <p>{{ t("searchResults.loading") }}</p>
     </div>
+    <!-- A search that could not be made is not one that found nothing. -->
+    <div v-else-if="failedHere" class="p-4 text-center" role="alert">
+      <p class="text-gray-700 dark:text-gray-300 mb-4">{{ t("common.loadFailed") }}</p>
+      <button
+        type="button"
+        @click="searchAgain"
+        class="px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 dark:text-indigo-300 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+      >
+        {{ t("common.retry") }}
+      </button>
+    </div>
     <div v-else-if="shown.length === 0" class="p-4 text-center text-gray-500 dark:text-gray-400">
       <p>{{ t("searchResults.noResults") }}</p>
     </div>
@@ -34,7 +45,7 @@ import { useSearchStore } from "@/stores/search";
 const { t } = useI18n();
 const { formatListDate } = useDateFormat();
 const searchStore = useSearchStore();
-const { results, isLoading } = storeToRefs(searchStore);
+const { results, isLoading, failed } = storeToRefs(searchStore);
 const route = useRoute();
 
 // Only under the mailbox they came from. The store holds one mailbox's
@@ -43,4 +54,10 @@ const route = useRoute();
 const shown = computed(() =>
 	searchStore.mailboxId === route.params.mailboxId ? results.value : [],
 );
+const failedHere = computed(
+	() => failed.value && searchStore.mailboxId === route.params.mailboxId,
+);
+
+const searchAgain = () =>
+	searchStore.searchEmails(searchStore.mailboxId, searchStore.query);
 </script>

@@ -100,6 +100,24 @@ describe("the limit", () => {
 		expect(encoded).toBeLessThan(40 * 1024 * 1024);
 		expect(MAX_TOTAL_ATTACHMENT_BYTES).toBeGreaterThan(5 * 1024 * 1024);
 	});
+
+	/**
+	 * Read first and refused after, a file of gigabytes froze the tab: the
+	 * read and the encoding both run on the page's thread.
+	 */
+	it("refuses a file over it without reading a byte", async () => {
+		const file = new File(["x"], "huge.iso");
+		Object.defineProperty(file, "size", {
+			value: MAX_TOTAL_ATTACHMENT_BYTES + 1,
+		});
+		let read = false;
+		file.arrayBuffer = async () => {
+			read = true;
+			return new ArrayBuffer(1);
+		};
+		await expect(fileToAttachment(file)).rejects.toThrow();
+		expect(read).toBe(false);
+	});
 });
 
 describe("formatBytes", () => {

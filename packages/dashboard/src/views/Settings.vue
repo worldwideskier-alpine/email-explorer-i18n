@@ -1,7 +1,11 @@
 <template>
   <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
     <h1 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ t("settings.title") }}</h1>
-    <div v-if="mailbox">
+    <!-- Shown once this screen's own request for the mailbox has answered,
+         and not before: the same mailbox from an earlier visit is still in
+         the store until then, and a save made from it wrote back what had
+         been stored before. -->
+    <div v-if="mailbox && mailboxState === 'loaded'">
       <!-- The name and signature arrive filled in; they are somebody's
            writing only once they are typed into. See profileTouched. -->
       <form
@@ -271,7 +275,18 @@
             {{ autoBackupLastLine }}
           </p>
 
-          <div v-if="autoBackupEnabled && backups.length">
+          <!-- Whatever the switch says: archives already made are still
+               there with it off, and this is the only way to them. And a
+               list that could not be read is not an empty one. -->
+          <div v-if="backupsState === 'failed'" class="flex flex-wrap items-center gap-3" role="alert">
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t("common.loadFailed") }}</span>
+            <button
+              type="button"
+              @click="loadBackups"
+              class="text-sm font-medium text-indigo-700 dark:text-indigo-300 hover:underline"
+            >{{ t("common.retry") }}</button>
+          </div>
+          <div v-else-if="backups.length">
             <h3 class="text-base font-medium text-gray-900 dark:text-white mb-2">{{ t("settings.autoBackupStored") }}</h3>
             <ul class="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg">
               <li v-for="backup in backups" :key="backup.name" class="flex items-center justify-between gap-4 px-4 py-2">
@@ -287,7 +302,7 @@
               </li>
             </ul>
           </div>
-          <p v-else class="text-sm text-gray-500 dark:text-gray-400">{{ t("settings.autoBackupNone") }}</p>
+          <p v-else-if="backupsState === 'loaded'" class="text-sm text-gray-500 dark:text-gray-400">{{ t("settings.autoBackupNone") }}</p>
         </div>
       </div>
 
@@ -387,6 +402,16 @@
         </div>
       </div>
     </div>
+    <!-- A mailbox that could not be loaded. It was an unhandled rejection
+         and a screen with nothing under its title. -->
+    <div v-else-if="mailboxState === 'failed'" class="flex flex-wrap items-center gap-3" role="alert">
+      <span class="text-sm text-gray-700 dark:text-gray-300">{{ t("common.loadFailed") }}</span>
+      <button
+        type="button"
+        @click="loadMailbox"
+        class="text-sm font-medium text-indigo-700 dark:text-indigo-300 hover:underline"
+      >{{ t("common.retry") }}</button>
+    </div>
   </div>
 </template>
 
@@ -467,22 +492,40 @@ const togglePush = async () => {
 	}
 };
 
+type LoadedMailbox = NonNullable<typeof mailbox.value>;
+const fillers: ((m: LoadedMailbox) => void)[] = [];
+
 /**
- * Fills a section's fields from the stored settings when a mailbox is opened
- * -- and only then. These used to follow every change to the mailbox, and
- * every save replaces it, so saving one section put back what was stored in
- * all the others: an unsaved signature vanished when the spam settings were
- * saved. Displays derived from the stored settings (the key badge, the lock,
- * the last-run lines) still follow every change; they are not being edited.
+ * Fills a section's fields from the stored settings when this screen's
+ * request for the mailbox answers -- and only then. These used to follow
+ * every change to the mailbox, and every save replaces it, so saving one
+ * section put back what was stored in all the others: an unsaved signature
+ * vanished when the spam settings were saved. Displays derived from the
+ * stored settings (the key badge, the lock, the last-run lines) still follow
+ * every change; they are not being edited.
+ *
+ * From the answer, not from whatever the store held when the screen opened:
+ * coming here from the same mailbox's inbox, the store still had the mailbox
+ * as it was loaded then, the fields were filled from that, and the fresh
+ * answer -- same id, so nothing seemed to change -- was never put in them.
  */
-function whenOpened(fill: (m: NonNullable<typeof mailbox.value>) => void) {
-	watch(
-		() => mailbox.value?.id,
-		(id) => {
-			if (id && mailbox.value) fill(mailbox.value);
-		},
-		{ immediate: true },
-	);
+function whenOpened(fill: (m: LoadedMailbox) => void) {
+	fillers.push(fill);
+}
+
+const mailboxState = ref<"loading" | "loaded" | "failed">("loading");
+
+async function loadMailbox() {
+	mailboxState.value = "loading";
+	try {
+		const fresh = await mailboxStore.fetchMailbox(
+			route.params.mailboxId as string,
+		);
+		for (const fill of fillers) fill(fresh);
+		mailboxState.value = "loaded";
+	} catch {
+		mailboxState.value = "failed";
+	}
 }
 
 /**
@@ -508,6 +551,9 @@ const profileError = useLocalizedMessage();
 const profileMessage = useLocalizedMessage();
 
 whenOpened((m) => {
+	// Not over what somebody has already started typing, as Root.vue's
+	// recovery sender: an answer that arrives after they have would wipe it.
+	if (profileTouched.value) return;
 	if (m.settings?.signature) {
 		signatureEnabled.value = m.settings.signature.enabled;
 		signatureHtml.value =
@@ -561,7 +607,7 @@ watch(
 );
 
 onMounted(() => {
-	mailboxStore.fetchMailbox(route.params.mailboxId as string);
+	loadMailbox();
 	loadBackups();
 });
 
@@ -580,27 +626,45 @@ const exporting = ref(false);
 async function exportMailbox() {
 	if (exporting.value) return;
 	exporting.value = true;
+	// A new build reloading the page mid-download cut the export off, and
+	// nothing on screen said so. The request is the long part; the hand-over
+	// to the browser is held as well.
+	const releaseReload = holdReload();
 	try {
 		const mailboxId = route.params.mailboxId as string;
 		const response = await api.exportMailbox(mailboxId);
-		const url = URL.createObjectURL(response.data as Blob);
-		const link = document.createElement("a");
-		link.href = url;
 		const stamp = new Date().toISOString().slice(0, 10);
-		link.download = `${mailboxId}-${stamp}.mbox`;
-		document.body.appendChild(link);
-		link.click();
-		// Revoked on a later tick: releasing it in the same one can cut the
-		// download off before the browser has taken the data.
-		setTimeout(() => {
-			link.remove();
-			URL.revokeObjectURL(url);
-		}, 1000);
+		await saveBlob(response.data as Blob, `${mailboxId}-${stamp}.mbox`);
 	} catch {
 		window.alert(t("settings.exportFailed"));
 	} finally {
+		releaseReload();
 		exporting.value = false;
 	}
+}
+
+/**
+ * Hands a downloaded blob to the browser as a file, and resolves once the
+ * object URL has been let go.
+ *
+ * Revoked on a later tick: releasing it in the same one can cut the download
+ * off before the browser has taken the data -- and so can a reload in that
+ * second, which is why the callers hold one until this resolves.
+ */
+function saveBlob(blob: Blob, filename: string): Promise<void> {
+	const url = URL.createObjectURL(blob);
+	const link = document.createElement("a");
+	link.href = url;
+	link.download = filename;
+	document.body.appendChild(link);
+	link.click();
+	return new Promise((resolve) => {
+		setTimeout(() => {
+			link.remove();
+			URL.revokeObjectURL(url);
+			resolve();
+		}, 1000);
+	});
 }
 
 const autoBackupEnabled = ref(false);
@@ -718,12 +782,21 @@ const formatSize = (bytes: number): string => {
 	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+/**
+ * A failure is its own state rather than an empty list: shown as "no backups",
+ * it told the person there was nothing to restore from.
+ */
+const backupsState = ref<"loading" | "loaded" | "failed">("loading");
+
 async function loadBackups() {
+	backupsState.value = "loading";
 	try {
 		const response = await api.listBackups(route.params.mailboxId as string);
 		backups.value = response.data ?? [];
+		backupsState.value = "loaded";
 	} catch {
 		backups.value = [];
+		backupsState.value = "failed";
 	}
 }
 
@@ -754,21 +827,17 @@ async function saveAutoBackup() {
 }
 
 async function downloadBackup(name: string) {
+	// Held for the same reason as the export: an archive is as large as the
+	// mailbox, and a reload for a new build cut it off.
+	const releaseReload = holdReload();
 	try {
 		const mailboxId = route.params.mailboxId as string;
 		const response = await api.downloadBackup(mailboxId, name);
-		const url = URL.createObjectURL(response.data as Blob);
-		const link = document.createElement("a");
-		link.href = url;
-		link.download = `${mailboxId}-${name}`;
-		document.body.appendChild(link);
-		link.click();
-		setTimeout(() => {
-			link.remove();
-			URL.revokeObjectURL(url);
-		}, 1000);
+		await saveBlob(response.data as Blob, `${mailboxId}-${name}`);
 	} catch {
 		window.alert(t("settings.exportFailed"));
+	} finally {
+		releaseReload();
 	}
 }
 

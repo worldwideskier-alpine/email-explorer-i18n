@@ -247,6 +247,8 @@ const error = useLocalizedMessage();
 const attachments = ref<PendingAttachment[]>([]);
 const attachmentInput = ref<HTMLInputElement | null>(null);
 const isReadingAttachments = ref(false);
+/** Moves on each time the dialog opens or closes; see onAttachmentsChosen. */
+let composerGeneration = 0;
 const attachmentBytes = computed(() => totalAttachmentBytes(attachments.value));
 const attachmentsTooLarge = computed(
 	() => attachmentBytes.value > MAX_TOTAL_ATTACHMENT_BYTES,
@@ -267,15 +269,36 @@ async function onAttachmentsChosen(event: Event) {
 	const picked = Array.from(input.files ?? []);
 	if (!picked.length) return;
 
+	// Refused on the size the browser already knows, before a byte is read:
+	// the whole file is read and base64-encoded on this thread, and a file of
+	// gigabytes froze the tab before the limit was ever looked at.
+	const pickedBytes = totalAttachmentBytes(picked);
+	if (attachmentBytes.value + pickedBytes > MAX_TOTAL_ATTACHMENT_BYTES) {
+		error.value = () =>
+			t("compose.attachmentTooLarge", {
+				max: formatBytes(MAX_TOTAL_ATTACHMENT_BYTES),
+			});
+		input.value = "";
+		return;
+	}
+
+	// Which message these files were picked for. A read still running when
+	// the dialog closed finished into the next message composed, and went to
+	// whoever that was sent to.
+	const generation = composerGeneration;
 	isReadingAttachments.value = true;
 	try {
 		const read = await Promise.all(picked.map(fileToAttachment));
+		if (generation !== composerGeneration) return;
 		attachments.value = [...attachments.value, ...read];
 	} catch {
+		if (generation !== composerGeneration) return;
 		error.value = () => t("compose.attachmentReadFailed");
 	} finally {
-		isReadingAttachments.value = false;
-		if (attachmentInput.value) attachmentInput.value.value = "";
+		if (generation === composerGeneration) {
+			isReadingAttachments.value = false;
+			if (attachmentInput.value) attachmentInput.value.value = "";
+		}
 	}
 }
 
@@ -342,7 +365,8 @@ const quotedBody = (original: Quotable) =>
 /**
  * The sender, subject and header text are the sender's own words going into
  * HTML the editor parses, so a subject that is a tag becomes one -- an image
- * in a subject line was a tracker in every reply.
+ * in a subject line was a tracker in every reply. The date is theirs too: one
+ * that does not parse is shown as it came (formatFullDate).
  */
 const escapeHtml = (text: string) =>
 	text
@@ -399,6 +423,10 @@ const getSignatureBlock = (): string => {
 
 // Watch for compose modal opening and pre-populate fields
 watch(isComposeModalOpen, (isOpen) => {
+	// A read from the message before is no longer this one's, and does not
+	// hold this one's Send button either.
+	composerGeneration += 1;
+	isReadingAttachments.value = false;
 	if (isOpen) {
 		const options = composeOptions.value;
 		const original = options.originalEmail;
@@ -456,7 +484,7 @@ watch(isComposeModalOpen, (isOpen) => {
 		} else if (options.mode === "forward" && original) {
 			to.value = "";
 			subject.value = forwardSubject(original.subject);
-			body.value = `<p><br></p>${sigBlock}<div style="border: 1px solid #ddd; padding: 1em; background-color: #f9f9f9; margin: 1em 0;"><p><strong>${t("compose.forwardedMessage")}</strong><br><strong>${t("compose.forwardFrom")}</strong> ${escapeHtml(original.sender)}<br><strong>${t("compose.forwardDate")}</strong> ${formatFullDate(original.date)}<br><strong>${t("compose.forwardSubject")}</strong> ${escapeHtml(original.subject)}</p>${quotedBody(original)}</div>`;
+			body.value = `<p><br></p>${sigBlock}<div style="border: 1px solid #ddd; padding: 1em; background-color: #f9f9f9; margin: 1em 0;"><p><strong>${t("compose.forwardedMessage")}</strong><br><strong>${t("compose.forwardFrom")}</strong> ${escapeHtml(original.sender)}<br><strong>${t("compose.forwardDate")}</strong> ${escapeHtml(formatFullDate(original.date))}<br><strong>${t("compose.forwardSubject")}</strong> ${escapeHtml(original.subject)}</p>${quotedBody(original)}</div>`;
 		} else {
 			to.value = "";
 			subject.value = "";

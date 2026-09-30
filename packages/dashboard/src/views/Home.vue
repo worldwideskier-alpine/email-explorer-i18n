@@ -112,7 +112,7 @@
     </div>
     <div v-if="isCreateModalOpen" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div class="flex justify-between items-center bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-5">
+        <div class="flex justify-between items-center bg-gradient-to-r from-green-700 to-emerald-700 px-6 py-5">
           <h2 class="text-xl font-bold text-white">{{ t("home.createMailboxTitle") }}</h2>
           <button @click="closeCreateMailboxModal" class="text-white/80 hover:text-white hover:bg-white/10 rounded-lg p-2 transition-all duration-200">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,10 +158,13 @@
             >
               {{ t("home.cancel") }}
             </button>
-            <button 
-              type="submit" 
+            <!-- 700s, as the button that opens this dialog: white measured
+                 3.22:1 on green-600 and 3.65:1 on emerald-600, and a
+                 gradient is as readable as its lightest end. -->
+            <button
+              type="submit"
               :disabled="isCreatingMailbox"
-              class="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              class="px-6 py-3 bg-gradient-to-r from-green-700 to-emerald-700 text-white rounded-xl hover:from-green-800 hover:to-emerald-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <svg v-if="!isCreatingMailbox" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

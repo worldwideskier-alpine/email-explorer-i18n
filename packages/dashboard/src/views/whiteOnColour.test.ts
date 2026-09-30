@@ -36,16 +36,28 @@ const sources = {
 	}) as Record<string, string>),
 };
 
-/** Contrast against white, measured in a browser. See the note above. */
+/**
+ * Contrast against white, measured in a browser. See the note above.
+ *
+ * The emerald, purple and indigo-500 entries came later, for gradients, and
+ * were measured the same way in headless Chromium 141: each colour's value
+ * from Tailwind's theme painted on a div, the screenshot's pixel read back.
+ * The same run reproduced every older entry here to the hundredth, green-600's
+ * 3.22 included.
+ */
 const MEASURED: Record<string, number> = {
 	"amber-700": 5.03,
+	"emerald-600": 3.65,
+	"emerald-700": 5.36,
 	"green-600": 3.22,
 	"green-700": 4.95,
 	"green-800": 7.13,
 	"red-600": 4.77,
 	"red-700": 6.42,
+	"indigo-500": 4.58,
 	"indigo-600": 6.46,
 	"indigo-700": 8.09,
+	"purple-600": 5.54,
 	"gray-700": 10.3,
 	"gray-800": 14.67,
 	"gray-900": 17.75,
@@ -66,9 +78,9 @@ interface Pair {
  * `dark:bg-…` only applies in dark mode if no `dark:text-…` takes the text
  * somewhere else, which is how the one button that flips both is written.
  */
-function whiteOnColour(): Pair[] {
+function whiteOnColour(files: Record<string, string> = sources): Pair[] {
 	const found: Pair[] = [];
-	for (const [path, source] of Object.entries(sources)) {
+	for (const [path, source] of Object.entries(files)) {
 		// Class attributes, and any whole string in the script that carries
 		// text-white: a component choosing its colours in code (Toast) was
 		// invisible to a reading of attributes alone.
@@ -81,11 +93,17 @@ function whiteOnColour(): Pair[] {
 			const line = source.slice(0, match.index).split("\n").length;
 			const file = path.replace(/^\.\.?\//, "");
 
+			// A gradient's stops are its background too, and it is as readable
+			// as its lightest one. Read only `bg-`, the create button's
+			// green-600 gradient went unmeasured -- the very colour this test
+			// was written about.
 			const bg = (prefix: string) =>
-				classes
-					.filter((c) => c.startsWith(`${prefix}bg-`))
-					.map((c) => c.slice(`${prefix}bg-`.length))
-					.filter((c) => /^[a-z]+-\d{2,3}$/.test(c));
+				classes.flatMap((c) =>
+					["bg-", "from-", "via-", "to-"]
+						.filter((kind) => c.startsWith(`${prefix}${kind}`))
+						.map((kind) => c.slice(`${prefix}${kind}`.length))
+						.filter((colour) => /^[a-z]+-\d{2,3}$/.test(colour)),
+				);
 
 			if (classes.includes("text-white")) {
 				for (const colour of bg("")) found.push({ file, colour, line });
@@ -107,6 +125,18 @@ describe("white text on a coloured background", () => {
 
 	it("is used somewhere, so this test is looking at something", () => {
 		expect(pairs.length).toBeGreaterThan(5);
+	});
+
+	it("is looked for on a gradient's every stop, in both themes", () => {
+		const found = whiteOnColour({
+			"x.vue": `<button class="bg-gradient-to-r from-green-600 via-red-600 to-emerald-600 dark:from-gray-800 text-white">`,
+		}).map((p) => p.colour);
+		expect([...new Set(found)].sort()).toEqual([
+			"emerald-600",
+			"gray-800",
+			"green-600",
+			"red-600",
+		]);
 	});
 
 	it("only sits on colours that have been measured", () => {

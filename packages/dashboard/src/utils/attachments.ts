@@ -44,7 +44,15 @@ export function bytesToBase64(bytes: Uint8Array): string {
 	return btoa(binary);
 }
 
+/**
+ * Refuses a file over the limit before reading it. Reading and encoding run
+ * on the page's own thread, so a file of gigabytes froze the tab first and
+ * was refused only afterwards.
+ */
 export async function fileToAttachment(file: File): Promise<PendingAttachment> {
+	if (file.size > MAX_TOTAL_ATTACHMENT_BYTES) {
+		throw new RangeError(`${file.name} is over the attachment limit`);
+	}
 	const bytes = new Uint8Array(await file.arrayBuffer());
 	return {
 		id: crypto.randomUUID(),

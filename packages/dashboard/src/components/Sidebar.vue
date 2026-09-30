@@ -159,10 +159,14 @@ watch(
 	() => uiStore.closeSidebar(),
 );
 
+// By id, which the Worker fixes for the system folders and a rename leaves
+// alone. By name, a folder of someone's own renamed "Spam" -- or restored
+// from a backup as "trash", which gets an id of its own -- vanished from this
+// list with its mail still in it, and nothing led back to it.
 const defaultFolderIds = ["archive", "inbox", "sent", "spam", "trash", "draft"];
 const customFolders = computed(() => {
 	return folders.value.filter(
-		(folder) => !defaultFolderIds.includes(folder.name.toLowerCase()),
+		(folder) => !defaultFolderIds.includes(folder.id),
 	);
 });
 

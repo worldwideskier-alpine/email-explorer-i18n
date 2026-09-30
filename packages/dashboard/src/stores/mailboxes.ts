@@ -20,12 +20,18 @@ export const useMailboxStore = defineStore("mailboxes", {
 		 * to stay until the new one arrived -- or for good, if that failed --
 		 * and the settings screen, saving meanwhile, wrote the previous
 		 * mailbox's sender name and settings into this one.
+		 *
+		 * The answer is handed back as well, so a screen that fills fields
+		 * from it fills them from this answer: the same mailbox from an
+		 * earlier visit stays in `currentMailbox` until then, and filled from
+		 * that, the settings screen saved what had been stored before.
 		 */
-		async fetchMailbox(id: string) {
+		async fetchMailbox(id: string): Promise<Mailbox> {
 			if (this.currentMailbox?.id !== id) this.currentMailbox = null;
 			const request = ++latestMailbox;
 			const response = await api.getMailbox(id);
 			if (request === latestMailbox) this.currentMailbox = response.data;
+			return response.data;
 		},
 		/**
 		 * Saves what is given -- one section is enough; the server keeps the
