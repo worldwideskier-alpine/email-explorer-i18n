@@ -4,7 +4,7 @@ import { LOCALES } from "./registry";
 /**
  * docs/readme/ holds one short summary per language the picker offers.
  *
- * These are summaries, not translations of the README: keeping 69 full
+ * These are summaries, not translations of the README: keeping 73 full
  * translations current is not realistic, and a stale translation is worse
  * than a short accurate one.
  *
@@ -12,7 +12,8 @@ import { LOCALES } from "./registry";
  * the catalogue that decides which languages exist, so adding a language and
  * forgetting the summary is the obvious way for this to rot. Nothing at build
  * time would notice -- the docs are not compiled, and the deploy workflow
- * skips runs that only touch docs/**.
+ * skips runs that only touch docs/** (except docs/readme/, taken back in
+ * so that this test runs when a summary changes).
  *
  * The docs are read through import.meta.glob rather than node:fs because
  * `type-check` builds this file against @vue/tsconfig's DOM config, which has

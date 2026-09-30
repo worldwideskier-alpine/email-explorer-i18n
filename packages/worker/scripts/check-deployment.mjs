@@ -20,6 +20,7 @@ import {
 	assetMismatch,
 	builtAssets,
 	staleServedPage,
+	workerVersionMismatch,
 } from "./deployment-check.mjs";
 
 const ASSETS = fileURLToPath(new URL("../dashboard/assets", import.meta.url));
@@ -30,6 +31,15 @@ const ASSETS = fileURLToPath(new URL("../dashboard/assets", import.meta.url));
 // build.
 const ATTEMPTS = 20;
 const PAUSE_MS = 3000;
+const REQUEST_TIMEOUT_MS = 15_000;
+
+// From the step before, which read it out of `wrangler deployments status`.
+const expectedVersion = (process.env.EXPECTED_WORKER_VERSION ?? "").trim();
+if (!expectedVersion) {
+	console.log(
+		"no published version was read back, so the Worker's is not compared",
+	);
+}
 
 const base = (process.env.PRODUCTION_URL ?? "").trim().replace(/\/+$/, "");
 if (!base) {
@@ -52,6 +62,8 @@ async function inspect() {
 		const response = await fetch(`${base}${path}`, {
 			headers: { "cache-control": "no-cache" },
 			redirect: "follow",
+			// A request that hangs is one more try, not the whole job.
+			signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 		});
 		return {
 			status: response.status,
@@ -119,6 +131,20 @@ async function inspect() {
 		);
 	} else {
 		console.log(`the Worker is answering API paths (${api.status})`);
+	}
+
+	// And that it is the version just published; see workerVersionMismatch.
+	if (expectedVersion) {
+		const settings = await get("/api/v1/settings", "text");
+		let served = null;
+		try {
+			served = JSON.parse(settings.body)?.version ?? null;
+		} catch {
+			served = null;
+		}
+		const wrong = workerVersionMismatch(expectedVersion, served);
+		if (wrong) problems.push(wrong);
+		else console.log(`the Worker running is the version published (${served})`);
 	}
 
 	return problems;

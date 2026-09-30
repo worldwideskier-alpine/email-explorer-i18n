@@ -12,6 +12,11 @@
 		"enabled": true
 	},
 	"compatibility_flags": ["nodejs_compat", "enable_email_sending_queuing"],
+	// Which version is answering; the deploy's last step compares it with the
+	// one it published. See scripts/deployment-check.mjs.
+	"version_metadata": {
+		"binding": "CF_VERSION_METADATA"
+	},
 	// Once a day, 18:00 UTC (03:00 JST). The Worker wakes, and each mailbox's
 	// own frequency decides whether it is backed up this time -- so this only
 	// has to fire as often as the shortest frequency on offer, which is daily.

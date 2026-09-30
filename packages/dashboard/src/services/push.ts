@@ -15,10 +15,34 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
 	return Uint8Array.from([...raw].map((char) => char.charCodeAt(0)));
 }
 
+/** How long the service worker is waited for before push is given up on. */
+const READY_WITHIN_MS = 10_000;
+
+/**
+ * The service worker's registration, or a rejection once READY_WITHIN_MS
+ * has gone by. `navigator.serviceWorker.ready` never settles when no worker
+ * is registered -- a browser that refused it, a private window, a build
+ * served without sw.js -- and the settings switch waited on it for ever,
+ * spinning, with nothing said.
+ */
+function registration(): Promise<ServiceWorkerRegistration> {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const late = new Promise<never>((_, reject) => {
+		timer = setTimeout(
+			() => reject(new Error("The service worker did not start")),
+			READY_WITHIN_MS,
+		);
+	});
+	return Promise.race([navigator.serviceWorker.ready, late]).finally(() =>
+		clearTimeout(timer),
+	);
+}
+
 export async function getExistingSubscription(): Promise<PushSubscription | null> {
 	if (!isPushSupported()) return null;
-	const registration = await navigator.serviceWorker.ready;
-	return registration.pushManager.getSubscription();
+	// No worker, no subscription this page can see.
+	const ready = await registration().catch(() => null);
+	return ready ? ready.pushManager.getSubscription() : null;
 }
 
 /** The reader said no to notifications; only they can change that. */
@@ -44,8 +68,8 @@ export async function subscribeToPush(): Promise<void> {
 		throw new Error("VAPID public key is not configured on the server");
 	}
 
-	const registration = await navigator.serviceWorker.ready;
-	const subscription = await registration.pushManager.subscribe({
+	const ready = await registration();
+	const subscription = await ready.pushManager.subscribe({
 		userVisibleOnly: true,
 		applicationServerKey: urlBase64ToUint8Array(data.publicKey),
 	});

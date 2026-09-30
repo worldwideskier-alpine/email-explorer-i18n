@@ -247,8 +247,9 @@ const act = async (action: () => Promise<unknown>) => {
 	try {
 		await action();
 	} catch (e: any) {
-		showErrorToast(
-			translateApiError(e?.response?.data?.error, t("compose.unexpectedError")),
+		const fromApi = e?.response?.data?.error;
+		showErrorToast(() =>
+			translateApiError(fromApi, t("compose.unexpectedError")),
 		);
 	}
 };

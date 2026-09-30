@@ -212,3 +212,19 @@ describe("a person root makes", () => {
 		).toEqual(["op-spare@example.com", "op@example.com"]);
 	});
 });
+
+/**
+ * Which version of the Worker answered, for the deploy's last step to
+ * compare with the one it published.
+ */
+describe("the public settings", () => {
+	it("say which version is answering", async () => {
+		const settings = await (await SELF.fetch(`${API}/settings`)).json<{
+			version: unknown;
+		}>();
+		expect(settings).toHaveProperty("version");
+		expect(
+			settings.version === null || typeof settings.version === "string",
+		).toBe(true);
+	});
+});

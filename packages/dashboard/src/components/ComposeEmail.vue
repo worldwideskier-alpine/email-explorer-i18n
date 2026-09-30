@@ -525,7 +525,7 @@ const saveDraft = async () => {
 			draftId.value = response.data.id;
 		}
 
-		showSuccessToast(t("compose.draftSaved"));
+		showSuccessToast(() => t("compose.draftSaved"));
 	} catch (e: any) {
 		const fromApi = e.response?.data?.error;
 		// Through the catalogue like every other refusal; it was the server's
@@ -533,7 +533,7 @@ const saveDraft = async () => {
 		const errorMessage = () =>
 			translateApiError(fromApi, t("compose.unexpectedError"));
 		error.value = errorMessage;
-		showErrorToast(errorMessage());
+		showErrorToast(errorMessage);
 	} finally {
 		isSavingDraft.value = false;
 	}
@@ -641,7 +641,7 @@ const send = async () => {
 		body.value = "";
 		clearAttachments();
 		closeModal();
-		showSuccessToast(t("compose.emailSentSuccess"));
+		showSuccessToast(() => t("compose.emailSentSuccess"));
 	} catch (e: any) {
 		// A refusal from the server, or one of ours by its key. Ours used to
 		// be thrown translated and then dropped here, which read only the
@@ -653,7 +653,7 @@ const send = async () => {
 				? t(ownKey)
 				: translateApiError(fromApi, t("compose.unexpectedError"));
 		error.value = errorMessage;
-		showErrorToast(errorMessage());
+		showErrorToast(errorMessage);
 	} finally {
 		isLoading.value = false;
 	}

@@ -6,7 +6,9 @@ import {
 	assetMismatch,
 	assetsReferencedBy,
 	builtAssets,
+	liveVersionIn,
 	staleServedPage,
+	workerVersionMismatch,
 } from "../../scripts/deployment-check.mjs";
 
 /**
@@ -160,5 +162,33 @@ describe("whether a browser will come back for the page", () => {
 		expect(staleServedPage("")).toContain("no Cache-Control");
 		expect(staleServedPage(null)).toContain("no Cache-Control");
 		expect(staleServedPage(undefined)).toContain("no Cache-Control");
+	});
+});
+
+/**
+ * Whether the Worker answering is the one just published. The page and its
+ * bundle prove the assets only; a change to the Worker alone left both as
+ * they were, so a deploy of Worker code passed whether or not it was running.
+ */
+describe("the Worker's version", () => {
+	const ID = "57c9b824-4a2d-489f-ab32-47a71a3e0a40";
+
+	it("is read from what wrangler says is live", () => {
+		expect(
+			liveVersionIn(`Created:     2026-09-29\nVersion(s):  (100%) ${ID}\n`),
+		).toBe(ID);
+		// A split deployment names no one version.
+		expect(
+			liveVersionIn(`Version(s):  (60%) ${ID}\n             (40%) ${ID}`),
+		).toBeNull();
+		expect(liveVersionIn("could not read the live version back")).toBeNull();
+	});
+
+	it("must be the one published, when one was read back", () => {
+		expect(workerVersionMismatch(ID, ID)).toBeNull();
+		expect(workerVersionMismatch(ID, ID.toUpperCase())).toBeNull();
+		expect(workerVersionMismatch(ID, "0".repeat(36))).toMatch(/not/);
+		expect(workerVersionMismatch(ID, null)).toMatch(/does not say/);
+		expect(workerVersionMismatch("", "anything")).toBeNull();
 	});
 });

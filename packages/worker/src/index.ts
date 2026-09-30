@@ -195,6 +195,9 @@ const AppSettingsResponseSchema = z.object({
 	turnstile: z.object({
 		siteKey: z.string().nullable(),
 	}),
+	// Which version of the Worker answered, so the deploy can ask whether the
+	// one it published is the one running; null where there is no binding.
+	version: z.string().nullable(),
 });
 
 const EmailMetadataSchema = z.object({
@@ -2462,6 +2465,7 @@ class GetAppSettings extends OpenAPIRoute {
 			turnstile: {
 				siteKey: (await storedTurnstile(c.env))?.siteKey ?? null,
 			},
+			version: c.env.CF_VERSION_METADATA?.id ?? null,
 		});
 	}
 }

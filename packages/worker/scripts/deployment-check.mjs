@@ -121,3 +121,34 @@ export function staleServedPage(cacheControl) {
 	if (maxAge === "0") return null;
 	return `the page is served with "${value}", so a browser may use an old one without asking`;
 }
+
+/**
+ * The version `wrangler deployments status` says is live, from its output:
+ * the line `Version(s):  (100%) <id>`. Null when it says no such thing -- a
+ * split deployment, or a read that failed -- and then nothing is compared.
+ */
+export function liveVersionIn(statusOutput) {
+	const found = /Version\(s\):\s*\(100%\)\s*([0-9a-f-]{36})/i.exec(
+		statusOutput ?? "",
+	);
+	return found ? found[1].toLowerCase() : null;
+}
+
+/**
+ * Whether the Worker answering is the version that was published.
+ *
+ * The page and its bundle prove the assets; a change to the Worker alone
+ * leaves both exactly as they were, so a deploy of only Worker code passed
+ * this check whether or not the new code was running. The Worker says which
+ * version it is (the `version_metadata` binding, in /api/v1/settings).
+ *
+ * Returns what is wrong, or null when it is the one -- or when there is
+ * nothing to compare against.
+ */
+export function workerVersionMismatch(expected, served) {
+	if (!expected) return null;
+	if (!served) return "the Worker does not say which version it is";
+	return served.toLowerCase() === expected.toLowerCase()
+		? null
+		: `the Worker answering is version ${served}, not ${expected}`;
+}

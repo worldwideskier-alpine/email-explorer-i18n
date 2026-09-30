@@ -271,7 +271,7 @@ A: Yes, but some complex formatting may be simplified. It's best to use the edit
 A: Select your text, then click the formatting buttons again to toggle them off. Or paste as plain text using Ctrl+Shift+V.
 
 **Q: Can I add images?**  
-A: Image upload is coming in a future update! For now, you can add image links using the hyperlink feature.
+A: There is no image button, and uploading one is not supported. An image by URL can be written as an `<img>` in the HTML source view, and it is kept; a link to an image is just a link.
 
 **Q: Does the editor work on mobile?**  
 A: Yes! All features work on mobile browsers, though the interface may be slightly different.
@@ -304,7 +304,7 @@ Future updates will add:
 - 📎 **Image uploads** - Drag and drop images directly into emails
 - 😀 **Emoji picker** - Quick emoji insertion
 - 📋 **Email templates** - Save frequently used formats
-- 📊 **Tables** - Create structured data tables
+- 📊 **Inserting tables** - A table in a message you reply to or forward is already kept; making a new one is not yet possible
 - 🎨 **More colors** - Extended color palette
 
 ## Need Help?

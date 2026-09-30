@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, nextTick } from "vue";
-import { useToast } from "@/composables/useToast";
+import { toastText, useToast } from "@/composables/useToast";
 import { englishWith } from "@/testing/english";
 
 /**
@@ -96,7 +96,7 @@ describe("a language that will not load", () => {
 		expect(reload).not.toHaveBeenCalled();
 		// Kept, so the reload they make opens in it.
 		expect(rememberLocale).toHaveBeenCalledWith("de");
-		expect(useToast().toasts.value.map((t) => t.message)).toEqual([NOTICE]);
+		expect(useToast().toasts.value.map(toastText)).toEqual([NOTICE]);
 	});
 
 	it("is left as it was when no newer build is served", async () => {

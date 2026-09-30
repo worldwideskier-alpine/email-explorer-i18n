@@ -8,6 +8,7 @@ import REAL from "../../dev/wrangler.jsonc?raw";
 import {
 	applyDeploymentConfig,
 	setStringValue,
+	stringValueOf,
 } from "../../scripts/deployment-config.mjs";
 import { recoveryFromEmail } from "../../src/deployment-config";
 
@@ -52,7 +53,8 @@ const CONFIG = `{
 const FORK = {
 	WORKER_NAME: "email-explorer-fork",
 	R2_BUCKET_NAME: "fork-mail",
-	VAPID_PUBLIC_KEY: "BGforkkey",
+	VAPID_PUBLIC_KEY:
+		"BAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0-P0A",
 	ACCOUNT_RECOVERY_FROM: "noreply@fork.example",
 };
 
@@ -62,7 +64,9 @@ describe("applying a fork's own values", () => {
 		expect(source).toContain('"name": "email-explorer-fork"');
 		expect(source).toContain('"bucket_name": "fork-mail"');
 		expect(source).toContain('"preview_bucket_name": "fork-mail"');
-		expect(source).toContain('"VAPID_PUBLIC_KEY": "BGforkkey"');
+		expect(source).toContain(
+			'"VAPID_PUBLIC_KEY": "BAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0-P0A"',
+		);
 		expect(source).toContain('"ACCOUNT_RECOVERY_FROM": "noreply@fork.example"');
 	});
 
@@ -152,10 +156,16 @@ describe("a value that would not work", () => {
 		).toThrow(/ACCOUNT_RECOVERY_FROM/);
 	});
 
+	it("refuses a push key that is not one", () => {
+		for (const value of ["BGforkkey", `${"A".repeat(87)}`, "not a key!"]) {
+			expect(() =>
+				applyDeploymentConfig(CONFIG, { VAPID_PUBLIC_KEY: value }),
+			).toThrow(/VAPID_PUBLIC_KEY/);
+		}
+	});
+
 	it("escapes a value rather than letting it break out of its string", () => {
-		const { source } = applyDeploymentConfig(CONFIG, {
-			VAPID_PUBLIC_KEY: 'a"b\\c',
-		});
+		const source = setStringValue(CONFIG, "VAPID_PUBLIC_KEY", 'a"b\\c');
 		expect(
 			JSON.parse(source.replace(/^\s*\/\/[^\n]*\n/gm, "")).vars
 				.VAPID_PUBLIC_KEY,
@@ -270,8 +280,31 @@ describe("the real dev/wrangler.jsonc", () => {
 		const { source } = applyDeploymentConfig(REAL, FORK);
 		expect(source).toContain('"name": "email-explorer-fork"');
 		expect(source).toContain('"bucket_name": "fork-mail"');
-		expect(source).toContain('"VAPID_PUBLIC_KEY": "BGforkkey"');
+		expect(source).toContain(
+			'"VAPID_PUBLIC_KEY": "BAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0-P0A"',
+		);
 		expect(source).toContain('"ACCOUNT_RECOVERY_FROM": "noreply@fork.example"');
 		expect(source).not.toBe(REAL);
+	});
+});
+
+/**
+ * The bucket step reads the bucket's name from the config the deploy is
+ * about to use, rather than repeating the default: a default of its own would
+ * be left behind by a rename, creating one bucket and deploying against
+ * another.
+ */
+describe("the bucket's name, as the deploy step reads it", () => {
+	it("is the checked-in default when nothing is set", () => {
+		expect(stringValueOf(REAL, "bucket_name")).toBe(
+			stringValueOf(REAL, "preview_bucket_name"),
+		);
+	});
+
+	it("is the fork's once its values are applied, trimmed", () => {
+		const { source } = applyDeploymentConfig(REAL, {
+			R2_BUCKET_NAME: "  fork-mail  ",
+		});
+		expect(stringValueOf(source, "bucket_name")).toBe("fork-mail");
 	});
 });

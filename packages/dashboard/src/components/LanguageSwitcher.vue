@@ -80,7 +80,7 @@ const onChange = (event: Event) => {
 			reloading.now();
 			return;
 		}
-		warning(t("header.reloadForLanguage"), 10_000);
+		warning(() => t("header.reloadForLanguage"), 10_000);
 	});
 };
 </script>

@@ -105,7 +105,7 @@ async function handleForgotPassword() {
 		const sentTo = email.value;
 		successMessage.value = () =>
 			t("forgotPassword.linkSent", { email: sentTo });
-		success(t("forgotPassword.linkSentToast"));
+		success(() => t("forgotPassword.linkSentToast"));
 	} catch (e: any) {
 		spent(e);
 		const fromApi = e.response?.data?.error;

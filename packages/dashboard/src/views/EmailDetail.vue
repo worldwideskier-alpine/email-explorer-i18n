@@ -457,8 +457,9 @@ const act = async (action: () => Promise<unknown>, then?: () => void) => {
 		await action();
 		then?.();
 	} catch (e: any) {
-		showErrorToast(
-			translateApiError(e?.response?.data?.error, t("compose.unexpectedError")),
+		const fromApi = e?.response?.data?.error;
+		showErrorToast(() =>
+			translateApiError(fromApi, t("compose.unexpectedError")),
 		);
 	}
 };

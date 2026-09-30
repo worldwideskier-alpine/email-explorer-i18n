@@ -44,6 +44,12 @@ export type Env = {
 	VAPID_PUBLIC_KEY: string;
 	VAPID_PRIVATE_KEY: string;
 	/**
+	 * The running version, from the `version_metadata` binding. The deploy's
+	 * last step asks for it: a change to the Worker alone leaves the page and
+	 * its bundle as they were, so the page proves nothing about the code.
+	 */
+	CF_VERSION_METADATA?: { id: string; tag?: string; timestamp?: string };
+	/**
 	 * Optional `mailto:`/`https:` contact for whoever operates this
 	 * deployment, sent to push services as the VAPID `sub` claim. Falls back
 	 * to the notified mailbox's own address when unset.

@@ -48,6 +48,7 @@ export const SETTINGS = [
 	{
 		env: "VAPID_PUBLIC_KEY",
 		keys: ["VAPID_PUBLIC_KEY"],
+		validate: validateVapidPublicKey,
 		describe: "the public half of the push-notification key pair",
 	},
 	{
@@ -67,6 +68,31 @@ function validateResourceName(value, env) {
 	if (!/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(value)) {
 		throw new Error(
 			`${env}="${value}" is not usable: 3 to 63 characters, lowercase letters, digits and dashes, starting and ending with a letter or digit.`,
+		);
+	}
+}
+
+/**
+ * An uncompressed P-256 point, base64url: 65 bytes starting 0x04. The Worker
+ * serves the half it derives from the private key when it can (see
+ * publicKeyOf), so this is the fallback -- and a fallback that is not a key
+ * at all is better refused here, with the variable named, than handed to
+ * every browser that asks.
+ */
+function validateVapidPublicKey(value, env) {
+	let bytes = "";
+	try {
+		bytes = atob(value.replace(/-/g, "+").replace(/_/g, "/"));
+	} catch {
+		bytes = "";
+	}
+	if (
+		!/^[A-Za-z0-9_-]+$/.test(value) ||
+		bytes.length !== 65 ||
+		bytes.charCodeAt(0) !== 4
+	) {
+		throw new Error(
+			`${env} is not usable: it should be the base64url public key of a P-256 pair (87 characters, starting "B").`,
 		);
 	}
 }
@@ -141,4 +167,19 @@ export function applyDeploymentConfig(source, env) {
 	}
 
 	return { source: result, applied };
+}
+
+/** The value of one JSON string key, which must appear exactly once. */
+export function stringValueOf(source, key) {
+	const found = [
+		...source.matchAll(
+			new RegExp(`"${key}"\\s*:\\s*("(?:[^"\\\\]|\\\\.)*")`, "g"),
+		),
+	];
+	if (found.length !== 1) {
+		throw new Error(
+			`"${key}" appears ${found.length} times in wrangler.jsonc; it must appear once.`,
+		);
+	}
+	return JSON.parse(found[0][1]);
 }

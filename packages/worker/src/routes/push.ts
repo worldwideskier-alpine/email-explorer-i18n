@@ -31,8 +31,42 @@ export class GetVapidPublicKey extends OpenAPIRoute {
 		// usable while nothing could ever be delivered. A fork inherits this
 		// repository's public key in wrangler.jsonc, so that was the default
 		// for anybody who had not made a pair of their own.
-		const publicKey = c.env.VAPID_PRIVATE_KEY ? c.env.VAPID_PUBLIC_KEY : "";
-		return c.json({ publicKey: publicKey || "" });
+		if (!c.env.VAPID_PRIVATE_KEY) return c.json({ publicKey: "" });
+		return c.json({
+			publicKey:
+				publicKeyOf(c.env.VAPID_PRIVATE_KEY) ?? c.env.VAPID_PUBLIC_KEY ?? "",
+		});
+	}
+}
+
+/**
+ * The public half of the key the Worker signs with, from the private one.
+ *
+ * The public key was a variable of its own, with this deployment's as the
+ * default in wrangler.jsonc: a fork that made its own pair and set only the
+ * private half (a secret) handed browsers this deployment's public key, and
+ * every push was refused by the push service for a signature that did not
+ * match -- with nothing on any screen to say why. A P-256 JWK carries the
+ * public point as `x` and `y`, so the pair cannot disagree. The variable is
+ * the fallback for a private key written without them.
+ */
+export function publicKeyOf(privateJwk: string): string | null {
+	try {
+		const { x, y } = JSON.parse(privateJwk) as { x?: unknown; y?: unknown };
+		if (typeof x !== "string" || typeof y !== "string") return null;
+		const bytes = (b64url: string) =>
+			Uint8Array.from(
+				atob(b64url.replace(/-/g, "+").replace(/_/g, "/")),
+				(ch) => ch.charCodeAt(0),
+			);
+		const point = new Uint8Array([4, ...bytes(x), ...bytes(y)]);
+		if (point.length !== 65) return null;
+		return btoa(String.fromCharCode(...point))
+			.replace(/\+/g, "-")
+			.replace(/\//g, "_")
+			.replace(/=+$/, "");
+	} catch {
+		return null;
 	}
 }
 

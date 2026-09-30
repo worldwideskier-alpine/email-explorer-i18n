@@ -120,7 +120,7 @@ async function handleResetPassword() {
 	try {
 		await api.resetPassword(token.value, password.value);
 		successMessage.value = () => t("resetPassword.success");
-		success(t("resetPassword.success"), 5000);
+		success(() => t("resetPassword.success"), 5000);
 		setTimeout(() => {
 			router.push("/login");
 		}, 5000);

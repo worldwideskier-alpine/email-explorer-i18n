@@ -166,6 +166,43 @@ describe("the deploy workflow", () => {
 	 * token, while running every install and build script there is; a token
 	 * that could write could push to main, which deploys.
 	 */
+	/**
+	 * A hung install or test held a runner for GitHub's six hours; a whole
+	 * run takes minutes.
+	 */
+	it("gives every job an end", () => {
+		const section = (deploy ?? "").slice((deploy ?? "").indexOf("\njobs:\n"));
+		const jobs = section.split(/\n {2}(?=[a-z-]+:\n)/).slice(1);
+		expect(jobs.length).toBeGreaterThanOrEqual(2);
+		for (const job of jobs) {
+			expect(job, job.split("\n")[0]).toMatch(/\n {4}timeout-minutes: \d+/);
+		}
+	});
+
+	/**
+	 * The page and its bundle prove the assets only. The check is handed the
+	 * version wrangler says is live, and asks the Worker whether it is that
+	 * one -- and the bucket step asks the config for the bucket, rather than
+	 * repeating a default of its own.
+	 */
+	it("asks the Worker for the version it published, and the config for the bucket", () => {
+		const step = (name: string) =>
+			(deploy ?? "")
+				.split(/\n {6}- /)
+				.find((one) => one.startsWith(`name: ${name}`)) ?? "";
+		expect(step("Report the version that is live")).toContain("id: live");
+		expect(step("Report the version that is live")).toContain(
+			"live-version.mjs",
+		);
+		expect(step("Check the deployment serves this build")).toContain(
+			"EXPECTED_WORKER_VERSION: ${{ steps.live.outputs.version }}",
+		);
+		expect(step("Ensure R2 bucket exists")).toContain(
+			'bucket="$(node ../scripts/bucket-name.mjs)"',
+		);
+		expect(step("Ensure R2 bucket exists")).not.toMatch(/R2_BUCKET_NAME:-/);
+	});
+
 	it("gives every job a token that can only read", () => {
 		const top = /^permissions:\n((?: {2}.*\n)+)/m.exec(deploy ?? "")?.[1];
 		expect(top?.trim()).toBe("contents: read");

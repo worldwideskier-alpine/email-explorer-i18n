@@ -378,6 +378,50 @@ describe("the push public key", () => {
 		expect(await ask(env)).not.toBe("");
 		expect(await ask({ ...env, VAPID_PRIVATE_KEY: "" })).toBe("");
 	});
+
+	/**
+	 * The half that pairs with the key the Worker signs with. It was a
+	 * variable of its own, defaulting to this deployment's: a fork with its
+	 * own private key handed browsers a public key that matched nothing, and
+	 * every push was refused. These tests are in that very position -- the
+	 * pool's private key is not the pair of the one in wrangler.jsonc.
+	 */
+	it("is the pair of the private key, whatever the variable says", async () => {
+		const served = await ask(env);
+		const raw = Uint8Array.from(
+			atob(served.replace(/-/g, "+").replace(/_/g, "/")),
+			(ch) => ch.charCodeAt(0),
+		);
+		const algorithm = { name: "ECDSA", namedCurve: "P-256" };
+		const publicKey = await crypto.subtle.importKey(
+			"raw",
+			raw,
+			algorithm,
+			false,
+			["verify"],
+		);
+		const privateKey = await crypto.subtle.importKey(
+			"jwk",
+			JSON.parse(env.VAPID_PRIVATE_KEY),
+			algorithm,
+			false,
+			["sign"],
+		);
+		const data = new TextEncoder().encode("a push");
+		const sign = { name: "ECDSA", hash: "SHA-256" };
+		const signature = await crypto.subtle.sign(sign, privateKey, data);
+		expect(await crypto.subtle.verify(sign, publicKey, signature, data)).toBe(
+			true,
+		);
+		expect(served).not.toBe(env.VAPID_PUBLIC_KEY);
+	});
+
+	it("falls back to the variable for a private key without its public point", async () => {
+		const { x: _x, y: _y, ...bare } = JSON.parse(env.VAPID_PRIVATE_KEY);
+		expect(await ask({ ...env, VAPID_PRIVATE_KEY: JSON.stringify(bare) })).toBe(
+			env.VAPID_PUBLIC_KEY,
+		);
+	});
 });
 
 /**

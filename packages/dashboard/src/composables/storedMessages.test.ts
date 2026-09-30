@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { toastText, useToast } from "./useToast";
 
 /**
  * No message may be stored as an already-translated string.
@@ -83,6 +84,37 @@ describe("stored messages", () => {
 			}
 		}
 
+		expect(offenders).toEqual([]);
+	});
+});
+
+/**
+ * A toast is a message stored, too: it is drawn for seconds after it was
+ * made, and a string from `t()` stayed in the language it was made in. The
+ * toast takes a function now (useToast's ToastMessage); what is handed to it
+ * directly must not be a translation.
+ */
+describe("toasts", () => {
+	const TOAST_CALL =
+		/\b(?:success|error|info|warning|addToast|show\w*Toast)\(\s*(?!\(\)\s*=>)[^)]*?\b(?:t|translateApiError)\s*\(/g;
+
+	it("say it again each time they are drawn", () => {
+		let language = "en";
+		const { addToast, toasts, removeToast } = useToast();
+		const id = addToast(() => `saved (${language})`, "info", 0);
+		language = "ja";
+		const shown = toasts.value.find((toast) => toast.id === id);
+		expect(shown && toastText(shown)).toBe("saved (ja)");
+		removeToast(id);
+	});
+
+	it("are handed how to say it, not what was said", () => {
+		const offenders: string[] = [];
+		for (const [path, raw] of Object.entries(sources)) {
+			for (const match of withoutComments(raw).matchAll(TOAST_CALL)) {
+				offenders.push(`${path}: ${match[0]}`);
+			}
+		}
 		expect(offenders).toEqual([]);
 	});
 });

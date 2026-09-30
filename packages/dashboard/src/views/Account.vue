@@ -135,7 +135,7 @@ async function submitPassword() {
 		currentPasswordForPassword.value = "";
 		newPassword.value = "";
 		newPasswordConfirm.value = "";
-		success(t("account.changePassword.done"));
+		success(() => t("account.changePassword.done"));
 	} catch (e: any) {
 		showError(
 			translateApiError(
@@ -156,7 +156,10 @@ async function submitEmail() {
 			newEmail.value,
 			locale.value,
 		);
-		success(t("account.changeEmail.sent", { email: newEmail.value }));
+		// The address now, not when the toast is drawn: the box is cleared
+		// on the next line.
+		const sentTo = newEmail.value;
+		success(() => t("account.changeEmail.sent", { email: sentTo }));
 		currentPasswordForEmail.value = "";
 		newEmail.value = "";
 	} catch (e: any) {

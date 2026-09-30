@@ -44,7 +44,7 @@ See the [Admin Panel Guide](./admin-panel.md) for what each screen offers.
 
 1. Open your deployment's URL
 2. Enter your sign-in address and password
-3. Choose **Log In**
+3. Choose **Sign in**
 
 A sign-in that fails says "Invalid credentials" whether the address or the
 password was wrong, so the page does not tell a stranger which addresses

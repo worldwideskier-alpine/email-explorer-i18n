@@ -122,7 +122,8 @@ are still checked, by the `tsc` that runs before the worker tests.
   records what it took with whose key (`https://api.resend.com/__sent`);
   `whose-key.test.ts` asks it. Before, it took anything, so a send billed to
   somebody else passed every test.
-- **Roles.** `root` / `admin` / `member`, decided in `roles.ts`. Root is an
+- **Roles.** `root` / `admin`, decided in `roles.ts` -- the third, `member`,
+  is gone (nothing ever made one on purpose). Root is an
   **account id in `app_roles`, inside the auth Durable Object** -- not a
   deployment variable. This is software people fork and deploy: naming who
   administers their own mail must not send them to GitHub, so every part of it
