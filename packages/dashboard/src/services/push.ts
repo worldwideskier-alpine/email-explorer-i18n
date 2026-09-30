@@ -8,7 +8,10 @@ export function isPushSupported(): boolean {
 	);
 }
 
-function urlBase64ToUint8Array(base64: string): Uint8Array {
+// Backed by an ArrayBuffer, which is what pushManager.subscribe takes as a
+// BufferSource; since TypeScript 5.9 a bare Uint8Array may be backed by a
+// SharedArrayBuffer too, and is refused there.
+function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
 	const padding = "=".repeat((4 - (base64.length % 4)) % 4);
 	const base64Safe = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
 	const raw = atob(base64Safe);
