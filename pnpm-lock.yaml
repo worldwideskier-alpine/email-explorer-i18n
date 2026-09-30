@@ -125,8 +125,8 @@ importers:
         specifier: ^2.0.5
         version: 2.0.5
       chanfana:
-        specifier: 2.8.3
-        version: 2.8.3
+        specifier: 3.4.0
+        version: 3.4.0
       hono:
         specifier: 4.13.9
         version: 4.13.9
@@ -182,10 +182,10 @@ packages:
     resolution: {integrity: sha512-lSWTBMjAcmu2xn5yEDU7jh6QDV+C8GEKtdJ4pIQhXh26RkKQ7S3FuQlt+zZkUbTdJ4d3XyV1kPI/G0zWXxqaqw==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
 
-  '@asteasolutions/zod-to-openapi@7.2.0':
-    resolution: {integrity: sha512-Va+Fq1QzKkSgmiYINSp3cASFhMsbdRH/kmCk2feijhC+yNjGoC056CRqihrVFhR8MY8HOZHdlYm2Ns2lmszCiw==}
+  '@asteasolutions/zod-to-openapi@8.5.0':
+    resolution: {integrity: sha512-SABbKiObg5dLRiTFnqiW1WWwGcg1BJfmHtT2asIBnBHg6Smy/Ms2KHc650+JI4Hw7lSkdiNebEGXpwoxfben8Q==}
     peerDependencies:
-      zod: ^3.20.2
+      zod: ^4.0.0
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -2033,8 +2033,9 @@ packages:
     resolution: {integrity: sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg==}
     engines: {node: '>=18'}
 
-  chanfana@2.8.3:
-    resolution: {integrity: sha512-OBefbT8n+CeRYkC6lUoRgySTFbth+3LetxiNrCe0t+WgpQhhoIxPlo+lDYvNrLJgtsQr7XuPazm8yyxR8zwB7g==}
+  chanfana@3.4.0:
+    resolution: {integrity: sha512-zNXyjQWnuhxd2m5QOQjAT7dCi8jg/SXckhD3y/Z6PKJfsf/XfSlvxyxFJpJh8O19lrvrsM4SUgEz2628imtWJQ==}
+    engines: {node: '>=18'}
     hasBin: true
 
   chokidar@4.0.3:
@@ -2601,6 +2602,9 @@ packages:
 
   openapi3-ts@4.4.0:
     resolution: {integrity: sha512-9asTNB9IkKEzWMcHmVZE7Ts3kC9G7AFHfs8i7caD8HbI76gEjdkId4z/AkP83xdZsH7PLAnnbl47qZkXuxpArw==}
+
+  openapi3-ts@4.6.1:
+    resolution: {integrity: sha512-XW9MOldkhoICNeXVzzmXzmOW5G73ppOEGmh7fLCqHjgfdEYCGGN+00MlVCeUZgovjjfC56j9tvtDt1zGabNjjA==}
 
   orderedmap@2.1.1:
     resolution: {integrity: sha512-TvAWxi0nDe1j/rtMcWcIj94+Ffe6n7zhow33h40SKxmsmozs6dz/e+EajymfoFcHd7sxNn8yHM8839uixMOV6g==}
@@ -3250,10 +3254,10 @@ snapshots:
       is-potential-custom-element-name: 1.0.1
       lru-cache: 11.5.3
 
-  '@asteasolutions/zod-to-openapi@7.2.0(zod@3.25.76)':
+  '@asteasolutions/zod-to-openapi@8.5.0(zod@4.4.3)':
     dependencies:
       openapi3-ts: 4.4.0
-      zod: 3.25.76
+      zod: 4.4.3
 
   '@babel/code-frame@7.27.1':
     dependencies:
@@ -4857,13 +4861,13 @@ snapshots:
 
   chai@6.2.2: {}
 
-  chanfana@2.8.3:
+  chanfana@3.4.0:
     dependencies:
-      '@asteasolutions/zod-to-openapi': 7.2.0(zod@3.25.76)
+      '@asteasolutions/zod-to-openapi': 8.5.0(zod@4.4.3)
       js-yaml: 4.3.2
-      openapi3-ts: 4.4.0
+      openapi3-ts: 4.6.1
       yargs-parser: 22.0.0
-      zod: 3.25.76
+      zod: 4.4.3
 
   chokidar@4.0.3:
     dependencies:
@@ -5398,6 +5402,10 @@ snapshots:
       wsl-utils: 1.0.0
 
   openapi3-ts@4.4.0:
+    dependencies:
+      yaml: 2.9.0
+
+  openapi3-ts@4.6.1:
     dependencies:
       yaml: 2.9.0
 
