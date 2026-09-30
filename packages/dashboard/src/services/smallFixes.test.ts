@@ -216,7 +216,7 @@ describe("search results", () => {
 		const app = createApp({ render: () => h(RouterView) });
 		// Navigate before the router is installed; installed first, it resolved
 		// the memory history's empty start, matched nothing and warned.
-		await router.push("/mailbox/two%40example.com/search");
+		await router.push("/mailbox/two%40example.com/search?q=invoice");
 		await router.isReady();
 		app
 			.use(pinia)
@@ -230,7 +230,11 @@ describe("search results", () => {
 				}),
 			);
 		const { useSearchStore } = await import("@/stores/search");
+		// The screen asks for its own search; held here, so that what is on
+		// screen is only ever the other mailbox's results or none.
+		vi.spyOn(useSearchStore(), "searchEmails").mockResolvedValue();
 		useSearchStore().mailboxId = "one@example.com";
+		useSearchStore().query = "invoice";
 		useSearchStore().results = [
 			{ id: "r1", subject: "found", sender: "a@x", date: "2026-09-01" },
 		] as never;
@@ -239,7 +243,7 @@ describe("search results", () => {
 		await nextTick();
 		expect(host.textContent).not.toContain("found");
 
-		await router.push("/mailbox/one%40example.com/search");
+		await router.push("/mailbox/one%40example.com/search?q=invoice");
 		await nextTick();
 		expect(host.textContent).toContain("found");
 		app.unmount();

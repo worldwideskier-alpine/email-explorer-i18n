@@ -3,8 +3,6 @@ import { describe, expect, it } from "vitest";
 // its shape; these run on it, so a key renamed or moved there fails here
 // rather than in the deploy.
 import REAL from "../../dev/wrangler.jsonc?raw";
-// The pool reads the file above; its own settings must not replace it.
-import POOL_CONFIG from "../vitest.config.mts?raw";
 // Plain JS on purpose: this module also runs under node from the deploy
 // workflow, where there is nothing to compile it. allowJs types it here.
 import {
@@ -13,6 +11,8 @@ import {
 	stringValueOf,
 } from "../../scripts/deployment-config.mjs";
 import { recoveryFromEmail } from "../../src/deployment-config";
+// The pool reads dev/wrangler.jsonc; its own settings must not replace it.
+import POOL_CONFIG from "../vitest.config.mts?raw";
 
 /**
  * The values that belong to one deployment and no other.

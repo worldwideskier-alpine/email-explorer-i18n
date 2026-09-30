@@ -29,9 +29,9 @@ type Sent = {
 };
 
 async function sentTo(recipient: string) {
-	const all = await (
-		await fetch("https://api.resend.com/__sent")
-	).json<Sent[]>();
+	const all = await (await fetch("https://api.resend.com/__sent")).json<
+		Sent[]
+	>();
 	const mine = all.filter((one) =>
 		[one.body.to].flat().some((to) => String(to) === recipient),
 	);
