@@ -1,0 +1,23 @@
+# Temporary: reads what changed in chanfana 2.8 -> 3.4 and zod 3 -> 4 before
+# either is taken. Runs on the working branch only, and is removed once it
+# has answered.
+name: Changelog probe
+on:
+  push:
+    branches: [claude/github-settings-migration-t81k5b]
+    paths: ['.github/workflows/changelog-probe.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: chanfana
+        run: |
+          curl -sSL --max-time 30 -o ch.md https://raw.githubusercontent.com/cloudflare/chanfana/main/CHANGELOG.md -w '%{http_code}\n'
+          awk '/^#+ \[?2\.8\.3/{exit} {print}' ch.md | grep -v '^\s*$' | head -220
+      - name: zod
+        run: |
+          curl -sSL --max-time 30 -o z.mdx https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/v4/changelog.mdx -w '%{http_code}\n'
+          grep -nE '^#{2,3} ' z.mdx | head -120
