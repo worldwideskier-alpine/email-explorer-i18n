@@ -35,7 +35,7 @@ updates:
     # deploys straight to production, and a breaking bump of postal-mime or
     # zod is not something to wave through alongside a routine patch. They
     # come as one pull request to be read one by one, not one pull request
-    # each. They are deliberately not ignored (two exceptions, below) --
+    # each. They are deliberately not ignored (but for the few below) --
     # upstream is active, and a security fix sometimes lands only in a new
     # major.
     groups:
@@ -58,12 +58,20 @@ updates:
     # suite and names the vitest it takes (^4.1.0 in 0.22.0, still the
     # latest). vitest 5 under it started no test at all (#48); both suites
     # stay on one vitest. Move it when the pool's peer range does.
+    #
+    # TypeScript follows vue-tsc, which type-checks the dashboard in every
+    # build through TypeScript's own JavaScript API (typescript/lib/tsc).
+    # TypeScript 7, the native rewrite, does not ship that API: vue-tsc
+    # 3.3.11 stopped at ERR_PACKAGE_PATH_NOT_EXPORTED before checking a file
+    # (#26 and #50). Move it when vue-tsc supports 7.
     ignore:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
       - dependency-name: "vitest"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@vitest/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
   - package-ecosystem: "github-actions"
     directory: "/"
