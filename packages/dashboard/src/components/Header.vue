@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
@@ -78,11 +78,27 @@ const uiStore = useUIStore();
 const route = useRoute();
 const router = useRouter();
 
+// The words go in the address, which is what the results screen searches
+// by; asked here too, so pressing Enter on the same words asks again.
 const performSearch = () => {
 	const mailboxId = route.params.mailboxId as string;
 	searchStore.searchEmails(mailboxId, searchQuery.value);
-	router.push({ name: "SearchResults" });
+	router.push({
+		name: "SearchResults",
+		params: { mailboxId },
+		query: { q: searchQuery.value },
+	});
 };
+
+// A results screen opened from its address shows its words in the box.
+watch(
+	() => route.query.q,
+	(q) => {
+		if (route.name === "SearchResults" && typeof q === "string")
+			searchQuery.value = q;
+	},
+	{ immediate: true },
+);
 
 const handleSettingsClick = () => {
 	const mailboxId = route.params.mailboxId as string;

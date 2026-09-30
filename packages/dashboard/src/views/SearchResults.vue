@@ -36,9 +36,9 @@
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useDateFormat } from "@/composables/useDateFormat";
 import { useSearchStore } from "@/stores/search";
 
@@ -47,17 +47,47 @@ const { formatListDate } = useDateFormat();
 const searchStore = useSearchStore();
 const { results, isLoading, failed } = storeToRefs(searchStore);
 const route = useRoute();
+const router = useRouter();
 
-// Only under the mailbox they came from. The store holds one mailbox's
-// results, and they used to show under whichever mailbox was open next --
-// links to messages that mailbox does not have.
-const shown = computed(() =>
-	searchStore.mailboxId === route.params.mailboxId ? results.value : [],
+const mailboxId = computed(() => route.params.mailboxId as string);
+/**
+ * What is searched for is the address's, not only the store's. Held in the
+ * store alone, a reload, a shared link or coming back to this screen showed
+ * "No results found" for a search nobody had made.
+ */
+const asked = computed(() =>
+	typeof route.query.q === "string" ? route.query.q : undefined,
 );
-const failedHere = computed(
-	() => failed.value && searchStore.mailboxId === route.params.mailboxId,
+
+// Only for the mailbox and the words in the address. The store holds one
+// search, and it used to show under whichever mailbox was open next --
+// links to messages that mailbox does not have.
+const isThisSearch = computed(
+	() =>
+		searchStore.mailboxId === mailboxId.value &&
+		searchStore.query === asked.value,
+);
+const shown = computed(() => (isThisSearch.value ? results.value : []));
+const failedHere = computed(() => failed.value && isThisSearch.value);
+
+watch(
+	[mailboxId, asked],
+	([mailbox, q]) => {
+		if (!mailbox) return;
+		// Nothing asked, so there is no answer to show; the mailbox is.
+		if (q === undefined) {
+			router.replace({
+				name: "EmailList",
+				params: { mailboxId: mailbox, folder: "inbox" },
+			});
+			return;
+		}
+		// The header has already asked this one on its way here.
+		if (!isThisSearch.value) void searchStore.searchEmails(mailbox, q);
+	},
+	{ immediate: true },
 );
 
 const searchAgain = () =>
-	searchStore.searchEmails(searchStore.mailboxId, searchStore.query);
+	searchStore.searchEmails(mailboxId.value, asked.value ?? "");
 </script>

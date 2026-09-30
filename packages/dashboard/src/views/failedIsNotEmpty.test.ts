@@ -79,7 +79,7 @@ describe("a search that fails", () => {
 	const mountResults = async () => {
 		const { default: SearchResults } = await import("./SearchResults.vue");
 		await mount(
-			"/mailbox/m%40example.com/search",
+			"/mailbox/m%40example.com/search?q=invoice",
 			[
 				{
 					path: "/mailbox/:mailboxId/search",
