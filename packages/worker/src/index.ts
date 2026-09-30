@@ -840,6 +840,8 @@ class PostEmail extends OpenAPIRoute {
 						filename: att.filename,
 						content: att.content,
 						type: att.type,
+						disposition: att.disposition,
+						contentId: att.contentId,
 					})),
 					inReplyTo: in_reply_to,
 					references: references,

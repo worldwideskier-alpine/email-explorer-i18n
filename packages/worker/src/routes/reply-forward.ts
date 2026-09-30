@@ -129,6 +129,8 @@ export class PostReplyEmail extends OpenAPIRoute {
 						filename: att.filename,
 						content: att.content,
 						type: att.type,
+						disposition: att.disposition,
+						contentId: att.contentId,
 					})),
 					inReplyTo: in_reply_to ?? undefined,
 					references: references,
@@ -242,6 +244,8 @@ export class PostForwardEmail extends OpenAPIRoute {
 						filename: att.filename,
 						content: att.content,
 						type: att.type,
+						disposition: att.disposition,
+						contentId: att.contentId,
 					})),
 				},
 				// Sent by whoever holds this mailbox, and billed to their key.

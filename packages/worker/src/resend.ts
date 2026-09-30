@@ -6,6 +6,21 @@ interface ResendAttachment {
 	filename: string;
 	content: string; // base64
 	type: string;
+	disposition?: "attachment" | "inline";
+	/** What the HTML names it by, as `cid:...`, when it is inline. */
+	contentId?: string;
+}
+
+/**
+ * The id an inline picture is named by, as Resend's `content_id` takes it:
+ * bare, without the angle brackets a Content-ID header carries (its own SDK
+ * takes them off too). Resend writes it into a header of the message, so
+ * anything but visible ASCII is refused rather than passed on; the file then
+ * goes as an ordinary attachment.
+ */
+export function asContentId(value: string | undefined): string | undefined {
+	const bare = (value ?? "").trim().replace(/^<(.*)>$/, "$1");
+	return /^[\x21-\x3b\x3d\x3f-\x7e]+$/.test(bare) ? bare : undefined;
 }
 
 interface SendEmailParams {
@@ -78,6 +93,11 @@ export async function sendEmail(
 				filename: att.filename,
 				content: att.content,
 				content_type: att.type,
+				// Without it an inline picture went as a plain attachment, and
+				// the HTML's cid: reference pointed at nothing: the picture was
+				// missing from the message and listed below it instead.
+				content_id:
+					att.disposition === "inline" ? asContentId(att.contentId) : undefined,
 			})),
 		}),
 	});
