@@ -11,7 +11,10 @@
 	"observability": {
 		"enabled": true
 	},
-	"compatibility_flags": ["nodejs_compat", "enable_email_sending_queuing"],
+	// Only what the code uses. `enable_email_sending_queuing`, inherited from
+	// upstream, concerns a send_email binding, and there is none: mail leaves
+	// through Resend. The test pool reads this list rather than its own.
+	"compatibility_flags": ["nodejs_compat"],
 	// Which version is answering; the deploy's last step compares it with the
 	// one it published. See scripts/deployment-check.mjs.
 	"version_metadata": {

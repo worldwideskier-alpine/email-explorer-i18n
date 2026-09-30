@@ -64,7 +64,6 @@ export default defineConfig({
 						'{"kty":"EC","x":"8E1Zw4MOMOZ7rj054pNEfyPiDPFFa8fslXToOdkZ7T8","y":"a6S25MrJI_qeBANimu06z3PpRZ9qt4f7TV-vzugFLNo","crv":"P-256","d":"jttxgnEcVnL_dzqyTnUWQWViXHLM_owkiFnF5EHKung","alg":"ES256","key_ops":["sign"],"ext":true}',
 				},
 				r2Persist: false,
-				compatibilityFlags: ["nodejs_compat", "nodejs_als"],
 				// Reply/forward routes call the real Resend API over fetch();
 				// stub it out so integration tests don't need network access
 				// or a real API key.

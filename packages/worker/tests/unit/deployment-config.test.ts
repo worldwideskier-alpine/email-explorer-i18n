@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 // its shape; these run on it, so a key renamed or moved there fails here
 // rather than in the deploy.
 import REAL from "../../dev/wrangler.jsonc?raw";
+// The pool reads the file above; its own settings must not replace it.
+import POOL_CONFIG from "../vitest.config.mts?raw";
 // Plain JS on purpose: this module also runs under node from the deploy
 // workflow, where there is nothing to compile it. allowJs types it here.
 import {
@@ -306,5 +308,17 @@ describe("the bucket's name, as the deploy step reads it", () => {
 			R2_BUCKET_NAME: "  fork-mail  ",
 		});
 		expect(stringValueOf(source, "bucket_name")).toBe("fork-mail");
+	});
+});
+
+/**
+ * The tests run on the deployment's own compatibility flags. The pool used
+ * to set a list of its own, which had drifted from the deployed one: the
+ * tests ran with a flag production did not have and without one it did.
+ */
+describe("the test pool's compatibility flags", () => {
+	it("are the ones dev/wrangler.jsonc deploys with", () => {
+		expect(POOL_CONFIG).not.toMatch(/compatibility(Flags|Date)\s*:/);
+		expect(POOL_CONFIG).toContain('"../dev/wrangler.jsonc"');
 	});
 });
