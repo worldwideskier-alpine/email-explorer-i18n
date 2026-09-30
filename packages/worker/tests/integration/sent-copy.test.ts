@@ -29,7 +29,7 @@ describe("an attachment that is not base64", () => {
 		const real = globalThis.fetch;
 		vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
 			const url = input instanceof Request ? input.url : String(input);
-			if (url.includes("api.resend.com")) sent.push(url);
+			if (new URL(url).hostname === "api.resend.com") sent.push(url);
 			return real(input, init);
 		});
 

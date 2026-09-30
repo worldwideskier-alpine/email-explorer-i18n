@@ -16,7 +16,7 @@ describe("quotedPictures", () => {
 	});
 
 	it("reads an encoded mailbox as the mailbox", () => {
-		const encoded = HERE.replace("@", "%40");
+		const encoded = `/api/v1/mailboxes/${encodeURIComponent("m@example.com")}/emails/e1/attachments/a1`;
 		expect(quotedPictures(`<img src="${encoded}">`)[0].mailboxId).toBe(
 			"m@example.com",
 		);
