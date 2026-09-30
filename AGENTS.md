@@ -43,6 +43,12 @@ deployment's address and they never arrived. The order is the variable, then
 `/root`, then an `EmailExplorer({ accountRecovery })` option; with none,
 "forgot password" is off. See `src/deployment-config.ts`.
 
+The Worker serves the push public key it derives from the private one
+(`publicKeyOf`, `routes/push.ts`), so `VAPID_PUBLIC_KEY` is only the fallback
+for a private key written without its public point: a fork that set only its
+own private key used to hand out this deployment's public key, and every push
+was refused. A value given for it must have a key's shape, or the deploy stops.
+
 User-facing setup lives in `docs/deploying-your-own.md`.
 
 ## Layout
@@ -557,7 +563,11 @@ the entry script's name in the served page, that file's bytes by hash, the
 SPA fallback on a deep path, and an API path answered by the Worker rather
 than by the page being served in its place. So "the bundle I measured is the
 bundle that is live" is something the log says rather than something to
-assume. It needs the `PRODUCTION_URL` secret; without it the step is skipped
+assume. And the Worker is asked which version it is (`version` in
+`/api/v1/settings`, from the `version_metadata` binding) and compared with the
+one `wrangler deployments status` said is live: a change to the Worker alone
+leaves the page and its bundle as they were, so they prove nothing about the
+code. It needs the `PRODUCTION_URL` secret; without it the step is skipped
 and says so. The step before it prints the version that is actually running,
 which is *not* the id the deploy step prints -- uploading the VAPID secret
 publishes a version of its own, after it.
@@ -645,6 +655,8 @@ reached, and a second copy of the editor's Link extension.
   produce it — `useLocalizedMessage` for a message set by an action,
   `computed` for one derived from state. `storedMessages.test.ts` fails on the
   old shape; a line built inside a `watch` slips past it, so check by hand.
+  A toast is the same: hand it `() => t("...")`, not `t("...")`
+  (`ToastMessage`); the same test holds it.
 - Keep business identifiers out of `packages/worker/src`,
   `packages/dashboard` and the tests — this repository is public.
   Deployment-specific values belong in `packages/worker/dev`.
