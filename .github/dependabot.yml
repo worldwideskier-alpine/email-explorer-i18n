@@ -24,8 +24,9 @@ updates:
     # group arrives as its own pull request instead, which is the point: a
     # merge to main deploys straight to production, and a breaking bump of
     # postal-mime or zod is not something to wave through alongside a routine
-    # patch. Majors are deliberately not ignored -- upstream is active, and a
-    # security fix sometimes lands only in a new major.
+    # patch. Majors are deliberately not ignored (one exception, below) --
+    # upstream is active, and a security fix sometimes lands only in a new
+    # major.
     groups:
       prod-deps:
         dependency-type: "production"
@@ -33,6 +34,15 @@ updates:
       dev-deps:
         dependency-type: "development"
         update-types: ["minor", "patch"]
+    # The one major that is ignored. @types/node describes a Node, and the one
+    # that matters is the one CI and the deploy run (node-version in
+    # deploy.yml), not the newest: typed for Node 26 while running Node 22,
+    # an API Node 22 does not have compiles and then fails at run time. It
+    # carries no code, so no security fix waits in its next major. Move it
+    # with node-version, by hand.
+    ignore:
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
