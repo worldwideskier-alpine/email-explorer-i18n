@@ -29,7 +29,9 @@ export const useFolderStore = defineStore("folders", {
 		},
 		async createFolder(mailboxId: string, name: string) {
 			const response = await api.createFolder(mailboxId, name);
-			this.folders.push(response.data);
+			// Into this mailbox's list only: made in one and answered after
+			// moving to another, it was added to the other's sidebar.
+			if (this.mailboxId === mailboxId) this.folders.push(response.data);
 		},
 		async updateFolder(mailboxId: string, id: string, name: string) {
 			const response = await api.updateFolder(mailboxId, id, name);

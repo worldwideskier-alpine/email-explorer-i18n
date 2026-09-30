@@ -3,6 +3,8 @@ import api from "@/services/api";
 import type { Mailbox } from "@/types";
 
 let latestMailbox = 0;
+/** Which request for the list is the latest; see fetchMailboxes. */
+let latestList = 0;
 
 export const useMailboxStore = defineStore("mailboxes", {
 	state: () => ({
@@ -11,8 +13,11 @@ export const useMailboxStore = defineStore("mailboxes", {
 	}),
 	actions: {
 		async fetchMailboxes() {
+			// The latest answer only: a list asked for before a mailbox was
+			// made could land after the one asked for once it was.
+			const request = ++latestList;
 			const response = await api.listMailboxes();
-			this.mailboxes = response.data;
+			if (request === latestList) this.mailboxes = response.data;
 		},
 		/**
 		 * The previous mailbox is dropped before the next is asked for, and a

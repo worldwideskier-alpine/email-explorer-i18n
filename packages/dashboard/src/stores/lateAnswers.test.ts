@@ -12,6 +12,7 @@ const later = (key: string) =>
 		pending[key] = resolve;
 	});
 
+let listed = 0;
 const getCurrentUser = vi.fn();
 const logout = vi.fn(async () => ({ data: {} }));
 
@@ -20,6 +21,10 @@ vi.mock("@/services/api", () => ({
 		searchEmails: (mailboxId: string, params: { query: string }) =>
 			later(`search:${mailboxId}:${params.query}`),
 		getMailbox: (id: string) => later(`mailbox:${id}`),
+		listContacts: (id: string) => later(`contacts:${id}`),
+		listMailboxes: () => later(`mailboxes:${++listed}`),
+		createFolder: (id: string, name: string) => later(`folder:${id}:${name}`),
+		listFolders: (id: string) => later(`folders:${id}`),
 		updateMailbox: (id: string) => later(`update:${id}`),
 		getCurrentUser: () => getCurrentUser(),
 		logout: () => logout(),
@@ -31,6 +36,8 @@ vi.mock("@/services/api", () => ({
 const { useSearchStore } = await import("./search");
 const { useMailboxStore } = await import("./mailboxes");
 const { useAuthStore } = await import("./auth");
+const { useContactStore } = await import("./contacts");
+const { useFolderStore } = await import("./folders");
 
 beforeEach(() => {
 	setActivePinia(createPinia());
@@ -159,5 +166,55 @@ describe("choosing a language", () => {
 		await Promise.all([slow, fast]);
 		expect(i18n.global.locale.value).toBe("en");
 		expect(localStorage.getItem("email-explorer-locale")).toBe("en");
+	});
+});
+
+/**
+ * The same for the lists that had no such guard: contacts, the mailbox list,
+ * and a folder made in one mailbox and answered once the reader was in
+ * another.
+ */
+describe("the lists that had no guard", () => {
+	it("keep one mailbox's contacts out of the next", async () => {
+		const store = useContactStore();
+		const first = store.fetchContacts("one");
+		const second = store.fetchContacts("two");
+		pending["contacts:two"]({
+			data: [{ id: 2, name: "b", email: "b@example.com" }],
+		});
+		await second;
+		pending["contacts:one"]({
+			data: [{ id: 1, name: "a", email: "a@example.com" }],
+		});
+		await first;
+		expect(store.contacts.map((c) => c.id)).toEqual([2]);
+	});
+
+	it("keep the latest mailbox list", async () => {
+		const store = useMailboxStore();
+		listed = 0;
+		const older = store.fetchMailboxes();
+		const newer = store.fetchMailboxes();
+		pending["mailboxes:2"]({ data: [{ id: "new@example.com" }] });
+		await newer;
+		pending["mailboxes:1"]({ data: [] });
+		await older;
+		expect(store.mailboxes.map((m) => m.id)).toEqual(["new@example.com"]);
+	});
+
+	it("put a new folder only in its own mailbox's list", async () => {
+		const store = useFolderStore();
+		const loadOne = store.fetchFolders("one");
+		pending["folders:one"]({ data: [] });
+		await loadOne;
+		const made = store.createFolder("one", "Receipts");
+		const loadTwo = store.fetchFolders("two");
+		pending["folders:two"]({ data: [{ id: "inbox", name: "Inbox" }] });
+		await loadTwo;
+		pending["folder:one:Receipts"]({
+			data: { id: "receipts", name: "Receipts" },
+		});
+		await made;
+		expect(store.folders.map((f) => f.id)).toEqual(["inbox"]);
 	});
 });
