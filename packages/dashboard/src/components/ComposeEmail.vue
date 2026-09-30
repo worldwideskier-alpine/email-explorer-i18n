@@ -211,6 +211,15 @@ import {
 	htmlToPlainText,
 	plainTextToSimpleHtml,
 } from "@/utils/htmlToPlainText";
+import {
+	asInlineAttachment,
+	attachmentPath,
+	type InlineCandidate,
+	type OutgoingInline,
+	quotedPictures,
+	substituteInlineImages,
+	withContentIds,
+} from "@/utils/inlineImages";
 import { plainTextToParagraphs, toQuotableHtml } from "@/utils/quotedBody";
 import { forwardSubject, replySubject } from "@/utils/subjectPrefix";
 import RichTextEditor from "./RichTextEditor.vue";
@@ -341,10 +350,12 @@ const { formatFullDate } = useDateFormat();
  * toQuotableHtml.
  */
 interface Quotable {
+	id: string;
 	date: string;
 	sender: string;
 	body: string;
 	folder_id?: string;
+	attachments?: InlineCandidate[];
 }
 
 /**
@@ -357,10 +368,21 @@ interface Quotable {
  * the spam folder is careful never to do. From spam the quote is the words
  * alone.
  */
-const quotedBody = (original: Quotable) =>
-	original.folder_id === "spam"
-		? plainTextToParagraphs(htmlToPlainText(original.body))
-		: toQuotableHtml(original.body);
+const quotedBody = (original: Quotable) => {
+	if (original.folder_id === "spam") {
+		return plainTextToParagraphs(htmlToPlainText(original.body));
+	}
+	// Its pictures by their addresses here, as when it is read: `cid:` loads
+	// nothing on this page, so they were broken in the editor -- and in the
+	// message sent, since nothing went with them. See outgoingPictures.
+	const mailboxId = route.params.mailboxId as string;
+	const { html } = substituteInlineImages(
+		original.body,
+		original.attachments ?? [],
+		(attachmentId) => attachmentPath(mailboxId, original.id, attachmentId),
+	);
+	return toQuotableHtml(html);
+};
 
 /**
  * The sender, subject and header text are the sender's own words going into
@@ -598,17 +620,34 @@ const send = async () => {
 			cc: splitAddresses(cc.value),
 			bcc: splitAddresses(bcc.value),
 		};
+		const { html, pictures } = isPlainText.value
+			? { html: body.value, pictures: [] }
+			: await outgoingPictures(mailboxId, body.value);
+		if (
+			attachmentBytes.value + totalAttachmentBytes(pictures) >
+			MAX_TOTAL_ATTACHMENT_BYTES
+		) {
+			error.value = () =>
+				t("compose.attachmentTooLarge", {
+					max: formatBytes(MAX_TOTAL_ATTACHMENT_BYTES),
+				});
+			return;
+		}
 		// Omitted entirely rather than sent as [], which the API rejects.
-		const attached = attachments.value.length
-			? {
-					attachments: attachments.value.map((att) => ({
-						content: att.content,
-						filename: att.filename,
-						type: att.type,
-						disposition: "attachment" as const,
-					})),
-				}
-			: {};
+		const attached =
+			attachments.value.length || pictures.length
+				? {
+						attachments: [
+							...attachments.value.map((att) => ({
+								content: att.content,
+								filename: att.filename,
+								type: att.type,
+								disposition: "attachment" as const,
+							})),
+							...pictures.map(({ size: _size, ...picture }) => picture),
+						],
+					}
+				: {};
 
 		const emailData = isPlainText.value
 			? {
@@ -623,7 +662,7 @@ const send = async () => {
 					...attached,
 					from: currentMailbox.value.email,
 					subject: subject.value,
-					html: body.value,
+					html,
 					text: htmlToPlainText(body.value),
 				};
 
@@ -686,6 +725,52 @@ const send = async () => {
 		isLoading.value = false;
 	}
 };
+
+/**
+ * The pictures quoted from a message, as they leave: each address on this
+ * deployment put back to a `cid:`, and the picture attached under it.
+ *
+ * Found in the HTML being sent rather than remembered from when the quote
+ * was made, so a picture deleted from the quote is not sent, and a draft
+ * saved and resumed sends its pictures too. An address of another
+ * mailbox's attachment -- pasted in -- is put back to a `cid:` all the same
+ * and sends nothing: the address would name that mailbox to the recipient,
+ * and open nothing for them.
+ */
+async function outgoingPictures(
+	mailboxId: string,
+	html: string,
+): Promise<{ html: string; pictures: OutgoingInline[] }> {
+	const found = quotedPictures(html);
+	if (!found.length) return { html, pictures: [] };
+	const ours = found.filter(
+		(picture, index) =>
+			picture.mailboxId.toLowerCase() === mailboxId.toLowerCase() &&
+			found.findIndex((p) => p.attachmentId === picture.attachmentId) === index,
+	);
+	let pictures: OutgoingInline[];
+	try {
+		pictures = await Promise.all(
+			ours.map(async (picture) => {
+				const response = await api.getAttachment(
+					mailboxId,
+					picture.emailId,
+					picture.attachmentId,
+				);
+				return asInlineAttachment(
+					picture,
+					response.data as Blob,
+					response.headers?.["content-disposition"],
+				);
+			}),
+		);
+	} catch {
+		// Not sent without it: the message would go with a broken picture
+		// in it, and nobody would know until the recipient said.
+		throw new ComposeError("common.loadFailed");
+	}
+	return { html: withContentIds(html, found), pictures };
+}
 
 /** A send refused before it reached the server, named by its message key. */
 class ComposeError extends Error {

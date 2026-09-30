@@ -205,6 +205,7 @@ import { useEmailStore } from "@/stores/emails";
 import { useFolderStore } from "@/stores/folders";
 import { useUIStore } from "@/stores/ui";
 import { translateApiError } from "@/utils/apiError";
+import { attachmentPath, substituteInlineImages } from "@/utils/inlineImages";
 
 const { t } = useI18n();
 const { error: showErrorToast } = useToast();
@@ -275,18 +276,8 @@ const moveToFolders = computed(() =>
 );
 
 /**
- * Rewrites the body's `cid:` references into attachment URLs and records
- * which attachments were consumed that way.
- *
- * An inline disposition alone doesn't mean the image is visible: senders
- * (Outlook especially) mark every signature and layout image "inline" even
- * when the HTML never references it. Only an attachment whose cid was
- * actually substituted into the body counts as displayed, so anything the
- * reader can't already see stays listed under the attachments.
- *
- * Substitution uses split/join rather than a RegExp because a content id may
- * contain regex metacharacters, and because the "did anything change?" test
- * is then exactly the substitution itself.
+ * The body with its `cid:` references pointing at the attachments, and which
+ * attachments that put on screen; see substituteInlineImages.
  */
 const renderedBody = computed<{ html: string; inlineIds: Set<string> }>(() => {
 	const inlineIds = new Set<string>();
@@ -305,47 +296,12 @@ const renderedBody = computed<{ html: string; inlineIds: Set<string> }>(() => {
 	// wants to see it can ask for it.
 	if (blocksRemoteContent.value) return { html, inlineIds };
 
-	return substituteInlineImages(html, inlineIds);
+	return substituteInlineImages(
+		html,
+		email.value.attachments ?? [],
+		getAttachmentUrl,
+	);
 });
-
-/**
- * The cid: substitution itself, once it has been decided that it should
- * happen at all.
- */
-function substituteInlineImages(
-	body: string,
-	inlineIds: Set<string>,
-): { html: string; inlineIds: Set<string> } {
-	let html = body;
-	const bare = (contentId: string) =>
-		contentId.startsWith("<") ? contentId.slice(1, -1) : contentId;
-
-	// Longest first. `cid:img1` is also the start of `cid:img10`, so taking
-	// img1 first rewrote img10's reference into img1's address with a "0"
-	// after it -- a broken picture, and img10 offered as a download too. Once
-	// the longer one has been replaced there is no `cid:` left for the shorter
-	// one to match inside it.
-	const inline = (email.value?.attachments ?? [])
-		.filter((a) => a.disposition === "inline" && a.content_id)
-		.sort(
-			(a, b) =>
-				bare(b.content_id ?? "").length - bare(a.content_id ?? "").length,
-		);
-
-	for (const attachment of inline) {
-		const cid = bare(attachment.content_id ?? "");
-		const substituted = html
-			.split(`cid:${cid}`)
-			.join(getAttachmentUrl(attachment.id));
-
-		if (substituted !== html) {
-			html = substituted;
-			inlineIds.add(attachment.id);
-		}
-	}
-
-	return { html, inlineIds };
-}
 
 const emailBodyWithInlineImages = computed(() => renderedBody.value.html);
 
@@ -396,11 +352,12 @@ const downloadAttachment = async (attachment: {
 	}
 };
 
-const getAttachmentUrl = (attachmentId: string) => {
-	const mailboxId = route.params.mailboxId as string;
-	const emailId = route.params.id as string;
-	return `/api/v1/mailboxes/${mailboxId}/emails/${emailId}/attachments/${attachmentId}`;
-};
+const getAttachmentUrl = (attachmentId: string) =>
+	attachmentPath(
+		route.params.mailboxId as string,
+		route.params.id as string,
+		attachmentId,
+	);
 
 const formatBytes = (bytes: number, decimals = 2) => {
 	if (bytes === 0) return "0 Bytes";

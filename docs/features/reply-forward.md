@@ -161,8 +161,15 @@ send and says so.
 
 **Note:** When forwarding, the original email's attachments are NOT automatically included. You need to manually add them if desired.
 
+Pictures that appear *inside* the quoted message are the exception: they
+show in the editor, and go with the reply or forward as pictures in its
+body (and count towards the 20 MB). Delete one from the quote and it is not
+sent. If one cannot be fetched when you press Send, the message is not sent
+and the window says so, rather than going out with a broken picture.
+
 **Note:** A saved draft does not keep attachments. Add them again before
-sending a draft.
+sending a draft. Pictures in a quote are kept, since they are part of the
+text.
 
 ## Drafts
 

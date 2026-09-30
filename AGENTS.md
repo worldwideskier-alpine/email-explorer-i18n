@@ -483,6 +483,13 @@ are still checked, by the `tsc` that runs before the worker tests.
   the way in and on the way out (`utils/editorColours.ts`,
   `editorColours.test.ts`). A new extension that copies an attribute into
   `style` needs the same.
+  A quoted picture is shown there by its address here (`cid:` loads nothing
+  on this page), so on the way out every `<img>` naming an attachment of
+  this deployment goes back to a `cid:` with the picture attached under it
+  (`outgoingPictures`, `utils/inlineImages.ts`): left as it was, it named
+  the mailbox to the recipient and opened nothing for them. It is found in
+  the HTML at send time, not remembered, so a resumed draft sends its
+  pictures and a deleted one is not sent. `composeQuotedPictures.test.ts`.
 - **Dashboard theming.** `index.html` carries the only page background and it
   has both halves (`bg-gray-100 text-gray-900 dark:bg-gray-900
   dark:text-gray-100`); cards use `bg-white dark:bg-gray-800` and follow the
