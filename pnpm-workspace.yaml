@@ -19,3 +19,10 @@ overrides:
   # GHSA-rgj7-g3m4-5g8c. The miniflare wrangler brings in already takes
   # 0.35.4, a patch release. Drop this once vitest-pool-workers moves on.
   "sharp@<0.35.4": "0.35.4"
+  # undici 7.29.0, which every miniflare here pins -- the one wrangler brings
+  # and the older one vitest-pool-workers does -- carries ten advisories
+  # fixed in 7.29.1 (GHSA-rx4f-c7p8-82vq and the rest; `pnpm audit`). It is
+  # the Node side of the local runtime and the deploy tooling: none of it is
+  # in the Worker's bundle. The newest miniflare already takes 7.29.1; drop
+  # this once both routes to miniflare have moved on.
+  "undici@>=7.0.0 <7.29.1": "7.29.1"
