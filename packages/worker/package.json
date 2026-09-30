@@ -38,11 +38,11 @@
 	},
 	"dependencies": {
 		"@pushforge/builder": "^2.0.5",
-		"chanfana": "2.8.3",
+		"chanfana": "3.4.0",
 		"hono": "4.13.9",
 		"postal-mime": "^4.0.0",
 		"workers-qb": "^1.15.0",
-		"zod": "^3.25.76"
+		"zod": "^4.6.5"
 	},
 	"devDependencies": {
 		"@cloudflare/vitest-pool-workers": "^0.22.0",
