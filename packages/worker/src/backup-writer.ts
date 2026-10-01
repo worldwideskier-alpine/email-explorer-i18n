@@ -234,6 +234,16 @@ export function renderBatches<
 	return batches;
 }
 
+/** What the backup and the purge ask of a mailbox's object. */
+export type MailboxSource = Pick<
+	MailboxDO,
+	| "listEmailIdsByDate"
+	| "getFolders"
+	| "getEmailsByIds"
+	| "listSpamEmailDates"
+	| "deleteEmailsIn"
+>;
+
 export interface BackupResult {
 	key: string;
 	messages: number;
@@ -322,9 +332,16 @@ export async function writeMailboxBackup(
 	 * or aborted at all. See deadline.ts.
 	 */
 	limits: TimeLimits = {},
+	/**
+	 * The mailbox's own object, when this runs inside it -- its nightly
+	 * alarm -- rather than calling itself through a stub. See
+	 * mailbox-night.ts.
+	 */
+	source?: MailboxSource,
 ): Promise<BackupResult> {
 	const bounded = limitedBy(limits);
-	const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+	const stub: MailboxSource =
+		source ?? env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 	const ids = await bounded(
 		stub.listEmailIdsByDate(),
 		"listing the mailbox's messages",

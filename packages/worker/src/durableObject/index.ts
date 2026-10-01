@@ -1,11 +1,23 @@
 import { DurableObject } from "cloudflare:workers";
 import { DOQB } from "workers-qb";
+import { recordBackupNotRun } from "../backup-run";
 import type { ClassifyInput, ClassifyResult } from "../claude-spam-filter";
 import { classifyWithClaude } from "../claude-spam-filter";
+import type { NightStatus } from "../mailbox-night";
+import { cutOff, nightFor, runMailboxNight } from "../mailbox-night";
+import type { MailboxRecord } from "../mailbox-records";
 import { hashPassword, verifyNothing, verifyPassword } from "../password";
 import type { ThrottleRule } from "../throttle";
 import type { Env, Session, User } from "../types";
 import { authMigrations, mailboxMigrations } from "./migrations";
+
+/** Where a mailbox keeps tonight's night: see startNight. */
+const NIGHT_KEY = "night";
+
+interface StoredNight {
+	mailbox: MailboxRecord;
+	status: NightStatus;
+}
 
 const ALLOWED_SORT_COLUMNS = [
 	"id",
@@ -1906,6 +1918,74 @@ export class MailboxDO extends DurableObject<Env> {
 			lastFailureReason: row?.last_failure_reason ?? null,
 			lastFailureDetail: row?.last_failure_detail ?? null,
 		};
+	}
+
+	/**
+	 * Begins this mailbox's night, in an alarm of its own. See
+	 * mailbox-night.ts for why each mailbox runs on its own rather than as a
+	 * turn in one pass.
+	 *
+	 * Returns at once: the cron starts every mailbox's night this way and
+	 * then asks each how it is going (nightStatus). Starting a night replaces
+	 * whatever the last one left, which is a night ago.
+	 */
+	async startNight(mailbox: MailboxRecord, night: string): Promise<void> {
+		if (this.#isAuthDO) return;
+		const stored: StoredNight = {
+			mailbox,
+			status: nightFor(mailbox, new Date(night)),
+		};
+		await this.ctx.storage.put(NIGHT_KEY, stored);
+		await this.ctx.storage.setAlarm(Date.now());
+	}
+
+	/** How the night begun for `night` is going, or null for any other. */
+	async nightStatus(night: string): Promise<NightStatus | null> {
+		const stored = await this.ctx.storage.get<StoredNight>(NIGHT_KEY);
+		return stored?.status.night === night ? stored.status : null;
+	}
+
+	/**
+	 * Runs the night startNight set up. Never throws: a throw would have the
+	 * runtime run it again, and each part records its own failure anyway.
+	 */
+	async alarm(): Promise<void> {
+		if (this.#isAuthDO) return;
+		const stored = await this.ctx.storage.get<StoredNight>(NIGHT_KEY);
+		if (!stored || stored.status.state === "done") return;
+		const { mailbox } = stored;
+		const now = new Date(stored.status.night);
+		const keep = async (status: NightStatus) => {
+			await this.ctx.storage.put(NIGHT_KEY, { mailbox, status });
+		};
+
+		// Under way already means the runtime ended an earlier attempt partway
+		// and is trying again; see cutOff.
+		if (stored.status.state === "running") {
+			const ended = cutOff(stored.status);
+			if (
+				stored.status.backup.state === "running" ||
+				stored.status.backup.state === "waiting"
+			) {
+				await recordBackupNotRun(
+					this.env,
+					mailbox.id,
+					now,
+					"The night's run was ended by the runtime before this backup finished.",
+				);
+			}
+			await keep(ended).catch(() => {});
+			return;
+		}
+
+		try {
+			await runMailboxNight(this.env, mailbox, now, {}, keep, this);
+		} catch {
+			// runMailboxNight does not throw; if it ever does, the night is
+			// over all the same, and saying so is better than a retry.
+			const latest = await this.ctx.storage.get<StoredNight>(NIGHT_KEY);
+			await keep(cutOff(latest?.status ?? stored.status)).catch(() => {});
+		}
 	}
 
 	async getFolders() {

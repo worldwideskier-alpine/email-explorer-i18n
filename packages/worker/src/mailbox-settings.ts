@@ -174,7 +174,6 @@ function mergeAutoBackup(
 		),
 		keep: Math.max(previousKeep, requestedKeep),
 		lastRunAt: existing?.lastRunAt,
-		lastAttemptAt: existing?.lastAttemptAt,
 		lastResult: existing?.lastResult,
 	};
 }

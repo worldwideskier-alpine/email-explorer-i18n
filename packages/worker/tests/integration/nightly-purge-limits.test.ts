@@ -1,7 +1,6 @@
 import { env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
-import { runScheduledBackups } from "../../src/backup-run";
-import { runScheduledSpamPurge } from "../../src/spam-purge-run";
+import { runScheduledBackups, runScheduledSpamPurge } from "./nights";
 import { authenticatedFetch, testAuthBeforeAll } from "./utils";
 
 /**
@@ -101,31 +100,6 @@ describe("the spam purge, with one mailbox that does not answer", () => {
 		expect(summary).toMatchObject({ ran: 1, failed: 1 });
 		expect(await spamIn(FINE)).toBe(0);
 		expect(await spamIn(SLOW)).toBe(1);
-	});
-
-	it("takes the mailbox purged longest ago first, so none is always last", async () => {
-		expect(FINE < SLOW, "the bucket lists the other first").toBe(true);
-		// The other one ran last night; the slow one never has. The bucket
-		// lists the other first, so only the order by last run puts the slow
-		// one ahead of it.
-		// Written straight to the bucket: a run's history is not something the
-		// settings route lets a client write.
-		const key = `mailboxes/${FINE}.json`;
-		const stored = (await (await env.BUCKET.get(key))?.json()) as Record<
-			string,
-			any
-		>;
-		stored.spamRetention = {
-			...stored.spamRetention,
-			lastRunAt: new Date(Date.now() - 86_400_000).toISOString(),
-		};
-		await env.BUCKET.put(key, JSON.stringify(stored));
-		const asked: string[] = [];
-		await runScheduledSpamPurge(withSlow(SLOW, asked), LATER, {
-			deadline: Date.now() + 60_000,
-			callLimitMs: 1000,
-		});
-		expect(asked).toEqual([SLOW, "other"]);
 	});
 });
 

@@ -2856,12 +2856,13 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 		},
 		/**
 		 * The cron fires once a day for the whole Worker; each mailbox's own
-		 * settings decide what happens to it (see backup-run and
-		 * spam-purge-run).
+		 * settings decide what happens to it. It starts every mailbox's night
+		 * in that mailbox's own object, all at once (mailbox-night.ts), and
+		 * waits to write down how they went (scheduled-run.ts).
 		 *
-		 * Awaited rather than handed to waitUntil: a scheduled invocation is
-		 * allowed to take its time, and returning early would let the run be
-		 * cut off partway through a mailbox.
+		 * Awaited rather than handed to waitUntil: the nights would run
+		 * without it, but the record of them is written here, and returning
+		 * early would leave it half written.
 		 *
 		 * Nothing else runs first. The legacy grant backfill used to, awaited
 		 * here with no limit and before the night's record was written -- so

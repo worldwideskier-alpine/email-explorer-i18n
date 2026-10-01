@@ -94,15 +94,15 @@ describe("what the nightly run writes down about itself", () => {
 		expect(states[states.length - 1]?.finishedAt).toBeTypeOf("string");
 	});
 
-	// A pass that throws is a different thing from an invocation that stops:
-	// the run reached its end, and says what went wrong on the way.
+	// A run that cannot even list the mailboxes is a different thing from an
+	// invocation that stops: it reached its end, and says what went wrong on
+	// the way -- on both passes, since neither could begin.
 	it("records a pass that threw, and still ends", async () => {
-		let listCalls = 0;
 		const broken = {
 			...(env as unknown as Record<string, unknown>),
 			BUCKET: new Proxy(bucket(), {
 				get(target, prop) {
-					if (prop === "list" && ++listCalls === 2) {
+					if (prop === "list") {
 						throw new Error("bucket unavailable");
 					}
 					const value = Reflect.get(target, prop);
@@ -116,7 +116,7 @@ describe("what the nightly run writes down about itself", () => {
 		);
 
 		const record = await readMaintenanceRecord(env as never);
-		expect(record?.backups?.finishedAt).toBeTypeOf("string");
+		expect(record?.backups?.error).toContain("bucket unavailable");
 		expect(record?.spamPurge?.error).toContain("bucket unavailable");
 		expect(record?.finishedAt).toBeTypeOf("string");
 	});

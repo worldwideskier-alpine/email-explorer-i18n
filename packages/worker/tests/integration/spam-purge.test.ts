@@ -1,6 +1,6 @@
 import { env, runInDurableObject } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
-import { runScheduledSpamPurge } from "../../src/spam-purge-run";
+import { runScheduledSpamPurge } from "./nights";
 import {
 	authenticatedFetch,
 	createDummyMailbox,

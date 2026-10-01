@@ -1,9 +1,10 @@
 /**
- * The scheduled pass: look at every mailbox, back up the ones that are due.
+ * One mailbox's nightly backup, and what is written down about it.
  *
- * The cron fires once a day for the whole Worker, not once per mailbox, so
- * this decides per mailbox whether its own frequency has come round (see
- * isBackupDue). A mailbox that is not due costs one settings read.
+ * The cron fires once a day for the whole Worker, not once per mailbox; each
+ * mailbox's own frequency decides whether its backup is due (see
+ * isBackupDue), and each due mailbox runs on its own -- see mailbox-night.ts
+ * for where, and why no longer one after another.
  *
  * Every run records what happened on the mailbox, success or failure. A
  * backup that quietly stops working is worse than no backup at all: the
@@ -13,11 +14,13 @@
  */
 
 import type { AutoBackupSettings } from "./auto-backup";
-import { isBackupDue, normalizeKeep } from "./auto-backup";
+import { normalizeKeep } from "./auto-backup";
+import type { MailboxSource } from "./backup-writer";
 import { writeMailboxBackup } from "./backup-writer";
 import type { TimeLimits } from "./deadline";
-import { OutOfTime, pastDeadline, recordingWithin } from "./deadline";
-import { listMailboxes, updateMailboxSettings } from "./mailbox-records";
+import { OutOfTime, recordingWithin } from "./deadline";
+import type { MailboxRecord } from "./mailbox-records";
+import { updateMailboxSettings } from "./mailbox-records";
 import type { Env } from "./types";
 
 /**
@@ -26,7 +29,7 @@ import type { Env } from "./types";
  * `lastRunAt` moves only on success. It is what decides the next run is due,
  * and moving it on a failure put a weekly or monthly backup off for the whole
  * interval after one transient error; a failed mailbox is due again the next
- * night. The order of the pass is not taken from it: see mostOverdueFirst.
+ * night.
  */
 async function recordResult(
 	env: Env,
@@ -58,168 +61,105 @@ export interface BackupProgress {
 	messages: number;
 }
 
-/**
- * The one whose turn is longest overdue first.
- *
- * The order used to be whatever `listMailboxes` returned, which is fine only
- * while every mailbox gets its turn. When an invocation stops finishing, it
- * stops finishing partway through the list -- so a fixed order means the
- * mailboxes at the front are backed up every night and the ones behind them
- * are never backed up again, silently, while their settings screen goes on
- * showing the last time they were.
- *
- * Sorting by when each last *succeeded* did not fix that; it moved it. A
- * mailbox too big to finish inside the pass keeps its old success time, so it
- * was first again every night, used the whole budget again, and every mailbox
- * behind it was "not reached" for good. So the order is by when each was last
- * *begun*: one that had its turn tonight, however it ended, goes behind one
- * that did not get a turn at all. Ties -- both begun the same night, or
- * neither ever -- go to the one whose last success is older. Never begun and
- * never succeeded sorts first, having waited longest of all; a mailbox from
- * before the attempt was recorded counts from its last success.
- */
-function mostOverdueFirst(
-	mailboxes: Awaited<ReturnType<typeof listMailboxes>>,
-): typeof mailboxes {
-	// ISO-8601 UTC sorts correctly as text, and "" sorts before all of it.
-	const byText = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
-	return [...mailboxes].sort((a, b) => {
-		const ab = a.settings.autoBackup;
-		const bb = b.settings.autoBackup;
-		return (
-			byText(
-				ab?.lastAttemptAt ?? ab?.lastRunAt ?? "",
-				bb?.lastAttemptAt ?? bb?.lastRunAt ?? "",
-			) || byText(ab?.lastRunAt ?? "", bb?.lastRunAt ?? "")
-		);
-	});
-}
+/** How one mailbox's backup went tonight. */
+export type BackupOutcome = "ran" | "failed";
 
 /**
- * Notes that this mailbox's turn has begun, before anything is written. It
- * goes first because an invocation that is cut off records nothing after it,
- * and a turn that left no trace would put this mailbox at the front again.
+ * One mailbox's backup: written, and its outcome recorded on the mailbox,
+ * whatever it was.
+ *
+ * Each mailbox runs on its own, inside its own object's nightly alarm (see
+ * mailbox-night.ts). It used to be one turn in a pass over every mailbox,
+ * one after another inside one invocation and one deadline -- so a slow
+ * mailbox spent the time of the ones behind it, and on 2026-10-01 the second
+ * of two was cut off 300 messages in while the first had used the night. Now
+ * each has the whole of its own.
+ *
+ * Never throws: a failure is the outcome, recorded where the mailbox's own
+ * screen shows it.
  */
-async function recordAttempt(
+export async function backupOneMailbox(
 	env: Env,
-	mailboxId: string,
-	at: string,
-): Promise<void> {
-	await updateMailboxSettings(env, mailboxId, (settings) => {
-		settings.autoBackup = { ...settings.autoBackup, lastAttemptAt: at };
-	});
-}
-
-export async function runScheduledBackups(
-	env: Env,
-	now: Date = new Date(),
-	/**
-	 * Called as the pass moves through the mailboxes. Its failures are the
-	 * caller's problem, not this pass's: a diagnostic that can stop the backup
-	 * is worse than no diagnostic.
-	 */
-	onProgress?: (progress: BackupProgress) => Promise<void>,
-	/**
-	 * When the pass must be done by, and how long one call may take. A
-	 * mailbox not started by the deadline is not started at all tonight: it
-	 * is recorded as not reached and, having not moved `lastRunAt`, is first
-	 * in line tomorrow. See deadline.ts for the night that made this matter.
-	 */
+	mailbox: MailboxRecord,
+	now: Date,
+	/** When this backup must be done by, and how long one call may take. */
 	limits: TimeLimits = {},
-): Promise<BackupPassSummary> {
-	// Listing, reporting and recording are held to the per-call limit only.
-	// The deadline decides which mailboxes are *started*; refusing to write
-	// down that one was not reached, because time is up, would lose exactly
-	// the fact the deadline exists to produce.
+	/** Messages written so far, every few hundred; failures are swallowed. */
+	onProgress?: (messages: number) => Promise<void>,
+	/** The mailbox's own object, when this runs inside it. */
+	source?: MailboxSource,
+): Promise<BackupOutcome> {
+	// Recording is held to the per-call limit only, up to `recordBy`: refusing
+	// to write down how it went because time is up would lose exactly the
+	// fact the deadline exists to produce.
 	const call = recordingWithin(limits);
-	const mailboxes = await call(listMailboxes(env), "listing mailboxes");
-	const summary: BackupPassSummary = {
-		considered: mailboxes.length,
-		ran: 0,
-		failed: 0,
-	};
-
-	const due = mostOverdueFirst(mailboxes).filter((mailbox) =>
-		isBackupDue(mailbox.settings.autoBackup, now.getTime()),
-	);
-
-	for (const [at, mailbox] of due.entries()) {
-		const where = (messages: number): BackupProgress => ({
-			mailbox: mailbox.id,
-			index: at + 1,
-			of: due.length,
-			messages,
-		});
-		if (pastDeadline(limits)) {
-			summary.failed += 1;
-			await call(
-				recordResult(env, mailbox.id, {
-					at: now.toISOString(),
-					ok: false,
-					error: "Not reached tonight: the pass ran out of time first.",
-					// The screen shows this one in the reader's own language; an
-					// English sentence written for people was going out as-is
-					// in every one of them.
-					reason: "not-reached",
-				}),
-				"recording the result",
-			).catch(() => {});
-			continue;
-		}
-		await call(
-			recordAttempt(env, mailbox.id, now.toISOString()),
-			"recording the attempt",
-		).catch(() => {});
-		if (onProgress) {
-			await call(onProgress(where(0)), "recording progress").catch(() => {});
-		}
-
-		const keep = normalizeKeep(mailbox.settings.autoBackup?.keep);
-		try {
-			const written = await writeMailboxBackup(
-				env,
-				mailbox.id,
-				now,
-				keep,
-				onProgress && ((messages) => onProgress(where(messages))),
-				undefined,
-				limits,
-			);
-			summary.ran += 1;
-			// Given the per-call limit alone: the archive is written by now,
-			// and saying so should not be refused because the pass's time has
-			// just run out. A failure here is not a failed backup either.
-			await call(
-				recordResult(env, mailbox.id, {
-					at: now.toISOString(),
-					ok: true,
-					messages: written.messages,
-					bytes: written.bytes,
-					removed: written.removed,
-				}),
-				"recording the result",
-			).catch(() => {});
-		} catch (e) {
-			// One mailbox failing must not stop the others: they are separate
-			// backups and a large mailbox running out of budget should not
-			// take a small one down with it.
-			summary.failed += 1;
-			await call(
-				recordResult(env, mailbox.id, {
-					at: now.toISOString(),
-					ok: false,
-					error: String(e instanceof Error ? e.message : e).slice(0, 300),
-					// Begun, and stopped by the pass's end rather than by a fault:
-					// worded on the screen in the reader's language, as
-					// not-reached is.
-					...(e instanceof OutOfTime && e.passEnded
-						? { reason: "out-of-time" as const }
-						: {}),
-				}),
-				"recording the result",
-			).catch(() => {});
-		}
+	if (onProgress) {
+		await call(onProgress(0), "recording progress").catch(() => {});
 	}
 
-	return summary;
+	const keep = normalizeKeep(mailbox.settings.autoBackup?.keep);
+	try {
+		const written = await writeMailboxBackup(
+			env,
+			mailbox.id,
+			now,
+			keep,
+			onProgress,
+			undefined,
+			limits,
+			source,
+		);
+		// Given the per-call limit alone: the archive is written by now, and
+		// saying so should not be refused because the time has just run out.
+		// A failure here is not a failed backup either.
+		await call(
+			recordResult(env, mailbox.id, {
+				at: now.toISOString(),
+				ok: true,
+				messages: written.messages,
+				bytes: written.bytes,
+				removed: written.removed,
+			}),
+			"recording the result",
+		).catch(() => {});
+		return "ran";
+	} catch (e) {
+		await call(
+			recordResult(env, mailbox.id, {
+				at: now.toISOString(),
+				ok: false,
+				error: String(e instanceof Error ? e.message : e).slice(0, 300),
+				// Begun, and stopped by its time running out rather than by a
+				// fault: worded on the screen in the reader's language, as
+				// not-reached is.
+				...(e instanceof OutOfTime && e.passEnded
+					? { reason: "out-of-time" as const }
+					: {}),
+			}),
+			"recording the result",
+		).catch(() => {});
+		return "failed";
+	}
+}
+
+/**
+ * A mailbox whose backup was due and never began: its night could not be
+ * started, or its object never said it had run. Recorded on the mailbox the
+ * way any failure is, so its screen does not go on showing the night before.
+ */
+export async function recordBackupNotRun(
+	env: Env,
+	mailboxId: string,
+	now: Date,
+	error: string,
+	limits: TimeLimits = {},
+): Promise<void> {
+	await recordingWithin(limits)(
+		recordResult(env, mailboxId, {
+			at: now.toISOString(),
+			ok: false,
+			error: error.slice(0, 300),
+		}),
+		"recording the result",
+	).catch(() => {});
 }

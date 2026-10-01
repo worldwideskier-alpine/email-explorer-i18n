@@ -1,9 +1,9 @@
 import { env, runInDurableObject } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { BackupProgress } from "../../src/backup-run";
-import { runScheduledBackups } from "../../src/backup-run";
 import { writeMailboxBackup } from "../../src/backup-writer";
 import { runScheduledMaintenance } from "../../src/scheduled-run";
+import { runScheduledBackups } from "./nights";
 import {
 	authenticatedFetch,
 	createDummyMailbox,
@@ -118,38 +118,6 @@ describe("the backup pass says where it is", () => {
 			of: 1,
 			messages: 0,
 		});
-	});
-
-	/**
-	 * The most overdue mailbox goes first.
-	 *
-	 * The order used to be whatever the mailbox list gave back. That is fine
-	 * only while every mailbox gets its turn -- and once an invocation stops
-	 * finishing, the ones at the front are backed up every night and the ones
-	 * behind them never again, silently. Sorting by when each last ran makes a
-	 * mailbox missed tonight the first one tried tomorrow.
-	 */
-	it("starts with the mailbox that has waited longest", async () => {
-		const recent = "recent@example.test";
-		await makeMailbox(recent);
-		await setAutoBackup(recent, { enabled: true });
-
-		// A real run, because `lastRunAt` is not something a client may set --
-		// it is written by the pass itself, which is the whole of its meaning.
-		const first = new Date("2026-09-01T18:00:00.000Z");
-		await runScheduledBackups(env, first);
-
-		// And now one that has never been backed up at all, which has therefore
-		// been waiting longer than any date could say.
-		await setAutoBackup(mailboxId, { enabled: true });
-
-		const order: string[] = [];
-		const later = new Date("2026-09-02T18:00:00.000Z");
-		await runScheduledBackups(env, later, async (p) => {
-			if (p.messages === 0) order.push(p.mailbox);
-		});
-
-		expect(order).toEqual([mailboxId, recent]);
 	});
 
 	// A mailbox that is not due is not in the count the positions are against.

@@ -1,5 +1,6 @@
 import { env, runInDurableObject } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
+import { inlineNights } from "../../src/mailbox-night";
 import { runScheduledMaintenance } from "../../src/scheduled-run";
 import {
 	authenticatedFetch,
@@ -131,33 +132,44 @@ describe("the daily maintenance pass", () => {
 	});
 
 	/**
-	 * A mailbox whose backup failed must not stop the purge for every mailbox
-	 * behind it in the loop -- and the backup pass records its own failure, so
-	 * the failure is not lost by carrying on.
+	 * A mailbox whose backup fails tonight still has its purge -- of only what
+	 * an earlier archive already holds -- and the failure is on the mailbox,
+	 * not lost by carrying on. There is no longer a pass whose failure could
+	 * stop the purge for every mailbox behind it: each mailbox's night is its
+	 * own (mailbox-night.ts).
 	 */
-	it("still purges when the backup pass throws", async () => {
-		await place("Old spam", "spam", "2026-07-01T00:00:00.000Z");
-		await authenticatedFetch(
-			`http://local.test/api/v1/mailboxes/${mailboxId}`,
-			{
+	it("still purges what an earlier archive holds when tonight's backup fails", async () => {
+		const old = await place("Old spam", "spam", "2026-07-01T00:00:00.000Z");
+		// Arrived before last night's run, so last night's archive holds it.
+		const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+		await runInDurableObject(stub, async (_i, state) => {
+			state.storage.sql.exec(
+				"UPDATE emails SET received_at = ? WHERE id = ?",
+				"2026-07-01T00:00:00.000Z",
+				old,
+			);
+		});
+		const set = (settings: object) =>
+			authenticatedFetch(`http://local.test/api/v1/mailboxes/${mailboxId}`, {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					settings: { spamRetention: { enabled: true, days: 30 } },
-				}),
-			},
-		);
+				body: JSON.stringify({ settings }),
+			});
+		await set({ autoBackup: { enabled: true, frequency: "daily", keep: 7 } });
+		const lastNight = new Date("2026-08-31T18:00:00.000Z");
+		const first = await runScheduledMaintenance(env as never, lastNight, {
+			nights: inlineNights,
+			pollMs: 20,
+		});
+		expect(first.backups?.ran).toBe(1);
 
-		// Both passes begin by listing the mailboxes, so failing only the
-		// first list is exactly "the backup pass broke and the purge pass did
-		// not".
-		let listCalls = 0;
-		const broken = {
+		await set({ spamRetention: { enabled: true, days: 30 } });
+		const failing = {
 			...(env as unknown as Record<string, unknown>),
 			BUCKET: new Proxy((env as unknown as { BUCKET: R2Bucket }).BUCKET, {
 				get(target, prop) {
-					if (prop === "list" && listCalls++ === 0) {
-						throw new Error("bucket unavailable");
+					if (prop === "createMultipartUpload") {
+						return () => Promise.reject(new Error("bucket unavailable"));
 					}
 					// Bound to the real bucket: an R2 method called with the
 					// proxy as `this` throws "Illegal invocation".
@@ -167,8 +179,20 @@ describe("the daily maintenance pass", () => {
 			}),
 		};
 
-		const summary = await runScheduledMaintenance(broken as never, NOW);
-		expect(summary.backupError).toContain("bucket unavailable");
+		const summary = await runScheduledMaintenance(failing as never, NOW, {
+			nights: inlineNights,
+			pollMs: 20,
+		});
+		expect(summary.backups).toMatchObject({ ran: 0, failed: 1 });
 		expect(summary.spamPurge?.deleted).toBe(1);
+		const settings = await (
+			(await (env as unknown as { BUCKET: R2Bucket }).BUCKET.get(
+				`mailboxes/${mailboxId}.json`,
+			)) as R2ObjectBody
+		).json<{ autoBackup?: { lastResult?: { ok: boolean; error?: string } } }>();
+		expect(settings.autoBackup?.lastResult?.ok).toBe(false);
+		expect(settings.autoBackup?.lastResult?.error).toContain(
+			"bucket unavailable",
+		);
 	});
 });

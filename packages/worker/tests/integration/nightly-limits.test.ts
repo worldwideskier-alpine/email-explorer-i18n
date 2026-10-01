@@ -1,9 +1,9 @@
 import { createExecutionContext, env } from "cloudflare:test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { backupKeyPrefix } from "../../src/auto-backup";
-import { runScheduledBackups } from "../../src/backup-run";
 import { OutOfTime, within } from "../../src/deadline";
 import { resetLegacyGrantMemo } from "../../src/legacy-grants";
+import { inlineNights } from "../../src/mailbox-night";
 import {
 	archiveLastRun,
 	HISTORY_LENGTH,
@@ -14,6 +14,7 @@ import {
 	readMaintenanceRecord,
 } from "../../src/maintenance-record";
 import { runScheduledMaintenance } from "../../src/scheduled-run";
+import { runScheduledBackups } from "./nights";
 import { authenticatedFetch, testAuthBeforeAll } from "./utils";
 
 /**
@@ -42,6 +43,7 @@ const NOW = new Date("2026-09-22T18:00:00.000Z");
  */
 const CALL_LIMIT = 1500;
 const HUNG = "hung@example.com";
+const ALSO_HUNG = "also-hung@example.com";
 const FINE = "fine@example.com";
 
 const bucket = () => (env as unknown as { BUCKET: R2Bucket }).BUCKET;
@@ -105,10 +107,10 @@ async function archivesOf(id: string): Promise<string[]> {
  * The deployment as it was that night: one mailbox whose messages never come
  * back, and a bucket that remembers which uploads were aborted.
  */
-function nightOfTheHang() {
+function nightOfTheHang(hung: string[] = [HUNG]) {
 	const aborted: string[] = [];
 	const real = (env as unknown as { MAILBOX: DurableObjectNamespace }).MAILBOX;
-	const hungId = real.idFromName(HUNG);
+	const hungIds = hung.map((name) => real.idFromName(name));
 
 	const MAILBOX = {
 		idFromName: (name: string) => real.idFromName(name),
@@ -117,7 +119,7 @@ function nightOfTheHang() {
 				string,
 				(...a: unknown[]) => Promise<unknown>
 			>;
-			if (!id.equals(hungId)) return stub;
+			if (!hungIds.some((h) => id.equals(h))) return stub;
 			return {
 				listEmailIdsByDate: () => stub.listEmailIdsByDate(),
 				getFolders: () => stub.getFolders(),
@@ -205,7 +207,11 @@ describe("a call that never answers", () => {
 
 	it("leaves the night able to finish and say how it went", async () => {
 		const night = nightOfTheHang();
-		await runScheduledMaintenance(night.env, NOW, { callLimitMs: CALL_LIMIT });
+		await runScheduledMaintenance(night.env, NOW, {
+			nights: inlineNights,
+			callLimitMs: CALL_LIMIT,
+			pollMs: 20,
+		});
 
 		const record = await readMaintenanceRecord(env as never);
 		expect(record?.finishedAt).toBeTypeOf("string");
@@ -238,33 +244,6 @@ describe("a backup stopped by the pass's end", () => {
 		expect(result?.reason).toBe("out-of-time");
 		expect(result?.error).toContain("ran out of time while");
 		expect(result?.error).not.toContain("did not answer");
-	});
-});
-
-describe("a pass whose time has run out", () => {
-	beforeEach(async () => {
-		await testAuthBeforeAll();
-		await makeMailbox(HUNG);
-		await makeMailbox(FINE);
-	});
-
-	it("starts no further mailbox, and says so on each", async () => {
-		const summary = await runScheduledBackups(env as never, NOW, undefined, {
-			deadline: Date.now() - 1,
-		});
-
-		expect(summary).toMatchObject({ ran: 0, failed: 2 });
-		for (const id of [HUNG, FINE]) {
-			expect(await archivesOf(id)).toEqual([]);
-			const settings = await settingsOf(id);
-			expect(settings.autoBackup?.lastResult?.error).toContain(
-				"ran out of time",
-			);
-			// And says which reason it is, so the screen can word it in the
-			// reader's language rather than show this English sentence.
-			expect(settings.autoBackup?.lastResult?.reason).toBe("not-reached");
-			expect(settings.autoBackup?.lastRunAt).toBeUndefined();
-		}
 	});
 });
 
@@ -331,75 +310,49 @@ describe("an archive finished as the time runs out", () => {
 });
 
 /**
- * A mailbox that takes the whole pass every night.
+ * A mailbox that takes the whole of its time.
  *
- * The pass took the mailbox with the oldest *successful* backup first. One
- * that could not finish inside the pass kept its old success, so it was first
- * again the next night, used up the pass again, and the mailbox behind it was
- * "not reached" every night from then on -- the starvation the ordering was
- * written to prevent, moved rather than removed.
+ * Every mailbox used to be one turn in a single pass, so one that could not
+ * finish spent the time of the ones behind it: on 2026-10-01 the second of
+ * two was cut off 300 messages in. Each mailbox's night now runs on its own
+ * (mailbox-night.ts), so the one that never answers runs out its own time
+ * and the other is backed up the same night, in its own.
  */
-describe("a mailbox that uses up the pass", () => {
+describe("a mailbox that takes the whole of its time", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
 		await makeMailbox(HUNG);
+		await makeMailbox(ALSO_HUNG);
 		await makeMailbox(FINE);
 	});
 
-	const night = (day: number) =>
-		new Date(`2026-09-${String(day).padStart(2, "0")}T18:00:00.000Z`);
-
-	/** One night on which HUNG's turn lasts until the pass is out of time. */
-	async function passWithHang(now: Date) {
-		const order: string[] = [];
-		const summary = await runScheduledBackups(
-			nightOfTheHang().env,
-			now,
-			async (p) => {
-				if (p.messages === 0) order.push(p.mailbox);
-			},
-			{ deadline: Date.now() + 1500, callLimitMs: 60_000 },
-		);
-		return { order, summary };
-	}
-
-	it("does not keep the mailbox behind it from its turn", async () => {
-		// FINE has a backup and HUNG has never had one, so HUNG is the more
-		// overdue of the two and goes first -- and takes the whole pass.
-		await runScheduledBackups(nightOfTheHang().env, night(20), undefined, {
-			callLimitMs: CALL_LIMIT,
+	it("does not take the other mailbox's night with it", async () => {
+		const hang = nightOfTheHang([HUNG, ALSO_HUNG]);
+		const started = Date.now();
+		const summary = await runScheduledMaintenance(hang.env, NOW, {
+			nights: inlineNights,
+			backupByMs: 2000,
+			purgeByMs: 2500,
+			recordByMs: 3000,
+			callLimitMs: 60_000,
+			pollMs: 20,
 		});
+
+		// All at once: two mailboxes that each take their whole two seconds
+		// are done in about two seconds, not four. One after another, the
+		// second would have started where the first ran out.
+		expect(Date.now() - started).toBeLessThan(3800);
+		expect(summary.backups).toMatchObject({ ran: 1, failed: 2 });
 		expect(await archivesOf(FINE)).toHaveLength(1);
-
-		const first = await passWithHang(night(21));
-		expect(first.order).toEqual([HUNG]);
-		expect(first.summary).toMatchObject({ ran: 0, failed: 2 });
-
-		// A save of HUNG's backup settings in between -- the section a save
-		// replaces -- keeps what the pass wrote about it.
-		const saved = await authenticatedFetch(
-			`http://local.test/api/v1/mailboxes/${HUNG}`,
-			{
-				method: "PUT",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					settings: {
-						autoBackup: { enabled: true, frequency: "daily", keep: 5 },
-					},
-				}),
-			},
-		);
-		expect(saved.status).toBe(200);
-
-		// HUNG has had its turn and FINE has not: FINE goes first.
-		const second = await passWithHang(night(22));
-		expect(second.order[0]).toBe(FINE);
-		expect(await archivesOf(FINE)).toHaveLength(2);
-		// Its own waiting is about 4.5 seconds of real time -- HUNG's call
-		// runs out its limit on the first night and the pass runs out its
-		// deadline on the other two -- which left the default 5 seconds a few
-		// hundred milliseconds for everything else. Measured at 5049 ms here,
-		// and timed out in CI on a busy runner.
+		for (const id of [HUNG, ALSO_HUNG]) {
+			const hung = (await settingsOf(id)).autoBackup?.lastResult;
+			expect(hung?.ok, id).toBe(false);
+			expect(hung?.reason, id).toBe("out-of-time");
+		}
+		expect(hang.aborted.sort()).toEqual([
+			expect.stringContaining(backupKeyPrefix(ALSO_HUNG)),
+			expect.stringContaining(backupKeyPrefix(HUNG)),
+		]);
 	}, 20_000);
 });
 

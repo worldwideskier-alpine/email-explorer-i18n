@@ -335,10 +335,12 @@ are still checked, by the `tsc` that runs before the worker tests.
   capitalised copy of somebody else's mailbox was a second mailbox that could
   send as the first, and a capitalised mailbox received nothing, since inbound
   mail is filed by the lowercased envelope recipient.
-- **The daily cron.** One `scheduled()` handler, and the order inside it
-  matters: `scheduled-run.ts` backs every mailbox up *first* and deletes old
-  spam *second*, so a message the purge removes is already in that run's
-  archive. Reversed, the deletion would be permanent with no copy anywhere.
+- **The daily cron.** One `scheduled()` handler, which starts every
+  mailbox's night in that mailbox's own Durable Object alarm, all at once
+  (`mailbox-night.ts`), and waits to write down how they went
+  (`scheduled-run.ts`). The order inside a night matters: it backs the
+  mailbox up *first* and deletes old spam *second*, so a message the purge
+  removes is already in that night's archive. Reversed, the deletion would be permanent with no copy anywhere.
   Nothing in the types holds it; `scheduled-order.test.ts` does.
   The order is not enough on its own, though: tonight's archive may not exist
   (the backup failed, was cut off, or a weekly or monthly one was not due).
@@ -356,36 +358,39 @@ are still checked, by the `tsc` that runs before the worker tests.
   its absence means the runtime killed the invocation inside the backup pass.
   No archive for two nights, and the purge — second in the order — had never
   once run. One fault, three symptoms, and each screen only showed its own.
-  Three things came out of it, all of which a rewrite could quietly undo:
+  Two things came out of it that a rewrite could quietly undo:
   `backup-writer.ts` reads messages a page at a time (one Durable Object round
-  trip per message was over 1500 per invocation, plus one R2 read each);
-  `backup-run.ts` takes the **mailbox whose turn is longest overdue first** --
-  by when its backup was last *begun*, not last succeeded, so a mailbox missed
-  tonight is first tomorrow rather than never, and one too big to finish in
-  the pass cannot take the front every night and starve the rest (it did,
-  once the pass had a deadline); and the pass reports progress as
-  it goes into `MaintenanceRecord.backupProgress`, which is the only thing a
-  killed run leaves behind. `backup-pass-progress.test.ts` holds all three,
-  and `nightly-limits.test.ts` the mailbox that takes the whole pass.
+  trip per message was over 1500 per invocation, plus one R2 read each), and
+  the run reports progress as it goes into `MaintenanceRecord.backupProgress`,
+  which is the only thing a killed run leaves behind -- now the backup
+  furthest from done. `backup-pass-progress.test.ts` holds both.
   It was cut off again on 2026-09-22, differently: `exceededWallTime` at
   899968 ms with 716 ms of CPU -- fourteen minutes waiting on one call that
   never answered. Both mailboxes lost that night's archive, each left an
   upload open, the purge never ran, and the next night overwrote the record,
   so it was found five days later by reading R2 by hand. So now **nothing in
   the run waits without a limit** (`deadline.ts`): each call a minute, the
-  backups done by twelve minutes in, the purge by thirteen; a mailbox whose call
+  backup done by twelve minutes in, the purge by thirteen; a mailbox whose call
   does not answer fails alone, its upload aborted and the reason on its
-  settings, and one not reached in time is first tomorrow. Twelve was ten
-  until 2026-10-01, when a slow night ran the second mailbox into it 300
-  messages in; a call cut short by the pass's end is recorded as
-  `out-of-time`, not as a call that "did not answer" (`OutOfTime.passEnded`). And each run moves
+  settings. A call cut short by that end is recorded as `out-of-time`, not
+  as a call that "did not answer" (`OutOfTime.passEnded`). And each run moves
   the previous record into `maintenance/history.json` (two weeks) before
   writing its own, which `/root` lists when a night did not end well.
   `nightly-limits.test.ts` holds both, with that night's own record.
-  The spam purge is held the same way, call by call, and takes the mailbox
-  purged longest ago first; and recording after a pass's deadline has an end
-  of its own (`recordBy`), since one record per mailbox left over was a
-  minute each. `nightly-purge-limits.test.ts`.
+  The spam purge is held the same way, call by call, and recording after a
+  deadline has an end of its own (`recordBy`). `nightly-purge-limits.test.ts`.
+  Those limits used to be the whole pass's, every mailbox one after another
+  inside the cron's one invocation, and on 2026-10-01 that was the fault: a
+  slow first mailbox spent the time, and the second was cut off 300 messages
+  in. So each mailbox's night is now its own alarm with the whole of its own
+  time, and a slow mailbox costs nobody else theirs (`nightly-limits.test.ts`,
+  two that hang and one that finishes, in about one night's time). The cron
+  only starts them and polls (`nightStatus`) for up to fourteen minutes. An alarm the runtime ended partway is run again by the
+  runtime; the second attempt finishes the record -- failed, due again
+  tomorrow -- rather than the night, which would most likely end the same
+  way once per retry (`night-alarm.test.ts`). A test that hands the run an
+  `env` of its own passes `nights: inlineNights`, since an alarm runs with
+  the deployment's.
 - **An attachment object is reachable only through its row.** Every writer
   names one `attachments/{emailId}/{attachmentId}/{filename}` and every reader
   — download, archive, delete — rebuilds that name from the row, so an object

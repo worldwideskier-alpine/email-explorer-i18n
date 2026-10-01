@@ -1,7 +1,7 @@
 /**
- * The scheduled pass that empties the back of each mailbox's spam folder.
+ * Emptying the back of a mailbox's spam folder, every night.
  *
- * Runs after the backup pass, not before: see runScheduledMaintenance. The
+ * Runs after the mailbox's backup, not before: see mailbox-night.ts. The
  * ordering is what makes a permanent deletion here safe to offer at all --
  * but only the ordering's intent. Tonight's archive may not exist: the backup
  * may have failed, been cut off (as it was, two nights running), or not been
@@ -17,9 +17,11 @@
  */
 
 import { backupKeyPrefix } from "./auto-backup";
+import type { MailboxSource } from "./backup-writer";
 import type { TimeLimits } from "./deadline";
 import { limitedBy, pastDeadline, recordingWithin } from "./deadline";
-import { listMailboxes, updateMailboxSettings } from "./mailbox-records";
+import type { MailboxRecord } from "./mailbox-records";
+import { updateMailboxSettings } from "./mailbox-records";
 import type { SpamRetentionSettings } from "./spam-retention";
 import { expiredSpamIds, retentionCutoff } from "./spam-retention";
 import type { Env } from "./types";
@@ -124,9 +126,12 @@ export async function purgeMailboxSpam(
 	 * the purge left behind went on deleting after the pass had moved on.
 	 */
 	limits: TimeLimits = {},
+	/** The mailbox's own object, when this runs inside it; see backup-writer.ts. */
+	source?: MailboxSource,
 ): Promise<number> {
 	const call = limitedBy(limits);
-	const stub = env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
+	const stub: MailboxSource =
+		source ?? env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 	const listed = await call(stub.listSpamEmailDates(), "listing the spam");
 	// Old enough by the date the message carries, and -- when backups are on
 	// -- here since before the newest archive by when it actually arrived.
@@ -186,84 +191,63 @@ export interface SpamPurgeSummary {
 	failed: number;
 }
 
-export async function runScheduledSpamPurge(
+/**
+ * One mailbox's purge, run after its backup in the same night (see
+ * mailbox-night.ts), with the outcome recorded on the mailbox. Never throws.
+ *
+ * For a mailbox whose backups are on, only what an archive in the bucket
+ * already holds may go; no archive at all means nothing is covered yet, so
+ * nothing goes.
+ */
+export async function purgeOneMailbox(
 	env: Env,
-	now: Date = new Date(),
+	mailbox: MailboxRecord,
+	now: Date,
 	/**
-	 * When the purge must be done by. Each mailbox's purge is bounded by what
-	 * is left of that rather than by the one-minute call limit, because
-	 * deleting a long backlog of spam can honestly take longer than a minute;
-	 * a mailbox not started by then is left for tomorrow, when it is due
-	 * again. See deadline.ts.
+	 * When this purge must be done by. Bounded by what is left of that
+	 * rather than by the one-minute call limit, because deleting a long
+	 * backlog of spam can honestly take longer than a minute; what is left
+	 * waits for tomorrow, when it is due again. See deadline.ts.
 	 */
 	limits: TimeLimits = {},
-): Promise<SpamPurgeSummary> {
-	// As in the backup pass: the deadline decides which mailboxes are
-	// started, and the calls around that are held to the per-call limit.
+	source?: MailboxSource,
+): Promise<{ ok: boolean; deleted: number }> {
 	const call = recordingWithin(limits);
-	const mailboxes = await call(listMailboxes(env), "listing mailboxes");
-	const summary: SpamPurgeSummary = {
-		considered: mailboxes.length,
-		ran: 0,
-		deleted: 0,
-		failed: 0,
-	};
-
-	// Longest since its last run first, as the backups go: in the order the
-	// bucket lists them, a mailbox that used the whole pass every night kept
-	// every mailbox after it from ever being purged.
-	const lastRun = (mailbox: (typeof mailboxes)[number]) =>
-		Date.parse(mailbox.settings.spamRetention?.lastRunAt ?? "") || 0;
-	const inTurn = [...mailboxes].sort((a, b) => lastRun(a) - lastRun(b));
-
-	for (const mailbox of inTurn) {
-		const retention = mailbox.settings.spamRetention;
-		if (!retention?.enabled) continue;
-		// Not started is not failed: nothing was deleted, which is the safe
-		// direction, and the mailbox is simply due again tomorrow.
-		if (pastDeadline(limits)) continue;
-
-		try {
-			// No archive at all means nothing is covered yet, so nothing goes.
-			const archivedBefore = mailbox.settings.autoBackup?.enabled
-				? ((await call(
-						newestArchiveAt(env, mailbox.id),
-						"finding the newest archive",
-					)) ?? Number.NEGATIVE_INFINITY)
-				: undefined;
-			const deleted = await purgeMailboxSpam(
-				env,
-				mailbox.id,
-				now,
-				retention.days,
-				archivedBefore,
-				limits,
-			);
-			summary.ran += 1;
-			summary.deleted += deleted;
-			await call(
-				recordResult(env, mailbox.id, {
-					at: now.toISOString(),
-					ok: true,
-					deleted,
-				}),
-				"recording the result",
-			).catch(() => {});
-		} catch (e) {
-			// One mailbox failing must not stop the others, for the same reason
-			// it must not in the backup pass: they are separate mailboxes and a
-			// large one running out of budget should not take a small one down.
-			summary.failed += 1;
-			await call(
-				recordResult(env, mailbox.id, {
-					at: now.toISOString(),
-					ok: false,
-					error: String(e instanceof Error ? e.message : e).slice(0, 300),
-				}),
-				"recording the result",
-			).catch(() => {});
-		}
+	const retention = mailbox.settings.spamRetention;
+	try {
+		const archivedBefore = mailbox.settings.autoBackup?.enabled
+			? ((await call(
+					newestArchiveAt(env, mailbox.id),
+					"finding the newest archive",
+				)) ?? Number.NEGATIVE_INFINITY)
+			: undefined;
+		const deleted = await purgeMailboxSpam(
+			env,
+			mailbox.id,
+			now,
+			retention?.days,
+			archivedBefore,
+			limits,
+			source,
+		);
+		await call(
+			recordResult(env, mailbox.id, {
+				at: now.toISOString(),
+				ok: true,
+				deleted,
+			}),
+			"recording the result",
+		).catch(() => {});
+		return { ok: true, deleted };
+	} catch (e) {
+		await call(
+			recordResult(env, mailbox.id, {
+				at: now.toISOString(),
+				ok: false,
+				error: String(e instanceof Error ? e.message : e).slice(0, 300),
+			}),
+			"recording the result",
+		).catch(() => {});
+		return { ok: false, deleted: 0 };
 	}
-
-	return summary;
 }

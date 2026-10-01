@@ -42,11 +42,6 @@ export interface AutoBackupSettings {
 	frequency?: BackupFrequency;
 	keep?: number;
 	lastRunAt?: string;
-	/**
-	 * When a pass last began this mailbox's backup, whatever came of it. It
-	 * orders the pass; see mostOverdueFirst in backup-run.ts.
-	 */
-	lastAttemptAt?: string;
 	lastResult?: {
 		at: string;
 		ok: boolean;

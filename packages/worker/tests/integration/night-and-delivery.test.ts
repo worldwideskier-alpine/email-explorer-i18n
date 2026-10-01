@@ -5,7 +5,6 @@ import {
 } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { deleteUnclaimedAttachments } from "../../src/attachment-sweep";
-import { runScheduledBackups } from "../../src/backup-run";
 import {
 	destroyMailboxCompletely,
 	finishUnfinishedDeletions,
@@ -14,6 +13,7 @@ import {
 } from "../../src/mailbox-destroy";
 import { readMaintenanceRecord } from "../../src/maintenance-record";
 import { runScheduledMaintenance } from "../../src/scheduled-run";
+import { runScheduledBackups } from "./nights";
 import {
 	authenticatedFetch,
 	createDummyMailbox,

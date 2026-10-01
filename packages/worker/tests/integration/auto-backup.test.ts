@@ -5,8 +5,8 @@ import {
 	waitOnExecutionContext,
 } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
-import { runScheduledBackups } from "../../src/backup-run";
 import { listBackups } from "../../src/backup-writer";
+import { runScheduledBackups } from "./nights";
 import {
 	authenticatedFetch,
 	createDummyMailbox,
