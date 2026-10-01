@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Še ni bilo izvedeno.",
 		"autoBackupLastOk": "Zadnjič {at}: uspešno ({messages} sporočil)",
 		"autoBackupLastFailed": "Zadnjič {at}: ni uspelo ({error})",
-		"autoBackupNotReached": "Zadnji zagon {at}: ni prišlo na vrsto — nočnemu zagonu je prej zmanjkalo časa. Naslednjič bo ta nabiralnik prvi.",
 		"autoBackupOutOfTime": "Zadnji zagon {at}: čas je potekel, preden je bil arhiv dokončan. Ob naslednjem zagonu se bo poskusilo znova.",
 		"autoBackupStored": "Shranjene kopije",
 		"autoBackupDownload": "Prenesi",
@@ -452,8 +451,8 @@
 			"unreadable": "Zapisa o zadnjem načrtovanem vzdrževanju ni bilo mogoče prebrati.",
 			"done": "Načrtovano vzdrževanje {at}: končano ({duration} / {backups} varnostnih kopij / {deleted} izbrisanih neželenih sporočil).",
 			"finishedWithError": "Načrtovano vzdrževanje {at}: en korak ni uspel ({duration} / {detail}).",
-			"notReached": "Načrtovano vzdrževanje {at}: končalo se je, preden je prišlo do čiščenja neželene pošte.",
-			"killedInBackup": "Načrtovano vzdrževanje {at}: prekinjeno med varnostnim kopiranjem ({detail}).",
+			"notReached": "Načrtovano vzdrževanje {at}: zapis se ustavi, preden so bili zapisani rezultati poštnih predalov. Varnostno kopiranje in čiščenje neželene pošte vsakega predala tečeta ločeno; rezultati so na zaslonu nastavitev tega predala.",
+			"killedInBackup": "Načrtovano vzdrževanje {at}: prekinjeno med varnostnim kopiranjem ({detail}). Varnostno kopiranje in čiščenje neželene pošte vsakega predala tečeta ločeno; rezultati so na zaslonu nastavitev tega predala.",
 			"unfinished": "Načrtovano vzdrževanje {at}: prišlo je do čiščenja neželene pošte, vendar ni zapisa, da bi se končalo."
 		},
 		"attachments": {

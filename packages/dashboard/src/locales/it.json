@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Non è ancora stato eseguito.",
 		"autoBackupLastOk": "Ultima esecuzione {at}: riuscita ({messages} messaggi)",
 		"autoBackupLastFailed": "Ultima esecuzione {at}: fallita ({error})",
-		"autoBackupNotReached": "Ultima esecuzione {at}: non raggiunta — l'esecuzione notturna ha esaurito il tempo prima. La prossima volta questa casella sarà la prima.",
 		"autoBackupOutOfTime": "Ultima esecuzione {at}: il tempo è scaduto prima che l'archivio fosse completato. Si riproverà alla prossima esecuzione.",
 		"autoBackupStored": "Backup conservati",
 		"autoBackupDownload": "Scarica",
@@ -452,8 +451,8 @@
 			"unreadable": "Non è stato possibile leggere il registro dell'ultima manutenzione programmata.",
 			"done": "Manutenzione pianificata {at}: completata ({duration} / {backups} backup / {deleted} spam eliminati).",
 			"finishedWithError": "Manutenzione pianificata {at}: una fase non è riuscita ({duration} / {detail}).",
-			"notReached": "Manutenzione pianificata {at}: si è conclusa prima di arrivare alla pulizia dello spam.",
-			"killedInBackup": "Manutenzione pianificata {at}: interrotta durante i backup ({detail}).",
+			"notReached": "Manutenzione pianificata {at}: la registrazione si interrompe prima che fossero scritti i risultati delle caselle. Il backup e la pulizia dello spam di ogni casella vengono eseguiti separatamente; i risultati sono nelle impostazioni di quella casella.",
+			"killedInBackup": "Manutenzione pianificata {at}: interrotta durante i backup ({detail}). Il backup e la pulizia dello spam di ogni casella vengono eseguiti separatamente; i risultati sono nelle impostazioni di quella casella.",
 			"unfinished": "Manutenzione pianificata {at}: è arrivata alla pulizia dello spam, ma non risulta conclusa."
 		},
 		"attachments": {

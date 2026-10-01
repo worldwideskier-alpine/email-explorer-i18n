@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Hefur ekki keyrt enn.",
 		"autoBackupLastOk": "Síðasta keyrsla {at}: tókst ({messages} skeyti)",
 		"autoBackupLastFailed": "Síðasta keyrsla {at}: mistókst ({error})",
-		"autoBackupNotReached": "Síðasta keyrsla {at}: ekki náðist — tími næturkeyrslunnar kláraðist fyrst. Næst verður þetta pósthólf fyrst.",
 		"autoBackupOutOfTime": "Síðasta keyrsla {at}: tíminn kláraðist áður en safnið varð tilbúið. Reynt verður aftur í næstu keyrslu.",
 		"autoBackupStored": "Vistuð afrit",
 		"autoBackupDownload": "Sækja",
@@ -452,8 +451,8 @@
 			"unreadable": "Ekki tókst að lesa skráningu síðasta áætlaða viðhalds.",
 			"done": "Áætlað viðhald {at}: lokið ({duration} / {backups} afrit / {deleted} ruslpóstum eytt).",
 			"finishedWithError": "Áætlað viðhald {at}: eitt skref mistókst ({duration} / {detail}).",
-			"notReached": "Áætlað viðhald {at}: lauk áður en það komst að ruslpóstshreinsuninni.",
-			"killedInBackup": "Áætlað viðhald {at}: rofnaði meðan á afritun stóð ({detail}).",
+			"notReached": "Áætlað viðhald {at}: skráningin stöðvast áður en niðurstöður pósthólfanna voru skráðar. Afritun og ruslpóstshreinsun hvers pósthólfs keyra sér; niðurstöðurnar eru á stillingaskjá þess pósthólfs.",
+			"killedInBackup": "Áætlað viðhald {at}: rofnaði meðan á afritun stóð ({detail}). Afritun og ruslpóstshreinsun hvers pósthólfs keyra sér; niðurstöðurnar eru á stillingaskjá þess pósthólfs.",
 			"unfinished": "Áætlað viðhald {at}: komst að ruslpóstshreinsuninni en engin skráning er um að því hafi lokið."
 		},
 		"attachments": {

@@ -130,8 +130,7 @@ export async function backupOneMailbox(
 				ok: false,
 				error: String(e instanceof Error ? e.message : e).slice(0, 300),
 				// Begun, and stopped by its time running out rather than by a
-				// fault: worded on the screen in the reader's language, as
-				// not-reached is.
+				// fault: worded on the screen in the reader's language.
 				...(e instanceof OutOfTime && e.passEnded
 					? { reason: "out-of-time" as const }
 					: {}),

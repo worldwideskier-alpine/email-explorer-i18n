@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Har ikkje køyrt enno.",
 		"autoBackupLastOk": "Siste køyring {at}: lukkast ({messages} meldingar)",
 		"autoBackupLastFailed": "Siste køyring {at}: mislukkast ({error})",
-		"autoBackupNotReached": "Siste køyring {at}: vart ikkje nådd — nattkøyringa gjekk tom for tid først. Neste gong går denne postkassa først.",
 		"autoBackupOutOfTime": "Siste køyring {at}: tida gjekk ut før arkivet var ferdig. Det blir prøvd igjen ved neste køyring.",
 		"autoBackupStored": "Lagra kopiar",
 		"autoBackupDownload": "Last ned",
@@ -452,8 +451,8 @@
 			"unreadable": "Oppføringa for siste planlagde vedlikehald kunne ikkje lesast.",
 			"done": "Planlagt vedlikehald {at}: fullført ({duration} / {backups} tryggingskopiar / {deleted} søppelpost sletta).",
 			"finishedWithError": "Planlagt vedlikehald {at}: eit steg mislukkast ({duration} / {detail}).",
-			"notReached": "Planlagt vedlikehald {at}: det slutta før det nådde oppryddinga av søppelpost.",
-			"killedInBackup": "Planlagt vedlikehald {at}: avbrote under tryggingskopieringa ({detail}).",
+			"notReached": "Planlagt vedlikehald {at}: registreringa stoppar før resultata til postkassene vart skrivne. Tryggingskopien og søppelpostoppryddinga til kvar postkasse køyrer kvar for seg; resultata står på innstillingsskjermen til postkassa.",
+			"killedInBackup": "Planlagt vedlikehald {at}: avbrote under tryggingskopieringa ({detail}). Tryggingskopien og søppelpostoppryddinga til kvar postkasse køyrer kvar for seg; resultata står på innstillingsskjermen til postkassa.",
 			"unfinished": "Planlagt vedlikehald {at}: det nådde oppryddinga av søppelpost, men det finst inga registrering av at det vart ferdig."
 		},
 		"attachments": {

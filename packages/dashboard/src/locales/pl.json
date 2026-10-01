@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Jeszcze nie uruchomiono.",
 		"autoBackupLastOk": "Ostatnio {at}: powodzenie ({messages} wiadomości)",
 		"autoBackupLastFailed": "Ostatnio {at}: niepowodzenie ({error})",
-		"autoBackupNotReached": "Ostatnie uruchomienie {at}: nie doszło do kolejki — nocnemu uruchomieniu wcześniej skończył się czas. Następnym razem ta skrzynka będzie pierwsza.",
 		"autoBackupOutOfTime": "Ostatnie uruchomienie {at}: czas się skończył, zanim archiwum zostało ukończone. Przy następnym uruchomieniu nastąpi kolejna próba.",
 		"autoBackupStored": "Zapisane kopie",
 		"autoBackupDownload": "Pobierz",
@@ -452,8 +451,8 @@
 			"unreadable": "Nie udało się odczytać zapisu ostatniej zaplanowanej konserwacji.",
 			"done": "Zaplanowana konserwacja {at}: zakończona ({duration} / {backups} kopii zapasowych / usunięto {deleted} spamu).",
 			"finishedWithError": "Zaplanowana konserwacja {at}: jeden etap się nie powiódł ({duration} / {detail}).",
-			"notReached": "Zaplanowana konserwacja {at}: zakończyła się, zanim dotarła do czyszczenia spamu.",
-			"killedInBackup": "Zaplanowana konserwacja {at}: przerwana podczas tworzenia kopii zapasowych ({detail}).",
+			"notReached": "Zaplanowana konserwacja {at}: zapis urywa się, zanim zapisano wyniki skrzynek pocztowych. Kopia zapasowa i czyszczenie spamu każdej skrzynki działają osobno; wyniki są na ekranie ustawień tej skrzynki.",
+			"killedInBackup": "Zaplanowana konserwacja {at}: przerwana podczas tworzenia kopii zapasowych ({detail}). Kopia zapasowa i czyszczenie spamu każdej skrzynki działają osobno; wyniki są na ekranie ustawień tej skrzynki.",
 			"unfinished": "Zaplanowana konserwacja {at}: dotarła do czyszczenia spamu, ale nie ma zapisu o jej zakończeniu."
 		},
 		"attachments": {

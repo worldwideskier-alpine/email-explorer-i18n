@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "尚未运行过。",
 		"autoBackupLastOk": "上次运行 {at}：成功（{messages} 封）",
 		"autoBackupLastFailed": "上次运行 {at}：失败（{error}）",
-		"autoBackupNotReached": "上次运行 {at}：未轮到——夜间运行的时间先用完了。下次将从此邮箱开始。",
 		"autoBackupOutOfTime": "上次运行 {at}：存档写完之前时间已用完。下次运行时会重试。",
 		"autoBackupStored": "已保存的备份",
 		"autoBackupDownload": "下载",
@@ -452,8 +451,8 @@
 			"unreadable": "无法读取最近一次定期维护的记录。",
 			"done": "定期维护 {at}：完成（{duration} ／ 备份 {backups} 个 ／ 删除垃圾邮件 {deleted} 封）。",
 			"finishedWithError": "定期维护 {at}：有一个步骤失败（{duration} ／ {detail}）。",
-			"notReached": "定期维护 {at}：未到达垃圾邮件清理就结束了。",
-			"killedInBackup": "定期维护 {at}：在备份过程中被中断（{detail}）。",
+			"notReached": "定期维护 {at}：记录在写下各邮箱的结果之前就停止了。每个邮箱的备份和垃圾邮件清理各自运行，结果显示在该邮箱的设置页面。",
+			"killedInBackup": "定期维护 {at}：在备份过程中被中断（{detail}）。每个邮箱的备份和垃圾邮件清理各自运行，结果显示在该邮箱的设置页面。",
 			"unfinished": "定期维护 {at}：已到达垃圾邮件清理，但没有完成的记录。"
 		},
 		"attachments": {

@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Nuk është ekzekutuar ende.",
 		"autoBackupLastOk": "Herën e fundit {at}: me sukses ({messages} mesazhe)",
 		"autoBackupLastFailed": "Herën e fundit {at}: dështoi ({error})",
-		"autoBackupNotReached": "Ekzekutimi i fundit {at}: nuk u arrit — ekzekutimit të natës i mbaroi koha më parë. Herën tjetër kjo kuti postare është e para.",
 		"autoBackupOutOfTime": "Ekzekutimi i fundit {at}: koha mbaroi para se arkivi të përfundonte. Do të provohet përsëri në ekzekutimin e ardhshëm.",
 		"autoBackupStored": "Kopjet e ruajtura",
 		"autoBackupDownload": "Shkarko",
@@ -452,8 +451,8 @@
 			"unreadable": "Regjistrimi i mirëmbajtjes së fundit të planifikuar nuk mund të lexohej.",
 			"done": "Mirëmbajtja e planifikuar {at}: përfundoi ({duration} / {backups} kopje rezervë / {deleted} mesazhe të padëshiruara u fshinë).",
 			"finishedWithError": "Mirëmbajtja e planifikuar {at}: një hap dështoi ({duration} / {detail}).",
-			"notReached": "Mirëmbajtje e planifikuar {at}: përfundoi para se të arrinte te pastrimi i spam-it.",
-			"killedInBackup": "Mirëmbajtja e planifikuar {at}: u ndërpre gjatë kopjeve rezervë ({detail}).",
+			"notReached": "Mirëmbajtje e planifikuar {at}: regjistrimi ndalet para se të shkruheshin rezultatet e kutive postare. Kopja rezervë dhe pastrimi i spam-it për çdo kuti postare punojnë veçmas; rezultatet janë në ekranin e cilësimeve të asaj kutie.",
+			"killedInBackup": "Mirëmbajtja e planifikuar {at}: u ndërpre gjatë kopjeve rezervë ({detail}). Kopja rezervë dhe pastrimi i spam-it për çdo kuti postare punojnë veçmas; rezultatet janë në ekranin e cilësimeve të asaj kutie.",
 			"unfinished": "Mirëmbajtje e planifikuar {at}: arriti te pastrimi i spam-it, por nuk ka asnjë shënim se përfundoi."
 		},
 		"attachments": {

@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Todavía no se ha ejecutado.",
 		"autoBackupLastOk": "Última ejecución {at}: correcta ({messages} mensajes)",
 		"autoBackupLastFailed": "Última ejecución {at}: falló ({error})",
-		"autoBackupNotReached": "Última ejecución {at}: no se llegó — a la ejecución nocturna se le acabó el tiempo antes. La próxima vez este buzón irá primero.",
 		"autoBackupOutOfTime": "Última ejecución {at}: se acabó el tiempo antes de terminar el archivo. Se volverá a intentar en la próxima ejecución.",
 		"autoBackupStored": "Copias guardadas",
 		"autoBackupDownload": "Descargar",
@@ -452,8 +451,8 @@
 			"unreadable": "No se ha podido leer el registro del último mantenimiento programado.",
 			"done": "Mantenimiento programado {at}: finalizado ({duration} / {backups} copias / {deleted} correos no deseados eliminados).",
 			"finishedWithError": "Mantenimiento programado {at}: una fase ha fallado ({duration} / {detail}).",
-			"notReached": "Mantenimiento programado {at}: terminó antes de llegar a la limpieza de spam.",
-			"killedInBackup": "Mantenimiento programado {at}: se interrumpió durante las copias de seguridad ({detail}).",
+			"notReached": "Mantenimiento programado {at}: el registro se detiene antes de que se escribieran los resultados de los buzones. La copia de seguridad y la limpieza de spam de cada buzón se ejecutan por separado; sus resultados están en la pantalla de ajustes de ese buzón.",
+			"killedInBackup": "Mantenimiento programado {at}: se interrumpió durante las copias de seguridad ({detail}). La copia de seguridad y la limpieza de spam de cada buzón se ejecutan por separado; sus resultados están en la pantalla de ajustes de ese buzón.",
 			"unfinished": "Mantenimiento programado {at}: llegó a la limpieza de spam, pero no consta que finalizara."
 		},
 		"attachments": {

@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Ainda não foi executado.",
 		"autoBackupLastOk": "Última execução {at}: com êxito ({messages} mensagens)",
 		"autoBackupLastFailed": "Última execução {at}: falhou ({error})",
-		"autoBackupNotReached": "Última execução {at}: não chegou a vez — a execução noturna ficou sem tempo antes. Da próxima vez esta caixa de correio vai primeiro.",
 		"autoBackupOutOfTime": "Última execução {at}: o tempo acabou antes de o arquivo ficar concluído. Será tentado novamente na próxima execução.",
 		"autoBackupStored": "Cópias guardadas",
 		"autoBackupDownload": "Transferir",
@@ -452,8 +451,8 @@
 			"unreadable": "Não foi possível ler o registo da última manutenção agendada.",
 			"done": "Manutenção agendada {at}: concluída ({duration} / {backups} backups / {deleted} spams excluídos).",
 			"finishedWithError": "Manutenção agendada {at}: uma etapa falhou ({duration} / {detail}).",
-			"notReached": "Manutenção agendada {at}: terminou antes de chegar à limpeza de spam.",
-			"killedInBackup": "Manutenção agendada {at}: foi interrompida durante os backups ({detail}).",
+			"notReached": "Manutenção agendada {at}: o registro para antes de os resultados das caixas de correio serem gravados. O backup e a limpeza de spam de cada caixa de correio rodam separadamente; os resultados ficam na tela de configurações dessa caixa.",
+			"killedInBackup": "Manutenção agendada {at}: foi interrompida durante os backups ({detail}). O backup e a limpeza de spam de cada caixa de correio rodam separadamente; os resultados ficam na tela de configurações dessa caixa.",
 			"unfinished": "Manutenção agendada {at}: chegou à limpeza de spam, mas não há registo de que tenha terminado."
 		},
 		"attachments": {

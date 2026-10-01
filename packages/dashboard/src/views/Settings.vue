@@ -706,11 +706,6 @@ const autoBackupLastOk = computed(() => autoBackupLastResult.value?.ok);
 const autoBackupLastLine = computed(() => {
 	const last = autoBackupLastResult.value;
 	if (!last) return t("settings.autoBackupNeverRun");
-	if (!last.ok && last.reason === "not-reached") {
-		return t("settings.autoBackupNotReached", {
-			at: new Date(last.at).toLocaleString(),
-		});
-	}
 	// Begun and stopped by the run's end: a slow night, not a broken call.
 	if (!last.ok && last.reason === "out-of-time") {
 		return t("settings.autoBackupOutOfTime", {

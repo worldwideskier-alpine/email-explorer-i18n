@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Hələ işə salınmayıb.",
 		"autoBackupLastOk": "Son işə salma {at}: uğurlu ({messages} məktub)",
 		"autoBackupLastFailed": "Son işə salma {at}: alınmadı ({error})",
-		"autoBackupNotReached": "Son icra {at}: çatılmadı — gecə icrasının vaxtı əvvəlcə bitdi. Növbəti dəfə bu poçt qutusu birinci olacaq.",
 		"autoBackupOutOfTime": "Son icra {at}: arxiv tamamlanmadan vaxt bitdi. Növbəti icrada yenidən cəhd ediləcək.",
 		"autoBackupStored": "Saxlanmış nüsxələr",
 		"autoBackupDownload": "Endir",
@@ -452,8 +451,8 @@
 			"unreadable": "Son planlı baxımın qeydini oxumaq mümkün olmadı.",
 			"done": "Planlı baxım {at}: bitdi ({duration} / {backups} ehtiyat nüsxə / {deleted} spam silindi).",
 			"finishedWithError": "Planlı baxım {at}: mərhələlərdən biri uğursuz oldu ({duration} / {detail}).",
-			"notReached": "Planlı texniki iş {at}: spam təmizlənməsinə çatmadan bitib.",
-			"killedInBackup": "Planlı baxım {at}: ehtiyat nüsxə çıxarılarkən yarımçıq kəsildi ({detail}).",
+			"notReached": "Planlı texniki iş {at}: qeyd poçt qutularının nəticələri yazılmadan dayanıb. Hər poçt qutusunun ehtiyat nüsxəsi və spam təmizlənməsi ayrıca işləyir; nəticələri həmin poçt qutusunun ayarlar ekranındadır.",
+			"killedInBackup": "Planlı baxım {at}: ehtiyat nüsxə çıxarılarkən yarımçıq kəsildi ({detail}). Hər poçt qutusunun ehtiyat nüsxəsi və spam təmizlənməsi ayrıca işləyir; nəticələri həmin poçt qutusunun ayarlar ekranındadır.",
 			"unfinished": "Planlı texniki iş {at}: spam təmizlənməsinə çatdı, lakin tamamlanma qeydi yoxdur."
 		},
 		"attachments": {

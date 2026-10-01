@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Hindi pa tumatakbo.",
 		"autoBackupLastOk": "Huling takbo {at}: matagumpay ({messages} mensahe)",
 		"autoBackupLastFailed": "Huling takbo {at}: nabigo ({error})",
-		"autoBackupNotReached": "Huling pagtakbo {at}: hindi naabot — naubusan ng oras ang takbo sa gabi bago ito. Mauuna ang mailbox na ito sa susunod.",
 		"autoBackupOutOfTime": "Huling pagtakbo {at}: naubusan ng oras bago natapos ang archive. Susubukan ulit sa susunod na pagtakbo.",
 		"autoBackupStored": "Mga naka-imbak na backup",
 		"autoBackupDownload": "I-download",
@@ -452,8 +451,8 @@
 			"unreadable": "Hindi mabasa ang tala ng huling nakatakdang maintenance.",
 			"done": "Nakatakdang pagpapanatili {at}: tapos na ({duration} / {backups} na-back up / {deleted} spam na natanggal).",
 			"finishedWithError": "Nakatakdang pagpapanatili {at}: may yugtong nabigo ({duration} / {detail}).",
-			"notReached": "Naka-iskedyul na maintenance {at}: natapos bago pa marating ang paglilinis ng spam.",
-			"killedInBackup": "Nakatakdang pagpapanatili {at}: naputol habang nagba-backup ({detail}).",
+			"notReached": "Naka-iskedyul na maintenance {at}: huminto ang tala bago naisulat ang mga resulta ng mga mailbox. Hiwalay na tumatakbo ang backup at paglilinis ng spam ng bawat mailbox; nasa screen ng mga setting ng mailbox na iyon ang resulta.",
+			"killedInBackup": "Nakatakdang pagpapanatili {at}: naputol habang nagba-backup ({detail}). Hiwalay na tumatakbo ang backup at paglilinis ng spam ng bawat mailbox; nasa screen ng mga setting ng mailbox na iyon ang resulta.",
 			"unfinished": "Naka-iskedyul na maintenance {at}: narating ang paglilinis ng spam, ngunit walang talaan na natapos ito."
 		},
 		"attachments": {

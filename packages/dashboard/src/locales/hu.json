@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Még nem futott.",
 		"autoBackupLastOk": "Utolsó futás {at}: sikeres ({messages} levél)",
 		"autoBackupLastFailed": "Utolsó futás {at}: sikertelen ({error})",
-		"autoBackupNotReached": "Utolsó futás {at}: nem került sorra — az éjszakai futás ideje előbb lejárt. Legközelebb ez a postafiók lesz az első.",
 		"autoBackupOutOfTime": "Utolsó futás {at}: lejárt az idő, mielőtt az archívum elkészült. A következő futáskor újra megpróbálja.",
 		"autoBackupStored": "Mentett másolatok",
 		"autoBackupDownload": "Letöltés",
@@ -452,8 +451,8 @@
 			"unreadable": "A legutóbbi ütemezett karbantartás bejegyzését nem sikerült beolvasni.",
 			"done": "Ütemezett karbantartás {at}: befejeződött ({duration} / {backups} mentés / {deleted} levélszemét törölve).",
 			"finishedWithError": "Ütemezett karbantartás {at}: az egyik lépés hibára futott ({duration} / {detail}).",
-			"notReached": "Ütemezett karbantartás {at}: véget ért, mielőtt elérte volna a levélszemét törlését.",
-			"killedInBackup": "Ütemezett karbantartás {at}: a mentés közben megszakadt ({detail}).",
+			"notReached": "Ütemezett karbantartás {at}: a feljegyzés megszakad, mielőtt a postafiókok eredményei bekerültek volna. Minden postafiók mentése és levélszemét-törlése külön fut; az eredmények az adott postafiók beállításainál láthatók.",
+			"killedInBackup": "Ütemezett karbantartás {at}: a mentés közben megszakadt ({detail}). Minden postafiók mentése és levélszemét-törlése külön fut; az eredmények az adott postafiók beállításainál láthatók.",
 			"unfinished": "Ütemezett karbantartás {at}: elérte a levélszemét törlését, de a befejezésről nincs bejegyzés."
 		},
 		"attachments": {

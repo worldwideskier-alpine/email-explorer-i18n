@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Henüz çalışmadı.",
 		"autoBackupLastOk": "Son çalışma {at}: başarılı ({messages} ileti)",
 		"autoBackupLastFailed": "Son çalışma {at}: başarısız ({error})",
-		"autoBackupNotReached": "Son çalıştırma {at}: sıra gelmedi — gece çalıştırmasının süresi önce doldu. Bir dahaki sefere bu posta kutusu önce gelir.",
 		"autoBackupOutOfTime": "Son çalıştırma {at}: arşiv bitmeden süre doldu. Bir sonraki çalıştırmada yeniden denenecek.",
 		"autoBackupStored": "Saklanan yedekler",
 		"autoBackupDownload": "İndir",
@@ -452,8 +451,8 @@
 			"unreadable": "Son planlı bakımın kaydı okunamadı.",
 			"done": "Zamanlanmış bakım {at}: tamamlandı ({duration} / {backups} yedek / {deleted} istenmeyen posta silindi).",
 			"finishedWithError": "Zamanlanmış bakım {at}: bir aşama başarısız oldu ({duration} / {detail}).",
-			"notReached": "Zamanlanmış bakım {at}: istenmeyen posta temizliğine ulaşmadan sona erdi.",
-			"killedInBackup": "Zamanlanmış bakım {at}: yedekleme sırasında yarıda kesildi ({detail}).",
+			"notReached": "Zamanlanmış bakım {at}: kayıt, posta kutularının sonuçları yazılmadan durmuş. Her posta kutusunun yedeklemesi ve istenmeyen posta temizliği ayrı çalışır; sonuçlar o posta kutusunun ayarlar ekranındadır.",
+			"killedInBackup": "Zamanlanmış bakım {at}: yedekleme sırasında yarıda kesildi ({detail}). Her posta kutusunun yedeklemesi ve istenmeyen posta temizliği ayrı çalışır; sonuçlar o posta kutusunun ayarlar ekranındadır.",
 			"unfinished": "Zamanlanmış bakım {at}: istenmeyen posta temizliğine ulaştı, ancak tamamlandığına dair kayıt yok."
 		},
 		"attachments": {

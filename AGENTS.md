@@ -384,7 +384,11 @@ are still checked, by the `tsc` that runs before the worker tests.
   slow first mailbox spent the time, and the second was cut off 300 messages
   in. So each mailbox's night is now its own alarm with the whole of its own
   time, and a slow mailbox costs nobody else theirs (`nightly-limits.test.ts`,
-  two that hang and one that finishes, in about one night's time). The cron
+  two that hang and one that finishes, in about one night's time). An alarm
+  has the cron's fifteen minutes of wall time but only 30 seconds of CPU by
+  default, where the cron had fifteen minutes; a 900-message night with a
+  94 MB archive measured 4.4 s all told in the test pool, so the default
+  stands (`mailbox-night.ts`). The cron
   only starts them and polls (`nightStatus`) for up to fourteen minutes. An alarm the runtime ended partway is run again by the
   runtime; the second attempt finishes the record -- failed, due again
   tomorrow -- rather than the night, which would most likely end the same

@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Anc betg ì.",
 		"autoBackupLastOk": "Ultim decurs {at}: reussì ({messages} messadis)",
 		"autoBackupLastFailed": "Ultim decurs {at}: fallì ({error})",
-		"autoBackupNotReached": "Ultima execuziun {at}: betg cuntanschì — a l'execuziun da notg è ì ora il temp pli baud. La proxima giada vegn questa chascha da posta sco emprima.",
 		"autoBackupOutOfTime": "Ultima execuziun {at}: il temp è ì ora avant che l'archiv saja finì. I vegn empruvà danovamain a la proxima execuziun.",
 		"autoBackupStored": "Copias memorisadas",
 		"autoBackupDownload": "Telechargiar",
@@ -452,8 +451,8 @@
 			"unreadable": "L'endataziun da l'ultima mantegnida planisada n'ha betg pudì vegnir legida.",
 			"done": "Mantegniment planisà {at}: terminà ({duration} / {backups} copias da segirezza / {deleted} spam stizzads).",
 			"finishedWithError": "Mantegniment planisà {at}: ina fasa è fallida ({duration} / {detail}).",
-			"notReached": "Mantegnientscha planisada {at}: ella è finida avant ch'ella ha cuntanschì la mundada da spam.",
-			"killedInBackup": "Mantegniment planisà {at}: interrut durant las copias da segirezza ({detail}).",
+			"notReached": "Mantegnientscha planisada {at}: la registraziun sa ferma avant che las resultats da las chaschettas da posta èn vegnids scrits. La copia da segirezza e la mundada da spam da mintga chaschetta da posta funcziunan separadamain; ils resultats èn en ils parameters da quella chaschetta.",
+			"killedInBackup": "Mantegniment planisà {at}: interrut durant las copias da segirezza ({detail}). La copia da segirezza e la mundada da spam da mintga chaschetta da posta funcziunan separadamain; ils resultats èn en ils parameters da quella chaschetta.",
 			"unfinished": "Mantegnientscha planisada {at}: ella ha cuntanschì la mundada da spam, ma i n'exista nagin protocol ch'ella saja finida."
 		},
 		"attachments": {

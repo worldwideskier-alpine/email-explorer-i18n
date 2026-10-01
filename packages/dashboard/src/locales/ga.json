@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Níor rith sé fós.",
 		"autoBackupLastOk": "Rith deiridh {at}: d'éirigh leis ({messages} teachtaireacht)",
 		"autoBackupLastFailed": "Rith deiridh {at}: theip air ({error})",
-		"autoBackupNotReached": "An rith is déanaí {at}: níor sroicheadh é — rith an rith oíche as am ar dtús. Beidh an bosca poist seo ar dtús an chéad uair eile.",
 		"autoBackupOutOfTime": "An rith is déanaí {at}: rith an t-am amach sular críochnaíodh an chartlann. Déanfar iarracht arís sa chéad rith eile.",
 		"autoBackupStored": "Cúltacaí sábháilte",
 		"autoBackupDownload": "Íoslódáil",
@@ -452,8 +451,8 @@
 			"unreadable": "Níorbh fhéidir taifead an chothabhála sceidealta is déanaí a léamh.",
 			"done": "Cothabháil sceidealta {at}: críochnaithe ({duration} / {backups} cúltaca / {deleted} turscar scriosta).",
 			"finishedWithError": "Cothabháil sceidealta {at}: theip ar chéim ({duration} / {detail}).",
-			"notReached": "Cothabháil sceidealta {at}: chríochnaigh sí sular shroich sí glanadh an turscair.",
-			"killedInBackup": "Cothabháil sceidealta {at}: gearradh siar é le linn na gcúltacaí ({detail}).",
+			"notReached": "Cothabháil sceidealta {at}: stopann an taifead sular scríobhadh torthaí na mboscaí poist. Ritheann cúltaca agus glanadh turscair gach bosca poist ar leith; tá a dtorthaí ar scáileán socruithe an bhosca sin.",
+			"killedInBackup": "Cothabháil sceidealta {at}: gearradh siar é le linn na gcúltacaí ({detail}). Ritheann cúltaca agus glanadh turscair gach bosca poist ar leith; tá a dtorthaí ar scáileán socruithe an bhosca sin.",
 			"unfinished": "Cothabháil sceidealta {at}: shroich sí glanadh an turscair, ach níl aon taifead ann gur chríochnaigh sí."
 		},
 		"attachments": {

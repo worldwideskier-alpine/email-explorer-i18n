@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Nach net gelaf.",
 		"autoBackupLastOk": "Leschte Laf {at}: gelongen ({messages} Messagen)",
 		"autoBackupLastFailed": "Leschte Laf {at}: feelgeschloen ({error})",
-		"autoBackupNotReached": "Leschte Laf {at}: net erreecht — dem nuetsleche Laf ass virdrun d'Zäit ausgaangen. Déi nächste Kéier ass dës Mailbox als éischt drun.",
 		"autoBackupOutOfTime": "Leschte Laf {at}: d'Zäit ass ausgaang, ier den Archiv fäerdeg war. Beim nächste Laf gëtt et nach eng Kéier probéiert.",
 		"autoBackupStored": "Gespäichert Sécherungen",
 		"autoBackupDownload": "Eroflueden",
@@ -452,8 +451,8 @@
 			"unreadable": "Den Andrag vun der leschter geplangter Maintenance konnt net gelies ginn.",
 			"done": "Geplangten Ënnerhalt {at}: ofgeschloss ({duration} / {backups} Sécherungen / {deleted} Spam geläscht).",
 			"finishedWithError": "Geplangten Ënnerhalt {at}: e Schrëtt ass feelgeschloen ({duration} / {detail}).",
-			"notReached": "Geplangten Ënnerhalt {at}: en ass eriwwer, ier en bei d'Spam-Läschung koum.",
-			"killedInBackup": "Geplangten Ënnerhalt {at}: während der Sécherung ofgebrach ({detail}).",
+			"notReached": "Geplangten Ënnerhalt {at}: d'Opzeechnung hält op, ier d'Resultater vun de Postfächer geschriwwe goufen. Sécherung a Spam-Läschung lafe fir all Postfach eenzel; d'Resultater stinn an den Astellunge vum jeeweilege Postfach.",
+			"killedInBackup": "Geplangten Ënnerhalt {at}: während der Sécherung ofgebrach ({detail}). Sécherung a Spam-Läschung lafe fir all Postfach eenzel; d'Resultater stinn an den Astellunge vum jeeweilege Postfach.",
 			"unfinished": "Geplangten Ënnerhalt {at}: en ass bei d'Spam-Läschung komm, mä en Ofschloss ass net festgehalen."
 		},
 		"attachments": {

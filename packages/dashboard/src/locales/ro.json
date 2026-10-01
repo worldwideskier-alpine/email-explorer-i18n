@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Nu a rulat încă.",
 		"autoBackupLastOk": "Ultima rulare {at}: reușită ({messages} mesaje)",
 		"autoBackupLastFailed": "Ultima rulare {at}: eșuată ({error})",
-		"autoBackupNotReached": "Ultima rulare {at}: nu s-a ajuns la ea — rulării de noapte i s-a terminat timpul mai înainte. Data viitoare această cutie poștală este prima.",
 		"autoBackupOutOfTime": "Ultima rulare {at}: timpul s-a terminat înainte ca arhiva să fie finalizată. Se va încerca din nou la următoarea rulare.",
 		"autoBackupStored": "Copii salvate",
 		"autoBackupDownload": "Descarcă",
@@ -452,8 +451,8 @@
 			"unreadable": "Înregistrarea ultimei mentenanțe programate nu a putut fi citită.",
 			"done": "Mentenanță programată {at}: finalizată ({duration} / {backups} copii de rezervă / {deleted} spam șterse).",
 			"finishedWithError": "Mentenanță programată {at}: o etapă a eșuat ({duration} / {detail}).",
-			"notReached": "Mentenanță programată {at}: s-a încheiat înainte de a ajunge la curățarea spamului.",
-			"killedInBackup": "Mentenanță programată {at}: a fost întreruptă în timpul copiilor de rezervă ({detail}).",
+			"notReached": "Mentenanță programată {at}: înregistrarea se oprește înainte ca rezultatele cutiilor poștale să fie scrise. Copia de rezervă și curățarea spamului fiecărei cutii poștale rulează separat; rezultatele sunt în ecranul de setări al acelei cutii.",
+			"killedInBackup": "Mentenanță programată {at}: a fost întreruptă în timpul copiilor de rezervă ({detail}). Copia de rezervă și curățarea spamului fiecărei cutii poștale rulează separat; rezultatele sunt în ecranul de setări al acelei cutii.",
 			"unfinished": "Mentenanță programată {at}: a ajuns la curățarea spamului, dar nu există nicio consemnare că s-ar fi încheiat."
 		},
 		"attachments": {

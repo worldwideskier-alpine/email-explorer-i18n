@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Encara no s'ha executat.",
 		"autoBackupLastOk": "Darrera execució {at}: correcta ({messages} missatges)",
 		"autoBackupLastFailed": "Darrera execució {at}: ha fallat ({error})",
-		"autoBackupNotReached": "Última execució {at}: no s'hi ha arribat — l'execució nocturna s'ha quedat sense temps abans. La propera vegada aquesta bústia serà la primera.",
 		"autoBackupOutOfTime": "Última execució {at}: s'ha acabat el temps abans de completar l'arxiu. Es tornarà a provar a la propera execució.",
 		"autoBackupStored": "Còpies desades",
 		"autoBackupDownload": "Baixa",
@@ -452,8 +451,8 @@
 			"unreadable": "No s'ha pogut llegir el registre de l'últim manteniment programat.",
 			"done": "Manteniment programat {at}: finalitzat ({duration} / {backups} còpies / {deleted} correus brossa suprimits).",
 			"finishedWithError": "Manteniment programat {at}: una fase ha fallat ({duration} / {detail}).",
-			"notReached": "Manteniment programat {at}: ha acabat abans d'arribar a la neteja de correu brossa.",
-			"killedInBackup": "Manteniment programat {at}: s'ha interromput durant les còpies de seguretat ({detail}).",
+			"notReached": "Manteniment programat {at}: el registre s'atura abans que s'escriguin els resultats de les bústies. La còpia de seguretat i la neteja de correu brossa de cada bústia funcionen per separat; els resultats són a la pantalla de configuració d'aquella bústia.",
+			"killedInBackup": "Manteniment programat {at}: s'ha interromput durant les còpies de seguretat ({detail}). La còpia de seguretat i la neteja de correu brossa de cada bústia funcionen per separat; els resultats són a la pantalla de configuració d'aquella bústia.",
 			"unfinished": "Manteniment programat {at}: ha arribat a la neteja de correu brossa, però no hi ha registre que finalitzés."
 		},
 		"attachments": {

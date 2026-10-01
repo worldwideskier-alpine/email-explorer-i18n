@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Bisher nicht gelaufen.",
 		"autoBackupLastOk": "Letzter Lauf {at}: erfolgreich ({messages} Nachrichten)",
 		"autoBackupLastFailed": "Letzter Lauf {at}: fehlgeschlagen ({error})",
-		"autoBackupNotReached": "Letzter Lauf {at}: nicht erreicht — dem nächtlichen Lauf ging vorher die Zeit aus. Beim nächsten Mal ist dieses Postfach als Erstes dran.",
 		"autoBackupOutOfTime": "Letzter Lauf {at}: Die Zeit lief ab, bevor das Archiv fertig war. Beim nächsten Lauf wird es erneut versucht.",
 		"autoBackupStored": "Gespeicherte Sicherungen",
 		"autoBackupDownload": "Herunterladen",
@@ -452,8 +451,8 @@
 			"unreadable": "Der Eintrag zur letzten geplanten Wartung konnte nicht gelesen werden.",
 			"done": "Geplante Wartung {at}: abgeschlossen ({duration} / {backups} Sicherungen / {deleted} Spam gelöscht).",
 			"finishedWithError": "Geplante Wartung {at}: ein Durchlauf ist fehlgeschlagen ({duration} / {detail}).",
-			"notReached": "Geplante Wartung {at}: endete, bevor sie die Spam-Löschung erreichte.",
-			"killedInBackup": "Geplante Wartung {at}: während der Sicherung abgebrochen ({detail}).",
+			"notReached": "Geplante Wartung {at}: die Aufzeichnung endet, bevor die Ergebnisse der Postfächer geschrieben wurden. Sicherung und Spam-Löschung laufen für jedes Postfach einzeln; die Ergebnisse stehen in den Einstellungen des jeweiligen Postfachs.",
+			"killedInBackup": "Geplante Wartung {at}: während der Sicherung abgebrochen ({detail}). Sicherung und Spam-Löschung laufen für jedes Postfach einzeln; die Ergebnisse stehen in den Einstellungen des jeweiligen Postfachs.",
 			"unfinished": "Geplante Wartung {at}: erreichte die Spam-Löschung, aber ein Abschluss ist nicht verzeichnet."
 		},
 		"attachments": {

@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "It has not run yet.",
 		"autoBackupLastOk": "Last run {at}: succeeded ({messages} messages)",
 		"autoBackupLastFailed": "Last run {at}: failed ({error})",
-		"autoBackupNotReached": "Last run {at}: not reached — the nightly run ran out of time first. This mailbox goes first next time.",
 		"autoBackupOutOfTime": "Last run {at}: ran out of time before the archive was finished. It is tried again on the next run.",
 		"autoBackupStored": "Stored backups",
 		"autoBackupDownload": "Download",
@@ -452,8 +451,8 @@
 			"unreadable": "Could not read the record of the last scheduled maintenance.",
 			"done": "Scheduled maintenance {at}: finished ({duration} / {backups} backed up / {deleted} spam deleted).",
 			"finishedWithError": "Scheduled maintenance {at}: a pass failed ({duration} / {detail}).",
-			"notReached": "Scheduled maintenance {at}: it ended before reaching the spam purge.",
-			"killedInBackup": "Scheduled maintenance {at}: it was cut off during the backups ({detail}).",
+			"notReached": "Scheduled maintenance {at}: its record stops before the mailboxes' results were written. Each mailbox's backup and spam purge run on their own; their results are on that mailbox's settings screen.",
+			"killedInBackup": "Scheduled maintenance {at}: it was cut off during the backups ({detail}). Each mailbox's backup and spam purge run on their own; their results are on that mailbox's settings screen.",
 			"unfinished": "Scheduled maintenance {at}: it reached the spam purge, but there is no record of it finishing."
 		},
 		"attachments": {

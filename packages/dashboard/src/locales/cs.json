@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Zatím neproběhlo.",
 		"autoBackupLastOk": "Poslední běh {at}: úspěch ({messages} zpráv)",
 		"autoBackupLastFailed": "Poslední běh {at}: selhalo ({error})",
-		"autoBackupNotReached": "Poslední běh {at}: nedostalo se na řadu — nočnímu běhu nejdřív došel čas. Příště bude tato schránka první.",
 		"autoBackupOutOfTime": "Poslední běh {at}: čas vypršel dřív, než byl archiv dokončen. Při dalším běhu se to zkusí znovu.",
 		"autoBackupStored": "Uložené zálohy",
 		"autoBackupDownload": "Stáhnout",
@@ -452,8 +451,8 @@
 			"unreadable": "Záznam o poslední naplánované údržbě se nepodařilo načíst.",
 			"done": "Plánovaná údržba {at}: dokončena ({duration} / {backups} záloh / {deleted} smazaných spamů).",
 			"finishedWithError": "Plánovaná údržba {at}: jedna fáze selhala ({duration} / {detail}).",
-			"notReached": "Plánovaná údržba {at}: skončila dříve, než se dostala k mazání spamu.",
-			"killedInBackup": "Plánovaná údržba {at}: přerušena během zálohování ({detail}).",
+			"notReached": "Plánovaná údržba {at}: záznam končí dříve, než byly zapsány výsledky poštovních schránek. Zálohování a mazání spamu každé schránky běží samostatně; jejich výsledky jsou na obrazovce nastavení dané schránky.",
+			"killedInBackup": "Plánovaná údržba {at}: přerušena během zálohování ({detail}). Zálohování a mazání spamu každé schránky běží samostatně; jejich výsledky jsou na obrazovce nastavení dané schránky.",
 			"unfinished": "Plánovaná údržba {at}: dostala se k mazání spamu, ale záznam o dokončení chybí."
 		},
 		"attachments": {

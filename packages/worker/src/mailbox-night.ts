@@ -31,6 +31,13 @@ import type { Env } from "./types";
  * cron is, and says nothing when it is. So the backup must be done twelve
  * minutes in and the purge by thirteen, and writing down how it went stops at
  * thirteen and a half -- inside the cron's own wait for it.
+ *
+ * CPU is the other limit, and the one that moved: an alarm has 30 seconds of
+ * it by default, where the cron that built the archive before had fifteen
+ * minutes. Measured in the test pool, a night of 900 messages and a 94 MB
+ * archive took 4.4 seconds all told, local storage included -- the work is
+ * waiting on R2, not computing. So the default stands; `limits.cpu_ms` would
+ * raise it for every request this Worker serves, not only for the nights.
  */
 export const NIGHT_BACKUP_BY_MS = 12 * 60_000;
 export const NIGHT_PURGE_BY_MS = 13 * 60_000;

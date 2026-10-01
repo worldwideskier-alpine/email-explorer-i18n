@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Har inte körts än.",
 		"autoBackupLastOk": "Senaste körning {at}: lyckades ({messages} meddelanden)",
 		"autoBackupLastFailed": "Senaste körning {at}: misslyckades ({error})",
-		"autoBackupNotReached": "Senaste körning {at}: nåddes inte — nattkörningen fick slut på tid först. Nästa gång går den här brevlådan först.",
 		"autoBackupOutOfTime": "Senaste körning {at}: tiden tog slut innan arkivet var klart. Det prövas igen vid nästa körning.",
 		"autoBackupStored": "Sparade kopior",
 		"autoBackupDownload": "Ladda ner",
@@ -452,8 +451,8 @@
 			"unreadable": "Posten för det senaste schemalagda underhållet kunde inte läsas.",
 			"done": "Schemalagt underhåll {at}: slutfört ({duration} / {backups} säkerhetskopior / {deleted} skräppost raderad).",
 			"finishedWithError": "Schemalagt underhåll {at}: ett steg misslyckades ({duration} / {detail}).",
-			"notReached": "Schemalagt underhåll {at}: det slutade innan det nådde skräppostrensningen.",
-			"killedInBackup": "Schemalagt underhåll {at}: avbröts under säkerhetskopieringen ({detail}).",
+			"notReached": "Schemalagt underhåll {at}: registreringen slutar innan brevlådornas resultat skrevs. Varje brevlådas säkerhetskopia och skräppostrensning körs för sig; resultaten står på brevlådans inställningsskärm.",
+			"killedInBackup": "Schemalagt underhåll {at}: avbröts under säkerhetskopieringen ({detail}). Varje brevlådas säkerhetskopia och skräppostrensning körs för sig; resultaten står på brevlådans inställningsskärm.",
 			"unfinished": "Schemalagt underhåll {at}: det nådde skräppostrensningen, men det finns ingen notering om att det blev klart."
 		},
 		"attachments": {

@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Ei ole vielä ajettu.",
 		"autoBackupLastOk": "Viimeksi {at}: onnistui ({messages} viestiä)",
 		"autoBackupLastFailed": "Viimeksi {at}: epäonnistui ({error})",
-		"autoBackupNotReached": "Viimeisin ajo {at}: vuoro ei ehtinyt — yöajon aika loppui ensin. Ensi kerralla tämä postilaatikko on ensimmäisenä.",
 		"autoBackupOutOfTime": "Viimeisin ajo {at}: aika loppui ennen kuin arkisto valmistui. Seuraavalla ajolla yritetään uudelleen.",
 		"autoBackupStored": "Tallennetut kopiot",
 		"autoBackupDownload": "Lataa",
@@ -452,8 +451,8 @@
 			"unreadable": "Viimeisimmän ajastetun ylläpidon tietoja ei voitu lukea.",
 			"done": "Ajastettu ylläpito {at}: valmis ({duration} / {backups} varmuuskopiota / {deleted} roskapostia poistettu).",
 			"finishedWithError": "Ajastettu ylläpito {at}: yksi vaihe epäonnistui ({duration} / {detail}).",
-			"notReached": "Ajastettu ylläpito {at}: päättyi ennen kuin ehti roskapostin siivoukseen.",
-			"killedInBackup": "Ajastettu ylläpito {at}: keskeytyi varmuuskopioinnin aikana ({detail}).",
+			"notReached": "Ajastettu ylläpito {at}: kirjaus päättyy ennen kuin postilaatikoiden tulokset kirjattiin. Kunkin postilaatikon varmuuskopio ja roskapostin siivous ajetaan erikseen; tulokset näkyvät postilaatikon asetuksissa.",
+			"killedInBackup": "Ajastettu ylläpito {at}: keskeytyi varmuuskopioinnin aikana ({detail}). Kunkin postilaatikon varmuuskopio ja roskapostin siivous ajetaan erikseen; tulokset näkyvät postilaatikon asetuksissa.",
 			"unfinished": "Ajastettu ylläpito {at}: ehti roskapostin siivoukseen, mutta valmistumisesta ei ole merkintää."
 		},
 		"attachments": {

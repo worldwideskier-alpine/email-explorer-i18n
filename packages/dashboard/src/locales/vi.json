@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Chưa từng chạy.",
 		"autoBackupLastOk": "Lần cuối {at}: thành công ({messages} thư)",
 		"autoBackupLastFailed": "Lần cuối {at}: thất bại ({error})",
-		"autoBackupNotReached": "Lần chạy gần nhất {at}: chưa đến lượt — lần chạy ban đêm đã hết thời gian trước. Lần sau hộp thư này sẽ được chạy trước.",
 		"autoBackupOutOfTime": "Lần chạy gần nhất {at}: hết thời gian trước khi bản lưu trữ hoàn tất. Sẽ thử lại ở lần chạy tiếp theo.",
 		"autoBackupStored": "Bản sao lưu đã lưu",
 		"autoBackupDownload": "Tải xuống",
@@ -452,8 +451,8 @@
 			"unreadable": "Không thể đọc bản ghi của lần bảo trì định kỳ gần nhất.",
 			"done": "Bảo trì theo lịch {at}: hoàn tất ({duration} / {backups} bản sao lưu / đã xóa {deleted} thư rác).",
 			"finishedWithError": "Bảo trì theo lịch {at}: một bước đã thất bại ({duration} / {detail}).",
-			"notReached": "Bảo trì theo lịch {at}: đã kết thúc trước khi đến bước dọn thư rác.",
-			"killedInBackup": "Bảo trì theo lịch {at}: bị ngắt giữa chừng khi sao lưu ({detail}).",
+			"notReached": "Bảo trì theo lịch {at}: bản ghi dừng lại trước khi kết quả của các hộp thư được ghi. Sao lưu và dọn thư rác của mỗi hộp thư chạy riêng; kết quả nằm ở màn hình cài đặt của hộp thư đó.",
+			"killedInBackup": "Bảo trì theo lịch {at}: bị ngắt giữa chừng khi sao lưu ({detail}). Sao lưu và dọn thư rác của mỗi hộp thư chạy riêng; kết quả nằm ở màn hình cài đặt của hộp thư đó.",
 			"unfinished": "Bảo trì theo lịch {at}: đã đến bước dọn thư rác, nhưng không có ghi nhận là đã hoàn tất."
 		},
 		"attachments": {

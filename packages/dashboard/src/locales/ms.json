@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Belum pernah dijalankan.",
 		"autoBackupLastOk": "Kali terakhir {at}: berjaya ({messages} mesej)",
 		"autoBackupLastFailed": "Kali terakhir {at}: gagal ({error})",
-		"autoBackupNotReached": "Larian terakhir {at}: tidak sampai giliran — masa larian malam habis dahulu. Lain kali peti mel ini didahulukan.",
 		"autoBackupOutOfTime": "Larian terakhir {at}: masa habis sebelum arkib siap. Akan dicuba semula pada larian seterusnya.",
 		"autoBackupStored": "Sandaran tersimpan",
 		"autoBackupDownload": "Muat turun",
@@ -452,8 +451,8 @@
 			"unreadable": "Rekod penyelenggaraan berjadual terakhir tidak dapat dibaca.",
 			"done": "Penyelenggaraan berjadual {at}: selesai ({duration} / {backups} disandarkan / {deleted} spam dipadam).",
 			"finishedWithError": "Penyelenggaraan berjadual {at}: satu peringkat gagal ({duration} / {detail}).",
-			"notReached": "Penyelenggaraan berjadual {at}: berakhir sebelum sampai ke pembersihan spam.",
-			"killedInBackup": "Penyelenggaraan berjadual {at}: terputus semasa sandaran ({detail}).",
+			"notReached": "Penyelenggaraan berjadual {at}: rekod terhenti sebelum keputusan peti mel ditulis. Sandaran dan pembersihan spam setiap peti mel berjalan secara berasingan; keputusannya ada di skrin tetapan peti mel itu.",
+			"killedInBackup": "Penyelenggaraan berjadual {at}: terputus semasa sandaran ({detail}). Sandaran dan pembersihan spam setiap peti mel berjalan secara berasingan; keputusannya ada di skrin tetapan peti mel itu.",
 			"unfinished": "Penyelenggaraan berjadual {at}: sampai ke pembersihan spam, tetapi tiada rekod bahawa ia selesai."
 		},
 		"attachments": {

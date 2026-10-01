@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Vēl nav darbojies.",
 		"autoBackupLastOk": "Pēdējoreiz {at}: veiksmīgi ({messages} vēstules)",
 		"autoBackupLastFailed": "Pēdējoreiz {at}: neizdevās ({error})",
-		"autoBackupNotReached": "Pēdējā palaišana {at}: rinda nepienāca — nakts palaišanai laiks beidzās ātrāk. Nākamreiz šī pastkaste būs pirmā.",
 		"autoBackupOutOfTime": "Pēdējā palaišana {at}: laiks beidzās, pirms arhīvs tika pabeigts. Nākamajā palaišanā tiks mēģināts vēlreiz.",
 		"autoBackupStored": "Saglabātās kopijas",
 		"autoBackupDownload": "Lejupielādēt",
@@ -452,8 +451,8 @@
 			"unreadable": "Neizdevās nolasīt pēdējās plānotās apkopes ierakstu.",
 			"done": "Plānotā apkope {at}: pabeigta ({duration} / {backups} dublējumi / dzēsti {deleted} mēstules).",
 			"finishedWithError": "Plānotā apkope {at}: viens posms neizdevās ({duration} / {detail}).",
-			"notReached": "Plānotā apkope {at}: beidzās, nesasniedzot mēstuļu tīrīšanu.",
-			"killedInBackup": "Plānotā apkope {at}: pārtraukta dublēšanas laikā ({detail}).",
+			"notReached": "Plānotā apkope {at}: ieraksts apstājas, pirms tika ierakstīti pastkastīšu rezultāti. Katras pastkastītes dublēšana un mēstuļu tīrīšana notiek atsevišķi; rezultāti ir šīs pastkastītes iestatījumu ekrānā.",
+			"killedInBackup": "Plānotā apkope {at}: pārtraukta dublēšanas laikā ({detail}). Katras pastkastītes dublēšana un mēstuļu tīrīšana notiek atsevišķi; rezultāti ir šīs pastkastītes iestatījumu ekrānā.",
 			"unfinished": "Plānotā apkope {at}: sasniedza mēstuļu tīrīšanu, bet ieraksta par pabeigšanu nav."
 		},
 		"attachments": {

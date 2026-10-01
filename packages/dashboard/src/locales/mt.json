@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Għadu ma ħadimx.",
 		"autoBackupLastOk": "L-aħħar {at}: irnexxa ({messages} messaġġi)",
 		"autoBackupLastFailed": "L-aħħar {at}: falla ({error})",
-		"autoBackupNotReached": "L-aħħar tħaddim {at}: ma ntlaħaqx — it-tħaddim ta' bil-lejl spiċċalu l-ħin qabel. Id-darba li jmiss din il-kaxxa postali tmur l-ewwel.",
 		"autoBackupOutOfTime": "L-aħħar tħaddim {at}: spiċċa l-ħin qabel ma tlesta l-arkivju. Se jerġa' jiġi ppruvat fit-tħaddim li jmiss.",
 		"autoBackupStored": "Kopji salvati",
 		"autoBackupDownload": "Niżżel",
@@ -452,8 +451,8 @@
 			"unreadable": "Ir-rekord tal-aħħar manutenzjoni skedata ma setax jinqara.",
 			"done": "Manutenzjoni skedata {at}: lesta ({duration} / {backups} backups / {deleted} spam imħassar).",
 			"finishedWithError": "Manutenzjoni skedata {at}: pass falla ({duration} / {detail}).",
-			"notReached": "Manutenzjoni skedata {at}: intemmet qabel ma waslet għat-tindif tal-ispam.",
-			"killedInBackup": "Manutenzjoni skedata {at}: waqfet waqt il-backups ({detail}).",
+			"notReached": "Manutenzjoni skedata {at}: ir-rekord jieqaf qabel ma nkitbu r-riżultati tal-kaxxi postali. Il-backup u t-tindif tal-ispam ta' kull kaxxa postali jaħdmu għalihom; ir-riżultati jidhru fl-iskrin tas-settings ta' dik il-kaxxa.",
+			"killedInBackup": "Manutenzjoni skedata {at}: waqfet waqt il-backups ({detail}). Il-backup u t-tindif tal-ispam ta' kull kaxxa postali jaħdmu għalihom; ir-riżultati jidhru fl-iskrin tas-settings ta' dik il-kaxxa.",
 			"unfinished": "Manutenzjoni skedata {at}: waslet għat-tindif tal-ispam, imma m'hemmx rekord li ntemmet."
 		},
 		"attachments": {

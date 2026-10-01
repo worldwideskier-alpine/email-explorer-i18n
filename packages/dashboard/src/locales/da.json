@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Er ikke kørt endnu.",
 		"autoBackupLastOk": "Sidste kørsel {at}: lykkedes ({messages} beskeder)",
 		"autoBackupLastFailed": "Sidste kørsel {at}: mislykkedes ({error})",
-		"autoBackupNotReached": "Seneste kørsel {at}: nåede ikke frem — natkørslen løb tør for tid først. Næste gang er denne postkasse den første.",
 		"autoBackupOutOfTime": "Seneste kørsel {at}: tiden løb ud, før arkivet var færdigt. Det prøves igen ved næste kørsel.",
 		"autoBackupStored": "Gemte kopier",
 		"autoBackupDownload": "Hent",
@@ -452,8 +451,8 @@
 			"unreadable": "Posten for den seneste planlagte vedligeholdelse kunne ikke læses.",
 			"done": "Planlagt vedligeholdelse {at}: fuldført ({duration} / {backups} sikkerhedskopier / {deleted} spam slettet).",
 			"finishedWithError": "Planlagt vedligeholdelse {at}: et trin mislykkedes ({duration} / {detail}).",
-			"notReached": "Planlagt vedligeholdelse {at}: sluttede, før den nåede spamoprydningen.",
-			"killedInBackup": "Planlagt vedligeholdelse {at}: afbrudt under sikkerhedskopieringen ({detail}).",
+			"notReached": "Planlagt vedligeholdelse {at}: registreringen stopper, før postkassernes resultater blev skrevet. Hver postkasses sikkerhedskopi og spamoprydning kører for sig; resultaterne står på postkassens indstillingsskærm.",
+			"killedInBackup": "Planlagt vedligeholdelse {at}: afbrudt under sikkerhedskopieringen ({detail}). Hver postkasses sikkerhedskopi og spamoprydning kører for sig; resultaterne står på postkassens indstillingsskærm.",
 			"unfinished": "Planlagt vedligeholdelse {at}: nåede spamoprydningen, men der er ingen registrering af, at den blev færdig."
 		},
 		"attachments": {

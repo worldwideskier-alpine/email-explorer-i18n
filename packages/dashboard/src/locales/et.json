@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Pole veel käivitunud.",
 		"autoBackupLastOk": "Viimane {at}: õnnestus ({messages} kirja)",
 		"autoBackupLastFailed": "Viimane {at}: ebaõnnestus ({error})",
-		"autoBackupNotReached": "Viimane käivitus {at}: järjekord ei jõudnud kätte — öise käivituse aeg sai enne otsa. Järgmisel korral on see postkast esimene.",
 		"autoBackupOutOfTime": "Viimane käivitus {at}: aeg sai otsa enne, kui arhiiv valmis sai. Järgmisel käivitusel proovitakse uuesti.",
 		"autoBackupStored": "Salvestatud koopiad",
 		"autoBackupDownload": "Laadi alla",
@@ -452,8 +451,8 @@
 			"unreadable": "Viimase plaanilise hoolduse kirjet ei õnnestunud lugeda.",
 			"done": "Plaanitud hooldus {at}: lõpetatud ({duration} / {backups} varukoopiat / {deleted} rämpsposti kustutatud).",
 			"finishedWithError": "Plaanitud hooldus {at}: üks etapp ebaõnnestus ({duration} / {detail}).",
-			"notReached": "Plaaniline hooldus {at}: lõppes enne rämpsposti puhastuseni jõudmist.",
-			"killedInBackup": "Plaanitud hooldus {at}: katkes varunduse ajal ({detail}).",
+			"notReached": "Plaaniline hooldus {at}: kirje lõpeb enne, kui postkastide tulemused kirja said. Iga postkasti varundus ja rämpsposti puhastus käivad eraldi; tulemused on selle postkasti seadete ekraanil.",
+			"killedInBackup": "Plaanitud hooldus {at}: katkes varunduse ajal ({detail}). Iga postkasti varundus ja rämpsposti puhastus käivad eraldi; tulemused on selle postkasti seadete ekraanil.",
 			"unfinished": "Plaaniline hooldus {at}: jõudis rämpsposti puhastuseni, kuid lõpetamise kohta kirje puudub."
 		},
 		"attachments": {

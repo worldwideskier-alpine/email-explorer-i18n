@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Dar nevykdyta.",
 		"autoBackupLastOk": "Paskutinis {at}: sėkmingai ({messages} laiškų)",
 		"autoBackupLastFailed": "Paskutinis {at}: nepavyko ({error})",
-		"autoBackupNotReached": "Paskutinis vykdymas {at}: eilė neatėjo — naktiniam vykdymui anksčiau baigėsi laikas. Kitą kartą ši pašto dėžutė bus pirmoji.",
 		"autoBackupOutOfTime": "Paskutinis vykdymas {at}: laikas baigėsi anksčiau, nei archyvas buvo baigtas. Kitą kartą bus bandoma iš naujo.",
 		"autoBackupStored": "Išsaugotos kopijos",
 		"autoBackupDownload": "Atsisiųsti",
@@ -452,8 +451,8 @@
 			"unreadable": "Nepavyko perskaityti paskutinės suplanuotos priežiūros įrašo.",
 			"done": "Suplanuota priežiūra {at}: baigta ({duration} / {backups} atsarginės kopijos / ištrinta {deleted} brukalo).",
 			"finishedWithError": "Suplanuota priežiūra {at}: vienas etapas nepavyko ({duration} / {detail}).",
-			"notReached": "Suplanuota priežiūra {at}: baigėsi nepasiekusi šlamšto valymo.",
-			"killedInBackup": "Suplanuota priežiūra {at}: nutrūko kuriant atsargines kopijas ({detail}).",
+			"notReached": "Suplanuota priežiūra {at}: įrašas nutrūksta prieš įrašant pašto dėžučių rezultatus. Kiekvienos pašto dėžutės atsarginė kopija ir šlamšto valymas vyksta atskirai; rezultatai matomi tos dėžutės nustatymuose.",
+			"killedInBackup": "Suplanuota priežiūra {at}: nutrūko kuriant atsargines kopijas ({detail}). Kiekvienos pašto dėžutės atsarginė kopija ir šlamšto valymas vyksta atskirai; rezultatai matomi tos dėžutės nustatymuose.",
 			"unfinished": "Suplanuota priežiūra {at}: pasiekė šlamšto valymą, bet įrašo apie pabaigą nėra."
 		},
 		"attachments": {

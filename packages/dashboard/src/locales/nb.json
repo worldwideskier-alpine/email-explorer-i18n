@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Har ikke kjørt ennå.",
 		"autoBackupLastOk": "Siste kjøring {at}: vellykket ({messages} meldinger)",
 		"autoBackupLastFailed": "Siste kjøring {at}: mislyktes ({error})",
-		"autoBackupNotReached": "Siste kjøring {at}: ble ikke nådd — nattkjøringen gikk tom for tid først. Neste gang går denne postkassen først.",
 		"autoBackupOutOfTime": "Siste kjøring {at}: tiden gikk ut før arkivet var ferdig. Det prøves igjen ved neste kjøring.",
 		"autoBackupStored": "Lagrede kopier",
 		"autoBackupDownload": "Last ned",
@@ -452,8 +451,8 @@
 			"unreadable": "Oppføringen for siste planlagte vedlikehold kunne ikke leses.",
 			"done": "Planlagt vedlikehold {at}: fullført ({duration} / {backups} sikkerhetskopier / {deleted} søppelpost slettet).",
 			"finishedWithError": "Planlagt vedlikehold {at}: et trinn mislyktes ({duration} / {detail}).",
-			"notReached": "Planlagt vedlikehold {at}: sluttet før det nådde søppelpostopprydningen.",
-			"killedInBackup": "Planlagt vedlikehold {at}: avbrutt under sikkerhetskopieringen ({detail}).",
+			"notReached": "Planlagt vedlikehold {at}: registreringen stopper før postkassenes resultater ble skrevet. Hver postkasses sikkerhetskopi og søppelpostopprydding kjører hver for seg; resultatene står på innstillingsskjermen til postkassen.",
+			"killedInBackup": "Planlagt vedlikehold {at}: avbrutt under sikkerhetskopieringen ({detail}). Hver postkasses sikkerhetskopi og søppelpostopprydding kjører hver for seg; resultatene står på innstillingsskjermen til postkassen.",
 			"unfinished": "Planlagt vedlikehold {at}: nådde søppelpostopprydningen, men det finnes ingen registrering av at det ble ferdig."
 		},
 		"attachments": {

@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Pas encore exécuté.",
 		"autoBackupLastOk": "Dernière exécution {at} : réussie ({messages} messages)",
 		"autoBackupLastFailed": "Dernière exécution {at} : échec ({error})",
-		"autoBackupNotReached": "Dernière exécution {at} : non atteinte — l'exécution nocturne a manqué de temps avant. Cette boîte aux lettres passera en premier la prochaine fois.",
 		"autoBackupOutOfTime": "Dernière exécution {at} : le temps a manqué avant la fin de l'archive. Elle sera retentée à la prochaine exécution.",
 		"autoBackupStored": "Sauvegardes enregistrées",
 		"autoBackupDownload": "Télécharger",
@@ -452,8 +451,8 @@
 			"unreadable": "Impossible de lire l'enregistrement de la dernière maintenance planifiée.",
 			"done": "Maintenance planifiée {at} : terminée ({duration} / {backups} sauvegardes / {deleted} spams supprimés).",
 			"finishedWithError": "Maintenance planifiée {at} : une étape a échoué ({duration} / {detail}).",
-			"notReached": "Maintenance planifiée {at} : elle s'est arrêtée avant d'atteindre la purge du spam.",
-			"killedInBackup": "Maintenance planifiée {at} : interrompue pendant les sauvegardes ({detail}).",
+			"notReached": "Maintenance planifiée {at} : l'enregistrement s'arrête avant que les résultats des boîtes aux lettres soient écrits. La sauvegarde et la purge du spam de chaque boîte aux lettres s'exécutent séparément ; leurs résultats figurent dans les réglages de cette boîte.",
+			"killedInBackup": "Maintenance planifiée {at} : interrompue pendant les sauvegardes ({detail}). La sauvegarde et la purge du spam de chaque boîte aux lettres s'exécutent séparément ; leurs résultats figurent dans les réglages de cette boîte.",
 			"unfinished": "Maintenance planifiée {at} : elle a atteint la purge du spam, mais rien n'indique qu'elle se soit terminée."
 		},
 		"attachments": {

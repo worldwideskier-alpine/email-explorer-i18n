@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Još nije pokrenuto.",
 		"autoBackupLastOk": "Zadnje {at}: uspješno ({messages} poruka)",
 		"autoBackupLastFailed": "Zadnje {at}: neuspješno ({error})",
-		"autoBackupNotReached": "Posljednje pokretanje {at}: nije došlo na red — noćnom pokretanju je prije toga isteklo vrijeme. Sljedeći put ovo poštansko sanduče ide prvo.",
 		"autoBackupOutOfTime": "Posljednje pokretanje {at}: vrijeme je isteklo prije nego što je arhiva završena. Pokušaće se ponovo pri sljedećem pokretanju.",
 		"autoBackupStored": "Sačuvane kopije",
 		"autoBackupDownload": "Preuzmi",
@@ -452,8 +451,8 @@
 			"unreadable": "Zapis o posljednjem zakazanom održavanju nije se mogao pročitati.",
 			"done": "Planirano održavanje {at}: završeno ({duration} / {backups} rezervnih kopija / {deleted} obrisanih neželjenih poruka).",
 			"finishedWithError": "Planirano održavanje {at}: jedan korak nije uspio ({duration} / {detail}).",
-			"notReached": "Planirano održavanje {at}: završilo je prije nego što je stiglo do čišćenja neželjene pošte.",
-			"killedInBackup": "Planirano održavanje {at}: prekinuto tokom izrade rezervne kopije ({detail}).",
+			"notReached": "Planirano održavanje {at}: zapis se zaustavio prije nego što su upisani rezultati poštanskih sandučića. Rezervna kopija i čišćenje neželjene pošte svakog sandučića rade zasebno; rezultati su na ekranu podešavanja tog sandučića.",
+			"killedInBackup": "Planirano održavanje {at}: prekinuto tokom izrade rezervne kopije ({detail}). Rezervna kopija i čišćenje neželjene pošte svakog sandučića rade zasebno; rezultati su na ekranu podešavanja tog sandučića.",
 			"unfinished": "Planirano održavanje {at}: stiglo je do čišćenja neželjene pošte, ali nema zapisa o završetku."
 		},
 		"attachments": {

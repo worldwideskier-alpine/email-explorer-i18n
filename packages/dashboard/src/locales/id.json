@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Belum pernah berjalan.",
 		"autoBackupLastOk": "Terakhir {at}: berhasil ({messages} pesan)",
 		"autoBackupLastFailed": "Terakhir {at}: gagal ({error})",
-		"autoBackupNotReached": "Jalan terakhir {at}: tidak tercapai — waktu jalan malam habis lebih dulu. Lain kali kotak surat ini didahulukan.",
 		"autoBackupOutOfTime": "Jalan terakhir {at}: waktu habis sebelum arsip selesai. Akan dicoba lagi pada jalan berikutnya.",
 		"autoBackupStored": "Cadangan tersimpan",
 		"autoBackupDownload": "Unduh",
@@ -452,8 +451,8 @@
 			"unreadable": "Catatan pemeliharaan terjadwal terakhir tidak dapat dibaca.",
 			"done": "Pemeliharaan terjadwal {at}: selesai ({duration} / {backups} dicadangkan / {deleted} spam dihapus).",
 			"finishedWithError": "Pemeliharaan terjadwal {at}: satu tahap gagal ({duration} / {detail}).",
-			"notReached": "Pemeliharaan terjadwal {at}: berakhir sebelum sampai ke pembersihan spam.",
-			"killedInBackup": "Pemeliharaan terjadwal {at}: terputus saat pencadangan ({detail}).",
+			"notReached": "Pemeliharaan terjadwal {at}: catatan berhenti sebelum hasil kotak surat ditulis. Pencadangan dan pembersihan spam setiap kotak surat berjalan sendiri-sendiri; hasilnya ada di layar pengaturan kotak surat tersebut.",
+			"killedInBackup": "Pemeliharaan terjadwal {at}: terputus saat pencadangan ({detail}). Pencadangan dan pembersihan spam setiap kotak surat berjalan sendiri-sendiri; hasilnya ada di layar pengaturan kotak surat tersebut.",
 			"unfinished": "Pemeliharaan terjadwal {at}: sampai ke pembersihan spam, tetapi tidak ada catatan bahwa ia selesai."
 		},
 		"attachments": {

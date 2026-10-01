@@ -308,34 +308,17 @@ describe("turning a nightly job off", () => {
 });
 
 /**
- * A backup the nightly run did not reach. The run recorded it as an English
- * sentence, shown as it was in every language; it now says which reason it
- * is, and the screen words it.
+ * A backup the nightly run cut off. The run records it as an English
+ * sentence, for the log and for root; it also says which reason it is, and
+ * the screen words that in the reader's language.
  */
-describe("a backup the nightly run did not reach", () => {
+describe("a backup the nightly run cut off", () => {
 	afterEach(() => {
 		stored.settings.autoBackup = {
 			enabled: false,
 			frequency: "daily",
 			keep: 3,
 		};
-	});
-
-	it("is said in the reader's language, not the run's English", async () => {
-		stored.settings.autoBackup = {
-			enabled: true,
-			frequency: "daily",
-			keep: 3,
-			lastResult: {
-				at: "2026-09-22T18:10:00.000Z",
-				ok: false,
-				error: "Not reached tonight: the pass ran out of time first.",
-				reason: "not-reached",
-			},
-		} as never;
-		await mountSettings();
-		expect(host.textContent).toContain("the nightly run ran out of time first");
-		expect(host.textContent).not.toContain("Not reached tonight");
 	});
 
 	// Begun, and stopped by the run's end -- the night of 2026-10-01, which

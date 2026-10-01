@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "尚未執行過。",
 		"autoBackupLastOk": "上次執行 {at}：成功（{messages} 封）",
 		"autoBackupLastFailed": "上次執行 {at}：失敗（{error}）",
-		"autoBackupNotReached": "上次執行 {at}：未輪到——夜間執行的時間先用完了。下次將從此信箱開始。",
 		"autoBackupOutOfTime": "上次執行 {at}：封存寫完之前時間已用完。下次執行時會重試。",
 		"autoBackupStored": "已儲存的備份",
 		"autoBackupDownload": "下載",
@@ -452,8 +451,8 @@
 			"unreadable": "無法讀取最近一次定期維護的記錄。",
 			"done": "定期維護 {at}：完成（{duration} ／ 備份 {backups} 個 ／ 刪除垃圾郵件 {deleted} 封）。",
 			"finishedWithError": "定期維護 {at}：有一個步驟失敗（{duration} ／ {detail}）。",
-			"notReached": "定期維護 {at}：未到達垃圾郵件清理就結束了。",
-			"killedInBackup": "定期維護 {at}：在備份過程中被中斷（{detail}）。",
+			"notReached": "定期維護 {at}：記錄在寫下各郵箱的結果之前就停止了。每個郵箱的備份與垃圾郵件清理各自執行，結果顯示在該郵箱的設定頁面。",
+			"killedInBackup": "定期維護 {at}：在備份過程中被中斷（{detail}）。每個郵箱的備份與垃圾郵件清理各自執行，結果顯示在該郵箱的設定頁面。",
 			"unfinished": "定期維護 {at}：已到達垃圾郵件清理，但沒有完成的紀錄。"
 		},
 		"attachments": {

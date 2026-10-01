@@ -215,7 +215,6 @@
 		"autoBackupNeverRun": "Nog niet uitgevoerd.",
 		"autoBackupLastOk": "Laatste run {at}: gelukt ({messages} berichten)",
 		"autoBackupLastFailed": "Laatste run {at}: mislukt ({error})",
-		"autoBackupNotReached": "Laatste run {at}: niet aan de beurt gekomen — de nachtelijke run had eerder geen tijd meer. De volgende keer is deze mailbox als eerste aan de beurt.",
 		"autoBackupOutOfTime": "Laatste run {at}: de tijd was op voordat het archief klaar was. Bij de volgende run wordt het opnieuw geprobeerd.",
 		"autoBackupStored": "Opgeslagen back-ups",
 		"autoBackupDownload": "Downloaden",
@@ -452,8 +451,8 @@
 			"unreadable": "Het record van het laatste geplande onderhoud kon niet worden gelezen.",
 			"done": "Gepland onderhoud {at}: voltooid ({duration} / {backups} back-ups / {deleted} spam verwijderd).",
 			"finishedWithError": "Gepland onderhoud {at}: een fase is mislukt ({duration} / {detail}).",
-			"notReached": "Gepland onderhoud {at}: het eindigde voordat het de spamopruiming bereikte.",
-			"killedInBackup": "Geplande onderhoud {at}: afgebroken tijdens de back-ups ({detail}).",
+			"notReached": "Gepland onderhoud {at}: de registratie stopt voordat de resultaten van de mailboxen werden geschreven. De back-up en spamopruiming van elke mailbox lopen afzonderlijk; de resultaten staan in de instellingen van die mailbox.",
+			"killedInBackup": "Geplande onderhoud {at}: afgebroken tijdens de back-ups ({detail}). De back-up en spamopruiming van elke mailbox lopen afzonderlijk; de resultaten staan in de instellingen van die mailbox.",
 			"unfinished": "Gepland onderhoud {at}: het bereikte de spamopruiming, maar er is niets vastgelegd over de voltooiing."
 		},
 		"attachments": {

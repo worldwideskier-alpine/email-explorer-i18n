@@ -53,7 +53,7 @@ export interface AutoBackupSettings {
 		 * Why, when it is one the screen says in the reader's language.
 		 * `error` stays English, for the log and for root.
 		 */
-		reason?: "not-reached" | "out-of-time";
+		reason?: "out-of-time";
 	};
 }
 
