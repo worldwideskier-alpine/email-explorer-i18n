@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Pēdējoreiz {at}: veiksmīgi ({messages} vēstules)",
 		"autoBackupLastFailed": "Pēdējoreiz {at}: neizdevās ({error})",
 		"autoBackupNotReached": "Pēdējā palaišana {at}: rinda nepienāca — nakts palaišanai laiks beidzās ātrāk. Nākamreiz šī pastkaste būs pirmā.",
+		"autoBackupOutOfTime": "Pēdējā palaišana {at}: laiks beidzās, pirms arhīvs tika pabeigts. Nākamajā palaišanā tiks mēģināts vēlreiz.",
 		"autoBackupStored": "Saglabātās kopijas",
 		"autoBackupDownload": "Lejupielādēt",
 		"autoBackupNone": "Saglabātu kopiju vēl nav.",

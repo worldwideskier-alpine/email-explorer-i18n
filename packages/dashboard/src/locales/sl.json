@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Zadnjič {at}: uspešno ({messages} sporočil)",
 		"autoBackupLastFailed": "Zadnjič {at}: ni uspelo ({error})",
 		"autoBackupNotReached": "Zadnji zagon {at}: ni prišlo na vrsto — nočnemu zagonu je prej zmanjkalo časa. Naslednjič bo ta nabiralnik prvi.",
+		"autoBackupOutOfTime": "Zadnji zagon {at}: čas je potekel, preden je bil arhiv dokončan. Ob naslednjem zagonu se bo poskusilo znova.",
 		"autoBackupStored": "Shranjene kopije",
 		"autoBackupDownload": "Prenesi",
 		"autoBackupNone": "Shranjenih kopij še ni.",

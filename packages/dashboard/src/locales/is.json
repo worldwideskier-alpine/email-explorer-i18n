@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Síðasta keyrsla {at}: tókst ({messages} skeyti)",
 		"autoBackupLastFailed": "Síðasta keyrsla {at}: mistókst ({error})",
 		"autoBackupNotReached": "Síðasta keyrsla {at}: ekki náðist — tími næturkeyrslunnar kláraðist fyrst. Næst verður þetta pósthólf fyrst.",
+		"autoBackupOutOfTime": "Síðasta keyrsla {at}: tíminn kláraðist áður en safnið varð tilbúið. Reynt verður aftur í næstu keyrslu.",
 		"autoBackupStored": "Vistuð afrit",
 		"autoBackupDownload": "Sækja",
 		"autoBackupNone": "Engin vistuð afrit enn.",

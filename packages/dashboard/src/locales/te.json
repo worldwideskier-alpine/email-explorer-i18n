@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "చివరిసారి {at}: విజయవంతం ({messages} సందేశాలు)",
 		"autoBackupLastFailed": "చివరిసారి {at}: విఫలం ({error})",
 		"autoBackupNotReached": "చివరి రన్ {at}: వంతు రాలేదు — రాత్రి రన్ సమయం ముందే ముగిసింది. తదుపరిసారి ఈ మెయిల్‌బాక్స్ మొదట.",
+		"autoBackupOutOfTime": "చివరి రన్ {at}: ఆర్కైవ్ పూర్తయ్యే ముందే సమయం ముగిసింది. తదుపరి రన్‌లో మళ్లీ ప్రయత్నిస్తుంది.",
 		"autoBackupStored": "భద్రపరచిన బ్యాకప్‌లు",
 		"autoBackupDownload": "డౌన్‌లోడ్",
 		"autoBackupNone": "ఇంకా భద్రపరచిన బ్యాకప్ లేదు.",

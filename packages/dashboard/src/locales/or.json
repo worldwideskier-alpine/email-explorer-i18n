@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "ଶେଷ ଥର {at}: ସଫଳ ({messages} ସନ୍ଦେଶ)",
 		"autoBackupLastFailed": "ଶେଷ ଥର {at}: ବିଫଳ ({error})",
 		"autoBackupNotReached": "ଶେଷ ଚାଳନା {at}: ପାଳି ଆସିଲା ନାହିଁ — ରାତିର ଚାଳନାର ସମୟ ପୂର୍ବରୁ ସରିଗଲା। ପରବର୍ତ୍ତୀ ଥର ଏହି ମେଲବକ୍ସ ପ୍ରଥମେ।",
+		"autoBackupOutOfTime": "ଶେଷ ଚାଳନା {at}: ଅଭିଲେଖ ସମ୍ପୂର୍ଣ୍ଣ ହେବା ପୂର୍ବରୁ ସମୟ ସରିଗଲା। ପରବର୍ତ୍ତୀ ଚାଳନାରେ ପୁଣି ଚେଷ୍ଟା କରାଯିବ।",
 		"autoBackupStored": "ସଞ୍ଚିତ ବ୍ୟାକଅପ",
 		"autoBackupDownload": "ଡାଉନଲୋଡ",
 		"autoBackupNone": "ଏପର୍ଯ୍ୟନ୍ତ ସଞ୍ଚିତ ବ୍ୟାକଅପ ନାହିଁ।",

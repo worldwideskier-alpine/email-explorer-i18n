@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Última execução {at}: com êxito ({messages} mensagens)",
 		"autoBackupLastFailed": "Última execução {at}: falhou ({error})",
 		"autoBackupNotReached": "Última execução {at}: não chegou a vez — a execução noturna ficou sem tempo antes. Da próxima vez esta caixa de correio vai primeiro.",
+		"autoBackupOutOfTime": "Última execução {at}: o tempo acabou antes de o arquivo ficar concluído. Será tentado novamente na próxima execução.",
 		"autoBackupStored": "Cópias guardadas",
 		"autoBackupDownload": "Transferir",
 		"autoBackupNone": "Ainda não há cópias guardadas.",

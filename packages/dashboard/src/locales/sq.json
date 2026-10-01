@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Herën e fundit {at}: me sukses ({messages} mesazhe)",
 		"autoBackupLastFailed": "Herën e fundit {at}: dështoi ({error})",
 		"autoBackupNotReached": "Ekzekutimi i fundit {at}: nuk u arrit — ekzekutimit të natës i mbaroi koha më parë. Herën tjetër kjo kuti postare është e para.",
+		"autoBackupOutOfTime": "Ekzekutimi i fundit {at}: koha mbaroi para se arkivi të përfundonte. Do të provohet përsëri në ekzekutimin e ardhshëm.",
 		"autoBackupStored": "Kopjet e ruajtura",
 		"autoBackupDownload": "Shkarko",
 		"autoBackupNone": "Ende nuk ka kopje të ruajtura.",

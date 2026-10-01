@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Letzter Lauf {at}: erfolgreich ({messages} Nachrichten)",
 		"autoBackupLastFailed": "Letzter Lauf {at}: fehlgeschlagen ({error})",
 		"autoBackupNotReached": "Letzter Lauf {at}: nicht erreicht — dem nächtlichen Lauf ging vorher die Zeit aus. Beim nächsten Mal ist dieses Postfach als Erstes dran.",
+		"autoBackupOutOfTime": "Letzter Lauf {at}: Die Zeit lief ab, bevor das Archiv fertig war. Beim nächsten Lauf wird es erneut versucht.",
 		"autoBackupStored": "Gespeicherte Sicherungen",
 		"autoBackupDownload": "Herunterladen",
 		"autoBackupNone": "Noch keine gespeicherten Sicherungen.",

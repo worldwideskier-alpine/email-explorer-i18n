@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Viimane {at}: õnnestus ({messages} kirja)",
 		"autoBackupLastFailed": "Viimane {at}: ebaõnnestus ({error})",
 		"autoBackupNotReached": "Viimane käivitus {at}: järjekord ei jõudnud kätte — öise käivituse aeg sai enne otsa. Järgmisel korral on see postkast esimene.",
+		"autoBackupOutOfTime": "Viimane käivitus {at}: aeg sai otsa enne, kui arhiiv valmis sai. Järgmisel käivitusel proovitakse uuesti.",
 		"autoBackupStored": "Salvestatud koopiad",
 		"autoBackupDownload": "Laadi alla",
 		"autoBackupNone": "Salvestatud koopiaid veel pole.",

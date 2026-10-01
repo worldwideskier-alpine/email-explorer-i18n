@@ -16,7 +16,7 @@ import type { AutoBackupSettings } from "./auto-backup";
 import { isBackupDue, normalizeKeep } from "./auto-backup";
 import { writeMailboxBackup } from "./backup-writer";
 import type { TimeLimits } from "./deadline";
-import { pastDeadline, recordingWithin } from "./deadline";
+import { OutOfTime, pastDeadline, recordingWithin } from "./deadline";
 import { listMailboxes, updateMailboxSettings } from "./mailbox-records";
 import type { Env } from "./types";
 
@@ -209,6 +209,12 @@ export async function runScheduledBackups(
 					at: now.toISOString(),
 					ok: false,
 					error: String(e instanceof Error ? e.message : e).slice(0, 300),
+					// Begun, and stopped by the pass's end rather than by a fault:
+					// worded on the screen in the reader's language, as
+					// not-reached is.
+					...(e instanceof OutOfTime && e.passEnded
+						? { reason: "out-of-time" as const }
+						: {}),
 				}),
 				"recording the result",
 			).catch(() => {});

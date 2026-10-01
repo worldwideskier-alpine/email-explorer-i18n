@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "अंतिम बार {at}: सफल ({messages} संदेश)",
 		"autoBackupLastFailed": "अंतिम बार {at}: विफल ({error})",
 		"autoBackupNotReached": "पिछला रन {at}: बारी नहीं आई — रात के रन का समय पहले ही खत्म हो गया। अगली बार यह मेलबॉक्स सबसे पहले होगा।",
+		"autoBackupOutOfTime": "पिछला रन {at}: संग्रह पूरा होने से पहले समय खत्म हो गया। अगले रन में फिर कोशिश होगी।",
 		"autoBackupStored": "सहेजे गए बैकअप",
 		"autoBackupDownload": "डाउनलोड",
 		"autoBackupNone": "अभी कोई सहेजा गया बैकअप नहीं है।",

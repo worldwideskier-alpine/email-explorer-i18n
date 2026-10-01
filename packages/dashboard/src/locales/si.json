@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "අවසන් වරට {at}: සාර්ථකයි ({messages} පණිවිඩ)",
 		"autoBackupLastFailed": "අවසන් වරට {at}: අසාර්ථකයි ({error})",
 		"autoBackupNotReached": "අවසාන ධාවනය {at}: වාරය පැමිණියේ නැත — රාත්‍රී ධාවනයේ කාලය කලින් අවසන් විය. ඊළඟ වතාවේ මෙම තැපැල් පෙට්ටිය පළමුව.",
+		"autoBackupOutOfTime": "අවසාන ධාවනය {at}: සංරක්ෂිතය අවසන් වීමට පෙර කාලය අවසන් විය. ඊළඟ ධාවනයේදී නැවත උත්සාහ කරනු ඇත.",
 		"autoBackupStored": "සුරකින ලද උපස්ථ",
 		"autoBackupDownload": "බාගන්න",
 		"autoBackupNone": "තවම සුරකින ලද උපස්ථ නැත.",

@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Rith deiridh {at}: d'éirigh leis ({messages} teachtaireacht)",
 		"autoBackupLastFailed": "Rith deiridh {at}: theip air ({error})",
 		"autoBackupNotReached": "An rith is déanaí {at}: níor sroicheadh é — rith an rith oíche as am ar dtús. Beidh an bosca poist seo ar dtús an chéad uair eile.",
+		"autoBackupOutOfTime": "An rith is déanaí {at}: rith an t-am amach sular críochnaíodh an chartlann. Déanfar iarracht arís sa chéad rith eile.",
 		"autoBackupStored": "Cúltacaí sábháilte",
 		"autoBackupDownload": "Íoslódáil",
 		"autoBackupNone": "Níl aon chúltaca sábháilte fós.",

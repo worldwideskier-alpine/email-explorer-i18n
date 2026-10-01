@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Viimeksi {at}: onnistui ({messages} viestiä)",
 		"autoBackupLastFailed": "Viimeksi {at}: epäonnistui ({error})",
 		"autoBackupNotReached": "Viimeisin ajo {at}: vuoro ei ehtinyt — yöajon aika loppui ensin. Ensi kerralla tämä postilaatikko on ensimmäisenä.",
+		"autoBackupOutOfTime": "Viimeisin ajo {at}: aika loppui ennen kuin arkisto valmistui. Seuraavalla ajolla yritetään uudelleen.",
 		"autoBackupStored": "Tallennetut kopiot",
 		"autoBackupDownload": "Lataa",
 		"autoBackupNone": "Ei vielä tallennettuja kopioita.",

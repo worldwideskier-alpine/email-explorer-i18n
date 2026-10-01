@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "آخر تشغيل {at}: نجح ({messages} رسالة)",
 		"autoBackupLastFailed": "آخر تشغيل {at}: فشل ({error})",
 		"autoBackupNotReached": "آخر تشغيل {at}: لم يُصل إليه — نفد وقت التشغيل الليلي أولاً. سيكون صندوق البريد هذا الأول في المرة القادمة.",
+		"autoBackupOutOfTime": "آخر تشغيل {at}: نفد الوقت قبل اكتمال الأرشيف. ستُعاد المحاولة في التشغيل التالي.",
 		"autoBackupStored": "النسخ المحفوظة",
 		"autoBackupDownload": "تنزيل",
 		"autoBackupNone": "لا توجد نسخ محفوظة بعد.",

@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Ultim decurs {at}: reussì ({messages} messadis)",
 		"autoBackupLastFailed": "Ultim decurs {at}: fallì ({error})",
 		"autoBackupNotReached": "Ultima execuziun {at}: betg cuntanschì — a l'execuziun da notg è ì ora il temp pli baud. La proxima giada vegn questa chascha da posta sco emprima.",
+		"autoBackupOutOfTime": "Ultima execuziun {at}: il temp è ì ora avant che l'archiv saja finì. I vegn empruvà danovamain a la proxima execuziun.",
 		"autoBackupStored": "Copias memorisadas",
 		"autoBackupDownload": "Telechargiar",
 		"autoBackupNone": "Anc naginas copias memorisadas.",

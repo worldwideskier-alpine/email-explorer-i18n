@@ -14,13 +14,25 @@
  * to -- and is simply dropped when the invocation ends.
  */
 
-/** What a call that did not answer in time rejects with. */
+/**
+ * What a call that did not answer in time rejects with.
+ *
+ * `passEnded` is the difference between a call that hung and a pass whose
+ * time ran out while a healthy call was under way. The second is given only
+ * what is left of the pass, which can be seconds, and recorded as "did not
+ * answer within 7s" it read as a broken call on the night of 2026-10-01 --
+ * when the backup had simply been slow and reached the pass's end.
+ */
 export class OutOfTime extends Error {
-	constructor(what: string, ms: number) {
+	readonly passEnded: boolean;
+	constructor(what: string, ms: number, passEnded = false) {
 		super(
-			`${what} did not answer within ${Math.max(0, Math.round(ms / 1000))}s`,
+			passEnded
+				? `ran out of time while ${what}: the pass reached its end`
+				: `${what} did not answer within ${Math.max(0, Math.round(ms / 1000))}s`,
 		);
 		this.name = "OutOfTime";
+		this.passEnded = passEnded;
 	}
 }
 
@@ -35,17 +47,19 @@ export function within<T>(
 	work: Promise<T>,
 	ms: number,
 	what: string,
+	/** True when `ms` is what is left of a pass, not a call's own limit. */
+	passEnded = false,
 ): Promise<T> {
 	if (!Number.isFinite(ms)) return work;
 	if (ms <= 0) {
 		// Nobody will wait for it now; its failure must not surface as an
 		// unhandled rejection later.
 		work.catch(() => {});
-		return Promise.reject(new OutOfTime(what, 0));
+		return Promise.reject(new OutOfTime(what, 0, passEnded));
 	}
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	const timeout = new Promise<never>((_, reject) => {
-		timer = setTimeout(() => reject(new OutOfTime(what, ms)), ms);
+		timer = setTimeout(() => reject(new OutOfTime(what, ms, passEnded)), ms);
 	});
 	return Promise.race([work, timeout]).finally(() => clearTimeout(timer));
 }
@@ -91,8 +105,10 @@ export function recordingWithin(limits: TimeLimits = {}) {
 export function limitedBy(limits: TimeLimits = {}) {
 	const deadline = limits.deadline ?? Number.POSITIVE_INFINITY;
 	const callLimit = limits.callLimitMs ?? CALL_LIMIT_MS;
-	return <T>(work: Promise<T>, what: string): Promise<T> =>
-		within(work, Math.min(callLimit, deadline - Date.now()), what);
+	return <T>(work: Promise<T>, what: string): Promise<T> => {
+		const left = deadline - Date.now();
+		return within(work, Math.min(callLimit, left), what, left < callLimit);
+	};
 }
 
 /** Whether a pass's deadline has already gone by. */

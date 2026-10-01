@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "上次執行 {at}：成功（{messages} 封）",
 		"autoBackupLastFailed": "上次執行 {at}：失敗（{error}）",
 		"autoBackupNotReached": "上次執行 {at}：未輪到 — 夜間執行嘅時間先用完。下次會由呢個郵箱開始。",
+		"autoBackupOutOfTime": "上次執行 {at}：封存未寫完就夠鐘。下次執行會再試。",
 		"autoBackupStored": "已儲存嘅備份",
 		"autoBackupDownload": "下載",
 		"autoBackupNone": "重未有儲存嘅備份。",

@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "آخرین اجرا {at}: موفق ({messages} نامه)",
 		"autoBackupLastFailed": "آخرین اجرا {at}: ناموفق ({error})",
 		"autoBackupNotReached": "آخرین اجرا {at}: به آن نرسید — وقت اجرای شبانه زودتر تمام شد. دفعه بعد این صندوق پستی اول است.",
+		"autoBackupOutOfTime": "آخرین اجرا {at}: پیش از کامل شدن بایگانی، وقت تمام شد. در اجرای بعدی دوباره تلاش می‌شود.",
 		"autoBackupStored": "پشتیبان‌های ذخیره‌شده",
 		"autoBackupDownload": "دریافت",
 		"autoBackupNone": "هنوز پشتیبانی ذخیره نشده است.",

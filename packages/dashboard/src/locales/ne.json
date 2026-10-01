@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "अन्तिम पटक {at}: सफल ({messages} सन्देश)",
 		"autoBackupLastFailed": "अन्तिम पटक {at}: असफल ({error})",
 		"autoBackupNotReached": "अन्तिम रन {at}: पालो आएन — रातिको रनको समय पहिल्यै सकियो। अर्को पटक यो मेलबक्स पहिलो हुनेछ।",
+		"autoBackupOutOfTime": "अन्तिम रन {at}: अभिलेख पूरा हुनुअघि नै समय सकियो। अर्को रनमा फेरि प्रयास गरिनेछ।",
 		"autoBackupStored": "सुरक्षित ब्याकअप",
 		"autoBackupDownload": "डाउनलोड",
 		"autoBackupNone": "अझै सुरक्षित ब्याकअप छैन।",

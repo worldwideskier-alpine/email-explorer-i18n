@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Ultima rulare {at}: reușită ({messages} mesaje)",
 		"autoBackupLastFailed": "Ultima rulare {at}: eșuată ({error})",
 		"autoBackupNotReached": "Ultima rulare {at}: nu s-a ajuns la ea — rulării de noapte i s-a terminat timpul mai înainte. Data viitoare această cutie poștală este prima.",
+		"autoBackupOutOfTime": "Ultima rulare {at}: timpul s-a terminat înainte ca arhiva să fie finalizată. Se va încerca din nou la următoarea rulare.",
 		"autoBackupStored": "Copii salvate",
 		"autoBackupDownload": "Descarcă",
 		"autoBackupNone": "Încă nu există copii salvate.",

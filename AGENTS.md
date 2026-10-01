@@ -373,9 +373,12 @@ are still checked, by the `tsc` that runs before the worker tests.
   upload open, the purge never ran, and the next night overwrote the record,
   so it was found five days later by reading R2 by hand. So now **nothing in
   the run waits without a limit** (`deadline.ts`): each call a minute, the
-  backups done by ten minutes in, the purge by thirteen; a mailbox whose call
+  backups done by twelve minutes in, the purge by thirteen; a mailbox whose call
   does not answer fails alone, its upload aborted and the reason on its
-  settings, and one not reached in time is first tomorrow. And each run moves
+  settings, and one not reached in time is first tomorrow. Twelve was ten
+  until 2026-10-01, when a slow night ran the second mailbox into it 300
+  messages in; a call cut short by the pass's end is recorded as
+  `out-of-time`, not as a call that "did not answer" (`OutOfTime.passEnded`). And each run moves
   the previous record into `maintenance/history.json` (two weeks) before
   writing its own, which `/root` lists when a night did not end well.
   `nightly-limits.test.ts` holds both, with that night's own record.

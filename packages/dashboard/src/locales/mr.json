@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "शेवटचे {at}: यशस्वी ({messages} संदेश)",
 		"autoBackupLastFailed": "शेवटचे {at}: अयशस्वी ({error})",
 		"autoBackupNotReached": "शेवटचे रन {at}: पाळी आली नाही — रात्रीच्या रनचा वेळ आधीच संपला. पुढच्या वेळी हा मेलबॉक्स प्रथम असेल.",
+		"autoBackupOutOfTime": "शेवटचे रन {at}: संग्रह पूर्ण होण्यापूर्वीच वेळ संपला. पुढच्या रनमध्ये पुन्हा प्रयत्न केला जाईल.",
 		"autoBackupStored": "जतन केलेले बॅकअप",
 		"autoBackupDownload": "डाउनलोड",
 		"autoBackupNone": "अजून जतन केलेला बॅकअप नाही.",

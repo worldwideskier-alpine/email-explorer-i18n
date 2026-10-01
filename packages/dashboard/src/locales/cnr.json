@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Zadnje {at}: uspješno ({messages} poruka)",
 		"autoBackupLastFailed": "Zadnje {at}: neuspješno ({error})",
 		"autoBackupNotReached": "Posljednje pokretanje {at}: nije došlo na red — noćnom pokretanju je prije toga isteklo vrijeme. Sljedeći put ovo poštansko sanduče ide prvo.",
+		"autoBackupOutOfTime": "Posljednje pokretanje {at}: vrijeme je isteklo prije nego što je arhiva završena. Pokušaće se ponovo pri sljedećem pokretanju.",
 		"autoBackupStored": "Sačuvane kopije",
 		"autoBackupDownload": "Preuzmi",
 		"autoBackupNone": "Još nema sačuvanih kopija.",

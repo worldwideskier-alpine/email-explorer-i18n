@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "마지막 실행 {at}: 성공({messages}통)",
 		"autoBackupLastFailed": "마지막 실행 {at}: 실패({error})",
 		"autoBackupNotReached": "마지막 실행 {at}: 순서가 오지 않음 — 야간 실행 시간이 먼저 끝났습니다. 다음에는 이 메일함이 먼저 처리됩니다.",
+		"autoBackupOutOfTime": "마지막 실행 {at}: 아카이브를 마치기 전에 시간이 다 되었습니다. 다음 실행에서 다시 시도합니다.",
 		"autoBackupStored": "저장된 백업",
 		"autoBackupDownload": "다운로드",
 		"autoBackupNone": "저장된 백업이 아직 없습니다.",

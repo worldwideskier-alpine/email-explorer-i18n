@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Darrera execució {at}: correcta ({messages} missatges)",
 		"autoBackupLastFailed": "Darrera execució {at}: ha fallat ({error})",
 		"autoBackupNotReached": "Última execució {at}: no s'hi ha arribat — l'execució nocturna s'ha quedat sense temps abans. La propera vegada aquesta bústia serà la primera.",
+		"autoBackupOutOfTime": "Última execució {at}: s'ha acabat el temps abans de completar l'arxiu. Es tornarà a provar a la propera execució.",
 		"autoBackupStored": "Còpies desades",
 		"autoBackupDownload": "Baixa",
 		"autoBackupNone": "Encara no hi ha còpies desades.",

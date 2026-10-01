@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "ਆਖਰੀ ਵਾਰ {at}: ਸਫਲ ({messages} ਸੁਨੇਹੇ)",
 		"autoBackupLastFailed": "ਆਖਰੀ ਵਾਰ {at}: ਅਸਫਲ ({error})",
 		"autoBackupNotReached": "ਪਿਛਲਾ ਰਨ {at}: ਵਾਰੀ ਨਹੀਂ ਆਈ — ਰਾਤ ਦੇ ਰਨ ਦਾ ਸਮਾਂ ਪਹਿਲਾਂ ਹੀ ਖਤਮ ਹੋ ਗਿਆ। ਅਗਲੀ ਵਾਰ ਇਹ ਮੇਲਬਾਕਸ ਪਹਿਲਾਂ ਹੋਵੇਗਾ।",
+		"autoBackupOutOfTime": "ਪਿਛਲਾ ਰਨ {at}: ਪੁਰਾਲੇਖ ਪੂਰਾ ਹੋਣ ਤੋਂ ਪਹਿਲਾਂ ਹੀ ਸਮਾਂ ਖਤਮ ਹੋ ਗਿਆ। ਅਗਲੇ ਰਨ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕੀਤੀ ਜਾਵੇਗੀ।",
 		"autoBackupStored": "ਸੰਭਾਲੇ ਬੈਕਅੱਪ",
 		"autoBackupDownload": "ਡਾਊਨਲੋਡ",
 		"autoBackupNone": "ਹਾਲੇ ਕੋਈ ਸੰਭਾਲਿਆ ਬੈਕਅੱਪ ਨਹੀਂ।",

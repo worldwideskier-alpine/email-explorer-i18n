@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "L-aħħar {at}: irnexxa ({messages} messaġġi)",
 		"autoBackupLastFailed": "L-aħħar {at}: falla ({error})",
 		"autoBackupNotReached": "L-aħħar tħaddim {at}: ma ntlaħaqx — it-tħaddim ta' bil-lejl spiċċalu l-ħin qabel. Id-darba li jmiss din il-kaxxa postali tmur l-ewwel.",
+		"autoBackupOutOfTime": "L-aħħar tħaddim {at}: spiċċa l-ħin qabel ma tlesta l-arkivju. Se jerġa' jiġi ppruvat fit-tħaddim li jmiss.",
 		"autoBackupStored": "Kopji salvati",
 		"autoBackupDownload": "Niżżel",
 		"autoBackupNone": "Għad m'hemmx kopji salvati.",

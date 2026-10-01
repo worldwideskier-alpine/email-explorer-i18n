@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Lần cuối {at}: thành công ({messages} thư)",
 		"autoBackupLastFailed": "Lần cuối {at}: thất bại ({error})",
 		"autoBackupNotReached": "Lần chạy gần nhất {at}: chưa đến lượt — lần chạy ban đêm đã hết thời gian trước. Lần sau hộp thư này sẽ được chạy trước.",
+		"autoBackupOutOfTime": "Lần chạy gần nhất {at}: hết thời gian trước khi bản lưu trữ hoàn tất. Sẽ thử lại ở lần chạy tiếp theo.",
 		"autoBackupStored": "Bản sao lưu đã lưu",
 		"autoBackupDownload": "Tải xuống",
 		"autoBackupNone": "Chưa có bản sao lưu nào.",

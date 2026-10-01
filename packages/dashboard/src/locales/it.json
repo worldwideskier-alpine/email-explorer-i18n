@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Ultima esecuzione {at}: riuscita ({messages} messaggi)",
 		"autoBackupLastFailed": "Ultima esecuzione {at}: fallita ({error})",
 		"autoBackupNotReached": "Ultima esecuzione {at}: non raggiunta — l'esecuzione notturna ha esaurito il tempo prima. La prossima volta questa casella sarà la prima.",
+		"autoBackupOutOfTime": "Ultima esecuzione {at}: il tempo è scaduto prima che l'archivio fosse completato. Si riproverà alla prossima esecuzione.",
 		"autoBackupStored": "Backup conservati",
 		"autoBackupDownload": "Scarica",
 		"autoBackupNone": "Nessun backup conservato.",

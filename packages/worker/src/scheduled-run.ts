@@ -55,12 +55,17 @@ const message = (e: unknown): string =>
  * 899968 ms. Measured nights take five to eight minutes.
  *
  * So the passes are given ends of their own inside that, with room after each
- * for what follows: the backups must be done ten minutes in, the purge by
+ * for what follows: the backups must be done twelve minutes in, the purge by
  * thirteen, which leaves two for writing down how it went. A pass that runs
  * out stops at its next call and says so, rather than taking the night with
  * it; see deadline.ts.
+ *
+ * Twelve, not the ten it was: the purge takes seconds (5 to 7 on every night
+ * on record), and on 2026-10-01 the backups ran into the ten-minute end with
+ * the second mailbox 300 messages in -- work that took 3.5 to 8.5 minutes on
+ * the nights before. Ten left the slow nights no room.
  */
-export const BACKUPS_BY_MS = 10 * 60_000;
+export const BACKUPS_BY_MS = 12 * 60_000;
 export const PURGE_BY_MS = 13 * 60_000;
 /** Deletions left unfinished by root (see mailbox-destroy.ts) go last. */
 export const DELETIONS_BY_MS = 14 * 60_000;

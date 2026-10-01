@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Leschte Laf {at}: gelongen ({messages} Messagen)",
 		"autoBackupLastFailed": "Leschte Laf {at}: feelgeschloen ({error})",
 		"autoBackupNotReached": "Leschte Laf {at}: net erreecht — dem nuetsleche Laf ass virdrun d'Zäit ausgaangen. Déi nächste Kéier ass dës Mailbox als éischt drun.",
+		"autoBackupOutOfTime": "Leschte Laf {at}: d'Zäit ass ausgaang, ier den Archiv fäerdeg war. Beim nächste Laf gëtt et nach eng Kéier probéiert.",
 		"autoBackupStored": "Gespäichert Sécherungen",
 		"autoBackupDownload": "Eroflueden",
 		"autoBackupNone": "Nach keng gespäichert Sécherungen.",

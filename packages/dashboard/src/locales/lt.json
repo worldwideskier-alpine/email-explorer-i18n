@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Paskutinis {at}: sėkmingai ({messages} laiškų)",
 		"autoBackupLastFailed": "Paskutinis {at}: nepavyko ({error})",
 		"autoBackupNotReached": "Paskutinis vykdymas {at}: eilė neatėjo — naktiniam vykdymui anksčiau baigėsi laikas. Kitą kartą ši pašto dėžutė bus pirmoji.",
+		"autoBackupOutOfTime": "Paskutinis vykdymas {at}: laikas baigėsi anksčiau, nei archyvas buvo baigtas. Kitą kartą bus bandoma iš naujo.",
 		"autoBackupStored": "Išsaugotos kopijos",
 		"autoBackupDownload": "Atsisiųsti",
 		"autoBackupNone": "Išsaugotų kopijų dar nėra.",

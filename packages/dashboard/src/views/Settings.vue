@@ -711,6 +711,12 @@ const autoBackupLastLine = computed(() => {
 			at: new Date(last.at).toLocaleString(),
 		});
 	}
+	// Begun and stopped by the run's end: a slow night, not a broken call.
+	if (!last.ok && last.reason === "out-of-time") {
+		return t("settings.autoBackupOutOfTime", {
+			at: new Date(last.at).toLocaleString(),
+		});
+	}
 	return last.ok
 		? t("settings.autoBackupLastOk", {
 				at: new Date(last.at).toLocaleString(),

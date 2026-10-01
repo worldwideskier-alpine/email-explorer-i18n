@@ -337,6 +337,28 @@ describe("a backup the nightly run did not reach", () => {
 		expect(host.textContent).toContain("the nightly run ran out of time first");
 		expect(host.textContent).not.toContain("Not reached tonight");
 	});
+
+	// Begun, and stopped by the run's end -- the night of 2026-10-01, which
+	// the screen showed as a call that "did not answer within 7s".
+	it("says a backup cut off by the run's end ran out of time", async () => {
+		stored.settings.autoBackup = {
+			enabled: true,
+			frequency: "daily",
+			keep: 3,
+			lastResult: {
+				at: "2026-09-30T18:01:07.046Z",
+				ok: false,
+				error:
+					"ran out of time while reading messages' originals and attachments: the pass reached its end",
+				reason: "out-of-time",
+			},
+		} as never;
+		await mountSettings();
+		expect(host.textContent).toContain(
+			"ran out of time before the archive was finished",
+		);
+		expect(host.textContent).not.toContain("the pass reached its end");
+	});
 });
 
 /**

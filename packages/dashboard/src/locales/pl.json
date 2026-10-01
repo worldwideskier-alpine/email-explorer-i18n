@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Ostatnio {at}: powodzenie ({messages} wiadomości)",
 		"autoBackupLastFailed": "Ostatnio {at}: niepowodzenie ({error})",
 		"autoBackupNotReached": "Ostatnie uruchomienie {at}: nie doszło do kolejki — nocnemu uruchomieniu wcześniej skończył się czas. Następnym razem ta skrzynka będzie pierwsza.",
+		"autoBackupOutOfTime": "Ostatnie uruchomienie {at}: czas się skończył, zanim archiwum zostało ukończone. Przy następnym uruchomieniu nastąpi kolejna próba.",
 		"autoBackupStored": "Zapisane kopie",
 		"autoBackupDownload": "Pobierz",
 		"autoBackupNone": "Brak zapisanych kopii.",

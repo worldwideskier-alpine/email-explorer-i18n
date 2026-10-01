@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Terakhir {at}: berhasil ({messages} pesan)",
 		"autoBackupLastFailed": "Terakhir {at}: gagal ({error})",
 		"autoBackupNotReached": "Jalan terakhir {at}: tidak tercapai — waktu jalan malam habis lebih dulu. Lain kali kotak surat ini didahulukan.",
+		"autoBackupOutOfTime": "Jalan terakhir {at}: waktu habis sebelum arsip selesai. Akan dicoba lagi pada jalan berikutnya.",
 		"autoBackupStored": "Cadangan tersimpan",
 		"autoBackupDownload": "Unduh",
 		"autoBackupNone": "Belum ada cadangan tersimpan.",

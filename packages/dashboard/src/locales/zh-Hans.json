@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "上次运行 {at}：成功（{messages} 封）",
 		"autoBackupLastFailed": "上次运行 {at}：失败（{error}）",
 		"autoBackupNotReached": "上次运行 {at}：未轮到——夜间运行的时间先用完了。下次将从此邮箱开始。",
+		"autoBackupOutOfTime": "上次运行 {at}：存档写完之前时间已用完。下次运行时会重试。",
 		"autoBackupStored": "已保存的备份",
 		"autoBackupDownload": "下载",
 		"autoBackupNone": "尚无已保存的备份。",

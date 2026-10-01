@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "הרצה אחרונה {at}: הצליחה ({messages} הודעות)",
 		"autoBackupLastFailed": "הרצה אחרונה {at}: נכשלה ({error})",
 		"autoBackupNotReached": "הרצה אחרונה {at}: התור לא הגיע — זמן ההרצה הלילית נגמר קודם. בפעם הבאה תיבת הדואר הזו תהיה ראשונה.",
+		"autoBackupOutOfTime": "הרצה אחרונה {at}: הזמן נגמר לפני שהארכיון הושלם. ינוסה שוב בהרצה הבאה.",
 		"autoBackupStored": "גיבויים שמורים",
 		"autoBackupDownload": "הורדה",
 		"autoBackupNone": "אין עדיין גיבויים שמורים.",

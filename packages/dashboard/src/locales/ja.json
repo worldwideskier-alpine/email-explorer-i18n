@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "最終実行 {at}：成功（{messages} 通）",
 		"autoBackupLastFailed": "最終実行 {at}：失敗（{error}）",
 		"autoBackupNotReached": "前回の実行 {at}: 順番が回りませんでした（夜間処理の時間が先に尽きました）。次回はこのメールボックスから始まります。",
+		"autoBackupOutOfTime": "前回の実行 {at}：時間切れで、バックアップを最後まで書けませんでした。次回の実行でやり直します。",
 		"autoBackupStored": "保存済みのバックアップ",
 		"autoBackupDownload": "ダウンロード",
 		"autoBackupNone": "保存済みのバックアップはまだありません。",

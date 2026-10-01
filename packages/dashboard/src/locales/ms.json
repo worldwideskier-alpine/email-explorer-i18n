@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Kali terakhir {at}: berjaya ({messages} mesej)",
 		"autoBackupLastFailed": "Kali terakhir {at}: gagal ({error})",
 		"autoBackupNotReached": "Larian terakhir {at}: tidak sampai giliran — masa larian malam habis dahulu. Lain kali peti mel ini didahulukan.",
+		"autoBackupOutOfTime": "Larian terakhir {at}: masa habis sebelum arkib siap. Akan dicuba semula pada larian seterusnya.",
 		"autoBackupStored": "Sandaran tersimpan",
 		"autoBackupDownload": "Muat turun",
 		"autoBackupNone": "Belum ada sandaran tersimpan.",

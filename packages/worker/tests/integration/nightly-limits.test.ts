@@ -185,6 +185,8 @@ describe("a call that never answers", () => {
 		expect(hung.autoBackup?.lastResult?.error).toContain(
 			"reading messages from the mailbox did not answer",
 		);
+		// A call that hung is not a pass that ran out of time.
+		expect(hung.autoBackup?.lastResult?.reason).toBeUndefined();
 		// And not counted as done: it is first in line tomorrow.
 		expect(hung.autoBackup?.lastRunAt).toBeUndefined();
 	});
@@ -209,6 +211,33 @@ describe("a call that never answers", () => {
 		expect(record?.finishedAt).toBeTypeOf("string");
 		expect(record?.backups).toMatchObject({ ran: 1, failed: 1 });
 		expect(record?.spamPurge?.finishedAt).toBeTypeOf("string");
+	});
+});
+
+/**
+ * The night of 2026-10-01: the second mailbox's backup was slow, not hung,
+ * and reached the pass's end 300 messages in. Its next call was given the
+ * seven seconds that were left, and the record said "did not answer within
+ * 7s" -- which reads as a broken call. Cut off by the pass's end, it says so.
+ */
+describe("a backup stopped by the pass's end", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await makeMailbox(HUNG);
+	});
+
+	it("is recorded as out of time, not as a call that did not answer", async () => {
+		const night = nightOfTheHang();
+		await runScheduledBackups(night.env, NOW, undefined, {
+			deadline: Date.now() + CALL_LIMIT,
+			callLimitMs: 60_000,
+		});
+
+		const result = (await settingsOf(HUNG)).autoBackup?.lastResult;
+		expect(result?.ok).toBe(false);
+		expect(result?.reason).toBe("out-of-time");
+		expect(result?.error).toContain("ran out of time while");
+		expect(result?.error).not.toContain("did not answer");
 	});
 });
 

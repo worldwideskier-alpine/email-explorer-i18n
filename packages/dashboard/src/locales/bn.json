@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "শেষবার {at}: সফল ({messages}টি)",
 		"autoBackupLastFailed": "শেষবার {at}: ব্যর্থ ({error})",
 		"autoBackupNotReached": "শেষ চালানো {at}: পৌঁছানো যায়নি — রাতের চালানোর সময় আগেই শেষ হয়ে গেছে। পরের বার এই মেলবক্স প্রথমে থাকবে।",
+		"autoBackupOutOfTime": "শেষ চালানো {at}: আর্কাইভ শেষ হওয়ার আগেই সময় ফুরিয়ে গেছে। পরের চালানোয় আবার চেষ্টা করা হবে।",
 		"autoBackupStored": "সংরক্ষিত ব্যাকআপ",
 		"autoBackupDownload": "ডাউনলোড",
 		"autoBackupNone": "এখনো কোনো সংরক্ষিত ব্যাকআপ নেই।",

@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Senaste körning {at}: lyckades ({messages} meddelanden)",
 		"autoBackupLastFailed": "Senaste körning {at}: misslyckades ({error})",
 		"autoBackupNotReached": "Senaste körning {at}: nåddes inte — nattkörningen fick slut på tid först. Nästa gång går den här brevlådan först.",
+		"autoBackupOutOfTime": "Senaste körning {at}: tiden tog slut innan arkivet var klart. Det prövas igen vid nästa körning.",
 		"autoBackupStored": "Sparade kopior",
 		"autoBackupDownload": "Ladda ner",
 		"autoBackupNone": "Inga sparade kopior än.",

@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Laatste run {at}: gelukt ({messages} berichten)",
 		"autoBackupLastFailed": "Laatste run {at}: mislukt ({error})",
 		"autoBackupNotReached": "Laatste run {at}: niet aan de beurt gekomen — de nachtelijke run had eerder geen tijd meer. De volgende keer is deze mailbox als eerste aan de beurt.",
+		"autoBackupOutOfTime": "Laatste run {at}: de tijd was op voordat het archief klaar was. Bij de volgende run wordt het opnieuw geprobeerd.",
 		"autoBackupStored": "Opgeslagen back-ups",
 		"autoBackupDownload": "Downloaden",
 		"autoBackupNone": "Nog geen opgeslagen back-ups.",

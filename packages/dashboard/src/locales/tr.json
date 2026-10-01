@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Son çalışma {at}: başarılı ({messages} ileti)",
 		"autoBackupLastFailed": "Son çalışma {at}: başarısız ({error})",
 		"autoBackupNotReached": "Son çalıştırma {at}: sıra gelmedi — gece çalıştırmasının süresi önce doldu. Bir dahaki sefere bu posta kutusu önce gelir.",
+		"autoBackupOutOfTime": "Son çalıştırma {at}: arşiv bitmeden süre doldu. Bir sonraki çalıştırmada yeniden denenecek.",
 		"autoBackupStored": "Saklanan yedekler",
 		"autoBackupDownload": "İndir",
 		"autoBackupNone": "Henüz saklanan yedek yok.",

@@ -70,7 +70,7 @@ export interface AutoBackupSettings {
 		removed?: number;
 		error?: string;
 		/** Set when the reason is one the screen words itself. */
-		reason?: "not-reached";
+		reason?: "not-reached" | "out-of-time";
 	};
 }
 

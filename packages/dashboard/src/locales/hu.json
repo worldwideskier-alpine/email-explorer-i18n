@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Utolsó futás {at}: sikeres ({messages} levél)",
 		"autoBackupLastFailed": "Utolsó futás {at}: sikertelen ({error})",
 		"autoBackupNotReached": "Utolsó futás {at}: nem került sorra — az éjszakai futás ideje előbb lejárt. Legközelebb ez a postafiók lesz az első.",
+		"autoBackupOutOfTime": "Utolsó futás {at}: lejárt az idő, mielőtt az archívum elkészült. A következő futáskor újra megpróbálja.",
 		"autoBackupStored": "Mentett másolatok",
 		"autoBackupDownload": "Letöltés",
 		"autoBackupNone": "Még nincs mentett másolat.",

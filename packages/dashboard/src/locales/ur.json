@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "آخری بار {at}: کامیاب ({messages} پیغامات)",
 		"autoBackupLastFailed": "آخری بار {at}: ناکام ({error})",
 		"autoBackupNotReached": "آخری رن {at}: باری نہیں آئی — رات کے رن کا وقت پہلے ہی ختم ہو گیا۔ اگلی بار یہ میل باکس سب سے پہلے ہوگا۔",
+		"autoBackupOutOfTime": "آخری رن {at}: آرکائیو مکمل ہونے سے پہلے وقت ختم ہو گیا۔ اگلے رن میں دوبارہ کوشش کی جائے گی۔",
 		"autoBackupStored": "محفوظ بیک اپ",
 		"autoBackupDownload": "ڈاؤن لوڈ",
 		"autoBackupNone": "ابھی کوئی محفوظ بیک اپ نہیں۔",

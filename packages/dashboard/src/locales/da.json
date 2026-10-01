@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Sidste kørsel {at}: lykkedes ({messages} beskeder)",
 		"autoBackupLastFailed": "Sidste kørsel {at}: mislykkedes ({error})",
 		"autoBackupNotReached": "Seneste kørsel {at}: nåede ikke frem — natkørslen løb tør for tid først. Næste gang er denne postkasse den første.",
+		"autoBackupOutOfTime": "Seneste kørsel {at}: tiden løb ud, før arkivet var færdigt. Det prøves igen ved næste kørsel.",
 		"autoBackupStored": "Gemte kopier",
 		"autoBackupDownload": "Hent",
 		"autoBackupNone": "Ingen gemte kopier endnu.",

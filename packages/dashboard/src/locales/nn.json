@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Siste køyring {at}: lukkast ({messages} meldingar)",
 		"autoBackupLastFailed": "Siste køyring {at}: mislukkast ({error})",
 		"autoBackupNotReached": "Siste køyring {at}: vart ikkje nådd — nattkøyringa gjekk tom for tid først. Neste gong går denne postkassa først.",
+		"autoBackupOutOfTime": "Siste køyring {at}: tida gjekk ut før arkivet var ferdig. Det blir prøvd igjen ved neste køyring.",
 		"autoBackupStored": "Lagra kopiar",
 		"autoBackupDownload": "Last ned",
 		"autoBackupNone": "Ingen lagra kopiar enno.",

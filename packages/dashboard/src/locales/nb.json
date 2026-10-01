@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Siste kjøring {at}: vellykket ({messages} meldinger)",
 		"autoBackupLastFailed": "Siste kjøring {at}: mislyktes ({error})",
 		"autoBackupNotReached": "Siste kjøring {at}: ble ikke nådd — nattkjøringen gikk tom for tid først. Neste gang går denne postkassen først.",
+		"autoBackupOutOfTime": "Siste kjøring {at}: tiden gikk ut før arkivet var ferdig. Det prøves igjen ved neste kjøring.",
 		"autoBackupStored": "Lagrede kopier",
 		"autoBackupDownload": "Last ned",
 		"autoBackupNone": "Ingen lagrede kopier ennå.",

@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Huling takbo {at}: matagumpay ({messages} mensahe)",
 		"autoBackupLastFailed": "Huling takbo {at}: nabigo ({error})",
 		"autoBackupNotReached": "Huling pagtakbo {at}: hindi naabot — naubusan ng oras ang takbo sa gabi bago ito. Mauuna ang mailbox na ito sa susunod.",
+		"autoBackupOutOfTime": "Huling pagtakbo {at}: naubusan ng oras bago natapos ang archive. Susubukan ulit sa susunod na pagtakbo.",
 		"autoBackupStored": "Mga naka-imbak na backup",
 		"autoBackupDownload": "I-download",
 		"autoBackupNone": "Wala pang naka-imbak na backup.",

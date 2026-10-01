@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "છેલ્લે {at}: સફળ ({messages} સંદેશા)",
 		"autoBackupLastFailed": "છેલ્લે {at}: નિષ્ફળ ({error})",
 		"autoBackupNotReached": "છેલ્લું ચલાવવું {at}: પહોંચી શકાયું નહીં — રાત્રિના ચલાવવાનો સમય પહેલાં જ પૂરો થઈ ગયો. આવતી વખતે આ મેઇલબોક્સ પ્રથમ રહેશે.",
+		"autoBackupOutOfTime": "છેલ્લું ચલાવવું {at}: આર્કાઇવ પૂરું થાય તે પહેલાં સમય પૂરો થઈ ગયો. આગલી વખતે ફરી પ્રયાસ થશે.",
 		"autoBackupStored": "સાચવેલા બેકઅપ",
 		"autoBackupDownload": "ડાઉનલોડ",
 		"autoBackupNone": "હજી કોઈ સાચવેલો બેકઅપ નથી.",

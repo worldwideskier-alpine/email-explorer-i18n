@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Dernière exécution {at} : réussie ({messages} messages)",
 		"autoBackupLastFailed": "Dernière exécution {at} : échec ({error})",
 		"autoBackupNotReached": "Dernière exécution {at} : non atteinte — l'exécution nocturne a manqué de temps avant. Cette boîte aux lettres passera en premier la prochaine fois.",
+		"autoBackupOutOfTime": "Dernière exécution {at} : le temps a manqué avant la fin de l'archive. Elle sera retentée à la prochaine exécution.",
 		"autoBackupStored": "Sauvegardes enregistrées",
 		"autoBackupDownload": "Télécharger",
 		"autoBackupNone": "Aucune sauvegarde enregistrée.",

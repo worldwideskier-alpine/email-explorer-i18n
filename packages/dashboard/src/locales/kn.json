@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "ಕೊನೆಯ ಬಾರಿ {at}: ಯಶಸ್ವಿ ({messages} ಸಂದೇಶ)",
 		"autoBackupLastFailed": "ಕೊನೆಯ ಬಾರಿ {at}: ವಿಫಲ ({error})",
 		"autoBackupNotReached": "ಕೊನೆಯ ರನ್ {at}: ಸರದಿ ಬರಲಿಲ್ಲ — ರಾತ್ರಿಯ ರನ್‌ನ ಸಮಯ ಮೊದಲೇ ಮುಗಿಯಿತು. ಮುಂದಿನ ಬಾರಿ ಈ ಮೇಲ್‌ಬಾಕ್ಸ್ ಮೊದಲು.",
+		"autoBackupOutOfTime": "ಕೊನೆಯ ರನ್ {at}: ಆರ್ಕೈವ್ ಮುಗಿಯುವ ಮೊದಲೇ ಸಮಯ ಮುಗಿಯಿತು. ಮುಂದಿನ ರನ್‌ನಲ್ಲಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲಾಗುತ್ತದೆ.",
 		"autoBackupStored": "ಉಳಿಸಿದ ಬ್ಯಾಕಪ್",
 		"autoBackupDownload": "ಡೌನ್‌ಲೋಡ್",
 		"autoBackupNone": "ಇನ್ನೂ ಉಳಿಸಿದ ಬ್ಯಾಕಪ್ ಇಲ್ಲ.",

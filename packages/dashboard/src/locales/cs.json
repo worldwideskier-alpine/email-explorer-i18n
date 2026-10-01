@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Poslední běh {at}: úspěch ({messages} zpráv)",
 		"autoBackupLastFailed": "Poslední běh {at}: selhalo ({error})",
 		"autoBackupNotReached": "Poslední běh {at}: nedostalo se na řadu — nočnímu běhu nejdřív došel čas. Příště bude tato schránka první.",
+		"autoBackupOutOfTime": "Poslední běh {at}: čas vypršel dřív, než byl archiv dokončen. Při dalším běhu se to zkusí znovu.",
 		"autoBackupStored": "Uložené zálohy",
 		"autoBackupDownload": "Stáhnout",
 		"autoBackupNone": "Zatím žádné uložené zálohy.",

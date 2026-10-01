@@ -216,6 +216,7 @@
 		"autoBackupLastOk": "Last run {at}: succeeded ({messages} messages)",
 		"autoBackupLastFailed": "Last run {at}: failed ({error})",
 		"autoBackupNotReached": "Last run {at}: not reached — the nightly run ran out of time first. This mailbox goes first next time.",
+		"autoBackupOutOfTime": "Last run {at}: ran out of time before the archive was finished. It is tried again on the next run.",
 		"autoBackupStored": "Stored backups",
 		"autoBackupDownload": "Download",
 		"autoBackupNone": "No backups stored yet.",
