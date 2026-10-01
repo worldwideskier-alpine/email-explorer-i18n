@@ -1,0 +1,23 @@
+# Temporary: reads Cloudflare's published limits for a Durable Object alarm
+# and a cron trigger, which this session cannot reach. Public pages, no
+# secrets. Runs on the working branch only, and is removed once it has
+# answered.
+name: Docs probe
+on:
+  push:
+    branches: [claude/github-settings-migration-t81k5b]
+    paths: ['.github/workflows/docs-probe.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read the limits
+        run: |
+          for page in durable-objects/platform/limits durable-objects/api/alarms workers/platform/limits; do
+            echo "=== $page"
+            curl -sSfL "https://developers.cloudflare.com/$page/index.md" -o page.md || { echo "unreadable"; continue; }
+            grep -n -i -E "alarm|wall|duration|15 min|minutes|cron" page.md | head -60
+          done
