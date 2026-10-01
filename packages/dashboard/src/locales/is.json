@@ -114,6 +114,7 @@
 		"loadingMore": "Sæki fleiri ...",
 		"unstar": "Fjarlægja stjörnu",
 		"star": "Setja stjörnu",
+		"replied": "Svarað ({at})",
 		"markUnread": "Merkja sem ólesið",
 		"markRead": "Merkja sem lesið",
 		"delete": "Eyða",

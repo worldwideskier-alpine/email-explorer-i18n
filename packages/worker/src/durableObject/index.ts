@@ -57,6 +57,8 @@ interface EmailData {
 	message_id?: string | null;
 	/** For a draft: the id of the message it replies to, in this mailbox. */
 	draft_reply_to?: string | null;
+	/** When a reply to it last left from here; null if never. */
+	replied_at?: string | null;
 }
 
 /** The most results one search returns. */
@@ -1363,6 +1365,7 @@ export class MailboxDO extends DurableObject<Env> {
 				"email_references",
 				"thread_id",
 				"folder_id",
+				"replied_at",
 			]);
 
 		const folderId = folder ? this.#resolveFolderId(folder) : undefined;
@@ -2213,6 +2216,15 @@ export class MailboxDO extends DurableObject<Env> {
 		);
 	}
 
+	/** Notes that a reply to this message has left, for the list to show. */
+	async markReplied(id: string, at: string): Promise<void> {
+		this.ctx.storage.sql.exec(
+			"UPDATE emails SET replied_at = ? WHERE id = ?",
+			at,
+			id,
+		);
+	}
+
 	async searchEmails(options: {
 		query: string;
 		folder?: string;
@@ -2236,6 +2248,7 @@ export class MailboxDO extends DurableObject<Env> {
 				"email_references",
 				"thread_id",
 				"folder_id",
+				"replied_at",
 			]);
 
 		const folderId = folder ? this.#resolveFolderId(folder) : undefined;

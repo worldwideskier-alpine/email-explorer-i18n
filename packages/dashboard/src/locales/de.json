@@ -114,6 +114,7 @@
 		"loadingMore": "Weitere werden geladen...",
 		"unstar": "Markierung entfernen",
 		"star": "Markieren",
+		"replied": "Beantwortet ({at})",
 		"markUnread": "Als ungelesen markieren",
 		"markRead": "Als gelesen markieren",
 		"delete": "Löschen",

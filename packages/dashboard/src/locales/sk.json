@@ -114,6 +114,7 @@
 		"loadingMore": "Načítavanie ďalších...",
 		"unstar": "Zrušiť hviezdičku",
 		"star": "Pridať hviezdičku",
+		"replied": "Odpovedané ({at})",
 		"markUnread": "Označiť ako neprečítané",
 		"markRead": "Označiť ako prečítané",
 		"delete": "Odstrániť",

@@ -39,7 +39,10 @@
                 <div v-if="!email.read" class="w-2 h-2 bg-indigo-600 dark:bg-indigo-400 rounded-full flex-shrink-0"></div>
                 <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" :class="{'font-bold': !email.read}">{{ email.sender }}</p>
               </div>
-              <p class="text-base text-gray-800 dark:text-gray-300 truncate" :class="{'font-semibold': !email.read, 'font-normal': email.read}">{{ email.subject }}</p>
+              <div class="flex items-center gap-1.5 min-w-0">
+                <RepliedMark v-if="email.replied_at" :at="email.replied_at" />
+                <p class="text-base text-gray-800 dark:text-gray-300 truncate" :class="{'font-semibold': !email.read, 'font-normal': email.read}">{{ email.subject }}</p>
+              </div>
             </div>
             <div class="flex-shrink-0 flex items-center gap-2">
               <p class="text-xs text-gray-500 dark:text-gray-400 hidden sm:block sm:group-hover:hidden sm:group-focus-within:hidden sm:pointer-coarse:hidden whitespace-nowrap">{{ formatListDate(email.date) }}</p>
@@ -127,6 +130,7 @@ import { storeToRefs } from "pinia";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
+import RepliedMark from "@/components/RepliedMark.vue";
 import { useDateFormat } from "@/composables/useDateFormat";
 import { useToast } from "@/composables/useToast";
 import api from "@/services/api";

@@ -114,6 +114,7 @@
 		"loadingMore": "Caricamento...",
 		"unstar": "Togli la stella",
 		"star": "Aggiungi una stella",
+		"replied": "Risposto ({at})",
 		"markUnread": "Segna come da leggere",
 		"markRead": "Segna come letta",
 		"delete": "Elimina",

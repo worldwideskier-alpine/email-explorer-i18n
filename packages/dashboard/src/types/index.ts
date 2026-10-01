@@ -104,6 +104,8 @@ export interface Email {
 	folder_id?: string;
 	/** For a draft: the message it replies to, if it is a reply. */
 	draft_reply_to?: string | null;
+	/** When a reply to it last left from here; absent or null if never. */
+	replied_at?: string | null;
 }
 
 export interface Attachment {

@@ -114,6 +114,7 @@
 		"loadingMore": "Ielādē vairāk...",
 		"unstar": "Noņemt zvaigznīti",
 		"star": "Pievienot zvaigznīti",
+		"replied": "Atbildēts ({at})",
 		"markUnread": "Atzīmēt kā nelasītu",
 		"markRead": "Atzīmēt kā lasītu",
 		"delete": "Dzēst",

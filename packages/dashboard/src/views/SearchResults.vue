@@ -27,7 +27,10 @@
             <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ email.sender }}</p>
             <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatListDate(email.date) }}</p>
           </div>
-          <p class="text-sm text-gray-800 dark:text-gray-300 mt-1">{{ email.subject }}</p>
+          <div class="flex items-center gap-1.5 mt-1">
+            <RepliedMark v-if="email.replied_at" :at="email.replied_at" />
+            <p class="text-sm text-gray-800 dark:text-gray-300">{{ email.subject }}</p>
+          </div>
         </router-link>
       </li>
     </ul>
@@ -39,6 +42,7 @@ import { storeToRefs } from "pinia";
 import { computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
+import RepliedMark from "@/components/RepliedMark.vue";
 import { useDateFormat } from "@/composables/useDateFormat";
 import { useSearchStore } from "@/stores/search";
 

@@ -114,6 +114,7 @@
 		"loadingMore": "Cargando...",
 		"unstar": "Quitar destacado",
 		"star": "Destacar",
+		"replied": "Respondido ({at})",
 		"markUnread": "Marcar como no leído",
 		"markRead": "Marcar como leído",
 		"delete": "Eliminar",

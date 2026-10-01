@@ -213,6 +213,7 @@ const EmailMetadataSchema = z.object({
 	in_reply_to: z.string().nullable().optional(),
 	email_references: z.string().nullable().optional(),
 	thread_id: z.string().nullable().optional(),
+	replied_at: z.string().nullable().optional(),
 });
 
 const AttachmentSchema = z.object({

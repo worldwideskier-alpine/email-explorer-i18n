@@ -285,6 +285,12 @@ are still checked, by the `tsc` that runs before the worker tests.
   as a real line break -- a `Bcc:` of the sender's choosing in our next reply.
   Asked at ingest, when a reply is threaded and when the headers are written,
   since rows from before are still there. `message-id-shape.test.ts`.
+  The list marks a message answered from here (`replied_at`, set by the
+  reply route once Resend has taken the reply, never on a refusal or a
+  forward). Replies from before the column were found by the copy each left
+  in Sent, whose In-Reply-To names the message -- by Message-ID, or by our row
+  id from before replies were threaded that way (`13_replied_at`,
+  `replied-mark.test.ts`).
 - **A notification is dismissed only if it was sent.** Delivery sets
   `notified` when a device was told; mark-read, delete, bin and "spam" ask
   `takeNotified`, which clears it in the same step. A dismissal is a push that

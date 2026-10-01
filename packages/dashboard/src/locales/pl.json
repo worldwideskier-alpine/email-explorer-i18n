@@ -114,6 +114,7 @@
 		"loadingMore": "Wczytywanie...",
 		"unstar": "Usuń gwiazdkę",
 		"star": "Dodaj gwiazdkę",
+		"replied": "Odpowiedziano ({at})",
 		"markUnread": "Oznacz jako nieprzeczytaną",
 		"markRead": "Oznacz jako przeczytaną",
 		"delete": "Usuń",

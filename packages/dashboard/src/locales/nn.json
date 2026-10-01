@@ -114,6 +114,7 @@
 		"loadingMore": "Hentar fleire ...",
 		"unstar": "Fjern stjerna",
 		"star": "Set stjerne",
+		"replied": "Svara ({at})",
 		"markUnread": "Merk som ulesen",
 		"markRead": "Merk som lesen",
 		"delete": "Slett",

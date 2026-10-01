@@ -224,6 +224,28 @@ export const mailboxMigrations: Migration[] = [
             );
         `,
 	},
+	{
+		/**
+		 * When a message was last answered from here, for the list to mark it.
+		 *
+		 * Replies sent before this existed are found by the copy each left in
+		 * Sent: its In-Reply-To names the message it answered -- by the
+		 * sender's Message-ID now, and by our own row id before replies were
+		 * threaded by Message-ID. A message whose reply copy was deleted, or
+		 * never kept, stays unmarked; nothing else says it was answered.
+		 */
+		name: "13_replied_at",
+		sql: `
+            ALTER TABLE emails ADD COLUMN replied_at TEXT;
+            UPDATE emails SET replied_at = (
+                SELECT MAX(r.date) FROM emails r
+                WHERE r.folder_id = 'sent'
+                  AND r.in_reply_to IS NOT NULL
+                  AND (r.in_reply_to = emails.message_id OR r.in_reply_to = emails.id)
+            )
+            WHERE folder_id != 'sent';
+        `,
+	},
 ];
 
 export const authMigrations: Migration[] = [

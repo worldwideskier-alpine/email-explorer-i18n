@@ -114,6 +114,7 @@
 		"loadingMore": "További elemek betöltése...",
 		"unstar": "Csillag eltávolítása",
 		"star": "Csillagozás",
+		"replied": "Megválaszolva ({at})",
 		"markUnread": "Megjelölés olvasatlanként",
 		"markRead": "Megjelölés olvasottként",
 		"delete": "Törlés",

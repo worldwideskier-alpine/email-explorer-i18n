@@ -143,6 +143,11 @@ export class PostReplyEmail extends OpenAPIRoute {
 		}
 
 		const messageId = crypto.randomUUID();
+		const sentAt = new Date().toISOString();
+
+		// Marked once the reply has left, for the list's "replied" sign. A
+		// failure here is not the send's: the reply is gone either way.
+		await stub.markReplied(id, sentAt).catch(() => {});
 
 		const saved = await keepSentCopy(
 			c.env,
@@ -154,7 +159,7 @@ export class PostReplyEmail extends OpenAPIRoute {
 				recipient: formatAddressList(to) ?? "",
 				cc: formatAddressList(cc),
 				bcc: formatAddressList(bcc),
-				date: new Date().toISOString(),
+				date: sentAt,
 				body: html || (text ? plainTextToHtml(text) : ""),
 				in_reply_to: in_reply_to,
 				email_references: references.length ? JSON.stringify(references) : null,

@@ -114,6 +114,7 @@
 		"loadingMore": "Läser in...",
 		"unstar": "Ta bort stjärnan",
 		"star": "Stjärnmärk",
+		"replied": "Besvarat ({at})",
 		"markUnread": "Markera som oläst",
 		"markRead": "Markera som läst",
 		"delete": "Ta bort",

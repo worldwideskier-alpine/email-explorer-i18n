@@ -114,6 +114,7 @@
 		"loadingMore": "正在加载更多…",
 		"unstar": "取消星标",
 		"star": "加星标",
+		"replied": "已回复（{at}）",
 		"markUnread": "标为未读",
 		"markRead": "标为已读",
 		"delete": "删除",

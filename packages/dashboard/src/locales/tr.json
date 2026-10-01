@@ -114,6 +114,7 @@
 		"loadingMore": "Daha fazlası yükleniyor...",
 		"unstar": "Yıldızı kaldır",
 		"star": "Yıldızla",
+		"replied": "Yanıtlandı ({at})",
 		"markUnread": "Okunmadı olarak işaretle",
 		"markRead": "Okundu olarak işaretle",
 		"delete": "Sil",

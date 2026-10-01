@@ -114,6 +114,7 @@
 		"loadingMore": "더 가져오는 중...",
 		"unstar": "별표 해제",
 		"star": "별표 표시",
+		"replied": "답장함 ({at})",
 		"markUnread": "읽지 않음으로 표시",
 		"markRead": "읽음으로 표시",
 		"delete": "삭제",

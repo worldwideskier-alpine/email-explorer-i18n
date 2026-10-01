@@ -114,6 +114,7 @@
 		"loadingMore": "Chargement...",
 		"unstar": "Retirer le suivi",
 		"star": "Suivre",
+		"replied": "Répondu ({at})",
 		"markUnread": "Marquer comme non lu",
 		"markRead": "Marquer comme lu",
 		"delete": "Supprimer",

@@ -114,6 +114,7 @@
 		"loadingMore": "Laden...",
 		"unstar": "Ster verwijderen",
 		"star": "Ster toevoegen",
+		"replied": "Beantwoord ({at})",
 		"markUnread": "Als ongelezen markeren",
 		"markRead": "Als gelezen markeren",
 		"delete": "Verwijderen",

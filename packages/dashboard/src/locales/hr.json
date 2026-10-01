@@ -114,6 +114,7 @@
 		"loadingMore": "Učitavanje još poruka...",
 		"unstar": "Ukloni zvjezdicu",
 		"star": "Dodaj zvjezdicu",
+		"replied": "Odgovoreno ({at})",
 		"markUnread": "Označi kao nepročitano",
 		"markRead": "Označi kao pročitano",
 		"delete": "Izbriši",

@@ -114,6 +114,7 @@
 		"loadingMore": "Indlæser...",
 		"unstar": "Fjern stjernen",
 		"star": "Sæt stjerne",
+		"replied": "Besvaret ({at})",
 		"markUnread": "Marker som ulæst",
 		"markRead": "Marker som læst",
 		"delete": "Slet",

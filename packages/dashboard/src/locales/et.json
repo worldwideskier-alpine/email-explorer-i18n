@@ -114,6 +114,7 @@
 		"loadingMore": "Laadin veel...",
 		"unstar": "Eemalda täht",
 		"star": "Lisa täht",
+		"replied": "Vastatud ({at})",
 		"markUnread": "Märgi lugemata",
 		"markRead": "Märgi loetuks",
 		"delete": "Kustuta",

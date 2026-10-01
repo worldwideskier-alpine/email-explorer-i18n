@@ -114,6 +114,7 @@
 		"loadingMore": "S'estan carregant més...",
 		"unstar": "Treu el destacat",
 		"star": "Destaca",
+		"replied": "Respost ({at})",
 		"markUnread": "Marca com a no llegit",
 		"markRead": "Marca com a llegit",
 		"delete": "Suprimeix",

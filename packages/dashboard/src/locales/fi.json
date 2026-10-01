@@ -114,6 +114,7 @@
 		"loadingMore": "Ladataan...",
 		"unstar": "Poista tähti",
 		"star": "Merkitse tähdellä",
+		"replied": "Vastattu ({at})",
 		"markUnread": "Merkitse lukemattomaksi",
 		"markRead": "Merkitse luetuksi",
 		"delete": "Poista",
