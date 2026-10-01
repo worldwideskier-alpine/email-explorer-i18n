@@ -115,6 +115,7 @@
 		"unstar": "Ster verwijderen",
 		"star": "Ster toevoegen",
 		"replied": "Beantwoord ({at})",
+		"forwarded": "Doorgestuurd ({at})",
 		"markUnread": "Als ongelezen markeren",
 		"markRead": "Als gelezen markeren",
 		"delete": "Verwijderen",

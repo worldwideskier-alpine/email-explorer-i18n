@@ -144,3 +144,64 @@ describe("the replied mark", () => {
 		expect((await listed("sent")).get("copy-1")).toBeNull();
 	});
 });
+
+/**
+ * A forward is marked the same way, on its own field: it was sent on, not
+ * answered. The copy a forward keeps in Sent names no message it came from,
+ * so forwards from before the mark have none.
+ */
+describe("the forwarded mark", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createMailbox();
+	});
+
+	async function forwardedAt(folder = "inbox") {
+		const res = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}/emails?folder=${folder}`,
+		);
+		expect(res.status).toBe(200);
+		const rows =
+			await res.json<{ id: string; forwarded_at?: string | null }[]>();
+		return new Map(rows.map((r) => [r.id, r.forwarded_at ?? null]));
+	}
+
+	it("is set on the message a forward sends on, and on no other", async () => {
+		await place("sent-on", "inbox", { message_id: "f@mail.example.org" });
+		await place("answered", "inbox", { message_id: "a@mail.example.org" });
+		await place("untouched", "inbox");
+
+		const before = Date.now();
+		expect((await send("sent-on", "forward", "Fwd: s")).status).toBe(201);
+		expect((await send("answered", "reply")).status).toBe(201);
+
+		const marks = await forwardedAt();
+		const at = marks.get("sent-on");
+		expect(at).toBeTypeOf("string");
+		expect(Date.parse(at as string)).toBeGreaterThanOrEqual(before - 1000);
+		expect(marks.get("answered")).toBeNull();
+		expect(marks.get("untouched")).toBeNull();
+		// Forwarding is not answering.
+		expect((await listed()).get("sent-on")).toBeNull();
+	});
+
+	it("is not set when the forward did not leave", async () => {
+		await place("refused", "inbox", { message_id: "r@mail.example.org" });
+		const res = await send("refused", "forward", "Fwd: ECHO_RESEND_REQUEST");
+		expect(res.status).toBe(500);
+		expect((await forwardedAt()).get("refused")).toBeNull();
+	});
+
+	it("is found in search results too", async () => {
+		await place("found", "inbox", { message_id: "s@mail.example.org" });
+		expect((await send("found", "forward", "Fwd: s")).status).toBe(201);
+		const res = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}/search?query=${encodeURIComponent("subject found")}`,
+		);
+		const rows =
+			await res.json<{ id: string; forwarded_at?: string | null }[]>();
+		expect(rows.find((r) => r.id === "found")?.forwarded_at).toBeTypeOf(
+			"string",
+		);
+	});
+});

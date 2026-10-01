@@ -115,6 +115,7 @@
 		"unstar": "Yıldızı kaldır",
 		"star": "Yıldızla",
 		"replied": "Yanıtlandı ({at})",
+		"forwarded": "İletildi ({at})",
 		"markUnread": "Okunmadı olarak işaretle",
 		"markRead": "Okundu olarak işaretle",
 		"delete": "Sil",

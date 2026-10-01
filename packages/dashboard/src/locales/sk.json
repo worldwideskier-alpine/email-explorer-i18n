@@ -115,6 +115,7 @@
 		"unstar": "Zrušiť hviezdičku",
 		"star": "Pridať hviezdičku",
 		"replied": "Odpovedané ({at})",
+		"forwarded": "Preposlané ({at})",
 		"markUnread": "Označiť ako neprečítané",
 		"markRead": "Označiť ako prečítané",
 		"delete": "Odstrániť",

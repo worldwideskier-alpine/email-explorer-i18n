@@ -115,6 +115,7 @@
 		"unstar": "Fjern stjernen",
 		"star": "Sæt stjerne",
 		"replied": "Besvaret ({at})",
+		"forwarded": "Videresendt ({at})",
 		"markUnread": "Marker som ulæst",
 		"markRead": "Marker som læst",
 		"delete": "Slet",

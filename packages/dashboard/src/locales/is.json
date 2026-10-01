@@ -115,6 +115,7 @@
 		"unstar": "Fjarlægja stjörnu",
 		"star": "Setja stjörnu",
 		"replied": "Svarað ({at})",
+		"forwarded": "Áframsent ({at})",
 		"markUnread": "Merkja sem ólesið",
 		"markRead": "Merkja sem lesið",
 		"delete": "Eyða",

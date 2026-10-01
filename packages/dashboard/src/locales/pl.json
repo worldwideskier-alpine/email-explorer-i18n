@@ -115,6 +115,7 @@
 		"unstar": "Usuń gwiazdkę",
 		"star": "Dodaj gwiazdkę",
 		"replied": "Odpowiedziano ({at})",
+		"forwarded": "Przekazano dalej ({at})",
 		"markUnread": "Oznacz jako nieprzeczytaną",
 		"markRead": "Oznacz jako przeczytaną",
 		"delete": "Usuń",

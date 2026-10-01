@@ -115,6 +115,7 @@
 		"unstar": "Poista tähti",
 		"star": "Merkitse tähdellä",
 		"replied": "Vastattu ({at})",
+		"forwarded": "Välitetty ({at})",
 		"markUnread": "Merkitse lukemattomaksi",
 		"markRead": "Merkitse luetuksi",
 		"delete": "Poista",

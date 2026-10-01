@@ -115,6 +115,7 @@
 		"unstar": "Ta bort stjärnan",
 		"star": "Stjärnmärk",
 		"replied": "Besvarat ({at})",
+		"forwarded": "Vidarebefordrat ({at})",
 		"markUnread": "Markera som oläst",
 		"markRead": "Markera som läst",
 		"delete": "Ta bort",

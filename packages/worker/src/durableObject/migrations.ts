@@ -246,6 +246,17 @@ export const mailboxMigrations: Migration[] = [
             WHERE folder_id != 'sent';
         `,
 	},
+	{
+		/**
+		 * When a message was last forwarded from here, for the list to mark it
+		 * as it marks a reply. Nothing finds forwards from before: the copy a
+		 * forward leaves in Sent names no message it came from.
+		 */
+		name: "14_forwarded_at",
+		sql: `
+            ALTER TABLE emails ADD COLUMN forwarded_at TEXT;
+        `,
+	},
 ];
 
 export const authMigrations: Migration[] = [

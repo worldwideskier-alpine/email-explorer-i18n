@@ -115,6 +115,7 @@
 		"unstar": "Treu el destacat",
 		"star": "Destaca",
 		"replied": "Respost ({at})",
+		"forwarded": "Reenviat ({at})",
 		"markUnread": "Marca com a no llegit",
 		"markRead": "Marca com a llegit",
 		"delete": "Suprimeix",

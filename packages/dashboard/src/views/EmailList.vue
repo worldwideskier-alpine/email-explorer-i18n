@@ -40,7 +40,7 @@
                 <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" :class="{'font-bold': !email.read}">{{ email.sender }}</p>
               </div>
               <div class="flex items-center gap-1.5 min-w-0">
-                <RepliedMark v-if="email.replied_at" :at="email.replied_at" />
+                <SentOnMarks :replied-at="email.replied_at" :forwarded-at="email.forwarded_at" />
                 <p class="text-base text-gray-800 dark:text-gray-300 truncate" :class="{'font-semibold': !email.read, 'font-normal': email.read}">{{ email.subject }}</p>
               </div>
             </div>
@@ -130,7 +130,7 @@ import { storeToRefs } from "pinia";
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import RepliedMark from "@/components/RepliedMark.vue";
+import SentOnMarks from "@/components/SentOnMarks.vue";
 import { useDateFormat } from "@/composables/useDateFormat";
 import { useToast } from "@/composables/useToast";
 import api from "@/services/api";

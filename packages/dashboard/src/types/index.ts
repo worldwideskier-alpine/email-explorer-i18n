@@ -106,6 +106,8 @@ export interface Email {
 	draft_reply_to?: string | null;
 	/** When a reply to it last left from here; absent or null if never. */
 	replied_at?: string | null;
+	/** When it was last forwarded from here; absent or null if never. */
+	forwarded_at?: string | null;
 }
 
 export interface Attachment {

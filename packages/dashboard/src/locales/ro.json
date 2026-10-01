@@ -115,6 +115,7 @@
 		"unstar": "Elimină steaua",
 		"star": "Adaugă stea",
 		"replied": "Răspuns trimis ({at})",
+		"forwarded": "Redirecționat ({at})",
 		"markUnread": "Marchează ca necitit",
 		"markRead": "Marchează ca citit",
 		"delete": "Șterge",

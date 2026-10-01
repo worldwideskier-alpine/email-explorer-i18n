@@ -115,6 +115,7 @@
 		"unstar": "Alisin ang bituin",
 		"star": "Lagyan ng bituin",
 		"replied": "Nasagot na ({at})",
+		"forwarded": "Naipasa na ({at})",
 		"markUnread": "Markahang hindi pa nabasa",
 		"markRead": "Markahang nabasa na",
 		"delete": "Burahin",

@@ -115,6 +115,7 @@
 		"unstar": "攞走個星",
 		"star": "加個星",
 		"replied": "已回覆（{at}）",
+		"forwarded": "已轉寄（{at}）",
 		"markUnread": "標做未睇",
 		"markRead": "標做睇咗",
 		"delete": "刪除",

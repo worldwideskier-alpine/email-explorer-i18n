@@ -115,6 +115,7 @@
 		"unstar": "Noņemt zvaigznīti",
 		"star": "Pievienot zvaigznīti",
 		"replied": "Atbildēts ({at})",
+		"forwarded": "Pārsūtīts ({at})",
 		"markUnread": "Atzīmēt kā nelasītu",
 		"markRead": "Atzīmēt kā lasītu",
 		"delete": "Dzēst",

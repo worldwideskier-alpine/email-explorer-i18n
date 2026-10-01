@@ -115,6 +115,7 @@
 		"unstar": "Bỏ gắn sao",
 		"star": "Gắn sao",
 		"replied": "Đã trả lời ({at})",
+		"forwarded": "Đã chuyển tiếp ({at})",
 		"markUnread": "Đánh dấu chưa đọc",
 		"markRead": "Đánh dấu đã đọc",
 		"delete": "Xóa",

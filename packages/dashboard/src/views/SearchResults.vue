@@ -28,7 +28,7 @@
             <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatListDate(email.date) }}</p>
           </div>
           <div class="flex items-center gap-1.5 mt-1">
-            <RepliedMark v-if="email.replied_at" :at="email.replied_at" />
+            <SentOnMarks :replied-at="email.replied_at" :forwarded-at="email.forwarded_at" />
             <p class="text-sm text-gray-800 dark:text-gray-300">{{ email.subject }}</p>
           </div>
         </router-link>
@@ -42,7 +42,7 @@ import { storeToRefs } from "pinia";
 import { computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import RepliedMark from "@/components/RepliedMark.vue";
+import SentOnMarks from "@/components/SentOnMarks.vue";
 import { useDateFormat } from "@/composables/useDateFormat";
 import { useSearchStore } from "@/stores/search";
 

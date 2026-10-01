@@ -115,6 +115,7 @@
 		"unstar": "Markierung entfernen",
 		"star": "Markieren",
 		"replied": "Beantwortet ({at})",
+		"forwarded": "Weitergeleitet ({at})",
 		"markUnread": "Als ungelesen markieren",
 		"markRead": "Als gelesen markieren",
 		"delete": "Löschen",

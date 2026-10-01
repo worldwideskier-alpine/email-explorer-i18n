@@ -115,6 +115,7 @@
 		"unstar": "Retirer le suivi",
 		"star": "Suivre",
 		"replied": "Répondu ({at})",
+		"forwarded": "Transféré ({at})",
 		"markUnread": "Marquer comme non lu",
 		"markRead": "Marquer comme lu",
 		"delete": "Supprimer",

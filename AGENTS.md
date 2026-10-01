@@ -290,7 +290,10 @@ are still checked, by the `tsc` that runs before the worker tests.
   forward). Replies from before the column were found by the copy each left
   in Sent, whose In-Reply-To names the message -- by Message-ID, or by our row
   id from before replies were threaded that way (`13_replied_at`,
-  `replied-mark.test.ts`).
+  `replied-mark.test.ts`). A forward is marked the same way on its own
+  column (`forwarded_at`), with the arrow the other way round
+  (`SentOnMarks.vue`); forwards from before it have no mark, because the copy
+  a forward keeps in Sent names no message it came from.
 - **A notification is dismissed only if it was sent.** Delivery sets
   `notified` when a device was told; mark-read, delete, bin and "spam" ask
   `takeNotified`, which clears it in the same step. A dismissal is a push that

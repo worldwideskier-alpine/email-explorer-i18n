@@ -115,6 +115,7 @@
 		"unstar": "Ulduzu götür",
 		"star": "Ulduzla",
 		"replied": "Cavab verilib ({at})",
+		"forwarded": "Yönləndirilib ({at})",
 		"markUnread": "Oxunmamış kimi işarələ",
 		"markRead": "Oxunmuş kimi işarələ",
 		"delete": "Sil",

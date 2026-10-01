@@ -115,6 +115,7 @@
 		"unstar": "Odstrani zvezdico",
 		"star": "Dodaj zvezdico",
 		"replied": "Odgovorjeno ({at})",
+		"forwarded": "Posredovano ({at})",
 		"markUnread": "Označi kot neprebrano",
 		"markRead": "Označi kot prebrano",
 		"delete": "Izbriši",

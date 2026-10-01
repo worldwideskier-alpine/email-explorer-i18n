@@ -115,6 +115,7 @@
 		"unstar": "Quitar destacado",
 		"star": "Destacar",
 		"replied": "Respondido ({at})",
+		"forwarded": "Reenviado ({at})",
 		"markUnread": "Marcar como no leído",
 		"markRead": "Marcar como leído",
 		"delete": "Eliminar",

@@ -115,6 +115,7 @@
 		"unstar": "Pašalinti žvaigždutę",
 		"star": "Pažymėti žvaigždute",
 		"replied": "Atsakyta ({at})",
+		"forwarded": "Persiųsta ({at})",
 		"markUnread": "Žymėti kaip neskaitytą",
 		"markRead": "Žymėti kaip skaitytą",
 		"delete": "Ištrinti",

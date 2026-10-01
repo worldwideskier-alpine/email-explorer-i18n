@@ -115,6 +115,7 @@
 		"unstar": "スターを外す",
 		"star": "スターを付ける",
 		"replied": "返信済み（{at}）",
+		"forwarded": "転送済み（{at}）",
 		"markUnread": "未読にする",
 		"markRead": "既読にする",
 		"delete": "削除",

@@ -115,6 +115,7 @@
 		"unstar": "Fjern stjernen",
 		"star": "Sett stjerne",
 		"replied": "Besvart ({at})",
+		"forwarded": "Videresendt ({at})",
 		"markUnread": "Merk som ulest",
 		"markRead": "Merk som lest",
 		"delete": "Slett",

@@ -59,6 +59,8 @@ interface EmailData {
 	draft_reply_to?: string | null;
 	/** When a reply to it last left from here; null if never. */
 	replied_at?: string | null;
+	/** When it was last forwarded from here; null if never. */
+	forwarded_at?: string | null;
 }
 
 /** The most results one search returns. */
@@ -1366,6 +1368,7 @@ export class MailboxDO extends DurableObject<Env> {
 				"thread_id",
 				"folder_id",
 				"replied_at",
+				"forwarded_at",
 			]);
 
 		const folderId = folder ? this.#resolveFolderId(folder) : undefined;
@@ -2225,6 +2228,15 @@ export class MailboxDO extends DurableObject<Env> {
 		);
 	}
 
+	/** Notes that this message has been forwarded, for the list to show. */
+	async markForwarded(id: string, at: string): Promise<void> {
+		this.ctx.storage.sql.exec(
+			"UPDATE emails SET forwarded_at = ? WHERE id = ?",
+			at,
+			id,
+		);
+	}
+
 	async searchEmails(options: {
 		query: string;
 		folder?: string;
@@ -2249,6 +2261,7 @@ export class MailboxDO extends DurableObject<Env> {
 				"thread_id",
 				"folder_id",
 				"replied_at",
+				"forwarded_at",
 			]);
 
 		const folderId = folder ? this.#resolveFolderId(folder) : undefined;

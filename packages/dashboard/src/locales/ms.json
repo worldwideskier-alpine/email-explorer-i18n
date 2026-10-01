@@ -115,6 +115,7 @@
 		"unstar": "Buang bintang",
 		"star": "Beri bintang",
 		"replied": "Telah dibalas ({at})",
+		"forwarded": "Telah dimajukan ({at})",
 		"markUnread": "Tandakan belum dibaca",
 		"markRead": "Tandakan sudah dibaca",
 		"delete": "Padam",

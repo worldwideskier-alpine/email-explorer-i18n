@@ -115,6 +115,7 @@
 		"unstar": "Csillag eltávolítása",
 		"star": "Csillagozás",
 		"replied": "Megválaszolva ({at})",
+		"forwarded": "Továbbítva ({at})",
 		"markUnread": "Megjelölés olvasatlanként",
 		"markRead": "Megjelölés olvasottként",
 		"delete": "Törlés",

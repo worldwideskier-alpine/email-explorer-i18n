@@ -115,6 +115,7 @@
 		"unstar": "הסרת כוכב",
 		"star": "סימון בכוכב",
 		"replied": "נענה ({at})",
+		"forwarded": "הועבר ({at})",
 		"markUnread": "סימון כלא נקראה",
 		"markRead": "סימון כנקראה",
 		"delete": "מחיקה",

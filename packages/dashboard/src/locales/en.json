@@ -115,6 +115,7 @@
 		"unstar": "Unstar",
 		"star": "Star",
 		"replied": "Replied ({at})",
+		"forwarded": "Forwarded ({at})",
 		"markUnread": "Mark as unread",
 		"markRead": "Mark as read",
 		"delete": "Delete",

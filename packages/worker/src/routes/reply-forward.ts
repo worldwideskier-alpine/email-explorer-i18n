@@ -261,6 +261,10 @@ export class PostForwardEmail extends OpenAPIRoute {
 		}
 
 		const messageId = crypto.randomUUID();
+		const sentAt = new Date().toISOString();
+
+		// Marked once it has left, as a reply is; see PostReplyEmail.
+		await stub.markForwarded(id, sentAt).catch(() => {});
 
 		const saved = await keepSentCopy(
 			c.env,
@@ -272,7 +276,7 @@ export class PostForwardEmail extends OpenAPIRoute {
 				recipient: formatAddressList(to) ?? "",
 				cc: formatAddressList(cc),
 				bcc: formatAddressList(bcc),
-				date: new Date().toISOString(),
+				date: sentAt,
 				body: html || (text ? plainTextToHtml(text) : ""),
 				in_reply_to: null,
 				email_references: null,

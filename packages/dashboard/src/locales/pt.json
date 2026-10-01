@@ -115,6 +115,7 @@
 		"unstar": "Retirar a estrela",
 		"star": "Marcar com estrela",
 		"replied": "Respondido ({at})",
+		"forwarded": "Encaminhado ({at})",
 		"markUnread": "Marcar como não lida",
 		"markRead": "Marcar como lida",
 		"delete": "Eliminar",
