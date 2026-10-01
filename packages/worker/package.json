@@ -39,7 +39,7 @@
 	"dependencies": {
 		"@pushforge/builder": "^2.0.5",
 		"chanfana": "3.4.0",
-		"hono": "4.13.9",
+		"hono": "4.13.10",
 		"postal-mime": "^4.0.0",
 		"workers-qb": "^1.15.0",
 		"zod": "^4.6.5"
