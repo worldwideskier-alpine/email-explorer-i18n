@@ -46,7 +46,11 @@ import {
 import type { MailboxRecord } from "./mailbox-records";
 import { listMailboxes } from "./mailbox-records";
 import type { MaintenanceRecord } from "./maintenance-record";
-import { archiveLastRun, writeMaintenanceRecord } from "./maintenance-record";
+import {
+	archiveLastRun,
+	foldContinuedNight,
+	writeMaintenanceRecord,
+} from "./maintenance-record";
 import type { SpamPurgeSummary } from "./spam-purge-run";
 import type { Env } from "./types";
 
@@ -306,8 +310,58 @@ async function runNights(
 		}
 	}
 
-	// Still under way when the wait ended: counted as failed here. The night
-	// itself goes on and records how it ends on its own mailbox.
+	// Still under way when the wait ended: a night that has begun is carrying
+	// its backup from alarm to alarm (see SLICE_BYTES) and counts once it
+	// ends, folded into this record by the night itself. One that never began
+	// is counted as failed here, as before.
+	// A backup the record has already counted -- every backup had ended,
+	// and a purge carries on -- is not counted again when the night folds.
+	const backupsCounted = record.backups !== undefined;
+	const continuing = [...nights.values()]
+		.filter((night) => night.state !== "done" && night.state !== "scheduled")
+		.map((night) => night.mailbox);
+	if (continuing.length > 0) {
+		for (const id of continuing) nights.delete(id);
+		record.continuing = continuing.map((mailbox) => ({
+			mailbox,
+			backup: !backupsCounted,
+		}));
+		// Both passes and the list in one write: the nights fold into what
+		// is stored, and they fold only into a record that lists them.
+		if (!backupsCounted) {
+			summary.backups = backupSummary(mailboxes.length, nights);
+			record.backups = {
+				finishedAt: new Date().toISOString(),
+				...summary.backups,
+			};
+		}
+		summary.spamPurge = purgeSummary(mailboxes.length, nights);
+		record.spamPurge = {
+			finishedAt: new Date().toISOString(),
+			...summary.spamPurge,
+		};
+		await note(env, record);
+		// A night that ended between the last question and that write folded
+		// into nothing -- it was not listed yet. Asked once more, and folded
+		// here; one that ends after this folds itself.
+		await Promise.all(
+			continuing.map(async (id) => {
+				const status = await within(
+					runner.status(id, now),
+					ASK_LIMIT_MS,
+					"asking a mailbox how its night is going",
+				).catch(() => null);
+				if (status?.state === "done") {
+					await within(
+						foldContinuedNight(env, status),
+						NOTE_LIMIT_MS,
+						"writing the maintenance record",
+					).catch(() => {});
+				}
+			}),
+		);
+		return;
+	}
 	if (!record.backups) {
 		summary.backups = backupSummary(mailboxes.length, nights);
 		record.backups = {

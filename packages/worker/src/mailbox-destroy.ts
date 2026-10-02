@@ -17,6 +17,8 @@
  *  - `backups/{id}/*.mbox`, every archive ever taken
  *  - `mailboxes-deleted/{id}.json`, the settings kept by a delete without
  *    purge so that recreating the address brings them back
+ *  - `backup-carry/{id}.*`, a backup paused between two alarms: part of the
+ *    mail, with its upload still open
  *
  * The archives are the one most easily forgotten and the one that matters
  * most: they are complete copies of the mail, written nightly, and a deletion
@@ -29,6 +31,7 @@
  * ticked.
  */
 
+import { abandonPausedBackup, pausedBackupKeys } from "./backup-writer";
 import type { TimeLimits } from "./deadline";
 import { pastDeadline, within } from "./deadline";
 import { rewriteJson } from "./r2-json";
@@ -119,6 +122,12 @@ export async function destroyMailboxCompletely(
 	keys.push(
 		...(await listKeys(env, `backups/${encodeURIComponent(mailboxId)}/`)),
 	);
+	// Its upload aborted first, which only the carry can name; the carry's
+	// objects go with the rest either way.
+	await abandonPausedBackup(env, mailboxId).catch(() => {});
+	for (const key of pausedBackupKeys(mailboxId)) {
+		if (await env.BUCKET.head(key)) keys.push(key);
+	}
 	const objects = await deleteKeys(env, keys);
 
 	// The messages themselves. A failure here used to be swallowed as

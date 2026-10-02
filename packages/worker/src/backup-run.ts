@@ -15,8 +15,8 @@
 
 import type { AutoBackupSettings } from "./auto-backup";
 import { normalizeKeep } from "./auto-backup";
-import type { MailboxSource } from "./backup-writer";
-import { writeMailboxBackup } from "./backup-writer";
+import type { BackupSlice, MailboxSource } from "./backup-writer";
+import { stepMailboxBackup } from "./backup-writer";
 import type { TimeLimits } from "./deadline";
 import { OutOfTime, recordingWithin } from "./deadline";
 import type { MailboxRecord } from "./mailbox-records";
@@ -61,8 +61,11 @@ export interface BackupProgress {
 	messages: number;
 }
 
-/** How one mailbox's backup went tonight. */
-export type BackupOutcome = "ran" | "failed";
+/**
+ * How one mailbox's backup went tonight -- or, for a slice, that it paused
+ * and carries on in the next one (see SLICE_BYTES).
+ */
+export type BackupOutcome = "ran" | "failed" | "paused";
 
 /**
  * One mailbox's backup: written, and its outcome recorded on the mailbox,
@@ -88,18 +91,20 @@ export async function backupOneMailbox(
 	onProgress?: (messages: number) => Promise<void>,
 	/** The mailbox's own object, when this runs inside it. */
 	source?: MailboxSource,
+	/** Where this slice stops; absent, the whole backup in one go. */
+	slice?: BackupSlice,
 ): Promise<BackupOutcome> {
 	// Recording is held to the per-call limit only, up to `recordBy`: refusing
 	// to write down how it went because time is up would lose exactly the
 	// fact the deadline exists to produce.
 	const call = recordingWithin(limits);
-	if (onProgress) {
+	if (onProgress && !slice?.resume) {
 		await call(onProgress(0), "recording progress").catch(() => {});
 	}
 
 	const keep = normalizeKeep(mailbox.settings.autoBackup?.keep);
 	try {
-		const written = await writeMailboxBackup(
+		const step = await stepMailboxBackup(
 			env,
 			mailbox.id,
 			now,
@@ -108,7 +113,12 @@ export async function backupOneMailbox(
 			undefined,
 			limits,
 			source,
+			slice,
 		);
+		// Nothing to write down yet: the mailbox's screen goes on showing the
+		// last night until this one has an outcome.
+		if (step.kind === "paused") return "paused";
+		const written = step.result;
 		// Given the per-call limit alone: the archive is written by now, and
 		// saying so should not be refused because the time has just run out.
 		// A failure here is not a failed backup either.

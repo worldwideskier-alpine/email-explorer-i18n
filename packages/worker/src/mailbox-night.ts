@@ -18,9 +18,15 @@
  */
 
 import { isBackupDue } from "./auto-backup";
-import { backupOneMailbox } from "./backup-run";
+import { backupOneMailbox, recordBackupNotRun } from "./backup-run";
 import type { MailboxSource } from "./backup-writer";
+import {
+	abandonPausedBackup,
+	SLICE_BYTES,
+	SLICE_WALL_MS,
+} from "./backup-writer";
 import type { MailboxRecord } from "./mailbox-records";
+import { foldContinuedNight } from "./maintenance-record";
 import { purgeOneMailbox } from "./spam-purge-run";
 import type { Env } from "./types";
 
@@ -32,16 +38,27 @@ import type { Env } from "./types";
  * minutes in and the purge by thirteen, and writing down how it went stops at
  * thirteen and a half -- inside the cron's own wait for it.
  *
- * CPU is the other limit, and the one that moved: an alarm has 30 seconds of
- * it by default, where the cron that built the archive before had fifteen
- * minutes. Measured in the test pool, a night of 900 messages and a 94 MB
- * archive took 4.4 seconds all told, local storage included -- the work is
- * waiting on R2, not computing. So the default stands; `limits.cpu_ms` would
- * raise it for every request this Worker serves, not only for the nights.
+ * CPU is the other limit: an alarm has 30 seconds of it, where the cron that
+ * built the archive before had fifteen minutes. Neither limit is left for a
+ * growing mailbox to reach one night: the backup is written in slices that
+ * pause and carry on in the next alarm (SLICE_BYTES, backup-writer.ts), so
+ * each alarm does a bounded amount whatever the mailbox weighs. Raising the
+ * CPU limit instead (`limits.cpu_ms`) would raise it for every request this
+ * Worker serves, and only move the night on which it ran out.
  */
 export const NIGHT_BACKUP_BY_MS = 12 * 60_000;
 export const NIGHT_PURGE_BY_MS = 13 * 60_000;
 export const NIGHT_RECORD_BY_MS = 13.5 * 60_000;
+
+/**
+ * How far a backup may be carried from alarm to alarm before it is given up.
+ *
+ * A slice is at most 128 MiB (SLICE_BYTES), so this is a mailbox of several
+ * gigabytes -- and the night must end long before the next one starts, which
+ * would otherwise begin the same archive over the top of it.
+ */
+export const MAX_SLICES = 100;
+export const NIGHT_LONGEST_MS = 20 * 60 * 60_000;
 
 export interface NightLimits {
 	backupByMs?: number;
@@ -49,6 +66,10 @@ export interface NightLimits {
 	recordByMs?: number;
 	/** Absent means CALL_LIMIT_MS. Tests pass a small one. */
 	callLimitMs?: number;
+	/** Where a backup slice stops; see SLICE_BYTES. Tests pass small ones. */
+	sliceBytes?: number;
+	sliceWallMs?: number;
+	maxSlices?: number;
 }
 
 /** Where one part of a mailbox's night is. */
@@ -59,12 +80,19 @@ export interface NightStatus {
 	/** The run it belongs to: the moment the cron began, as ISO-8601. */
 	night: string;
 	mailbox: string;
-	state: "scheduled" | "running" | "done";
+	/**
+	 * `continuing`: a slice of the backup has paused, and the next alarm
+	 * carries on with it. `running` found on waking means the runtime ended
+	 * the last one partway; see cutOff.
+	 */
+	state: "scheduled" | "running" | "continuing" | "done";
 	backup: {
 		state: NightPart;
 		/** Messages written into the archive so far, and when that was said. */
 		messages?: number;
 		at?: string;
+		/** How many slices the backup has taken, this one included. */
+		slices?: number;
 	};
 	purge: { state: NightPart; deleted?: number };
 }
@@ -97,13 +125,18 @@ export function partSettled(state: NightPart): boolean {
 }
 
 /**
- * Runs one mailbox's night and says how it goes at every step.
+ * Runs one mailbox's night -- or, with `from`, carries on with one whose
+ * backup paused -- and says how it goes at every step.
  *
  * `report` is handed a copy of the status each time it moves: before each
  * part, every few hundred messages of the backup, after each part and at the
  * end. Its failures are swallowed -- a diagnostic that can stop the backup is
  * worse than none -- and nothing here throws: each part records its own
  * failure on the mailbox and the night goes on.
+ *
+ * A night whose backup pauses returns `continuing`, and whoever runs it runs
+ * it again with that status: the next alarm, in production. Every limit runs
+ * from the start of the slice in hand, so each alarm has the whole of its own.
  */
 export async function runMailboxNight(
 	env: Env,
@@ -113,37 +146,71 @@ export async function runMailboxNight(
 	report: (status: NightStatus) => Promise<void>,
 	/** The mailbox's own object, when this runs inside it. */
 	source?: MailboxSource,
+	/** The night to carry on with, when its backup paused. */
+	from?: NightStatus,
 ): Promise<NightStatus> {
 	const start = Date.now();
 	const backupBy = start + (limits.backupByMs ?? NIGHT_BACKUP_BY_MS);
 	const purgeBy = start + (limits.purgeByMs ?? NIGHT_PURGE_BY_MS);
 	const recordBy = start + (limits.recordByMs ?? NIGHT_RECORD_BY_MS);
 
-	const status = nightFor(mailbox, now);
+	const status: NightStatus = from
+		? structuredClone(from)
+		: nightFor(mailbox, now);
+	const resuming = status.backup.state === "running";
 	status.state = "running";
 	const say = () => report(structuredClone(status)).catch(() => {});
 	await say();
 
-	if (status.backup.state === "waiting") {
-		status.backup.state = "running";
-		await say();
-		status.backup.state = await backupOneMailbox(
-			env,
-			mailbox,
-			now,
-			{
-				deadline: backupBy,
-				callLimitMs: limits.callLimitMs,
-				recordBy: purgeBy,
-			},
-			async (messages) => {
-				status.backup.messages = messages;
-				status.backup.at = new Date().toISOString();
+	if (status.backup.state === "waiting" || resuming) {
+		const slices = (status.backup.slices ?? 0) + 1;
+		if (
+			resuming &&
+			(slices > (limits.maxSlices ?? MAX_SLICES) ||
+				start - Date.parse(status.night) > NIGHT_LONGEST_MS)
+		) {
+			await abandonPausedBackup(env, mailbox.id).catch(() => {});
+			await recordBackupNotRun(
+				env,
+				mailbox.id,
+				now,
+				`Not finished in ${slices - 1} parts before the next night; given up.`,
+			);
+			status.backup.state = "failed";
+			await say();
+		} else {
+			status.backup.state = "running";
+			status.backup.slices = slices;
+			await say();
+			const outcome = await backupOneMailbox(
+				env,
+				mailbox,
+				now,
+				{
+					deadline: backupBy,
+					callLimitMs: limits.callLimitMs,
+					recordBy: purgeBy,
+				},
+				async (messages) => {
+					status.backup.messages = messages;
+					status.backup.at = new Date().toISOString();
+					await say();
+				},
+				source,
+				{
+					bytes: limits.sliceBytes ?? SLICE_BYTES,
+					until: start + (limits.sliceWallMs ?? SLICE_WALL_MS),
+					resume: resuming,
+				},
+			);
+			if (outcome === "paused") {
+				status.state = "continuing";
 				await say();
-			},
-			source,
-		);
-		await say();
+				return status;
+			}
+			status.backup.state = outcome;
+			await say();
+		}
 	}
 
 	if (status.purge.state === "waiting") {
@@ -165,6 +232,9 @@ export async function runMailboxNight(
 
 	status.state = "done";
 	await say();
+	// Carried past the cron's wait, the night's outcome is not in the run's
+	// record yet; it goes in now. A night the cron saw end is already there.
+	if (from) await foldContinuedNight(env, status).catch(() => {});
 	return status;
 }
 
@@ -222,9 +292,24 @@ export function inlineNights(env: Env, limits: NightLimits = {}): NightRunner {
 	return {
 		start: async (mailbox, now) => {
 			statuses.set(mailbox.id, nightFor(mailbox, now));
-			void runMailboxNight(env, mailbox, now, limits, async (status) => {
+			const keep = async (status: NightStatus) => {
 				statuses.set(mailbox.id, status);
-			});
+			};
+			// Each slice after the last, as the next alarm would run it.
+			void (async () => {
+				let status = await runMailboxNight(env, mailbox, now, limits, keep);
+				while (status.state === "continuing") {
+					status = await runMailboxNight(
+						env,
+						mailbox,
+						now,
+						limits,
+						keep,
+						undefined,
+						status,
+					);
+				}
+			})();
 		},
 		status: async (id) => statuses.get(id) ?? null,
 	};

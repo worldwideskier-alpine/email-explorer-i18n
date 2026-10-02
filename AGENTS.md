@@ -394,11 +394,23 @@ are still checked, by the `tsc` that runs before the worker tests.
   in. So each mailbox's night is now its own alarm with the whole of its own
   time, and a slow mailbox costs nobody else theirs (`nightly-limits.test.ts`,
   two that hang and one that finishes, in about one night's time). An alarm
-  has the cron's fifteen minutes of wall time but only 30 seconds of CPU by
-  default, where the cron had fifteen minutes; a 900-message night with a
-  94 MB archive measured 4.4 s all told in the test pool, so the default
-  stands (`mailbox-night.ts`). The cron
-  only starts them and polls (`nightStatus`) for up to fourteen minutes. An alarm the runtime ended partway is run again by the
+  has the cron's fifteen minutes of wall time but only 30 seconds of CPU,
+  where the cron had fifteen minutes, and a mailbox does not stop growing
+  (1756 messages and 401 MB on 2026-10-01). Nobody should have to watch for
+  the night it no longer fits, so **a backup is written in slices**
+  (`SLICE_BYTES`, 128 MiB or eight minutes, `backup-writer.ts`): a slice
+  pauses with its upload open, keeps its place and the bytes that are not yet
+  a whole part in `backup-carry/{id}.*` -- outside the archives' prefix, which
+  the holder's screen lists and the purge reads -- and the night sets the
+  next alarm and carries on (`continuing`). The archive is byte for byte the
+  one a single pass writes, and `backup-slices.test.ts` holds that, with the
+  carry given up when the runtime ends a slice, when a night would run into
+  the next one (`MAX_SLICES`), and when the mailbox is deleted. The cron
+  only starts the nights and polls (`nightStatus`) for up to fourteen
+  minutes; one still carrying on then is listed in the record as
+  `continuing` rather than counted as failed, and counts itself in when it
+  ends (`foldContinuedNight`), which is also why the cron's own writes keep
+  what the nights folded in. An alarm the runtime ended partway is run again by the
   runtime; the second attempt finishes the record -- failed, due again
   tomorrow -- rather than the night, which would most likely end the same
   way once per retry (`night-alarm.test.ts`). A test that hands the run an

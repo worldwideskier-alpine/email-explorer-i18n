@@ -419,7 +419,8 @@ describe("progress inside one mailbox", () => {
 		);
 
 		expect(written.messages).toBe(150);
-		// After the first page, while the second is still to come.
-		expect(reported).toEqual([100]);
+		// After the first page, while the second is still to come -- and the
+		// whole count once it is done, which the night's status is read for.
+		expect(reported).toEqual([100, 150]);
 	});
 });

@@ -1,11 +1,13 @@
 import { DurableObject } from "cloudflare:workers";
 import { DOQB } from "workers-qb";
 import { recordBackupNotRun } from "../backup-run";
+import { abandonPausedBackup } from "../backup-writer";
 import type { ClassifyInput, ClassifyResult } from "../claude-spam-filter";
 import { classifyWithClaude } from "../claude-spam-filter";
 import type { NightStatus } from "../mailbox-night";
 import { cutOff, nightFor, runMailboxNight } from "../mailbox-night";
 import type { MailboxRecord } from "../mailbox-records";
+import { foldContinuedNight } from "../maintenance-record";
 import { hashPassword, verifyNothing, verifyPassword } from "../password";
 import type { ThrottleRule } from "../throttle";
 import type { Env, Session, User } from "../types";
@@ -1937,6 +1939,14 @@ export class MailboxDO extends DurableObject<Env> {
 	 */
 	async startNight(mailbox: MailboxRecord, night: string): Promise<void> {
 		if (this.#isAuthDO) return;
+		// A night still carrying its backup on when the next one starts is
+		// given up rather than written over: its upload is aborted, and the
+		// cap on slices (MAX_SLICES) means this is a mailbox far beyond any
+		// one night, not an ordinary one.
+		const previous = await this.ctx.storage.get<StoredNight>(NIGHT_KEY);
+		if (previous && previous.status.state !== "done") {
+			await abandonPausedBackup(this.env, mailbox.id).catch(() => {});
+		}
 		const stored: StoredNight = {
 			mailbox,
 			status: nightFor(mailbox, new Date(night)),
@@ -1952,8 +1962,10 @@ export class MailboxDO extends DurableObject<Env> {
 	}
 
 	/**
-	 * Runs the night startNight set up. Never throws: a throw would have the
-	 * runtime run it again, and each part records its own failure anyway.
+	 * Runs the night startNight set up, a slice at a time: a night whose
+	 * backup paused sets the next alarm and carries on in it. Never throws:
+	 * a throw would have the runtime run it again, and each part records its
+	 * own failure anyway.
 	 */
 	async alarm(): Promise<void> {
 		if (this.#isAuthDO) return;
@@ -1973,6 +1985,7 @@ export class MailboxDO extends DurableObject<Env> {
 				stored.status.backup.state === "running" ||
 				stored.status.backup.state === "waiting"
 			) {
+				await abandonPausedBackup(this.env, mailbox.id).catch(() => {});
 				await recordBackupNotRun(
 					this.env,
 					mailbox.id,
@@ -1981,16 +1994,35 @@ export class MailboxDO extends DurableObject<Env> {
 				);
 			}
 			await keep(ended).catch(() => {});
+			await foldContinuedNight(this.env, ended).catch(() => {});
 			return;
 		}
 
+		const from =
+			stored.status.state === "continuing" ? stored.status : undefined;
 		try {
-			await runMailboxNight(this.env, mailbox, now, {}, keep, this);
+			const status = await runMailboxNight(
+				this.env,
+				mailbox,
+				now,
+				{},
+				keep,
+				this,
+				from,
+			);
+			// Straight on: the slice has its whole budget, and the night has
+			// a cron waiting on it.
+			if (status.state === "continuing") {
+				await this.ctx.storage.setAlarm(Date.now());
+			}
 		} catch {
 			// runMailboxNight does not throw; if it ever does, the night is
 			// over all the same, and saying so is better than a retry.
 			const latest = await this.ctx.storage.get<StoredNight>(NIGHT_KEY);
-			await keep(cutOff(latest?.status ?? stored.status)).catch(() => {});
+			const ended = cutOff(latest?.status ?? stored.status);
+			await abandonPausedBackup(this.env, mailbox.id).catch(() => {});
+			await keep(ended).catch(() => {});
+			await foldContinuedNight(this.env, ended).catch(() => {});
 		}
 	}
 

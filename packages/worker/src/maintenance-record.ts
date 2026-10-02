@@ -16,6 +16,8 @@
  * is about the run, and a run is a deployment-wide thing.
  */
 
+import type { NightStatus } from "./mailbox-night";
+import { rewriteJson } from "./r2-json";
 import type { Env } from "./types";
 
 export const MAINTENANCE_KEY = "maintenance/last-run.json";
@@ -71,6 +73,14 @@ export interface MaintenanceRecord {
 	 * `left: -1` with an error: the list itself could not be read.
 	 */
 	unfinishedDeletions?: { finished: number; left: number; error?: string };
+	/**
+	 * Mailboxes whose night was still carrying its backup from alarm to alarm
+	 * when the cron stopped waiting (see SLICE_BYTES). They are in neither
+	 * pass's counts yet; each is folded in as its night ends
+	 * (foldContinuedNight). `backup` is false for one whose backup had ended
+	 * and was counted, and whose purge carried on.
+	 */
+	continuing?: { mailbox: string; backup: boolean }[];
 }
 
 export async function readMaintenanceRecord(
@@ -87,11 +97,98 @@ export async function readMaintenanceRecord(
 	}
 }
 
+/**
+ * Writes the cron's record over what is stored -- keeping what the nights it
+ * stopped waiting for have folded in since, which the cron's own copy does
+ * not know about.
+ */
 export async function writeMaintenanceRecord(
 	env: Pick<Env, "BUCKET">,
 	record: MaintenanceRecord,
 ): Promise<void> {
-	await env.BUCKET.put(MAINTENANCE_KEY, JSON.stringify(record));
+	await rewriteJson<MaintenanceRecord>(
+		env.BUCKET,
+		MAINTENANCE_KEY,
+		(stored) =>
+			stored?.startedAt === record.startedAt &&
+			stored.continuing &&
+			record.continuing
+				? {
+						...record,
+						backups: stored.backups,
+						spamPurge: stored.spamPurge,
+						continuing: stored.continuing,
+					}
+				: record,
+		{ replaceUnreadable: true },
+	);
+}
+
+/**
+ * Adds a night that ended after the cron stopped waiting for it to the run's
+ * counts. Only a night the record lists as continuing: one the cron saw end
+ * is counted already, and the list is how that is told apart -- so it is
+ * counted once, by whichever of the two gets there first.
+ */
+export async function foldContinuedNight(
+	env: Pick<Env, "BUCKET">,
+	night: NightStatus,
+): Promise<void> {
+	await rewriteJson<MaintenanceRecord>(
+		env.BUCKET,
+		MAINTENANCE_KEY,
+		(stored) => {
+			const listed = stored?.continuing?.find(
+				(entry) => entry.mailbox === night.mailbox,
+			);
+			if (!stored || stored.startedAt !== night.night || !listed) {
+				return undefined;
+			}
+			const counted = (state: string) =>
+				state === "ran"
+					? { ran: 1, failed: 0 }
+					: state === "skipped"
+						? { ran: 0, failed: 0 }
+						: { ran: 0, failed: 1 };
+			const at = new Date().toISOString();
+			const backup = listed.backup
+				? counted(night.backup.state)
+				: { ran: 0, failed: 0 };
+			const purge = counted(night.purge.state);
+			const backups = stored.backups ?? {
+				finishedAt: at,
+				considered: 0,
+				ran: 0,
+				failed: 0,
+			};
+			const spamPurge = stored.spamPurge ?? {
+				finishedAt: at,
+				considered: 0,
+				ran: 0,
+				failed: 0,
+				deleted: 0,
+			};
+			return {
+				...stored,
+				backups: {
+					...backups,
+					finishedAt: at,
+					ran: backups.ran + backup.ran,
+					failed: backups.failed + backup.failed,
+				},
+				spamPurge: {
+					...spamPurge,
+					finishedAt: at,
+					ran: spamPurge.ran + purge.ran,
+					failed: spamPurge.failed + purge.failed,
+					deleted: (spamPurge.deleted ?? 0) + (night.purge.deleted ?? 0),
+				},
+				continuing: (stored.continuing ?? []).filter(
+					(entry) => entry.mailbox !== night.mailbox,
+				),
+			};
+		},
+	);
 }
 
 /**

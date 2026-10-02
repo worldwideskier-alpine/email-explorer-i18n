@@ -302,11 +302,164 @@ export class PartBuffer {
 }
 
 /**
+ * How much of a backup one alarm writes before handing the rest to the next.
+ *
+ * A mailbox's night runs in its own object's alarm, and an alarm has thirty
+ * seconds of CPU and fifteen minutes of wall time, whatever the mailbox
+ * weighs. Written in one go, a mailbox would one night outgrow them both: on
+ * 2026-10-01 the larger of the two came to 1756 messages and 401 MB. So the
+ * archive is written a slice at a time, and a slice stops once it has written
+ * this much or run this long -- the upload stays open, what is not yet a whole
+ * part is kept in the bucket, and the next alarm carries on from there.
+ *
+ * 128 MiB, because a 94 MB archive measured 4.4 s of writing all told in the
+ * test pool, storage included: about a fifth of the CPU an alarm has, so the
+ * slice stays well inside it on a slower machine too. Eight minutes, so a
+ * slow night pauses rather than running into the deadline its calls are held
+ * to, which is what failed the backup of 2026-10-01.
+ */
+export const SLICE_BYTES = 128 * 1024 * 1024;
+export const SLICE_WALL_MS = 8 * 60_000;
+
+/** Where a slice stops, and whether it carries on from the last one. */
+export interface BackupSlice {
+	/** Stop once this many bytes of archive have been written in this slice. */
+	bytes: number;
+	/** ...or once this moment (ms since the epoch) has passed. */
+	until: number;
+	/** Carry on from where the last slice of tonight's backup paused. */
+	resume?: boolean;
+}
+
+/** What a paused backup needs to carry on, kept in the bucket between alarms. */
+interface BackupCarry {
+	/** The night it belongs to, so a stale one is never carried into another. */
+	night: string;
+	key: string;
+	uploadId: string;
+	parts: R2UploadedPart[];
+	/** The messages to write, in order, as they stood when the backup began. */
+	ids: string[];
+	/** The position in `ids` of the next message to write. */
+	next: number;
+	messages: number;
+	bytes: number;
+	/** Bytes written but not yet a whole part, kept beside this as a file. */
+	leftover: number;
+}
+
+/**
+ * Outside the archives' prefix on purpose: everything under that is listed to
+ * the mailbox's holder as a backup they can download, and taken as an archive
+ * by the spam purge.
+ */
+const carryKey = (mailboxId: string) => `backup-carry/${mailboxId}.json`;
+const leftoverKey = (mailboxId: string) => `backup-carry/${mailboxId}.bin`;
+
+/** The objects a paused backup keeps, for a deletion to take with the rest. */
+export const pausedBackupKeys = (mailboxId: string) => [
+	carryKey(mailboxId),
+	leftoverKey(mailboxId),
+];
+
+async function saveCarry(
+	env: Env,
+	mailboxId: string,
+	carry: BackupCarry,
+	leftover: Uint8Array,
+): Promise<void> {
+	// The bytes first: a state naming bytes that are not there yet would be
+	// carried on from, and the archive would be missing them.
+	await env.BUCKET.put(leftoverKey(mailboxId), leftover);
+	await env.BUCKET.put(carryKey(mailboxId), JSON.stringify(carry));
+}
+
+async function loadCarry(
+	env: Env,
+	mailboxId: string,
+	night: string,
+): Promise<{ carry: BackupCarry; leftover: Uint8Array }> {
+	const stored = await env.BUCKET.get(carryKey(mailboxId));
+	const carry = stored ? await stored.json<BackupCarry>() : null;
+	if (!carry || carry.night !== night) {
+		throw new Error("The paused backup's place was not found.");
+	}
+	const bytes = await env.BUCKET.get(leftoverKey(mailboxId));
+	const leftover = bytes
+		? new Uint8Array(await bytes.arrayBuffer())
+		: new Uint8Array();
+	// Short by even a byte and the archive would be quietly corrupt.
+	if (leftover.byteLength !== carry.leftover) {
+		throw new Error("The paused backup's unwritten bytes were not found.");
+	}
+	return { carry, leftover };
+}
+
+async function dropCarry(env: Env, mailboxId: string): Promise<void> {
+	await env.BUCKET.delete([carryKey(mailboxId), leftoverKey(mailboxId)]);
+}
+
+/**
+ * Gives up a paused backup: its upload aborted and its place forgotten. For a
+ * night that will not carry on -- ended by the runtime, replaced by the next
+ * one, or too long to finish. Nothing to do when nothing was paused.
+ */
+export async function abandonPausedBackup(
+	env: Env,
+	mailboxId: string,
+): Promise<void> {
+	const stored = await env.BUCKET.get(carryKey(mailboxId));
+	if (!stored) return;
+	const carry = await stored.json<BackupCarry>().catch(() => null);
+	if (carry) {
+		await env.BUCKET.resumeMultipartUpload(carry.key, carry.uploadId)
+			.abort()
+			.catch(() => {});
+	}
+	await dropCarry(env, mailboxId);
+}
+
+/** A slice's outcome: the archive is done, or it paused and will carry on. */
+export type BackupStep =
+	| { kind: "done"; result: BackupResult }
+	| { kind: "paused"; messages: number };
+
+/**
  * Writes the mailbox out and returns what happened. Throws if the archive
  * could not be written; the caller records that on the mailbox so a failed
  * backup is visible rather than silent.
  */
 export async function writeMailboxBackup(
+	env: Env,
+	mailboxId: string,
+	now: Date,
+	keep: number,
+	onProgress?: (messages: number) => Promise<void>,
+	progressEvery: number = PROGRESS_EVERY,
+	limits: TimeLimits = {},
+	source?: MailboxSource,
+): Promise<BackupResult> {
+	const step = await stepMailboxBackup(
+		env,
+		mailboxId,
+		now,
+		keep,
+		onProgress,
+		progressEvery,
+		limits,
+		source,
+	);
+	if (step.kind === "paused") {
+		throw new Error("A backup with no slice paused.");
+	}
+	return step.result;
+}
+
+/**
+ * Writes the mailbox out -- all of it, or with `slice`, as much as one slice
+ * holds -- and says whether it finished.
+ */
+export async function stepMailboxBackup(
 	env: Env,
 	mailboxId: string,
 	now: Date,
@@ -338,40 +491,64 @@ export async function writeMailboxBackup(
 	 * mailbox-night.ts.
 	 */
 	source?: MailboxSource,
-): Promise<BackupResult> {
+	/** Where to stop and hand on; absent, the whole archive in one go. */
+	slice?: BackupSlice,
+): Promise<BackupStep> {
 	const bounded = limitedBy(limits);
+	const call = limitedBy({ callLimitMs: limits.callLimitMs });
 	const stub: MailboxSource =
 		source ?? env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
-	const ids = await bounded(
-		stub.listEmailIdsByDate(),
-		"listing the mailbox's messages",
-	);
+	const night = now.toISOString();
+	const carried = slice?.resume
+		? await bounded(
+				loadCarry(env, mailboxId, night),
+				"reading where the backup paused",
+			)
+		: null;
+
+	// Taken once, when the backup begins, and carried from slice to slice: a
+	// message that arrives in between is tomorrow's, and one deleted in
+	// between is simply not read back.
+	const ids =
+		carried?.carry.ids ??
+		(await bounded(
+			stub.listEmailIdsByDate(),
+			"listing the mailbox's messages",
+		));
 
 	const folderNames = new Map<string, string>();
 	for (const folder of await bounded(stub.getFolders(), "listing folders")) {
 		folderNames.set(String(folder.id), String(folder.name));
 	}
 
-	const key = backupKey(mailboxId, now);
-	const upload = await bounded(
-		env.BUCKET.createMultipartUpload(key),
-		"starting the archive upload",
-	);
+	const key = carried?.carry.key ?? backupKey(mailboxId, now);
+	const upload = carried
+		? env.BUCKET.resumeMultipartUpload(key, carried.carry.uploadId)
+		: await bounded(
+				env.BUCKET.createMultipartUpload(key),
+				"starting the archive upload",
+			);
 	const buffer = new PartBuffer();
-	const parts: R2UploadedPart[] = [];
-	let messages = 0;
-	let bytes = 0;
+	if (carried) buffer.add(carried.leftover);
+	const parts: R2UploadedPart[] = carried?.carry.parts ?? [];
+	let messages = carried?.carry.messages ?? 0;
+	let bytes = carried?.carry.bytes ?? 0;
+	let next = carried?.carry.next ?? 0;
+	let sliceBytes = 0;
+	let paused = false;
 
+	let reported = messages;
 	try {
-		let reported = 0;
 		// A page at a time. The ids were taken in date order above and the read
 		// gives them back in that order, so the archive is written in the same
 		// order it always was.
-		for (let from = 0; from < ids.length; from += READ_BATCH) {
+		pages: for (let from = next; from < ids.length; from += READ_BATCH) {
+			const pageIds = ids.slice(from, from + READ_BATCH);
+			const position = new Map(pageIds.map((id, at) => [id, from + at]));
 			// Typed from the method: through the RPC stub a row of unknown
 			// columns comes back as `unknown` as a whole.
 			const page = (await bounded(
-				stub.getEmailsByIds(ids.slice(from, from + READ_BATCH)),
+				stub.getEmailsByIds(pageIds),
 				"reading messages from the mailbox",
 			)) as Awaited<ReturnType<MailboxDO["getEmailsByIds"]>>;
 
@@ -399,6 +576,7 @@ export async function writeMailboxBackup(
 				for (const entry of rendered) {
 					buffer.add(entry);
 					bytes += entry.byteLength;
+					sliceBytes += entry.byteLength;
 					messages += 1;
 
 					// A loop, not an `if`: one message with a large attachment can
@@ -412,17 +590,56 @@ export async function writeMailboxBackup(
 						);
 					}
 				}
+
+				// By the message's own place, not by counting: a message deleted
+				// since the backup began is not read back, and counting would
+				// carry on one message short of where this stopped.
+				const last = String(batch[batch.length - 1]?.id);
+				next = (position.get(last) ?? from) + 1;
+				if (
+					slice &&
+					next < ids.length &&
+					(sliceBytes >= slice.bytes || Date.now() >= slice.until)
+				) {
+					paused = true;
+					break pages;
+				}
 			}
+			next = Math.min(from + READ_BATCH, ids.length);
 
 			if (onProgress && messages - reported >= progressEvery) {
 				reported = messages;
 				// The per-call limit alone: a report is worth making even as the
 				// pass's time runs out, and it is swallowed either way.
-				await limitedBy({ callLimitMs: limits.callLimitMs })(
-					onProgress(messages),
-					"recording progress",
-				).catch(() => {});
+				await call(onProgress(messages), "recording progress").catch(() => {});
 			}
+		}
+
+		if (paused) {
+			const leftover = buffer.take(buffer.size);
+			await call(
+				saveCarry(
+					env,
+					mailboxId,
+					{
+						night,
+						key,
+						uploadId: upload.uploadId,
+						parts,
+						ids,
+						next,
+						messages,
+						bytes,
+						leftover: leftover.byteLength,
+					},
+					leftover,
+				),
+				"keeping the paused backup's place",
+			);
+			if (onProgress) {
+				await call(onProgress(messages), "recording progress").catch(() => {});
+			}
+			return { kind: "paused", messages };
 		}
 
 		// The last part carries whatever is left and may be under the minimum.
@@ -438,6 +655,11 @@ export async function writeMailboxBackup(
 		}
 
 		await bounded(upload.complete(parts), "completing the archive");
+		// The whole count, not the last few hundred's: the night's status is
+		// read for how far the backup got.
+		if (onProgress && messages !== reported) {
+			await call(onProgress(messages), "recording progress").catch(() => {});
+		}
 	} catch (e) {
 		// Without this the bucket keeps paying for the parts of a run that
 		// never finished. The abort gets a limit of its own rather than what
@@ -446,11 +668,20 @@ export async function writeMailboxBackup(
 		// R2 also drops an upload left incomplete after seven days (the
 		// bucket's default lifecycle rule), so one that cannot be aborted
 		// here is not kept for ever.
-		await limitedBy({ callLimitMs: limits.callLimitMs })(
-			upload.abort(),
-			"aborting the archive upload",
-		).catch(() => {});
+		await call(upload.abort(), "aborting the archive upload").catch(() => {});
+		if (carried || paused) {
+			await call(
+				dropCarry(env, mailboxId),
+				"forgetting the paused backup",
+			).catch(() => {});
+		}
 		throw e;
+	}
+
+	if (carried) {
+		await call(dropCarry(env, mailboxId), "forgetting the paused backup").catch(
+			() => {},
+		);
 	}
 
 	// The archive is whole by now, and this mailbox's backup has happened.
@@ -460,12 +691,12 @@ export async function writeMailboxBackup(
 	// were not. So the per-call limit alone, and a rotation that fails costs
 	// nothing but a spare archive: the next one removes everything beyond
 	// `keep`, not one at a time.
-	const removed = await limitedBy({ callLimitMs: limits.callLimitMs })(
+	const removed = await call(
 		rotate(env, mailboxId, keep),
 		"removing old archives",
 	).catch(() => 0);
 
-	return { key, messages, bytes, removed };
+	return { kind: "done", result: { key, messages, bytes, removed } };
 }
 
 /**
