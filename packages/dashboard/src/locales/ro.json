@@ -452,6 +452,7 @@
 			"never": "Mentenanța programată nu a rulat niciodată.",
 			"unreadable": "Înregistrarea ultimei mentenanțe programate nu a putut fi citită.",
 			"done": "Mentenanță programată {at}: finalizată ({duration} / {backups} copii de rezervă / {deleted} spam șterse).",
+			"continuing": "{count} cutii poștale sunt încă în curs; vor fi adăugate aici când se termină.",
 			"finishedWithError": "Mentenanță programată {at}: o etapă a eșuat ({duration} / {detail}).",
 			"notReached": "Mentenanță programată {at}: înregistrarea se oprește înainte ca rezultatele cutiilor poștale să fie scrise. Copia de rezervă și curățarea spamului fiecărei cutii poștale rulează separat; rezultatele sunt în ecranul de setări al acelei cutii.",
 			"killedInBackup": "Mentenanță programată {at}: a fost întreruptă în timpul copiilor de rezervă ({detail}). Copia de rezervă și curățarea spamului fiecărei cutii poștale rulează separat; rezultatele sunt în ecranul de setări al acelei cutii.",

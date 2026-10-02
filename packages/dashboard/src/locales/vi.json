@@ -452,6 +452,7 @@
 			"never": "Bảo trì theo lịch chưa từng chạy.",
 			"unreadable": "Không thể đọc bản ghi của lần bảo trì định kỳ gần nhất.",
 			"done": "Bảo trì theo lịch {at}: hoàn tất ({duration} / {backups} bản sao lưu / đã xóa {deleted} thư rác).",
+			"continuing": "{count} hộp thư vẫn đang chạy; sẽ được cộng vào đây khi xong.",
 			"finishedWithError": "Bảo trì theo lịch {at}: một bước đã thất bại ({duration} / {detail}).",
 			"notReached": "Bảo trì theo lịch {at}: bản ghi dừng lại trước khi kết quả của các hộp thư được ghi. Sao lưu và dọn thư rác của mỗi hộp thư chạy riêng; kết quả nằm ở màn hình cài đặt của hộp thư đó.",
 			"killedInBackup": "Bảo trì theo lịch {at}: bị ngắt giữa chừng khi sao lưu ({detail}). Sao lưu và dọn thư rác của mỗi hộp thư chạy riêng; kết quả nằm ở màn hình cài đặt của hộp thư đó.",

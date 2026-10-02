@@ -452,6 +452,7 @@
 			"never": "Planirano održavanje još nije nijednom pokrenuto.",
 			"unreadable": "Zapis o posljednjem zakazanom održavanju nije se mogao pročitati.",
 			"done": "Planirano održavanje {at}: završeno ({duration} / {backups} sigurnosnih kopija / {deleted} obrisanih neželjenih poruka).",
+			"continuing": "Još se obrađuje poštanskih sandučića: {count}; dodat će se ovdje kad završe.",
 			"finishedWithError": "Planirano održavanje {at}: jedan korak nije uspio ({duration} / {detail}).",
 			"notReached": "Planirano održavanje {at}: zapis se zaustavio prije nego što su upisani rezultati poštanskih sandučića. Sigurnosna kopija i čišćenje neželjene pošte svakog sandučića rade zasebno; rezultati su na ekranu postavki tog sandučića.",
 			"killedInBackup": "Planirano održavanje {at}: prekinuto tokom izrade sigurnosne kopije ({detail}). Sigurnosna kopija i čišćenje neželjene pošte svakog sandučića rade zasebno; rezultati su na ekranu postavki tog sandučića.",

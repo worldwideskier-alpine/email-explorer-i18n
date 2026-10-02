@@ -452,6 +452,7 @@
 			"never": "Hindi pa kailanman tumakbo ang naka-iskedyul na maintenance.",
 			"unreadable": "Hindi mabasa ang tala ng huling nakatakdang maintenance.",
 			"done": "Nakatakdang pagpapanatili {at}: tapos na ({duration} / {backups} na-back up / {deleted} spam na natanggal).",
+			"continuing": "{count} mailbox ang tumatakbo pa; idaragdag dito kapag natapos.",
 			"finishedWithError": "Nakatakdang pagpapanatili {at}: may yugtong nabigo ({duration} / {detail}).",
 			"notReached": "Naka-iskedyul na maintenance {at}: huminto ang tala bago naisulat ang mga resulta ng mga mailbox. Hiwalay na tumatakbo ang backup at paglilinis ng spam ng bawat mailbox; nasa screen ng mga setting ng mailbox na iyon ang resulta.",
 			"killedInBackup": "Nakatakdang pagpapanatili {at}: naputol habang nagba-backup ({detail}). Hiwalay na tumatakbo ang backup at paglilinis ng spam ng bawat mailbox; nasa screen ng mga setting ng mailbox na iyon ang resulta.",

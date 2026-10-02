@@ -452,6 +452,7 @@
 			"never": "Plānotā apkope vēl nekad nav veikta.",
 			"unreadable": "Neizdevās nolasīt pēdējās plānotās apkopes ierakstu.",
 			"done": "Plānotā apkope {at}: pabeigta ({duration} / {backups} dublējumi / dzēsti {deleted} mēstules).",
+			"continuing": "Vēl apstrādē esošas pastkastītes: {count}; tās tiks pieskaitītas šeit, kad pabeigs.",
 			"finishedWithError": "Plānotā apkope {at}: viens posms neizdevās ({duration} / {detail}).",
 			"notReached": "Plānotā apkope {at}: ieraksts apstājas, pirms tika ierakstīti pastkastīšu rezultāti. Katras pastkastītes dublēšana un mēstuļu tīrīšana notiek atsevišķi; rezultāti ir šīs pastkastītes iestatījumu ekrānā.",
 			"killedInBackup": "Plānotā apkope {at}: pārtraukta dublēšanas laikā ({detail}). Katras pastkastītes dublēšana un mēstuļu tīrīšana notiek atsevišķi; rezultāti ir šīs pastkastītes iestatījumu ekrānā.",

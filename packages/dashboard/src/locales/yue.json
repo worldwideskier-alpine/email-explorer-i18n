@@ -452,6 +452,7 @@
 			"never": "定期維護未曾執行過。",
 			"unreadable": "讀唔到最近一次定期維護嘅記錄。",
 			"done": "定期維護 {at}：完成（{duration} ／ 備份 {backups} 個 ／ 刪咗 {deleted} 封垃圾郵件）。",
+			"continuing": "仲有 {count} 個郵箱處理緊，完成之後會加到呢度。",
 			"finishedWithError": "定期維護 {at}：有一個步驟失敗咗（{duration} ／ {detail}）。",
 			"notReached": "定期維護 {at}：記錄喺寫低各個郵箱嘅結果之前就停咗。每個郵箱嘅備份同垃圾郵件清理都係各自行嘅，結果喺嗰個郵箱嘅設定畫面度。",
 			"killedInBackup": "定期維護 {at}：喺備份途中畀截斷咗（{detail}）。每個郵箱嘅備份同垃圾郵件清理都係各自行嘅，結果喺嗰個郵箱嘅設定畫面度。",

@@ -387,3 +387,45 @@ describe("earlier nights on /root", () => {
 		expect(host.querySelectorAll("li.text-amber-700")).toHaveLength(0);
 	});
 });
+
+/**
+ * A night carried past the run's wait is not in the counts yet. The finished
+ * line says how many are still going, so "1 backed up" with two due does not
+ * read as the whole night.
+ */
+describe("a night still going on /root", () => {
+	const night = (continuing?: { mailbox: string; backup: boolean }[]) => ({
+		startedAt: "2026-10-02T18:00:19.920Z",
+		finishedAt: "2026-10-02T18:14:30.000Z",
+		backups: { finishedAt: "2026-10-02T18:14:00.000Z", ran: 1, failed: 0 },
+		spamPurge: {
+			finishedAt: "2026-10-02T18:14:00.000Z",
+			ran: 1,
+			deleted: 3,
+			failed: 0,
+		},
+		...(continuing ? { continuing } : {}),
+	});
+
+	beforeEach(() => {
+		getRecoverySender.mockResolvedValue({
+			data: { fromEmail: null, setByDeployment: false, enabled: false },
+		});
+	});
+
+	it("is said beside the finished line", async () => {
+		getMaintenance.mockResolvedValue({
+			data: night([{ mailbox: "b@example.com", backup: true }]),
+		});
+		await mountRoot();
+		expect(host.textContent).toContain("root.maintenance.done");
+		expect(host.textContent).toContain("root.maintenance.continuing");
+	});
+
+	it("is not said once every night has ended", async () => {
+		getMaintenance.mockResolvedValue({ data: night([]) });
+		await mountRoot();
+		expect(host.textContent).toContain("root.maintenance.done");
+		expect(host.textContent).not.toContain("root.maintenance.continuing");
+	});
+});

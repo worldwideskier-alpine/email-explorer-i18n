@@ -452,6 +452,7 @@
 			"never": "Plaanilist hooldust pole veel kordagi tehtud.",
 			"unreadable": "Viimase plaanilise hoolduse kirjet ei õnnestunud lugeda.",
 			"done": "Plaanitud hooldus {at}: lõpetatud ({duration} / {backups} varukoopiat / {deleted} rämpsposti kustutatud).",
+			"continuing": "Veel töös olevaid postkaste: {count}; need lisatakse siia, kui valmis saavad.",
 			"finishedWithError": "Plaanitud hooldus {at}: üks etapp ebaõnnestus ({duration} / {detail}).",
 			"notReached": "Plaaniline hooldus {at}: kirje lõpeb enne, kui postkastide tulemused kirja said. Iga postkasti varundus ja rämpsposti puhastus käivad eraldi; tulemused on selle postkasti seadete ekraanil.",
 			"killedInBackup": "Plaanitud hooldus {at}: katkes varunduse ajal ({detail}). Iga postkasti varundus ja rämpsposti puhastus käivad eraldi; tulemused on selle postkasti seadete ekraanil.",

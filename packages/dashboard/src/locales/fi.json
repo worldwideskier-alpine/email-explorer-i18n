@@ -452,6 +452,7 @@
 			"never": "Ajastettua ylläpitoa ei ole vielä kertaakaan ajettu.",
 			"unreadable": "Viimeisimmän ajastetun ylläpidon tietoja ei voitu lukea.",
 			"done": "Ajastettu ylläpito {at}: valmis ({duration} / {backups} varmuuskopiota / {deleted} roskapostia poistettu).",
+			"continuing": "Postilaatikoita vielä käynnissä: {count}; ne lisätään tähän, kun ne valmistuvat.",
 			"finishedWithError": "Ajastettu ylläpito {at}: yksi vaihe epäonnistui ({duration} / {detail}).",
 			"notReached": "Ajastettu ylläpito {at}: kirjaus päättyy ennen kuin postilaatikoiden tulokset kirjattiin. Kunkin postilaatikon varmuuskopio ja roskapostin siivous ajetaan erikseen; tulokset näkyvät postilaatikon asetuksissa.",
 			"killedInBackup": "Ajastettu ylläpito {at}: keskeytyi varmuuskopioinnin aikana ({detail}). Kunkin postilaatikon varmuuskopio ja roskapostin siivous ajetaan erikseen; tulokset näkyvät postilaatikon asetuksissa.",

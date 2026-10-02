@@ -452,6 +452,7 @@
 			"never": "A manutenção agendada nunca foi executada.",
 			"unreadable": "Não foi possível ler o registo da última manutenção agendada.",
 			"done": "Manutenção agendada {at}: concluída ({duration} / {backups} backups / {deleted} spams excluídos).",
+			"continuing": "{count} caixas de correio ainda em andamento; serão somadas aqui quando terminarem.",
 			"finishedWithError": "Manutenção agendada {at}: uma etapa falhou ({duration} / {detail}).",
 			"notReached": "Manutenção agendada {at}: o registro para antes de os resultados das caixas de correio serem gravados. O backup e a limpeza de spam de cada caixa de correio rodam separadamente; os resultados ficam na tela de configurações dessa caixa.",
 			"killedInBackup": "Manutenção agendada {at}: foi interrompida durante os backups ({detail}). O backup e a limpeza de spam de cada caixa de correio rodam separadamente; os resultados ficam na tela de configurações dessa caixa.",

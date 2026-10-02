@@ -452,6 +452,7 @@
 			"never": "Den planlagte vedligeholdelse har aldrig kørt.",
 			"unreadable": "Posten for den seneste planlagte vedligeholdelse kunne ikke læses.",
 			"done": "Planlagt vedligeholdelse {at}: fuldført ({duration} / {backups} sikkerhedskopier / {deleted} spam slettet).",
+			"continuing": "{count} postkasser er stadig i gang; de lægges til her, når de er færdige.",
 			"finishedWithError": "Planlagt vedligeholdelse {at}: et trin mislykkedes ({duration} / {detail}).",
 			"notReached": "Planlagt vedligeholdelse {at}: registreringen stopper, før postkassernes resultater blev skrevet. Hver postkasses sikkerhedskopi og spamoprydning kører for sig; resultaterne står på postkassens indstillingsskærm.",
 			"killedInBackup": "Planlagt vedligeholdelse {at}: afbrudt under sikkerhedskopieringen ({detail}). Hver postkasses sikkerhedskopi og spamoprydning kører for sig; resultaterne står på postkassens indstillingsskærm.",

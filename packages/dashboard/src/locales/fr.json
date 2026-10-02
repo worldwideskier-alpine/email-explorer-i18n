@@ -452,6 +452,7 @@
 			"never": "La maintenance planifiée n'a jamais été exécutée.",
 			"unreadable": "Impossible de lire l'enregistrement de la dernière maintenance planifiée.",
 			"done": "Maintenance planifiée {at} : terminée ({duration} / {backups} sauvegardes / {deleted} spams supprimés).",
+			"continuing": "{count} boîtes aux lettres encore en cours ; elles s'ajouteront ici une fois terminées.",
 			"finishedWithError": "Maintenance planifiée {at} : une étape a échoué ({duration} / {detail}).",
 			"notReached": "Maintenance planifiée {at} : l'enregistrement s'arrête avant que les résultats des boîtes aux lettres soient écrits. La sauvegarde et la purge du spam de chaque boîte aux lettres s'exécutent séparément ; leurs résultats figurent dans les réglages de cette boîte.",
 			"killedInBackup": "Maintenance planifiée {at} : interrompue pendant les sauvegardes ({detail}). La sauvegarde et la purge du spam de chaque boîte aux lettres s'exécutent séparément ; leurs résultats figurent dans les réglages de cette boîte.",

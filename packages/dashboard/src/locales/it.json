@@ -452,6 +452,7 @@
 			"never": "La manutenzione pianificata non è mai stata eseguita.",
 			"unreadable": "Non è stato possibile leggere il registro dell'ultima manutenzione programmata.",
 			"done": "Manutenzione pianificata {at}: completata ({duration} / {backups} backup / {deleted} spam eliminati).",
+			"continuing": "{count} caselle ancora in corso; verranno aggiunte qui al termine.",
 			"finishedWithError": "Manutenzione pianificata {at}: una fase non è riuscita ({duration} / {detail}).",
 			"notReached": "Manutenzione pianificata {at}: la registrazione si interrompe prima che fossero scritti i risultati delle caselle. Il backup e la pulizia dello spam di ogni casella vengono eseguiti separatamente; i risultati sono nelle impostazioni di quella casella.",
 			"killedInBackup": "Manutenzione pianificata {at}: interrotta durante i backup ({detail}). Il backup e la pulizia dello spam di ogni casella vengono eseguiti separatamente; i risultati sono nelle impostazioni di quella casella.",

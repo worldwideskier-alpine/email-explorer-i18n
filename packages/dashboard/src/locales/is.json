@@ -452,6 +452,7 @@
 			"never": "Áætluð viðhaldskeyrsla hefur aldrei verið keyrð.",
 			"unreadable": "Ekki tókst að lesa skráningu síðasta áætlaða viðhalds.",
 			"done": "Áætlað viðhald {at}: lokið ({duration} / {backups} afrit / {deleted} ruslpóstum eytt).",
+			"continuing": "Pósthólf enn í vinnslu: {count}; þau bætast hér við þegar þau klárast.",
 			"finishedWithError": "Áætlað viðhald {at}: eitt skref mistókst ({duration} / {detail}).",
 			"notReached": "Áætlað viðhald {at}: skráningin stöðvast áður en niðurstöður pósthólfanna voru skráðar. Afritun og ruslpóstshreinsun hvers pósthólfs keyra sér; niðurstöðurnar eru á stillingaskjá þess pósthólfs.",
 			"killedInBackup": "Áætlað viðhald {at}: rofnaði meðan á afritun stóð ({detail}). Afritun og ruslpóstshreinsun hvers pósthólfs keyra sér; niðurstöðurnar eru á stillingaskjá þess pósthólfs.",

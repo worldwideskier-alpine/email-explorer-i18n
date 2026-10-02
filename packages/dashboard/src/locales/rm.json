@@ -452,6 +452,7 @@
 			"never": "La mantegnientscha planisada n'è anc mai vegnida exequida.",
 			"unreadable": "L'endataziun da l'ultima mantegnida planisada n'ha betg pudì vegnir legida.",
 			"done": "Mantegniment planisà {at}: terminà ({duration} / {backups} copias da segirezza / {deleted} spam stizzads).",
+			"continuing": "Chaschettas da posta anc en lavur: {count}; ellas vegnan agiuntadas qua cur ch'ellas èn finidas.",
 			"finishedWithError": "Mantegniment planisà {at}: ina fasa è fallida ({duration} / {detail}).",
 			"notReached": "Mantegnientscha planisada {at}: la registraziun sa ferma avant che las resultats da las chaschettas da posta èn vegnids scrits. La copia da segirezza e la mundada da spam da mintga chaschetta da posta funcziunan separadamain; ils resultats èn en ils parameters da quella chaschetta.",
 			"killedInBackup": "Mantegniment planisà {at}: interrut durant las copias da segirezza ({detail}). La copia da segirezza e la mundada da spam da mintga chaschetta da posta funcziunan separadamain; ils resultats èn en ils parameters da quella chaschetta.",

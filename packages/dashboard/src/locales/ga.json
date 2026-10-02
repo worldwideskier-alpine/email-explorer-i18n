@@ -452,6 +452,7 @@
 			"never": "Níor ritheadh an chothabháil sceidealta riamh.",
 			"unreadable": "Níorbh fhéidir taifead an chothabhála sceidealta is déanaí a léamh.",
 			"done": "Cothabháil sceidealta {at}: críochnaithe ({duration} / {backups} cúltaca / {deleted} turscar scriosta).",
+			"continuing": "Boscaí poist fós ar siúl: {count}; cuirfear leis seo iad nuair a chríochnóidh siad.",
 			"finishedWithError": "Cothabháil sceidealta {at}: theip ar chéim ({duration} / {detail}).",
 			"notReached": "Cothabháil sceidealta {at}: stopann an taifead sular scríobhadh torthaí na mboscaí poist. Ritheann cúltaca agus glanadh turscair gach bosca poist ar leith; tá a dtorthaí ar scáileán socruithe an bhosca sin.",
 			"killedInBackup": "Cothabháil sceidealta {at}: gearradh siar é le linn na gcúltacaí ({detail}). Ritheann cúltaca agus glanadh turscair gach bosca poist ar leith; tá a dtorthaí ar scáileán socruithe an bhosca sin.",

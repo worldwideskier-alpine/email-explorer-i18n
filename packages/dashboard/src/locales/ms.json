@@ -452,6 +452,7 @@
 			"never": "Penyelenggaraan berjadual belum pernah dijalankan.",
 			"unreadable": "Rekod penyelenggaraan berjadual terakhir tidak dapat dibaca.",
 			"done": "Penyelenggaraan berjadual {at}: selesai ({duration} / {backups} disandarkan / {deleted} spam dipadam).",
+			"continuing": "{count} peti mel masih berjalan; akan ditambah di sini apabila selesai.",
 			"finishedWithError": "Penyelenggaraan berjadual {at}: satu peringkat gagal ({duration} / {detail}).",
 			"notReached": "Penyelenggaraan berjadual {at}: rekod terhenti sebelum keputusan peti mel ditulis. Sandaran dan pembersihan spam setiap peti mel berjalan secara berasingan; keputusannya ada di skrin tetapan peti mel itu.",
 			"killedInBackup": "Penyelenggaraan berjadual {at}: terputus semasa sandaran ({detail}). Sandaran dan pembersihan spam setiap peti mel berjalan secara berasingan; keputusannya ada di skrin tetapan peti mel itu.",

@@ -452,6 +452,7 @@
 			"never": "Det schemalagda underhållet har aldrig körts.",
 			"unreadable": "Posten för det senaste schemalagda underhållet kunde inte läsas.",
 			"done": "Schemalagt underhåll {at}: slutfört ({duration} / {backups} säkerhetskopior / {deleted} skräppost raderad).",
+			"continuing": "{count} brevlådor pågår fortfarande; de läggs till här när de är klara.",
 			"finishedWithError": "Schemalagt underhåll {at}: ett steg misslyckades ({duration} / {detail}).",
 			"notReached": "Schemalagt underhåll {at}: registreringen slutar innan brevlådornas resultat skrevs. Varje brevlådas säkerhetskopia och skräppostrensning körs för sig; resultaten står på brevlådans inställningsskärm.",
 			"killedInBackup": "Schemalagt underhåll {at}: avbröts under säkerhetskopieringen ({detail}). Varje brevlådas säkerhetskopia och skräppostrensning körs för sig; resultaten står på brevlådans inställningsskärm.",

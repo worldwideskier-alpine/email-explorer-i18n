@@ -452,6 +452,7 @@
 			"never": "Die geplante Wartung ist noch nie gelaufen.",
 			"unreadable": "Der Eintrag zur letzten geplanten Wartung konnte nicht gelesen werden.",
 			"done": "Geplante Wartung {at}: abgeschlossen ({duration} / {backups} Sicherungen / {deleted} Spam gelöscht).",
+			"continuing": "{count} Postfächer laufen noch; sie werden hier hinzugezählt, sobald sie fertig sind.",
 			"finishedWithError": "Geplante Wartung {at}: ein Durchlauf ist fehlgeschlagen ({duration} / {detail}).",
 			"notReached": "Geplante Wartung {at}: die Aufzeichnung endet, bevor die Ergebnisse der Postfächer geschrieben wurden. Sicherung und Spam-Löschung laufen für jedes Postfach einzeln; die Ergebnisse stehen in den Einstellungen des jeweiligen Postfachs.",
 			"killedInBackup": "Geplante Wartung {at}: während der Sicherung abgebrochen ({detail}). Sicherung und Spam-Löschung laufen für jedes Postfach einzeln; die Ergebnisse stehen in den Einstellungen des jeweiligen Postfachs.",

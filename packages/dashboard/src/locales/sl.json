@@ -452,6 +452,7 @@
 			"never": "Načrtovano vzdrževanje se še ni nikoli izvedlo.",
 			"unreadable": "Zapisa o zadnjem načrtovanem vzdrževanju ni bilo mogoče prebrati.",
 			"done": "Načrtovano vzdrževanje {at}: končano ({duration} / {backups} varnostnih kopij / {deleted} izbrisanih neželenih sporočil).",
+			"continuing": "Poštnih predalov še v teku: {count}; ko končajo, se prištejejo sem.",
 			"finishedWithError": "Načrtovano vzdrževanje {at}: en korak ni uspel ({duration} / {detail}).",
 			"notReached": "Načrtovano vzdrževanje {at}: zapis se ustavi, preden so bili zapisani rezultati poštnih predalov. Varnostno kopiranje in čiščenje neželene pošte vsakega predala tečeta ločeno; rezultati so na zaslonu nastavitev tega predala.",
 			"killedInBackup": "Načrtovano vzdrževanje {at}: prekinjeno med varnostnim kopiranjem ({detail}). Varnostno kopiranje in čiščenje neželene pošte vsakega predala tečeta ločeno; rezultati so na zaslonu nastavitev tega predala.",

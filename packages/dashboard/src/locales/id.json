@@ -452,6 +452,7 @@
 			"never": "Pemeliharaan terjadwal belum pernah berjalan.",
 			"unreadable": "Catatan pemeliharaan terjadwal terakhir tidak dapat dibaca.",
 			"done": "Pemeliharaan terjadwal {at}: selesai ({duration} / {backups} dicadangkan / {deleted} spam dihapus).",
+			"continuing": "{count} kotak surat masih berjalan; akan ditambahkan di sini setelah selesai.",
 			"finishedWithError": "Pemeliharaan terjadwal {at}: satu tahap gagal ({duration} / {detail}).",
 			"notReached": "Pemeliharaan terjadwal {at}: catatan berhenti sebelum hasil kotak surat ditulis. Pencadangan dan pembersihan spam setiap kotak surat berjalan sendiri-sendiri; hasilnya ada di layar pengaturan kotak surat tersebut.",
 			"killedInBackup": "Pemeliharaan terjadwal {at}: terputus saat pencadangan ({detail}). Pencadangan dan pembersihan spam setiap kotak surat berjalan sendiri-sendiri; hasilnya ada di layar pengaturan kotak surat tersebut.",

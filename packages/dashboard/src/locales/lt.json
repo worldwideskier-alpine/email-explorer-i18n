@@ -452,6 +452,7 @@
 			"never": "Suplanuota priežiūra dar nė karto nevykdyta.",
 			"unreadable": "Nepavyko perskaityti paskutinės suplanuotos priežiūros įrašo.",
 			"done": "Suplanuota priežiūra {at}: baigta ({duration} / {backups} atsarginės kopijos / ištrinta {deleted} brukalo).",
+			"continuing": "Dar vykdomos pašto dėžutės: {count}; baigusios bus pridėtos čia.",
 			"finishedWithError": "Suplanuota priežiūra {at}: vienas etapas nepavyko ({duration} / {detail}).",
 			"notReached": "Suplanuota priežiūra {at}: įrašas nutrūksta prieš įrašant pašto dėžučių rezultatus. Kiekvienos pašto dėžutės atsarginė kopija ir šlamšto valymas vyksta atskirai; rezultatai matomi tos dėžutės nustatymuose.",
 			"killedInBackup": "Suplanuota priežiūra {at}: nutrūko kuriant atsargines kopijas ({detail}). Kiekvienos pašto dėžutės atsarginė kopija ir šlamšto valymas vyksta atskirai; rezultatai matomi tos dėžutės nustatymuose.",

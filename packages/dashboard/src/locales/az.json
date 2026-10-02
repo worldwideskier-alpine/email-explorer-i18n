@@ -452,6 +452,7 @@
 			"never": "Planlı texniki iş hələ heç vaxt icra olunmayıb.",
 			"unreadable": "Son planlı baxımın qeydini oxumaq mümkün olmadı.",
 			"done": "Planlı baxım {at}: bitdi ({duration} / {backups} ehtiyat nüsxə / {deleted} spam silindi).",
+			"continuing": "{count} poçt qutusu hələ emal olunur; bitdikdə bura əlavə olunacaq.",
 			"finishedWithError": "Planlı baxım {at}: mərhələlərdən biri uğursuz oldu ({duration} / {detail}).",
 			"notReached": "Planlı texniki iş {at}: qeyd poçt qutularının nəticələri yazılmadan dayanıb. Hər poçt qutusunun ehtiyat nüsxəsi və spam təmizlənməsi ayrıca işləyir; nəticələri həmin poçt qutusunun ayarlar ekranındadır.",
 			"killedInBackup": "Planlı baxım {at}: ehtiyat nüsxə çıxarılarkən yarımçıq kəsildi ({detail}). Hər poçt qutusunun ehtiyat nüsxəsi və spam təmizlənməsi ayrıca işləyir; nəticələri həmin poçt qutusunun ayarlar ekranındadır.",

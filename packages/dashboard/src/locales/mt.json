@@ -452,6 +452,7 @@
 			"never": "Il-manutenzjoni skedata qatt ma ġiet imħaddma.",
 			"unreadable": "Ir-rekord tal-aħħar manutenzjoni skedata ma setax jinqara.",
 			"done": "Manutenzjoni skedata {at}: lesta ({duration} / {backups} backups / {deleted} spam imħassar).",
+			"continuing": "Kaxxi postali li għadhom għaddejjin: {count}; jiżdiedu hawn meta jispiċċaw.",
 			"finishedWithError": "Manutenzjoni skedata {at}: pass falla ({duration} / {detail}).",
 			"notReached": "Manutenzjoni skedata {at}: ir-rekord jieqaf qabel ma nkitbu r-riżultati tal-kaxxi postali. Il-backup u t-tindif tal-ispam ta' kull kaxxa postali jaħdmu għalihom; ir-riżultati jidhru fl-iskrin tas-settings ta' dik il-kaxxa.",
 			"killedInBackup": "Manutenzjoni skedata {at}: waqfet waqt il-backups ({detail}). Il-backup u t-tindif tal-ispam ta' kull kaxxa postali jaħdmu għalihom; ir-riżultati jidhru fl-iskrin tas-settings ta' dik il-kaxxa.",

@@ -452,6 +452,7 @@
 			"never": "El manteniment programat encara no s'ha executat mai.",
 			"unreadable": "No s'ha pogut llegir el registre de l'últim manteniment programat.",
 			"done": "Manteniment programat {at}: finalitzat ({duration} / {backups} còpies / {deleted} correus brossa suprimits).",
+			"continuing": "{count} bústies encara s'estan processant; s'afegiran aquí quan acabin.",
 			"finishedWithError": "Manteniment programat {at}: una fase ha fallat ({duration} / {detail}).",
 			"notReached": "Manteniment programat {at}: el registre s'atura abans que s'escriguin els resultats de les bústies. La còpia de seguretat i la neteja de correu brossa de cada bústia funcionen per separat; els resultats són a la pantalla de configuració d'aquella bústia.",
 			"killedInBackup": "Manteniment programat {at}: s'ha interromput durant les còpies de seguretat ({detail}). La còpia de seguretat i la neteja de correu brossa de cada bústia funcionen per separat; els resultats són a la pantalla de configuració d'aquella bústia.",

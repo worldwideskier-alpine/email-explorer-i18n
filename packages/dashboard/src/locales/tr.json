@@ -452,6 +452,7 @@
 			"never": "Zamanlanmış bakım henüz hiç çalışmadı.",
 			"unreadable": "Son planlı bakımın kaydı okunamadı.",
 			"done": "Zamanlanmış bakım {at}: tamamlandı ({duration} / {backups} yedek / {deleted} istenmeyen posta silindi).",
+			"continuing": "{count} posta kutusu hâlâ sürüyor; bittiğinde buraya eklenecek.",
 			"finishedWithError": "Zamanlanmış bakım {at}: bir aşama başarısız oldu ({duration} / {detail}).",
 			"notReached": "Zamanlanmış bakım {at}: kayıt, posta kutularının sonuçları yazılmadan durmuş. Her posta kutusunun yedeklemesi ve istenmeyen posta temizliği ayrı çalışır; sonuçlar o posta kutusunun ayarlar ekranındadır.",
 			"killedInBackup": "Zamanlanmış bakım {at}: yedekleme sırasında yarıda kesildi ({detail}). Her posta kutusunun yedeklemesi ve istenmeyen posta temizliği ayrı çalışır; sonuçlar o posta kutusunun ayarlar ekranındadır.",

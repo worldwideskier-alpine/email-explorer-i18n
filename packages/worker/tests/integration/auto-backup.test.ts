@@ -67,6 +67,25 @@ describe("The scheduled backup pass", () => {
 		await createDummyMailbox();
 	});
 
+	// Left on the stored settings by the pass that ordered mailboxes by it,
+	// and read by nothing since; the next outcome written takes it out.
+	it("drops the field the old single pass ordered mailboxes by", async () => {
+		await importEmail("one");
+		await setBackup({
+			enabled: true,
+			frequency: "daily",
+			keep: 3,
+			lastAttemptAt: "2026-09-30T18:01:07.046Z",
+		});
+
+		expect((await runScheduledBackups(env as never, new Date())).ran).toBe(1);
+
+		const stored = await readBackupSettings();
+		expect(stored).not.toHaveProperty("lastAttemptAt");
+		expect(stored).toMatchObject({ enabled: true, keep: 3 });
+		expect(stored.lastResult?.ok).toBe(true);
+	});
+
 	it("skips a mailbox that has not turned it on", async () => {
 		await importEmail("one");
 		const summary = await runScheduledBackups(env as never, new Date());

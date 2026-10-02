@@ -452,6 +452,7 @@
 			"never": "定期维护尚未运行过。",
 			"unreadable": "无法读取最近一次定期维护的记录。",
 			"done": "定期维护 {at}：完成（{duration} ／ 备份 {backups} 个 ／ 删除垃圾邮件 {deleted} 封）。",
+			"continuing": "还有 {count} 个邮箱在处理中，完成后会计入这里。",
 			"finishedWithError": "定期维护 {at}：有一个步骤失败（{duration} ／ {detail}）。",
 			"notReached": "定期维护 {at}：记录在写下各邮箱的结果之前就停止了。每个邮箱的备份和垃圾邮件清理各自运行，结果显示在该邮箱的设置页面。",
 			"killedInBackup": "定期维护 {at}：在备份过程中被中断（{detail}）。每个邮箱的备份和垃圾邮件清理各自运行，结果显示在该邮箱的设置页面。",

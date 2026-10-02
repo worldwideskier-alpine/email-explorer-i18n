@@ -452,6 +452,7 @@
 			"never": "The scheduled maintenance has never run.",
 			"unreadable": "Could not read the record of the last scheduled maintenance.",
 			"done": "Scheduled maintenance {at}: finished ({duration} / {backups} backed up / {deleted} spam deleted).",
+			"continuing": "{count} mailboxes still going; each is added here when it finishes.",
 			"finishedWithError": "Scheduled maintenance {at}: a pass failed ({duration} / {detail}).",
 			"notReached": "Scheduled maintenance {at}: its record stops before the mailboxes' results were written. Each mailbox's backup and spam purge run on their own; their results are on that mailbox's settings screen.",
 			"killedInBackup": "Scheduled maintenance {at}: it was cut off during the backups ({detail}). Each mailbox's backup and spam purge run on their own; their results are on that mailbox's settings screen.",

@@ -452,6 +452,7 @@
 			"never": "Az ütemezett karbantartás még soha nem futott le.",
 			"unreadable": "A legutóbbi ütemezett karbantartás bejegyzését nem sikerült beolvasni.",
 			"done": "Ütemezett karbantartás {at}: befejeződött ({duration} / {backups} mentés / {deleted} levélszemét törölve).",
+			"continuing": "Még folyamatban lévő postafiókok: {count}; befejezéskor ide számítanak.",
 			"finishedWithError": "Ütemezett karbantartás {at}: az egyik lépés hibára futott ({duration} / {detail}).",
 			"notReached": "Ütemezett karbantartás {at}: a feljegyzés megszakad, mielőtt a postafiókok eredményei bekerültek volna. Minden postafiók mentése és levélszemét-törlése külön fut; az eredmények az adott postafiók beállításainál láthatók.",
 			"killedInBackup": "Ütemezett karbantartás {at}: a mentés közben megszakadt ({detail}). Minden postafiók mentése és levélszemét-törlése külön fut; az eredmények az adott postafiók beállításainál láthatók.",

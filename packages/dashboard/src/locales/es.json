@@ -452,6 +452,7 @@
 			"never": "El mantenimiento programado no se ha ejecutado nunca.",
 			"unreadable": "No se ha podido leer el registro del último mantenimiento programado.",
 			"done": "Mantenimiento programado {at}: finalizado ({duration} / {backups} copias / {deleted} correos no deseados eliminados).",
+			"continuing": "{count} buzones siguen en curso; se sumarán aquí cuando terminen.",
 			"finishedWithError": "Mantenimiento programado {at}: una fase ha fallado ({duration} / {detail}).",
 			"notReached": "Mantenimiento programado {at}: el registro se detiene antes de que se escribieran los resultados de los buzones. La copia de seguridad y la limpieza de spam de cada buzón se ejecutan por separado; sus resultados están en la pantalla de ajustes de ese buzón.",
 			"killedInBackup": "Mantenimiento programado {at}: se interrumpió durante las copias de seguridad ({detail}). La copia de seguridad y la limpieza de spam de cada buzón se ejecutan por separado; sus resultados están en la pantalla de ajustes de ese buzón.",

@@ -452,6 +452,7 @@
 			"never": "Mirëmbajtja e planifikuar nuk është kryer asnjëherë.",
 			"unreadable": "Regjistrimi i mirëmbajtjes së fundit të planifikuar nuk mund të lexohej.",
 			"done": "Mirëmbajtja e planifikuar {at}: përfundoi ({duration} / {backups} kopje rezervë / {deleted} mesazhe të padëshiruara u fshinë).",
+			"continuing": "{count} kuti postare janë ende në punë; do të shtohen këtu kur të përfundojnë.",
 			"finishedWithError": "Mirëmbajtja e planifikuar {at}: një hap dështoi ({duration} / {detail}).",
 			"notReached": "Mirëmbajtje e planifikuar {at}: regjistrimi ndalet para se të shkruheshin rezultatet e kutive postare. Kopja rezervë dhe pastrimi i spam-it për çdo kuti postare punojnë veçmas; rezultatet janë në ekranin e cilësimeve të asaj kutie.",
 			"killedInBackup": "Mirëmbajtja e planifikuar {at}: u ndërpre gjatë kopjeve rezervë ({detail}). Kopja rezervë dhe pastrimi i spam-it për çdo kuti postare punojnë veçmas; rezultatet janë në ekranin e cilësimeve të asaj kutie.",

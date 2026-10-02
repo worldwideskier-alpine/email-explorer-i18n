@@ -410,7 +410,9 @@ are still checked, by the `tsc` that runs before the worker tests.
   minutes; one still carrying on then is listed in the record as
   `continuing` rather than counted as failed, and counts itself in when it
   ends (`foldContinuedNight`), which is also why the cron's own writes keep
-  what the nights folded in. An alarm the runtime ended partway is run again by the
+  what the nights folded in. `/root` says how many are still going beside
+  the finished line (`maintenanceContinuing`), so a smaller count does not
+  read as the whole night. An alarm the runtime ended partway is run again by the
   runtime; the second attempt finishes the record -- failed, due again
   tomorrow -- rather than the night, which would most likely end the same
   way once per retry (`night-alarm.test.ts`). A test that hands the run an

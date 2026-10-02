@@ -48,7 +48,7 @@
             duration: finishedDuration,
             backups: maintenance.backups?.ran ?? 0,
             deleted: deletedCount,
-          }) }}
+          }) }}<span v-if="continuingCount"> · {{ t("root.maintenance.continuing", { count: continuingCount }) }}</span>
         </p>
         <!-- Four of the six sentences have no `{detail}` slot, so what the run
              recorded is put after the sentence when it did not fit inside
@@ -416,6 +416,7 @@ import { translateApiError } from "@/utils/apiError";
 import { formatBytes } from "@/utils/attachments";
 import {
 	type MaintenanceRecord,
+	maintenanceContinuing,
 	maintenanceDeleted,
 	maintenanceDuration,
 	maintenanceFinishedCleanly,
@@ -482,6 +483,9 @@ const stoppedKey = computed(() => maintenanceStoppedKey(maintenance.value));
 // never shown at all, and is the number that says how close the run is to the
 // edge it was going over.
 const deletedCount = computed(() => maintenanceDeleted(maintenance.value));
+const continuingCount = computed(() =>
+	maintenanceContinuing(maintenance.value),
+);
 const finishedDuration = computed(() => maintenanceDuration(maintenance.value));
 
 const stoppedDetail = computed(() =>

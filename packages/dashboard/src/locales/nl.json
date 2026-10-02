@@ -452,6 +452,7 @@
 			"never": "Het geplande onderhoud is nog nooit uitgevoerd.",
 			"unreadable": "Het record van het laatste geplande onderhoud kon niet worden gelezen.",
 			"done": "Gepland onderhoud {at}: voltooid ({duration} / {backups} back-ups / {deleted} spam verwijderd).",
+			"continuing": "{count} mailboxen zijn nog bezig; ze worden hier opgeteld zodra ze klaar zijn.",
 			"finishedWithError": "Gepland onderhoud {at}: een fase is mislukt ({duration} / {detail}).",
 			"notReached": "Gepland onderhoud {at}: de registratie stopt voordat de resultaten van de mailboxen werden geschreven. De back-up en spamopruiming van elke mailbox lopen afzonderlijk; de resultaten staan in de instellingen van die mailbox.",
 			"killedInBackup": "Geplande onderhoud {at}: afgebroken tijdens de back-ups ({detail}). De back-up en spamopruiming van elke mailbox lopen afzonderlijk; de resultaten staan in de instellingen van die mailbox.",

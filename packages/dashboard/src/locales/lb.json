@@ -452,6 +452,7 @@
 			"never": "De geplangte Ënnerhalt ass nach ni gelaf.",
 			"unreadable": "Den Andrag vun der leschter geplangter Maintenance konnt net gelies ginn.",
 			"done": "Geplangten Ënnerhalt {at}: ofgeschloss ({duration} / {backups} Sécherungen / {deleted} Spam geläscht).",
+			"continuing": "{count} Postfächer lafen nach; si ginn hei derbäigezielt, soubal se fäerdeg sinn.",
 			"finishedWithError": "Geplangten Ënnerhalt {at}: e Schrëtt ass feelgeschloen ({duration} / {detail}).",
 			"notReached": "Geplangten Ënnerhalt {at}: d'Opzeechnung hält op, ier d'Resultater vun de Postfächer geschriwwe goufen. Sécherung a Spam-Läschung lafe fir all Postfach eenzel; d'Resultater stinn an den Astellunge vum jeeweilege Postfach.",
 			"killedInBackup": "Geplangten Ënnerhalt {at}: während der Sécherung ofgebrach ({detail}). Sécherung a Spam-Läschung lafe fir all Postfach eenzel; d'Resultater stinn an den Astellunge vum jeeweilege Postfach.",

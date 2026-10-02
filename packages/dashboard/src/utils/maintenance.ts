@@ -47,6 +47,26 @@ export interface MaintenanceRecord {
 		failed?: number;
 		error?: string;
 	};
+	/**
+	 * Mailboxes whose night was still carrying its backup on when the run
+	 * stopped waiting. Each is added to the counts above when it ends, and
+	 * leaves this list then.
+	 */
+	continuing?: { mailbox: string; backup: boolean }[];
+}
+
+/**
+ * How many mailboxes are not in the counts yet, because their night is
+ * still going.
+ *
+ * Without it the finished line read as a smaller night than the real one --
+ * "1 backed up" with two mailboxes due -- for as long as the second carried
+ * on, and nothing said the number would change.
+ */
+export function maintenanceContinuing(
+	record: MaintenanceRecord | null | undefined,
+): number {
+	return record?.continuing?.length ?? 0;
 }
 
 /** One pass's trouble, the more specific of the two things it can say. */

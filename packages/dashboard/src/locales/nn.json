@@ -452,6 +452,7 @@
 			"never": "Det planlagde vedlikehaldet har aldri køyrt.",
 			"unreadable": "Oppføringa for siste planlagde vedlikehald kunne ikkje lesast.",
 			"done": "Planlagt vedlikehald {at}: fullført ({duration} / {backups} tryggingskopiar / {deleted} søppelpost sletta).",
+			"continuing": "{count} postkasser er framleis i gang; dei blir lagde til her når dei er ferdige.",
 			"finishedWithError": "Planlagt vedlikehald {at}: eit steg mislukkast ({duration} / {detail}).",
 			"notReached": "Planlagt vedlikehald {at}: registreringa stoppar før resultata til postkassene vart skrivne. Tryggingskopien og søppelpostoppryddinga til kvar postkasse køyrer kvar for seg; resultata står på innstillingsskjermen til postkassa.",
 			"killedInBackup": "Planlagt vedlikehald {at}: avbrote under tryggingskopieringa ({detail}). Tryggingskopien og søppelpostoppryddinga til kvar postkasse køyrer kvar for seg; resultata står på innstillingsskjermen til postkassa.",

@@ -452,6 +452,7 @@
 			"never": "Plánovaná údržba sa zatiaľ nikdy nevykonala.",
 			"unreadable": "Záznam o poslednej naplánovanej údržbe sa nepodarilo načítať.",
 			"done": "Plánovaná údržba {at}: dokončená ({duration} / {backups} záloh / {deleted} zmazaných spamov).",
+			"continuing": "Poštových schránok stále v spracovaní: {count}; pripočítajú sa sem, keď skončia.",
 			"finishedWithError": "Plánovaná údržba {at}: jedna fáza zlyhala ({duration} / {detail}).",
 			"notReached": "Plánovaná údržba {at}: záznam končí skôr, než boli zapísané výsledky poštových schránok. Zálohovanie a mazanie spamu každej schránky bežia samostatne; ich výsledky sú na obrazovke nastavení danej schránky.",
 			"killedInBackup": "Plánovaná údržba {at}: prerušená počas zálohovania ({detail}). Zálohovanie a mazanie spamu každej schránky bežia samostatne; ich výsledky sú na obrazovke nastavení danej schránky.",

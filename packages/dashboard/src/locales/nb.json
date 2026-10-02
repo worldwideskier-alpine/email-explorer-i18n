@@ -452,6 +452,7 @@
 			"never": "Den planlagte vedlikeholdskjøringen har aldri kjørt.",
 			"unreadable": "Oppføringen for siste planlagte vedlikehold kunne ikke leses.",
 			"done": "Planlagt vedlikehold {at}: fullført ({duration} / {backups} sikkerhetskopier / {deleted} søppelpost slettet).",
+			"continuing": "{count} postkasser er fortsatt i gang; de legges til her når de er ferdige.",
 			"finishedWithError": "Planlagt vedlikehold {at}: et trinn mislyktes ({duration} / {detail}).",
 			"notReached": "Planlagt vedlikehold {at}: registreringen stopper før postkassenes resultater ble skrevet. Hver postkasses sikkerhetskopi og søppelpostopprydding kjører hver for seg; resultatene står på innstillingsskjermen til postkassen.",
 			"killedInBackup": "Planlagt vedlikehold {at}: avbrutt under sikkerhetskopieringen ({detail}). Hver postkasses sikkerhetskopi og søppelpostopprydding kjører hver for seg; resultatene står på innstillingsskjermen til postkassen.",

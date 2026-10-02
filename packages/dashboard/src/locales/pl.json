@@ -452,6 +452,7 @@
 			"never": "Zaplanowana konserwacja nigdy jeszcze nie została wykonana.",
 			"unreadable": "Nie udało się odczytać zapisu ostatniej zaplanowanej konserwacji.",
 			"done": "Zaplanowana konserwacja {at}: zakończona ({duration} / {backups} kopii zapasowych / usunięto {deleted} spamu).",
+			"continuing": "Skrzynki wciąż w toku: {count}; zostaną tu doliczone po zakończeniu.",
 			"finishedWithError": "Zaplanowana konserwacja {at}: jeden etap się nie powiódł ({duration} / {detail}).",
 			"notReached": "Zaplanowana konserwacja {at}: zapis urywa się, zanim zapisano wyniki skrzynek pocztowych. Kopia zapasowa i czyszczenie spamu każdej skrzynki działają osobno; wyniki są na ekranie ustawień tej skrzynki.",
 			"killedInBackup": "Zaplanowana konserwacja {at}: przerwana podczas tworzenia kopii zapasowych ({detail}). Kopia zapasowa i czyszczenie spamu każdej skrzynki działają osobno; wyniki są na ekranie ustawień tej skrzynki.",
