@@ -37,14 +37,8 @@ async function recordResult(
 	result: NonNullable<AutoBackupSettings["lastResult"]>,
 ): Promise<void> {
 	await updateMailboxSettings(env, mailboxId, (settings) => {
-		// `lastAttemptAt` ordered the single pass of every mailbox that each
-		// night used to be, and is read by nothing since nights ran one per
-		// mailbox (2026-10-01). Taken out the next time the outcome is
-		// written, so no stored settings go on carrying it.
-		const { lastAttemptAt: _unused, ...kept } = (settings.autoBackup ??
-			{}) as AutoBackupSettings & { lastAttemptAt?: string };
 		settings.autoBackup = {
-			...kept,
+			...settings.autoBackup,
 			...(result.ok ? { lastRunAt: result.at } : {}),
 			lastResult: result,
 		};
