@@ -614,6 +614,35 @@ and says so. The step before it prints the version that is actually running,
 which is *not* the id the deploy step prints -- uploading the VAPID secret
 publishes a version of its own, after it.
 
+A deploy that fails once it is live is rolled back. The step before the
+deploy notes the version that is live then (`steps.before`), and the last
+step, on `failure()`, puts it back with `wrangler rollback` unless it is still
+the one live, and checks that it is. The run stays red, so the failure is
+still mailed; production just does not stay on it.
+
+The checks are three jobs side by side -- lint and build, the worker suite,
+the dashboard suite -- and the deploy needs all three. The worker suite does
+not need the build.
+
+Every evening at 18:30 UTC, half an hour after the Worker's cron,
+`night-check.yml` reads `maintenance/last-run.json` and `backup-carry/`
+through the R2 API and fails when the night did not end well
+(`scripts/night-check.mjs`, `night-check.test.ts`): no run in 24 hours, a run
+cut off, a pass that failed or recorded nothing, a deletion left unfinished,
+a night still carrying on after twenty minutes more, or a paused backup
+nothing carries on. A failed scheduled run is mailed to the owner, so nobody
+has to open `/root` to find out -- the nights of 09-04 and 09-22 were found
+days later, by hand. It prints counts and times, never a mailbox. It also
+fails at fifty days without a commit, because GitHub turns a schedule off at
+sixty and that is the one failure it could not report. `workflowGuards.test.ts`
+holds the rollback, the `needs`, the thirty minutes and the night check's
+token.
+
+A test that hands the nightly code a fixed date is a time bomb wherever that
+code compares the date with the real clock: `backup-slices.test.ts` was
+fixed at 2026-10-02 and began failing twenty hours later, when the night it
+named had become one too old to carry on (`NIGHT_LONGEST_MS`).
+
 Production URLs and the mail domain are secrets rather than repository
 variables, and not out of squeamishness: this repository is public, its
 Actions logs are public, and the runner prints every step's environment and

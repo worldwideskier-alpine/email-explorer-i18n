@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
  * four lines of YAML, they are easy to weaken by accident, and a diff that
  * weakens them looks like a diff that tidies them.
  *
- * So they are asserted here. This runs in `build-and-check`, which runs on
+ * So they are asserted here. This runs in `test-dashboard`, which runs on
  * every pull request, so a change that removes any of them fails the pull
  * request that carries it -- before anyone has to notice it by reading.
  *
@@ -68,18 +68,45 @@ describe("the deploy workflow", () => {
 	});
 
 	/**
-	 * The job that runs on pull requests must not carry any secret. Even
+	 * The jobs that run on pull requests must not carry any secret. Even
 	 * without one, a fork's pull request does not receive them -- but a
 	 * deployment that relied on that alone would be one settings change away
 	 * from handing them over.
 	 */
-	it("keeps every secret out of the job that pull requests run", () => {
-		const check = deploy?.slice(
-			deploy.indexOf("build-and-check:"),
-			deploy.indexOf("deploy:"),
-		);
-		expect(check).toBeTruthy();
-		expect(check).not.toContain("secrets.");
+	it("keeps every secret out of the jobs that pull requests run", () => {
+		const jobs = deploy?.slice(deploy.indexOf("\njobs:\n"));
+		const checks = jobs?.slice(0, jobs.indexOf("\n  deploy:"));
+		expect(checks).toMatch(/\n {2}lint-and-build:\n/);
+		expect(checks).toMatch(/\n {2}test-worker:\n/);
+		expect(checks).toMatch(/\n {2}test-dashboard:\n/);
+		expect(checks).not.toContain("secrets.");
+	});
+
+	/**
+	 * The checks run side by side, and the deploy waits for every one of
+	 * them. A check left out of `needs` would still run -- and production
+	 * would be deployed whatever it said.
+	 */
+	it("deploys only after every check has passed", () => {
+		const needs = /^\s*deploy:\n(?:.*\n)*?\s*needs: \[(.*)\]$/m.exec(
+			deploy ?? "",
+		)?.[1];
+		expect(needs?.split(/,\s*/).sort()).toEqual([
+			"lint-and-build",
+			"test-dashboard",
+			"test-worker",
+		]);
+		const step = (job: string) => {
+			const from = (deploy ?? "").slice(
+				(deploy ?? "").indexOf(`\n  ${job}:\n`) + 1,
+			);
+			const next = from.slice(1).search(/\n {2}[a-z-]+:\n/);
+			return next < 0 ? from : from.slice(0, next + 1);
+		};
+		expect(step("lint-and-build")).toMatch(/run: pnpm run lint\n/);
+		expect(step("lint-and-build")).toMatch(/run: pnpm run build\n/);
+		expect(step("test-worker")).toMatch(/run: pnpm test-worker\n/);
+		expect(step("test-dashboard")).toMatch(/run: pnpm test-dashboard\n/);
 	});
 
 	/**
@@ -204,20 +231,51 @@ describe("the deploy workflow", () => {
 	});
 
 	it("gives every job a token that can only read", () => {
-		const top = /^permissions:\n((?: {2}.*\n)+)/m.exec(deploy ?? "")?.[1];
-		expect(top?.trim()).toBe("contents: read");
-		expect(deploy).not.toMatch(/:\s*write\b/);
-		expect(deploy).not.toMatch(/permissions:\s*write-all/);
+		for (const [path, source] of Object.entries(workflows)) {
+			const top = /^permissions:\n((?: {2}.*\n)+)/m.exec(source)?.[1];
+			expect(top?.trim(), path).toBe("contents: read");
+			expect(source, path).not.toMatch(/:\s*write\b/);
+			expect(source, path).not.toMatch(/permissions:\s*write-all/);
+		}
 	});
 
 	it("leaves no token behind in a checkout", () => {
-		const checkouts = (deploy ?? "").split("uses: actions/checkout@").slice(1);
-		expect(checkouts.length).toBeGreaterThan(0);
-		for (const checkout of checkouts) {
-			expect(checkout.split("\n      - ")[0]).toContain(
-				"persist-credentials: false",
-			);
+		for (const [path, source] of Object.entries(workflows)) {
+			const checkouts = source.split("uses: actions/checkout@").slice(1);
+			expect(checkouts.length, path).toBeGreaterThan(0);
+			for (const checkout of checkouts) {
+				expect(checkout.split("\n      - ")[0], path).toContain(
+					"persist-credentials: false",
+				);
+			}
 		}
+	});
+
+	/**
+	 * A deploy that fails after it went live is put back. The version to go
+	 * back to has to be read before the deploy -- afterwards it is gone from
+	 * `deployments status` -- and the step that uses it has to run on a
+	 * failure, which a step without `failure()` never does.
+	 */
+	it("rolls a failed deploy back to the version live before it", () => {
+		const steps = (deploy ?? "").split(/\n {6}- /);
+		const at = (name: string) =>
+			steps.findIndex((one) => one.startsWith(`name: ${name}`));
+		const before = steps[at("Note the version that is live now")] ?? "";
+		expect(before).toContain("id: before");
+		expect(before).toContain("live-version.mjs");
+		expect(at("Note the version that is live now")).toBeLessThan(
+			at("Deploy Worker"),
+		);
+		const back = steps.at(-1) ?? "";
+		expect(back).toMatch(
+			/^name: Roll back to the version that was live before/,
+		);
+		expect(back).toContain(
+			"if: failure() && steps.before.outputs.version != ''",
+		);
+		expect(back).toContain('wrangler rollback "$BEFORE"');
+		expect(back).toContain("BEFORE: ${{ steps.before.outputs.version }}");
 	});
 
 	/** A tag can be moved to code nobody here has read; a commit cannot. */
@@ -227,5 +285,57 @@ describe("the deploy workflow", () => {
 				expect(action, path).toMatch(/@[0-9a-f]{40}$/);
 			}
 		}
+	});
+});
+
+const nightCheck = Object.entries(workflows).find(([path]) =>
+	path.endsWith("night-check.yml"),
+)?.[1];
+
+const wrangler = Object.values(
+	import.meta.glob<string>("../../../worker/dev/wrangler.jsonc", {
+		query: "?raw",
+		import: "default",
+		eager: true,
+	}),
+)[0];
+
+/**
+ * The evening check of the nightly run (scripts/night-check.mjs). It holds
+ * the Cloudflare token and writes into a public log, and it is only worth
+ * anything if it asks after the run has had its time.
+ */
+describe("the night check workflow", () => {
+	it("is where this test thinks it is", () => {
+		expect(nightCheck, "night-check.yml not found").toBeTruthy();
+		expect(wrangler, "wrangler.jsonc not found").toBeTruthy();
+	});
+
+	it("asks half an hour after the Worker's own cron", () => {
+		const cron = /"crons":\s*\["(\d+) (\d+) \* \* \*"\]/.exec(wrangler ?? "");
+		const asks = /cron: '(\d+) (\d+) \* \* \*'/.exec(nightCheck ?? "");
+		expect(cron, "the Worker's cron is not a daily one").toBeTruthy();
+		expect(asks, "the check's cron is not a daily one").toBeTruthy();
+		const minutes = (m: RegExpExecArray) => Number(m[2]) * 60 + Number(m[1]);
+		expect(
+			minutes(asks as RegExpExecArray) - minutes(cron as RegExpExecArray),
+		).toBe(30);
+	});
+
+	it("hands the token only to the step that reads, and filters what it prints", () => {
+		const steps = (nightCheck ?? "").split(/\n {6}- /).slice(1);
+		const holding = steps.filter((step) =>
+			step.includes("secrets.CLOUDFLARE_API_TOKEN"),
+		);
+		expect(holding).toHaveLength(1);
+		const step = (holding[0] ?? "").replace(/\\\n\s*/g, " ");
+		expect(step).toMatch(/^name: Read last night's run/);
+		expect(step).toContain("set -o pipefail");
+		expect(step).toMatch(/check-night\.mjs 2>&1\s+\|\s+node \S*withhold\.mjs/);
+		const jobEnv = (nightCheck ?? "").slice(
+			(nightCheck ?? "").indexOf("    env:"),
+			(nightCheck ?? "").indexOf("    steps:"),
+		);
+		expect(jobEnv).not.toContain("secrets.");
 	});
 });

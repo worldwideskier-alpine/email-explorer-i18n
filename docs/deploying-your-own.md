@@ -27,7 +27,8 @@ what lets GitHub's **Sync fork** bring later fixes in (see
 
 In the Cloudflare dashboard, **My Profile → API Tokens → Create Token**. The
 workflow runs `wrangler deploy`, `wrangler r2 bucket info` / `create`,
-`wrangler secret put` and `wrangler deployments status`, and nothing else, so
+`wrangler secret put`, `wrangler deployments status` and `wrangler rollback`,
+and the evening check reads two things from the bucket, and nothing else, so
 the token needs, at minimum, **Workers Scripts: Edit** and **Workers R2
 Storage: Edit** on your account. The *Edit Cloudflare Workers* template
 includes both, along with permissions this does not use: nothing here uses KV
@@ -118,6 +119,18 @@ the page and that an API path is answered by the Worker rather than by the
 page being served in its place. An accepted upload is not a served one, and
 the difference is otherwise invisible from here. It waits up to about a
 minute for Cloudflare to start serving the new build before calling it wrong.
+
+If that check fails -- or anything else fails once the new version is live --
+the run puts back the version that was live before it (`wrangler rollback`)
+and stays failed, so you hear about it without your users meeting it.
+
+A second workflow, **Check last night's run**, runs every evening half an hour
+after the Worker's nightly cron. It reads what the night left in the bucket --
+backups, the spam purge, unfinished deletions -- and fails when it did not end
+well, so GitHub mails you instead of you having to open `/root`. It prints
+counts and times only. GitHub turns a schedule off after sixty days without
+activity in the repository; the check fails ten days before that, and any
+commit keeps it on.
 
 ## 7. Register, and make the accounts
 

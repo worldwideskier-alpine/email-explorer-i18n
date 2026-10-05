@@ -1,0 +1,62 @@
+name: Check last night's run
+
+# Every evening, half an hour after the Worker's own cron (18:00 UTC in
+# dev/wrangler.jsonc), asks what the nightly run left in the bucket and fails
+# when it did not end well: a run cut off, a pass that failed, a deletion left
+# unfinished, a paused backup nothing carries on, or no run at all. GitHub
+# mails a failed scheduled run to the repository's owner, so nobody has to
+# remember to open /root. See scripts/night-check.mjs.
+#
+# It reads and nothing else, and prints counts and times only: the record
+# names mailboxes, and this repository's logs are public.
+on:
+  schedule:
+    - cron: '30 18 * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: night-check
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # The check waits up to twenty minutes for a night still carrying on.
+    timeout-minutes: 30
+    env:
+      # The bucket is this deployment's, as the deploy has it; see deploy.yml.
+      R2_BUCKET_NAME: ${{ vars.R2_BUCKET_NAME }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Plain node, nothing to install: the scripts import only node: and
+      # each other.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+      - name: Apply this deployment's configuration
+        run: node packages/worker/scripts/apply-deployment-config.mjs
+      - name: Read last night's run
+        run: |
+          set -o pipefail
+          node packages/worker/scripts/check-night.mjs 2>&1 \
+            | node packages/worker/scripts/withhold.mjs
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # GitHub turns a schedule off after sixty days with no activity in the
+      # repository, and then this check simply stops -- the one failure it
+      # could not report. So it fails ten days before, while it still runs.
+      - name: Keep this schedule from being turned off
+        if: always()
+        run: |
+          days=$(( ( $(date +%s) - $(git log -1 --format=%ct) ) / 86400 ))
+          echo "The last commit is $days day(s) old."
+          if [ "$days" -ge 50 ]; then
+            echo "::error::No commit for $days days: GitHub turns this schedule off at sixty. Any commit to main keeps it on."
+            exit 1
+          fi

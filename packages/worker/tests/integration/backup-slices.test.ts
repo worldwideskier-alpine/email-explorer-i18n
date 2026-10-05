@@ -31,7 +31,10 @@ import {
  * very one a single pass would have written, or a restore finds the seam.
  */
 
-const NOW = new Date("2026-10-02T18:00:00.000Z");
+// Tonight, not a date: a night carried on more than twenty hours after it
+// began is given up (NIGHT_LONGEST_MS), against the real clock. Fixed at
+// 2026-10-02, these tests began failing twenty hours later.
+const NOW = new Date();
 const bucket = () => (env as unknown as { BUCKET: R2Bucket }).BUCKET;
 const stub = () => env.MAILBOX.get(env.MAILBOX.idFromName(mailboxId));
 const fireAlarm = () =>

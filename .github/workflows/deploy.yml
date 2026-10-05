@@ -1,8 +1,8 @@
 name: Deploy to Cloudflare
 
-# The only workflow there is. It carries the full check set (lint, build,
-# both test suites) because it is the last gate before production, and the
-# same job is what checks a pull request.
+# It carries the full check set (lint, build, both test suites) because it
+# is the last gate before production, and the same jobs are what check a pull
+# request. The other workflow, night-check.yml, only reads.
 on:
   push:
     branches: [main]
@@ -27,17 +27,21 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
 
-# Read, and nothing else, for every job. build-and-check had no block of its
+# Read, and nothing else, for every job. The checking job had no block of its
 # own and so ran with the repository's default token, whatever that was set
-# to -- and it runs every package install and build script there is, on
-# every push. A dependency that turned hostile there would have held a token
+# to -- and the checks run every package install and build script there is,
+# on every push. A dependency that turned hostile there would have held a token
 # that could push to main, and a push to main deploys. The checkouts below do
 # not leave the token in .git/config either.
 permissions:
   contents: read
 
 jobs:
-  build-and-check:
+  # The checks, as three jobs side by side rather than one after another: the
+  # worker's suite is most of the time, and nothing in it waits on the lint,
+  # the build or the dashboard's suite. Every one of them still runs on every
+  # pull request, and the deploy waits for all three.
+  lint-and-build:
     runs-on: ubuntu-latest
     # A hung install or test used to hold a runner for GitHub's six hours.
     # A whole run takes a few minutes.
@@ -59,15 +63,47 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run lint
+      # The build type-checks the dashboard, its tests included (vue-tsc).
       - run: pnpm run build
-      - run: pnpm test
+
+  # Needs no build: the pool reads the dashboard's assets from nowhere, and
+  # the suite type-checks the Worker and its tests itself before it runs.
+  test-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test-worker
+
+  test-dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test-dashboard
 
   # A push to main, or a run started by hand from main -- which only somebody
   # with write access can start, and which docs/deploying-your-own.md tells a
   # fork to use after setting its variables. Never a pull request.
   deploy:
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    needs: build-and-check
+    needs: [lint-and-build, test-worker, test-dashboard]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -150,6 +186,24 @@ jobs:
         run: |
           host="${PRODUCTION_URL#https://}"
           echo "::add-mask::${host%%/*}"
+      # What is live before this deploy, so a deploy that fails its check
+      # can be put back (the last step). Without it there is nothing to go
+      # back to -- a first deploy, or a read that failed -- and a failure
+      # then leaves the new version live and says so.
+      - name: Note the version that is live now
+        id: before
+        working-directory: packages/worker/dev
+        run: |
+          set -o pipefail
+          timeout 90 npx wrangler deployments status 2>&1 \
+            | node ../scripts/withhold.mjs \
+            | tee "$RUNNER_TEMP/status-before.txt" \
+            || echo "could not read the live version; a failure below cannot be rolled back"
+          node ../scripts/live-version.mjs \
+            < "$RUNNER_TEMP/status-before.txt" >> "$GITHUB_OUTPUT" || true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       # wrangler prints the address it deployed to, and a fork that has not
       # set PRODUCTION_URL has nothing masking it -- so its address went
       # into a public log before its root existed, and whoever read that log
@@ -222,3 +276,33 @@ jobs:
         run: node packages/worker/scripts/check-deployment.mjs
         env:
           EXPECTED_WORKER_VERSION: ${{ steps.live.outputs.version }}
+      # A deploy that failed after it may have changed what is live -- the
+      # check above said production is not serving this build, or the secret
+      # step failed with the new code already up -- is put back to the
+      # version that was live before it, rather than left for somebody to
+      # notice. Only when what is live is no longer that version: a deploy
+      # that failed before uploading changed nothing. The run stays failed,
+      # so the failure is still mailed; production is simply not left on it.
+      - name: Roll back to the version that was live before
+        if: failure() && steps.before.outputs.version != ''
+        working-directory: packages/worker/dev
+        run: |
+          set -o pipefail
+          now="$(timeout 90 npx wrangler deployments status 2>&1 | node ../scripts/withhold.mjs | node ../scripts/live-version.mjs || true)"
+          if [ "$now" = "version=$BEFORE" ]; then
+            echo "The version that was live before this deploy is still live; nothing to roll back."
+            exit 0
+          fi
+          timeout 120 npx wrangler rollback "$BEFORE" --yes \
+            --message "The deploy of ${GITHUB_SHA::7} failed after it went live (run $GITHUB_RUN_ID)" 2>&1 \
+            | node ../scripts/withhold.mjs
+          after="$(timeout 90 npx wrangler deployments status 2>&1 | node ../scripts/withhold.mjs | node ../scripts/live-version.mjs || true)"
+          if [ "$after" != "version=$BEFORE" ]; then
+            echo "::error::Rolled back, but the live version is not the one from before (${after:-unreadable})."
+            exit 1
+          fi
+          echo "::error::This deploy failed and was rolled back: $BEFORE is live again."
+        env:
+          BEFORE: ${{ steps.before.outputs.version }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
