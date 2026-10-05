@@ -143,3 +143,10 @@ vite.config.ts.timestamp-*
 .dev.vars
 .dev.vars.*
 packages/worker/dashboard
+
+# Claude Code: a person's own overrides, and Claude Security's reports. A
+# report carries its own .gitignore as well; this keeps a stray one out too.
+.claude/settings.local.json
+.claude/*.local.md
+.claude/*.local.json
+CLAUDE-SECURITY-*/

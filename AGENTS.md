@@ -713,6 +713,36 @@ the memory history's empty start and warned. Over a hundred such lines a run
 buried the two that were real: a catalogue key the compile check never
 reached, and a second copy of the editor's Link extension.
 
+## Security checks
+
+Every change goes to main through a pull request, and is merged only after
+all of these pass, in this order:
+
+1. Both test suites (CI runs them on the pull request). The permission
+   boundaries are tested from both sides: `route-access.test.ts` asks every
+   route as somebody who must be refused *and* as somebody who must be let
+   in, and `root-accounts.test.ts` holds that a deleted person's open session
+   reaches nothing.
+2. `.claude/pre-merge-check.sh`: `pnpm audit --audit-level high` (pnpm's own
+   audit; the workspace is pnpm), then Gitleaks over the commits being
+   merged. A high or critical advisory, or a key, stops the merge. A key found
+   is taken out of the code at once; history is not rewritten, and the key is
+   reported as exposed, by name, file and commit, never by value.
+3. `/security-review` in a session other than the one that made the change
+   (`claude -p "/security-review"` on the branch is one). A finding judged a
+   false positive is explained in the pull request's description.
+4. For a change to a boundary, authentication or key handling, Claude
+   Security over that change (`/claude-security`, "scan changes").
+
+`.claude/settings.json` turns on two plugins from Anthropic's official
+marketplace: `security-guidance`, which checks code as it is written against
+`.claude/claude-security-guidance.md` (this project's boundaries and key
+rules) and `.claude/security-patterns.json` (a key of this project's kinds
+written out, or a key-like name given a value in a Wrangler config), and
+`claude-security`. Its reports (`CLAUDE-SECURITY-<time>/`) are never
+committed. Dependabot and testing the live deployment from outside are not
+part of this.
+
 ## Conventions
 
 - Every push to `main` deploys. One workflow does it (`deploy.yml`), and it
