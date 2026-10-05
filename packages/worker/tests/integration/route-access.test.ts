@@ -1,7 +1,13 @@
-import { env, SELF } from "cloudflare:test";
+import { env, runInDurableObject, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import SOURCE from "../../src/index.ts?raw";
-import { authenticatedFetch, testAuthBeforeAll } from "./utils";
+import {
+	authenticatedFetch,
+	createMailbox,
+	mailboxId,
+	personId,
+	testAuthBeforeAll,
+} from "./utils";
 
 /**
  * Who may reach each route, as one table.
@@ -11,6 +17,10 @@ import { authenticatedFetch, testAuthBeforeAll } from "./utils";
  * hold the mailbox, as somebody who is not root -- so a route added without
  * its gate fails here whatever else it does. And the table has to name every
  * route the Worker registers: a new one is classified before this passes.
+ *
+ * Each question is asked from the other side too: the holder reaches every
+ * route of their own mailbox, root every root route, a session every session
+ * route. A gate that refused everyone would pass the refusals alone.
  */
 
 type Access = "public" | "session" | "holder" | "root";
@@ -99,10 +109,10 @@ function registered(): string[] {
 /** Somebody else's mailbox: it exists, and the fixture person does not hold it. */
 const THEIRS = "theirs@example.org";
 
-const request = (route: string, signedIn: boolean) => {
+const request = (route: string, signedIn: boolean, mailbox = THEIRS) => {
 	const [method, template] = route.split(" ");
 	const path = template
-		.replace(":mailboxId", encodeURIComponent(THEIRS))
+		.replace(":mailboxId", encodeURIComponent(mailbox))
 		.replace(/:[A-Za-z]+/g, "x");
 	const init: RequestInit = {
 		method,
@@ -166,5 +176,57 @@ describe("the table of who may reach each route", () => {
 			if (res.status !== 403) wrong.push(`${route} -> ${res.status}`);
 		}
 		expect(wrong).toEqual([]);
+	});
+});
+
+/**
+ * The same table from the side that is let in. What a route answers past its
+ * gate depends on what it was sent -- ids here are made up, bodies empty --
+ * so this asks only that the gate itself did not refuse: never 401, never
+ * 403. A route that is refused here refuses the people it exists for.
+ */
+describe("the table, from the side that is let in", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createMailbox();
+	});
+
+	const refused = async (routes: string[], mailbox?: string) => {
+		const wrong: string[] = [];
+		for (const route of routes) {
+			const res = await request(route, true, mailbox);
+			if (res.status === 401 || res.status === 403) {
+				wrong.push(`${route} -> ${res.status}`);
+			}
+		}
+		return wrong;
+	};
+
+	it("lets the holder reach every route of their own mailbox", async () => {
+		expect(await refused(routesThatAre("holder"), mailboxId)).toEqual([]);
+	});
+
+	it("lets a session reach every route that needs only a session", async () => {
+		// Each run of these may end the session (logout, a password change),
+		// so each is asked on a session of its own.
+		const wrong: string[] = [];
+		for (const route of routesThatAre("session")) {
+			await testAuthBeforeAll();
+			wrong.push(...(await refused([route])));
+		}
+		expect(wrong).toEqual([]);
+	});
+
+	it("lets root reach every root route", async () => {
+		await runInDurableObject(
+			env.MAILBOX.get(env.MAILBOX.idFromName("AUTH")),
+			async (_instance, state) => {
+				state.storage.sql.exec(
+					"UPDATE app_roles SET root_person_id = ? WHERE id = 1",
+					personId,
+				);
+			},
+		);
+		expect(await refused(routesThatAre("root"))).toEqual([]);
 	});
 });

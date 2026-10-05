@@ -1,0 +1,36 @@
+{
+  "patterns": [
+    {
+      "rule_name": "resend-api-key-in-code",
+      "regex": "\\bre_[A-Za-z0-9]{8}_[A-Za-z0-9]{20,}",
+      "reminder": "This looks like a Resend API key. Sending keys are set by each person on their own screen and kept in R2 (settings/person/...); none belongs in the code, a test or a log. Remove it, and report the key as exposed rather than rewriting history."
+    },
+    {
+      "rule_name": "anthropic-api-key-in-code",
+      "regex": "sk-ant-[A-Za-z0-9_-]{20,}",
+      "reminder": "This looks like an Anthropic API key. The spam check's key is set on the mailbox's settings screen and kept in R2; none belongs in the code, a test or a log. Remove it, and report the key as exposed rather than rewriting history."
+    },
+    {
+      "rule_name": "turnstile-secret-in-code",
+      "regex": "\\b0x4AAAA[A-Za-z0-9_-]{26,}",
+      "reminder": "This looks like a Cloudflare Turnstile secret key. Root sets it on /root and it is kept in R2 (settings/turnstile.json); none belongs in the code, a test or a log. Remove it, and report the key as exposed."
+    },
+    {
+      "rule_name": "cloudflare-api-token-in-code",
+      "regex": "CLOUDFLARE_API_TOKEN[\"']?\\s*[:=]\\s*[\"']?[A-Za-z0-9_-]{30,}",
+      "reminder": "This looks like a Cloudflare API token written out. It lives only in the repository's Actions secrets and reaches only the workflow steps that run wrangler (workflowGuards.test.ts); never in a file. Remove it, and report the token as exposed."
+    },
+    {
+      "rule_name": "private-key-in-code",
+      "regex": "-----BEGIN [A-Z ]{0,20}PRIVATE KEY-----|\"d\"\\s*:\\s*\"[A-Za-z0-9_-]{40,}\"",
+      "exclude_paths": ["**/tests/vitest.config.mts"],
+      "reminder": "This looks like a private key (PEM, or the private part of a JWK such as a VAPID key). A key the running Worker needs is a Worker secret (wrangler secret put), never a value in the code. The only allowed one is the test-only VAPID key in tests/vitest.config.mts."
+    },
+    {
+      "rule_name": "secret-in-wrangler-vars",
+      "regex": "[A-Z0-9_]*(SECRET|PRIVATE|PASSWORD|API_KEY|TOKEN)[A-Z0-9_]*[\"']?\\s*[:=]",
+      "paths": ["wrangler.jsonc", "wrangler.toml", "wrangler.json"],
+      "reminder": "A key-like name is being given a value in a Wrangler config file. Everything under `vars` is committed in plain text and shown in the deploy log. A key the Worker needs is a Worker secret (wrangler secret put), and only its name may appear here, in a comment."
+    }
+  ]
+}

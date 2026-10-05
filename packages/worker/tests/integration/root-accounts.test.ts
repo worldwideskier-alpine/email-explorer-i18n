@@ -293,6 +293,44 @@ describe("what root does with accounts", () => {
 	});
 
 	/**
+	 * A deleted person is a customer who has left, and what they had open
+	 * still holds a session. Signing in again being refused is not the whole
+	 * of it: a tab left open must not reach their account, their mailboxes
+	 * or anybody's, from the moment the deletion answers.
+	 */
+	it("ends the person's sessions, so nothing they left open still works", async () => {
+		await createUser("leaver@example.com", false);
+		const session = (await signIn("leaver@example.com")).id;
+		const made = await as(session)("http://local.test/api/v1/mailboxes", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ email: "left@example.com", name: "Left" }),
+		});
+		expect(made.status).toBeLessThan(300);
+		const before = await as(session)(
+			`http://local.test/api/v1/mailboxes/${encodeURIComponent("left@example.com")}/emails?folder=inbox`,
+		);
+		expect(before.status).toBe(200);
+
+		const leaverId = await personIdOf("leaver@example.com");
+		await unlock(leaverId);
+		const res = await as(root)(
+			`http://local.test/api/v1/root/accounts/${leaverId}`,
+			{ method: "DELETE" },
+		);
+		expect(res.status).toBe(200);
+
+		for (const path of [
+			"/api/v1/auth/me",
+			"/api/v1/mailboxes",
+			`/api/v1/mailboxes/${encodeURIComponent("left@example.com")}/emails?folder=inbox`,
+		]) {
+			const after = await as(session)(`http://local.test${path}`);
+			expect(after.status, path).toBe(401);
+		}
+	});
+
+	/**
 	 * Deleting means deleting.
 	 *
 	 * This used to keep the mailbox, on the reasoning that mail outlives
