@@ -276,6 +276,10 @@ jobs:
         run: node packages/worker/scripts/check-deployment.mjs
         env:
           EXPECTED_WORKER_VERSION: ${{ steps.live.outputs.version }}
+      # Temporary: a failure once the new version is live, to see the step
+      # below roll it back. Reverted by the next commit.
+      - name: Temporary -- fail once live
+        run: exit 1
       # A deploy that failed after it may have changed what is live -- the
       # check above said production is not serving this build, or the secret
       # step failed with the new code already up -- is put back to the
