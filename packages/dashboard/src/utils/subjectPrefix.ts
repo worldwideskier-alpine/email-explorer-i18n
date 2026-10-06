@@ -52,11 +52,17 @@ const FORWARD = [
 	"전달",
 ];
 
+// The counter carries its own trailing space. Written as `\s*(counter)?\s*`,
+// two runs of white space sat side by side with nothing between them when
+// there was no counter, and a subject of "Re" and a long run of spaces was
+// split between them every possible way before failing: quadratic, from a
+// sender's subject, on reply or forward (Claude Security F13). The subjects
+// it accepts are the same.
 const prefixPattern = (words: string[]) =>
 	new RegExp(
 		`^\\s*(?:${words
 			.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-			.join("|")})\\s*(?:\\[\\d+\\]|\\^\\d+)?\\s*[:：]`,
+			.join("|")})\\s*(?:(?:\\[\\d+\\]|\\^\\d+)\\s*)?[:：]`,
 		"iu",
 	);
 
