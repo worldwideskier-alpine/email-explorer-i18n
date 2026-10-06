@@ -49,6 +49,21 @@ for a private key written without its public point: a fork that set only its
 own private key used to hand out this deployment's public key, and every push
 was refused. A value given for it must have a key's shape, or the deploy stops.
 
+The private key is set nowhere. The deploy asks the Worker's secret list
+(names only) and, when `VAPID_PRIVATE_KEY` is not in it, makes a key on the
+runner and hands it straight to `wrangler secret put` (`scripts/push-key.mjs`,
+the step "Give the Worker a push key if it has none"). A Worker that has one
+keeps it, and so does one whose list could not be read: a key put over an
+existing one silently stops every device subscribed under it. It used to be a
+GitHub secret uploaded on every deploy, which kept a copy on GitHub and left a
+fork that skipped making one with no push; that copy is read by nothing now,
+and the deploy warns while it exists. Only whether it is set reaches a step.
+The step never fails the run, since the new code is live by then and a
+failure would roll it back for a key. `push-key.test.ts`;
+`workflowGuards.test.ts` holds that the key reaches only `secret put`, only
+whole, and is never echoed, teed or written down -- it is not a GitHub secret,
+so nothing would mask it in the public log.
+
 User-facing setup lives in `docs/deploying-your-own.md`.
 
 ## Layout
@@ -611,8 +626,8 @@ one `wrangler deployments status` said is live: a change to the Worker alone
 leaves the page and its bundle as they were, so they prove nothing about the
 code. It needs the `PRODUCTION_URL` secret; without it the step is skipped
 and says so. The step before it prints the version that is actually running,
-which is *not* the id the deploy step prints -- uploading the VAPID secret
-publishes a version of its own, after it.
+which on a deploy that gave the Worker its push key is *not* the id the deploy
+step prints -- putting a secret publishes a version of its own, after it.
 
 A deploy that fails once it is live is rolled back. The step before the
 deploy notes the version that is live then (`steps.before`), and the last

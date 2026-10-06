@@ -27,12 +27,12 @@ what lets GitHub's **Sync fork** bring later fixes in (see
 
 In the Cloudflare dashboard, **My Profile → API Tokens → Create Token**. The
 workflow runs `wrangler deploy`, `wrangler r2 bucket info` / `create`,
-`wrangler secret put`, `wrangler deployments status` and `wrangler rollback`,
-and the evening check reads two things from the bucket, and nothing else, so
-the token needs, at minimum, **Workers Scripts: Edit** and **Workers R2
-Storage: Edit** on your account. The *Edit Cloudflare Workers* template
-includes both, along with permissions this does not use: nothing here uses KV
-or Pages.
+`wrangler secret list` / `put`, `wrangler deployments status` and
+`wrangler rollback`, and the evening check reads two things from the bucket,
+and nothing else, so the token needs, at minimum, **Workers Scripts: Edit**
+and **Workers R2 Storage: Edit** on your account. The *Edit Cloudflare
+Workers* template includes both, along with permissions this does not use:
+nothing here uses KV or Pages.
 
 Note your **Account ID** as well; it is on the right of any zone's overview
 page.
@@ -44,14 +44,26 @@ Cloudflare dashboard and set it there. The Worker is published at
 asks for one interactively -- which it cannot do in a workflow, so the first
 deploy fails instead. It is set once per account, not per Worker.
 
-## 3. Generate a push-notification key pair
+## 3. The push-notification key: nothing to do
 
-```bash
-npx @pushforge/builder vapid
-```
+The first deploy gives your Worker a key of its own for signing push
+notifications, and every later deploy leaves it as it is. It is made on the
+runner when the Worker has none and handed straight to the Worker's secrets
+(`VAPID_PRIVATE_KEY`): it is not kept on GitHub, not printed in the log, and
+neither wrangler nor the Cloudflare dashboard will show it to anyone
+afterwards. The Worker works out from it the public half that browsers need.
 
-Keep both halves. The public one is a repository variable, the private one a
-secret.
+If you followed an earlier version of this guide and set a
+`VAPID_PRIVATE_KEY` repository secret, delete it (**Settings → Secrets and
+variables → Actions**). Nothing reads it any more, and every deploy says so
+with a warning until it is gone. Your Worker keeps the key it was given from
+it, so notifications carry on.
+
+To replace the key, delete the `VAPID_PRIVATE_KEY` secret from the Worker in
+the Cloudflare dashboard (**Workers & Pages →** your Worker **→ Settings →
+Variables and Secrets**) and deploy again: the deploy makes a new one. Every
+device subscribed under the old key stops receiving notifications until it
+subscribes again.
 
 ## 4. Set the repository secrets
 
@@ -61,7 +73,6 @@ secret.
 |---|---|
 | `CLOUDFLARE_API_TOKEN` | From step 2. |
 | `CLOUDFLARE_ACCOUNT_ID` | From step 2. |
-| `VAPID_PRIVATE_KEY` | The private half from step 3, the whole JSON object. |
 
 Two more are optional, and both are addresses rather than credentials. They
 are secrets anyway, for one reason: GitHub replaces a secret's value with
@@ -79,14 +90,15 @@ prints when it finishes.
 
 **Settings → Secrets and variables → Actions → Variables**. Each one you
 leave out keeps the default checked into `packages/worker/dev/wrangler.jsonc`,
-which is this repository's own deployment. **Set the first three**, or you
-will deploy under this repository's names; the fourth is usually left unset.
+which is this repository's own deployment. **Set the first two**, or you
+will deploy under this repository's names; the other two are usually left
+unset.
 
 | Variable | What it is |
 |---|---|
 | `WORKER_NAME` | Your Worker's name. Lowercase letters, digits and dashes. Also decides its `*.workers.dev` address. |
 | `R2_BUCKET_NAME` | The R2 bucket holding mail and attachments. Same naming rules. Created for you on the first deploy. |
-| `VAPID_PUBLIC_KEY` | The public half from step 3. |
+| `VAPID_PUBLIC_KEY` | Usually left unset. The Worker works out the public half of its push key from the private one (step 3); this is only used for a private key written without its public point, which the deploy never makes. |
 | `ACCOUNT_RECOVERY_FROM` | Usually left unset: the password-reset sender is set on `/root` (step 7). Set it only to fix it from the deployment, in which case it wins over `/root` and `/root` says so. Prefer the secret of the same name (step 4), which keeps it out of the public log. |
 
 Nothing in the source names a password-reset sender any more, so a new
@@ -100,8 +112,8 @@ never arrived.
 
 Push to `main`, or run the **Deploy to Cloudflare** workflow by hand from the
 Actions tab, on `main`. The run creates the R2 bucket if it is missing, deploys
-the Worker, and uploads the VAPID private key as a Worker secret (skipped, with
-a line saying so, when you have not set one).
+the Worker, and gives it a push-notification key if it has none (step 3) --
+which only the first deploy does; the others say it has one and leave it.
 
 A new fork has Actions switched off until you enable them in its **Actions**
 tab, so the first push deploys nothing until you have.
@@ -196,10 +208,11 @@ nothing here to conflict.
 
 ## What is optional
 
-- **Push notifications.** Without a VAPID pair the app works; the browser
-  notification toggle simply cannot be turned on. That needs the private key:
-  the public one alone is not enough, and the checked-in default is this
-  repository's, which is no use to you.
+- **Push notifications.** Nothing to set up: the first deploy gives the
+  Worker its key (step 3). Each person turns notifications on for their own
+  browser, in the dashboard's settings. If a deploy could not give the Worker
+  a key, it says so with a warning, notifications cannot be turned on until
+  it has one, and the next deploy tries again.
 - **Outbound mail.** Without a Resend key you can read mail but not send it.
   The app says so rather than failing silently.
 - **Second-pass spam filtering.** Per mailbox, on the settings screen, you can

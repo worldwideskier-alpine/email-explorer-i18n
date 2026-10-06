@@ -171,6 +171,95 @@ describe("the deploy workflow", () => {
 	});
 
 	/**
+	 * The push key is made on the runner when the Worker has none, and goes
+	 * to the Worker's secrets and nowhere else (scripts/push-key.mjs). It
+	 * used to be a GitHub secret uploaded on every deploy; that copy is read
+	 * by nothing now, and a step that took its value again could put it back
+	 * over the Worker's own key. Only whether it is still set reaches a step,
+	 * so that the deploy can say it should be deleted.
+	 */
+	it("hands no step the old GitHub copy of the push key, only whether it is set", () => {
+		const mentions = Object.values(workflows).flatMap((source) =>
+			[...source.matchAll(/\$\{\{[^}]*VAPID_PRIVATE_KEY[^}]*\}\}/g)].map(
+				([expression]) => expression,
+			),
+		);
+		expect(mentions).toEqual(["${{ secrets.VAPID_PRIVATE_KEY != '' }}"]);
+		const step =
+			(deploy ?? "")
+				.split(/\n {6}- /)
+				.find((one) => one.includes("secrets.VAPID_PRIVATE_KEY")) ?? "";
+		expect(step).toMatch(/^name: Say whether an old push key/);
+		expect(step).not.toContain("CLOUDFLARE_API_TOKEN");
+		expect(step).not.toContain("wrangler");
+	});
+
+	/**
+	 * The step that gives the Worker a push key asks first, and puts one only
+	 * on "generate": a key put over an existing one quietly stops every
+	 * device subscribed under it. The key it makes is held in one variable
+	 * and handed to `wrangler secret put` on its stdin -- never echoed,
+	 * written to a file, teed or exported, because it is not a GitHub secret
+	 * and nothing would mask it in this public log. And only once it is not
+	 * empty: `secret put` takes an empty stdin as the value, and the next
+	 * deploy would find that key present and leave it.
+	 */
+	it("makes a push key only for a Worker without one, and hands it only to the Worker", () => {
+		const step =
+			(deploy ?? "")
+				.split(/\n {6}- /)
+				.find((one) =>
+					one.startsWith("name: Give the Worker a push key if it has none"),
+				) ?? "";
+		expect(step, "the push key step is missing").toBeTruthy();
+		const script = step
+			.slice(step.indexOf("run: |"))
+			.replace(/\\\n\s*/g, " ")
+			.split("\n")
+			.filter((line) => !line.trim().startsWith("#"))
+			.map((line) => line.trim())
+			.join("\n");
+		const at = (text: string) => script.indexOf(text);
+		expect(at("wrangler secret list --format json")).toBeGreaterThan(-1);
+		expect(at("push-key-step.mjs decide")).toBeGreaterThan(
+			at("wrangler secret list --format json"),
+		);
+		// Everything but "generate" ends the step before the key is made.
+		const deciding = script.slice(
+			at("push-key-step.mjs decide"),
+			at("push-key-step.mjs generate"),
+		);
+		expect(deciding).toMatch(
+			/if \[ "\$verdict" != "generate" \]; then\n(?:.*\n)*?exit 0\nfi/,
+		);
+		expect(at("wrangler secret put VAPID_PRIVATE_KEY")).toBeGreaterThan(
+			at("push-key-step.mjs generate"),
+		);
+
+		// The key, line by line: made into one variable, checked, handed over.
+		const generated = script
+			.split("\n")
+			.filter((line) => line.includes("push-key-step.mjs generate"));
+		expect(generated).toEqual([
+			'push_key="$(node ../scripts/push-key-step.mjs generate)" || push_key=""',
+		]);
+		const uses = script.split("\n").filter((line) => /push_key/.test(line));
+		for (const line of uses) {
+			if (line === generated[0]) continue;
+			if (line === 'if [ -z "$push_key" ]; then') continue;
+			expect(line).toMatch(
+				/^if printf '%s' "\$push_key" \| (?:timeout \d+ )?npx wrangler secret put VAPID_PRIVATE_KEY 2>&1 \| node \S*withhold\.mjs; then$/,
+			);
+		}
+		expect(uses).toHaveLength(3);
+		expect(at('if [ -z "$push_key" ]; then')).toBeLessThan(
+			at("wrangler secret put"),
+		);
+		expect(script).not.toMatch(/\btee\b|set -x|>\s*[^&\s]|>\s+\S|add-mask/);
+		expect(script).not.toMatch(/GITHUB_(?:ENV|OUTPUT|STEP_SUMMARY)/);
+	});
+
+	/**
 	 * Creating a bucket that is already there is an error, and the step
 	 * printed it on every deploy: an [ERROR] in every log that meant nothing.
 	 * It asks first now, and keeps what the question prints out of the log.

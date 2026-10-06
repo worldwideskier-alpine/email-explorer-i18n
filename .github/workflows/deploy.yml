@@ -221,28 +221,65 @@ jobs:
       # No RESEND_API_KEY here: each person sets their own on their screen
       # (/admin, or /root for root), and nothing reads a deployment-wide one
       # any more; see app-settings.ts.
-      - name: Set VAPID_PRIVATE_KEY secret
-        working-directory: packages/worker/dev
-        # Skipped when the secret is not set: piping an empty value would
-        # either blank the Worker's key or fail the job after the Worker is
-        # already live, and a fork without a VAPID pair simply has no push.
+      #
+      # The push key used to be a GitHub secret, uploaded on every deploy.
+      # Nothing reads that copy now (the step below makes the key), and this
+      # says so until it is deleted. It is handed whether the secret is set,
+      # never its value, and holds no token.
+      - name: Say whether an old push key is still kept on GitHub
         run: |
-          if [ -z "$VAPID_PRIVATE_KEY" ]; then
-            echo "VAPID_PRIVATE_KEY is not set; push notifications stay off."
+          if [ "$OLD_PUSH_KEY_ON_GITHUB" = "true" ]; then
+            echo "::warning::The VAPID_PRIVATE_KEY repository secret is no longer used: the Worker keeps its push key among its own secrets. Delete it under Settings, Secrets and variables, Actions. The Worker's key stays as it is."
+          fi
+        env:
+          OLD_PUSH_KEY_ON_GITHUB: ${{ secrets.VAPID_PRIVATE_KEY != '' }}
+      # A Worker with no push key gets one, made here and handed straight to
+      # its secrets; one that has a key keeps it. See scripts/push-key.mjs.
+      #
+      # After the deploy, because a fork's first deploy is what creates the
+      # Worker whose secrets are asked. Nothing here fails the run: the new
+      # code is already live, a failure would roll it back for the sake of a
+      # key, and a Worker still without one is asked again next time. Every
+      # doubt -- a list that cannot be read, a key that did not come out
+      # whole -- leaves the key alone, since a key put over an existing one
+      # silently stops every device subscribed under it.
+      - name: Give the Worker a push key if it has none
+        working-directory: packages/worker/dev
+        run: |
+          set -o pipefail
+          if ! listed="$(timeout 90 npx wrangler secret list --format json 2>&1 | node ../scripts/withhold.mjs)"; then
+            printf '%s\n' "$listed"
+            echo "::warning::Could not read the names of the Worker's secrets, so its push key was left as it is. The next deploy asks again."
             exit 0
           fi
-          set -o pipefail
-          printf '%s' "$VAPID_PRIVATE_KEY" \
-            | npx wrangler secret put VAPID_PRIVATE_KEY 2>&1 \
-            | node ../scripts/withhold.mjs
+          verdict="$(printf '%s' "$listed" | node ../scripts/push-key-step.mjs decide)" || verdict=""
+          if [ "$verdict" = "present" ]; then
+            echo "The Worker has its push key; it is left as it is."
+            exit 0
+          fi
+          if [ "$verdict" != "generate" ]; then
+            printf '%s\n' "$listed"
+            echo "::warning::Could not tell from the list above whether the Worker has a push key, so it was left as it is."
+            exit 0
+          fi
+          push_key="$(node ../scripts/push-key-step.mjs generate)" || push_key=""
+          if [ -z "$push_key" ]; then
+            echo "::warning::The Worker has no push key, and making one failed; push notifications stay off until a deploy makes one."
+            exit 0
+          fi
+          if printf '%s' "$push_key" | timeout 120 npx wrangler secret put VAPID_PRIVATE_KEY 2>&1 | node ../scripts/withhold.mjs; then
+            echo "The Worker had no push key and has one now."
+          else
+            echo "::warning::The Worker has no push key, and giving it one failed; the next deploy tries again."
+          fi
         env:
-          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      # Setting a secret publishes a version of its own, so the id printed by
-      # the deploy step above is not the one left running. This prints the one
-      # that is. Informational: the deploy has already happened, and a hiccup
-      # reading it back is not a reason to call the run failed.
+      # Giving the Worker a key publishes a version of its own, so on the one
+      # deploy that does it the id printed by the deploy step above is not the
+      # one left running. This prints the one that is. Informational: the
+      # deploy has already happened, and a hiccup reading it back is not a
+      # reason to call the run failed.
       #
       # Every address is struck out of the output. wrangler names the account
       # that published a version, and the first run of this step put that
@@ -277,10 +314,9 @@ jobs:
         env:
           EXPECTED_WORKER_VERSION: ${{ steps.live.outputs.version }}
       # A deploy that failed after it may have changed what is live -- the
-      # check above said production is not serving this build, or the secret
-      # step failed with the new code already up -- is put back to the
-      # version that was live before it, rather than left for somebody to
-      # notice. Only when what is live is no longer that version: a deploy
+      # check above said production is not serving this build -- is put back
+      # to the version that was live before it, rather than left for somebody
+      # to notice. Only when what is live is no longer that version: a deploy
       # that failed before uploading changed nothing. The run stays failed,
       # so the failure is still mailed; production is simply not left on it.
       - name: Roll back to the version that was live before
