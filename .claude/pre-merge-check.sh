@@ -39,8 +39,9 @@ git rev-parse --verify --quiet "${base}^{commit}" > /dev/null || {
 	exit 1
 }
 
-# On every scan gitleaks also reads <source>/.gitleaksignore,
-# <source>/.gitleaks.toml and a config named in its environment. Each of them
+# gitleaks reads <source>/.gitleaksignore on every scan, whatever -i names;
+# and, given no --config, it takes its config from GITLEAKS_CONFIG or
+# GITLEAKS_CONFIG_TOML, else from <source>/.gitleaks.toml. Each of them
 # silenced the commits being merged as well, so none is allowed: what main's
 # history needs goes in ${known}, which only the full scan reads.
 unset GITLEAKS_CONFIG GITLEAKS_CONFIG_TOML
@@ -81,16 +82,35 @@ done < "$known"
 
 report="$(mktemp -d)"
 trap 'rm -rf "$report"' EXIT
-# --text and --no-textconv: git log -p prints a file it takes for binary as
-# "Binary files differ", and gitleaks skips it. A .gitattributes (-diff,
-# binary, a diff driver) or one NUL byte in the file hid its key from both
-# scans. --ignore-gitleaks-allow: a "gitleaks:allow" on the line let it
-# through. The report is read for its rule, file, line and commit alone;
-# gitleaks' own -v prints the author's name and address beside them.
+# --no-color: color.ui=always in the runner's own git config made a diff
+# gitleaks could not parse, and both scans passed a key. --text and
+# --no-textconv: git log -p prints a file it takes for binary as "Binary
+# files differ", and gitleaks skips it. A .gitattributes (-diff, binary, a
+# diff driver) or one NUL byte in the file hid its key from both scans.
+# --ignore-gitleaks-allow: a "gitleaks:allow" on the line let it through.
+# The report is read for its rule, file, line and commit alone; gitleaks' own
+# -v prints the author's name and address beside them.
+# What gitleaks' default config allows whatever it is given -- lock files,
+# images, node_modules, lines some rules accept -- neither scan reads; that
+# is for review to catch (AGENTS.md, "Security checks").
 scan() { # name, git log arguments, further gitleaks arguments
-	local name="$1" opts="$2"
+	local name="$1" opts="--no-color --text --no-textconv $2" said
 	shift 2
-	if ! gitleaks git --log-opts="--text --no-textconv ${opts}" --redact \
+	# gitleaks stops reading git's output at the first line git writes to
+	# stderr, and reports what it had read as a pass: one line of a pull
+	# request's .gitattributes that git warns about, or a partial clone whose
+	# remote was out of reach, passed a key with nothing scanned. So the same
+	# git log runs first, its arguments split on spaces as gitleaks splits
+	# them, and anything it says stops the check. gc.auto=0: in a partial
+	# clone this run fetches the blobs, and each fetch said it was packing.
+	said="$(git -c gc.auto=0 log -p -U0 ${opts} 2>&1 > /dev/null)" ||
+		said="${said:-git log failed}"
+	if [ -n "$said" ]; then
+		echo "git log wrote to stderr, which ends a ${name} scan early:" >&2
+		printf '%s\n' "$said" >&2
+		return 1
+	fi
+	if ! gitleaks git --log-opts="${opts}" --redact \
 		--no-banner --ignore-gitleaks-allow --report-format json \
 		--report-path "${report}/${name}.json" "$@" .; then
 		node -e '
@@ -111,10 +131,12 @@ scan() { # name, git log arguments, further gitleaks arguments
 echo "== keys in ${base}..HEAD: gitleaks ${GITLEAKS_VERSION}"
 scan range "${base}..HEAD"
 
-# -m: without it git log shows a merge commit no diff at all, so a key that
-# only the resolution of a conflict put in was never read (measured, as was
-# --cc, which gitleaks does not parse). With it, a registered key a merge
-# carries comes up again under the merge's own commit, and needs a line of
-# its own -- a check that stops, rather than one that misses.
+# --diff-merges=separate: without it git log shows a merge commit no diff at
+# all, so a key that only the resolution of a conflict put in was never read
+# (measured, as was --cc, which gitleaks does not parse). Not -m, which takes
+# its format from log.diffMerges: set to combined in the runner's config, a
+# merge was read as nothing again. With it, a registered key a merge carries
+# comes up again under the merge's own commit, and needs a line of its own --
+# a check that stops, rather than one that misses.
 echo "== keys in all of HEAD's history, less ${known}"
-scan full "-m HEAD" -i "$known"
+scan full "--diff-merges=separate HEAD" -i "$known"

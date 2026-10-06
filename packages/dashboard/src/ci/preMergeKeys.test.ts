@@ -8,11 +8,17 @@ import { describe, expect, it } from "vitest";
  * ROADMAP.md, imported whole and deleted since. The history is not rewritten
  * (upstream's main still has the file), so the scan of the whole history
  * would stop every merge on them; .claude/gitleaks-known-history lets those
- * two through, by commit. What has to stay true is that nothing a pull
- * request carries can let its *own* key through the same way -- not a line
- * in that file, not a .gitleaksignore or .gitleaks.toml at the root, not a
- * "gitleaks:allow" on the line, not a .gitattributes or a NUL byte that makes
- * git print "Binary files differ". Each was measured doing exactly that.
+ * two through, by commit. What has to stay true is that none of the ways a
+ * pull request was measured letting its *own* key through works again: a
+ * line in that file, a .gitleaksignore or .gitleaks.toml at the root, a
+ * "gitleaks:allow" on the line, a .gitattributes or a NUL byte that makes git
+ * print "Binary files differ", and anything that makes git write to stderr,
+ * at which gitleaks stops reading and passes what it read. Nor the runner's
+ * own git config: color.ui and log.diffMerges each blinded a scan.
+ *
+ * That is not every way. gitleaks' default config skips lock files, images,
+ * node_modules and lines some rules accept, whatever it is given; AGENTS.md
+ * says so, and review is what catches a key put there.
  *
  * The script is a few lines of shell, and a diff that undoes one of them
  * looks like a diff that tidies it. As with workflowGuards.test.ts, this
@@ -51,6 +57,12 @@ const gitleaksRuns = code
 	.split("\n")
 	.filter((line) => /\bgitleaks git\b/.test(line));
 
+/** The body of scan(), which both passes run. */
+const scanBody = (() => {
+	const start = code.indexOf("scan() {");
+	return start < 0 ? "" : code.slice(start, code.indexOf("\n}\n", start));
+})();
+
 /** Every call of the script's scan(), by the name of its pass. */
 const passes = Object.fromEntries(
 	[...code.matchAll(/^scan (\S+) (.*)$/gm)].map(([, name, rest]) => [
@@ -77,6 +89,7 @@ describe("the pre-merge key scans", () => {
 		// A rename would otherwise turn every assertion below into a silent pass.
 		expect(script, "pre-merge-check.sh not found").toBeTruthy();
 		expect(known, "gitleaks-known-history not found").toBeTruthy();
+		expect(scanBody, "scan() not found").toContain("gitleaks git");
 	});
 
 	it("scan the commits being merged without the registered history", () => {
@@ -85,11 +98,13 @@ describe("the pre-merge key scans", () => {
 	});
 
 	/**
-	 * -m, because a merge commit has no diff in git log without it: a key
-	 * that only a conflict's resolution put in was never read.
+	 * A merge commit has no diff in git log without --diff-merges, so a key
+	 * that only a conflict's resolution put in was never read. Not -m, which
+	 * takes its format from log.diffMerges: set to combined, it read nothing
+	 * of the merge again.
 	 */
 	it("scan all of HEAD's history, merges included, less the registered file", () => {
-		expect(passes.full).toBe('"-m HEAD" -i "$known"');
+		expect(passes.full).toBe('"--diff-merges=separate HEAD" -i "$known"');
 		expect(code).toContain("known=.claude/gitleaks-known-history\n");
 	});
 
@@ -97,13 +112,37 @@ describe("the pre-merge key scans", () => {
 		expect(Object.keys(passes).sort()).toEqual(["full", "range"]);
 		expect(gitleaksRuns).toHaveLength(1);
 		const run = gitleaksRuns[0] ?? "";
-		expect(run).toContain('--log-opts="--text --no-textconv ${opts}"');
+		expect(scanBody.replace(/\\\n\s*/g, " ")).toContain(run.trim());
+		// --no-color against color.ui=always; --text and --no-textconv against
+		// "Binary files differ".
+		expect(scanBody).toContain(
+			'local name="$1" opts="--no-color --text --no-textconv $2" said\n',
+		);
+		expect(run).toContain('--log-opts="${opts}"');
 		expect(run).toContain("--ignore-gitleaks-allow");
 		expect(run).toContain("--redact");
 		expect(run).toContain('"$@" .');
 		// -v prints the author's name and address beside each finding.
 		expect(run).not.toMatch(/\s(-v|--verbose)\b/);
 		expect(run).not.toMatch(/\s(-c|--config|-b|--baseline-path)\b/);
+	});
+
+	/**
+	 * gitleaks stops reading git's output at the first line git writes to
+	 * stderr and reports what it had read as a pass. A warning about one
+	 * line of a pull request's .gitattributes passed its key with no commit
+	 * scanned, and so did a partial clone whose remote was out of reach.
+	 */
+	it("stop when the same git log writes anything to stderr, before gitleaks reads it", () => {
+		const ask =
+			'said="$(git -c gc.auto=0 log -p -U0 ${opts} 2>&1 > /dev/null)" ||\n';
+		expect(scanBody).toContain(ask);
+		expect(scanBody.indexOf(ask)).toBeLessThan(
+			scanBody.indexOf("gitleaks git"),
+		);
+		expect(scanBody).toContain('said="${said:-git log failed}"\n');
+		const said = scanBody.slice(scanBody.indexOf('if [ -n "$said" ]; then'));
+		expect(said.slice(0, said.indexOf("\tfi"))).toContain("\t\treturn 1\n");
 	});
 
 	it("print a finding as its rule, file, line and commit, and nothing else of it", () => {
@@ -126,14 +165,17 @@ describe("the pre-merge key scans", () => {
 	});
 
 	/**
-	 * gitleaks reads all of these on every scan, whatever -i is given, so any
-	 * one of them would have let the pull request's own commits through too.
+	 * gitleaks reads a .gitleaksignore at the root whatever -i is given, and,
+	 * given no --config, a config from its environment or a .gitleaks.toml at
+	 * the root. Any one of them would have let the pull request's own commits
+	 * through too.
 	 */
 	it("refuse every other way gitleaks could be told to look away", () => {
 		expect(code).toContain("unset GITLEAKS_CONFIG GITLEAKS_CONFIG_TOML\n");
 		expect(code).toContain("for ignored in .gitleaksignore .gitleaks.toml; do");
 		const loop = code.slice(code.indexOf("for ignored in"));
-		expect(loop.slice(0, loop.indexOf("done"))).toContain("exit 1");
+		const body = loop.slice(0, loop.indexOf("done"));
+		expect(body).toContain("exit 1");
 	});
 
 	it("accept only a commit fingerprint, and only of a commit on the base", () => {

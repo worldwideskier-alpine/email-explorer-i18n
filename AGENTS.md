@@ -840,26 +840,43 @@ all of these pass, in this order:
    never its author, which gitleaks' own `-v` prints. A key found is taken out
    of the code at once; history is not rewritten, and the key is reported as
    exposed, by name, file and commit, never by value.
-   A key in the commits being merged stays a stop: nothing a pull request
-   carries lets it through. A key in history already on main is reported the
-   same way, and whether the full scan then lets it through is the owner's
-   decision: its fingerprint, by commit, goes in
-   `.claude/gitleaks-known-history` under a line saying why, and that pull
-   request's description gives the rule, file, line and commit. Only the full
-   scan reads that file, and a line naming a commit not yet on the base stops
-   the check. Everything else that silenced a scan is refused or overridden:
-   a `.gitleaksignore` or `.gitleaks.toml` at the root (gitleaks reads both on
-   every scan, whatever it is given, so a fork that keeps one has to move what
-   it needs into that file), a config in gitleaks' environment, a
-   `gitleaks:allow` on the line, and whatever makes git print "Binary files
-   differ" -- a `.gitattributes` that marks the file binary, or one NUL byte
-   in it. Each was measured letting a pull request's own key through. Merge
-   commits are read with `-m`, since without it a key that only a conflict's
-   resolution put in was never read; the cost is that a registered key a
-   merge carries comes up again under the merge's commit, and needs a line of
-   its own. The two lines there now are upstream's `ROADMAP.md`, imported
-   whole in 9cb6794 and taken out in eaa26ed; upstream's main still has it,
-   so the values are upstream's, and nobody here has examined them.
+   A key in the commits being merged cannot be registered away. A key in
+   history already on main is reported the same way, and whether the full
+   scan then lets it through is the owner's decision: its fingerprint, by
+   commit, goes in `.claude/gitleaks-known-history` under a line saying why,
+   and that pull request's description gives the rule, file, line and commit.
+   Only the full scan reads that file, and a line naming a commit not yet on
+   the base stops the check. The two lines there now are upstream's
+   `ROADMAP.md`, imported whole in 9cb6794 and taken out in eaa26ed;
+   upstream's main still has it, so the values are upstream's, and nobody
+   here has examined them.
+   These were each measured letting a pull request's own key through, and
+   are refused or overridden: a `.gitleaksignore` at the root (gitleaks reads
+   it whatever `-i` names), a `.gitleaks.toml` there or a config in gitleaks'
+   environment (read when no `--config` is given) -- so a fork that keeps
+   either has to move what it needs into that file; a `gitleaks:allow` on the
+   line; whatever makes git print "Binary files differ" -- a `.gitattributes`
+   that marks the file binary, or one NUL byte in it; and anything git writes
+   to stderr. gitleaks stops reading at the first such line and reports what
+   it had read as a pass, so a `.gitattributes` line git warns about passed a
+   key with nothing scanned, as did a partial clone whose remote was out of
+   reach; each scan therefore runs the same `git log` first and stops on any
+   word from it. The runner's own git config blinded both scans too, and is
+   overridden: `--no-color` (`color.ui=always`), and merges read with
+   `--diff-merges=separate` rather than `-m`, which follows `log.diffMerges`
+   and, set to `combined`, read nothing of a merge. Without merge diffs a key
+   that only a conflict's resolution put in was never read; the cost is that
+   a registered key a merge carries comes up again under the merge's commit,
+   and needs a line of its own.
+   That is not every way. What gitleaks' default config allows whatever it is
+   given, neither scan reads, and a pull request can use it: lock files,
+   images, fonts, `node_modules`, any path with `gitleaks.toml` in it, and
+   lines some rules accept. Measured, a key passed both scans in
+   `pnpm-lock.yaml`, in an SVG, under `node_modules`, in a
+   `gitleaks.toml.bak` and on a line `generic-api-key` accepts. Nor can a
+   pattern find a key cut into pieces, or encoded in a way gitleaks does not
+   decode (it decodes base64, hex, percent and unicode escapes). Those are
+   for review to catch.
    `preMergeKeys.test.ts` holds the script to all of this.
 3. `/security-review` in a session other than the one that made the change
    (`REPLY_RULES=off claude -p "/security-review"` on the branch is one; see

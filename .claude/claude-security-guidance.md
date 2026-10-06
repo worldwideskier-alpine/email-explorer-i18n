@@ -73,3 +73,8 @@ The cookie signs in only a GET of an attachment, `/docs` and `/openapi.json`.
   and commit are not in the pull request's description is a finding. So is a
   change that adds a `.gitleaksignore` or `.gitleaks.toml`, or that weakens
   `.claude/pre-merge-check.sh`.
+- The pre-merge scan does not read what gitleaks' default config allows: lock
+  files (`pnpm-lock.yaml`), images (SVG included), fonts, `node_modules`, a
+  path with `gitleaks.toml` in it, and lines some rules accept. A key-shaped
+  value a change adds to one of those is for review to find, and is a
+  finding.
