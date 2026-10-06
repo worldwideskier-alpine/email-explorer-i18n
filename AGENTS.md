@@ -564,7 +564,7 @@ are still checked, by the `tsc` that runs before the worker tests.
   `spam-check-location.test.ts` holds the arrangement -- partly structurally,
   because both sides run in one isolate under the test pool and the difference
   is only visible in production.
-- **The spam check reads what the screen shows, as a browser reads it.** The
+- **The spam check reads the part the screen shows, as a browser reads it.** The
   screen shows a message's HTML part whenever it has one (`email-ingest.ts`),
   and the classifier read its text part whenever it had one -- so an innocent
   text part beside a phishing page in the HTML was all the classifier was
@@ -585,14 +585,23 @@ are still checked, by the `tsc` that runs before the worker tests.
   too) and invisible padding is taken out. A comment's far side, past its
   first `>`, is read as it was before -- `<!--[if mso]>` blocks give their
   words -- but as markup of its own that stops at the comment's end, so
-  nothing in it hides what follows. Inside svg, math and select a style or
-  script is read rather than dropped, since the tree builder does not make it
-  raw text there; the rest of the tree builder is not followed. Against parse5 on
-  random markup it missed none of the words a browser shows in 1,355,830
-  messages without svg, math or select, script escapes among them. With svg
-  or math it missed 496 of 555,140, and with select 105 of 89,030 -- most of
-  them a word written as references inside an element that is raw text in
-  HTML and markup there. The reading before missed a third of them
+  nothing in it hides what follows. Inside svg and math a style or script is
+  read rather than dropped, since the tree builder does not make it raw text
+  there. Inside select a style is read, which the tree builder makes no
+  element of, and so is a script, which it does and the browser hides: it
+  ignores a title or an xmp in select, so the reading there is less sure, and
+  dropping the script where it went wrong lost the words after it, measured.
+  The rest of the tree builder is not followed. Words meet where the screen
+  runs them together -- a comment, a doctype, `<wbr>` and NUL part nothing --
+  but every element's tag parts them, even an inline one that does not on
+  screen, since style can make any element a block: an empty `<span></span>`
+  inside a word still splits it in two. Against parse5 on random markup,
+  compared with the white space taken out of both -- so a word split in two
+  still counts as read -- it missed none of the words a browser shows in
+  1,355,830 messages without svg, math or select, script escapes among them.
+  With svg or math it missed 496 of 555,140, and with select 105 of 89,030 --
+  most of them a word written as references inside an element that is raw
+  text in HTML and markup there. The reading before missed a third of them
   (`strip-html.test.ts` holds a generated version). It stops once it has the
   4000 characters, a step of 4096 at a time: decoding the whole of a 24MB
   message cost seconds of the mailbox Durable Object's time. The sender's
@@ -605,9 +614,16 @@ are still checked, by the `tsc` that runs before the worker tests.
   a comment's far side is read, so three thousand characters of it ahead of
   the visible words leave them out (taking it out needs the page laid out,
   not parsed); a text-only message is read as it came, brackets aside, so
-  four thousand zero-width spaces ahead of its words do the same; and inside
+  four thousand zero-width spaces ahead of its words do the same; inside
   svg, math and select a crafted message can still part this from the
-  browser, as the counts above say.
+  browser, as the counts above say; and words the screen draws rather than
+  holds -- an image's `alt`, an input's `value`, a style's `content`, a
+  picture of the words -- are not read, so an HTML part that shows its words
+  only that way, beside an innocent text part, still leaves the classifier
+  the text part alone (the prompt says what the part it is shown leaves
+  out). Reading the first three would still leave the picture, which costs a
+  sender no more and which no reading of the markup sees, and would add text
+  nobody is shown: an `alt` is not shown once its picture loads.
   `claude-spam-prompt.test.ts`, `strip-html.test.ts`,
   `claude-spam-classification.test.ts`.
 - **The message frame is decided on the string.** A message is shown in a

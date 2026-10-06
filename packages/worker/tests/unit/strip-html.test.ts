@@ -27,7 +27,8 @@ describe("stripHtml", () => {
 		["x <> y", "x <> y"],
 		["only < opening", "only < opening"],
 		['<a title="<script>">x</script>', "x"],
-		["a<!-- b -->c", "a c"],
+		// A comment parts nothing on screen; its far side is read, apart.
+		["a<!-- b -->c", "ac"],
 		["a<!-- b > c -->d", "a c d"],
 		["<!doctype html><p>a</p>", "a"],
 		// A tag the message never ends: the browser shows nothing from its `<`.
@@ -47,10 +48,13 @@ describe("stripHtml", () => {
 
 /**
  * Each of these shows its marker in a browser -- parse5 with scripting off,
- * as in the message frame, measured -- and an earlier reading missed it: the
- * expressions this replaced, or a scan that took the first `</script>` for
- * a script's end. Five are inside svg, math and select, where the tree
- * builder, not the tokenizer, decides that a style is no style.
+ * as in the message frame, measured. Most were missed by an earlier reading:
+ * the expressions this replaced, or a scan that took the first `</script>`
+ * for a script's end. The stray quote and the textarea were read by both,
+ * and are here for the reading of quotes: one that took any quote for the
+ * start of a value would lose them. Seven are inside svg, math and select,
+ * where the tree builder, not the tokenizer, decides whether a style, a
+ * script or a title is one.
  */
 describe("reads what a browser shows", () => {
 	it.each([
@@ -82,9 +86,56 @@ describe("reads what a browser shows", () => {
 		// The same inside math's `<mi>`, where an HTML script is an HTML
 		// script, though math is counted open.
 		'<math><mi><script><!--<script></script><a title="</script><p>SHOWN_AFTER_ESCAPED_IN_MI</p><p title=">x',
+		// The tree builder ignores a title in select, so the textarea after
+		// it holds the rest as text, `<script>` and all. The reading here
+		// takes the title for one, and reads a script in select rather than
+		// drop it so as not to lose what that takes past.
+		"<select><title><textarea></title><script>SHOWN_IN_TEXTAREA</script>",
 	])("%s", (html) => {
 		const marker = /SHOWN_[A-Z_]+/.exec(html)?.[0] ?? "";
 		expect(stripHtml(html)).toContain(marker);
+	});
+});
+
+/**
+ * A word is one word here where it is one on screen. A comment, a doctype,
+ * `<wbr>` and NUL part nothing on screen, and parted the word here: a
+ * sender split the word the classifier is meant to see across one of them,
+ * and it was shown two halves. Measured against parse5.
+ */
+describe("joins what the screen joins", () => {
+	it.each([
+		"TRIGGER_CL<!-- -->AUDE_SPAM",
+		"TRIGGER_CL<!---->AUDE_SPAM",
+		"TRIGGER_CL<!-->AUDE_SPAM",
+		"TRIGGER_CL<!-- x --!>AUDE_SPAM",
+		"TRIGGER_CL<!-- > -->AUDE_SPAM",
+		"TRIGGER_CL<!-- ><b></b> -->AUDE_SPAM",
+		"TRIGGER_CL<wbr>AUDE_SPAM",
+		"TRIGGER_CL<WBR/>AUDE_SPAM",
+		"TRIGGER_CL\u0000AUDE_SPAM",
+		"TRIGGER_CL<?x>AUDE_SPAM",
+		"TRIGGER_CL<!x>AUDE_SPAM",
+		"TRIGGER_CL</ x>AUDE_SPAM",
+		"TRIGGER_CL<!doctype html>AUDE_SPAM",
+		"TRIGGER_CL</>AUDE_SPAM",
+	])("%j", (word) => {
+		expect(stripHtml(`<p>${word}</p>`)).toBe("TRIGGER_CLAUDE_SPAM");
+	});
+
+	// The other side. A comment's far side is read though it is not shown,
+	// and is kept apart from the words either side. An element's tag parts
+	// words, even an inline one that does not on screen: style can make any
+	// element a block, so no tag says for certain, and parting them leaves
+	// two halves of a word rather than two words run into one.
+	it.each([
+		["a<!-- >far side-->b", "a far side b"],
+		["a <!-- --> b", "a b"],
+		["a<p>b", "a b"],
+		["a<br>b", "a b"],
+		["a<span></span>b", "a b"],
+	])("%j reads as %j", (html, words) => {
+		expect(stripHtml(html)).toBe(words);
 	});
 });
 
@@ -122,6 +173,9 @@ describe("reads a comment's far side, as it was read before", () => {
 	it.each([
 		"<p>shown</p><!-- a > READ_FAR_SIDE -->",
 		"<!--[if mso]><table><tr><td>READ_FOR_OUTLOOK</td></tr></table><![endif]--><p>shown</p>",
+		// Not a comment, but read though hidden all the same: a script in
+		// select, for the reason SHOWN_IN_TEXTAREA gives above.
+		"<select><script>READ_SCRIPT_IN_SELECT</script></select><p>shown</p>",
 	])("%s", (html) => {
 		const marker = /READ_[A-Z_]+/.exec(html)?.[0] ?? "";
 		const words = stripHtml(html);
@@ -189,6 +243,10 @@ const SHOWS: ((word: string) => string)[] = [
 	(w) => `<script><!-- --></script>${w}`,
 	(w) => `<SCRIPT><!--<ScRiPt\t></sCrIpT ><!--</script/>${w}`,
 	(w) => `<!-- x > <a title=" -->${w}`,
+	// A word split across what parts nothing on screen is still the word.
+	(w) => ` ${w.slice(0, 3)}<!-- -->${w.slice(3)} `,
+	(w) => ` ${w.slice(0, 3)}<wbr>${w.slice(3)} `,
+	(w) => ` ${w.slice(0, 3)}\u0000${w.slice(3)} `,
 ];
 
 const HIDES: ((word: string) => string)[] = [

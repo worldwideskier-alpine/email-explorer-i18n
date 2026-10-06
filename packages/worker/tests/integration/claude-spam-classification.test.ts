@@ -391,6 +391,23 @@ describe("Claude second-stage spam classification", () => {
 			expect(await folderOf("After an escaped script")).toBe("spam");
 		});
 
+		// A comment between two halves of a word parts nothing on screen, and
+		// the reader is shown the word whole. Parted here, the classifier was
+		// shown two halves of it.
+		it("reads a word the HTML part splits with a comment as one word", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"A word split by a comment",
+					"Thank you for your order.",
+					"<p>Verify your card now TRIGGER_CL<!-- -->AUDE_SPAM</p>",
+				),
+			);
+
+			expect(await folderOf("A word split by a comment")).toBe("spam");
+		});
+
 		// The other side: what the screen does not show is not read either --
 		// a style, a script, the part of an escaped script past its first
 		// `</script>`, a comment with no `>` in it.
