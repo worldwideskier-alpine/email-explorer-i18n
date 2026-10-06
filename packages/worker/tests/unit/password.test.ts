@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
 	hashPassword,
 	PBKDF2_ITERATIONS,
@@ -110,5 +110,52 @@ describe("malformed stored hashes", () => {
 			valid: false,
 			needsRehash: false,
 		});
+	});
+});
+
+/**
+ * Claude Security F12. An address with no account costs a full PBKDF2
+ * (verifyNothing), and so did one with a current hash -- but one still on
+ * the unsalted SHA-256 of before answered after a single digest, and the
+ * difference in time listed those accounts. Timing is not measurable in the
+ * Workers runtime, whose clock stands still between I/O, so what is asked is
+ * the work itself: every way a stored hash is checked derives one PBKDF2 at
+ * the current work factor.
+ */
+describe("what checking a stored hash costs", () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	const roundsDerived = async (stored: string, password = PASSWORD) => {
+		const derive = vi.spyOn(crypto.subtle, "deriveBits");
+		derive.mockClear();
+		await verifyPassword(password, stored);
+		const rounds = derive.mock.calls.map(
+			([algorithm]) => (algorithm as { iterations: number }).iterations,
+		);
+		derive.mockRestore();
+		return rounds;
+	};
+
+	it("is a full PBKDF2 for a legacy hash, right or wrong", async () => {
+		const stored = await legacyHash(PASSWORD);
+		expect(await roundsDerived(stored)).toEqual([PBKDF2_ITERATIONS]);
+		expect(await roundsDerived(stored, "wrong")).toEqual([PBKDF2_ITERATIONS]);
+	});
+
+	it("is a full PBKDF2 for a stored hash that cannot be read", async () => {
+		for (const stored of [
+			"pbkdf2-sha256$x$c2FsdA==$aGFzaA==",
+			"pbkdf2-sha256$100000$!!!$aGFzaA==",
+			"pbkdf2-sha256$100000",
+		]) {
+			expect(await roundsDerived(stored), stored).toEqual([PBKDF2_ITERATIONS]);
+		}
+	});
+
+	it("is the same as for a current hash", async () => {
+		const stored = await hashPassword(PASSWORD);
+		expect(await roundsDerived(stored)).toEqual([PBKDF2_ITERATIONS]);
 	});
 });
