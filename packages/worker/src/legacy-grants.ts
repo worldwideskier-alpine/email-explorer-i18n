@@ -164,10 +164,15 @@ export async function ensureLegacyMailboxGrants(
 	const alreadyOwned = new Set(await authDO.listOwnedMailboxIds());
 	const mailboxes = candidates.filter((id) => !alreadyOwned.has(id));
 
+	// A mailbox at somebody else's sign-in address is passed over: whoever
+	// held it would read their reset link. The auth object decides that, in
+	// the step that writes the grant (giveMailboxToPerson), and says so.
+	let granted = 0;
 	for (const mailboxId of mailboxes) {
-		await authDO.giveMailboxToPerson(LEGACY_ADMIN_PERSON_ID, mailboxId);
+		if (await authDO.giveMailboxToPerson(LEGACY_ADMIN_PERSON_ID, mailboxId)) {
+			granted++;
+		}
 	}
-	const granted = mailboxes.length;
 
 	await env.BUCKET.put(
 		MARKER_KEY,

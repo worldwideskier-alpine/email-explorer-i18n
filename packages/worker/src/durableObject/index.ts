@@ -15,6 +15,7 @@ import { cutOff, nightFor, runMailboxNight } from "../mailbox-night";
 import type { MailboxRecord } from "../mailbox-records";
 import { foldContinuedNight } from "../maintenance-record";
 import { hashPassword, verifyNothing, verifyPassword } from "../password";
+import { ANOTHER_PERSONS_MAILBOX } from "../people";
 import type { ThrottleRule } from "../throttle";
 import { loginThrottleRules } from "../throttle";
 import type { Env, Session, User } from "../types";
@@ -203,6 +204,90 @@ export class MailboxDO extends DurableObject<Env> {
 		);
 	}
 
+	/*
+	 * An address is one person's, whichever kind of address it is.
+	 *
+	 * A sign-in address is where "forgot password" sends the link, and mail
+	 * to an address is filed in the mailbox of that address -- so whoever
+	 * holds the mailbox reads the link. A mailbox registered at somebody
+	 * else's sign-in address was a way to take their account, root's
+	 * included; a login made at somebody else's mailbox handed that mailbox's
+	 * holder the login. Each side used to look only at its own table.
+	 *
+	 * Both tables are in this object, so the question is asked in the same
+	 * synchronous step as the write it guards, as #takenBy is. `IS NOT`
+	 * rather than `!=`: compared with a login that has no person, `!=` is
+	 * NULL and would let every holder through. NOCASE because grants from
+	 * before mailbox addresses were lowercased can carry capitals.
+	 */
+
+	/** Whether a person other than this one holds the address as a mailbox, deleted or not. */
+	#anotherPersonsMailbox(address: string, personId: string | null): boolean {
+		return (
+			this.ctx.storage.sql
+				.exec(
+					"SELECT 1 FROM person_mailboxes WHERE mailbox_id = ? COLLATE NOCASE AND person_id IS NOT ?",
+					address.trim().toLowerCase(),
+					personId,
+				)
+				.toArray().length > 0
+		);
+	}
+
+	/** Whether a login of a person other than this one signs in with the address. */
+	#anotherPersonsLogin(address: string, personId: string | null): boolean {
+		return (
+			this.ctx.storage.sql
+				.exec(
+					"SELECT 1 FROM users WHERE email = ? COLLATE NOCASE AND person_id IS NOT ?",
+					address.trim().toLowerCase(),
+					personId,
+				)
+				.toArray().length > 0
+		);
+	}
+
+	#personOf(userId: string): string | null {
+		const value = this.ctx.storage.sql
+			.exec("SELECT person_id FROM users WHERE id = ?", userId)
+			.toArray()[0]?.person_id;
+		return value === null || value === undefined ? null : String(value);
+	}
+
+	/**
+	 * Whether account mail for this login -- a reset link -- must not go to
+	 * this address, because somebody else holds it as a mailbox.
+	 *
+	 * The rules at creation keep a new collision from arising; this is for
+	 * the ones from before them, and for any way in nobody has thought of.
+	 * Asked where the harm would happen, just before a link is made.
+	 */
+	async isAnotherPersonsMailbox(
+		userId: string,
+		address: string,
+	): Promise<boolean> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+		return this.#anotherPersonsMailbox(address, this.#personOf(userId));
+	}
+
+	/**
+	 * Why this login may not be moved to the address, if it may not: another
+	 * login has it, or another person holds it as a mailbox. Asked before the
+	 * confirmation link goes out, so the link is not mailed into somebody
+	 * else's mailbox; confirmEmailChange asks again and has the last word.
+	 */
+	async addressChangeRefusal(
+		userId: string,
+		address: string,
+	): Promise<"login" | "mailbox" | null> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+		if (this.#takenBy(address.trim().toLowerCase())) return "login";
+		if (this.#anotherPersonsMailbox(address, this.#personOf(userId))) {
+			return "mailbox";
+		}
+		return null;
+	}
+
 	/** The account for an address; an exact spelling first, for rows from before. */
 	#userRowByEmail(email: string): Record<string, SqlStorageValue> | undefined {
 		return this.ctx.storage.sql
@@ -229,6 +314,11 @@ export class MailboxDO extends DurableObject<Env> {
 		const now = Date.now();
 		if (this.#takenBy(email)) {
 			throw new Error("UNIQUE constraint failed: users.email");
+		}
+		// A spare at one's own mailbox is fine; at somebody else's, that
+		// somebody would read its reset link.
+		if (this.#anotherPersonsMailbox(email, personId ?? null)) {
+			throw new Error(ANOTHER_PERSONS_MAILBOX);
 		}
 
 		// A login belongs to somebody. Registering makes a new person, because
@@ -299,6 +389,11 @@ export class MailboxDO extends DurableObject<Env> {
 		if (onlyFirst && count > 0) return "closed";
 		if (this.#takenBy(email)) {
 			throw new Error("UNIQUE constraint failed: users.email");
+		}
+		// A new person, so anybody holding the address as a mailbox is
+		// somebody else.
+		if (this.#anotherPersonsMailbox(email, null)) {
+			throw new Error(ANOTHER_PERSONS_MAILBOX);
 		}
 		const isFirstUser = count === 0;
 
@@ -996,7 +1091,7 @@ export class MailboxDO extends DurableObject<Env> {
 		userId: string,
 		newEmail: string,
 		stamp: string,
-	): Promise<"changed" | "stale" | "taken"> {
+	): Promise<"changed" | "stale" | "taken" | "held"> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
 		const before = this.#loginCredentials(userId);
@@ -1014,6 +1109,11 @@ export class MailboxDO extends DurableObject<Env> {
 
 		newEmail = newEmail.trim().toLowerCase();
 		if (this.#takenBy(newEmail, userId)) return "taken";
+		// Here as well as when the link was asked for: somebody may have
+		// registered the address as a mailbox while the link was out.
+		if (this.#anotherPersonsMailbox(newEmail, this.#personOf(userId))) {
+			return "held";
+		}
 		try {
 			this.ctx.storage.sql.exec(
 				"UPDATE users SET email = ?, updated_at = ? WHERE id = ?",
@@ -1100,18 +1200,25 @@ export class MailboxDO extends DurableObject<Env> {
 	 * second -- and there is no way for a caller to know which it is without
 	 * reading the grants first. Assigning a mailbox to somebody who already
 	 * has it is not an error; it is the same sentence said twice.
+	 *
+	 * Not at another person's sign-in address, though, which it answers with
+	 * false: the holder would read that person's reset link. The legacy
+	 * backfill is what calls this, and it hands over every unheld mailbox in
+	 * the bucket without asking whose address each one is.
 	 */
 	async giveMailboxToPerson(
 		personId: string,
 		mailboxId: string,
-	): Promise<void> {
+	): Promise<boolean> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+		if (this.#anotherPersonsLogin(mailboxId, personId)) return false;
 
 		this.ctx.storage.sql.exec(
 			"INSERT OR IGNORE INTO person_mailboxes (person_id, mailbox_id) VALUES (?, ?)",
 			personId,
 			mailboxId,
 		);
+		return true;
 	}
 
 	/**
@@ -1119,13 +1226,19 @@ export class MailboxDO extends DurableObject<Env> {
 	 * holds it. One step, so two people creating the same new address at once
 	 * cannot both end up holding it: the route's own checks come several
 	 * awaits earlier, and the grant table allows any number of holders.
+	 *
+	 * Nor at another person's sign-in address, unless the address is this
+	 * person's already: a grant outlives the mailbox's deletion and keeps
+	 * the address its holder's, and a collision from before this rule must
+	 * not cost the holder their own mail and archives. The reset link that
+	 * collision would carry is held back where it is sent.
 	 */
 	async claimMailboxForPersonOf(
 		userId: string,
 		mailboxId: string,
 	): Promise<boolean> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-		const personId = await this.getPersonId(userId);
+		const personId = this.#personOf(userId);
 		if (!personId) return false;
 		const others = this.ctx.storage.sql
 			.exec(
@@ -1135,6 +1248,17 @@ export class MailboxDO extends DurableObject<Env> {
 			)
 			.toArray();
 		if (others.length > 0) return false;
+		const theirsAlready =
+			this.ctx.storage.sql
+				.exec(
+					"SELECT 1 FROM person_mailboxes WHERE mailbox_id = ? AND person_id = ?",
+					mailboxId,
+					personId,
+				)
+				.toArray().length > 0;
+		if (!theirsAlready && this.#anotherPersonsLogin(mailboxId, personId)) {
+			return false;
+		}
 		this.ctx.storage.sql.exec(
 			"INSERT OR IGNORE INTO person_mailboxes (person_id, mailbox_id) VALUES (?, ?)",
 			personId,
@@ -1336,12 +1460,7 @@ export class MailboxDO extends DurableObject<Env> {
 	/** Which person a login belongs to, or null if the login is gone. */
 	async getPersonId(userId: string): Promise<string | null> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-
-		const row = this.ctx.storage.sql
-			.exec("SELECT person_id FROM users WHERE id = ?", userId)
-			.toArray()[0];
-		const value = row?.person_id;
-		return value === null || value === undefined ? null : String(value);
+		return this.#personOf(userId);
 	}
 
 	/** The mailboxes a person holds. */

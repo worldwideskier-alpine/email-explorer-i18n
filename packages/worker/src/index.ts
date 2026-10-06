@@ -682,6 +682,8 @@ class PostMailbox extends OpenAPIRoute {
 		// Claimed before anything is written, in one step inside the auth
 		// object: the checks above are several awaits old by now, and two
 		// people creating the same new address at once both passed them.
+		// It also refuses somebody else's sign-in address, whose reset link
+		// this mailbox would receive; see claimMailboxForPersonOf.
 		if (!(await authDO.claimMailboxForPersonOf(session.userId, email))) {
 			return c.json({ error: "Mailbox already exists" }, 409);
 		}
@@ -2097,6 +2099,17 @@ async function storeAndSendPasswordReset(
 	origin: string,
 ): Promise<void> {
 	const authStub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
+	// Mail to an address is filed in the mailbox of that address, so a link
+	// sent where somebody else holds the mailbox is a link handed to them.
+	// New collisions are refused where addresses are made; this catches the
+	// ones from before. No token, no mail, and the answer has already gone,
+	// the same as for any address. The log names no address.
+	if (await authStub.isAnotherPersonsMailbox(user.id, to)) {
+		console.warn(
+			"Password reset not sent: the address is another person's mailbox",
+		);
+		return;
+	}
 	// Valid for an hour.
 	const token = crypto.randomUUID();
 	const expiresAt = Date.now() + 3600000;

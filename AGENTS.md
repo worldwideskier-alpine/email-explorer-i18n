@@ -398,6 +398,27 @@ are still checked, by the `tsc` that runs before the worker tests.
   capitalised copy of somebody else's mailbox was a second mailbox that could
   send as the first, and a capitalised mailbox received nothing, since inbound
   mail is filed by the lowercased envelope recipient.
+- **One person per address, whichever kind.** A reset link goes to the
+  sign-in address, and mail to an address is filed in the mailbox of that
+  address, so whoever holds the mailbox reads the link. Mailbox creation
+  looked only at the grants and login creation only at the logins: a mailbox
+  registered at somebody else's sign-in address took their account (root's
+  too), and root making a login at a customer's mailbox handed the customer
+  that login. Now creating a mailbox refuses another person's sign-in
+  address (`claimMailboxForPersonOf`), and making or moving a login --
+  root's form, one's own spare, the address change asked and confirmed, the
+  open registration form -- refuses another person's mailbox, deleted ones
+  included, since a grant keeps the address its holder's. Each is asked in
+  the auth object's step that writes, both tables being there. The legacy
+  backfill passes such an address over (`giveMailboxToPerson`). One's own
+  addresses are left alone, and a holder may still bring back a deleted
+  mailbox that collides with a login from before. Those collisions are not
+  undone -- neither side can be removed safely -- so a reset is not sent to
+  an address another person holds as a mailbox (`isAnotherPersonsMailbox`,
+  asked just before the token is made); the answer is the one any address
+  gets, and root can set the password directly. Refusals reuse "Mailbox
+  already exists", which every catalogue already has, rather than a new
+  sentence that would name the kind of address. `address-of-another.test.ts`.
 - **The daily cron.** One `scheduled()` handler, which starts every
   mailbox's night in that mailbox's own Durable Object alarm, all at once
   (`mailbox-night.ts`), and waits to write down how they went

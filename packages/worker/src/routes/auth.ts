@@ -9,6 +9,7 @@ import {
 	newDeviceToken,
 } from "../login-device";
 import { buildEmailChangeEmail, MAIL_LOCALES } from "../mail-templates";
+import { ANOTHER_PERSONS_MAILBOX } from "../people";
 import { sendEmail } from "../resend";
 import { roleOf } from "../roles";
 import {
@@ -313,6 +314,9 @@ export class PostRegister extends OpenAPIRoute {
 				);
 			return c.json({ ...user, role, session }, 201);
 		} catch (error: any) {
+			if (error.message?.includes(ANOTHER_PERSONS_MAILBOX)) {
+				return c.json({ error: "Mailbox already exists" }, 400);
+			}
 			if (error.message?.includes("UNIQUE constraint failed")) {
 				return c.json({ error: "Email already registered" }, 400);
 			}
@@ -496,7 +500,8 @@ export class PostChangeEmail extends OpenAPIRoute {
 				...contentJson(ErrorResponseSchema),
 			},
 			"409": {
-				description: "That address already belongs to an account",
+				description:
+					"That address already belongs to an account, or is another person's mailbox",
 				...contentJson(ErrorResponseSchema),
 			},
 			"429": {
@@ -543,8 +548,16 @@ export class PostChangeEmail extends OpenAPIRoute {
 		}
 
 		const address = newEmail.trim().toLowerCase();
-		if (await authDO.getUserByEmail(address)) {
+		// Somebody else's mailbox is refused here, before the link is mailed
+		// into it, and not only at the confirmation: the requester proved
+		// the password and is told why, where a link held back in silence
+		// would read as sent.
+		const refusal = await authDO.addressChangeRefusal(session.userId, address);
+		if (refusal === "login") {
 			return c.json({ error: "Email already registered" }, 409);
+		}
+		if (refusal === "mailbox") {
+			return c.json({ error: "Mailbox already exists" }, 409);
 		}
 
 		// Nothing is changed yet. The address only becomes the sign-in address
@@ -616,7 +629,8 @@ export class PostConfirmEmailChange extends OpenAPIRoute {
 				...contentJson(ErrorResponseSchema),
 			},
 			"409": {
-				description: "That address already belongs to an account",
+				description:
+					"That address already belongs to an account, or is another person's mailbox",
 				...contentJson(ErrorResponseSchema),
 			},
 		},
@@ -664,6 +678,9 @@ export class PostConfirmEmailChange extends OpenAPIRoute {
 		}
 		if (outcome === "taken") {
 			return c.json({ error: "Email already registered" }, 409);
+		}
+		if (outcome === "held") {
+			return c.json({ error: "Mailbox already exists" }, 409);
 		}
 		return c.json({ status: "Sign-in address changed" });
 	}
@@ -788,6 +805,9 @@ export class PostAdminRegister extends OpenAPIRoute {
 			);
 			return c.json({ ...user, role: session.role ?? "admin" }, 201);
 		} catch (error: any) {
+			if (error.message?.includes(ANOTHER_PERSONS_MAILBOX)) {
+				return c.json({ error: "Mailbox already exists" }, 400);
+			}
 			if (error.message?.includes("UNIQUE constraint failed")) {
 				return c.json({ error: "Email already registered" }, 400);
 			}

@@ -44,6 +44,7 @@ import {
 	readMaintenanceHistory,
 	readMaintenanceRecord,
 } from "../maintenance-record";
+import { ANOTHER_PERSONS_MAILBOX } from "../people";
 import { roleOf } from "../roles";
 import {
 	pairWasVerified,
@@ -461,6 +462,12 @@ export class PostAccount extends OpenAPIRoute {
 			if (!person) return c.json({ error: "Registration failed" }, 400);
 			return c.json(person, 201);
 		} catch (e) {
+			// Root holds no mailbox and sees nobody's, so "already registered"
+			// for an address missing from the people list would leave it no
+			// way to tell why.
+			if (String(e).includes(ANOTHER_PERSONS_MAILBOX)) {
+				return c.json({ error: "Mailbox already exists" }, 400);
+			}
 			if (String(e).includes("UNIQUE")) {
 				return c.json({ error: "Email already registered" }, 400);
 			}
