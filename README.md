@@ -68,7 +68,7 @@ GitHub 側で設定する値は次のとおりです。**どれも追跡され�
 |---|---|---|
 | Secret | `CLOUDFLARE_API_TOKEN` | Cloudflare の API トークン |
 | Secret | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare のアカウント ID |
-| Secret（任意） | `PRODUCTION_URL` | デプロイ先のURL。デプロイの最後のステップが、いま配信されているのが今回ビルドしたものかを確かめます。未設定ならそのステップは飛ばされ、その旨がログに出ます |
+| Secret（任意） | `PRODUCTION_URL` | **通常は設定しません**。デプロイの最後のステップは、wrangler がデプロイ時に示した配備先（`workers.dev` のアドレス）に、いま配信されているのが今回ビルドしたものかを確かめます。アドレスはログに出しません。wrangler が配備先を示さない場合（`workers.dev` を切り、ルートも無い場合）と、独自ドメインをログから伏せたい場合だけ設定します |
 | Variable | `WORKER_NAME` | Worker 名。公開URLもこれで決まります |
 | Variable | `R2_BUCKET_NAME` | メールと添付を置く R2 バケット名 |
 | Variable（任意） | `VAPID_PUBLIC_KEY` | プッシュ通知の公開鍵。**通常は設定しません**。Worker は公開鍵を秘密鍵から求めます。これは公開点を含まない秘密鍵のときだけ使う代わりの値で、デプロイが作る鍵では使われません |

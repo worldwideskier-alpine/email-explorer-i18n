@@ -6,6 +6,7 @@ import {
 	assetMismatch,
 	assetsReferencedBy,
 	builtAssets,
+	deployedAddress,
 	liveVersionIn,
 	staleServedPage,
 	workerVersionMismatch,
@@ -190,5 +191,63 @@ describe("the Worker's version", () => {
 		expect(workerVersionMismatch(ID, "0".repeat(36))).toMatch(/not/);
 		expect(workerVersionMismatch(ID, null)).toMatch(/does not say/);
 		expect(workerVersionMismatch("", "anything")).toBeNull();
+	});
+});
+
+/**
+ * The address the check asks, read from what `wrangler deploy` printed --
+ * so that a deployment checks itself with nothing set, where it used to need
+ * the address as a GitHub secret and was unchecked without one.
+ */
+describe("the address wrangler deployed to", () => {
+	const deployed = (...after: string[]) =>
+		[
+			"Uploaded email-explorer-x (5.11 sec)",
+			"Deployed email-explorer-x triggers (0.59 sec)",
+			...after,
+			"Current Version ID: 4d8d17b8-cf11-4e10-9be0-1d3a28084517",
+		].join("\n");
+
+	it("is the https line under the triggers line", () => {
+		expect(
+			deployedAddress(
+				deployed(
+					"  https://email-explorer-x.someone.workers.dev",
+					"  schedule: 0 18 * * *",
+				),
+			),
+		).toBe("https://email-explorer-x.someone.workers.dev");
+	});
+
+	it("is the first of several, without a trailing slash", () => {
+		expect(
+			deployedAddress(
+				deployed(
+					"  https://a.someone.workers.dev/",
+					"  https://b.someone.workers.dev",
+				),
+			),
+		).toBe("https://a.someone.workers.dev");
+	});
+
+	it.each([
+		[
+			"no deploy, though an address is printed",
+			"Error: authentication failed\n  https://dash.cloudflare.com/profile/api-tokens",
+		],
+		["no address under it", deployed("  schedule: 0 18 * * *")],
+		// What the log shows: struck out, it is no address.
+		["only what the log shows", deployed("  https://(address withheld)")],
+		["a struck-out address", deployed("  https://(withheld)")],
+		[
+			"an address before the triggers line",
+			"  https://elsewhere.example\nDeployed x triggers (1 sec)\n  schedule: 0 18 * * *",
+		],
+		[
+			"an address after the indented block ends",
+			`${deployed("  schedule: 0 18 * * *")}\n  https://later.example`,
+		],
+	])("is none when there is %s", (_, output) => {
+		expect(deployedAddress(output)).toBeNull();
 	});
 });

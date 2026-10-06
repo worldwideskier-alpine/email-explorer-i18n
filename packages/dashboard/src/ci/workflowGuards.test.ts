@@ -219,7 +219,11 @@ describe("the deploy workflow", () => {
 			expect(commands.length, name).toBeGreaterThan(0);
 			for (const command of commands) {
 				if (/> \/dev\/null 2>&1/.test(command)) continue;
-				expect(command, name).toMatch(/2>&1\s+\|\s+node \S*withhold\.mjs/);
+				// A copy into a file of the runner's own may come first: tee
+				// prints only what goes on down the pipe, to the filter.
+				expect(command, name).toMatch(
+					/2>&1\s+\|\s+(?:tee "\$RUNNER_TEMP\/[\w.-]+"\s+\|\s+)?node \S*withhold\.mjs/,
+				);
 				// Its failure matters unless it says it does not.
 				if (!/\|\| true/.test(command)) {
 					expect(script, name).toContain("set -o pipefail");
@@ -442,6 +446,16 @@ describe("the deploy workflow", () => {
 		);
 		expect(step("Check the deployment serves this build")).toContain(
 			"EXPECTED_WORKER_VERSION: ${{ steps.live.outputs.version }}",
+		);
+		// Asked whether or not PRODUCTION_URL is set: the address is read
+		// from what the deploy printed, kept whole in a file the log never
+		// shows. Behind an `if` on the secret, deleting it turned the check
+		// off, and the rollback with it.
+		expect(step("Check the deployment serves this build")).not.toMatch(
+			/\n {8}if:/,
+		);
+		expect(runLines(step("Deploy Worker"))).toContain(
+			'| tee "$RUNNER_TEMP/deploy-output.txt" \\',
 		);
 		expect(step("Ensure R2 bucket exists")).toContain(
 			'bucket="$(node ../scripts/bucket-name.mjs)"',

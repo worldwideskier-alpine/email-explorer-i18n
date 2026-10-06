@@ -151,14 +151,13 @@ jobs:
       # of bindings wrangler prints when it deploys -- a public log. A secret
       # is redacted in both. The variable stays for a fork that set one.
       ACCOUNT_RECOVERY_FROM: ${{ secrets.ACCOUNT_RECOVERY_FROM || vars.ACCOUNT_RECOVERY_FROM }}
-      # Where this deployment answers, so the last step can ask it what it is
-      # serving. A secret rather than a repository variable, and not because
-      # an address is confidential: GitHub redacts a secret's value wherever
-      # it turns up in a log, and the logs of a public repository are public.
-      # A variable would be printed in the env block of every step that
-      # carries it. As a secret it also redacts the line wrangler prints when
-      # it deploys, which published the address on every run until now.
-      # Optional, like the variables above: without it the check is skipped.
+      # Where this deployment answers, for a Worker wrangler reports no
+      # address for -- the last step otherwise asks the one it reported, and
+      # most deployments need not set this. A secret rather than a repository
+      # variable, and not because an address is confidential: GitHub redacts
+      # a secret's value wherever it turns up in a log, and the logs of a
+      # public repository are public. Set, it also masks a domain of your own
+      # in what wrangler prints. Optional, like the variables above.
       PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -234,10 +233,15 @@ jobs:
       # and registered first became root. Every step that runs wrangler
       # filters its output by the shape of an address: see
       # scripts/log-redaction.mjs.
+      #
+      # Its output is also kept, whole, in a file the log never shows: the
+      # check at the end reads from it the address wrangler deployed to, so
+      # that nothing has to be set for the check to run.
       - name: Deploy Worker
         run: |
           set -o pipefail
           pnpm run deploy-dev-worker 2>&1 \
+            | tee "$RUNNER_TEMP/deploy-output.txt" \
             | node packages/worker/scripts/withhold.mjs
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -332,8 +336,11 @@ jobs:
       # And the question the rest of it cannot answer: is the deployment
       # serving this build? An accepted upload is not a served one. See
       # scripts/deployment-check.mjs.
+      #
+      # It asks the address wrangler reported when it deployed, so it runs
+      # whether or not PRODUCTION_URL is set; that is only for a Worker
+      # wrangler reports no address for.
       - name: Check the deployment serves this build
-        if: env.PRODUCTION_URL != ''
         run: node packages/worker/scripts/check-deployment.mjs
         env:
           EXPECTED_WORKER_VERSION: ${{ steps.live.outputs.version }}

@@ -2,23 +2,25 @@
  * Asks the live deployment what it is serving, and compares it with the build
  * that was just uploaded. See deployment-check.mjs for why.
  *
- * Reads the address from `PRODUCTION_URL` and prints none of it. That is not
- * decoration: this repository is public, its Actions logs are public with it,
- * and an address in a repository variable would be echoed into every run's
- * log by the runner itself. A secret is redacted wherever it appears --
- * including in the line wrangler prints when it deploys -- which is the whole
- * reason the address is kept as one.
+ * Asks the address `wrangler deploy` reported (the deploy step keeps its
+ * output in $RUNNER_TEMP/deploy-output.txt, out of the log), or, when it
+ * reported none, `PRODUCTION_URL`. It prints none of either, and has the
+ * runner mask the host before anything else: this repository is public, its
+ * Actions logs are public with it, and a host in a failed request's message
+ * would otherwise be published.
  *
  * Nothing here signs in or writes anything. Four unauthenticated requests.
  */
 
 import { createHash } from "node:crypto";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
 	answeredByTheWorker,
 	assetMismatch,
 	builtAssets,
+	deployedAddress,
 	staleServedPage,
 	workerVersionMismatch,
 } from "./deployment-check.mjs";
@@ -41,13 +43,34 @@ if (!expectedVersion) {
 	);
 }
 
-const base = (process.env.PRODUCTION_URL ?? "").trim().replace(/\/+$/, "");
+const output = join(process.env.RUNNER_TEMP ?? "", "deploy-output.txt");
+const reported = existsSync(output)
+	? deployedAddress(readFileSync(output, "utf8"))
+	: null;
+const base = (reported ?? process.env.PRODUCTION_URL ?? "")
+	.trim()
+	.replace(/\/+$/, "");
 if (!base) {
-	// A fork that has not set the address gets the deploy and no check. The
-	// workflow skips this step in that case; this is the belt for the braces.
-	console.log("PRODUCTION_URL is not set, so there is nothing to check.");
+	// A Worker with no workers.dev address and no route, and no address set:
+	// nothing to ask. Said as a warning, because a change in what wrangler
+	// prints would look the same, and an unchecked deploy should not pass
+	// unnoticed.
+	console.log(
+		"::warning::wrangler reported no address it deployed to, and PRODUCTION_URL is not set, so what is served was not checked",
+	);
 	process.exit(0);
 }
+try {
+	console.log(`::add-mask::${new URL(base).host}`);
+} catch {
+	console.log("::error::the address to check is not a URL");
+	process.exit(1);
+}
+console.log(
+	reported
+		? "asking the address wrangler reported it deployed to"
+		: "asking PRODUCTION_URL, since wrangler reported no address",
+);
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 

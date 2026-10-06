@@ -152,3 +152,28 @@ export function workerVersionMismatch(expected, served) {
 		? null
 		: `the Worker answering is version ${served}, not ${expected}`;
 }
+
+/**
+ * The address `wrangler deploy` says it deployed to: the first `https://` line
+ * under its "Deployed <name> triggers" line. Null when it names none -- a
+ * Worker with neither a workers.dev address nor a route.
+ *
+ * Read from wrangler's own output so that nothing has to be set for the check
+ * to run: it used to need the address as a GitHub secret, which a fork had to
+ * know to make, and without which its deploys went unchecked -- and with the
+ * check, the rollback that hangs on it. The output is read from a file the
+ * deploy step writes, never from the log, which has every address struck out.
+ */
+export function deployedAddress(deployOutput) {
+	const lines = (deployOutput ?? "").split(/\r?\n/);
+	const at = lines.findIndex((line) =>
+		/^\s*Deployed \S+ triggers\b/.test(line),
+	);
+	if (at < 0) return null;
+	for (const line of lines.slice(at + 1)) {
+		if (!/^\s/.test(line)) break;
+		const url = /^\s+(https:\/\/[^\s()]+)\s*$/.exec(line);
+		if (url) return url[1].replace(/\/+$/, "");
+	}
+	return null;
+}

@@ -79,7 +79,8 @@ is turned on again.
 | `CLOUDFLARE_API_TOKEN` | From step 2. |
 | `CLOUDFLARE_ACCOUNT_ID` | From step 2. |
 
-Two more are optional, and both are addresses rather than credentials. They
+Two more are optional, and both are addresses rather than credentials. Most
+deployments set neither. They
 are secrets anyway, for one reason: GitHub replaces a secret's value with
 `***` wherever it appears in a log, and a public repository's Actions logs
 are public. Kept as repository variables they would be printed on every run —
@@ -88,7 +89,7 @@ prints when it finishes.
 
 | Secret | What it is |
 |---|---|
-| `PRODUCTION_URL` | Where your deployment answers, e.g. `https://your-worker.your-subdomain.workers.dev`. The deploy then asks it what it is serving and fails the run if that is not the build it just made. Without it that check is skipped. The `workers.dev` address is kept out of the log either way; set this as well if you serve the Worker on a domain of your own, which the log would otherwise show. |
+| `PRODUCTION_URL` | Usually left unset. The deploy checks what your deployment serves at the address wrangler reports when it deploys -- your `workers.dev` address -- and keeps it out of the log. Set this only if wrangler reports no address (you turned `workers.dev` off and have no route), so the check has somewhere to ask, or if you serve the Worker on a domain of your own that the log would otherwise show. |
 | `ACCOUNT_RECOVERY_FROM` | Only if you want the password-reset sender fixed by the deployment rather than set on `/root` (step 7). Set it here rather than as a variable: a variable is printed in the deploy log, in every step's environment and in the bindings wrangler lists. If both exist, this one is used. |
 
 ## 5. Set the repository variables
@@ -130,7 +131,7 @@ default was used — check it the first time.
 The Cloudflare token is handed only to the steps that run wrangler, not to
 the whole job, and the actions the workflow uses are pinned to commits.
 
-It closes, if you set `PRODUCTION_URL`, by fetching your deployment and
+It closes by fetching your deployment, at the address wrangler reported, and
 comparing what it serves against what was just built: the entry script's name
 in the page, then that file's bytes, then that a deep path still falls back to
 the page and that an API path is answered by the Worker rather than by the
