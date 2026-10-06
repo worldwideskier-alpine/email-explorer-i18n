@@ -1,3 +1,4 @@
+import { TextSelection } from "@tiptap/pm/state";
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h, nextTick } from "vue";
 import { createI18n } from "vue-i18n";
@@ -169,12 +170,16 @@ describe("a pasted table", () => {
 describe("a table pasted into a table", () => {
 	type View = {
 		pasteHTML: (html: string, event: Event) => boolean;
-		state: { doc: { content: { size: number } } };
+		state: {
+			doc: Parameters<typeof TextSelection.create>[0];
+			tr: { setSelection: (selection: TextSelection) => unknown };
+		};
+		dispatch: (tr: unknown) => void;
 	};
 	type Editor = {
 		view: View;
 		commands: {
-			setTextSelection: (pos: number) => boolean;
+			setTextSelection: (pos: number | { from: number; to: number }) => boolean;
 			insertContent: (html: string) => boolean;
 		};
 		getJSON: () => unknown;
@@ -195,6 +200,24 @@ describe("a table pasted into a table", () => {
 		expect(performance.now() - started).toBeLessThan(5000);
 		expect(host.querySelectorAll(".ProseMirror table")).toHaveLength(1);
 		expect(host.querySelectorAll(".ProseMirror tr")).toHaveLength(1);
+		app.unmount();
+	}, 30_000);
+
+	it("is caught with a selection made backwards out of the table", async () => {
+		// The selection starts in the paragraph above and its head is in a
+		// cell: prosemirror-tables merges cells by the head, so that is where
+		// the paste lands.
+		const { host, app } = await drawn(
+			"<p>x</p><table><tr><td>a</td><td>b</td></tr></table>",
+		);
+		const editor = editorOf(host);
+		const { view } = editor;
+		view.dispatch(
+			view.state.tr.setSelection(TextSelection.create(view.state.doc, 1, 8)),
+		);
+		const tall = "<tr><td>x</td></tr>".repeat(500);
+		editor.view.pasteHTML(`<table>${tall}</table>`, new Event("paste"));
+		expect(host.querySelectorAll(".ProseMirror tr").length).toBeLessThan(10);
 		app.unmount();
 	}, 30_000);
 

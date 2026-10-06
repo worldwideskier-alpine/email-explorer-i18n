@@ -1,6 +1,7 @@
 import { TableCell, TableHeader } from "@tiptap/extension-table";
 import { Fragment, type Node, Slice } from "@tiptap/pm/model";
-import { Plugin } from "@tiptap/pm/state";
+import { type EditorState, Plugin } from "@tiptap/pm/state";
+import { isInTable } from "@tiptap/pm/tables";
 import { Extension, type JSONContent } from "@tiptap/vue-3";
 
 /**
@@ -116,15 +117,6 @@ function slotsIn(doc: Node, budget = MAX_TABLE_GRID): number {
 	return used;
 }
 
-/** Whether a position is inside a table cell. */
-const inTable = (doc: Node, pos: number) => {
-	const $pos = doc.resolve(pos);
-	for (let depth = $pos.depth; depth > 0; depth--) {
-		if ($pos.node(depth).type.name === "table") return true;
-	}
-	return false;
-};
-
 /**
  * What is pasted or dropped into the editor, held to what is left of the
  * same budget once the document's own tables are counted. Setting content
@@ -133,12 +125,16 @@ const inTable = (doc: Node, pos: number) => {
  * replaced is handed back as it was; one with a table taken out is closed,
  * since the depth it was open at may have been that table's.
  */
-export function boundPasted(slice: Slice, doc: Node, at: number): Slice {
+export function boundPasted(slice: Slice, state: EditorState): Slice {
+	const { doc } = state;
 	// Into a table, a pasted table is pasted as its cells' contents. Merged
 	// in as cells, it grew the table it landed in to cover both, and growing
 	// it was the expensive part, done before anything could measure the
 	// result (security-guidance, on this change).
-	const left = inTable(doc, at)
+	// Asked the way prosemirror-tables asks before it merges cells, so the two
+	// cannot disagree about where the paste lands: a selection made backwards
+	// out of a table had its start outside it and its head in it.
+	const left = isInTable(state)
 		? 0
 		: Math.max(0, MAX_TABLE_GRID - slotsIn(doc));
 	const pasted = { type: "doc", content: slice.content.toJSON() ?? [] };
