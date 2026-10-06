@@ -158,10 +158,18 @@ added on `/root`.
 The address is a mailbox on this deployment that belongs to somebody else --
 possibly one they deleted, which keeps the address theirs. Password resets
 for a sign-in address there would land in their mailbox, so it is refused;
-use another address. Creating a mailbox at somebody else's sign-in address is
-refused with the same words, for the same reason. Your own addresses are not
-affected: a mailbox at an address you sign in with, or the other way round,
-is fine.
+use another address.
+
+**"Mailbox already exists" for a mailbox nobody seems to have.** The address
+may be somebody else's sign-in address, and a mailbox there would receive
+their password reset. That includes root's: root is a person of its own, so
+an administrator account cannot make a mailbox at root's sign-in address
+even when the same human runs both. Use another address, or move root's
+sign-in address first, on `/account` signed in as root (the confirmation is
+mailed, so root's Resend key and the password reset sender must be set).
+Your own addresses are not affected: a mailbox at an address the same
+account signs in with, or a sign-in address added at one of its own
+mailboxes, is fine.
 
 **The delete button is missing on `/root`.** That person's deletion lock is on.
 

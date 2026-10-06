@@ -406,23 +406,40 @@ are still checked, by the `tsc` that runs before the worker tests.
   too), and root making a login at a customer's mailbox handed the customer
   that login. Now creating a mailbox refuses another person's sign-in
   address (`claimMailboxForPersonOf`), and making or moving a login --
-  root's form, one's own spare, the address change asked and confirmed, the
-  open registration form -- refuses another person's mailbox, deleted ones
-  included, since a grant keeps the address its holder's. Each is asked in
-  the auth object's step that writes, both tables being there. The legacy
-  backfill passes such an address over (`giveMailboxToPerson`). One's own
-  addresses are left alone, and a holder may still bring back a deleted
-  mailbox that collides with a login from before. Those collisions are not
-  undone -- neither side can be removed safely -- so a reset is not sent to
-  an address another person holds as a mailbox; the answer is the one any
-  address gets, and root can set the password directly. That is asked in
-  the step that binds the link to the address it is mailed to
-  (`passwordResetStamp`): asked in a call of its own before the stamp, the
-  owner could move off the address in between, somebody make a mailbox of
-  it, and the link -- stamped with the new address -- reset the owner's
-  password from there. Refusals reuse "Mailbox
-  already exists", which every catalogue already has, rather than a new
-  sentence that would name the kind of address. `address-of-another.test.ts`.
+  root's form, one's own spare, the open registration form, the address
+  change when confirmed -- refuses another person's mailbox, deleted ones
+  included, since a grant keeps the address its holder's. Each of those is
+  decided in the auth object's step that writes, both tables being there.
+  The address change is also refused when it is asked for, so the link is
+  not mailed into somebody else's mailbox; that is an early answer, and the
+  confirmation has the last word. The legacy backfill passes such an
+  address over (`giveMailboxToPerson`), and a run that passed over
+  everything it found is not run again (`passedOverEverything`). Addresses
+  compare without case: sign-in rows from before lowercasing keep capitals.
+  One's own addresses are left alone, and a holder may still bring back a
+  deleted mailbox that collides with a login from before.
+  Those collisions are not undone -- neither side can be removed safely --
+  so a reset is not sent to an address another person holds as a mailbox;
+  the answer is the one any address gets, and root can set the password
+  directly. That is asked in the step that binds the link to the address it
+  is mailed to (`passwordResetStamp`): asked in a call of its own before the
+  stamp, the owner could move off the address in between, somebody make a
+  mailbox of it, and the link -- stamped with the new address -- reset the
+  owner's password from there.
+  Root is a person of its own, so root's sign-in address is somebody else's
+  to every administrator account, the owner's own included: a mailbox at
+  root's address is refused even where one human runs both, and where such
+  a mailbox exists from before, root's reset is not sent to it. The setup
+  guides say so, and to give root a spare.
+  Refusals reuse "Mailbox already exists", which every catalogue already
+  has, so no sentence says which kind of address was met -- but the refusal
+  itself says something. A signed-in administrator can learn from a 409 at
+  `POST /mailboxes`, with no password and no limit, that an address is
+  somebody's sign-in address (root's included) or a deleted mailbox --
+  inbound mail is refused where no mailbox lives, which rules out a live
+  one -- though every guess that misses becomes a mailbox of theirs. Before, telling a sign-in address took the current password, under
+  the account-change limit. That is the price of refusing at all: a mailbox
+  that is let through is the hole. `address-of-another.test.ts`.
 - **The daily cron.** One `scheduled()` handler, which starts every
   mailbox's night in that mailbox's own Durable Object alarm, all at once
   (`mailbox-night.ts`), and waits to write down how they went

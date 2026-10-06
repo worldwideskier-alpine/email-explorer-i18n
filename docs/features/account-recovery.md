@@ -281,8 +281,11 @@ export default EmailExplorer({
 6. Check that the address is not also a mailbox on this deployment that
    belongs to somebody else: the reset would be filed in their mailbox, so it
    is not sent, and the page does not say so. Root can set a new password on
-   `/root`. New accounts and mailboxes cannot end up like this; it is left
-   over from before that was refused.
+   `/root`. For root's own address -- a mailbox there held by an
+   administrator account counts as somebody else's, even your own -- sign in
+   with root's spare address and set it from `/root`. New accounts and
+   mailboxes cannot end up like this; it is left over from before that was
+   refused.
 
 ### "Password reset failed"
 
