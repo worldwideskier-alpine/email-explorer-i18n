@@ -282,4 +282,162 @@ describe("Claude second-stage spam classification", () => {
 			expect(await folderOf("Auth verdicts reach the classifier")).toBe("spam");
 		});
 	});
+
+	/**
+	 * The screen shows a message's HTML part whenever it has one, and the
+	 * classifier read its text part whenever it had one. These deliver the two
+	 * parts with the marker in only one of them, so the folder says which part
+	 * reached the classifier.
+	 */
+	describe("which part of a message reaches the classifier", () => {
+		function multipart(subject: string, text: string, html: string): string {
+			return buildRawEmail(
+				{
+					From: "sender@legit.com",
+					To: mailboxId,
+					Subject: subject,
+					"MIME-Version": "1.0",
+					"Content-Type": 'multipart/alternative; boundary="part"',
+					"Authentication-Results": PASSING_AUTH_RESULTS,
+				},
+				[
+					"--part",
+					"Content-Type: text/plain; charset=utf-8",
+					"",
+					text,
+					"--part",
+					"Content-Type: text/html; charset=utf-8",
+					"",
+					html,
+					"--part--",
+					"",
+				].join("\r\n"),
+			);
+		}
+
+		it("reads the HTML part, which is what the reader is shown", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"Only the HTML part says so",
+					"Thank you for your order.",
+					"<p>Verify your card now TRIGGER_CLAUDE_SPAM</p>",
+				),
+			);
+
+			expect(await folderOf("Only the HTML part says so")).toBe("spam");
+		});
+
+		it("reads the HTML part's character references as the reader does", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"Written as references",
+					"Thank you for your order.",
+					"<p>&#x54;RIGGER_CLAUDE_SPAM</p>",
+				),
+			);
+
+			expect(await folderOf("Written as references")).toBe("spam");
+		});
+
+		it("still reads the text part when the HTML is only a picture", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"Picture-only HTML",
+					"Cheap pills TRIGGER_CLAUDE_SPAM",
+					'<table><tr><td>&nbsp;</td><td><img src="https://x.example/o.png"></td></tr></table>',
+				),
+			);
+
+			expect(await folderOf("Picture-only HTML")).toBe("spam");
+		});
+
+		// The HTML part read the way a browser reads it: a `<` that opens no
+		// tag is a `<` on screen, and the words after it are shown.
+		it("reads the HTML part's words after a `<` that opens nothing", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"Words after a bare bracket",
+					"Thank you for your order.",
+					"<p>Orders under 5000 yen < ship free. TRIGGER_CLAUDE_SPAM confirm your card today.</p>",
+				),
+			);
+
+			expect(await folderOf("Words after a bare bracket")).toBe("spam");
+		});
+
+		// A script that `<!--` and `<script` have escaped does not end at the
+		// first `</script>`. Taken for its end, the rest was read as markup,
+		// and the `<style>` after it hid the words the screen shows -- forty
+		// bytes ahead of an HTML part, beside an innocent text part.
+		it("reads the HTML part's words after a script the tokenizer escaped", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"After an escaped script",
+					"Thank you for your order.",
+					"<script><!--<script></script><style></script><p>Verify your card now TRIGGER_CLAUDE_SPAM</p><style></style>",
+				),
+			);
+
+			expect(await folderOf("After an escaped script")).toBe("spam");
+		});
+
+		// A comment between two halves of a word parts nothing on screen, and
+		// the reader is shown the word whole. Parted here, the classifier was
+		// shown two halves of it.
+		it("reads a word the HTML part splits with a comment as one word", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"A word split by a comment",
+					"Thank you for your order.",
+					"<p>Verify your card now TRIGGER_CL<!-- -->AUDE_SPAM</p>",
+				),
+			);
+
+			expect(await folderOf("A word split by a comment")).toBe("spam");
+		});
+
+		// The other side: what the screen does not show is not read either --
+		// a style, a script, the part of an escaped script past its first
+		// `</script>`, a comment with no `>` in it.
+		it("does not read the HTML part's styles, scripts or comments", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"Only hidden parts say so",
+					"Thank you for your order.",
+					"<style>/* TRIGGER_CLAUDE_SPAM */</style><script>TRIGGER_CLAUDE_SPAM</script><script><!--<script></script>TRIGGER_CLAUDE_SPAM</script><!-- TRIGGER_CLAUDE_SPAM --><p>Thank you for your order.</p>",
+				),
+			);
+
+			expect(await folderOf("Only hidden parts say so")).toBe("inbox");
+		});
+
+		// The other side: two clean parts are still let through.
+		it("keeps a message whose parts are both clean in the inbox", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"Both parts clean",
+					"Thank you for your order.",
+					"<p>Thank you for your order.</p>",
+				),
+			);
+
+			expect(await folderOf("Both parts clean")).toBe("inbox");
+		});
+	});
 });
