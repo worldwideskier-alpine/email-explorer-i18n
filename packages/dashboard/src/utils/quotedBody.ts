@@ -47,11 +47,25 @@ function escapeHtml(text: string): string {
 }
 
 /**
+ * The text without the newlines it starts and ends with, found by index. It
+ * was `/^\n+|\n+$/g`, and `\n+$` is tried again from every newline in a run
+ * that something else follows: quadratic, and a sender's few hundred thousand
+ * blank lines froze the tab on reply or forward (Claude Security F5).
+ */
+function withoutOuterNewlines(text: string): string {
+	let start = 0;
+	let end = text.length;
+	while (start < end && text[start] === "\n") start += 1;
+	while (end > start && text[end - 1] === "\n") end -= 1;
+	return text.slice(start, end);
+}
+
+/**
  * Plain text as paragraphs a rich-text editor can take apart: one `<p>` per
  * blank-line-separated block, `<br>` for the line breaks inside a block.
  */
 export function plainTextToParagraphs(text: string): string {
-	const body = text.replace(/\r\n?/g, "\n").replace(/^\n+|\n+$/g, "");
+	const body = withoutOuterNewlines(text.replace(/\r\n?/g, "\n"));
 	if (!body) return "";
 
 	return body
