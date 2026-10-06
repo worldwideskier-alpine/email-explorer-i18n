@@ -613,8 +613,7 @@ are still checked, by the `tsc` that runs before the worker tests.
   overlooked: text the HTML hides by style, puts in a `<title>` or leaves on
   a comment's far side is read, so three thousand characters of it ahead of
   the visible words leave them out (taking it out needs the page laid out,
-  not parsed); a text-only message is read as it came, brackets aside, so
-  four thousand zero-width spaces ahead of its words do the same; inside
+  not parsed); inside
   svg, math and select a crafted message can still part this from the
   browser, as the counts above say; and words the screen draws rather than
   holds -- an image's `alt`, an input's `value`, a style's `content`, a
@@ -624,6 +623,13 @@ are still checked, by the `tsc` that runs before the worker tests.
   out). Reading the first three would still leave the picture, which costs a
   sender no more and which no reading of the markup sees, and would add text
   nobody is shown: an `alt` is not shown once its picture loads.
+  A text-only message is read as its `pre-wrap` block shows it
+  (`plainShown`): what takes no room is taken out and each run of spaces or
+  blank lines is one, a step at a time -- read as it came, four thousand
+  zero-width spaces, or line breaks, ahead of its words left them out. A run
+  two steps cut is joined where they meet: left as two, a body of line
+  breaks counted a blank line per step towards the 4000 and stopped before
+  the words.
   `claude-spam-prompt.test.ts`, `strip-html.test.ts`,
   `claude-spam-classification.test.ts`.
 - **The message frame is decided on the string.** A message is shown in a

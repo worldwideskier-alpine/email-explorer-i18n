@@ -1008,6 +1008,60 @@ function cut(text: string, max: number): string {
 	return text.slice(0, end >= 0xd800 && end <= 0xdbff ? max - 1 : max);
 }
 
+/** A run of SPACES with one of these in it was a line break on screen. */
+const LINE_BREAKS = /\r\n|[\n\r\v\f\u0085\u2028\u2029]/g;
+
+/**
+ * A plain-text body as its `pre-wrap` block shows it, until there is more
+ * than `enough`: no character that takes no room, a run of spaces one
+ * space, a run of blank lines one blank line. Taken a step at a time, so a
+ * 24MB body of padding costs one pass and a long one with words in it
+ * stops once it has them. A run a step cuts in two is joined where the
+ * steps meet: left as two, a body of line breaks added a blank line per
+ * step, and those alone reached `enough` with the words still to come.
+ */
+function plainShown(text: string, enough: number): string {
+	let shown = "";
+	for (let at = 0; at < text.length && shown.length <= enough; ) {
+		const end = Math.min(text.length, at + TEXT_STEP);
+		const piece = oneRunEach(text.slice(at, end).replace(INVISIBLE, ""));
+		const tail = shown.length - runBefore(shown, shown.length);
+		const head = runBefore(piece, 0, true);
+		shown =
+			shown.slice(0, shown.length - tail) +
+			oneRunEach(shown.slice(shown.length - tail) + piece.slice(0, head)) +
+			piece.slice(head);
+		at = end;
+	}
+	return shown.trim();
+}
+
+/**
+ * Where the run of space that ends at `to` starts -- or, `forward`, where
+ * the one that starts at `to` ends. A run oneRunEach has made is at most
+ * two characters, so this looks at no more than that.
+ */
+function runBefore(text: string, to: number, forward = false): number {
+	let at = to;
+	if (forward) {
+		while (at < text.length && isRun(text.charCodeAt(at))) at++;
+	} else {
+		while (at > 0 && isRun(text.charCodeAt(at - 1))) at--;
+	}
+	return at;
+}
+
+function isRun(c: number): boolean {
+	return c === SPACE || c === LF;
+}
+
+function oneRunEach(text: string): string {
+	return text.replace(SPACES, (run) => {
+		const breaks = run.match(LINE_BREAKS)?.length ?? 0;
+		return breaks === 0 ? " " : breaks === 1 ? "\n" : "\n\n";
+	});
+}
+
 /**
  * The two parts of the body, within MAX_BODY_CHARS between them.
  *
@@ -1032,11 +1086,11 @@ function cut(text: string, max: number): string {
  * would add text the reader is not shown: an `alt` is not shown once its
  * picture has loaded.
  *
- * A text-only message is read as it was, brackets aside, invisible
- * characters included: four thousand zero-width spaces ahead of its words
- * leave the words out. Not taken out because the text part is shown as
- * written (plainTextToHtml), and reading it any other way is a change of its
- * own.
+ * A text-only message is read as the screen shows it (plainTextToHtml, a
+ * `pre-wrap` block): the characters that take no room are taken out and
+ * each run of space or blank lines is one (plainShown). Read as it came,
+ * four thousand zero-width spaces, or as many line breaks, ahead of its
+ * words left the words out.
  */
 function bodyParts(input: Pick<ClassifyInput, "text" | "html">): {
 	shown: string;
@@ -1046,7 +1100,10 @@ function bodyParts(input: Pick<ClassifyInput, "text" | "html">): {
 	// same either way, and a cut part is all it then has to read.
 	const text = input.text ?? "";
 	if (!input.html) {
-		return { shown: asData(cut(text, MAX_BODY_CHARS)), alternative: "" };
+		return {
+			shown: asData(cut(plainShown(text, MAX_BODY_CHARS), MAX_BODY_CHARS)),
+			alternative: "",
+		};
 	}
 	const html = stripHtml(input.html, MAX_BODY_CHARS);
 	const alternative = text.trim();

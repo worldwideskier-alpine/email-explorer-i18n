@@ -282,17 +282,47 @@ describe("which part of the message the classifier reads", () => {
 		);
 	});
 
-	it("reads a message with only a text part as it did", () => {
+	it("reads a message with only a text part as its screen shows it", () => {
 		const content = buildClassificationContent({
 			subject: "s",
 			from: "a@example.org",
-			text: "Line one &amp; more\n\n  Line two\u200b <b>",
+			text: "Line one &amp; more\n\n\n  Line two\u200b <b>\r\nLine   three\n",
 		});
-		// Word for word, with only the brackets made inert.
+		// Word for word: references are text here, the brackets are made
+		// inert, and only what takes no room on screen is gone -- the
+		// zero-width space, and each run of spaces or blank lines down to one.
 		expect(framed(content, "shown_to_reader")).toBe(
-			"Line one &amp; more\n\n  Line two\u200b \u2039b\u203a",
+			"Line one &amp; more\n\nLine two \u2039b\u203a\nLine three",
 		);
 		expect(content).not.toContain("plain_text_alternative");
+	});
+
+	it.each([
+		["zero-width spaces", "\u200b"],
+		["soft hyphens and joiners", "\u00ad\u2060\ufeff\u034f"],
+		["line breaks", "\n"],
+		["spaces", " "],
+		["CR LFs", "\r\n"],
+	])(
+		"does not let %s ahead of a text-only body push its words out",
+		(_, pad) => {
+			const content = buildClassificationContent({
+				subject: "s",
+				from: "a@example.org",
+				text: `${pad.repeat(6000)}PADDED_WORDS${pad.repeat(6000)}`,
+			});
+			expect(framed(content, "shown_to_reader")).toBe("PADDED_WORDS");
+		},
+	);
+
+	it("joins a run of blank lines a step cuts in two", () => {
+		// 4096 is the step, and the run of line breaks straddles it.
+		const text = `HEAD${"\u200b".repeat(4086)}${"\n".repeat(12)}TAIL`;
+		const shown = framed(
+			buildClassificationContent({ subject: "s", from: "a@example.org", text }),
+			"shown_to_reader",
+		);
+		expect(shown).toBe("HEAD\n\nTAIL");
 	});
 
 	it("reads character references as the reader sees them", () => {
@@ -474,6 +504,44 @@ describe("which part of the message the classifier reads", () => {
 		// Linear work on 320KB is a few milliseconds; a second is room for a
 		// slow runner.
 		expect(performance.now() - started).toBeLessThan(1000);
+	});
+
+	// A text-only body is tidied a step at a time. Its padding is read to the
+	// end, so it has to be one pass however it is made; and the runs the
+	// steps cut have to be joined, or a body of line breaks counts a blank
+	// line per step towards the limit and stops before the words.
+	it.each([
+		["line breaks", "\n"],
+		["spaces", " "],
+		["CR LFs", "\r\n"],
+		["zero-width spaces", "\u200b"],
+		["a mix", " \u200b\n\t\u00ad\r\n"],
+	])("reads the words after 24MB of %s in a text-only body", (_what, pad) => {
+		const text = `${pad.repeat(Math.ceil(24_000_000 / pad.length))}FAR_WORDS`;
+		const started = performance.now();
+		const content = buildClassificationContent({
+			subject: "s",
+			from: "a@example.org",
+			text,
+		});
+		const took = performance.now() - started;
+		expect(framed(content, "shown_to_reader")).toBe("FAR_WORDS");
+		// One linear pass over 24MB; the 30 seconds a Durable Object has
+		// are far off either way.
+		expect(took).toBeLessThan(3000);
+	});
+
+	it("stops reading a long text-only body once it has the limit", () => {
+		const text = "word ".repeat(5_000_000);
+		const started = performance.now();
+		const content = buildClassificationContent({
+			subject: "s",
+			from: "a@example.org",
+			text,
+		});
+		const took = performance.now() - started;
+		expect(framed(content, "shown_to_reader")?.length).toBe(4000);
+		expect(took).toBeLessThan(250);
 	});
 
 	// Where a part is cut, it is cut between characters. Half an emoji is a

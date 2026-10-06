@@ -439,5 +439,24 @@ describe("Claude second-stage spam classification", () => {
 
 			expect(await folderOf("Both parts clean")).toBe("inbox");
 		});
+
+		it("reads a text-only message's words after padding that takes no room", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				buildRawEmail(
+					{
+						From: "sender@legit.com",
+						To: mailboxId,
+						Subject: "Padded plain text",
+						"Content-Type": "text/plain; charset=utf-8",
+						"Authentication-Results": PASSING_AUTH_RESULTS,
+					},
+					`${"\u200b".repeat(4500)}${"\r\n".repeat(4500)}Verify your card now TRIGGER_CLAUDE_SPAM\r\n`,
+				),
+			);
+
+			expect(await folderOf("Padded plain text")).toBe("spam");
+		});
 	});
 });
