@@ -282,4 +282,94 @@ describe("Claude second-stage spam classification", () => {
 			expect(await folderOf("Auth verdicts reach the classifier")).toBe("spam");
 		});
 	});
+
+	/**
+	 * The screen shows a message's HTML part whenever it has one, and the
+	 * classifier read its text part whenever it had one. These deliver the two
+	 * parts with the marker in only one of them, so the folder says which part
+	 * reached the classifier.
+	 */
+	describe("which part of a message reaches the classifier", () => {
+		function multipart(subject: string, text: string, html: string): string {
+			return buildRawEmail(
+				{
+					From: "sender@legit.com",
+					To: mailboxId,
+					Subject: subject,
+					"MIME-Version": "1.0",
+					"Content-Type": 'multipart/alternative; boundary="part"',
+					"Authentication-Results": PASSING_AUTH_RESULTS,
+				},
+				[
+					"--part",
+					"Content-Type: text/plain; charset=utf-8",
+					"",
+					text,
+					"--part",
+					"Content-Type: text/html; charset=utf-8",
+					"",
+					html,
+					"--part--",
+					"",
+				].join("\r\n"),
+			);
+		}
+
+		it("reads the HTML part, which is what the reader is shown", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"Only the HTML part says so",
+					"Thank you for your order.",
+					"<p>Verify your card now TRIGGER_CLAUDE_SPAM</p>",
+				),
+			);
+
+			expect(await folderOf("Only the HTML part says so")).toBe("spam");
+		});
+
+		it("reads the HTML part's character references as the reader does", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"Written as references",
+					"Thank you for your order.",
+					"<p>&#x54;RIGGER_CLAUDE_SPAM</p>",
+				),
+			);
+
+			expect(await folderOf("Written as references")).toBe("spam");
+		});
+
+		it("still reads the text part when the HTML is only a picture", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"Picture-only HTML",
+					"Cheap pills TRIGGER_CLAUDE_SPAM",
+					'<table><tr><td>&nbsp;</td><td><img src="https://x.example/o.png"></td></tr></table>',
+				),
+			);
+
+			expect(await folderOf("Picture-only HTML")).toBe("spam");
+		});
+
+		// The other side: two clean parts are still let through.
+		it("keeps a message whose parts are both clean in the inbox", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"Both parts clean",
+					"Thank you for your order.",
+					"<p>Thank you for your order.</p>",
+				),
+			);
+
+			expect(await folderOf("Both parts clean")).toBe("inbox");
+		});
+	});
 });

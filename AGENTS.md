@@ -564,6 +564,26 @@ are still checked, by the `tsc` that runs before the worker tests.
   `spam-check-location.test.ts` holds the arrangement -- partly structurally,
   because both sides run in one isolate under the test pool and the difference
   is only visible in production.
+- **The spam check reads what the screen shows.** The screen shows a
+  message's HTML part whenever it has one (`email-ingest.ts`), and the
+  classifier read its text part whenever it had one -- so an innocent text
+  part beside a phishing page in the HTML was all the classifier was asked
+  about. `buildClassificationContent` (`claude-spam-filter.ts`) now puts the
+  HTML's words first, with character references decoded and invisible padding
+  taken out, and the text part after them with 1000 of the 4000 characters
+  kept for it: neither part can push the other out by being long, a
+  picture-only HTML part has no words of its own, and a link's address is
+  spelled out only in the text part. The sender's `<` and `>` become `‹` and
+  `›` -- one for one, so the limit still holds; `&lt;` grew a body of `<` to
+  four times it -- so nothing they write closes `<shown_to_reader>` or
+  `<plain_text_alternative>`, and the relay's Authentication line is the only
+  line above the `----` marker. The system prompt explains every tag the
+  content uses, and a test holds the two together. Text the HTML hides
+  (`display:none`, `<title>`, the far side of a comment) is still read, and
+  that is a known gap rather than an oversight: removing comments by scanning
+  for `<!--` and `-->` removed text a browser shows, measured, and four such
+  cases are in the unit test; doing it properly needs a real HTML parser.
+  `claude-spam-prompt.test.ts`, `claude-spam-classification.test.ts`.
 - **The message frame is decided on the string.** A message is shown in a
   sandboxed `srcdoc` iframe, and everything about what it may do is settled
   in the markup before the frame parses it (`prepareFrame`,
