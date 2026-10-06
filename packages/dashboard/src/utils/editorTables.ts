@@ -1,6 +1,7 @@
 import { TableCell, TableHeader } from "@tiptap/extension-table";
 import { Fragment, type Node, Slice } from "@tiptap/pm/model";
-import type { JSONContent } from "@tiptap/vue-3";
+import { Plugin } from "@tiptap/pm/state";
+import { Extension, type JSONContent } from "@tiptap/vue-3";
 
 /**
  * Table cells whose spans are held to the limits a browser holds them to.
@@ -99,16 +100,30 @@ export function boundTables(
 	return { ...doc, content: walk(doc.content ?? []) };
 }
 
-/** The slots the tables already in a document take between them. */
-function slotsIn(doc: Node): number {
+/**
+ * The slots the tables in a document take between them, or Infinity once
+ * past `budget`.
+ */
+function slotsIn(doc: Node, budget = MAX_TABLE_GRID): number {
 	let used = 0;
 	doc.descendants((node) => {
+		if (used > budget) return false;
 		if (node.type.name === "table") {
-			used += gridSlots(node.toJSON() as JSONContent, Number.MAX_SAFE_INTEGER);
+			used += gridSlots(node.toJSON() as JSONContent, budget - used);
 		}
+		return true;
 	});
 	return used;
 }
+
+/** Whether a position is inside a table cell. */
+const inTable = (doc: Node, pos: number) => {
+	const $pos = doc.resolve(pos);
+	for (let depth = $pos.depth; depth > 0; depth--) {
+		if ($pos.node(depth).type.name === "table") return true;
+	}
+	return false;
+};
 
 /**
  * What is pasted or dropped into the editor, held to what is left of the
@@ -118,8 +133,14 @@ function slotsIn(doc: Node): number {
  * replaced is handed back as it was; one with a table taken out is closed,
  * since the depth it was open at may have been that table's.
  */
-export function boundPasted(slice: Slice, doc: Node): Slice {
-	const left = Math.max(0, MAX_TABLE_GRID - slotsIn(doc));
+export function boundPasted(slice: Slice, doc: Node, at: number): Slice {
+	// Into a table, a pasted table is pasted as its cells' contents. Merged
+	// in as cells, it grew the table it landed in to cover both, and growing
+	// it was the expensive part, done before anything could measure the
+	// result (security-guidance, on this change).
+	const left = inTable(doc, at)
+		? 0
+		: Math.max(0, MAX_TABLE_GRID - slotsIn(doc));
 	const pasted = { type: "doc", content: slice.content.toJSON() ?? [] };
 	const bounded = boundTables(pasted, left);
 	if (JSON.stringify(bounded) === JSON.stringify(pasted)) return slice;
@@ -147,5 +168,23 @@ export const BoundedTableHeader = TableHeader.extend({
 			colspan: span("colspan", MAX_COLSPAN),
 			rowspan: span("rowspan", MAX_ROWSPAN),
 		};
+	},
+});
+
+/**
+ * The last word: no change to the document may leave its tables past
+ * MAX_TABLE_GRID, whatever made the change. Content set, pasted or dropped
+ * is bounded before it gets here, so this refuses only what came some other
+ * way -- a command, a table edited a row at a time.
+ */
+export const TableBudget = Extension.create({
+	name: "tableBudget",
+	addProseMirrorPlugins() {
+		return [
+			new Plugin({
+				filterTransaction: (tr) =>
+					!tr.docChanged || slotsIn(tr.doc) <= MAX_TABLE_GRID,
+			}),
+		];
 	},
 });

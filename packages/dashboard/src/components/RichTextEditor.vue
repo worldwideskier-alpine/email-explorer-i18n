@@ -347,6 +347,7 @@ import {
 	BoundedTableHeader,
 	boundPasted,
 	boundTables,
+	TableBudget,
 } from "@/utils/editorTables";
 
 const props = defineProps<{
@@ -448,6 +449,7 @@ const extensions = [
 				"border: 1px solid #ccc; padding: 4px 8px; background: #f3f4f6; font-weight: 600;",
 		},
 	}),
+	TableBudget,
 ];
 
 /**
@@ -466,7 +468,8 @@ const editor = useEditor({
 			class: "prose prose-sm max-w-none focus:outline-none min-h-full",
 		},
 		// Pasting and dropping are ways in too (see editorTables).
-		transformPasted: (slice, view) => boundPasted(slice, view.state.doc),
+		transformPasted: (slice, view) =>
+			boundPasted(slice, view.state.doc, view.state.selection.from),
 	},
 	// The editor's HTML does not go back into the source box while it is open.
 	// In source mode the box is what is being typed into, and each keystroke

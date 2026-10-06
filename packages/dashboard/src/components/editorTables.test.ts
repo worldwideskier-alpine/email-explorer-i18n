@@ -159,3 +159,52 @@ describe("a pasted table", () => {
 		app.unmount();
 	});
 });
+
+/**
+ * Into a table, a pasted table is pasted as its contents: merged in as
+ * cells, it grew the table it landed in to cover both before anything could
+ * measure it (security-guidance, on the change before this one). And no
+ * change at all may leave the document past the budget.
+ */
+describe("a table pasted into a table", () => {
+	type View = {
+		pasteHTML: (html: string, event: Event) => boolean;
+		state: { doc: { content: { size: number } } };
+	};
+	type Editor = {
+		view: View;
+		commands: {
+			setTextSelection: (pos: number) => boolean;
+			insertContent: (html: string) => boolean;
+		};
+		getJSON: () => unknown;
+	};
+	const editorOf = (host: Element) =>
+		(host.querySelector(".ProseMirror") as unknown as { editor: Editor })
+			.editor;
+
+	it("is pasted as its cells' contents, and grows nothing", async () => {
+		const { host, app } = await drawn(
+			"<table><tr><td>a</td><td>b</td></tr></table>",
+		);
+		const editor = editorOf(host);
+		editor.commands.setTextSelection(3);
+		const tall = "<tr><td>x</td></tr>".repeat(500);
+		const started = performance.now();
+		editor.view.pasteHTML(`<table>${tall}</table>`, new Event("paste"));
+		expect(performance.now() - started).toBeLessThan(5000);
+		expect(host.querySelectorAll(".ProseMirror table")).toHaveLength(1);
+		expect(host.querySelectorAll(".ProseMirror tr")).toHaveLength(1);
+		app.unmount();
+	}, 30_000);
+
+	it("is refused by any other way in that would pass the budget", async () => {
+		const { host, app } = await drawn("<p>reply</p>");
+		const editor = editorOf(host);
+		const before = JSON.stringify(editor.getJSON());
+		const cells = '<td colspan="1000">c</td>'.repeat(1000);
+		editor.commands.insertContent(`<table><tr>${cells}</tr></table>`);
+		expect(JSON.stringify(editor.getJSON())).toBe(before);
+		app.unmount();
+	}, 30_000);
+});
