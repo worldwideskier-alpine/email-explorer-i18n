@@ -342,6 +342,7 @@ import { EditorContent, useEditor } from "@tiptap/vue-3";
 import { onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ColourHighlight, TextColour } from "@/utils/editorColours";
+import { BoundedTableCell, BoundedTableHeader } from "@/utils/editorTables";
 
 const props = defineProps<{
 	modelValue: string;
@@ -427,16 +428,20 @@ const editor = useEditor({
 					style: "border-collapse: collapse; margin: 8px 0;",
 				},
 			},
-			tableCell: {
-				HTMLAttributes: {
-					style: "border: 1px solid #ccc; padding: 4px 8px;",
-				},
+			// The kit's own cells read a span as written; these hold it to what
+			// a browser would (see editorTables).
+			tableCell: false,
+			tableHeader: false,
+		}),
+		BoundedTableCell.configure({
+			HTMLAttributes: {
+				style: "border: 1px solid #ccc; padding: 4px 8px;",
 			},
-			tableHeader: {
-				HTMLAttributes: {
-					style:
-						"border: 1px solid #ccc; padding: 4px 8px; background: #f3f4f6; font-weight: 600;",
-				},
+		}),
+		BoundedTableHeader.configure({
+			HTMLAttributes: {
+				style:
+					"border: 1px solid #ccc; padding: 4px 8px; background: #f3f4f6; font-weight: 600;",
 			},
 		}),
 	],
