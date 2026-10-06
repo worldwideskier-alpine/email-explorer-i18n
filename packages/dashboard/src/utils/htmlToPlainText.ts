@@ -79,10 +79,17 @@ const BLOCK = new Set([
  * `>`, no later pass can tell it was blank.
  */
 function collapseBlankLines(text: string): string {
-	return text
-		.replace(/\r\n?/g, "\n")
-		.replace(/[^\S\n]+\n/g, "\n")
-		.replace(/\n{3,}/g, "\n\n");
+	// Trailing white space comes off each line but the last by trimEnd, which
+	// takes exactly what `\s` matches. It was `/[^\S\n]+\n/g`, which is
+	// quadratic on a long run of spaces not followed by a newline: a sender's
+	// hundred thousand spaces froze the tab on reply, forward or send
+	// (Claude Security F4). A plain-text message keeps the run, inside its
+	// `<pre>`, and U+00A0 and U+3000 are never folded.
+	const lines = text.replace(/\r\n?/g, "\n").split("\n");
+	for (let i = 0; i < lines.length - 1; i++) {
+		lines[i] = (lines[i] as string).trimEnd();
+	}
+	return lines.join("\n").replace(/\n{3,}/g, "\n\n");
 }
 
 /**
@@ -190,7 +197,9 @@ export function htmlToPlainText(html: string): string {
 	// nothing in the message can load a resource or run while we read it.
 	const doc = new DOMParser().parseFromString(html, "text/html");
 
-	return collapseBlankLines(serialize(doc.body)).replace(/^\n+|\s+$/g, "");
+	// Leading newlines and trailing white space, without `\s+$`: the same
+	// quadratic shape as above, on the end of the text.
+	return collapseBlankLines(serialize(doc.body)).replace(/^\n+/, "").trimEnd();
 }
 
 /** Escapes plain text back into HTML, preserving its line breaks. */

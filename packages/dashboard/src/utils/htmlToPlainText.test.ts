@@ -246,3 +246,40 @@ describe("space that is content, not layout", () => {
 		);
 	});
 });
+
+/**
+ * Claude Security F4. Trailing white space was taken off each line with
+ * `/[^\S\n]+\n/g` and off the end with `\s+$`, both quadratic on a long run
+ * of white space followed by anything else: 40,000 spaces took 1.7 seconds
+ * in node, twice as many four times as long. A plain-text message keeps the
+ * run inside its `<pre>`, so a sender's froze the tab on reply, forward or
+ * send.
+ */
+describe("a long run of white space", () => {
+	const quick = (html: string) => {
+		const started = performance.now();
+		const text = htmlToPlainText(html);
+		expect(performance.now() - started).toBeLessThan(500);
+		return text;
+	};
+
+	it("does not hang when text follows it", () => {
+		expect(quick(`<pre>${" ".repeat(100_000)}x</pre>`)).toBe(
+			`${" ".repeat(100_000)}x`,
+		);
+		expect(quick(`<pre>a${" ".repeat(100_000)}x</pre>`)).toHaveLength(100_002);
+	});
+
+	it("does not hang when it ends the text", () => {
+		expect(quick(`<pre>x${" ".repeat(100_000)}　y</pre>`)).toHaveLength(
+			100_003,
+		);
+		expect(quick(`<pre>x${"　".repeat(100_000)}</pre>`)).toBe("x");
+	});
+
+	it("still comes off the end of every line", () => {
+		expect(quick("<pre>one   \ntwo  \n\n\n\nthree  </pre>")).toBe(
+			"one\ntwo\n\nthree",
+		);
+	});
+});
