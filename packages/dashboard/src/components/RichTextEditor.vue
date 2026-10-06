@@ -338,10 +338,17 @@ import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
-import { EditorContent, useEditor } from "@tiptap/vue-3";
+import { EditorContent, generateJSON, useEditor } from "@tiptap/vue-3";
 import { onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ColourHighlight, TextColour } from "@/utils/editorColours";
+import {
+	BoundedTableCell,
+	BoundedTableHeader,
+	boundPasted,
+	boundTables,
+	TableBudget,
+} from "@/utils/editorTables";
 
 const props = defineProps<{
 	modelValue: string;
@@ -389,62 +396,79 @@ const highlightColors = [
 	"#C1E1C1",
 ];
 
-const editor = useEditor({
-	extensions: [
-		// StarterKit 3 carries its own Link and Underline. Left in, they ran
-		// beside the ones configured below -- two `link` extensions, and the
-		// kit's has openOnClick on, so clicking a link in a message being
-		// written opened it in a new tab.
-		StarterKit.configure({ link: false, underline: false }),
-		Underline,
-		TextAlign.configure({
-			types: ["heading", "paragraph"],
-		}),
-		Link.configure({
-			openOnClick: false,
+const extensions = [
+	// StarterKit 3 carries its own Link and Underline. Left in, they ran
+	// beside the ones configured below -- two `link` extensions, and the
+	// kit's has openOnClick on, so clicking a link in a message being
+	// written opened it in a new tab.
+	StarterKit.configure({ link: false, underline: false }),
+	Underline,
+	TextAlign.configure({
+		types: ["heading", "paragraph"],
+	}),
+	Link.configure({
+		openOnClick: false,
+		HTMLAttributes: {
+			class: "text-blue-600 underline hover:text-blue-800",
+		},
+	}),
+	Image,
+	TextStyle,
+	// Only a colour, from a message being replied to: see editorColours.
+	TextColour,
+	ColourHighlight,
+	// Without this, a table in the message being replied to is dropped and
+	// the reply carries its cells as loose text -- an invoice or a quote
+	// comes back to the sender unreadable.
+	//
+	// The borders are inline styles rather than a stylesheet because the
+	// result is sent as an email, and mail clients strip <style>. Column
+	// resizing is off: it is a composing convenience that costs handle
+	// markup in the message, and what matters here is quoting a table back
+	// intact.
+	TableKit.configure({
+		table: {
+			resizable: false,
 			HTMLAttributes: {
-				class: "text-blue-600 underline hover:text-blue-800",
+				style: "border-collapse: collapse; margin: 8px 0;",
 			},
-		}),
-		Image,
-		TextStyle,
-		// Only a colour, from a message being replied to: see editorColours.
-		TextColour,
-		ColourHighlight,
-		// Without this, a table in the message being replied to is dropped and
-		// the reply carries its cells as loose text -- an invoice or a quote
-		// comes back to the sender unreadable.
-		//
-		// The borders are inline styles rather than a stylesheet because the
-		// result is sent as an email, and mail clients strip <style>. Column
-		// resizing is off: it is a composing convenience that costs handle
-		// markup in the message, and what matters here is quoting a table back
-		// intact.
-		TableKit.configure({
-			table: {
-				resizable: false,
-				HTMLAttributes: {
-					style: "border-collapse: collapse; margin: 8px 0;",
-				},
-			},
-			tableCell: {
-				HTMLAttributes: {
-					style: "border: 1px solid #ccc; padding: 4px 8px;",
-				},
-			},
-			tableHeader: {
-				HTMLAttributes: {
-					style:
-						"border: 1px solid #ccc; padding: 4px 8px; background: #f3f4f6; font-weight: 600;",
-				},
-			},
-		}),
-	],
-	content: props.modelValue,
+		},
+		// The kit's own cells read a span as written; these hold it to what
+		// a browser would (see editorTables).
+		tableCell: false,
+		tableHeader: false,
+	}),
+	BoundedTableCell.configure({
+		HTMLAttributes: {
+			style: "border: 1px solid #ccc; padding: 4px 8px;",
+		},
+	}),
+	BoundedTableHeader.configure({
+		HTMLAttributes: {
+			style:
+				"border: 1px solid #ccc; padding: 4px 8px; background: #f3f4f6; font-weight: 600;",
+		},
+	}),
+	TableBudget,
+];
+
+/**
+ * What goes into the editor: the HTML as the editor parses it, with any
+ * table too large to lay out quoted as its contents instead (editorTables).
+ * Every way content arrives goes through this -- the message being replied
+ * to, a draft, the source box.
+ */
+const bounded = (html: string) => boundTables(generateJSON(html, extensions));
+
+const editor = useEditor({
+	extensions,
+	content: bounded(props.modelValue),
 	editorProps: {
 		attributes: {
 			class: "prose prose-sm max-w-none focus:outline-none min-h-full",
 		},
+		// Pasting and dropping are ways in too (see editorTables).
+		transformPasted: (slice, view) => boundPasted(slice, view.state),
 	},
 	// The editor's HTML does not go back into the source box while it is open.
 	// In source mode the box is what is being typed into, and each keystroke
@@ -462,7 +486,7 @@ watch(
 	() => props.modelValue,
 	(newValue) => {
 		if (editor.value && newValue !== editor.value.getHTML()) {
-			editor.value.commands.setContent(newValue);
+			editor.value.commands.setContent(bounded(newValue));
 		}
 	},
 );
@@ -470,7 +494,7 @@ watch(
 // Update editor from source code
 const updateFromSource = () => {
 	if (editor.value) {
-		editor.value.commands.setContent(sourceCode.value);
+		editor.value.commands.setContent(bounded(sourceCode.value));
 	}
 };
 
