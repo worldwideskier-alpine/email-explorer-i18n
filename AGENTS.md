@@ -564,26 +564,42 @@ are still checked, by the `tsc` that runs before the worker tests.
   `spam-check-location.test.ts` holds the arrangement -- partly structurally,
   because both sides run in one isolate under the test pool and the difference
   is only visible in production.
-- **The spam check reads what the screen shows.** The screen shows a
-  message's HTML part whenever it has one (`email-ingest.ts`), and the
-  classifier read its text part whenever it had one -- so an innocent text
-  part beside a phishing page in the HTML was all the classifier was asked
-  about. `buildClassificationContent` (`claude-spam-filter.ts`) now puts the
-  HTML's words first, with character references decoded and invisible padding
-  taken out, and the text part after them with 1000 of the 4000 characters
-  kept for it: neither part can push the other out by being long, a
-  picture-only HTML part has no words of its own, and a link's address is
-  spelled out only in the text part. The sender's `<` and `>` become `‹` and
-  `›` -- one for one, so the limit still holds; `&lt;` grew a body of `<` to
-  four times it -- so nothing they write closes `<shown_to_reader>` or
+- **The spam check reads what the screen shows, as a browser reads it.** The
+  screen shows a message's HTML part whenever it has one (`email-ingest.ts`),
+  and the classifier read its text part whenever it had one -- so an innocent
+  text part beside a phishing page in the HTML was all the classifier was
+  asked about. `buildClassificationContent` (`claude-spam-filter.ts`) now puts
+  the HTML's words first, and the text part after them with 1000 of the 4000
+  characters kept for it: neither part can push the other out by being long,
+  a picture-only HTML part has no words of its own, and a link's address is
+  spelled out only in the text part. The HTML is read the way the tokenizer
+  reads it (`stripHtml`), because the reading before took a visible `5 < 6`,
+  `<scripts>` or `alt="<style>"` for the start of something and dropped the
+  words after it -- the same trick, done with one character. So `<` opens a
+  tag only before a letter, `/`, `!` or `?`, a quoted value keeps its `>`,
+  comments are found and not read, raw text ends at its own end tag,
+  references are decoded (legacy names with no semicolon too) and invisible
+  padding is taken out. Inside svg, math and select a style or script is read
+  rather than dropped, since the tree builder does not make it raw text
+  there; the rest of the tree builder is not followed. Against parse5 on
+  random markup it missed none of the words a browser shows outside those
+  three, and a handful in 100,000 messages built to mix them; the reading
+  before missed a third of them (`strip-html.test.ts` holds a generated
+  version). It stops once it has the 4000 characters, a step of 4096 at a
+  time: decoding the whole of a 24MB message cost seconds of the mailbox
+  Durable Object's time. The sender's `<` and `>` become `‹` and `›`
+  -- one for one, so the limit still holds; `&lt;` grew a body of `<` to four
+  times it -- so nothing they write closes `<shown_to_reader>` or
   `<plain_text_alternative>`, and the relay's Authentication line is the only
   line above the `----` marker. The system prompt explains every tag the
-  content uses, and a test holds the two together. Text the HTML hides
-  (`display:none`, `<title>`, the far side of a comment) is still read, and
-  that is a known gap rather than an oversight: removing comments by scanning
-  for `<!--` and `-->` removed text a browser shows, measured, and four such
-  cases are in the unit test; doing it properly needs a real HTML parser.
-  `claude-spam-prompt.test.ts`, `claude-spam-classification.test.ts`.
+  content uses, and a test holds the two together. Two gaps are known rather
+  than overlooked: text the HTML hides by style or puts in a `<title>` is
+  read, so three thousand characters of it ahead of the visible words leave
+  them out (taking it out needs the page laid out, not parsed); and a
+  text-only message is read as it came, brackets aside, so four thousand
+  zero-width spaces ahead of its words do the same.
+  `claude-spam-prompt.test.ts`, `strip-html.test.ts`,
+  `claude-spam-classification.test.ts`.
 - **The message frame is decided on the string.** A message is shown in a
   sandboxed `srcdoc` iframe, and everything about what it may do is settled
   in the markup before the frame parses it (`prepareFrame`,

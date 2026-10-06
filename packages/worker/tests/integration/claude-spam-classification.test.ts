@@ -357,6 +357,37 @@ describe("Claude second-stage spam classification", () => {
 			expect(await folderOf("Picture-only HTML")).toBe("spam");
 		});
 
+		// The HTML part read the way a browser reads it: a `<` that opens no
+		// tag is a `<` on screen, and the words after it are shown.
+		it("reads the HTML part's words after a `<` that opens nothing", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"Words after a bare bracket",
+					"Thank you for your order.",
+					"<p>Orders under 5000 yen < ship free. TRIGGER_CLAUDE_SPAM confirm your card today.</p>",
+				),
+			);
+
+			expect(await folderOf("Words after a bare bracket")).toBe("spam");
+		});
+
+		// The other side: what the screen does not show is not read either.
+		it("does not read the HTML part's styles, scripts or comments", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"Only hidden parts say so",
+					"Thank you for your order.",
+					"<style>/* TRIGGER_CLAUDE_SPAM */</style><script>TRIGGER_CLAUDE_SPAM</script><!-- TRIGGER_CLAUDE_SPAM --><p>Thank you for your order.</p>",
+				),
+			);
+
+			expect(await folderOf("Only hidden parts say so")).toBe("inbox");
+		});
+
 		// The other side: two clean parts are still let through.
 		it("keeps a message whose parts are both clean in the inbox", async () => {
 			await setClaudeApiKey("sk-ant-test-key");

@@ -169,81 +169,309 @@ const SYSTEM_PROMPT = [
 ].join("\n\n");
 
 /**
- * The words of an HTML body: script and style elements out, then tags out.
+ * The words of an HTML body as its reader is shown them, read the way the
+ * HTML tokenizer reads the markup -- references decoded, characters that take
+ * no room on screen taken out, every run of space one space.
  *
- * Scans rather than the regular expressions they replaced, because those were
- * quadratic on input a sender chooses: every `<style` with no `</style>`
- * after it, and every `<` with no `>`, sent the engine to the end of the
- * message and back one character on. 320KB of `<style x` took 25 seconds,
- * inside the mailbox's Durable Object, which answers nothing else while it
- * runs -- one message stalled the mailbox. Here each search remembers where
- * it got to, and one that found nothing is not made again, since nothing
- * further on can be found either.
+ * The way the tokenizer reads it, because a word read differently is a word
+ * the classifier is not shown. The expressions this replaced took every `<`
+ * for the start of a tag, every name beginning "script" or "style" for those
+ * elements, and a `<style>` inside an attribute's value for one -- so a
+ * visible `5 < 6`, `<scripts>` or `alt="<style>"` took the words after it out
+ * of the classifier's view, measured against parse5. With the HTML part the
+ * one read, that was the old trick again, done with one character.
  *
- * What comes out is exactly what the expressions produced, malformed input
- * included -- the two passes are theirs, in their order; the unit test
- * compares them on generated input.
+ * So `<` opens a tag only before a letter, `/`, `!` or `?`; a tag ends at the
+ * first `>` outside its quoted values; a comment ends where the tokenizer
+ * ends it and is not read, as it is not shown -- and has to be found, since a
+ * `<style>` inside one is no style element; script and style end at their own
+ * end tag; title, textarea, xmp, iframe, noembed and noframes hold text, not
+ * tags, which is read; plaintext is text to the end.
+ *
+ * Where this and the browser part company it reads more, not less: a script
+ * or style with no end tag, which the browser hides to the end, is read, and
+ * so is text hidden by style or put in a title. Inside svg, math and select a
+ * style or script is read rather than dropped, and in svg and math CDATA is
+ * text: there the tree builder does not make a style raw text, and an HTML
+ * tag such as `<p>` inside one breaks out of the svg and is shown. Which of
+ * those is open is counted roughly, and counted long, since reading a style
+ * that was raw text after all costs only its CSS. The rest of the tree
+ * builder's say in how the tokenizer reads is not followed, and there a
+ * crafted message can still part the two. Against parse5, none of the words
+ * a browser shows was missed in 300,000 random messages without svg, math or
+ * select, and a few dozen were in 100,000 built to mix them.
+ *
+ * The reading stops once it has more than `enough` characters. The
+ * classifier reads 4000 at most, and decoding every reference of a 24MB
+ * message took seconds of the mailbox Durable Object's time, which answers
+ * nothing else while it runs.
+ *
+ * Linear in the message: each search resumes where the last one stopped, and
+ * one that found nothing is not made again -- the regular expressions this
+ * once was took 25 seconds on 320KB of `<style x`.
  */
-export function stripHtml(html: string): string {
-	return collapseTags(withoutScriptsAndStyles(html))
-		.replace(/\s+/g, " ")
-		.trim();
+export function stripHtml(
+	html: string,
+	enough = Number.POSITIVE_INFINITY,
+): string {
+	return new HtmlReader(html, enough).read();
 }
 
-/** `/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi` replaced with a space. */
-function withoutScriptsAndStyles(html: string): string {
-	// ASCII only, so every index means the same in both strings:
-	// toLowerCase lengthens some characters ("İ" becomes two), and the
-	// expression's `i` flag folded nothing outside ASCII into these names.
-	const lower = html.replace(/[A-Z]/g, (c) => c.toLowerCase());
-	const found = new Searcher(lower);
-	const out: string[] = [];
-	let i = 0;
-	let at = i;
-	while (at < html.length) {
-		const lt = lower.indexOf("<", at);
-		if (lt === -1) break;
-		const name = lower.startsWith("script", lt + 1)
-			? "script"
-			: lower.startsWith("style", lt + 1)
-				? "style"
-				: null;
-		if (name) {
-			const gt = found.next(">", lt + 1 + name.length);
-			const close = gt === -1 ? -1 : found.next(`</${name}>`, gt + 1);
-			if (close !== -1) {
-				out.push(html.slice(i, lt), " ");
-				i = at = close + name.length + 3;
-				continue;
+class HtmlReader {
+	readonly #words = new Words();
+	readonly #found: Searcher;
+	readonly #ends: EndTags;
+	/**
+	 * Open svg and math elements, counted long: see stripHtml. Apart, since
+	 * `</svg>` inside a math element closes nothing.
+	 */
+	#svg = 0;
+	#math = 0;
+	#select = false;
+
+	constructor(
+		private readonly html: string,
+		private readonly enough: number,
+	) {
+		this.#found = new Searcher(html);
+		this.#ends = new EndTags(html);
+	}
+
+	read(): string {
+		const { html } = this;
+		let at = 0;
+		while (at !== -1 && at < html.length && this.#words.length <= this.enough) {
+			const lt = html.indexOf("<", at);
+			if (lt === -1) {
+				this.#text(at, html.length, true);
+				break;
+			}
+			this.#text(at, lt, true);
+			at = this.#markup(lt);
+		}
+		return this.#words.toString();
+	}
+
+	/**
+	 * Whatever a `<` at `lt` opens, read; where reading goes on, or -1 when
+	 * nothing after it is shown.
+	 */
+	#markup(lt: number): number {
+		const { html } = this;
+		const next = html.charCodeAt(lt + 1);
+		if (isLetter(next)) return this.#startTag(lt);
+		if (next === SLASH) {
+			const then = html.charCodeAt(lt + 2);
+			if (isLetter(then)) return this.#endTag(lt);
+			// `</>` is nothing at all, and `</` at the very end is text.
+			if (then === GT) return lt + 3;
+			if (lt + 2 === html.length) {
+				this.#text(lt, html.length, false);
+				return -1;
 			}
 		}
-		at = lt + 1;
+		if (next === BANG && html.startsWith("--", lt + 2)) {
+			return this.#gapThen(commentEnd(html, lt + 4, this.#found));
+		}
+		if (
+			next === BANG &&
+			this.#foreign() &&
+			html.startsWith("[CDATA[", lt + 2)
+		) {
+			// Text to `]]>` inside svg and math; a bogus comment anywhere else,
+			// and read either way, since the count runs long.
+			const end = this.#found.next("]]>", lt + 9);
+			this.#text(lt + 9, end === -1 ? html.length : end, false);
+			return end === -1 ? -1 : this.#gapThen(end + 3);
+		}
+		if (next === BANG || next === QUESTION || next === SLASH) {
+			// A doctype, or a bogus comment: either way, up to the next `>`.
+			const gt = this.#found.next(">", lt + 2);
+			return this.#gapThen(gt === -1 ? -1 : gt + 1);
+		}
+		// A `<` that opens nothing is a `<` on the screen.
+		this.#text(lt, lt + 1, false);
+		return lt + 1;
 	}
-	out.push(html.slice(i));
-	return out.join("");
+
+	#startTag(lt: number): number {
+		const { html } = this;
+		const nameEnd = tagNameEnd(html, lt + 1);
+		const selfClosing = { value: false };
+		const after = tagEnd(html, nameEnd, selfClosing);
+		if (after === -1) return -1;
+		this.#words.gap();
+		const name = asciiLower(html, lt + 1, nameEnd);
+		if (name === "svg" && !selfClosing.value) this.#svg++;
+		if (name === "math" && !selfClosing.value) this.#math++;
+		if (name === "select") this.#select = true;
+		let kind = CONTENT.get(name);
+		if (kind === undefined) return after;
+		if (kind === "plaintext") {
+			this.#text(after, html.length, false);
+			return -1;
+		}
+		if (kind === "drop" && (this.#foreign() || this.#select)) kind = "text";
+		const close = this.#ends.next(name, after);
+		if (close === -1) {
+			// A script or style with no end: the browser hides the rest, and
+			// this reads it. Text with no end is text to the end.
+			if (kind === "drop") return after;
+			this.#text(after, html.length, kind === "text");
+			return -1;
+		}
+		if (kind !== "drop") this.#text(after, close, kind === "text");
+		return this.#gapThen(tagEnd(html, close + 2 + name.length));
+	}
+
+	#endTag(lt: number): number {
+		const { html } = this;
+		const nameEnd = tagNameEnd(html, lt + 2);
+		const name = asciiLower(html, lt + 2, nameEnd);
+		if (name === "svg" && this.#svg > 0) this.#svg--;
+		if (name === "math" && this.#math > 0) this.#math--;
+		if (name === "select") this.#select = false;
+		return this.#gapThen(tagEnd(html, nameEnd));
+	}
+
+	#foreign(): boolean {
+		return this.#svg > 0 || this.#math > 0;
+	}
+
+	#gapThen(after: number): number {
+		if (after !== -1) this.#words.gap();
+		return after;
+	}
+
+	#text(from: number, to: number, references: boolean): void {
+		this.#words.text(this.html, from, to, references, this.enough);
+	}
 }
 
-/** `/<[^>]+>/g` replaced with a space. */
-function collapseTags(html: string): string {
-	const found = new Searcher(html);
-	const out: string[] = [];
-	let i = 0;
-	let at = 0;
-	while (at < html.length) {
-		const lt = html.indexOf("<", at);
-		if (lt === -1) break;
-		const gt = found.next(">", lt + 1);
-		if (gt === -1) break;
-		if (gt === lt + 1) {
-			// `<>`: nothing between, so not a tag; the search goes on from `>`.
-			at = lt + 1;
-			continue;
-		}
-		out.push(html.slice(i, lt), " ");
-		i = at = gt + 1;
+const TAB = 0x09;
+const LF = 0x0a;
+const FF = 0x0c;
+const CR = 0x0d;
+const SPACE = 0x20;
+const BANG = 0x21;
+const DOUBLE_QUOTE = 0x22;
+const SINGLE_QUOTE = 0x27;
+const SLASH = 0x2f;
+const EQUALS = 0x3d;
+const GT = 0x3e;
+const QUESTION = 0x3f;
+
+/** The tokenizer's whitespace; a CR counts, as the input stream's newline. */
+function isSpace(c: number): boolean {
+	return c === SPACE || c === LF || c === TAB || c === FF || c === CR;
+}
+
+function isLetter(c: number): boolean {
+	return (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a);
+}
+
+/**
+ * Elements whose content the tokenizer does not read as markup, and what
+ * becomes of it here: script and style are dropped, as they always were;
+ * title and textarea are text with references in it; the rest are text as
+ * written.
+ */
+const CONTENT = new Map<string, "drop" | "text" | "raw" | "plaintext">([
+	["script", "drop"],
+	["style", "drop"],
+	["title", "text"],
+	["textarea", "text"],
+	["xmp", "raw"],
+	["iframe", "raw"],
+	["noembed", "raw"],
+	["noframes", "raw"],
+	["plaintext", "plaintext"],
+]);
+
+/**
+ * A tag name in lowercase, or "" for one too short or too long to be any this
+ * looks for: those in CONTENT, svg, math and select.
+ *
+ * The tokenizer folds ASCII only, and toLowerCase folds more -- but the only
+ * characters it folds into ASCII are the Kelvin sign, to "k", and a dotted
+ * capital I, to an i and a combining dot; none of those names has a k, so for
+ * them the two agree. toLowerCase because this runs at every tag, and an
+ * expression with a function per letter cost a second on 24MB of them.
+ */
+function asciiLower(html: string, from: number, to: number): string {
+	if (to - from < 3 || to - from > 9) return "";
+	return html.slice(from, to).toLowerCase();
+}
+
+/** Where a tag's name ends: at space, `/`, `>` or the end of the message. */
+function tagNameEnd(html: string, from: number): number {
+	let i = from;
+	while (i < html.length) {
+		const c = html.charCodeAt(i);
+		if (isSpace(c) || c === SLASH || c === GT) break;
+		i++;
 	}
-	out.push(html.slice(i));
-	return out.join("");
+	return i;
+}
+
+/**
+ * Just past the `>` that ends a tag whose name ended at `from`, or -1 when
+ * the message ends first -- and then the browser shows nothing from the `<`
+ * on. Attributes are read as the tokenizer reads them: a value opened by a
+ * quote straight after `=` runs to the same quote, `>` included, and a quote
+ * anywhere else is just a character. `selfClosing` says whether it ended
+ * `/>` -- which `<svg a=b/>` does not: the `/` is part of the value.
+ */
+function tagEnd(
+	html: string,
+	from: number,
+	selfClosing?: { value: boolean },
+): number {
+	const n = html.length;
+	let i = from;
+	for (;;) {
+		const skipped = i;
+		let c = html.charCodeAt(i);
+		while (i < n && (isSpace(c) || c === SLASH)) c = html.charCodeAt(++i);
+		if (i >= n) return -1;
+		if (c === GT) {
+			if (selfClosing) {
+				selfClosing.value = i > skipped && html.charCodeAt(i - 1) === SLASH;
+			}
+			return i + 1;
+		}
+		// An attribute's name; its first character may be anything left,
+		// `=` included.
+		c = html.charCodeAt(++i);
+		while (i < n && !isSpace(c) && c !== SLASH && c !== GT && c !== EQUALS) {
+			c = html.charCodeAt(++i);
+		}
+		while (i < n && isSpace(c)) c = html.charCodeAt(++i);
+		if (c !== EQUALS) continue;
+		c = html.charCodeAt(++i);
+		while (i < n && isSpace(c)) c = html.charCodeAt(++i);
+		if (c === DOUBLE_QUOTE || c === SINGLE_QUOTE) {
+			const close = html.indexOf(c === DOUBLE_QUOTE ? '"' : "'", i + 1);
+			if (close === -1) return -1;
+			i = close + 1;
+		} else {
+			while (i < n && !isSpace(c) && c !== GT) c = html.charCodeAt(++i);
+		}
+	}
+}
+
+/**
+ * Just past the end of a comment whose `<!--` ended at `from`, or -1 when the
+ * message ends first. `<!-->` and `<!--->` end at once; otherwise the first
+ * `-->` or `--!>` does.
+ */
+function commentEnd(html: string, from: number, found: Searcher): number {
+	if (html.charCodeAt(from) === GT) return from + 1;
+	if (html.startsWith("->", from)) return from + 2;
+	const dashes = found.next("-->", from);
+	const bang = found.next("--!>", from);
+	if (bang !== -1 && (dashes === -1 || bang < dashes)) return bang + 4;
+	return dashes === -1 ? -1 : dashes + 3;
 }
 
 /**
@@ -262,6 +490,122 @@ class Searcher {
 		const hit = this.text.indexOf(needle, from);
 		this.#hits.set(needle, hit);
 		return hit;
+	}
+}
+
+/**
+ * Where an element whose content is not markup ends: `</` and its name in
+ * any case, then space, `/` or `>` -- `</style >` ends a style element, and
+ * `</styles>` does not. Remembers as Searcher does, one name at a time.
+ */
+class EndTags {
+	#hits = new Map<string, number>();
+	constructor(private readonly html: string) {}
+	next(name: string, from: number): number {
+		const known = this.#hits.get(name);
+		if (known === -1) return -1;
+		if (known !== undefined && known >= from) return known;
+		let at = from;
+		for (;;) {
+			const hit = this.html.indexOf("</", at);
+			if (hit === -1 || this.#ends(name, hit)) {
+				this.#hits.set(name, hit);
+				return hit;
+			}
+			at = hit + 2;
+		}
+	}
+	#ends(name: string, at: number): boolean {
+		const after = at + 2 + name.length;
+		if (asciiLower(this.html, at + 2, after) !== name) return false;
+		const c = this.html.charCodeAt(after);
+		return isSpace(c) || c === SLASH || c === GT;
+	}
+}
+
+/**
+ * The characters that take no room on screen and are what preheader padding
+ * is made of: soft hyphens, the grapheme joiner, zero widths, the word joiner
+ * and the invisible operators, the byte-order mark. The grapheme joiner is a
+ * combining mark, so it stands outside the class: inside one it reads as
+ * joined to the character before it.
+ */
+const INVISIBLE = /(?:\u034f|[\u00ad\u180e\u200b-\u200f\u2060-\u2064\ufeff])+/g;
+
+/** Space, and the control characters, which show as nothing or as space. */
+// biome-ignore lint/suspicious/noControlCharactersInRegex: that is the point
+const SPACES = /[\s\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g;
+
+/**
+ * How much of a run of text is decoded and tidied at a time, so that a
+ * reading told it has enough stops partway through a long one.
+ */
+const TEXT_STEP = 4096;
+
+/** A reference is made of these after its `&`; anything else ends it. */
+const REFERENCE_ENDS = /[^#0-9A-Za-z;]/g;
+
+/**
+ * The words read so far, one space between runs and none at either end.
+ */
+class Words {
+	#parts: string[] = [];
+	#gap = false;
+	length = 0;
+
+	/**
+	 * html[from, to) as the reader is shown it, a step at a time until there
+	 * is more than `enough`. A step ends where no reference can go on, so no
+	 * reference is cut in two.
+	 */
+	text(
+		html: string,
+		from: number,
+		to: number,
+		references: boolean,
+		enough: number,
+	): void {
+		let at = from;
+		while (at < to && this.length <= enough) {
+			let end = to;
+			if (to - at > TEXT_STEP) {
+				REFERENCE_ENDS.lastIndex = at + TEXT_STEP;
+				const stop = REFERENCE_ENDS.exec(html);
+				if (stop !== null && stop.index < to) end = stop.index;
+			}
+			const raw = html.slice(at, end);
+			this.#add(references && raw.includes("&") ? decodeReferences(raw) : raw);
+			at = end;
+		}
+	}
+
+	/** Where a tag was: words either side of it are not run together. */
+	gap(): void {
+		this.#gap = true;
+	}
+
+	#add(text: string): void {
+		const tidy = text.replace(INVISIBLE, "").replace(SPACES, " ");
+		if (tidy === "") return;
+		const leading = tidy.charCodeAt(0) === SPACE;
+		const trailing =
+			tidy.length > 1 && tidy.charCodeAt(tidy.length - 1) === SPACE;
+		const words = tidy.slice(leading ? 1 : 0, trailing ? -1 : undefined);
+		if (words !== "") {
+			if ((leading || this.#gap) && this.length > 0) {
+				this.#parts.push(" ");
+				this.length += 1;
+			}
+			this.#parts.push(words);
+			this.length += words.length;
+			this.#gap = trailing;
+		} else {
+			this.#gap = true;
+		}
+	}
+
+	toString(): string {
+		return this.#parts.join("");
 	}
 }
 
@@ -345,63 +689,113 @@ const PLAIN_TEXT_SHARE = 1000;
 /**
  * Named references a mail body uses to fill space or punctuate. Anything
  * else is left as it came, which is how every reference used to be left.
- * Names are matched as written, as a browser matches them.
+ * Names are matched as written, as a browser matches them. A Map, not an
+ * object: `&constructor;` is no reference, and an object's prototype would
+ * have answered it with a function.
  */
-const NAMED_REFERENCES: Record<string, string> = {
-	nbsp: "\u00a0",
-	amp: "&",
-	AMP: "&",
-	lt: "<",
-	LT: "<",
-	gt: ">",
-	GT: ">",
-	quot: '"',
-	QUOT: '"',
-	apos: "'",
-	zwnj: "\u200c",
-	zwj: "\u200d",
-	lrm: "\u200e",
-	rlm: "\u200f",
-	shy: "\u00ad",
-	ensp: "\u2002",
-	emsp: "\u2003",
-	thinsp: "\u2009",
-	copy: "\u00a9",
-	COPY: "\u00a9",
-	reg: "\u00ae",
-	REG: "\u00ae",
-	trade: "\u2122",
-	hellip: "\u2026",
-	mdash: "\u2014",
-	ndash: "\u2013",
-	lsquo: "\u2018",
-	rsquo: "\u2019",
-	ldquo: "\u201c",
-	rdquo: "\u201d",
-	bull: "\u2022",
-	middot: "\u00b7",
-	euro: "\u20ac",
-	pound: "\u00a3",
-	yen: "\u00a5",
-};
+const NAMED_REFERENCES = new Map<string, string>([
+	["nbsp", "\u00a0"],
+	["amp", "&"],
+	["AMP", "&"],
+	["lt", "<"],
+	["LT", "<"],
+	["gt", ">"],
+	["GT", ">"],
+	["quot", '"'],
+	["QUOT", '"'],
+	["apos", "'"],
+	["zwnj", "\u200c"],
+	["zwj", "\u200d"],
+	["lrm", "\u200e"],
+	["rlm", "\u200f"],
+	["shy", "\u00ad"],
+	["ensp", "\u2002"],
+	["emsp", "\u2003"],
+	["thinsp", "\u2009"],
+	["copy", "\u00a9"],
+	["COPY", "\u00a9"],
+	["reg", "\u00ae"],
+	["REG", "\u00ae"],
+	["trade", "\u2122"],
+	["hellip", "\u2026"],
+	["mdash", "\u2014"],
+	["ndash", "\u2013"],
+	["lsquo", "\u2018"],
+	["rsquo", "\u2019"],
+	["ldquo", "\u201c"],
+	["rdquo", "\u201d"],
+	["bull", "\u2022"],
+	["middot", "\u00b7"],
+	["euro", "\u20ac"],
+	["pound", "\u00a3"],
+	["yen", "\u00a5"],
+]);
+
+/**
+ * The names above that HTML also reads with no semicolon, its legacy ones. A
+ * browser shows `&shy&shy&shy` as nothing at all and `&nbspx` as a space and
+ * an x, so without these a run of `&shy` was the padding the decoding is
+ * there to see through.
+ */
+const LEGACY_NAMES = new Set([
+	"nbsp",
+	"amp",
+	"AMP",
+	"lt",
+	"LT",
+	"gt",
+	"GT",
+	"quot",
+	"QUOT",
+	"shy",
+	"copy",
+	"COPY",
+	"reg",
+	"REG",
+	"middot",
+	"pound",
+	"yen",
+]);
+
+/** The longest of LEGACY_NAMES. */
+const LONGEST_LEGACY_NAME = 6;
 
 /**
  * Character references as a reader is shown them.
  *
- * stripHtml leaves them as written, so a sender who wrote the body as
- * `&#x56;&#x65;...` had the classifier read a wall of references while the
- * reader read words, and a preheader padded with `&#847;&zwnj;&nbsp;` spent
- * the body's characters half a dozen at a time on nothing visible. Numeric
- * ones are read as the HTML parser reads them -- any number of digits, the
- * semicolon optional -- and one that names no character becomes U+FFFD, as
- * it does on screen. One pass, so `&amp;lt;` comes out as the `&lt;` a
- * reader sees. Linear: every match consumes what it scanned.
+ * Left as written, a sender who wrote the body as `&#x56;&#x65;...` had the
+ * classifier read a wall of references while the reader read words, and a
+ * preheader padded with `&#847;&zwnj;&nbsp;` spent the body's characters half
+ * a dozen at a time on nothing visible. Numeric ones are read as the HTML
+ * parser reads them -- any number of digits, the semicolon optional -- and
+ * one that names no character, a surrogate included, becomes U+FFFD, as it
+ * does on screen. A name is decoded when it is on the list and ends in a
+ * semicolon, and otherwise by the longest legacy name it begins with. One
+ * pass, so `&amp;lt;` comes out as the `&lt;` a reader sees. Linear: every
+ * match consumes what it scanned.
  */
 function decodeReferences(text: string): string {
 	return text.replace(
-		/&(?:#[xX]([0-9a-fA-F]+);?|#([0-9]+);?|([a-zA-Z][a-zA-Z0-9]{1,31});)/g,
-		(whole, hex?: string, decimal?: string, name?: string) => {
-			if (name !== undefined) return NAMED_REFERENCES[name] ?? whole;
+		/&(?:#[xX]([0-9a-fA-F]+);?|#([0-9]+);?|([a-zA-Z][a-zA-Z0-9]*)(;?))/g,
+		(
+			whole,
+			hex?: string,
+			decimal?: string,
+			name?: string,
+			semicolon?: string,
+		) => {
+			if (name !== undefined) {
+				const named = semicolon ? NAMED_REFERENCES.get(name) : undefined;
+				if (named !== undefined) return named;
+				// The longest legacy name it begins with, and the rest as written.
+				for (let k = Math.min(name.length, LONGEST_LEGACY_NAME); k > 1; k--) {
+					const head = name.slice(0, k);
+					if (LEGACY_NAMES.has(head)) {
+						return `${NAMED_REFERENCES.get(head)}${whole.slice(1 + k)}`;
+					}
+				}
+				return whole;
+			}
 			const code =
 				hex !== undefined ? Number.parseInt(hex, 16) : Number(decimal);
 			if (
@@ -416,28 +810,11 @@ function decodeReferences(text: string): string {
 }
 
 /**
- * Text with the characters that take no room on screen taken out, and every
- * run of space or control characters made one space. The removed ones are
- * what preheader padding is made of: soft hyphens, the grapheme joiner, zero
- * widths, the word joiner and the invisible operators, the byte-order mark.
- * The grapheme joiner is a combining mark, so it stands outside the class:
- * inside one it reads as joined to the character before it.
- */
-function tidy(text: string): string {
-	return (
-		text
-			.replace(/\u034f|[\u00ad\u180e\u200b-\u200f\u2060-\u2064\ufeff]/g, "")
-			// biome-ignore lint/suspicious/noControlCharactersInRegex: that is the point
-			.replace(/[\s\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g, " ")
-			.trim()
-	);
-}
-
-/**
  * At most `max` UTF-16 units of `text`, never half a character. A cut through
- * a surrogate pair left a lone surrogate, which JSON.stringify writes as
- * `\ud83d` and the API refuses as invalid JSON -- a failed check, and the
- * message went to the inbox unread.
+ * a surrogate pair leaves a lone surrogate, which JSON.stringify writes as
+ * `\ud83d` -- not a character, and a strict JSON reader refuses it. Whether
+ * the API's does was not measured; a check it refused would send the message
+ * to the inbox unread, and a cut a unit sooner costs nothing.
  */
 function cut(text: string, max: number): string {
 	if (text.length <= max) return text;
@@ -455,10 +832,16 @@ function cut(text: string, max: number): string {
  * innocent text part beside an HTML part that said something else, and the
  * reader was shown one while the classifier was asked about the other.
  *
- * Hidden text in the HTML -- `display:none`, `<title>`, the far side of a
- * comment -- is read too. Taking it out properly needs a real HTML parser:
- * a scan for `<!--` and `-->` removed text a browser shows (see the unit
- * test), and hiding by style has no end of forms.
+ * Hidden text in the HTML -- `display:none`, `<title>` -- is read too, and
+ * three thousand characters of it ahead of the words a reader sees leave
+ * those words out. Taking it out needs the page laid out, not just parsed:
+ * hiding by style has no end of forms.
+ *
+ * A text-only message is read as it was, brackets aside, invisible
+ * characters included: four thousand zero-width spaces ahead of its words
+ * leave the words out. Not taken out because the text part is shown as
+ * written (plainTextToHtml), and reading it any other way is a change of its
+ * own.
  */
 function bodyParts(input: Pick<ClassifyInput, "text" | "html">): {
 	shown: string;
@@ -470,7 +853,7 @@ function bodyParts(input: Pick<ClassifyInput, "text" | "html">): {
 	if (!input.html) {
 		return { shown: asData(cut(text, MAX_BODY_CHARS)), alternative: "" };
 	}
-	const html = tidy(decodeReferences(stripHtml(input.html)));
+	const html = stripHtml(input.html, MAX_BODY_CHARS);
 	const alternative = text.trim();
 	const shown = cut(
 		html,
