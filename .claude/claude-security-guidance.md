@@ -67,3 +67,9 @@ The cookie signs in only a GET of an attachment, `/docs` and `/openapi.json`.
   an address or a mailbox name.
 - Tests use placeholders only (`re_placeholder_for_tests`, the test-only VAPID
   key in `tests/vitest.config.mts`). A real key in a test is a finding.
+- A line in `.claude/gitleaks-known-history` lets a key in main's history
+  through the pre-merge scan. A new one names a commit already on main, under
+  the reason for it, and is the owner's decision; one whose rule, file, line
+  and commit are not in the pull request's description is a finding. So is a
+  change that adds a `.gitleaksignore` or `.gitleaks.toml`, or that weakens
+  `.claude/pre-merge-check.sh`.

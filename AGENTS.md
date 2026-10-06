@@ -833,10 +833,34 @@ all of these pass, in this order:
    in, and `root-accounts.test.ts` holds that a deleted person's open session
    reaches nothing.
 2. `.claude/pre-merge-check.sh`: `pnpm audit --audit-level high` (pnpm's own
-   audit; the workspace is pnpm), then Gitleaks over the commits being
-   merged. A high or critical advisory, or a key, stops the merge. A key found
-   is taken out of the code at once; history is not rewritten, and the key is
-   reported as exposed, by name, file and commit, never by value.
+   audit; the workspace is pnpm), then Gitleaks twice: over the commits being
+   merged, and over the whole of HEAD's history (a shallow clone is fetched in
+   full first). A high or critical advisory, or a key, stops the merge, and a
+   key is printed as its rule, file, line and commit -- never its value, and
+   never its author, which gitleaks' own `-v` prints. A key found is taken out
+   of the code at once; history is not rewritten, and the key is reported as
+   exposed, by name, file and commit, never by value.
+   A key in the commits being merged stays a stop: nothing a pull request
+   carries lets it through. A key in history already on main is reported the
+   same way, and whether the full scan then lets it through is the owner's
+   decision: its fingerprint, by commit, goes in
+   `.claude/gitleaks-known-history` under a line saying why, and that pull
+   request's description gives the rule, file, line and commit. Only the full
+   scan reads that file, and a line naming a commit not yet on the base stops
+   the check. Everything else that silenced a scan is refused or overridden:
+   a `.gitleaksignore` or `.gitleaks.toml` at the root (gitleaks reads both on
+   every scan, whatever it is given, so a fork that keeps one has to move what
+   it needs into that file), a config in gitleaks' environment, a
+   `gitleaks:allow` on the line, and whatever makes git print "Binary files
+   differ" -- a `.gitattributes` that marks the file binary, or one NUL byte
+   in it. Each was measured letting a pull request's own key through. Merge
+   commits are read with `-m`, since without it a key that only a conflict's
+   resolution put in was never read; the cost is that a registered key a
+   merge carries comes up again under the merge's commit, and needs a line of
+   its own. The two lines there now are upstream's `ROADMAP.md`, imported
+   whole in 9cb6794 and taken out in eaa26ed; upstream's main still has it,
+   so the values are upstream's, and nobody here has examined them.
+   `preMergeKeys.test.ts` holds the script to all of this.
 3. `/security-review` in a session other than the one that made the change
    (`REPLY_RULES=off claude -p "/security-review"` on the branch is one; see
    "Replies to the owner"). A finding judged a false positive is explained in
