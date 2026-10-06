@@ -63,6 +63,29 @@ const scanBody = (() => {
 	return start < 0 ? "" : code.slice(start, code.indexOf("\n}\n", start));
 })();
 
+/** The node -e that prints a finding, its whitespace collapsed. */
+const printer = /node -e '([^']*)'/
+	.exec(code)?.[1]
+	?.replace(/\s+/g, " ")
+	.trim();
+
+/**
+ * All of it, because a printer can leak without naming a new field: a
+ * second read of the report, or the whole finding handed to console.error,
+ * which printed the author's address (measured).
+ */
+const PRINTER = [
+	'const fs = require("node:fs");',
+	"const path = process.argv[1];",
+	"if (!fs.existsSync(path)) {",
+	'console.error("gitleaks stopped before it wrote a report");',
+	"process.exit();",
+	"}",
+	'for (const f of JSON.parse(fs.readFileSync(path, "utf8"))) {',
+	"console.error(`${f.RuleID} ${f.File}:${f.StartLine} in ${f.Commit}`);",
+	"}",
+].join(" ");
+
 /** Every call of the script's scan(), by the name of its pass. */
 const passes = Object.fromEntries(
 	[...code.matchAll(/^scan (\S+) (.*)$/gm)].map(([, name, rest]) => [
@@ -90,6 +113,7 @@ describe("the pre-merge key scans", () => {
 		expect(script, "pre-merge-check.sh not found").toBeTruthy();
 		expect(known, "gitleaks-known-history not found").toBeTruthy();
 		expect(scanBody, "scan() not found").toContain("gitleaks git");
+		expect(printer, "the printer not found").toBeTruthy();
 	});
 
 	it("scan the commits being merged without the registered history", () => {
@@ -125,6 +149,7 @@ describe("the pre-merge key scans", () => {
 		// -v prints the author's name and address beside each finding.
 		expect(run).not.toMatch(/\s(-v|--verbose)\b/);
 		expect(run).not.toMatch(/\s(-c|--config|-b|--baseline-path)\b/);
+		expect(run).not.toMatch(/--exit-code\b/);
 	});
 
 	/**
@@ -145,10 +170,19 @@ describe("the pre-merge key scans", () => {
 		expect(said.slice(0, said.indexOf("\tfi"))).toContain("\t\treturn 1\n");
 	});
 
+	it("fail the check when either pass finds anything", () => {
+		expect(code).toContain("set -euo pipefail\n");
+		// A finding is printed and then fails: "return 0" there printed it and
+		// passed.
+		const returns = [...scanBody.matchAll(/\breturn\b.*$/gm)].map(([r]) => r);
+		expect(returns).toEqual(["return 1", "return 1"]);
+	});
+
 	it("print a finding as its rule, file, line and commit, and nothing else of it", () => {
 		expect(code).toContain("--report-format json");
 		const printed = [...code.matchAll(/\$\{f\.(\w+)\}/g)].map(([, f]) => f);
 		expect(printed.sort()).toEqual(["Commit", "File", "RuleID", "StartLine"]);
+		expect(printer).toBe(PRINTER);
 	});
 
 	it("read the whole history, from a base that exists", () => {
@@ -175,6 +209,8 @@ describe("the pre-merge key scans", () => {
 		expect(code).toContain("for ignored in .gitleaksignore .gitleaks.toml; do");
 		const loop = code.slice(code.indexOf("for ignored in"));
 		const body = loop.slice(0, loop.indexOf("done"));
+		// The condition itself: "[ -e ... ] && false" refused nothing.
+		expect(body).toContain('\tif [ -e "$ignored" ]; then\n');
 		expect(body).toContain("exit 1");
 	});
 
