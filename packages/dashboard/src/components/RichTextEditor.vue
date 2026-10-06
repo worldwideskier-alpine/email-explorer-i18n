@@ -326,7 +326,7 @@
         :placeholder="t('richTextEditor.sourceCodePlaceholder')"
       />
     </div>
-    <editor-content v-else :editor="editor" class="prose prose-sm max-w-none p-4 text-gray-900 dark:text-gray-100 flex-1 min-h-0 overflow-y-auto" />
+    <editor-content v-else :editor="editor" class="max-w-none p-4 text-gray-900 dark:text-gray-100 flex-1 min-h-0 overflow-y-auto" />
   </div>
 </template>
 
@@ -466,7 +466,7 @@ const editor = useEditor({
 	content: bounded(props.modelValue),
 	editorProps: {
 		attributes: {
-			class: "prose prose-sm max-w-none focus:outline-none min-h-full",
+			class: "max-w-none focus:outline-none min-h-full",
 		},
 		// Pasting and dropping are ways in too (see editorTables).
 		transformPasted: (slice, view) => boundPasted(slice, view.state),
