@@ -797,9 +797,27 @@ step, on `failure()`, puts it back with `wrangler rollback` unless it is still
 the one live, and checks that it is. The run stays red, so the failure is
 still mailed; production just does not stay on it.
 
-The checks are three jobs side by side -- lint and build, the worker suite,
-the dashboard suite -- and the deploy needs all three. The worker suite does
-not need the build.
+The checks are four jobs side by side -- lint and build, the worker suite,
+the dashboard suite, the advisory check -- and the deploy needs all four. The
+worker suite does not need the build.
+
+The advisory check (`advisories`, `scripts/check-advisories.mjs`) asks
+GitHub's own advisory database -- the one Dependabot mails from -- about
+every package `pnpm-lock.yaml` pins, and fails on high, critical or malware.
+`pnpm audit` reads npm's copy, which lagged: Dependabot mailed an advisory
+for sharp while the pre-merge check still said "No known vulnerabilities".
+A check that asks a service passes on silence, so each run first asks about
+two releases with long-standing critical advisories, among as many of the
+lockfile's longest names as a real question holds -- the same shape and at
+least the same length -- and stops unless both come back
+(`controlQuestion`, `controlProblem`); a request that fails fails the check
+too. Its first run asked about 584 packages and was told of none. It uses
+the token Actions gives every job, read-only here, so a fork sets up
+nothing, and it installs nothing, so no install script runs beside that
+token. The judgement is `advisories.mjs`, tested in the worker pool
+(`advisories.test.ts`); `workflowGuards.test.ts` holds the job's shape. An
+advisory with no fixed release yet stops every merge and deploy until it is
+dealt with -- that is the point, and the decision is the owner's.
 
 Every evening at 18:30 UTC, half an hour after the Worker's cron,
 `night-check.yml` reads `maintenance/last-run.json` and `backup-carry/`
@@ -911,6 +929,9 @@ all of these pass, in this order:
    of the check's own. A key found is taken out of the code at once; history
    is not rewritten, and the key is reported as exposed, by name, file and
    commit, never by value.
+   `pnpm audit` here is the second reading of the advisories, not the
+   first: CI's `advisories` job asks GitHub's database, which `pnpm audit`
+   has been seen to trail (see "Working here").
    A key in the commits being merged cannot be registered away. A key in
    history already on main is reported the same way, and whether the full
    scan then lets it through is the owner's decision: its fingerprint, by
@@ -1023,7 +1044,7 @@ changes CLAUDE.md, the judge and its test together.
 ## Conventions
 
 - Every push to `main` deploys. One workflow does it (`deploy.yml`), and it
-  runs lint, build and both test suites first.
+  runs lint, build, both test suites and the advisory check first.
 - Comments explain why, not what. A sentence about the constraint that forced
   the code beats a restatement of the code.
 - A message shown to the user is never stored as an already-translated string.

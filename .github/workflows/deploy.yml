@@ -1,8 +1,8 @@
 name: Deploy to Cloudflare
 
-# It carries the full check set (lint, build, both test suites) because it
-# is the last gate before production, and the same jobs are what check a pull
-# request. The other workflow, night-check.yml, only reads.
+# It carries the full check set (lint, build, both test suites, the advisory
+# check) because it is the last gate before production, and the same jobs are
+# what check a pull request. The other workflow, night-check.yml, only reads.
 on:
   push:
     branches: [main]
@@ -98,12 +98,36 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test-dashboard
 
+  # Every package the lockfile pins, asked about in GitHub's own advisory
+  # database -- the one Dependabot mails from. The pre-merge check's `pnpm
+  # audit` reads npm's copy, which lagged: it found nothing in a lockfile
+  # Dependabot was already warning about. Fails on high, critical or malware,
+  # and on not being able to ask (scripts/check-advisories.mjs). Installs
+  # nothing: the script needs node and the lockfile, and a package's install
+  # script would run beside the token.
+  advisories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+      - name: Ask GitHub's advisory database about every locked package
+        run: node packages/worker/scripts/check-advisories.mjs
+        # The token every job is given, limited to reading by the workflow's
+        # permissions; for the rate limit, since the database is public.
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
   # A push to main, or a run started by hand from main -- which only somebody
   # with write access can start, and which docs/deploying-your-own.md tells a
   # fork to use after setting its variables. Never a pull request.
   deploy:
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    needs: [lint-and-build, test-worker, test-dashboard]
+    needs: [lint-and-build, test-worker, test-dashboard, advisories]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
