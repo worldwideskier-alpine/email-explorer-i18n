@@ -332,7 +332,6 @@
 
 <script setup lang="ts">
 import Image from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
 import { TableKit } from "@tiptap/extension-table";
 import TextAlign from "@tiptap/extension-text-align";
 import { TextStyle } from "@tiptap/extension-text-style";
@@ -342,6 +341,7 @@ import { EditorContent, generateJSON, useEditor } from "@tiptap/vue-3";
 import { onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ColourHighlight, TextColour } from "@/utils/editorColours";
+import { QuotedLink } from "@/utils/editorLinks";
 import {
 	BoundedTableCell,
 	BoundedTableHeader,
@@ -406,7 +406,8 @@ const extensions = [
 	TextAlign.configure({
 		types: ["heading", "paragraph"],
 	}),
-	Link.configure({
+	// The sender's class stays out of this page (see editorLinks).
+	QuotedLink.configure({
 		openOnClick: false,
 		HTMLAttributes: {
 			class: "text-blue-600 underline hover:text-blue-800",
