@@ -359,8 +359,8 @@ repository, set its repository variables and secrets, and push. Every push to
 Email Explorer uses a factory function pattern for configuration. A
 deployment's options live in `packages/worker/dev/index.ts` (in your fork,
 your copy of it); the per-deployment values -- Worker name, bucket, recovery
-sender -- are set in GitHub instead, and the first deploy gives the Worker its
-push-notification key; see
+sender -- are set in GitHub instead, and a deploy gives the Worker its
+push-notification key when it has none; see
 [Deploying your own](docs/deploying-your-own.md):
 
 ```typescript

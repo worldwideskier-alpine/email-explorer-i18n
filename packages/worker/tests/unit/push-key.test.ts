@@ -6,7 +6,9 @@ import {
 	generatePushKey,
 	needsPushKey,
 	PUSH_KEY_SECRET,
+	pushKeyStep,
 } from "../../scripts/push-key.mjs";
+import STEP_SOURCE from "../../scripts/push-key-step.mjs?raw";
 import { publicKeyOf } from "../../src/routes/push";
 
 /**
@@ -87,6 +89,82 @@ describe("whether the Worker needs a push key", () => {
 		for (const output of unreadable) {
 			expect(needsPushKey(output), JSON.stringify(output)).toBe("unreadable");
 		}
+	});
+});
+
+/**
+ * What the deploy step reads (`push-key-step.mjs`, through pushKeyStep). The
+ * step compares these words exactly and puts a key only on "generate", so a
+ * word changed on the way out -- "unreadable" printed as "generate" -- would
+ * put a key over one the list merely failed to show.
+ */
+describe("what the deploy step is told", () => {
+	const given = (text: string) => async () => text;
+	const noInput = async (): Promise<string> => {
+		throw new Error("generate has no input to read");
+	};
+
+	it("is the verdict, word for word, on a line of its own", async () => {
+		expect(await pushKeyStep("decide", given("[]\n"))).toEqual({
+			stdout: "generate\n",
+			stderr: "",
+			code: 0,
+		});
+		expect(
+			(await pushKeyStep("decide", given(listed([PUSH_KEY_SECRET])))).stdout,
+		).toBe("present\n");
+		for (const output of [
+			"",
+			'✘ [ERROR] Worker "a-worker" not found.\n',
+			`[]\n${listed([PUSH_KEY_SECRET])}`,
+		]) {
+			expect(
+				(await pushKeyStep("decide", given(output))).stdout,
+				JSON.stringify(output),
+			).toBe("unreadable\n");
+		}
+	});
+
+	it("is a key and nothing else when asked to make one", async () => {
+		const { stdout, stderr, code } = await pushKeyStep("generate", noInput);
+		expect(code).toBe(0);
+		expect(stderr).toBe("");
+		expect(stdout).not.toMatch(/\s/);
+		// One line of JSON and nothing around it, read the way the Worker
+		// reads its secret.
+		expect(JSON.parse(stdout).d).toMatch(/^[A-Za-z0-9_-]{43}$/);
+		expect(publicKeyOf(stdout)).toHaveLength(87);
+	});
+
+	it("is nothing a step could act on for anything else", async () => {
+		for (const command of [undefined, "", "Generate", "present", "generate "]) {
+			const told = await pushKeyStep(command, given("[]\n"));
+			expect(told.stdout, String(command)).toBe("");
+			expect(told.code, String(command)).not.toBe(0);
+		}
+	});
+
+	/**
+	 * The wrapper the step runs is outside every test -- it runs only under
+	 * node, on GitHub -- so it is held to deciding nothing: it hands its
+	 * argument and its stdin to pushKeyStep and writes back what it is given.
+	 */
+	it("is decided here, not in the wrapper the step runs", () => {
+		const code = STEP_SOURCE.replace(/\/\*[\s\S]*?\*\//g, "")
+			.replace(/\/\/.*$/gm, "")
+			.trim();
+		// Spaces aside, so the formatter may lay it out as it likes.
+		expect(code.replace(/\s+/g, "")).toContain(
+			"awaitpushKeyStep(process.argv[2],async()=>{",
+		);
+		expect(code).not.toMatch(
+			/needsPushKey|generatePushKey|["'`](?:generate|present|unreadable|decide)\b/,
+		);
+		expect(code.match(/process\.(?:stdout|stderr)\.write\([^)]*\)/g)).toEqual([
+			"process.stdout.write(stdout)",
+			"process.stderr.write(stderr)",
+		]);
+		expect(code).toMatch(/process\.exitCode = code;$/);
 	});
 });
 

@@ -12,17 +12,22 @@
  * whole -- that command reads whatever arrives on its stdin, an empty one
  * included, and would put an empty key the next deploy then finds present.
  * workflowGuards.test.ts holds the step to that.
+ *
+ * What is printed is decided in pushKeyStep, where it is tested; this file
+ * only reads stdin and writes what it is given, and push-key.test.ts holds
+ * that it decides nothing of its own.
  */
-import { generatePushKey, needsPushKey } from "./push-key.mjs";
+import { pushKeyStep } from "./push-key.mjs";
 
-const command = process.argv[2];
-if (command === "decide") {
-	let input = "";
-	for await (const chunk of process.stdin) input += chunk;
-	process.stdout.write(`${needsPushKey(input)}\n`);
-} else if (command === "generate") {
-	process.stdout.write(JSON.stringify(await generatePushKey()));
-} else {
-	console.error("usage: push-key-step.mjs decide | generate");
-	process.exit(2);
-}
+process.stdin.setEncoding("utf8");
+const { stdout, stderr, code } = await pushKeyStep(
+	process.argv[2],
+	async () => {
+		let input = "";
+		for await (const chunk of process.stdin) input += chunk;
+		return input;
+	},
+);
+process.stdout.write(stdout);
+process.stderr.write(stderr);
+process.exitCode = code;

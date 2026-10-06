@@ -36,6 +36,35 @@ const deploy = Object.entries(workflows).find(([path]) =>
 	path.endsWith("deploy.yml"),
 )?.[1];
 
+/** A step of the deploy job by its name: from its `name:` to the next step. */
+function stepNamed(name: string): string {
+	return (
+		(deploy ?? "")
+			.split(/\n {6}- /)
+			.find((one) => one.startsWith(`name: ${name}\n`)) ?? ""
+	);
+}
+
+/**
+ * The lines of a step's `run: |` block as bash reads them, one command or
+ * keyword each: indentation, blank lines and comments left out.
+ */
+function runLines(step: string): string[] {
+	const lines = step.split("\n");
+	const start = lines.indexOf("        run: |");
+	if (start < 0) return [];
+	const body: string[] = [];
+	for (const line of lines.slice(start + 1)) {
+		if (line.trim() === "") continue;
+		if (!line.startsWith(" ".repeat(10))) break;
+		body.push(line.trim());
+	}
+	return body.filter((line) => !line.startsWith("#"));
+}
+
+const PUSH_KEY_STEP = "Give the Worker a push key if it has none";
+const OLD_PUSH_KEY_STEP = "Say whether an old push key is still kept on GitHub";
+
 describe("the deploy workflow", () => {
 	it("is where this test thinks it is", () => {
 		// A rename would otherwise turn every assertion below into a silent pass.
@@ -192,6 +221,16 @@ describe("the deploy workflow", () => {
 		expect(step).toMatch(/^name: Say whether an old push key/);
 		expect(step).not.toContain("CLOUDFLARE_API_TOKEN");
 		expect(step).not.toContain("wrangler");
+		// The expression reaches the step as the string "true" or "false",
+		// neither of them empty: a `-n` test would warn on every deploy,
+		// whether the secret is there or not.
+		expect(runLines(stepNamed(OLD_PUSH_KEY_STEP))).toEqual([
+			'if [ "$OLD_PUSH_KEY_ON_GITHUB" = "true" ]; then',
+			expect.stringMatching(
+				/^echo "::warning::The VAPID_PRIVATE_KEY repository secret is no longer used/,
+			),
+			"fi",
+		]);
 	});
 
 	/**
@@ -255,8 +294,70 @@ describe("the deploy workflow", () => {
 		expect(at('if [ -z "$push_key" ]; then')).toBeLessThan(
 			at("wrangler secret put"),
 		);
-		expect(script).not.toMatch(/\btee\b|set -x|>\s*[^&\s]|>\s+\S|add-mask/);
+		expect(script).not.toMatch(/\btee\b|>\s*[^&\s]|>\s+\S|add-mask/);
 		expect(script).not.toMatch(/GITHUB_(?:ENV|OUTPUT|STEP_SUMMARY)/);
+	});
+
+	/**
+	 * Bash's trace prints each command before it runs, variables expanded,
+	 * and the key is not a GitHub secret, so nothing masks it in this public
+	 * log. Measured, with the step run under `bash -e` as GitHub runs it: one
+	 * `set -o xtrace` added to it put the key's private part in the log three
+	 * times -- as it was assigned, as it was checked for being empty, and as
+	 * it was handed to `secret put`. A trace is turned on in more
+	 * spellings than `set -x` -- `set -ex`, `set -euxo pipefail`, `set -o
+	 * xtrace` -- and from outside the script too: a step's `shell: bash -ex
+	 * {0}`, or the job's or the workflow's `defaults`.
+	 */
+	it("never traces the step that holds the push key", () => {
+		const step = stepNamed(PUSH_KEY_STEP);
+		expect(step, "the push key step is missing").toBeTruthy();
+		const said = step
+			.split("\n")
+			.filter((line) => !line.trim().startsWith("#"))
+			.join("\n");
+		// A short option with an x in it, wherever it is given.
+		expect(said).not.toMatch(/(?:^|\s)-[A-Za-z]*x[A-Za-z]*(?=\s|$)/m);
+		expect(said).not.toMatch(/xtrace|BASH_XTRACEFD|SHELLOPTS|BASHOPTS/);
+		expect(said).not.toMatch(/^\s*shell:/m);
+		const shells = (deploy ?? "")
+			.split("\n")
+			.filter((line) => /^\s*shell:/.test(line));
+		for (const shell of shells) {
+			expect(shell).not.toMatch(/\s-[A-Za-z]*x|xtrace/);
+		}
+	});
+
+	/**
+	 * Neither push-key step may fail the run. Both come after the deploy, so
+	 * a failed step would roll back new code that is live and working for
+	 * the sake of a key; a Worker still without one is asked again on the
+	 * next deploy. GitHub runs a `run:` block under `bash -e`, which ends the
+	 * step at the first command that fails outside an `if` or an `||` -- so
+	 * every line has to be one of the shapes that cannot: a keyword, `exit
+	 * 0`, a fixed message, the list printed back, or an assignment that
+	 * falls back to empty when what it ran failed.
+	 */
+	it("lets neither push-key step fail the run", () => {
+		const cannotFail = [
+			/^set -o pipefail$/,
+			/^if .+; then$/,
+			/^(?:then|else|fi)$/,
+			/^exit 0$/,
+			/^echo "[^"$`\\]*"$/,
+			/^printf '%s\\n' "\$listed"$/,
+			/^(\w+)="\$\(.+\)" \|\| \1=""$/,
+		];
+		for (const name of [OLD_PUSH_KEY_STEP, PUSH_KEY_STEP]) {
+			const lines = runLines(stepNamed(name));
+			expect(lines.length, name).toBeGreaterThan(0);
+			for (const line of lines) {
+				expect(
+					cannotFail.some((shape) => shape.test(line)),
+					`${name}: ${line}`,
+				).toBe(true);
+			}
+		}
 	});
 
 	/**

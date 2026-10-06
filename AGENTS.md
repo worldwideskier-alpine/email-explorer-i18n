@@ -59,10 +59,12 @@ GitHub secret uploaded on every deploy, which kept a copy on GitHub and left a
 fork that skipped making one with no push; that copy is read by nothing now,
 and the deploy warns while it exists. Only whether it is set reaches a step.
 The step never fails the run, since the new code is live by then and a
-failure would roll it back for a key. `push-key.test.ts`;
-`workflowGuards.test.ts` holds that the key reaches only `secret put`, only
-whole, and is never echoed, teed or written down -- it is not a GitHub secret,
-so nothing would mask it in the public log.
+failure would roll it back for a key. `push-key.test.ts` holds what it
+decides and the words it is told (`pushKeyStep`; `push-key-step.mjs` only
+moves bytes); `workflowGuards.test.ts` holds that the key reaches only
+`secret put`, only whole, and is never echoed, teed, traced or written down
+-- it is not a GitHub secret, so nothing would mask it in the public log --
+and that every line of the step is one `bash -e` cannot end it on.
 
 User-facing setup lives in `docs/deploying-your-own.md`.
 

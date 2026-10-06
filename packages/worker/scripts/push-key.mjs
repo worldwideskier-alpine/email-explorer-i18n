@@ -83,6 +83,39 @@ function jsonArraysIn(text) {
 }
 
 /**
+ * What `node push-key-step.mjs <command>` prints, which is what the deploy
+ * step reads: for `decide`, needsPushKey's word and a newline; for
+ * `generate`, a new key as one line of JSON with nothing after it. Anything
+ * else is a usage error and prints nothing on stdout.
+ *
+ * Here rather than in push-key-step.mjs so that the words the step compares
+ * against are tested where they are produced: the step puts a key only on
+ * "generate", so a wrapper that turned "unreadable" into "generate" would put
+ * one over a key the list merely failed to show. That file only moves bytes.
+ *
+ * @param {string | undefined} command
+ * @param {() => Promise<string>} input what arrived on stdin; read only by decide
+ * @returns {Promise<{ stdout: string, stderr: string, code: number }>}
+ */
+export async function pushKeyStep(command, input) {
+	if (command === "decide") {
+		return { stdout: `${needsPushKey(await input())}\n`, stderr: "", code: 0 };
+	}
+	if (command === "generate") {
+		return {
+			stdout: JSON.stringify(await generatePushKey()),
+			stderr: "",
+			code: 0,
+		};
+	}
+	return {
+		stdout: "",
+		stderr: "usage: push-key-step.mjs decide | generate\n",
+		code: 2,
+	};
+}
+
+/**
  * A new push key: a P-256 key pair as the private JWK the Worker reads --
  * `d` to sign with, and `x` and `y`, the public point, which the Worker hands
  * browsers (`publicKeyOf`, routes/push.ts). Made the way

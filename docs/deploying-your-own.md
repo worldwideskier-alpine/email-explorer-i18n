@@ -46,12 +46,14 @@ deploy fails instead. It is set once per account, not per Worker.
 
 ## 3. The push-notification key: nothing to do
 
-The first deploy gives your Worker a key of its own for signing push
-notifications, and every later deploy leaves it as it is. It is made on the
-runner when the Worker has none and handed straight to the Worker's secrets
-(`VAPID_PRIVATE_KEY`): it is not kept on GitHub, not printed in the log, and
-neither wrangler nor the Cloudflare dashboard will show it to anyone
-afterwards. The Worker works out from it the public half that browsers need.
+A deploy that finds your Worker without a key for signing push notifications
+gives it one of its own, and every deploy after that leaves it as it is. For
+a new fork that is the first deploy; a fork deployed earlier, and never given
+a key, gets one on its next deploy. It is made on the runner and handed
+straight to the Worker's secrets (`VAPID_PRIVATE_KEY`): it is not kept on
+GitHub, not printed in the log, and neither wrangler nor the Cloudflare
+dashboard will show it to anyone afterwards. The Worker works out from it the
+public half that browsers need.
 
 If you followed an earlier version of this guide and set a
 `VAPID_PRIVATE_KEY` repository secret, delete it (**Settings → Secrets and
@@ -113,7 +115,8 @@ never arrived.
 Push to `main`, or run the **Deploy to Cloudflare** workflow by hand from the
 Actions tab, on `main`. The run creates the R2 bucket if it is missing, deploys
 the Worker, and gives it a push-notification key if it has none (step 3) --
-which only the first deploy does; the others say it has one and leave it.
+once, on the first deploy that finds it without one; the others say it has
+one and leave it.
 
 A new fork has Actions switched off until you enable them in its **Actions**
 tab, so the first push deploys nothing until you have.
@@ -208,11 +211,11 @@ nothing here to conflict.
 
 ## What is optional
 
-- **Push notifications.** Nothing to set up: the first deploy gives the
-  Worker its key (step 3). Each person turns notifications on for their own
-  browser, in the dashboard's settings. If a deploy could not give the Worker
-  a key, it says so with a warning, notifications cannot be turned on until
-  it has one, and the next deploy tries again.
+- **Push notifications.** Nothing to set up: a deploy gives the Worker its
+  key when it has none (step 3). Each person turns notifications on for their
+  own browser, in the dashboard's settings. If a deploy could not give the
+  Worker a key, it says so with a warning, notifications cannot be turned on
+  until it has one, and the next deploy tries again.
 - **Outbound mail.** Without a Resend key you can read mail but not send it.
   The app says so rather than failing silently.
 - **Second-pass spam filtering.** Per mailbox, on the settings screen, you can
