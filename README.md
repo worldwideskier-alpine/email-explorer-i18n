@@ -563,7 +563,9 @@ Not implemented yet, roughly in the order they would be useful:
 - JavaScript must be enabled
 - Browser storage and cookies must be enabled: the session is kept in the
   browser and sent as a bearer token, and the session cookie is what signs in
-  attachment downloads and `/docs`
+  attachment downloads and `/docs`. A second cookie, `login_device`, is what
+  lets a browser that has signed in before past a lock that somebody else's
+  wrong guesses put on its address
 
 Please report any issues on this fork's [GitHub Issues](https://github.com/worldwideskier-alpine/email-explorer-i18n/issues) page.
 
@@ -578,7 +580,13 @@ Email Explorer takes security seriously:
   successful sign-in, so nobody has to reset a password.
 - Sign-in is rate limited per address and per IP. The counters live in the
   auth Durable Object, so they hold across colos rather than resetting with
-  every isolate.
+  every isolate. A browser that has signed in to an address before is
+  counted on its own, so a stranger's wrong guesses lock out strangers and
+  not the owner: it carries a random `login_device` cookie
+  (`HttpOnly; Secure; SameSite=Strict`, sent only to the sign-in route,
+  stored as a digest, replaced at every sign-in, and ended by a password
+  change, a reset or root setting the password). See
+  [Authentication](docs/features/authentication.md#rate-limiting).
 - Password reset is rate limited the same way and answers identically whether
   or not the address has an account, so it can't be used to find out which
   addresses are worth attacking.

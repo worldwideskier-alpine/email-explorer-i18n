@@ -64,9 +64,38 @@ exist.
 
 ### Rate limiting
 
-Repeated failed sign-ins lock an address for a while. Attempts are counted per
-address and per client network (an IPv4 address, or an IPv6 /64), so a
-password can be guessed at speed neither from one machine nor from many.
+Repeated failed sign-ins lock an address for a while: ten wrong passwords in
+fifteen minutes lock it for fifteen. Attempts are counted per address and per
+client network (an IPv4 address, or an IPv6 /64), so a password can be
+guessed at speed neither from one machine nor from many.
+
+Somebody else's wrong guesses do not lock you out, though, as long as you
+sign in from a browser that has signed in to that address before: it is
+counted on its own, so while a stranger has the address locked, it still
+gets in with the right password. It is told apart by a cookie,
+`login_device`, which is sent only with the sign-in request, cannot be read
+by the page's scripts and signs nothing in on its own. A browser is given
+one when it signs in, registers, changes its password or finishes a
+password reset, and it lasts 180 days from that browser's last sign-in.
+That trust ends:
+
+- when the password is changed, reset, or set by root -- for every browser
+  but the one that changed or reset it;
+- when the sign-in address changes, until the browser signs in at the new
+  one;
+- after 100 wrong passwords from that browser with no right one between
+  them;
+- for a copy of it taken from the browser, once the browser signs in again:
+  every sign-in hands out a new one.
+
+A browser that is new, or whose cookies were cleared, is counted with
+everybody else and waits for the lock to end, as before. A trusted browser
+that itself gets the password wrong ten times in fifteen minutes is locked
+on its own, with the same message.
+
+One browser is trusted for one address: the last one signed in to from it.
+Signing out does not end it, so on a computer somebody else will use, clear
+the browser's cookies for this site when you are done.
 
 ### Bot protection (Cloudflare Turnstile)
 

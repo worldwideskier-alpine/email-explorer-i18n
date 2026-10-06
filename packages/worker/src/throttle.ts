@@ -78,15 +78,28 @@ export function throttleAddress(ip: string): string {
  * looser but catches the other shape of attack: a few guesses each against
  * many accounts, which never trips any single account's counter.
  *
- * The per-account rule does mean someone can lock a known address out for
- * the lock window on purpose. That is the standard trade for having any
- * account-level limit at all; the window is kept short so the damage is
- * bounded, and a legitimate user who knows their password can simply wait.
+ * The per-account rule also let anyone who knew an address lock its owner
+ * out: ten wrong passwords from anywhere, and the right one was refused for
+ * fifteen minutes, again and again for as long as somebody kept sending them
+ * -- root's address included, on a deployment where nothing else stands in
+ * front of the form until root sets Turnstile. "The owner can simply wait"
+ * was the claim, and it held for no one under a patient stranger. So a
+ * browser this login trusts (login-device.ts) is counted on a key of its
+ * own, with the same limit: a stranger's failures lock out strangers, and
+ * the owner's browser locks only itself. Everything without that cookie --
+ * every network, every new browser -- still shares the address's key, so
+ * guessing from many places is held to the same ten.
  */
-export function loginThrottleRules(email: string, ip: string): ThrottleRule[] {
+export function loginThrottleRules(
+	email: string,
+	ip: string,
+	trustedBrowser?: { tokenHash: string; userId: string },
+): ThrottleRule[] {
 	return [
 		{
-			key: `login:user:${email.trim().toLowerCase()}`,
+			key: trustedBrowser
+				? `login:device:${trustedBrowser.tokenHash}:${trustedBrowser.userId}`
+				: `login:user:${email.trim().toLowerCase()}`,
 			limit: 10,
 			windowMs: 15 * MINUTE,
 			lockMs: 15 * MINUTE,

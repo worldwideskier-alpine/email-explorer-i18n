@@ -237,6 +237,28 @@ are still checked, by the `tsc` that runs before the worker tests.
   Creating a mailbox is the same shape: the address is claimed in one call
   to the auth object (`claimMailboxForPersonOf`) before anything is written,
   because two people creating the same new address at once both got it.
+- **A stranger's failed sign-ins lock out strangers, not the owner.** The
+  per-address limit (ten in fifteen minutes) is what holds a password
+  against guesses from many networks, and it also let anyone who knew an
+  address lock its owner out with ten wrong passwords every fifteen minutes,
+  for as long as they kept sending them -- measured, three rounds running,
+  and Turnstile is off until root sets it, so root's own address was the
+  easiest. A browser that has proved the password is now counted on a key
+  of its own (`login-device.ts`, OWASP's device cookies): a random
+  `login_device` cookie, sent only to the sign-in route, kept as a digest in
+  `login_devices` and bound to the login's `credentialStamp`. Everything
+  without it -- every network, every new browser -- still shares the
+  address's ten. Four things a rewrite could quietly undo. The standing is
+  granted inside the call that verified the password (`login`,
+  `changePassword`, `resetPasswordWithStamp`), never in a later one:
+  granted afterwards, sign-ins racing a password change stayed trusted
+  under the new password, ten of ten. The token is replaced at every
+  sign-in and the one presented retired, so a copied cookie dies at the
+  owner's next sign-in, and 100 failures on one end it
+  (`DEVICE_FAILURE_CAP`). And `loginTake` decides "trusted" and counts the
+  attempt in one call, as `throttleTake` does. A trusted browser's success
+  resets its own key and not the address's, so the stranger stays locked
+  out. `login-device.test.ts`.
 - **Turnstile guards the forms a stranger reaches** -- sign-in, registration,
   the reset request -- once root sets it on `/root` (`turnstile.ts`, kept in
   `settings/turnstile.json`). A pair is saved only after it passed siteverify
