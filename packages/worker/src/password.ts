@@ -123,6 +123,11 @@ export async function verifyPassword(
 	stored: string,
 ): Promise<PasswordVerification> {
 	if (!stored.startsWith(`${PBKDF2_PREFIX}$`)) {
+		// One SHA-256 answers at once, where an address with no account costs
+		// a full PBKDF2 (verifyNothing): the difference told which addresses
+		// still had an account from before PBKDF2, as plainly as an answer
+		// would (Claude Security F12). The legacy check costs the same now.
+		await verifyNothing(password);
 		const valid = timingSafeEqual(await legacyHash(password), stored);
 		return { valid, needsRehash: valid };
 	}
@@ -130,6 +135,8 @@ export async function verifyPassword(
 	const [, iterationsRaw, saltB64, hashB64] = stored.split("$");
 	const iterations = Number(iterationsRaw);
 	if (!Number.isInteger(iterations) || iterations < 1 || !saltB64 || !hashB64) {
+		// Unreadable, so wrong -- after the same cost, for the same reason.
+		await verifyNothing(password);
 		return { valid: false, needsRehash: false };
 	}
 
@@ -137,6 +144,7 @@ export async function verifyPassword(
 	try {
 		salt = fromBase64(saltB64);
 	} catch {
+		await verifyNothing(password);
 		return { valid: false, needsRehash: false };
 	}
 
