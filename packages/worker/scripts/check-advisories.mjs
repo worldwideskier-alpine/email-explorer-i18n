@@ -20,6 +20,7 @@ import {
 	blocking,
 	CONTROL,
 	controlProblem,
+	controlQuestion,
 	describeAdvisory,
 	lockedPackages,
 	nextPage,
@@ -80,17 +81,18 @@ async function ask(url) {
 }
 
 try {
-	const control = await ask(advisoriesUrl(CONTROL, "reviewed"));
+	const locked = lockedPackages(readFileSync(LOCK, "utf8"));
+	const question = controlQuestion(locked);
+	const control = await ask(advisoriesUrl(question, "reviewed"));
 	const problem = controlProblem(control);
 	if (problem) {
 		console.log(`::error::${problem}`);
 		process.exit(1);
 	}
 	console.log(
-		`control: GitHub returned the advisories for ${CONTROL.join(" and ")}`,
+		`control: GitHub returned the advisories for ${CONTROL.join(" and ")}, asked among ${question.length - CONTROL.length} locked packages (${advisoriesUrl(question, "reviewed").length} characters)`,
 	);
 
-	const locked = lockedPackages(readFileSync(LOCK, "utf8"));
 	const found = [];
 	for (const batch of batches(locked)) {
 		for (const type of ["reviewed", "malware"]) {

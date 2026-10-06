@@ -11,8 +11,9 @@
  * A check that asks a service and hears nothing back passes whatever is
  * wrong with the asking -- a parameter the service reads differently, a page
  * it never sent. So every run first asks about two packages known to be
- * vulnerable, in the same shape as every other question, and goes no further
- * unless both come back (`controlProblem`).
+ * vulnerable, among as many of the lockfile's longest names as any other
+ * question holds, and goes no further unless both come back
+ * (`controlQuestion`, `controlProblem`).
  *
  * No `node:` imports and no network here, so the judgement is tested in the
  * Workers pool; the asking lives in check-advisories.mjs, the split
@@ -36,6 +37,23 @@ export const BATCH = 50;
  * alone would pass a service that read the list as one name.
  */
 export const CONTROL = ["lodash@4.17.11", "minimist@0.0.8"];
+
+/**
+ * The control question: CONTROL among the longest names the lockfile has,
+ * as many as a real question holds. Two packages alone proved the shape but
+ * not the size -- a service that answered a long list with nothing would
+ * have passed every real question after a control it answered.
+ *
+ * @param {string[]} locked `name@version` each
+ * @returns {string[]}
+ */
+export function controlQuestion(locked) {
+	const longest = [...locked]
+		.filter((one) => !CONTROL.includes(one))
+		.sort((a, b) => b.length - a.length || (a < b ? -1 : 1))
+		.slice(0, BATCH - CONTROL.length);
+	return [...longest, ...CONTROL];
+}
 
 /**
  * Every `name@version` in the lockfile's `packages:` section, once each.
@@ -138,7 +156,7 @@ export function controlProblem(found) {
 	).filter((name) => !named.has(name));
 	return missing.length === 0
 		? null
-		: `asked about ${CONTROL.join(" and ")}, which have critical advisories, GitHub returned none for ${missing.join(" and ")}; a clean answer below would mean nothing`;
+		: `asked about ${CONTROL.join(" and ")} among ${BATCH - CONTROL.length} locked packages, GitHub returned no blocking advisory for ${missing.join(" and ")}, which have critical ones; a clean answer below would mean nothing`;
 }
 
 /**

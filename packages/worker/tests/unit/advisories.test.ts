@@ -8,6 +8,7 @@ import {
 	blocking,
 	CONTROL,
 	controlProblem,
+	controlQuestion,
 	describeAdvisory,
 	lockedPackages,
 	nextPage,
@@ -160,6 +161,19 @@ describe("the control question", () => {
 		);
 	});
 
+	it("is as long as the longest real question, with the two among them", () => {
+		const locked = lockedPackages(LOCK);
+		const question = controlQuestion(locked);
+		expect(question).toHaveLength(BATCH);
+		expect(question).toEqual(expect.arrayContaining(CONTROL));
+		const longestReal = Math.max(
+			...batches(locked).map((one) => advisoriesUrl(one, "reviewed").length),
+		);
+		expect(advisoriesUrl(question, "reviewed").length).toBeGreaterThanOrEqual(
+			longestReal,
+		);
+	});
+
 	it("is trusted only when each package comes back with a blocking advisory", () => {
 		expect(
 			controlProblem([
@@ -195,6 +209,6 @@ describe("the control question", () => {
 			],
 		],
 	])("is not trusted when GitHub returns %s", (_, found) => {
-		expect(controlProblem(found)).toMatch(/returned none for/);
+		expect(controlProblem(found)).toMatch(/returned no blocking advisory for/);
 	});
 });

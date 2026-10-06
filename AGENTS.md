@@ -807,9 +807,11 @@ every package `pnpm-lock.yaml` pins, and fails on high, critical or malware.
 `pnpm audit` reads npm's copy, which lagged: Dependabot mailed an advisory
 for sharp while the pre-merge check still said "No known vulnerabilities".
 A check that asks a service passes on silence, so each run first asks about
-two releases with long-standing critical advisories, in the same
-comma-separated shape as every real question, and stops unless both come
-back (`controlProblem`); a request that fails fails the check too. It uses
+two releases with long-standing critical advisories, among as many of the
+lockfile's longest names as a real question holds -- the same shape and at
+least the same length -- and stops unless both come back
+(`controlQuestion`, `controlProblem`); a request that fails fails the check
+too. Its first run asked about 584 packages and was told of none. It uses
 the token Actions gives every job, read-only here, so a fork sets up
 nothing, and it installs nothing, so no install script runs beside that
 token. The judgement is `advisories.mjs`, tested in the worker pool
