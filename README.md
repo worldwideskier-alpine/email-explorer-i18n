@@ -585,7 +585,8 @@ Email Explorer takes security seriously:
   not the owner: it carries a random `login_device` cookie
   (`HttpOnly; Secure; SameSite=Strict`, sent only to the sign-in route,
   stored as a digest, replaced at every sign-in, and ended by a password
-  change, a reset or root setting the password). See
+  change, a reset, root setting the password or a change of sign-in
+  address). See
   [Authentication](docs/features/authentication.md#rate-limiting).
 - Password reset is rate limited the same way and answers identically whether
   or not the address has an account, so it can't be used to find out which

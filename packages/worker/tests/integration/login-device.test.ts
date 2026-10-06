@@ -63,7 +63,7 @@ const login = (
 		body: JSON.stringify({ email, password }),
 	});
 
-const changePassword = (session: string) =>
+const changePassword = (session: string, currentPassword = PASSWORD) =>
 	SELF.fetch(`${API}/auth/change-password`, {
 		method: "POST",
 		headers: {
@@ -72,7 +72,7 @@ const changePassword = (session: string) =>
 			"CF-Connecting-IP": OWNER_IP,
 		},
 		body: JSON.stringify({
-			currentPassword: PASSWORD,
+			currentPassword,
 			newPassword: NEW_PASSWORD,
 		}),
 	});
@@ -196,6 +196,39 @@ describe("a browser that has signed in before", () => {
 			401: 10,
 			429: 15,
 		});
+	});
+
+	it("is still held by its network's limit, with everyone else there", async () => {
+		// Four logins, each with a browser it trusts: four keys of their own,
+		// and the browsers' keys are not all that counts.
+		const logins = [EMAIL, OTHER, "third@example.com", "fourth@example.com"];
+		await seedLogin("third", logins[2]);
+		await seedLogin("fourth", logins[3]);
+		const cookies: string[] = [];
+		for (const [i, email] of logins.entries()) {
+			cookies.push(
+				deviceCookieOf(
+					await login(PASSWORD, { email, ip: `192.0.2.${i + 1}` }),
+				),
+			);
+		}
+		// Nine wrong each, from one network: under every browser's ten, over
+		// the network's thirty.
+		const network = "198.51.100.50";
+		const statuses: number[] = [];
+		for (let round = 0; round < 9; round++) {
+			for (const [i, email] of logins.entries()) {
+				const res = await login("wrong", {
+					email,
+					ip: network,
+					cookie: cookies[i],
+				});
+				statuses.push(res.status);
+			}
+		}
+		expect(tally(statuses)).toEqual({ 401: 30, 429: 6 });
+		// It was the network that was locked, not the browsers.
+		expect((await login(PASSWORD, { cookie: cookies[0] })).status).toBe(200);
 	});
 
 	it("is not pushed aside by a planted login_device sent ahead of ours", async () => {
@@ -384,6 +417,54 @@ describe("what ends a browser's standing", () => {
 		).toBe(200);
 	});
 
+	it("moving the login away and back does not bring it back", async () => {
+		const cookie = deviceCookieOf(await login(PASSWORD));
+		const auth = authStub();
+		for (const to of ["moved@example.com", EMAIL]) {
+			const stamp = (await auth.emailChangeStamp("owner")) as string;
+			expect(await auth.confirmEmailChange("owner", to, stamp)).toBe("changed");
+		}
+		// Back at the address it proved, under the password it proved: the
+		// stamp is the one it was granted under, so the rows have to go.
+		expect(await deviceRows()).toHaveLength(0);
+		await strangerLocks();
+		expect((await login(PASSWORD, { cookie })).status).toBe(429);
+	});
+
+	it("a move of the address that is refused leaves it as it was", async () => {
+		await seedLogin("other", OTHER);
+		const cookie = deviceCookieOf(await login(PASSWORD));
+		const auth = authStub();
+		expect(
+			await auth.confirmEmailChange("owner", "moved@example.com", "stale"),
+		).toBe("stale");
+		const stamp = (await auth.emailChangeStamp("owner")) as string;
+		expect(await auth.confirmEmailChange("owner", OTHER, stamp)).toBe("taken");
+		expect(await deviceRows()).toHaveLength(1);
+		await strangerLocks();
+		expect((await login(PASSWORD, { cookie })).status).toBe(200);
+	});
+
+	it("a lapsed standing is swept by the next grant, and only a lapsed one", async () => {
+		await seedLogin("other", OTHER);
+		const kept = deviceCookieOf(await login(PASSWORD));
+		await login(PASSWORD, { email: OTHER });
+		await runInDurableObject(authStub(), async (_i, state) => {
+			state.storage.sql.exec(
+				"UPDATE login_devices SET granted_at = ? WHERE user_id = 'other'",
+				Date.now() - DEVICE_TTL_MS - 1000,
+			);
+		});
+		// A browser that is never seen again never presents its token, so
+		// nothing but the sweep takes its row.
+		await login(PASSWORD, { ip: "192.0.2.80" });
+		const rows = await deviceRows();
+		expect(rows.map((r) => r.user_id)).toEqual(["owner", "owner"]);
+		expect(rows.map((r) => r.token_hash)).toContain(
+			await deviceHash(kept.slice("login_device=".length)),
+		);
+	});
+
 	it("deleting the login takes its rows", async () => {
 		await seedLogin("spare", "spare@example.com", "person-owner");
 		await runInDurableObject(authStub(), async (_i, state) => {
@@ -490,5 +571,20 @@ describe("the browsers that start out trusted", () => {
 		expect(reset.status).toBe(401);
 		expect(hasDeviceCookie(reset)).toBe(false);
 		expect(await deviceRows()).toHaveLength(0);
+	});
+
+	it("nor a refused password change, which leaves the browser's own", async () => {
+		await seedLogin("owner", EMAIL);
+		const first = await login(PASSWORD);
+		const cookie = deviceCookieOf(first);
+		const { id: session } = (await first.json()) as { id: string };
+		const refused = await changePassword(session, "not-the-password");
+		expect(refused.status).toBe(403);
+		// A cookie handed out here would have no row behind it and would
+		// replace the browser's own: one mistyped current password, and the
+		// owner was counted with the stranger again.
+		expect(hasDeviceCookie(refused)).toBe(false);
+		await strangerLocks();
+		expect((await login(PASSWORD, { cookie })).status).toBe(200);
 	});
 });

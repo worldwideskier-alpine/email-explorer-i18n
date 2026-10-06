@@ -1025,6 +1025,14 @@ export class MailboxDO extends DurableObject<Env> {
 			if (String(e).includes("UNIQUE")) return "taken";
 			throw e;
 		}
+		// Every browser's standing goes with the old address (login-device.ts).
+		// The stamp alone does not end it: a login moved away and back has its
+		// old stamp again, and the browsers trusted before the first move were
+		// trusted again without signing in.
+		this.ctx.storage.sql.exec(
+			"DELETE FROM login_devices WHERE user_id = ?",
+			userId,
+		);
 		return "changed";
 	}
 
