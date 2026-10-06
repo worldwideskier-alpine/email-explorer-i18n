@@ -387,6 +387,53 @@ describe("a sign-in at somebody else's mailbox", () => {
 		).toBe(201);
 	});
 
+	/**
+	 * Nothing proves an address is its taker's, so a mailbox made and deleted
+	 * at an address that never delivers here holds it as firmly as a real
+	 * one, and root -- which sees nobody's mailboxes -- is not told by whom.
+	 * What frees it is deleting the person who holds it, which is where the
+	 * admin guide sends root; this holds both halves of what it says.
+	 */
+	it("is refused at an address a deleted mailbox holds, until the person who made it is deleted", async () => {
+		const { at, root, people } = await setUp();
+		const squatter = as(await signIn(people.squatter.address));
+		const held = at("newhire");
+		const path = `${API}/mailboxes/${encodeURIComponent(held)}`;
+		expect(
+			(await squatter(`${API}/mailboxes`, post({ email: held, name: "x" })))
+				.status,
+		).toBe(201);
+		const unlocked = await squatter(path, {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ settings: { deletionLocked: false } }),
+		});
+		expect(unlocked.status).toBe(200);
+		expect((await squatter(path, { method: "DELETE" })).status).toBe(204);
+		expect(await env.BUCKET.head(`mailboxes/${held}.json`)).toBeNull();
+
+		const make = () =>
+			root(
+				`${API}/root/accounts`,
+				post({ email: held, password: PASSWORD, role: "admin" }),
+			);
+		const refused = await make();
+		expect(refused.status).toBe(400);
+		expect(await refused.json()).toEqual({ error: "Mailbox already exists" });
+		expect(await auth().getUserByEmail(held)).toBeNull();
+
+		const lock = await root(
+			`${API}/root/accounts/${people.squatter.person}/lock`,
+			post({ locked: false }),
+		);
+		expect(lock.status).toBe(200);
+		const gone = await root(`${API}/root/accounts/${people.squatter.person}`, {
+			method: "DELETE",
+		});
+		expect(gone.status).toBe(200);
+		expect((await make()).status).toBe(201);
+	});
+
 	it("is refused as somebody's own spare, and let through at their own mailbox", async () => {
 		const { at, people } = await setUp();
 		const squatter = as(await signIn(people.squatter.address));
