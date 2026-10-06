@@ -1,9 +1,5 @@
-import {
-	Table,
-	TableCell,
-	TableHeader,
-	TableRow,
-} from "@tiptap/extension-table";
+import { TableCell, TableHeader } from "@tiptap/extension-table";
+import type { JSONContent } from "@tiptap/vue-3";
 
 /**
  * Table cells whose spans are held to the limits a browser holds them to.
@@ -31,82 +27,75 @@ const span = (name: "colspan" | "rowspan", max: number) => ({
 });
 
 /**
- * How many slots a table's grid may have -- columns, spans counted, by rows
- * -- and still be built as a table: a sheet of 50 columns by 5,000 rows.
+ * How many slots the tables of one document may have between them -- each
+ * table's columns, spans counted, by its rows -- and still be built as
+ * tables: a sheet of 50 columns by 5,000 rows.
  *
  * A cap on each cell is not a cap on the table. A thousand cells of a
- * thousand columns each is a million columns, built one at a time all the
- * same, and so is a row of many cells above many rows of one; the editor
- * lays out every slot of the grid. A table past this is not a table any
- * message needs, and its text is quoted as text instead.
+ * thousand columns each is a million columns; a wide row above many rows is
+ * the same; and so are many tables each just under any one table's limit.
+ * The editor lays out every slot of every grid. So the grid is measured the
+ * way the editor will lay it out -- on the document it parsed, not on the
+ * HTML, whose shape a sender controls in ways a parser need not agree with
+ * -- and a table past what is left of the budget is not built as a table:
+ * its cells' contents are quoted as they are, without it.
  */
 export const MAX_TABLE_GRID = 250_000;
 
-const fits = new WeakMap<Element, boolean>();
-
-function fitsTheEditor(table: HTMLElement): boolean {
-	const known = fits.get(table);
-	if (known !== undefined) return known;
-	const rows = (table as HTMLTableElement).rows ?? [];
+/** The slots a table's grid takes, or Infinity once past `budget`. */
+function gridSlots(table: JSONContent, budget: number): number {
+	const rows = table.content ?? [];
+	// How many more rows each column is held for by a rowspan above.
+	const carried: number[] = [];
 	let width = 0;
-	for (const row of rows) {
-		let columns = 0;
-		for (const cell of row.cells) {
-			columns += spanOf(cell, "colspan", MAX_COLSPAN);
+	for (const [r, row] of rows.entries()) {
+		let column = 0;
+		for (const cell of row.content ?? []) {
+			while ((carried[column] ?? 0) > 0) column += 1;
+			const colspan = Math.max(1, Number(cell.attrs?.colspan) || 1);
+			const rowspan = Math.min(
+				Math.max(1, Number(cell.attrs?.rowspan) || 1),
+				rows.length - r,
+			);
+			if ((column + colspan) * rows.length > budget)
+				return Number.POSITIVE_INFINITY;
+			for (let c = column; c < column + colspan; c++) carried[c] = rowspan;
+			column += colspan;
 		}
-		width = Math.max(width, columns);
+		width = Math.max(width, column, carried.length);
+		if (width * rows.length > budget) return Number.POSITIVE_INFINITY;
+		for (let c = 0; c < carried.length; c++) {
+			if ((carried[c] as number) > 0) carried[c] = (carried[c] as number) - 1;
+		}
 	}
-	const answer = width * rows.length <= MAX_TABLE_GRID;
-	fits.set(table, answer);
-	return answer;
+	return width * rows.length;
 }
 
-/** Whether an element of a table belongs to one too large to be one. */
-const inOversized = (element: HTMLElement) => {
-	const table = element.closest("table");
-	return !!table && !fitsTheEditor(table);
-};
-
 /**
- * The same rules, refusing anything inside an oversized table. Refusing the
- * `<table>` alone is not enough: its rows and cells were still read, and the
- * parser wrapped them back into a table of the same size.
+ * The parsed document with every table that does not fit what is left of
+ * MAX_TABLE_GRID replaced by its cells' contents. Tables are taken in order,
+ * outer before the ones nested in it.
  */
-const refusingOversized = <
-	Rule extends { getAttrs?: (element: HTMLElement) => unknown },
->(
-	rules: readonly Rule[] | undefined,
-): Rule[] =>
-	(rules ?? []).map(
-		(rule) =>
-			({
-				...rule,
-				getAttrs: (element: HTMLElement) =>
-					inOversized(element)
-						? false
-						: rule.getAttrs
-							? rule.getAttrs(element)
-							: null,
-			}) as Rule,
-	);
-
-/** A table, unless its grid is past MAX_TABLE_GRID; then its contents. */
-export const BoundedTable = Table.extend({
-	parseHTML() {
-		return refusingOversized(this.parent?.());
-	},
-});
-
-export const BoundedTableRow = TableRow.extend({
-	parseHTML() {
-		return refusingOversized(this.parent?.());
-	},
-});
+export function boundTables(doc: JSONContent): JSONContent {
+	let left = MAX_TABLE_GRID;
+	const walk = (nodes: JSONContent[]): JSONContent[] =>
+		nodes.flatMap((node) => {
+			if (node.type === "table") {
+				const slots = gridSlots(node, left);
+				if (slots > left) {
+					const cells = (node.content ?? []).flatMap(
+						(row) => row.content ?? [],
+					);
+					return walk(cells.flatMap((cell) => cell.content ?? []));
+				}
+				left -= slots;
+			}
+			return node.content ? [{ ...node, content: walk(node.content) }] : [node];
+		});
+	return { ...doc, content: walk(doc.content ?? []) };
+}
 
 export const BoundedTableCell = TableCell.extend({
-	parseHTML() {
-		return refusingOversized(this.parent?.());
-	},
 	addAttributes() {
 		return {
 			...this.parent?.(),
@@ -117,9 +106,6 @@ export const BoundedTableCell = TableCell.extend({
 });
 
 export const BoundedTableHeader = TableHeader.extend({
-	parseHTML() {
-		return refusingOversized(this.parent?.());
-	},
 	addAttributes() {
 		return {
 			...this.parent?.(),

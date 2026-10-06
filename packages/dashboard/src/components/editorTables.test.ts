@@ -104,6 +104,17 @@ describe("a quoted table too large to be one", () => {
 		app.unmount();
 	}, 30_000);
 
+	it("is caught however the HTML was shaped, cells in an <svg> included", async () => {
+		// No <table> above these cells: the parser builds the table itself,
+		// and a check on the HTML's own tables never saw it.
+		const cells = '<td colspan="1000">c</td>'.repeat(1000);
+		const started = performance.now();
+		const { host, app } = await drawn(`<p>x</p><svg>${cells}</svg>`);
+		expect(performance.now() - started).toBeLessThan(5000);
+		expect(host.querySelector(".ProseMirror table")).toBeNull();
+		app.unmount();
+	}, 30_000);
+
 	it("stays a table while its grid is within bounds", async () => {
 		const row = `<tr>${"<td>c</td>".repeat(20)}</tr>`;
 		const { host, app } = await drawn(`<table>${row.repeat(50)}</table>`);
