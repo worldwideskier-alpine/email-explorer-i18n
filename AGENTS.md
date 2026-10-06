@@ -729,8 +729,9 @@ all of these pass, in this order:
    is taken out of the code at once; history is not rewritten, and the key is
    reported as exposed, by name, file and commit, never by value.
 3. `/security-review` in a session other than the one that made the change
-   (`claude -p "/security-review"` on the branch is one). A finding judged a
-   false positive is explained in the pull request's description.
+   (`REPLY_RULES=off claude -p "/security-review"` on the branch is one; see
+   "Replies to the owner"). A finding judged a false positive is explained in
+   the pull request's description.
 4. For a change to a boundary, authentication or key handling, Claude
    Security over that change (`/claude-security`, "scan changes").
 
@@ -751,16 +752,30 @@ only, those rules were broken in the session that wrote them -- the rule is
 read at the start, and kept or not at every line after. So
 `.claude/settings.json` also registers `.claude/hooks/reply-rules.mjs` on
 three events: `UserPromptSubmit` puts the rules beside every prompt;
-`PostToolBatch` reads the text written just before the tools ran and says so
-when it broke one; `Stop` sends a final reply that breaks one back to be
-rewritten, at most twice, as feedback rather than a block (a block is shown to
-the owner as a hook error). Only the main agent's own messages are read: the
-transcript also holds a plugin's review run as a skill and a hook's yes-or-no,
-which the owner does not read. The hook exits quietly on anything it cannot
-read, so it never stops the work. The rules are in `reply-rules-judge.mjs`,
-pure so the worker suite can test them (`reply-rules.test.ts`, each rule from
-both sides). A fork that wants other rules changes CLAUDE.md, the judge and
-its test together.
+`PostToolBatch` reads the text written in the same model message as the tools
+and says so when it broke one; `Stop` sends a final reply that breaks one back
+to be rewritten, at most twice, as feedback rather than a block (a block is
+shown to the owner as a hook error).
+
+What counts as "the reply" is read off the transcript by the chain of parents
+from the prompt that started it, and by nothing else. The same file holds rows
+the owner never reads, and none of them can be told apart by model or label:
+the security-guidance plugin's review runs as an SDK session on the same
+model, and a `claude -p` started from the session shares its id and its file.
+A version sent back is not counted either: counted, its numbers clashed with
+the rewrite's, and a faithful rewrite was sent back again. A line counts as
+English by its words in lower case, because names are capitalised and a
+Japanese line naming three of them is still Japanese; inline code, paths,
+links, quotes and asides in parentheses are not read at all.
+
+`REPLY_RULES=off` in the environment turns it off, for a run nobody reads as a
+reply (the pre-merge `/security-review` below, whose format is its own) and for
+a fork that wants none of this. The hook exits quietly on anything it cannot
+read, its own judge included, so it never stops the work. The rules and the
+whole of what the hook decides are in `reply-rules-judge.mjs`, pure so the
+worker suite tests them (`reply-rules.test.ts`): each rule from both sides, and
+each seen to fail with its rule taken out. A fork that wants other rules
+changes CLAUDE.md, the judge and its test together.
 
 ## Conventions
 
