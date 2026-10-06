@@ -1,0 +1,16 @@
+# Findings in history already on main that the full-history pass of
+# .claude/pre-merge-check.sh lets through: one gitleaks fingerprint a line,
+# <40-hex commit>:<path>:<rule>:<line>, with the reason right above each group.
+#
+# Only that pass reads this file. The pass over the commits being merged does
+# not, and a line whose commit is not already on the base stops the check, so
+# a pull request cannot let its own key through by adding itself here. A line
+# is added by the repository's owner's decision, with the rule, file, line and
+# commit written in that pull request's description; the key is reported as
+# exposed, never by value (AGENTS.md, "Security checks").
+
+# Upstream's ROADMAP.md, imported whole in 9cb6794 and taken out of the code in
+# eaa26ed; the same file is still on upstream's main, so the values are
+# upstream's. Reported by rule, file, line and commit; nobody here examined them.
+9cb67942fa2b364032e9eda451c85301ff4942e6:ROADMAP.md:curl-auth-header:1438
+9cb67942fa2b364032e9eda451c85301ff4942e6:ROADMAP.md:curl-auth-header:1450

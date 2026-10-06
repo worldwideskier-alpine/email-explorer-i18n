@@ -67,3 +67,20 @@ The cookie signs in only a GET of an attachment, `/docs` and `/openapi.json`.
   an address or a mailbox name.
 - Tests use placeholders only (`re_placeholder_for_tests`, the test-only VAPID
   key in `tests/vitest.config.mts`). A real key in a test is a finding.
+- A line in `.claude/gitleaks-known-history` lets a key in main's history
+  through the pre-merge scan. A new one names a commit already on main, under
+  the reason for it, and is the owner's decision; one whose rule, file, line
+  and commit are not in the pull request's description is a finding. So is a
+  change that adds a `.gitleaksignore` or `.gitleaks.toml`, or that weakens
+  `.claude/pre-merge-check.sh`.
+- The pre-merge scan does not read a commit's message, or anything the
+  `[allowlist]` of gitleaks' pinned default config allows: by path, lock
+  files (`pnpm-lock.yaml`), images (SVG included), fonts, documents and
+  binaries (`.pdf`, `.docx`, `.exe`, ...), `go.mod`, `node_modules`,
+  `bower_components`, `vendor/github.com/...`, a `.js` named after angular,
+  bootstrap, jquery, plotly or swagger-ui, `env/lib`, `*.dist-info`, a path
+  with `gitleaks.toml` in it; by value, one with `false` in it, starting with
+  `true` or ending with `null`; and lines some rules accept. AGENTS.md
+  ("Security checks") has the list as measured. A key-shaped value a change
+  adds to one of those, or a key cut into pieces or encoded past what
+  gitleaks decodes, is for review to find, and is a finding.
