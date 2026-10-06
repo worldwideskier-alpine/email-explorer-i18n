@@ -154,6 +154,28 @@ added on `/root`.
 
 **"No Resend API key is configured."** Set yours on `/admin`.
 
+**"Mailbox already exists" when adding an account or a sign-in address.**
+The address is a mailbox on this deployment that belongs to somebody else --
+possibly one they deleted, which keeps the address theirs. Password resets
+for a sign-in address there would land in their mailbox, so it is refused;
+use another address. Root's screen does not say whose mailbox it is, since
+root sees nobody's. A mailbox keeps its address for the person who made it
+even after it is deleted, until that person is deleted, and an
+administrator can make one at any address, including one at another mail
+provider that never receives mail here. If the address is one nobody here
+should hold, ask your administrators which of them made a mailbox there.
+
+**"Mailbox already exists" for a mailbox nobody seems to have.** The address
+may be somebody else's sign-in address, and a mailbox there would receive
+their password reset. That includes root's: root is a person of its own, so
+an administrator account cannot make a mailbox at root's sign-in address
+even when the same human runs both. Use another address, or move root's
+sign-in address first, on `/account` signed in as root (the confirmation is
+mailed, so root's Resend key and the password reset sender must be set).
+Your own addresses are not affected: a mailbox at an address the same
+account signs in with, or a sign-in address added at one of its own
+mailboxes, is fine.
+
 **The delete button is missing on `/root`.** That person's deletion lock is on.
 
 ## Related documentation

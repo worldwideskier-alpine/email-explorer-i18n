@@ -17,6 +17,15 @@ the role to an existing account.
    8 characters
 4. Submit -- you are signed in as root
 
+Choose an address that will not be one of this deployment's mailboxes -- not
+even one of your own. Root is a person of its own, apart from any
+administrator account you make for your own mail, and mail to an address is
+filed in the mailbox of that address: a mailbox there would receive root's
+password reset. So creating one is refused with "Mailbox already exists",
+and where one exists from before, root's reset is not sent to it. An address
+at another mail provider is the simplest choice. Give root a spare address
+as well, on `/root`, in case one is ever lost.
+
 ### Everybody else
 
 Every other account is made by root, on `/root`. Someone who tries to register

@@ -163,6 +163,16 @@ registration closes behind it. Root owns no mailbox: on `/root` it makes
 everybody else's accounts, and can add a second address to its own (a spare
 way in, not a second root).
 
+Register root at an address that will not be one of this deployment's
+mailboxes -- not even one of yours. Root is a person of its own, apart from
+the administrator account you make for your own mail, and a mailbox at
+another person's sign-in address is refused ("Mailbox already exists"),
+because it would receive their password reset. An address at another mail
+provider is the simplest choice. If root already signs in at an address that
+is one of your mailboxes here, root's "forgot password" is not sent there;
+give root a spare address that is not a mailbox here, as below, or move
+root's address on `/account`.
+
 Every person sends with their own Resend API key, set on the screen they
 manage themselves from: each account root makes signs in, creates its
 mailboxes, and pastes its key on `/admin`; root pastes its own on `/root`.

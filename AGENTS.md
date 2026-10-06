@@ -398,6 +398,61 @@ are still checked, by the `tsc` that runs before the worker tests.
   capitalised copy of somebody else's mailbox was a second mailbox that could
   send as the first, and a capitalised mailbox received nothing, since inbound
   mail is filed by the lowercased envelope recipient.
+- **One person per address, whichever kind.** A reset link goes to the
+  sign-in address, and mail to an address is filed in the mailbox of that
+  address, so whoever holds the mailbox reads the link. Mailbox creation
+  looked only at the grants and login creation only at the logins: a mailbox
+  registered at somebody else's sign-in address took their account (root's
+  too), and root making a login at a customer's mailbox handed the customer
+  that login. Now creating a mailbox refuses another person's sign-in
+  address (`claimMailboxForPersonOf`), and making or moving a login --
+  root's form, one's own spare, the open registration form, the address
+  change when confirmed -- refuses another person's mailbox, deleted ones
+  included, since a grant keeps the address its holder's. Each of those is
+  decided in the auth object's step that writes, both tables being there.
+  The address change is also refused when it is asked for, so the link is
+  not mailed into somebody else's mailbox; that is an early answer, and the
+  confirmation has the last word. The legacy backfill passes such an
+  address over (`giveMailboxToPerson`), and a run that passed over
+  everything it found is not run again (`passedOverEverything`). Addresses
+  compare without case: sign-in rows from before lowercasing keep capitals.
+  One's own addresses are left alone, and a holder may still bring back a
+  deleted mailbox that collides with a login from before.
+  Those collisions are not undone -- neither side can be removed safely --
+  so a reset is not sent to an address another person holds as a mailbox;
+  the answer is the one any address gets, and root can set the password
+  directly. That is asked in the step that binds the link to the address it
+  is mailed to (`passwordResetStamp`): asked in a call of its own before the
+  stamp, the owner could move off the address in between, somebody make a
+  mailbox of it, and the link -- stamped with the new address -- reset the
+  owner's password from there.
+  Root is a person of its own, so root's sign-in address is somebody else's
+  to every administrator account, the owner's own included: a mailbox at
+  root's address is refused even where one human runs both, and where such
+  a mailbox exists from before, root's reset is not sent to it. The setup
+  guides say so, and to give root a spare.
+  Refusals reuse "Mailbox already exists", which every catalogue already
+  has, so no sentence says which kind of address was met -- but the refusal
+  itself says something. A signed-in administrator can learn from a 409 at
+  `POST /mailboxes`, with no password and no limit, that an address is
+  somebody's sign-in address (root's included) or a deleted mailbox --
+  inbound mail is refused where no mailbox lives, which rules out a live
+  one -- though every guess that misses becomes a mailbox of theirs.
+  Before, telling a sign-in address took the current password, under the
+  account-change limit. That is the price of refusing at all: a mailbox
+  that is let through is the hole.
+  Nothing proves an address is its taker's, so it can also be held to keep
+  it from someone. An administrator can make a mailbox at any address -- one
+  at another provider, which never delivers here, as readily -- and delete
+  it, and the grant left behind keeps every other person's login, as well
+  as their mailbox, off that address until its holder is deleted; root,
+  which sees nobody's mailboxes, is told only "Mailbox already exists" and
+  not by whom. The other way round, a registration form open to everyone
+  lets a stranger sign in at an address meant to be a mailbox here, which
+  root at least sees in its list of people and can delete. Telling an
+  owner from a squatter would take proof of ownership, a flow of its own,
+  so neither is undone in code; the admin guide says what root is told.
+  `address-of-another.test.ts`.
 - **The daily cron.** One `scheduled()` handler, which starts every
   mailbox's night in that mailbox's own Durable Object alarm, all at once
   (`mailbox-night.ts`), and waits to write down how they went

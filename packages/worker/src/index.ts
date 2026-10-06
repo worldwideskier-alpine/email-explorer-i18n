@@ -682,6 +682,8 @@ class PostMailbox extends OpenAPIRoute {
 		// Claimed before anything is written, in one step inside the auth
 		// object: the checks above are several awaits old by now, and two
 		// people creating the same new address at once both passed them.
+		// It also refuses somebody else's sign-in address, whose reset link
+		// this mailbox would receive; see claimMailboxForPersonOf.
 		if (!(await authDO.claimMailboxForPersonOf(session.userId, email))) {
 			return c.json({ error: "Mailbox already exists" }, 409);
 		}
@@ -2097,13 +2099,25 @@ async function storeAndSendPasswordReset(
 	origin: string,
 ): Promise<void> {
 	const authStub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
+	// Bound to the password and to the address the link is mailed to, in
+	// the step that asks whether somebody else holds that address as a
+	// mailbox; see passwordResetStamp, and resetPasswordWithStamp for the
+	// other end. Refused, there is no token and no mail, and the answer has
+	// already gone, the same as for any address.
+	const bound = await authStub.passwordResetStamp(user.id, to);
+	if ("refused" in bound) {
+		if (bound.refused === "mailbox") {
+			// The log names no address.
+			console.warn(
+				"Password reset not sent: the address is another person's mailbox",
+			);
+		}
+		return;
+	}
+	const { stamp } = bound;
 	// Valid for an hour.
 	const token = crypto.randomUUID();
 	const expiresAt = Date.now() + 3600000;
-	// Bound to the password and address as they are now; see
-	// resetPasswordWithStamp.
-	const stamp = await authStub.emailChangeStamp(user.id);
-	if (!stamp) return;
 	await env.BUCKET.put(
 		`recovery-tokens/${token}.json`,
 		JSON.stringify({ userId: user.id, email: user.email, expiresAt, stamp }),

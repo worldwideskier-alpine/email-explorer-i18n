@@ -22,6 +22,14 @@ does not go through the screen.
      person whose mail it is. There is no fallback key.
    - A deleted mailbox's address stays its holder's: never given to another
      person while anyone holds it, or while mail or archives remain.
+   - An address is one person's, whichever kind: no mailbox at another
+     person's sign-in address, and no login made or moved to another
+     person's mailbox, deleted ones included. Each is decided in the auth
+     object's step that writes (`claimMailboxForPersonOf`, `register`,
+     `registerFromForm`, `confirmEmailChange`, `giveMailboxToPerson`), not
+     asked first in a call of its own. A password reset is not sent to an
+     address another person holds as a mailbox, asked in the step that binds
+     the link to that address (`passwordResetStamp`).
    - Push subscriptions, sessions and logins belong to one person; listing or
      removing them is scoped to the signed-in person.
 2. **Between roles.** `root` above `admin` (`roles.ts`). Every

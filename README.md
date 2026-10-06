@@ -419,7 +419,10 @@ any other.
 
 1. **Deploy your worker** with smart mode enabled (default)
 2. **Visit your worker URL** in a browser
-3. **Register the first account** - this is root
+3. **Register the first account** - this is root. Use an address that will
+   not be one of this deployment's mailboxes, not even one of yours: root is
+   a person of its own, and a mailbox at its sign-in address is refused
+   (see [Authentication](docs/features/authentication.md#the-first-account))
 4. **Create the other accounts** on `/root`
 5. **Each person creates their mailboxes** and enters their Resend key on `/admin`
 

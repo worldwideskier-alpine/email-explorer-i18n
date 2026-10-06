@@ -14,3 +14,13 @@
  * never fall into this one, however the flag is set on it in the meantime.
  */
 export const LEGACY_ADMIN_PERSON_ID = "person-legacy-admins";
+
+/**
+ * What the auth object throws when a login would be made at an address
+ * another person holds as a mailbox. Thrown rather than returned so that
+ * `register` goes on answering a User, as the "UNIQUE constraint failed" it
+ * sits beside does; the routes match it by this text and answer with the
+ * sentence the dashboard already says in every language, "Mailbox already
+ * exists".
+ */
+export const ANOTHER_PERSONS_MAILBOX = "Address is another person's mailbox";
