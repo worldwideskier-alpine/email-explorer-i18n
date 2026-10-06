@@ -183,23 +183,26 @@ const SYSTEM_PROMPT = [
  *
  * So `<` opens a tag only before a letter, `/`, `!` or `?`; a tag ends at the
  * first `>` outside its quoted values; a comment ends where the tokenizer
- * ends it and is not read, as it is not shown -- and has to be found, since a
- * `<style>` inside one is no style element; script and style end at their own
- * end tag; title, textarea, xmp, iframe, noembed and noframes hold text, not
- * tags, which is read; plaintext is text to the end.
+ * ends it, and has to be found, since a `<style>` inside one is no style
+ * element; style ends at its own end tag, and script where the tokenizer's
+ * script states end it, which is not always the first `</script>`
+ * (scriptEnd); title, textarea, xmp, iframe, noembed and noframes hold text,
+ * not tags, which is read; plaintext is text to the end.
  *
  * Where this and the browser part company it reads more, not less: a script
- * or style with no end tag, which the browser hides to the end, is read, and
- * so is text hidden by style or put in a title. Inside svg, math and select a
- * style or script is read rather than dropped, and in svg and math CDATA is
- * text: there the tree builder does not make a style raw text, and an HTML
- * tag such as `<p>` inside one breaks out of the svg and is shown. Which of
- * those is open is counted roughly, and counted long, since reading a style
- * that was raw text after all costs only its CSS. The rest of the tree
- * builder's say in how the tokenizer reads is not followed, and there a
- * crafted message can still part the two. Against parse5, none of the words
- * a browser shows was missed in 300,000 random messages without svg, math or
- * select, and a few dozen were in 100,000 built to mix them.
+ * or style with no end, which the browser hides to the end, is read, and so
+ * is text hidden by style or put in a title. So is a comment's text after its
+ * first `>`, as markup of its own that stops at the comment's end: the
+ * reading before this took `<!-- ... >` for a tag and read what followed, and
+ * reading what the screen shows was not meant to take out more of what it
+ * hides. Inside svg, math and select a style or script is read rather than
+ * dropped, and in svg and math CDATA is text: there the tree builder does not
+ * make a style raw text, and an HTML tag such as `<p>` inside one breaks out
+ * of the svg and is shown. Which of those is open is counted roughly, and
+ * counted long, since reading a style that was raw text after all costs only
+ * its CSS. The rest of the tree builder's say in how the tokenizer reads is
+ * not followed, and there a crafted message can still part the two. How far,
+ * measured against parse5: AGENTS.md.
  *
  * The reading stops once it has more than `enough` characters. The
  * classifier reads 4000 at most, and decoding every reference of a 24MB
@@ -218,9 +221,10 @@ export function stripHtml(
 }
 
 class HtmlReader {
-	readonly #words = new Words();
+	readonly #words: Words;
 	readonly #found: Searcher;
-	readonly #ends: EndTags;
+	readonly #ends: Tags;
+	readonly #starts: Tags;
 	/**
 	 * Open svg and math elements, counted long: see stripHtml. Apart, since
 	 * `</svg>` inside a math element closes nothing.
@@ -229,15 +233,30 @@ class HtmlReader {
 	#math = 0;
 	#select = false;
 
+	/**
+	 * `inComment` for a comment's own text, where `<!--` opens nothing new:
+	 * a comment's text has no `-->` in it, so one would run to its end, and
+	 * reading that as a comment of its own, inside one, inside one, made a
+	 * message of `<!--` quadratic.
+	 */
 	constructor(
 		private readonly html: string,
 		private readonly enough: number,
+		words = new Words(),
+		private readonly inComment = false,
 	) {
+		this.#words = words;
 		this.#found = new Searcher(html);
-		this.#ends = new EndTags(html);
+		this.#ends = new Tags(html, "</");
+		this.#starts = new Tags(html, "<");
 	}
 
 	read(): string {
+		this.#run();
+		return this.#words.toString();
+	}
+
+	#run(): void {
 		const { html } = this;
 		let at = 0;
 		while (at !== -1 && at < html.length && this.#words.length <= this.enough) {
@@ -249,7 +268,6 @@ class HtmlReader {
 			this.#text(at, lt, true);
 			at = this.#markup(lt);
 		}
-		return this.#words.toString();
 	}
 
 	/**
@@ -270,8 +288,10 @@ class HtmlReader {
 				return -1;
 			}
 		}
-		if (next === BANG && html.startsWith("--", lt + 2)) {
-			return this.#gapThen(commentEnd(html, lt + 4, this.#found));
+		if (next === BANG && !this.inComment && html.startsWith("--", lt + 2)) {
+			const { text, after } = commentEnd(html, lt + 4, this.#found);
+			this.#comment(lt + 4, text);
+			return this.#gapThen(after);
 		}
 		if (
 			next === BANG &&
@@ -312,12 +332,26 @@ class HtmlReader {
 			return -1;
 		}
 		if (kind === "drop" && (this.#foreign() || this.#select)) kind = "text";
-		const close = this.#ends.next(name, after);
+		// A script follows the tokenizer's script states even where svg or
+		// math is counted open: the count runs long, and a script after a
+		// `<p>`, or inside `<mi>` or `<foreignObject>`, is an HTML one, which
+		// the first `</script>` need not end. One that really is svg's is
+		// markup, and what scriptEnd passes over in it is read as text.
+		const close =
+			name === "script"
+				? scriptEnd(after, this.#ends, this.#starts, this.#found)
+				: this.#ends.next(name, after);
 		if (close === -1) {
 			// A script or style with no end: the browser hides the rest, and
-			// this reads it. Text with no end is text to the end.
-			if (kind === "drop") return after;
-			this.#text(after, html.length, kind === "text");
+			// this reads it -- a style's as markup, a script's as text.
+			// scriptEnd searched on past `after` and found no end, and its
+			// searches remember where they stopped: reading markup from
+			// `after` again would ask them from behind that, and memory would
+			// answer for a stretch they skipped. Nothing after is shown, so
+			// text is as good a reading of it as markup. Text with no end is
+			// text to the end.
+			if (kind === "drop" && name !== "script") return after;
+			this.#text(after, html.length, kind !== "raw");
 			return -1;
 		}
 		if (kind !== "drop") this.#text(after, close, kind === "text");
@@ -332,6 +366,31 @@ class HtmlReader {
 		if (name === "math" && this.#math > 0) this.#math--;
 		if (name === "select") this.#select = false;
 		return this.#gapThen(tagEnd(html, nameEnd));
+	}
+
+	/**
+	 * The text of a comment, html[from, to): what follows its first `>`, read
+	 * as markup of its own. Of its own, so that nothing in it -- a `<style>`,
+	 * an open quote -- reaches past the comment's end and hides what the
+	 * reader is shown after it.
+	 */
+	#comment(from: number, to: number): void {
+		const gt = this.#found.next(">", from);
+		if (gt === -1 || gt >= to) return;
+		this.#words.gap();
+		const lt = this.#found.next("<", gt + 1);
+		if (lt === -1 || lt >= to) {
+			// No markup in it: read as text, without a reader of its own for
+			// every comment.
+			this.#text(gt + 1, to, true);
+			return;
+		}
+		new HtmlReader(
+			this.html.slice(gt + 1, to),
+			this.enough,
+			this.#words,
+			true,
+		).#run();
 	}
 
 	#foreign(): boolean {
@@ -461,17 +520,85 @@ function tagEnd(
 }
 
 /**
- * Just past the end of a comment whose `<!--` ended at `from`, or -1 when the
- * message ends first. `<!-->` and `<!--->` end at once; otherwise the first
- * `-->` or `--!>` does.
+ * Where the text of a comment whose `<!--` ended at `from` stops, and just
+ * past the comment -- -1 when the message ends first, and then its text runs
+ * to the end. `<!-->` and `<!--->` end at once, with no text; otherwise the
+ * first `-->` or `--!>` ends it.
  */
-function commentEnd(html: string, from: number, found: Searcher): number {
-	if (html.charCodeAt(from) === GT) return from + 1;
-	if (html.startsWith("->", from)) return from + 2;
+function commentEnd(
+	html: string,
+	from: number,
+	found: Searcher,
+): { text: number; after: number } {
+	if (html.charCodeAt(from) === GT) return { text: from, after: from + 1 };
+	if (html.startsWith("->", from)) return { text: from, after: from + 2 };
 	const dashes = found.next("-->", from);
 	const bang = found.next("--!>", from);
-	if (bang !== -1 && (dashes === -1 || bang < dashes)) return bang + 4;
-	return dashes === -1 ? -1 : dashes + 3;
+	if (bang !== -1 && (dashes === -1 || bang < dashes)) {
+		return { text: bang, after: bang + 4 };
+	}
+	if (dashes === -1) return { text: html.length, after: -1 };
+	return { text: dashes, after: dashes + 3 };
+}
+
+/**
+ * Where a script element's content ends -- at the `</script` that ends it --
+ * or -1 when nothing does, read through the tokenizer's script states.
+ *
+ * Not simply the first `</script`: once `<!--` has opened in a script, a
+ * `<script` puts the tokenizer in a state where `</script>` only steps back
+ * out, and the element ends at a later one or at none. Taken for the first,
+ * the rest of the script was read as markup, and a `<!--` or an open quote in
+ * it hid the words the reader is shown after the real end -- forty bytes
+ * ahead of the HTML part did it, beside an innocent text part.
+ *
+ * So: in script data, `<!--` escapes and `</script` ends. Escaped, `-->`
+ * goes back (the dashes of `<!--` count: `<!-->` goes straight back),
+ * `</script` ends, and `<script` escapes again, doubly. Doubly escaped,
+ * `-->` goes back to script data and `</script` back to escaped. Every
+ * search goes forward from the last, so this is linear with the rest.
+ */
+function scriptEnd(
+	from: number,
+	ends: Tags,
+	starts: Tags,
+	found: Searcher,
+): number {
+	let at = from;
+	let state: "data" | "escaped" | "doubly" = "data";
+	for (;;) {
+		const end = ends.next("script", at);
+		if (state === "data") {
+			const open = found.next("<!--", at);
+			if (open === -1 || (end !== -1 && end < open)) return end;
+			state = "escaped";
+			at = open + 2;
+			continue;
+		}
+		const back = found.next("-->", at);
+		const deeper = state === "escaped" ? starts.next("script", at) : -1;
+		const first = earliest(earliest(end, back), deeper);
+		if (first === -1) return -1;
+		if (first === back) {
+			state = "data";
+			at = back + 3;
+		} else if (first === deeper) {
+			state = "doubly";
+			at = deeper + "<script".length;
+		} else if (state === "escaped") {
+			return end;
+		} else {
+			state = "escaped";
+			at = end + "</script".length;
+		}
+	}
+}
+
+/** The earlier of two positions, where -1 is none. */
+function earliest(a: number, b: number): number {
+	if (a === -1) return b;
+	if (b === -1) return a;
+	return Math.min(a, b);
 }
 
 /**
@@ -494,30 +621,35 @@ class Searcher {
 }
 
 /**
- * Where an element whose content is not markup ends: `</` and its name in
- * any case, then space, `/` or `>` -- `</style >` ends a style element, and
- * `</styles>` does not. Remembers as Searcher does, one name at a time.
+ * Tags of a name, start or end by `opener`: the opener and the name in any
+ * case, then space, `/` or `>` -- `</style >` ends a style element, and
+ * `</styles>` does not; `<script/` doubly escapes a script, and `<scripts`
+ * does not. Remembers as Searcher does, one name at a time.
  */
-class EndTags {
+class Tags {
 	#hits = new Map<string, number>();
-	constructor(private readonly html: string) {}
+	constructor(
+		private readonly html: string,
+		private readonly opener: "<" | "</",
+	) {}
 	next(name: string, from: number): number {
 		const known = this.#hits.get(name);
 		if (known === -1) return -1;
 		if (known !== undefined && known >= from) return known;
 		let at = from;
 		for (;;) {
-			const hit = this.html.indexOf("</", at);
-			if (hit === -1 || this.#ends(name, hit)) {
+			const hit = this.html.indexOf(this.opener, at);
+			if (hit === -1 || this.#named(name, hit)) {
 				this.#hits.set(name, hit);
 				return hit;
 			}
-			at = hit + 2;
+			at = hit + this.opener.length;
 		}
 	}
-	#ends(name: string, at: number): boolean {
-		const after = at + 2 + name.length;
-		if (asciiLower(this.html, at + 2, after) !== name) return false;
+	#named(name: string, at: number): boolean {
+		const start = at + this.opener.length;
+		const after = start + name.length;
+		if (asciiLower(this.html, start, after) !== name) return false;
 		const c = this.html.charCodeAt(after);
 		return isSpace(c) || c === SLASH || c === GT;
 	}
@@ -687,8 +819,13 @@ function authLine(auth: AuthSummary | undefined): string | null {
 const PLAIN_TEXT_SHARE = 1000;
 
 /**
- * Named references a mail body uses to fill space or punctuate. Anything
- * else is left as it came, which is how every reference used to be left.
+ * Named references a mail body uses to fill space or punctuate. A name not
+ * on the list is read as a browser reads one not in its table: by the
+ * longest legacy name it begins with (LEGACY_NAMES), and otherwise left as
+ * it came, which is how every reference used to be left. That is the
+ * screen's reading of any name HTML does not have, but not of the few it has
+ * that begin with a legacy name and are not here: `&ltimes;` is read as
+ * `<imes;` where the screen shows a symbol. No word is lost either way.
  * Names are matched as written, as a browser matches them. A Map, not an
  * object: `&constructor;` is no reference, and an object's prototype would
  * have answered it with a function.

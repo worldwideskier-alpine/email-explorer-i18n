@@ -28,10 +28,18 @@ describe("stripHtml", () => {
 		["only < opening", "only < opening"],
 		['<a title="<script>">x</script>', "x"],
 		["a<!-- b -->c", "a c"],
+		["a<!-- b > c -->d", "a c d"],
 		["<!doctype html><p>a</p>", "a"],
 		// A tag the message never ends: the browser shows nothing from its `<`.
 		["<p>a</p><a href='x", "a"],
 		["caf&eacute; &amp;lt; &nbsp;x", "caf&eacute; &lt; x"],
+		// A title and a textarea hold text with references in it, as on
+		// screen; xmp holds text as written.
+		["<title>a&amp;b</title><textarea>c&lt;d</textarea>", "a&b c<d"],
+		["<xmp>a&amp;b</xmp>", "a&amp;b"],
+		["<p>a</p><plaintext>b&amp;c", "a b&amp;c"],
+		// Control characters show as nothing or as space.
+		["a\u0001b\u0090c", "a b c"],
 	])("%j reads as %j", (html, words) => {
 		expect(stripHtml(html)).toBe(words);
 	});
@@ -39,9 +47,10 @@ describe("stripHtml", () => {
 
 /**
  * Each of these shows its marker in a browser -- parse5 with scripting off,
- * as in the message frame, measured -- and the expressions this replaced
- * read none of them. The last five are inside svg, math and select, where
- * the tree builder, not the tokenizer, decides that a style is no style.
+ * as in the message frame, measured -- and an earlier reading missed it: the
+ * expressions this replaced, or a scan that took the first `</script>` for
+ * a script's end. Five are inside svg, math and select, where the tree
+ * builder, not the tokenizer, decides that a style is no style.
  */
 describe("reads what a browser shows", () => {
 	it.each([
@@ -61,6 +70,18 @@ describe("reads what a browser shows", () => {
 		"<math></svg><style><b>SHOWN_AFTER_STRAY_SVG_END</b></style></math>",
 		"<svg><text><![CDATA[SHOWN_IN_CDATA]]></text></svg>",
 		"<select><option><style>SHOWN_IN_OPTION</style></option></select>",
+		"<p>Hi</p><plaintext><style>SHOWN_IN_PLAINTEXT</style>",
+		// A script that `<!--` and then `<script` have escaped ends at a later
+		// `</script>` than the first: taken for the first, what followed was
+		// read as markup, and a `<!--`, an open quote or a `<style>` in it
+		// hid the words after the real end.
+		"<script><!--<script></script><!--</script><p>SHOWN_AFTER_DOUBLY_ESCAPED</p><span hidden>--></span>",
+		'<script><!--<script></script><a title="</script><p>SHOWN_AFTER_ESCAPED_END</p><p title=">x',
+		"<script><!--<script></script><style></script><p>SHOWN_AFTER_ESCAPED_STYLE</p><style></style>",
+		"<script><!--<script>x</script><!--</script>SHOWN_AFTER_ESCAPED_COMMENT<!-- -->",
+		// The same inside math's `<mi>`, where an HTML script is an HTML
+		// script, though math is counted open.
+		'<math><mi><script><!--<script></script><a title="</script><p>SHOWN_AFTER_ESCAPED_IN_MI</p><p title=">x',
 	])("%s", (html) => {
 		const marker = /SHOWN_[A-Z_]+/.exec(html)?.[0] ?? "";
 		expect(stripHtml(html)).toContain(marker);
@@ -73,12 +94,14 @@ describe("does not read what a browser hides", () => {
 		"<p>shown</p><style>HIDDEN_CSS</style>",
 		"<p>shown</p><script>HIDDEN_SCRIPT</script>",
 		"<p>shown</p><!-- HIDDEN_COMMENT -->",
-		"<p>shown</p><!-- a > HIDDEN_FAR_SIDE -->",
+		"<p>shown</p><script><!--<script></script>HIDDEN_DOUBLY_ESCAPED</script>",
 		'<p title="HIDDEN_ATTRIBUTE">shown</p>',
 		"<!doctype HIDDEN_DOCTYPE><p>shown</p>",
 		"<?HIDDEN_PI ?><p>shown</p>",
 		'<p>shown</p><a href="HIDDEN_UNENDED',
 		"<svg></svg><p>shown</p><style>HIDDEN_AFTER_SVG</style>",
+		"<math/><p>shown</p><style>HIDDEN_AFTER_MATH</style>",
+		"<p>shown</p><![CDATA[HIDDEN_CDATA]]>",
 	])("%s", (html) => {
 		const marker = /HIDDEN_[A-Z_]+/.exec(html)?.[0] ?? "";
 		const words = stripHtml(html);
@@ -88,11 +111,33 @@ describe("does not read what a browser hides", () => {
 });
 
 /**
+ * A comment's text after its first `>` is read, though no browser shows it:
+ * the reading before this took `<!-- ... >` for a tag and read what followed,
+ * and reading what the screen shows was not meant to take more of what it
+ * hides out of the classifier's view. Read as markup of its own, so what is
+ * in it goes no further than the comment -- the reading after it is the
+ * browser's (`<!-- x > <style> -->` above).
+ */
+describe("reads a comment's far side, as it was read before", () => {
+	it.each([
+		"<p>shown</p><!-- a > READ_FAR_SIDE -->",
+		"<!--[if mso]><table><tr><td>READ_FOR_OUTLOOK</td></tr></table><![endif]--><p>shown</p>",
+	])("%s", (html) => {
+		const marker = /READ_[A-Z_]+/.exec(html)?.[0] ?? "";
+		const words = stripHtml(html);
+		expect(words).toContain("shown");
+		expect(words).toContain(marker);
+		expect(words).not.toContain("<");
+	});
+});
+
+/**
  * Pieces that show their word in a browser, and pieces that hide it, each
  * leaving the tokenizer as it found it -- so any sequence of them shows the
  * shown words and hides the hidden ones. Checked against parse5 one by one
- * and on these 20000 sequences of them, where the reading before this missed
- * 33854 of 90626 shown words.
+ * and on these 20000 sequences of them, where the expressions this replaced
+ * missed a third of the shown words. READ are hidden by a browser and read
+ * here: a comment's far side, as above.
  */
 const SHOWS: ((word: string) => string)[] = [
 	(w) => ` ${w} `,
@@ -131,18 +176,37 @@ const SHOWS: ((word: string) => string)[] = [
 	(w) => `<svg a=b/><style><p>${w}</p></style></svg>`,
 	(w) => `<svg><text><![CDATA[${w}]]></text></svg>`,
 	(w) => `<select><option><style>${w}</style></option></select>`,
+	// The tokenizer's script states: `<!--` escapes, `<script` (and only
+	// that name) escapes doubly, `-->` goes back to plain script data -- the
+	// dashes of `<!--` count -- and only there and escaped does `</script>`
+	// end the element.
+	(w) => `<script><!--<script></script><!--</script>${w}`,
+	(w) => `<script><!--<script></script><a title="</script>${w}`,
+	(w) => `<script><!--<script/></script><a title="</script>${w}`,
+	(w) => `<script><!--<scripts></script>${w}--></script>`,
+	(w) => `<script><!--<script>--><script></script>${w}</script>`,
+	(w) => `<script><!--><script></script>${w}</script>`,
+	(w) => `<script><!-- --></script>${w}`,
+	(w) => `<SCRIPT><!--<ScRiPt\t></sCrIpT ><!--</script/>${w}`,
+	(w) => `<!-- x > <a title=" -->${w}`,
 ];
 
 const HIDES: ((word: string) => string)[] = [
 	(w) => `<style>${w}</style>`,
 	(w) => `<script>${w}</script>`,
 	(w) => `<!-- ${w} -->`,
-	(w) => `<!-- > ${w} -->`,
+	(w) => `<script><!--<script></script>${w}</script>`,
+	(w) => `<script><!--<script/></script>${w}--></script>`,
 	(w) => `<a title="${w}">x</a>`,
 	(w) => `<a title='${w} > '>x</a>`,
 	(w) => `<!doctype ${w}>`,
 	(w) => `<?${w}>`,
 	(w) => `</x ${w}>`,
+];
+
+const READ: ((word: string) => string)[] = [
+	(w) => `<!-- > ${w} -->`,
+	(w) => `<!--[if mso]><b>${w}</b><![endif]-->`,
 ];
 
 /** A small deterministic generator, so a failure names its own input. */
@@ -158,7 +222,7 @@ function generator(seed: number): () => number {
 }
 
 describe("on generated messages", () => {
-	it("reads every word a browser shows and none it hides, on 20000 of them", () => {
+	it("reads every word a browser shows and none it hides but a comment's far side, on 20000 of them", () => {
 		const random = generator(99);
 		for (let n = 0; n < 20000; n++) {
 			const shown: string[] = [];
@@ -166,12 +230,16 @@ describe("on generated messages", () => {
 			let html = "";
 			const pieces = 1 + Math.floor(random() * 12);
 			for (let k = 0; k < pieces; k++) {
-				if (random() < 0.7) {
+				const which = random();
+				if (which < 0.65) {
 					shown.push(`SHOWN${k}X`);
 					html += SHOWS[Math.floor(random() * SHOWS.length)](`SHOWN${k}X`);
-				} else {
+				} else if (which < 0.9) {
 					hidden.push(`HIDDEN${k}X`);
 					html += HIDES[Math.floor(random() * HIDES.length)](`HIDDEN${k}X`);
+				} else {
+					shown.push(`READ${k}X`);
+					html += READ[Math.floor(random() * READ.length)](`READ${k}X`);
 				}
 			}
 			const words = stripHtml(html);
@@ -198,6 +266,9 @@ describe("on generated messages", () => {
 			"<b>",
 			"</b>",
 			"<!-- c -->",
+			"<!-- > c &amp; -->",
+			"<!-- ><b>c</b> &shy -->",
+			"<script><!--<script></script>s</script>",
 			"<style>s</style>",
 			"<title>t &amp;</title>",
 			"<xmp>&amp;</xmp>",
@@ -236,6 +307,9 @@ describe("time", () => {
 		["<a ", "tags that never close"],
 		["<>", "empty brackets"],
 		["<!---->", "comments, each closed"],
+		["<!--x>", "comments inside a comment's far side"],
+		["<!-- ><b> -->", "comments with markup on their far side"],
+		["<script><!--</script>", "escaped scripts and a `-->` that never comes"],
 		["<style></styles>", "style elements that never end"],
 		['<a title="', "a quoted value that never ends"],
 	])("takes linear time on 320KB of %j (%s)", (unit, _what) => {

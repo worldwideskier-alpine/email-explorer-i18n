@@ -373,7 +373,27 @@ describe("Claude second-stage spam classification", () => {
 			expect(await folderOf("Words after a bare bracket")).toBe("spam");
 		});
 
-		// The other side: what the screen does not show is not read either.
+		// A script that `<!--` and `<script` have escaped does not end at the
+		// first `</script>`. Taken for its end, the rest was read as markup,
+		// and the `<style>` after it hid the words the screen shows -- forty
+		// bytes ahead of an HTML part, beside an innocent text part.
+		it("reads the HTML part's words after a script the tokenizer escaped", async () => {
+			await setClaudeApiKey("sk-ant-test-key");
+
+			await simulateReceiveEmail(
+				multipart(
+					"After an escaped script",
+					"Thank you for your order.",
+					"<script><!--<script></script><style></script><p>Verify your card now TRIGGER_CLAUDE_SPAM</p><style></style>",
+				),
+			);
+
+			expect(await folderOf("After an escaped script")).toBe("spam");
+		});
+
+		// The other side: what the screen does not show is not read either --
+		// a style, a script, the part of an escaped script past its first
+		// `</script>`, a comment with no `>` in it.
 		it("does not read the HTML part's styles, scripts or comments", async () => {
 			await setClaudeApiKey("sk-ant-test-key");
 
@@ -381,7 +401,7 @@ describe("Claude second-stage spam classification", () => {
 				multipart(
 					"Only hidden parts say so",
 					"Thank you for your order.",
-					"<style>/* TRIGGER_CLAUDE_SPAM */</style><script>TRIGGER_CLAUDE_SPAM</script><!-- TRIGGER_CLAUDE_SPAM --><p>Thank you for your order.</p>",
+					"<style>/* TRIGGER_CLAUDE_SPAM */</style><script>TRIGGER_CLAUDE_SPAM</script><script><!--<script></script>TRIGGER_CLAUDE_SPAM</script><!-- TRIGGER_CLAUDE_SPAM --><p>Thank you for your order.</p>",
 				),
 			);
 
