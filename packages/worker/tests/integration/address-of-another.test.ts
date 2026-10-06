@@ -89,12 +89,15 @@ async function resetTokensFor(userId: string) {
  * Asked of the Worker directly: the reset is made after the answer (see
  * PostForgotPassword), and a context's background work can be waited for.
  */
-async function forgot(email: string): Promise<[number, string]> {
+async function forgot(
+	email: string,
+	on: object = env,
+): Promise<[number, string]> {
 	const worker = await import("../../dev/index");
 	const ctx = createExecutionContext();
 	const answer = await worker.default.fetch(
 		new Request(`${API}/auth/forgot-password`, post({ email })),
-		env,
+		on as typeof env,
 		ctx,
 	);
 	await waitOnExecutionContext(ctx);
@@ -462,6 +465,147 @@ describe("a collision from before the rules", () => {
 		await forgot(rootAddress);
 		expect(await sentTo(rootAddress)).toHaveLength(0);
 		expect(await resetTokensFor(rootUser)).toBe(0);
+	});
+});
+
+/**
+ * The deployment's env, with each of `pauses` run just before the auth
+ * object's call of that number (from 0) among those a request makes once the
+ * account has been looked up -- which, for "forgot password", are the
+ * reset's own steps. `ran` lists the ones there was a call for.
+ */
+function pausedAt(pauses: Record<number, () => Promise<void>>) {
+	const authId = env.MAILBOX.idFromName("AUTH");
+	const ran: number[] = [];
+	let lookedUp = false;
+	let calls = 0;
+	const MAILBOX = new Proxy(env.MAILBOX, {
+		get(namespace, name) {
+			if (name !== "get") {
+				const value = Reflect.get(namespace, name);
+				return typeof value === "function" ? value.bind(namespace) : value;
+			}
+			return (id: DurableObjectId) => {
+				const stub = namespace.get(id);
+				if (!id.equals(authId)) return stub;
+				return new Proxy(stub, {
+					get(target, method) {
+						// Not a promise, and nothing else is asked of it here.
+						if (method === "then" || typeof method === "symbol") {
+							return undefined;
+						}
+						return async (...args: unknown[]) => {
+							if (lookedUp) {
+								const step = calls++;
+								if (pauses[step]) {
+									ran.push(step);
+									await pauses[step]();
+								}
+							}
+							const call = Reflect.get(target, method) as (
+								...a: unknown[]
+							) => Promise<unknown>;
+							const answer = await call(...args);
+							if (method === "getUserByEmail") lookedUp = true;
+							return answer;
+						};
+					},
+				});
+			};
+		},
+	});
+	return { env: { ...env, MAILBOX }, ran };
+}
+
+describe("a reset being made while its login moves", () => {
+	beforeEach(() => resetLegacyGrantMemo());
+
+	it("is no use to whoever makes a mailbox of the address it left, wherever the two land", async () => {
+		const { at, root, people } = await setUp();
+		const squatter = as(await signIn(people.squatter.address));
+
+		// The owner confirms a move off the address, which frees it, and
+		// somebody makes a mailbox of it: each at one of the reset's own
+		// calls to the auth object, the move no later than the mailbox, for
+		// every pair there are calls for.
+		const tried: string[] = [];
+		let run = 0;
+		for (let moveAt = 0; moveAt < 6; moveAt++) {
+			let moved = true;
+			for (let squatAt = moveAt; squatAt < 6; squatAt++) {
+				run++;
+				const address = at(`moving-${run}`);
+				const movedTo = at(`moved-${run}`);
+				expect(
+					(
+						await root(
+							`${API}/root/accounts`,
+							post({ email: address, password: PASSWORD, role: "admin" }),
+						)
+					).status,
+				).toBe(201);
+				const owner = (await auth().getUserByEmail(address))?.id ?? "";
+				await giveSendingKey(String(await auth().getPersonId(owner)));
+
+				const move = async () => {
+					const stamp = String(await auth().emailChangeStamp(owner));
+					expect(await auth().confirmEmailChange(owner, movedTo, stamp)).toBe(
+						"changed",
+					);
+				};
+				const squat = async () => {
+					const made = await squatter(
+						`${API}/mailboxes`,
+						post({ email: address, name: "x" }),
+					);
+					expect(made.status).toBe(201);
+				};
+				const { env: paused, ran } = pausedAt(
+					moveAt === squatAt
+						? {
+								[moveAt]: async () => {
+									await move();
+									await squat();
+								},
+							}
+						: { [moveAt]: move, [squatAt]: squat },
+				);
+				await forgot(address, paused);
+				moved = ran.includes(moveAt);
+				if (!ran.includes(squatAt)) break;
+				const pair = `moved at call ${moveAt}, mailbox made at call ${squatAt}`;
+				tried.push(pair);
+
+				// Whatever reached the mailbox, no link in it resets anything.
+				const listed = await env.BUCKET.list({ prefix: "recovery-tokens/" });
+				for (const object of listed.objects) {
+					const stored = await env.BUCKET.get(object.key);
+					if ((await stored?.json<{ userId: string }>())?.userId !== owner) {
+						continue;
+					}
+					const token = object.key
+						.replace("recovery-tokens/", "")
+						.replace(".json", "");
+					const used = await SELF.fetch(
+						`${API}/auth/reset-password`,
+						post({ token, newPassword: "taken-over-1" }),
+					);
+					expect(used.status, pair).toBe(401);
+				}
+				expect(await signIn(movedTo)).toBeTruthy();
+			}
+			if (!moved) break;
+		}
+		// The reset asks the auth object at least twice, before its link is
+		// bound and after, so at least these were tried. A move before the
+		// link is bound ends the reset there, with no later call for the
+		// mailbox to be made at.
+		expect(tried).toEqual(
+			expect.arrayContaining([
+				"moved at call 0, mailbox made at call 0",
+				"moved at call 1, mailbox made at call 1",
+			]),
+		);
 	});
 });
 

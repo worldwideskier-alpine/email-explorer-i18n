@@ -217,8 +217,15 @@ export class MailboxDO extends DurableObject<Env> {
 	 * Both tables are in this object, so the question is asked in the same
 	 * synchronous step as the write it guards, as #takenBy is. `IS NOT`
 	 * rather than `!=`: compared with a login that has no person, `!=` is
-	 * NULL and would let every holder through. NOCASE because grants from
-	 * before mailbox addresses were lowercased can carry capitals.
+	 * NULL and would let every holder through.
+	 *
+	 * Without case on both sides, so that two spellings are one address, as
+	 * they are to sign-in. On the login side that is what holds the rule:
+	 * rows from before sign-in addresses were lowercased still carry
+	 * capitals, and a reset sent to one is filed in the mailbox of the
+	 * lowercased address. A grant with capitals names a mailbox that
+	 * receives nothing -- inbound mail is filed by the lowercased recipient
+	 * -- so on that side it only keeps the two questions agreeing.
 	 */
 
 	/** Whether a person other than this one holds the address as a mailbox, deleted or not. */
@@ -252,22 +259,6 @@ export class MailboxDO extends DurableObject<Env> {
 			.exec("SELECT person_id FROM users WHERE id = ?", userId)
 			.toArray()[0]?.person_id;
 		return value === null || value === undefined ? null : String(value);
-	}
-
-	/**
-	 * Whether account mail for this login -- a reset link -- must not go to
-	 * this address, because somebody else holds it as a mailbox.
-	 *
-	 * The rules at creation keep a new collision from arising; this is for
-	 * the ones from before them, and for any way in nobody has thought of.
-	 * Asked where the harm would happen, just before a link is made.
-	 */
-	async isAnotherPersonsMailbox(
-		userId: string,
-		address: string,
-	): Promise<boolean> {
-		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-		return this.#anotherPersonsMailbox(address, this.#personOf(userId));
 	}
 
 	/**
@@ -1077,6 +1068,48 @@ export class MailboxDO extends DurableObject<Env> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 		const row = this.#loginCredentials(userId);
 		return row ? await credentialStamp(row) : null;
+	}
+
+	/**
+	 * What a reset link for this login, mailed to `to`, is bound to -- or why
+	 * none may be made: the login is gone, it no longer signs in with `to`
+	 * (or its password changed) since it was looked up, or somebody else
+	 * holds `to` as a mailbox.
+	 *
+	 * The last is for collisions from before the rules at creation, which
+	 * keep a new one from arising: mail to an address is filed in the
+	 * mailbox of that address, so a link sent there is handed to its holder.
+	 *
+	 * One step, and bound to `to` itself. It was two calls -- "somebody
+	 * else's mailbox?", then the stamp -- and between them the owner could
+	 * confirm a move off `to`, which freed it for anybody to make a mailbox
+	 * of, while the stamp then taken was of the new address and so went on
+	 * matching: the link reached that mailbox and reset the owner's
+	 * password. Now a move after this makes the link stale, and while `to`
+	 * is the login's address nobody else can make it a mailbox.
+	 */
+	async passwordResetStamp(
+		userId: string,
+		to: string,
+	): Promise<{ stamp: string } | { refused: "gone" | "moved" | "mailbox" }> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+		const before = this.#loginCredentials(userId);
+		if (!before) return { refused: "gone" };
+		const stamp = await credentialStamp(before);
+		// Read again after the await: from here to the answer is one step.
+		const after = this.#loginCredentials(userId);
+		if (!after) return { refused: "gone" };
+		if (
+			after.email !== before.email ||
+			after.password_hash !== before.password_hash ||
+			after.email.toLowerCase() !== to.trim().toLowerCase()
+		) {
+			return { refused: "moved" };
+		}
+		if (this.#anotherPersonsMailbox(to, this.#personOf(userId))) {
+			return { refused: "mailbox" };
+		}
+		return { stamp };
 	}
 
 	/**

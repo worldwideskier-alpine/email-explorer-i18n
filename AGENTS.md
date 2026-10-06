@@ -414,9 +414,13 @@ are still checked, by the `tsc` that runs before the worker tests.
   addresses are left alone, and a holder may still bring back a deleted
   mailbox that collides with a login from before. Those collisions are not
   undone -- neither side can be removed safely -- so a reset is not sent to
-  an address another person holds as a mailbox (`isAnotherPersonsMailbox`,
-  asked just before the token is made); the answer is the one any address
-  gets, and root can set the password directly. Refusals reuse "Mailbox
+  an address another person holds as a mailbox; the answer is the one any
+  address gets, and root can set the password directly. That is asked in
+  the step that binds the link to the address it is mailed to
+  (`passwordResetStamp`): asked in a call of its own before the stamp, the
+  owner could move off the address in between, somebody make a mailbox of
+  it, and the link -- stamped with the new address -- reset the owner's
+  password from there. Refusals reuse "Mailbox
   already exists", which every catalogue already has, rather than a new
   sentence that would name the kind of address. `address-of-another.test.ts`.
 - **The daily cron.** One `scheduled()` handler, which starts every

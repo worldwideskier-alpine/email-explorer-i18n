@@ -2099,24 +2099,25 @@ async function storeAndSendPasswordReset(
 	origin: string,
 ): Promise<void> {
 	const authStub = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
-	// Mail to an address is filed in the mailbox of that address, so a link
-	// sent where somebody else holds the mailbox is a link handed to them.
-	// New collisions are refused where addresses are made; this catches the
-	// ones from before. No token, no mail, and the answer has already gone,
-	// the same as for any address. The log names no address.
-	if (await authStub.isAnotherPersonsMailbox(user.id, to)) {
-		console.warn(
-			"Password reset not sent: the address is another person's mailbox",
-		);
+	// Bound to the password and to the address the link is mailed to, in
+	// the step that asks whether somebody else holds that address as a
+	// mailbox; see passwordResetStamp, and resetPasswordWithStamp for the
+	// other end. Refused, there is no token and no mail, and the answer has
+	// already gone, the same as for any address.
+	const bound = await authStub.passwordResetStamp(user.id, to);
+	if ("refused" in bound) {
+		if (bound.refused === "mailbox") {
+			// The log names no address.
+			console.warn(
+				"Password reset not sent: the address is another person's mailbox",
+			);
+		}
 		return;
 	}
+	const { stamp } = bound;
 	// Valid for an hour.
 	const token = crypto.randomUUID();
 	const expiresAt = Date.now() + 3600000;
-	// Bound to the password and address as they are now; see
-	// resetPasswordWithStamp.
-	const stamp = await authStub.emailChangeStamp(user.id);
-	if (!stamp) return;
 	await env.BUCKET.put(
 		`recovery-tokens/${token}.json`,
 		JSON.stringify({ userId: user.id, email: user.email, expiresAt, stamp }),
