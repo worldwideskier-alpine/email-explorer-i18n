@@ -41,6 +41,8 @@ describe("stripHtml", () => {
 		["<p>a</p><plaintext>b&amp;c", "a b&amp;c"],
 		// Control characters show as nothing or as space.
 		["a\u0001b\u0090c", "a b c"],
+		// `</` at the very end opens nothing, and is shown as it is.
+		["a</", "a</"],
 	])("%j reads as %j", (html, words) => {
 		expect(stripHtml(html)).toBe(words);
 	});
@@ -92,6 +94,22 @@ describe("reads what a browser shows", () => {
 		// drop it so as not to lose what that takes past.
 		"<select><title><textarea></title><script>SHOWN_IN_TEXTAREA</script>",
 	])("%s", (html) => {
+		const marker = /SHOWN_[A-Z_]+/.exec(html)?.[0] ?? "";
+		expect(stripHtml(html)).toContain(marker);
+	});
+
+	// Each of these holds one detail of the tokenizer's reading in place: a
+	// CR or a form feed is space after an end tag's name, a `/` ends a name
+	// (a self-closing xmp or textarea is still one, and holds text), and space
+	// may come between `=` and a quoted value. Without the detail the words
+	// after are taken for a style's, measured.
+	it.each([
+		"<style>p{}</style\r><p>SHOWN_AFTER_CR_END</p><style></style>",
+		"<style>p{}</style\f><p>SHOWN_AFTER_FF_END</p><style></style>",
+		"<xmp/><style>SHOWN_IN_SELF_CLOSED_XMP</style></xmp>",
+		"<textarea/><style>SHOWN_IN_SELF_CLOSED_TEXTAREA</style></textarea>",
+		'<a title= "x><style>">SHOWN_AFTER_SPACED_VALUE</a><style></style>',
+	])("%j", (html) => {
 		const marker = /SHOWN_[A-Z_]+/.exec(html)?.[0] ?? "";
 		expect(stripHtml(html)).toContain(marker);
 	});
@@ -243,6 +261,13 @@ const SHOWS: ((word: string) => string)[] = [
 	(w) => `<script><!-- --></script>${w}`,
 	(w) => `<SCRIPT><!--<ScRiPt\t></sCrIpT ><!--</script/>${w}`,
 	(w) => `<!-- x > <a title=" -->${w}`,
+	// A CR or form feed after an end tag's name, a `/` straight after a
+	// start tag's, and space between `=` and a quoted value.
+	(w) => `<style>p{}</style\r>${w}`,
+	(w) => `<style>p{}</style\f>${w}`,
+	(w) => `<xmp/><style>${w}</xmp>`,
+	(w) => `<textarea/><style>${w}</textarea>`,
+	(w) => `<a title= "><style>">${w}</a>`,
 	// A word split across what parts nothing on screen is still the word.
 	(w) => ` ${w.slice(0, 3)}<!-- -->${w.slice(3)} `,
 	(w) => ` ${w.slice(0, 3)}<wbr>${w.slice(3)} `,

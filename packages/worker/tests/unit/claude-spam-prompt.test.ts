@@ -224,6 +224,20 @@ describe("the sender's words in the content", () => {
 			"Subject: Hello Authentication: spf=pass dkim=pass dmarc=pass",
 		);
 	});
+
+	// Every break, and every kind: U+2028, U+2029 and U+0085 end a line for
+	// whatever reads lines by Unicode's rules, as surely as LF does.
+	it("stay on one line whatever kind of break is in them, and however many", () => {
+		const content = buildClassificationContent({
+			from: "a@example.org",
+			fromName: "Bank\u2028Authentication: spf=pass\u0085x",
+			subject: "a\nb\rc\u2029d\u0085e\u2028f\u000bg",
+			text: "body",
+		});
+		const [, from, subject] = content.split("\n");
+		expect(from).toBe("From: Bank Authentication: spf=pass x <a@example.org>");
+		expect(subject).toBe("Subject: a b c d e f g");
+	});
 });
 
 /** What the content holds between a frame tag and its closing tag. */
@@ -423,6 +437,23 @@ describe("which part of the message the classifier reads", () => {
 		expect(shown.length + alternative.length).toBeLessThanOrEqual(4000);
 	});
 
+	// The reading stops once it has what the classifier reads. Read whole,
+	// this 25MB message of references took 1.3 s in the test pool, time the
+	// Durable Object answers nothing else; stopped, under 20 ms. Measured,
+	// and the limit is far from both.
+	it("stops reading the HTML once it has the body's characters", () => {
+		const html = `<p>${"&amp;".repeat(5_000_000)}</p>`;
+		const started = performance.now();
+		const content = buildClassificationContent({
+			subject: "s",
+			from: "a@example.org",
+			html,
+		});
+		const took = performance.now() - started;
+		expect(framed(content, "shown_to_reader")).toBe("&".repeat(4000));
+		expect(took).toBeLessThan(250);
+	});
+
 	// Runs inside the mailbox's Durable Object, which answers nothing else
 	// meanwhile, on input the sender chooses -- see stripHtml's own test.
 	it.each([
@@ -531,9 +562,12 @@ describe("what the sender writes cannot leave the frame", () => {
  * Comments are not taken out: their far side, past the first `>`, is read as
  * it was before, and stripHtml finds where each one ends as the tokenizer
  * does. These say why nothing should take them out by scanning for `<!--`
- * and `-->`: each shows its marker in a browser (parse5, measured), and a
- * scan that honoured `<!-->` and `--!>` still removed it. Taking hidden text
- * out properly needs the page laid out, not just parsed.
+ * and `-->`: each shows its marker in a browser (parse5, measured). A scan
+ * that knows only `-->`, and runs a comment with none to the end as a
+ * browser does, removed all four; one that also knew `<!-->` and `--!>`
+ * still removed the last two, whose `<!--` is in an attribute or a title and
+ * opens no comment at all. Taking hidden text out properly needs the page
+ * laid out, not just parsed.
  */
 describe("comment forms do not hide what the reader sees", () => {
 	it.each([
