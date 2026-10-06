@@ -342,7 +342,12 @@ import { EditorContent, useEditor } from "@tiptap/vue-3";
 import { onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ColourHighlight, TextColour } from "@/utils/editorColours";
-import { BoundedTableCell, BoundedTableHeader } from "@/utils/editorTables";
+import {
+	BoundedTable,
+	BoundedTableCell,
+	BoundedTableHeader,
+	BoundedTableRow,
+} from "@/utils/editorTables";
 
 const props = defineProps<{
 	modelValue: string;
@@ -421,18 +426,22 @@ const editor = useEditor({
 		// resizing is off: it is a composing convenience that costs handle
 		// markup in the message, and what matters here is quoting a table back
 		// intact.
+		// The kit's own table and cells take a table as written; these hold
+		// its spans to what a browser would, and its size to what a message
+		// needs (see editorTables).
 		TableKit.configure({
-			table: {
-				resizable: false,
-				HTMLAttributes: {
-					style: "border-collapse: collapse; margin: 8px 0;",
-				},
-			},
-			// The kit's own cells read a span as written; these hold it to what
-			// a browser would (see editorTables).
+			table: false,
+			tableRow: false,
 			tableCell: false,
 			tableHeader: false,
 		}),
+		BoundedTable.configure({
+			resizable: false,
+			HTMLAttributes: {
+				style: "border-collapse: collapse; margin: 8px 0;",
+			},
+		}),
+		BoundedTableRow,
 		BoundedTableCell.configure({
 			HTMLAttributes: {
 				style: "border: 1px solid #ccc; padding: 4px 8px;",
