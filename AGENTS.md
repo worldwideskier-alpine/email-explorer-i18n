@@ -437,9 +437,22 @@ are still checked, by the `tsc` that runs before the worker tests.
   `POST /mailboxes`, with no password and no limit, that an address is
   somebody's sign-in address (root's included) or a deleted mailbox --
   inbound mail is refused where no mailbox lives, which rules out a live
-  one -- though every guess that misses becomes a mailbox of theirs. Before, telling a sign-in address took the current password, under
-  the account-change limit. That is the price of refusing at all: a mailbox
-  that is let through is the hole. `address-of-another.test.ts`.
+  one -- though every guess that misses becomes a mailbox of theirs.
+  Before, telling a sign-in address took the current password, under the
+  account-change limit. That is the price of refusing at all: a mailbox
+  that is let through is the hole.
+  Nothing proves an address is its taker's, so it can also be held to keep
+  it from someone. An administrator can make a mailbox at any address -- one
+  at another provider, which never delivers here, as readily -- and delete
+  it, and the grant left behind keeps every other person's login, as well
+  as their mailbox, off that address until its holder is deleted; root,
+  which sees nobody's mailboxes, is told only "Mailbox already exists" and
+  not by whom. The other way round, a registration form open to everyone
+  lets a stranger sign in at an address meant to be a mailbox here, which
+  root at least sees in its list of people and can delete. Telling an
+  owner from a squatter would take proof of ownership, a flow of its own,
+  so neither is undone in code; the admin guide says what root is told.
+  `address-of-another.test.ts`.
 - **The daily cron.** One `scheduled()` handler, which starts every
   mailbox's night in that mailbox's own Durable Object alarm, all at once
   (`mailbox-night.ts`), and waits to write down how they went

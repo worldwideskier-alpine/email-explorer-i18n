@@ -278,14 +278,16 @@ export default EmailExplorer({
 4. Check that the person being reset has a Resend API key set on their own
    screen -- without one no reset mail is sent, and the page does not say so
 5. Check that the sender address is on a domain verified in Resend
-6. Check that the address is not also a mailbox on this deployment that
-   belongs to somebody else: the reset would be filed in their mailbox, so it
-   is not sent, and the page does not say so. Root can set a new password on
-   `/root`. For root's own address -- a mailbox there held by an
-   administrator account counts as somebody else's, even your own -- sign in
-   with root's spare address and set it from `/root`. New accounts and
-   mailboxes cannot end up like this; it is left over from before that was
-   refused.
+6. If nothing above explains it, the address may also be a mailbox on this
+   deployment that belongs to somebody else. The reset would be filed in
+   their mailbox, so it is not sent, and the page does not say so. This
+   cannot be looked up -- root's screen lists nobody's mailboxes, and an
+   administrator sees only their own -- so set the password instead: root
+   can set a new one on `/root`. For root's own address -- a mailbox there
+   held by an administrator account counts as somebody else's, even your
+   own, so if you run one, look among its mailboxes -- sign in with root's
+   spare address and set it from `/root`. New accounts and mailboxes cannot
+   end up like this; it is left over from before that was refused.
 
 ### "Password reset failed"
 

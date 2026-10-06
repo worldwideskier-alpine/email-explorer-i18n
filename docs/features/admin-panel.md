@@ -158,7 +158,12 @@ added on `/root`.
 The address is a mailbox on this deployment that belongs to somebody else --
 possibly one they deleted, which keeps the address theirs. Password resets
 for a sign-in address there would land in their mailbox, so it is refused;
-use another address.
+use another address. Root's screen does not say whose mailbox it is, since
+root sees nobody's. A mailbox keeps its address for the person who made it
+even after it is deleted, until that person is deleted, and an
+administrator can make one at any address, including one at another mail
+provider that never receives mail here. If the address is one nobody here
+should hold, ask your administrators which of them made a mailbox there.
 
 **"Mailbox already exists" for a mailbox nobody seems to have.** The address
 may be somebody else's sign-in address, and a mailbox there would receive
