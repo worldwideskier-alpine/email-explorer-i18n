@@ -101,17 +101,19 @@ function sameKey(a: Uint8Array, b: Uint8Array): boolean {
  *
  * A subscription made under a key the Worker no longer has is made again
  * under the one it has, first. A push service refuses a push signed with any
- * key but the one the browser subscribed with, so after the Worker's key was
- * replaced (its secret deleted, and the next deploy made a new one) every
- * device stayed subscribed, switch on, and received nothing. Only when both
+ * key but the one the browser subscribed with, so once the Worker's key is
+ * replaced (its secret deleted, and the next deploy makes a new one) every
+ * device would stay subscribed, switch on, receiving nothing. Only when both
  * keys are known and differ: a browser that does not say which key it used,
  * or a Worker that serves none, gets what it got before.
  *
  * Asks for nothing: no permission prompt, and nothing if permission is not
- * already granted -- which is also what lets the browser subscribe again
- * without a tap. Failure is swallowed: before the browser lets its old
- * subscription go it changes nothing, and after, it leaves the switch off,
- * which is then the truth.
+ * already granted, which is the only state in which a browser may let a page
+ * subscribe without a tap. Whether released browsers do has not been tried
+ * (WebKit's source says it does); one that wants a tap refuses here, and the
+ * switch reads off until it is turned on again. Failure is swallowed: before
+ * the browser lets its old subscription go it changes nothing, and after, it
+ * leaves the switch off, which is then the truth.
  */
 export async function rebindPushSubscription(): Promise<void> {
 	try {
@@ -130,7 +132,9 @@ export async function rebindPushSubscription(): Promise<void> {
 			if (key && !sameKey(new Uint8Array(under), key)) {
 				// The Worker forgets the old one first. Left to the push
 				// service, it would be tried, and refused, on every new
-				// message until the service said it was gone.
+				// message until the service said it was gone. And the
+				// browser lets go only once it has: a refusal here leaves
+				// both as they were, for the next sign-in to try again.
 				await api.unsubscribePush(subscription.endpoint);
 				await subscription.unsubscribe();
 				subscription = await ready.pushManager.subscribe({
