@@ -81,6 +81,14 @@ export async function subscribeToPush(): Promise<void> {
 }
 
 /**
+ * Whether two keys are the same bytes. A subscription remembers the key it
+ * was made under as bytes; the Worker serves its key as base64url.
+ */
+function sameKey(a: Uint8Array, b: Uint8Array): boolean {
+	return a.length === b.length && a.every((byte, i) => byte === b[i]);
+}
+
+/**
  * Tells the Worker that this browser's subscription, if it has one, belongs
  * to the session now signed in.
  *
@@ -91,15 +99,50 @@ export async function subscribeToPush(): Promise<void> {
  * switch from the browser; without this, signing out and back in left the
  * switch on and the notifications off. Called once a session is known good.
  *
+ * A subscription made under a key the Worker no longer has is made again
+ * under the one it has, first. A push service refuses a push signed with any
+ * key but the one the browser subscribed with, so once the Worker's key is
+ * replaced (its secret deleted, and the next deploy makes a new one) every
+ * device would stay subscribed, switch on, receiving nothing. Only when both
+ * keys are known and differ: a browser that does not say which key it used,
+ * or a Worker that serves none, gets what it got before.
+ *
  * Asks for nothing: no permission prompt, and nothing if permission is not
- * already granted. Failure changes nothing a person can see, so it is
- * swallowed.
+ * already granted, which is the only state in which a browser may let a page
+ * subscribe without a tap. Whether released browsers do has not been tried
+ * (WebKit's source says it does); one that wants a tap refuses here, and the
+ * switch reads off until it is turned on again. Failure is swallowed: before
+ * the browser lets its old subscription go it changes nothing, and after, it
+ * leaves the switch off, which is then the truth.
  */
 export async function rebindPushSubscription(): Promise<void> {
 	try {
 		if (!isPushSupported() || Notification.permission !== "granted") return;
-		const subscription = await getExistingSubscription();
+		const ready = await registration().catch(() => null);
+		if (!ready) return;
+		let subscription = await ready.pushManager.getSubscription();
 		if (!subscription) return;
+		const under = subscription.options?.applicationServerKey;
+		if (under) {
+			const served = await api
+				.getVapidPublicKey()
+				.then(({ data }) => data.publicKey as string)
+				.catch(() => "");
+			const key = served ? urlBase64ToUint8Array(served) : null;
+			if (key && !sameKey(new Uint8Array(under), key)) {
+				// The Worker forgets the old one first. Left to the push
+				// service, it would be tried, and refused, on every new
+				// message until the service said it was gone. And the
+				// browser lets go only once it has: a refusal here leaves
+				// both as they were, for the next sign-in to try again.
+				await api.unsubscribePush(subscription.endpoint);
+				await subscription.unsubscribe();
+				subscription = await ready.pushManager.subscribe({
+					userVisibleOnly: true,
+					applicationServerKey: key,
+				});
+			}
+		}
 		await api.subscribePush(subscription.toJSON());
 	} catch {
 		// See above.

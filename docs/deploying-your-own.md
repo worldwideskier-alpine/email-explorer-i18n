@@ -63,9 +63,12 @@ it, so notifications carry on.
 
 To replace the key, delete the `VAPID_PRIVATE_KEY` secret from the Worker in
 the Cloudflare dashboard (**Workers & Pages →** your Worker **→ Settings →
-Variables and Secrets**) and deploy again: the deploy makes a new one. Every
-device subscribed under the old key stops receiving notifications until it
-subscribes again.
+Variables and Secrets**) and deploy again: the deploy makes a new one. A
+device subscribed under the old key receives nothing until the dashboard is
+next opened on it, signed in. The dashboard then subscribes it again under
+the new key, without asking, where the browser allows that; where it does
+not, the notification switch in the dashboard's settings shows off until it
+is turned on again.
 
 ## 4. Set the repository secrets
 
