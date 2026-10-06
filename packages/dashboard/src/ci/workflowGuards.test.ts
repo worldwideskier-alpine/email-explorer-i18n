@@ -121,6 +121,7 @@ describe("the deploy workflow", () => {
 			deploy ?? "",
 		)?.[1];
 		expect(needs?.split(/,\s*/).sort()).toEqual([
+			"advisories",
 			"lint-and-build",
 			"test-dashboard",
 			"test-worker",
@@ -136,6 +137,34 @@ describe("the deploy workflow", () => {
 		expect(step("lint-and-build")).toMatch(/run: pnpm run build\n/);
 		expect(step("test-worker")).toMatch(/run: pnpm test-worker\n/);
 		expect(step("test-dashboard")).toMatch(/run: pnpm test-dashboard\n/);
+		expect(step("advisories")).toMatch(
+			/run: node packages\/worker\/scripts\/check-advisories\.mjs\n/,
+		);
+	});
+
+	/**
+	 * The advisory check holds a token and runs on every pull request. It
+	 * reads a public database, so the token Actions gives every job -- read
+	 * only, by the workflow's permissions -- is enough, and only the step
+	 * that asks gets it. It installs nothing: a package's install script
+	 * would run beside the token.
+	 */
+	it("asks GitHub's advisory database with the job's own token, installing nothing", () => {
+		const from = (deploy ?? "").indexOf("\n  advisories:\n");
+		const job = (deploy ?? "").slice(
+			from,
+			(deploy ?? "").indexOf("\n  deploy:\n", from),
+		);
+		expect(job).not.toBe("");
+		expect(job).not.toMatch(/pnpm|npm (?:install|ci)|secrets\./);
+		const steps = job.split(/\n {6}- /).slice(1);
+		const holding = steps.filter((one) => one.includes("GITHUB_TOKEN"));
+		expect(holding).toHaveLength(1);
+		expect(holding[0]).toContain("GITHUB_TOKEN: ${{ github.token }}");
+		expect(holding[0]).toContain(
+			"run: node packages/worker/scripts/check-advisories.mjs",
+		);
+		expect(job.split("\n    steps:")[0]).not.toContain("env:");
 	});
 
 	/**
