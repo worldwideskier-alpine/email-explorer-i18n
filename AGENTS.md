@@ -318,6 +318,12 @@ are still checked, by the `tsc` that runs before the worker tests.
   others with their sessions. The dashboard hands the browser's subscription
   to each new session (`rebindPushSubscription`), since the browser keeps it
   and the settings switch reads it from there. `sessions-end.test.ts`.
+  A subscription made under a key the Worker no longer serves is made again
+  under the one it does, first -- the old endpoint forgotten by the Worker,
+  then let go by the browser -- because a push service refuses a push signed
+  with any other key, and a replaced key (see Deployment-specific values)
+  otherwise left every device subscribed, switch on, receiving nothing. Only
+  when both keys are known and differ. `pushRebind.test.ts`.
 - **Threading uses the sender's Message-ID.** Ingest keeps it in
   `message_id`; a reply names it in In-Reply-To and References, and never a
   row id, which no other client has seen (`replyThreading`,
