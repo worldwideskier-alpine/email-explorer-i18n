@@ -206,7 +206,21 @@ const URL_PATTERN = String.raw`https?:\/\/[A-Za-z0-9\-._~:/?#\[\]@!$&()*+,;=%]+`
 // Trailing characters that are almost never actually part of the URL --
 // closing punctuation the sender's prose put right after it (Japanese and
 // ASCII), or a bare trailing slash-less sentence terminator.
-const TRAILING_PUNCTUATION = /[.,;:!?)\]}、。）」』】]+$/;
+const TRAILING_PUNCTUATION = new Set([...".,;:!?)]}、。）」』】"]);
+
+/**
+ * The URL without the punctuation the sentence put after it, found by
+ * walking back from the end. It was a regex, `[...]+$`, and that is
+ * quadratic: every start inside a long run of those characters followed by
+ * anything else scans to the end and fails there. A sender's `https://`, a
+ * hundred thousand dots and one letter held the reader's tab for seconds
+ * every time the message was opened (Claude Security, F3).
+ */
+function withoutTrailingPunctuation(url: string): string {
+	let end = url.length;
+	while (end > 0 && TRAILING_PUNCTUATION.has(url[end - 1] as string)) end -= 1;
+	return url.slice(0, end);
+}
 
 /**
  * Where a URL is left as text. Inside a link it is one already. The rest hold
@@ -269,9 +283,7 @@ export function linkifyPlainUrls(doc: Document): void {
 		let lastIndex = 0;
 
 		for (const match of text.matchAll(new RegExp(URL_PATTERN, "g"))) {
-			let url = match[0];
-			const trailing = url.match(TRAILING_PUNCTUATION)?.[0] || "";
-			url = url.slice(0, url.length - trailing.length);
+			const url = withoutTrailingPunctuation(match[0]);
 			if (!url) continue;
 
 			const start = match.index as number;

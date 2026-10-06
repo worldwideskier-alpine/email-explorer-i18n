@@ -286,6 +286,35 @@ describe("a bare URL in the text", () => {
 		}
 	});
 
+	it("strips every kind of trailing punctuation, and only from the end", () => {
+		const doc = bodyOf(
+			"<pre>see https://example.com/a.b,c?d=1).;!、。 now</pre>",
+		);
+		linkifyPlainUrls(doc);
+		expect(link(doc).getAttribute("href")).toBe(
+			"https://example.com/a.b,c?d=1",
+		);
+		expect(doc.body.textContent).toContain(").;!、。 now");
+	});
+
+	/**
+	 * Claude Security F3. Trailing punctuation was taken off with a regex,
+	 * `[...]+$`, which is quadratic on a long run of it followed by anything
+	 * else: measured in node, 40,000 dots took 1.9 seconds and twice as many
+	 * took four times as long. A sender's message holding one such URL froze
+	 * the reader's tab each time it was opened. Linear, a hundred thousand
+	 * are nothing.
+	 */
+	it("does not hang on a URL that is a long run of punctuation", () => {
+		const doc = bodyOf(`<pre>https://${".".repeat(100_000)}a</pre>`);
+		const started = performance.now();
+		linkifyPlainUrls(doc);
+		expect(performance.now() - started).toBeLessThan(500);
+		expect(link(doc).getAttribute("href")).toHaveLength(
+			"https://".length + 100_000 + 1,
+		);
+	});
+
 	it("leaves a URL that is already a link alone", () => {
 		const doc = bodyOf(
 			'<a href="https://example.com/a">https://example.com/a</a>',
