@@ -113,3 +113,25 @@ describe("plainTextToParagraphs", () => {
 		);
 	});
 });
+
+/**
+ * Claude Security F5. The outer newlines came off with `/^\n+|\n+$/g`, and
+ * `\n+$` is tried again from every newline in a run that something else
+ * follows: 40,000 took 2.1 seconds in node, twice as many four times as
+ * long. A plain-text message with a few hundred thousand blank lines froze
+ * the tab on reply or forward.
+ */
+describe("a long run of blank lines", () => {
+	it("does not hang the quote, and the text either side survives", () => {
+		const text = `first${"\n".repeat(100_000)}last`;
+		const started = performance.now();
+		const html = plainTextToParagraphs(text);
+		expect(performance.now() - started).toBeLessThan(500);
+		expect(html).toBe("<p>first</p><p>last</p>");
+	});
+
+	it("still drops the newlines it starts and ends with", () => {
+		expect(plainTextToParagraphs("\n\n\nbody\n\n")).toBe("<p>body</p>");
+		expect(plainTextToParagraphs("\n\n\n")).toBe("");
+	});
+});
