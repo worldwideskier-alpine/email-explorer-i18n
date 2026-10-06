@@ -36,6 +36,35 @@ const deploy = Object.entries(workflows).find(([path]) =>
 	path.endsWith("deploy.yml"),
 )?.[1];
 
+/** A step of the deploy job by its name: from its `name:` to the next step. */
+function stepNamed(name: string): string {
+	return (
+		(deploy ?? "")
+			.split(/\n {6}- /)
+			.find((one) => one.startsWith(`name: ${name}\n`)) ?? ""
+	);
+}
+
+/**
+ * The lines of a step's `run: |` block as bash reads them, one command or
+ * keyword each: indentation, blank lines and comments left out.
+ */
+function runLines(step: string): string[] {
+	const lines = step.split("\n");
+	const start = lines.indexOf("        run: |");
+	if (start < 0) return [];
+	const body: string[] = [];
+	for (const line of lines.slice(start + 1)) {
+		if (line.trim() === "") continue;
+		if (!line.startsWith(" ".repeat(10))) break;
+		body.push(line.trim());
+	}
+	return body.filter((line) => !line.startsWith("#"));
+}
+
+const PUSH_KEY_STEP = "Give the Worker a push key if it has none";
+const OLD_PUSH_KEY_STEP = "Say whether an old push key is still kept on GitHub";
+
 describe("the deploy workflow", () => {
 	it("is where this test thinks it is", () => {
 		// A rename would otherwise turn every assertion below into a silent pass.
@@ -166,6 +195,167 @@ describe("the deploy workflow", () => {
 				if (!/\|\| true/.test(command)) {
 					expect(script, name).toContain("set -o pipefail");
 				}
+			}
+		}
+	});
+
+	/**
+	 * The push key is made on the runner when the Worker has none, and goes
+	 * to the Worker's secrets and nowhere else (scripts/push-key.mjs). It
+	 * used to be a GitHub secret uploaded on every deploy; that copy is read
+	 * by nothing now, and a step that took its value again could put it back
+	 * over the Worker's own key. Only whether it is still set reaches a step,
+	 * so that the deploy can say it should be deleted.
+	 */
+	it("hands no step the old GitHub copy of the push key, only whether it is set", () => {
+		const mentions = Object.values(workflows).flatMap((source) =>
+			[...source.matchAll(/\$\{\{[^}]*VAPID_PRIVATE_KEY[^}]*\}\}/g)].map(
+				([expression]) => expression,
+			),
+		);
+		expect(mentions).toEqual(["${{ secrets.VAPID_PRIVATE_KEY != '' }}"]);
+		const step =
+			(deploy ?? "")
+				.split(/\n {6}- /)
+				.find((one) => one.includes("secrets.VAPID_PRIVATE_KEY")) ?? "";
+		expect(step).toMatch(/^name: Say whether an old push key/);
+		expect(step).not.toContain("CLOUDFLARE_API_TOKEN");
+		expect(step).not.toContain("wrangler");
+		// The expression reaches the step as the string "true" or "false",
+		// neither of them empty: a `-n` test would warn on every deploy,
+		// whether the secret is there or not.
+		expect(runLines(stepNamed(OLD_PUSH_KEY_STEP))).toEqual([
+			'if [ "$OLD_PUSH_KEY_ON_GITHUB" = "true" ]; then',
+			expect.stringMatching(
+				/^echo "::warning::The VAPID_PRIVATE_KEY repository secret is no longer used/,
+			),
+			"fi",
+		]);
+	});
+
+	/**
+	 * The step that gives the Worker a push key asks first, and puts one only
+	 * on "generate": a key put over an existing one quietly stops every
+	 * device subscribed under it. The key it makes is held in one variable
+	 * and handed to `wrangler secret put` on its stdin -- never echoed,
+	 * written to a file, teed or exported, because it is not a GitHub secret
+	 * and nothing would mask it in this public log. And only once it is not
+	 * empty: `secret put` takes an empty stdin as the value, and the next
+	 * deploy would find that key present and leave it.
+	 */
+	it("makes a push key only for a Worker without one, and hands it only to the Worker", () => {
+		const step =
+			(deploy ?? "")
+				.split(/\n {6}- /)
+				.find((one) =>
+					one.startsWith("name: Give the Worker a push key if it has none"),
+				) ?? "";
+		expect(step, "the push key step is missing").toBeTruthy();
+		const script = step
+			.slice(step.indexOf("run: |"))
+			.replace(/\\\n\s*/g, " ")
+			.split("\n")
+			.filter((line) => !line.trim().startsWith("#"))
+			.map((line) => line.trim())
+			.join("\n");
+		const at = (text: string) => script.indexOf(text);
+		expect(at("wrangler secret list --format json")).toBeGreaterThan(-1);
+		expect(at("push-key-step.mjs decide")).toBeGreaterThan(
+			at("wrangler secret list --format json"),
+		);
+		// Everything but "generate" ends the step before the key is made.
+		const deciding = script.slice(
+			at("push-key-step.mjs decide"),
+			at("push-key-step.mjs generate"),
+		);
+		expect(deciding).toMatch(
+			/if \[ "\$verdict" != "generate" \]; then\n(?:.*\n)*?exit 0\nfi/,
+		);
+		expect(at("wrangler secret put VAPID_PRIVATE_KEY")).toBeGreaterThan(
+			at("push-key-step.mjs generate"),
+		);
+
+		// The key, line by line: made into one variable, checked, handed over.
+		const generated = script
+			.split("\n")
+			.filter((line) => line.includes("push-key-step.mjs generate"));
+		expect(generated).toEqual([
+			'push_key="$(node ../scripts/push-key-step.mjs generate)" || push_key=""',
+		]);
+		const uses = script.split("\n").filter((line) => /push_key/.test(line));
+		for (const line of uses) {
+			if (line === generated[0]) continue;
+			if (line === 'if [ -z "$push_key" ]; then') continue;
+			expect(line).toMatch(
+				/^if printf '%s' "\$push_key" \| (?:timeout \d+ )?npx wrangler secret put VAPID_PRIVATE_KEY 2>&1 \| node \S*withhold\.mjs; then$/,
+			);
+		}
+		expect(uses).toHaveLength(3);
+		expect(at('if [ -z "$push_key" ]; then')).toBeLessThan(
+			at("wrangler secret put"),
+		);
+		expect(script).not.toMatch(/\btee\b|>\s*[^&\s]|>\s+\S|add-mask/);
+		expect(script).not.toMatch(/GITHUB_(?:ENV|OUTPUT|STEP_SUMMARY)/);
+	});
+
+	/**
+	 * Bash's trace prints each command before it runs, variables expanded,
+	 * and the key is not a GitHub secret, so nothing masks it in this public
+	 * log. Measured, with the step run under `bash -e` as GitHub runs it: one
+	 * `set -o xtrace` added to it put the key's private part in the log three
+	 * times -- as it was assigned, as it was checked for being empty, and as
+	 * it was handed to `secret put`. A trace is turned on in more
+	 * spellings than `set -x` -- `set -ex`, `set -euxo pipefail`, `set -o
+	 * xtrace` -- and from outside the script too: a step's `shell: bash -ex
+	 * {0}`, or the job's or the workflow's `defaults`.
+	 */
+	it("never traces the step that holds the push key", () => {
+		const step = stepNamed(PUSH_KEY_STEP);
+		expect(step, "the push key step is missing").toBeTruthy();
+		const said = step
+			.split("\n")
+			.filter((line) => !line.trim().startsWith("#"))
+			.join("\n");
+		// A short option with an x in it, wherever it is given.
+		expect(said).not.toMatch(/(?:^|\s)-[A-Za-z]*x[A-Za-z]*(?=\s|$)/m);
+		expect(said).not.toMatch(/xtrace|BASH_XTRACEFD|SHELLOPTS|BASHOPTS/);
+		expect(said).not.toMatch(/^\s*shell:/m);
+		const shells = (deploy ?? "")
+			.split("\n")
+			.filter((line) => /^\s*shell:/.test(line));
+		for (const shell of shells) {
+			expect(shell).not.toMatch(/\s-[A-Za-z]*x|xtrace/);
+		}
+	});
+
+	/**
+	 * Neither push-key step may fail the run. Both come after the deploy, so
+	 * a failed step would roll back new code that is live and working for
+	 * the sake of a key; a Worker still without one is asked again on the
+	 * next deploy. GitHub runs a `run:` block under `bash -e`, which ends the
+	 * step at the first command that fails outside an `if` or an `||` -- so
+	 * every line has to be one of the shapes that cannot: a keyword, `exit
+	 * 0`, a fixed message, the list printed back, or an assignment that
+	 * falls back to empty when what it ran failed.
+	 */
+	it("lets neither push-key step fail the run", () => {
+		const cannotFail = [
+			/^set -o pipefail$/,
+			/^if .+; then$/,
+			/^(?:then|else|fi)$/,
+			/^exit 0$/,
+			/^echo "[^"$`\\]*"$/,
+			/^printf '%s\\n' "\$listed"$/,
+			/^(\w+)="\$\(.+\)" \|\| \1=""$/,
+		];
+		for (const name of [OLD_PUSH_KEY_STEP, PUSH_KEY_STEP]) {
+			const lines = runLines(stepNamed(name));
+			expect(lines.length, name).toBeGreaterThan(0);
+			for (const line of lines) {
+				expect(
+					cannotFail.some((shape) => shape.test(line)),
+					`${name}: ${line}`,
+				).toBe(true);
 			}
 		}
 	});

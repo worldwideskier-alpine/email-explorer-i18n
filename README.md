@@ -68,12 +68,13 @@ GitHub 側で設定する値は次のとおりです。**どれも追跡され�
 |---|---|---|
 | Secret | `CLOUDFLARE_API_TOKEN` | Cloudflare の API トークン |
 | Secret | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare のアカウント ID |
-| Secret | `VAPID_PRIVATE_KEY` | プッシュ通知の秘密鍵 |
 | Secret（任意） | `PRODUCTION_URL` | デプロイ先のURL。デプロイの最後のステップが、いま配信されているのが今回ビルドしたものかを確かめます。未設定ならそのステップは飛ばされ、その旨がログに出ます |
 | Variable | `WORKER_NAME` | Worker 名。公開URLもこれで決まります |
 | Variable | `R2_BUCKET_NAME` | メールと添付を置く R2 バケット名 |
-| Variable | `VAPID_PUBLIC_KEY` | プッシュ通知の公開鍵 |
+| Variable（任意） | `VAPID_PUBLIC_KEY` | プッシュ通知の公開鍵。**通常は設定しません**。Worker は公開鍵を秘密鍵から求めます。これは公開点を含まない秘密鍵のときだけ使う代わりの値で、デプロイが作る鍵では使われません |
 | Secret または Variable（任意） | `ACCOUNT_RECOVERY_FROM` | パスワード再設定メールの差出人。**通常は設定せず、デプロイ後に `/root` で設定します**（値はバケットの `settings/account-recovery.json` に保存されます）。ここで設定すると `/root` の設定より優先され、`/root` にその旨が表示されます。設定するならシークレットを推奨します（変数は公開されるデプロイログに出るため）。両方あればシークレットが使われます |
+
+プッシュ通知の秘密鍵は、どこにも設定しません。デプロイのとき Worker に鍵が無ければ、ランナーで作って Worker のシークレット（`VAPID_PRIVATE_KEY`）にそのまま入れます。鍵がある Worker では何もしません。GitHub にも、ログにも残りません。以前の手順で GitHub のシークレット `VAPID_PRIVATE_KEY` を設定した場合は、もう使われていないので削除してください。削除するまで、デプロイのたびに警告が出ます。Worker の鍵はそのまま残るので、通知は届き続けます。
 
 `PRODUCTION_URL` と `ACCOUNT_RECOVERY_FROM` がシークレットなのは秘密だからではなく、公開リポジトリの Actions ログでシークレットの値だけが `***` に伏せられるためです。
 
@@ -357,8 +358,9 @@ repository, set its repository variables and secrets, and push. Every push to
 
 Email Explorer uses a factory function pattern for configuration. A
 deployment's options live in `packages/worker/dev/index.ts` (in your fork,
-your copy of it); the per-deployment values -- Worker name, bucket, VAPID key,
-recovery sender -- are set in GitHub instead, see
+your copy of it); the per-deployment values -- Worker name, bucket, recovery
+sender -- are set in GitHub instead, and a deploy gives the Worker its
+push-notification key when it has none; see
 [Deploying your own](docs/deploying-your-own.md):
 
 ```typescript
