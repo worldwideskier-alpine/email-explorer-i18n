@@ -15,10 +15,13 @@ allowBuilds:
 
 overrides:
   # @cloudflare/vitest-pool-workers 0.22.0 -- still the latest -- pins a
-  # miniflare that pins sharp 0.35.2, which carries the libheif advisory
-  # GHSA-rgj7-g3m4-5g8c. The miniflare wrangler brings in already takes
-  # 0.35.4, a patch release. Drop this once vitest-pool-workers moves on.
-  "sharp@<0.35.4": "0.35.4"
+  # miniflare that pins sharp 0.35.2 (the libheif advisory
+  # GHSA-rgj7-g3m4-5g8c), and the miniflare wrangler brings in pins 0.35.4,
+  # which carries the librsvg advisory GHSA-wq5f-xc86-pv6w (high). Both are
+  # fixed in 0.35.5, a patch release. sharp is miniflare's, for the local
+  # runtime and the tests: none of it is in the Worker's bundle. Drop this
+  # once both routes to miniflare take 0.35.5 or later.
+  "sharp@<0.35.5": "0.35.5"
   # undici 7.29.0, which every miniflare here pins -- the one wrangler brings
   # and the older one vitest-pool-workers does -- carries ten advisories
   # fixed in 7.29.1 (GHSA-rx4f-c7p8-82vq and the rest; `pnpm audit`). It is
