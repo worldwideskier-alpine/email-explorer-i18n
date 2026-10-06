@@ -122,3 +122,40 @@ describe("a quoted table too large to be one", () => {
 		app.unmount();
 	});
 });
+
+/**
+ * Pasting and dropping go round setContent: a table copied out of a message
+ * came into the editor unmeasured (security-guidance, on the change before
+ * this one). They share what is left of the document's budget.
+ */
+describe("a pasted table", () => {
+	const paste = (host: Element, html: string) => {
+		const view = (
+			host.querySelector(".ProseMirror") as unknown as {
+				editor: {
+					view: { pasteHTML: (html: string, event: Event) => boolean };
+				};
+			}
+		).editor.view;
+		// jsdom has no ClipboardEvent, which pasteHTML makes when not given one.
+		view.pasteHTML(html, new Event("paste"));
+	};
+
+	it("too large to be one is pasted as its text, at once", async () => {
+		const { host, app } = await drawn("<p>reply</p>");
+		const cells = '<td colspan="1000">c</td>'.repeat(1000);
+		const started = performance.now();
+		paste(host, `<table><tr>${cells}</tr></table>`);
+		expect(performance.now() - started).toBeLessThan(5000);
+		expect(host.querySelector(".ProseMirror table")).toBeNull();
+		expect(host.querySelector(".ProseMirror")?.textContent).toContain("c");
+		app.unmount();
+	}, 30_000);
+
+	it("is still a table when it fits", async () => {
+		const { host, app } = await drawn("<p>reply</p>");
+		paste(host, "<table><tr><td>a</td><td>b</td></tr></table>");
+		expect(host.querySelectorAll(".ProseMirror td")).toHaveLength(2);
+		app.unmount();
+	});
+});

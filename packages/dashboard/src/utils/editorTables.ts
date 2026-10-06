@@ -1,4 +1,5 @@
 import { TableCell, TableHeader } from "@tiptap/extension-table";
+import { Fragment, type Node, Slice } from "@tiptap/pm/model";
 import type { JSONContent } from "@tiptap/vue-3";
 
 /**
@@ -76,8 +77,11 @@ function gridSlots(table: JSONContent, budget: number): number {
  * MAX_TABLE_GRID replaced by its cells' contents. Tables are taken in order,
  * outer before the ones nested in it.
  */
-export function boundTables(doc: JSONContent): JSONContent {
-	let left = MAX_TABLE_GRID;
+export function boundTables(
+	doc: JSONContent,
+	budget = MAX_TABLE_GRID,
+): JSONContent {
+	let left = budget;
 	const walk = (nodes: JSONContent[]): JSONContent[] =>
 		nodes.flatMap((node) => {
 			if (node.type === "table") {
@@ -93,6 +97,37 @@ export function boundTables(doc: JSONContent): JSONContent {
 			return node.content ? [{ ...node, content: walk(node.content) }] : [node];
 		});
 	return { ...doc, content: walk(doc.content ?? []) };
+}
+
+/** The slots the tables already in a document take between them. */
+function slotsIn(doc: Node): number {
+	let used = 0;
+	doc.descendants((node) => {
+		if (node.type.name === "table") {
+			used += gridSlots(node.toJSON() as JSONContent, Number.MAX_SAFE_INTEGER);
+		}
+	});
+	return used;
+}
+
+/**
+ * What is pasted or dropped into the editor, held to what is left of the
+ * same budget once the document's own tables are counted. Setting content
+ * was not the only way in: a table copied from a message and pasted came in
+ * unmeasured (security-guidance, on this change). A slice with nothing
+ * replaced is handed back as it was; one with a table taken out is closed,
+ * since the depth it was open at may have been that table's.
+ */
+export function boundPasted(slice: Slice, doc: Node): Slice {
+	const left = Math.max(0, MAX_TABLE_GRID - slotsIn(doc));
+	const pasted = { type: "doc", content: slice.content.toJSON() ?? [] };
+	const bounded = boundTables(pasted, left);
+	if (JSON.stringify(bounded) === JSON.stringify(pasted)) return slice;
+	return new Slice(
+		Fragment.fromJSON(doc.type.schema, bounded.content ?? []),
+		0,
+		0,
+	);
 }
 
 export const BoundedTableCell = TableCell.extend({

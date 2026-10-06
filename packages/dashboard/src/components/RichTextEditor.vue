@@ -345,6 +345,7 @@ import { ColourHighlight, TextColour } from "@/utils/editorColours";
 import {
 	BoundedTableCell,
 	BoundedTableHeader,
+	boundPasted,
 	boundTables,
 } from "@/utils/editorTables";
 
@@ -464,6 +465,8 @@ const editor = useEditor({
 		attributes: {
 			class: "prose prose-sm max-w-none focus:outline-none min-h-full",
 		},
+		// Pasting and dropping are ways in too (see editorTables).
+		transformPasted: (slice, view) => boundPasted(slice, view.state.doc),
 	},
 	// The editor's HTML does not go back into the source box while it is open.
 	// In source mode the box is what is being typed into, and each keystroke
