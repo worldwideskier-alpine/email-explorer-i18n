@@ -743,6 +743,25 @@ written out, or a key-like name given a value in a Wrangler config), and
 committed. Dependabot and testing the live deployment from outside are not
 part of this.
 
+## Replies to the owner
+
+CLAUDE.md sets how an agent writes to the owner: in Japanese, items numbered
+once each and never bulleted at the margin, no numbered headings. Written down
+only, those rules were broken in the session that wrote them -- the rule is
+read at the start, and kept or not at every line after. So
+`.claude/settings.json` also registers `.claude/hooks/reply-rules.mjs` on
+three events: `UserPromptSubmit` puts the rules beside every prompt;
+`PostToolBatch` reads the text written just before the tools ran and says so
+when it broke one; `Stop` sends a final reply that breaks one back to be
+rewritten, at most twice, as feedback rather than a block (a block is shown to
+the owner as a hook error). Only the main agent's own messages are read: the
+transcript also holds a plugin's review run as a skill and a hook's yes-or-no,
+which the owner does not read. The hook exits quietly on anything it cannot
+read, so it never stops the work. The rules are in `reply-rules-judge.mjs`,
+pure so the worker suite can test them (`reply-rules.test.ts`, each rule from
+both sides). A fork that wants other rules changes CLAUDE.md, the judge and
+its test together.
+
 ## Conventions
 
 - Every push to `main` deploys. One workflow does it (`deploy.yml`), and it
