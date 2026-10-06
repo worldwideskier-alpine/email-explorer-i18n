@@ -470,4 +470,30 @@ export const authMigrations: Migration[] = [
             CREATE INDEX IF NOT EXISTS idx_push_subscriptions_session_id ON push_subscriptions(session_id);
         `,
 	},
+	{
+		/**
+		 * The browsers that have signed in to a login (login-device.ts),
+		 * kept so that a stranger's failed sign-ins do not lock them out.
+		 *
+		 * Only the digest of the token is kept, never the token: a token is
+		 * good for half a year, and a copy of this table -- an export, a
+		 * dump made while debugging -- should not be a set of them.
+		 * `stamp` is the login's credentialStamp when the standing was
+		 * granted, so a password or address that has moved on since leaves
+		 * the row inert even where nothing deleted it.
+		 */
+		name: "9_login_devices",
+		sql: `
+            CREATE TABLE login_devices (
+                token_hash TEXT NOT NULL,
+                user_id TEXT NOT NULL,
+                stamp TEXT NOT NULL,
+                failures INTEGER NOT NULL DEFAULT 0,
+                granted_at INTEGER NOT NULL,
+                PRIMARY KEY (token_hash, user_id)
+            );
+            CREATE INDEX idx_login_devices_user_id ON login_devices(user_id);
+            CREATE INDEX idx_login_devices_granted_at ON login_devices(granted_at);
+        `,
+	},
 ];

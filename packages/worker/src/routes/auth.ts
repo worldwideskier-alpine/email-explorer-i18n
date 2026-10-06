@@ -2,13 +2,18 @@ import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
 import { recoveryFromEmail } from "../deployment-config";
+import {
+	deviceCookie,
+	deviceHash,
+	deviceTokensOf,
+	newDeviceToken,
+} from "../login-device";
 import { buildEmailChangeEmail, MAIL_LOCALES } from "../mail-templates";
 import { sendEmail } from "../resend";
 import { roleOf } from "../roles";
 import {
 	accountChangeThrottleRules,
 	clientIp,
-	loginThrottleRules,
 	registerThrottleRules,
 	retryAfterSeconds,
 } from "../throttle";
@@ -284,12 +289,20 @@ export class PostRegister extends OpenAPIRoute {
 
 			// Signed in at once, which the form did by asking /login next. With
 			// Turnstile on that second request would need a second token, and
-			// the one the widget gave has just been spent here.
+			// the one the widget gave has just been spent here. The browser
+			// that registered is the first one this login trusts.
+			const deviceToken = newDeviceToken();
 			const session = await startSession(
 				c,
 				authDO,
-				await authDO.login(email, password),
+				await authDO.login(email, password, {
+					trusted: null,
+					grant: await deviceHash(deviceToken),
+				}),
 			);
+			if (session) {
+				c.header("Set-Cookie", deviceCookie(deviceToken), { append: true });
+			}
 			// The role, as every other route that answers with a user gives
 			// it; the schema said so and this one left it out.
 			const role =
@@ -345,17 +358,31 @@ export class PostLogin extends OpenAPIRoute {
 		if (refused) return refused;
 
 		const authDO = getAuthDO(c.env);
-		const rules = loginThrottleRules(email, clientIp(c.req.raw));
+		const presented = await Promise.all(
+			deviceTokensOf(c.req.raw).map(deviceHash),
+		);
 
 		// The attempt is counted before the password is checked, in the same
-		// call that checks the lock; see throttleTake for why.
-		const retryAfterMs = await authDO.throttleTake(rules);
+		// call that checks the lock; see throttleTake for why. That call also
+		// decides whether this browser is one the login trusts, which decides
+		// what the attempt is counted on (loginThrottleRules).
+		const { retryAfterMs, rules, trusted } = await authDO.loginTake(
+			email,
+			clientIp(c.req.raw),
+			presented,
+		);
 		if (retryAfterMs > 0) {
 			c.header("Retry-After", String(retryAfterSeconds(retryAfterMs)));
 			return c.json({ error: "Too many failed attempts" }, 429);
 		}
 
-		const session = await authDO.login(email, password);
+		// A new token at every sign-in, granted inside login, in the call
+		// that verifies the password; the one presented is retired there.
+		const deviceToken = newDeviceToken();
+		const session = await authDO.login(email, password, {
+			trusted,
+			grant: await deviceHash(deviceToken),
+		});
 
 		if (!session) {
 			return c.json({ error: "Invalid credentials" }, 401);
@@ -363,10 +390,14 @@ export class PostLogin extends OpenAPIRoute {
 
 		// Knowing the password clears this address's slate, so a user who
 		// mistyped a few times and then got it right is not left sitting on a
-		// near-lockout. The address's own IP only gets this attempt back.
+		// near-lockout. The address's own IP only gets this attempt back. A
+		// trusted browser's success clears its own key and not the address's:
+		// a stranger locked out of the address stays locked out.
 		await authDO.throttleSettle(rules);
 
-		return c.json(await startSession(c, authDO, session));
+		const body = await startSession(c, authDO, session);
+		c.header("Set-Cookie", deviceCookie(deviceToken), { append: true });
+		return c.json(body);
 	}
 }
 
@@ -420,12 +451,16 @@ export class PostChangePassword extends OpenAPIRoute {
 		}
 
 		// The current session is kept so the user is not signed out of the tab
-		// they are using; every other one is dropped inside changePassword.
+		// they are using; every other one is dropped inside changePassword,
+		// with every browser's standing. This browser is handed a new one,
+		// under the new password, in the same call.
+		const deviceToken = newDeviceToken();
 		const changed = await authDO.changePassword(
 			session.userId,
 			currentPassword,
 			newPassword,
 			session.id,
+			await deviceHash(deviceToken),
 		);
 		if (!changed) {
 			// 403, not 401: the session is fine, the password in the body is
@@ -434,6 +469,7 @@ export class PostChangePassword extends OpenAPIRoute {
 		}
 
 		await authDO.throttleSettle(rules);
+		c.header("Set-Cookie", deviceCookie(deviceToken), { append: true });
 		return c.json({ status: "Password changed" });
 	}
 }

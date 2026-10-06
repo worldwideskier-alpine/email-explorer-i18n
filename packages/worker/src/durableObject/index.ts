@@ -4,12 +4,19 @@ import { recordBackupNotRun } from "../backup-run";
 import { abandonPausedBackup } from "../backup-writer";
 import type { ClassifyInput, ClassifyResult } from "../claude-spam-filter";
 import { classifyWithClaude } from "../claude-spam-filter";
+import type { DeviceStanding } from "../login-device";
+import {
+	DEVICE_FAILURE_CAP,
+	DEVICE_TTL_MS,
+	MAX_PRESENTED_DEVICES,
+} from "../login-device";
 import type { NightStatus } from "../mailbox-night";
 import { cutOff, nightFor, runMailboxNight } from "../mailbox-night";
 import type { MailboxRecord } from "../mailbox-records";
 import { foldContinuedNight } from "../maintenance-record";
 import { hashPassword, verifyNothing, verifyPassword } from "../password";
 import type { ThrottleRule } from "../throttle";
+import { loginThrottleRules } from "../throttle";
 import type { Env, Session, User } from "../types";
 import { authMigrations, mailboxMigrations } from "./migrations";
 
@@ -335,8 +342,20 @@ export class MailboxDO extends DurableObject<Env> {
 		};
 	}
 
-	// Auth operation: login
-	async login(email: string, password: string): Promise<Session | null> {
+	/**
+	 * Auth operation: login.
+	 *
+	 * `device` is the browser it came from (see loginTake): a failure is
+	 * counted on its standing, and a success hands it a new one, here, in
+	 * the call that verified the password. Granted by a later call, a
+	 * password change landing between the two left browsers that had proved
+	 * the old password trusted under the new one -- ten of ten, measured.
+	 */
+	async login(
+		email: string,
+		password: string,
+		device?: DeviceStanding,
+	): Promise<Session | null> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
 		const user = this.#userRowByEmail(email);
@@ -344,31 +363,44 @@ export class MailboxDO extends DurableObject<Env> {
 			await verifyNothing(password);
 			return null;
 		}
+		const userId = String(user.id);
 		const { valid, needsRehash } = await verifyPassword(
 			password,
 			String(user.password_hash),
 		);
 
-		if (!valid) return null;
+		if (!valid) {
+			if (device?.trusted) this.#deviceFailed(device.trusted, userId);
+			return null;
+		}
 
 		// Create session (30 days expiry)
 		const sessionId = this.#generateToken();
 		const now = Date.now();
 		const expiresAt = now + 30 * 24 * 60 * 60 * 1000;
 
+		// What the password was just verified against: the browser's standing
+		// is bound to it, not to whatever the row holds by the time it is
+		// written.
+		const verified = {
+			email: String(user.email),
+			password_hash: String(user.password_hash),
+		};
+
 		// A correct password is the only moment the plaintext is available, so
 		// it is also the only moment an account still on the old unsalted
 		// SHA-256 can be moved onto PBKDF2. Doing it here means every account
 		// upgrades on its own next login, with nobody asked to reset anything.
 		if (needsRehash) {
+			verified.password_hash = await hashPassword(password);
 			this.#qb
 				.update({
 					tableName: "users",
 					data: {
-						password_hash: await hashPassword(password),
+						password_hash: verified.password_hash,
 						updated_at: now,
 					},
-					where: { conditions: "id = ?", params: [String(user.id)] },
+					where: { conditions: "id = ?", params: [userId] },
 				})
 				.execute();
 		}
@@ -394,16 +426,18 @@ export class MailboxDO extends DurableObject<Env> {
 				tableName: "sessions",
 				data: {
 					id: sessionId,
-					user_id: String(user.id),
+					user_id: userId,
 					expires_at: expiresAt,
 					created_at: now,
 				},
 			})
 			.execute();
 
+		if (device) await this.#grantDevice(userId, device, verified);
+
 		return {
 			id: sessionId,
-			userId: String(user.id),
+			userId,
 			email: String(user.email),
 			isAdmin: user.is_admin === 1,
 			expiresAt,
@@ -496,6 +530,13 @@ export class MailboxDO extends DurableObject<Env> {
 	 * they are the kept session's.
 	 */
 	#endSessions(userId: string, keepSessionId: string | null): void {
+		// And every browser's standing (login-device.ts): what proved the
+		// old password proves nothing now. The browser that made the change,
+		// if any, is handed a new one after this, in the same call.
+		this.ctx.storage.sql.exec(
+			"DELETE FROM login_devices WHERE user_id = ?",
+			userId,
+		);
 		const keep = keepSessionId ?? "";
 		this.ctx.storage.sql.exec(
 			"DELETE FROM sessions WHERE user_id = ? AND id != ?",
@@ -526,7 +567,143 @@ export class MailboxDO extends DurableObject<Env> {
 	 */
 	async throttleTake(rules: ThrottleRule[]): Promise<number> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+		return this.#throttleTakeNow(rules);
+	}
 
+	/**
+	 * Auth operation: take a sign-in attempt, deciding first which of the
+	 * presented browsers (digests of their `login_device` tokens), if any,
+	 * this login trusts -- the rules follow from that (loginThrottleRules).
+	 *
+	 * Trusted means a row for this login whose stamp is the login's
+	 * credentialStamp as it is now, granted within DEVICE_TTL_MS. The stamp
+	 * is awaited, so the row is read again after it and compared, as
+	 * resetPasswordWithStamp does; from there to the count nothing is
+	 * awaited, so the decision and the attempt it is counted on are one
+	 * step. Without a cookie nothing is looked up, and the attempt is
+	 * counted on the address as it always was.
+	 */
+	async loginTake(
+		email: string,
+		ip: string,
+		deviceHashes: string[],
+	): Promise<{
+		retryAfterMs: number;
+		rules: ThrottleRule[];
+		trusted: string | null;
+	}> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+
+		let trusted: { tokenHash: string; userId: string } | undefined;
+		const user = deviceHashes.length ? this.#userRowByEmail(email) : undefined;
+		if (user) {
+			const userId = String(user.id);
+			const before = this.#loginCredentials(userId);
+			const stamp = before ? await credentialStamp(before) : null;
+			const after = this.#loginCredentials(userId);
+			if (
+				stamp &&
+				after &&
+				after.email === before?.email &&
+				after.password_hash === before?.password_hash
+			) {
+				for (const tokenHash of deviceHashes.slice(0, MAX_PRESENTED_DEVICES)) {
+					const hit = this.ctx.storage.sql
+						.exec(
+							"SELECT 1 FROM login_devices WHERE token_hash = ? AND user_id = ? AND stamp = ? AND granted_at > ?",
+							tokenHash,
+							userId,
+							stamp,
+							Date.now() - DEVICE_TTL_MS,
+						)
+						.toArray();
+					if (hit.length > 0) {
+						trusted = { tokenHash, userId };
+						break;
+					}
+				}
+			}
+		}
+		const rules = loginThrottleRules(email, ip, trusted);
+		return {
+			retryAfterMs: this.#throttleTakeNow(rules),
+			rules,
+			trusted: trusted?.tokenHash ?? null,
+		};
+	}
+
+	/**
+	 * A browser has just proved the password of this login: it is trusted,
+	 * under the token `device.grant`, for the credentials it proved, and the
+	 * token it presented, if trusted, is retired. A token is never handed out
+	 * twice, so a copy of one stops working at the owner's next sign-in --
+	 * which is also what makes the failure cap mean anything, since a
+	 * success clears it.
+	 *
+	 * The stamp is awaited; if the login has moved on meanwhile (a password
+	 * changed, an address moved) nothing is granted, because what was proved
+	 * is not the login's any more.
+	 */
+	async #grantDevice(
+		userId: string,
+		device: DeviceStanding,
+		proved: { email: string; password_hash: string },
+	): Promise<void> {
+		if (device.trusted && device.trusted !== device.grant) {
+			this.ctx.storage.sql.exec(
+				"DELETE FROM login_devices WHERE token_hash = ? AND user_id = ?",
+				device.trusted,
+				userId,
+			);
+		}
+		const stamp = await credentialStamp(proved);
+		const now = this.#loginCredentials(userId);
+		if (
+			!now ||
+			now.email !== proved.email ||
+			now.password_hash !== proved.password_hash
+		) {
+			return;
+		}
+		const at = Date.now();
+		this.ctx.storage.sql.exec(
+			`INSERT INTO login_devices (token_hash, user_id, stamp, failures, granted_at)
+             VALUES (?, ?, ?, 0, ?)
+             ON CONFLICT(token_hash, user_id) DO UPDATE SET
+                 stamp = excluded.stamp,
+                 failures = 0,
+                 granted_at = excluded.granted_at`,
+			device.grant,
+			userId,
+			stamp,
+			at,
+		);
+		// A browser that was cleared never presents its token again, so the
+		// rows would grow for ever; every grant sweeps what has lapsed, as
+		// every sign-in sweeps lapsed sessions.
+		this.ctx.storage.sql.exec(
+			"DELETE FROM login_devices WHERE granted_at <= ?",
+			at - DEVICE_TTL_MS,
+		);
+	}
+
+	/** A wrong password from a trusted browser; see DEVICE_FAILURE_CAP. */
+	#deviceFailed(tokenHash: string, userId: string): void {
+		this.ctx.storage.sql.exec(
+			"UPDATE login_devices SET failures = failures + 1 WHERE token_hash = ? AND user_id = ?",
+			tokenHash,
+			userId,
+		);
+		this.ctx.storage.sql.exec(
+			"DELETE FROM login_devices WHERE token_hash = ? AND user_id = ? AND failures >= ?",
+			tokenHash,
+			userId,
+			DEVICE_FAILURE_CAP,
+		);
+	}
+
+	/** throttleTake, for a caller already inside the object. */
+	#throttleTakeNow(rules: ThrottleRule[]): number {
 		const now = Date.now();
 		let longest = 0;
 		for (const rule of rules) {
@@ -739,27 +916,22 @@ export class MailboxDO extends DurableObject<Env> {
 		currentPassword: string,
 		newPassword: string,
 		keepSessionId: string,
+		grantDevice?: string,
 	): Promise<boolean> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
-		const row = this.#qb
-			.select("users")
-			.fields(["password_hash"])
-			.where("id = ?", userId)
-			.one().results;
+		const row = this.#loginCredentials(userId);
 		if (!row) return false;
 
-		const { valid } = await verifyPassword(
-			currentPassword,
-			String(row.password_hash),
-		);
+		const { valid } = await verifyPassword(currentPassword, row.password_hash);
 		if (!valid) return false;
 
+		const passwordHash = await hashPassword(newPassword);
 		this.#qb
 			.update({
 				tableName: "users",
 				data: {
-					password_hash: await hashPassword(newPassword),
+					password_hash: passwordHash,
 					updated_at: Date.now(),
 				},
 				where: { conditions: "id = ?", params: [userId] },
@@ -767,6 +939,16 @@ export class MailboxDO extends DurableObject<Env> {
 			.execute();
 
 		this.#endSessions(userId, keepSessionId);
+		// The browser that changed it has just proved both passwords; it
+		// keeps a standing under the new one, granted in this call so that
+		// nothing can land between the change and the grant.
+		if (grantDevice) {
+			await this.#grantDevice(
+				userId,
+				{ trusted: null, grant: grantDevice },
+				{ email: row.email, password_hash: passwordHash },
+			);
+		}
 		return true;
 	}
 
@@ -843,6 +1025,14 @@ export class MailboxDO extends DurableObject<Env> {
 			if (String(e).includes("UNIQUE")) return "taken";
 			throw e;
 		}
+		// Every browser's standing goes with the old address (login-device.ts).
+		// The stamp alone does not end it: a login moved away and back has its
+		// old stamp again, and the browsers trusted before the first move were
+		// trusted again without signing in.
+		this.ctx.storage.sql.exec(
+			"DELETE FROM login_devices WHERE user_id = ?",
+			userId,
+		);
 		return "changed";
 	}
 
@@ -1002,6 +1192,10 @@ export class MailboxDO extends DurableObject<Env> {
 
 		for (const userId of logins) {
 			this.ctx.storage.sql.exec(
+				"DELETE FROM login_devices WHERE user_id = ?",
+				userId,
+			);
+			this.ctx.storage.sql.exec(
 				"DELETE FROM sessions WHERE user_id = ?",
 				userId,
 			);
@@ -1039,6 +1233,10 @@ export class MailboxDO extends DurableObject<Env> {
 			return "last-login";
 		}
 
+		this.ctx.storage.sql.exec(
+			"DELETE FROM login_devices WHERE user_id = ?",
+			userId,
+		);
 		this.ctx.storage.sql.exec("DELETE FROM sessions WHERE user_id = ?", userId);
 		this.ctx.storage.sql.exec(
 			"DELETE FROM push_subscriptions WHERE user_id = ?",
@@ -1075,6 +1273,7 @@ export class MailboxDO extends DurableObject<Env> {
 		userId: string,
 		password: string,
 		stamp: string,
+		grantDevice?: string,
 	): Promise<"ok" | "stale"> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
@@ -1098,6 +1297,16 @@ export class MailboxDO extends DurableObject<Env> {
 			userId,
 		);
 		this.#endSessions(userId, null);
+		// The browser that finished the reset has just shown it can read the
+		// mail the link went to -- the one place the owner is known to be
+		// (OWASP hands out a device cookie at a reset link for that reason).
+		if (grantDevice) {
+			await this.#grantDevice(
+				userId,
+				{ trusted: null, grant: grantDevice },
+				{ email: after.email, password_hash: hashed },
+			);
+		}
 		return "ok";
 	}
 

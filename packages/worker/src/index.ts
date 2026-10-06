@@ -9,6 +9,7 @@ import { classifyWithClaude } from "./claude-spam-filter";
 import { recoveryFromEmail } from "./deployment-config";
 import { ingestEmailIntoMailbox } from "./email-ingest";
 import { ensureLegacyMailboxGrants } from "./legacy-grants";
+import { deviceCookie, deviceHash, newDeviceToken } from "./login-device";
 import { buildPasswordResetEmail, MAIL_LOCALES } from "./mail-templates";
 import { personHoldsMailbox, sendsAsMailbox } from "./mailbox-access";
 import { deletedMailboxKey, holdsMailOrArchives } from "./mailbox-destroy";
@@ -2284,13 +2285,16 @@ class PostResetPassword extends OpenAPIRoute {
 		//
 		// And only if the login is as it was when the link went out: see
 		// resetPasswordWithStamp, which is also what makes a second use of
-		// the same link fail when both arrive at once.
+		// the same link fail when both arrive at once. The browser that
+		// finished it is the one this login trusts afterwards (login-device.ts).
+		const deviceToken = newDeviceToken();
 		let result: "ok" | "stale";
 		try {
 			result = await authStub.resetPasswordWithStamp(
 				tokenData.userId,
 				newPassword,
 				tokenData.stamp,
+				await deviceHash(deviceToken),
 			);
 		} catch (e) {
 			return c.json({ error: "Failed to update password" }, 500);
@@ -2299,6 +2303,7 @@ class PostResetPassword extends OpenAPIRoute {
 			return c.json({ error: "Invalid or expired token" }, 401);
 		}
 
+		c.header("Set-Cookie", deviceCookie(deviceToken), { append: true });
 		return c.json({ status: "Password reset successfully" });
 	}
 }
