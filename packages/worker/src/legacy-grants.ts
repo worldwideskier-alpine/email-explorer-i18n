@@ -63,6 +63,20 @@ async function listMailboxIds(env: Env): Promise<string[]> {
 	return ids;
 }
 
+/**
+ * Whether the run that wrote the marker granted nothing because it passed
+ * over every mailbox it found. A marker written before runs counted these
+ * has neither field, and reads as no.
+ */
+async function passedOverEverything(env: Env): Promise<boolean> {
+	const marker = await env.BUCKET.get(MARKER_KEY);
+	if (!marker) return false;
+	const { granted, passedOver } = await marker
+		.json<{ granted?: unknown; passedOver?: unknown }>()
+		.catch(() => ({ granted: undefined, passedOver: undefined }));
+	return granted === 0 && typeof passedOver === "number" && passedOver > 0;
+}
+
 export async function ensureLegacyMailboxGrants(
 	env: Env,
 ): Promise<BackfillResult> {
@@ -98,11 +112,22 @@ export async function ensureLegacyMailboxGrants(
 	 * else's mail out. The original reasoning here ("nothing of theirs to
 	 * overwrite") was true and did not say that: the run grants every mailbox
 	 * in the bucket, not the ones this person used to have.
+	 *
+	 * Nor when the run that wrote the marker left them nothing on purpose:
+	 * every mailbox it found was at somebody else's sign-in address and was
+	 * passed over (see below). That is a decision, not mail gone missing, and
+	 * running again would only make it again -- a listing of the bucket on
+	 * every cold isolate, in front of the mailbox list and every mailbox
+	 * request, for as long as the deployment lives.
 	 */
 	if (await env.BUCKET.head(MARKER_KEY)) {
 		const held = await authDO.listPersonMailboxes(LEGACY_ADMIN_PERSON_ID);
 		const logins = await authDO.listPersonLoginIds(LEGACY_ADMIN_PERSON_ID);
-		if (held.length > 0 || logins.length === 0) {
+		if (
+			held.length > 0 ||
+			logins.length === 0 ||
+			(await passedOverEverything(env))
+		) {
 			checkedInThisIsolate = true;
 			return nothingToDo;
 		}
@@ -180,6 +205,8 @@ export async function ensureLegacyMailboxGrants(
 			at: new Date().toISOString(),
 			mailboxes: mailboxes.length,
 			accounts: owners.length,
+			granted,
+			passedOver: mailboxes.length - granted,
 		}),
 	);
 	checkedInThisIsolate = true;

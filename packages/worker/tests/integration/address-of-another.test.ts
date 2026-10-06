@@ -657,6 +657,67 @@ describe("the legacy backfill", () => {
 		expect(await sentTo(people.victim.address)).toHaveLength(1);
 	});
 
+	it("does not run again on every cold isolate after passing over everything it found", async () => {
+		const { at, root, people } = await setUp();
+		const oldAdmin = at("old-admin");
+		expect(
+			(
+				await root(
+					`${API}/root/accounts`,
+					post({ email: oldAdmin, password: PASSWORD, role: "admin" }),
+				)
+			).status,
+		).toBe(201);
+		await runInDurableObject(auth(), async (_i, state) => {
+			state.storage.sql.exec(
+				"UPDATE users SET person_id = ? WHERE email = ?",
+				LEGACY_ADMIN_PERSON_ID,
+				oldAdmin,
+			);
+		});
+		// The only mailbox nobody holds is at somebody else's sign-in
+		// address, so the old person is left holding nothing -- which, with
+		// logins, is also what the marker's override reads as mail gone
+		// missing.
+		await env.BUCKET.put(`mailboxes/${people.victim.address}.json`, "{}");
+		await env.BUCKET.delete(MARKER_KEY);
+		resetLegacyGrantMemo();
+
+		expect(await ensureLegacyMailboxGrants(env)).toMatchObject({
+			ran: true,
+			mailboxes: 1,
+			granted: 0,
+		});
+		for (const isolate of [2, 3]) {
+			resetLegacyGrantMemo();
+			expect(
+				(await ensureLegacyMailboxGrants(env)).ran,
+				`cold isolate ${isolate}`,
+			).toBe(false);
+		}
+
+		// Narrow: mail that went missing after a run that did grant is still
+		// put back, which is what the override is for.
+		await env.BUCKET.put(`mailboxes/${at("legacy-box")}.json`, "{}");
+		await env.BUCKET.delete(MARKER_KEY);
+		resetLegacyGrantMemo();
+		expect(await ensureLegacyMailboxGrants(env)).toMatchObject({
+			ran: true,
+			granted: 1,
+		});
+		await runInDurableObject(auth(), async (_i, state) => {
+			state.storage.sql.exec(
+				"DELETE FROM person_mailboxes WHERE person_id = ?",
+				LEGACY_ADMIN_PERSON_ID,
+			);
+		});
+		resetLegacyGrantMemo();
+		expect(await ensureLegacyMailboxGrants(env)).toMatchObject({
+			ran: true,
+			granted: 1,
+		});
+	});
+
 	it("is told so by the auth object, which grants the same address to the person who signs in with it", async () => {
 		const { people } = await setUp();
 		expect(
