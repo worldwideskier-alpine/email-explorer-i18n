@@ -243,8 +243,116 @@ describe("a mailbox at somebody else's sign-in address", () => {
 	});
 });
 
+describe("one address in two spellings", () => {
+	beforeEach(() => resetLegacyGrantMemo());
+
+	it("is refused as a mailbox at a sign-in address kept in capitals from before, and let through to its own person", async () => {
+		const { people } = await setUp();
+		// Sign-in rows from before addresses were lowercased keep their
+		// capitals, and sign-in finds them by either spelling. A reset sent
+		// to one is filed in the mailbox of the lowercased address.
+		const kept = people.victim.address.replace(/^v/, "V");
+		await runInDurableObject(auth(), async (_i, state) => {
+			state.storage.sql.exec(
+				"UPDATE users SET email = ? WHERE id = ?",
+				kept,
+				people.victim.user,
+			);
+		});
+		const squatter = as(await signIn(people.squatter.address));
+		const victim = as(await signIn(people.victim.address));
+
+		const taken = await squatter(
+			`${API}/mailboxes`,
+			post({ email: people.victim.address, name: "x" }),
+		);
+		expect(taken.status).toBe(409);
+
+		const own = await victim(
+			`${API}/mailboxes`,
+			post({ email: people.victim.address, name: "me" }),
+		);
+		expect(own.status).toBe(201);
+		await forgot(people.victim.address);
+		expect(await sentTo(people.victim.address)).toHaveLength(1);
+	});
+
+	it("is refused as a sign-in at a mailbox granted in capitals from before", async () => {
+		const { at, root, people } = await setUp();
+		// A capitalised mailbox receives nothing -- inbound mail is filed by
+		// the lowercased recipient -- so this is not about whose reset it
+		// would read. It is the two questions agreeing on what one address
+		// is, as sign-in does.
+		const address = at("granted");
+		await holdFromBefore(
+			people.squatter.person,
+			address.replace(/^g/, "G"),
+			false,
+		);
+
+		const made = await root(
+			`${API}/root/accounts`,
+			post({ email: address, password: PASSWORD, role: "admin" }),
+		);
+		expect(made.status).toBe(400);
+		expect(await made.json()).toEqual({ error: "Mailbox already exists" });
+	});
+});
+
 describe("a sign-in at somebody else's mailbox", () => {
 	beforeEach(() => resetLegacyGrantMemo());
+
+	it("races a mailbox at the same new address inside the auth object, either one first, and only one of them gets it", async () => {
+		const { at, people } = await setUp();
+		// Sent at once, straight to the auth object, in both orders and for
+		// each way a login comes to an address. The route-level race above
+		// is decided by whichever request reaches the object first, which
+		// has been the login; these send the mailbox first as well.
+		// Each is ready to send in one call, so that the order sent is the
+		// order the object takes them in.
+		const makers = {
+			register: async () => (address: string) =>
+				auth().register(address, PASSWORD, false, people.self.person),
+			registerFromForm: async () => (address: string) =>
+				auth().registerFromForm(address, PASSWORD, false),
+			confirmEmailChange: async () => {
+				const stamp = String(await auth().emailChangeStamp(people.self.user));
+				return (address: string) =>
+					auth().confirmEmailChange(people.self.user, address, stamp);
+			},
+		};
+		for (const [make, ready] of Object.entries(makers)) {
+			for (const mailboxFirst of [true, false]) {
+				const label = `${make}, ${mailboxFirst ? "mailbox" : "login"} first`;
+				const address = at(`both-${make}-${mailboxFirst}`);
+				const login = await ready();
+				const claim = () =>
+					auth().claimMailboxForPersonOf(people.squatter.user, address);
+				const [claimed, made] = mailboxFirst
+					? await Promise.allSettled([claim(), login(address)])
+					: await Promise.allSettled([login(address), claim()]).then(
+							([l, c]) => [c, l] as const,
+						);
+
+				const loginMade =
+					made.status === "fulfilled" &&
+					(make !== "confirmEmailChange" || made.value === "changed");
+				const mailboxClaimed =
+					claimed.status === "fulfilled" && claimed.value === true;
+				expect([loginMade, mailboxClaimed], label).toContain(true);
+				expect(loginMade, label).not.toBe(mailboxClaimed);
+				expect((await auth().getUserByEmail(address)) !== null, label).toBe(
+					loginMade,
+				);
+				expect(
+					(await auth().listPersonMailboxes(people.squatter.person)).includes(
+						address,
+					),
+					label,
+				).toBe(mailboxClaimed);
+			}
+		}
+	});
 
 	it("is refused when root makes a person there, deleted mailbox or live", async () => {
 		const { at, root, people } = await setUp();
