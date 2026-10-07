@@ -154,9 +154,9 @@ export function workerVersionMismatch(expected, served) {
 }
 
 /**
- * The address `wrangler deploy` says it deployed to: the first `https://` line
- * under its "Deployed <name> triggers" line. Null when it names none -- a
- * Worker with neither a workers.dev address nor a route.
+ * Every address `wrangler deploy` says it deployed to: the `https://` lines
+ * under its "Deployed <name> triggers" line -- workers.dev, then any route or
+ * custom domain. Empty when it names none.
  *
  * Read from wrangler's own output so that nothing has to be set for the check
  * to run: it used to need the address as a GitHub secret, which a fork had to
@@ -164,16 +164,127 @@ export function workerVersionMismatch(expected, served) {
  * check, the rollback that hangs on it. The output is read from a file the
  * deploy step writes, never from the log, which has every address struck out.
  */
-export function deployedAddress(deployOutput) {
+export function deployedAddresses(deployOutput) {
 	const lines = (deployOutput ?? "").split(/\r?\n/);
 	const at = lines.findIndex((line) =>
 		/^\s*Deployed \S+ triggers\b/.test(line),
 	);
-	if (at < 0) return null;
+	if (at < 0) return [];
+	const found = [];
 	for (const line of lines.slice(at + 1)) {
 		if (!/^\s/.test(line)) break;
 		const url = /^\s+(https:\/\/[^\s()]+)\s*$/.exec(line);
-		if (url) return url[1].replace(/\/+$/, "");
+		if (url) found.push(url[1].replace(/\/+$/, ""));
 	}
-	return null;
+	return found;
+}
+
+/** The first of them, which the deploy's check asks; null when none. */
+export function deployedAddress(deployOutput) {
+	return deployedAddresses(deployOutput)[0] ?? null;
+}
+
+/**
+ * Whether an answer is Cloudflare Access standing in front of the
+ * deployment: a redirect to a team's sign-in page at `*.cloudflareaccess.com`.
+ *
+ * Behind Access nothing here can ask the deployment what it serves -- the
+ * runner is nobody Access lets in -- and asking anyway failed every deploy
+ * and rolled it back. Told apart by the redirect's host, so that a deployment
+ * that answers wrongly in any other way still fails.
+ */
+export function behindAccess(status, location) {
+	if (![301, 302, 303, 307, 308].includes(status) || !location) return false;
+	try {
+		return /(^|\.)cloudflareaccess\.com$/i.test(new URL(location).hostname);
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * The Access team a sign-in redirect names, as the issuer its tokens carry:
+ * `https://<team>.cloudflareaccess.com`. Null for anything else.
+ *
+ * The deploy writes this for the Worker (cloudflare-access.ts), which then
+ * refuses every request that does not carry a token that team signed. Read
+ * from the redirect the deployment itself answered the runner with, so it is
+ * the team actually in front -- never one a request names.
+ */
+export function accessTeamFrom(status, location) {
+	if (!behindAccess(status, location)) return null;
+	try {
+		const url = new URL(location);
+		const issuer = `https://${url.hostname.toLowerCase()}`;
+		return url.protocol === "https:" &&
+			url.port === "" &&
+			/^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.cloudflareaccess\.com$/.test(
+				issuer,
+			)
+			? issuer
+			: null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * The application a sign-in redirect is for: its `kid`, which names the
+ * application by its audience tag (64 hex digits). Null when there is none
+ * of that shape, and the Worker then learns it from the first token of the
+ * team instead.
+ */
+export function accessAudienceFrom(location) {
+	try {
+		const kid = new URL(location).searchParams.get("kid") ?? "";
+		return /^[0-9a-f]{64}$/.test(kid) ? kid : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * How one address answered for one path, as far as Access is concerned:
+ *
+ *   behind  -- a team's sign-in redirect, with its team and application.
+ *   open    -- the page or the API itself (200, no redirect).
+ *   unknown -- anything else: an error, a redirect elsewhere, no answer.
+ */
+export function accessDoor(status, location) {
+	const issuer = accessTeamFrom(status, location);
+	if (issuer) {
+		return { door: "behind", issuer, audience: accessAudienceFrom(location) };
+	}
+	if (status === 200 && !location) return { door: "open" };
+	return { door: "unknown" };
+}
+
+/**
+ * What the deploy does about the Worker's Access settings, from every answer
+ * it had -- each address wrangler deployed to, each asked for its page and
+ * for an API path:
+ *
+ *   behind  -- any of them is behind a team: write that team, and the
+ *              applications if every one of them named its own. One address
+ *              Access does not cover is exactly where the Worker's own check
+ *              is needed, so it does not outvote one that is covered.
+ *   open    -- every one answered without Access: delete the settings, or
+ *              the Worker would refuse every request, which has no token
+ *              once Access is off.
+ *   unknown -- two teams, or no clear answer: leave them as they are.
+ */
+export function accessDoorOf(answers) {
+	const behind = answers.filter((answer) => answer.door === "behind");
+	if (behind.length > 0) {
+		const issuers = new Set(behind.map((answer) => answer.issuer));
+		if (issuers.size !== 1) return { door: "unknown", reason: "two teams" };
+		const audiences = behind.every((answer) => answer.audience)
+			? [...new Set(behind.map((answer) => answer.audience))].sort()
+			: [];
+		return { door: "behind", issuer: behind[0].issuer, audiences };
+	}
+	if (answers.length > 0 && answers.every((answer) => answer.door === "open")) {
+		return { door: "open" };
+	}
+	return { door: "unknown" };
 }

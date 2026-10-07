@@ -511,6 +511,52 @@ describe("the deploy workflow", () => {
 		expect(back).toContain("BEFORE: ${{ steps.before.outputs.version }}");
 	});
 
+	/**
+	 * The Worker's Access settings are written from the redirect the deployed
+	 * address answers with (scripts/access-door.mjs). After the deploy, so the
+	 * address is the one just deployed to; never failing the run, since the
+	 * code is live by then and a failure rolls it back; and the probe, which
+	 * talks to the deployment, is run without the Cloudflare token.
+	 */
+	it("writes the Worker's Access settings from the deployment's own answer", () => {
+		const steps = (deploy ?? "").split(/\n {6}- /);
+		const at = (name: string) =>
+			steps.findIndex((one) => one.startsWith(`name: ${name}`));
+		const name = "Tell the Worker which Access team stands in front";
+		expect(at(name)).toBeGreaterThan(at("Deploy Worker"));
+		expect(at(name)).toBeLessThan(at("Check the deployment serves this build"));
+		const step = steps[at(name)] ?? "";
+		expect(step).not.toMatch(/\n {8}if:/);
+		const lines = runLines(step);
+		expect(lines).toContain(
+			"env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID node ../scripts/access-door.mjs || true",
+		);
+		// Under `bash -e`, every line one that cannot end the step.
+		const cannotFail = [
+			/^set -o pipefail$/,
+			/^(?:if|elif) .+; then$/,
+			/^(?:else|fi)$/,
+			/^echo "[^"$`\\]*"$/,
+			/^(\w+)="\$\(.+\)" \|\| \1=""$/,
+			/^env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID node \S+ \|\| true$/,
+		];
+		for (const line of lines) {
+			expect(
+				cannotFail.some((shape) => shape.test(line)),
+				line,
+			).toBe(true);
+		}
+		const r2 = lines.filter((line) => line.includes("wrangler r2"));
+		expect(r2).toHaveLength(2);
+		for (const line of r2) {
+			expect(line).toContain('"$bucket/settings/access.json"');
+			expect(line).toContain("--remote");
+			expect(line).toMatch(/^if timeout \d+ npx wrangler r2 object /);
+		}
+		expect(r2[0]).toContain('--file "$RUNNER_TEMP/access.json"');
+		expect(r2[1]).toMatch(/wrangler r2 object delete /);
+	});
+
 	/** A tag can be moved to code nobody here has read; a commit cannot. */
 	it("runs actions pinned to a commit", () => {
 		for (const [path, source] of Object.entries(workflows)) {
@@ -570,5 +616,17 @@ describe("the night check workflow", () => {
 			(nightCheck ?? "").indexOf("    steps:"),
 		);
 		expect(jobEnv).not.toContain("secrets.");
+	});
+});
+
+/**
+ * The addresses the deployment answers on. workers.dev is where it is used,
+ * behind Cloudflare Access; a preview address per uploaded version would be
+ * one more way in for Access to have to cover, so there are none.
+ */
+describe("the deployment's addresses", () => {
+	it("answers on workers.dev and on no preview address", () => {
+		expect(wrangler).toMatch(/\n\t"workers_dev": true,\n/);
+		expect(wrangler).toMatch(/\n\t"preview_urls": false,\n/);
 	});
 });

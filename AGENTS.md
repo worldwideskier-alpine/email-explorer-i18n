@@ -265,6 +265,46 @@ are still checked, by the `tsc` that runs before the worker tests.
   left to the stamp: a login moved to another address and back has its old
   stamp again, and the browsers from before were trusted again without
   signing in. `login-device.test.ts`.
+- **Cloudflare Access stands in front, and the Worker checks it did.** The
+  owner put Access over every address the Worker answers on, members of the
+  Cloudflare account only. Every request the Worker handles first has the
+  token Access signs (`Cf-Access-Jwt-Assertion`) checked
+  (`cloudflare-access.ts`, at the top of `fetch()`, before sign-in and the
+  session gate): issued by this deployment's team -- compared before any key
+  is fetched -- RS256 alone, by a key that team publishes, in date, for this
+  application. Which team and application are the deployment's are
+  **written by the deploy**, never learned from a request: the step "Tell
+  the Worker which Access team stands in front" asks every address wrangler
+  deployed to, and `PRODUCTION_URL`, for `/` and for an API path without
+  following redirects (`scripts/access-door.mjs`). Behind Access the answer
+  is a redirect to the team's sign-in, whose host is the team and whose
+  `kid` names the application by its audience tag. Any answer behind a
+  team writes that team, with the applications, to `settings/access.json`
+  (`accessDoorOf`), using the R2 access the deploy already has; only when
+  every answer came without Access is the file deleted, so Access taken off
+  stops refusing requests at the next deploy, while an address Access does
+  not cover never outvotes one it does -- that address is where the
+  Worker's own check is needed. Nothing is set by hand, nothing names a team
+  in this public repository, and a fork's team, or none, is found the same
+  way. The first version learned the team from the first token that
+  verified, and anybody can make a team: on a deployment without Access, or
+  an address Access did not cover, a stranger's token fixed the stranger's
+  team and locked the owner out. A redirect with no `kid` of an audience
+  tag's shape leaves the applications unwritten, and the first token from
+  the written team then fixes one -- the fallback the instruction for this
+  allowed, not the rule, since on an uncovered address another application
+  of the same team could be first. With no file, every request passes: a
+  fork without Access, the tests, `wrangler dev`. The settings are read again every thirty seconds; a team's keys that
+  cannot be had answer 503, not 403, and settings that cannot be read fail
+  closed. Mail and the nightly run are no requests and are not asked. A token
+  is no session: the gates behind this one are unchanged.
+  `cloudflare-access.test.ts`, `deployment-check.test.ts`.
+  Behind Access the deploy's last check cannot reach the deployment -- the
+  runner is nobody Access lets in -- and asking anyway failed every deploy and
+  rolled it back. It recognises the redirect to a team's sign-in page
+  (`behindAccess`), says so, and goes by the version Cloudflare reports live;
+  the bytes served are not compared there. Preview addresses are off
+  (`preview_urls: false`): one per version, each another way in.
 - **Turnstile guards the forms a stranger reaches** -- sign-in, registration,
   the reset request -- once root sets it on `/root` (`turnstile.ts`, kept in
   `settings/turnstile.json`). A pair is saved only after it passed siteverify

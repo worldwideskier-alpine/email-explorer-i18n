@@ -333,6 +333,44 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # Cloudflare Access, when it stands in front, hands every request it
+      # lets through a token the Worker checks (src/cloudflare-access.ts).
+      # Which team signs them is read here, off the redirect the deployed
+      # address answers the runner with, and written to the bucket with the
+      # R2 access the token already has; a page answered without one deletes
+      # it, since the Worker would otherwise refuse every request once Access
+      # is off. Nothing is set by hand, and a fork's team, or none, is found
+      # the same way. Neither the address nor the team is printed.
+      #
+      # Never fails the run: the new code is live, and a failure here would
+      # roll it back for a setting that the next deploy writes again.
+      - name: Tell the Worker which Access team stands in front
+        working-directory: packages/worker/dev
+        run: |
+          set -o pipefail
+          env -u CLOUDFLARE_API_TOKEN -u CLOUDFLARE_ACCOUNT_ID node ../scripts/access-door.mjs || true
+          door="$(cat "$RUNNER_TEMP/access-door.txt")" || door=""
+          bucket="$(node ../scripts/bucket-name.mjs)" || bucket=""
+          if [ -z "$bucket" ]; then
+            echo "::warning::Could not read the bucket's name, so the Worker's Access settings were left as they are."
+          elif [ "$door" = "behind" ]; then
+            if timeout 90 npx wrangler r2 object put "$bucket/settings/access.json" --file "$RUNNER_TEMP/access.json" --content-type application/json --remote 2>&1 | node ../scripts/withhold.mjs; then
+              echo "Access stands in front; the Worker checks its token from that team."
+            else
+              echo "::warning::Access stands in front, but writing its team for the Worker failed; the next deploy tries again."
+            fi
+          elif [ "$door" = "open" ]; then
+            if timeout 90 npx wrangler r2 object delete "$bucket/settings/access.json" --remote 2>&1 | node ../scripts/withhold.mjs; then
+              echo "No Access in front; the Worker checks no Access token."
+            else
+              echo "::warning::No Access in front, but deleting the Worker's Access settings failed; the next deploy tries again."
+            fi
+          else
+            echo "::warning::Could not tell whether Access stands in front, so the Worker's Access settings were left as they are."
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       # And the question the rest of it cannot answer: is the deployment
       # serving this build? An accepted upload is not a served one. See
       # scripts/deployment-check.mjs.

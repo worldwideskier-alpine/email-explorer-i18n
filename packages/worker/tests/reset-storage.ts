@@ -1,5 +1,6 @@
 import { reset } from "cloudflare:test";
 import { afterEach } from "vitest";
+import { forgetAccessState } from "../src/cloudflare-access";
 
 /**
  * Clears the Durable Object and R2 state between tests.
@@ -16,4 +17,7 @@ import { afterEach } from "vitest";
  */
 afterEach(async () => {
 	await reset();
+	// The Access settings are kept for a while in the isolate; storage gone,
+	// the next test must not inherit them.
+	forgetAccessState();
 });
