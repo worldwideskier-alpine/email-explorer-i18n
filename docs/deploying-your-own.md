@@ -235,6 +235,14 @@ nothing here to conflict.
 - **Second-pass spam filtering.** Per mailbox, on the settings screen, you can
   add an Anthropic API key. Mail that already passed the SPF/DKIM/DMARC check
   is then also read by Claude. With no key that stage is skipped entirely.
+- **Cloudflare Access in front.** Nothing to set here either. If you put
+  Access over the Worker, the next deploy finds your team from the sign-in
+  page the address now redirects to, and from then on the Worker refuses any
+  request Access did not sign. Take Access off and the next deploy finds that
+  too; until it runs, the Worker keeps refusing requests, so run the deploy
+  (Actions, "Deploy to Cloudflare", "Run workflow") after turning it off.
+  Note that Access stops everybody it does not let in, including the people
+  your mailboxes are for and the links in reset and confirmation mail.
 
 ## How the configuration reaches the Worker
 

@@ -1,6 +1,10 @@
 import { createExecutionContext, env, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
-import { ACCESS_KEY } from "../../src/cloudflare-access";
+import {
+	ACCESS_KEY,
+	checkAccess,
+	forgetAccessState,
+} from "../../src/cloudflare-access";
 import {
 	createDummyMailbox,
 	mailboxId,
@@ -12,7 +16,8 @@ import {
  * The Cloudflare Access signature, checked by the Worker on every request it
  * handles (cloudflare-access.ts). Access stands in front of the deployment;
  * the Worker refuses what Access did not let through, by the token Access
- * signs, once it has learned which team and application are its own.
+ * signs, once the deploy has written which team is in front
+ * (`settings/access.json`, from the redirect the deployment answered it with).
  *
  * Tokens are signed here with the private half of the pool's stand-in key
  * (vitest.config.mts), which the pool hands to any `*.cloudflareaccess.com`
@@ -72,33 +77,64 @@ const ask = (assertion?: string) =>
 		headers: assertion ? { "Cf-Access-Jwt-Assertion": assertion } : {},
 	});
 
-const pinned = async () => {
+/** What the deploy writes, and what the Worker has made of it since. */
+const settle = (value: Record<string, unknown>) =>
+	env.BUCKET.put(ACCESS_KEY, JSON.stringify(value));
+const stored = async () => {
 	const object = await env.BUCKET.get(ACCESS_KEY);
 	return object ? await object.json() : null;
 };
 
-describe("the Access signature", () => {
-	it("lets a deployment without Access through, and pins nothing", async () => {
+describe("a deployment the deploy found no Access in front of", () => {
+	it("lets every request through, and writes nothing", async () => {
 		expect((await ask()).status).toBe(200);
-		expect(await pinned()).toBeNull();
+		// Not even a token of a team's own fixes anything: the team is the
+		// deploy's to write, never a request's. Learning it from the first
+		// token let anybody with a team lock the owner out.
+		expect((await ask(await token())).status).toBe(200);
+		expect(
+			(await ask(await token({ iss: "https://other.cloudflareaccess.com" })))
+				.status,
+		).toBe(200);
+		expect((await ask("garbage")).status).toBe(200);
+		expect(await stored()).toBeNull();
+	});
+});
+
+describe("a deployment with Access in front", () => {
+	it("refuses a request with no token", async () => {
+		await settle({ issuer: TEAM });
+		expect((await ask()).status).toBe(403);
 	});
 
-	it("pins the team and application of the first token, then holds every request to them", async () => {
+	it("fixes the application from the first token its team signed, then holds every request to it", async () => {
+		await settle({ issuer: TEAM });
 		expect((await ask(await token())).status).toBe(200);
-		expect(await pinned()).toEqual({ issuer: TEAM, audience: AUD });
-
+		expect(await stored()).toEqual({ issuer: TEAM, audience: AUD });
+		forgetAccessState();
 		expect((await ask(await token())).status).toBe(200);
-		// From here a request Access did not sign is refused.
-		expect((await ask()).status).toBe(403);
 		expect((await ask(await token({ aud: ["another-app"] }))).status).toBe(403);
+		expect((await ask()).status).toBe(403);
+	});
+
+	it("refuses another team's token without asking that team for its keys", async () => {
+		await settle({ issuer: TEAM });
+		// The pool's stand-in answers any team with the key that signed this,
+		// so only the issuer can refuse it; and a team that does not answer
+		// would be a 503 had it been asked.
 		expect(
 			(await ask(await token({ iss: "https://other.cloudflareaccess.com" })))
 				.status,
 		).toBe(403);
+		expect(
+			(await ask(await token({ iss: "https://down.cloudflareaccess.com" })))
+				.status,
+		).toBe(403);
+		expect(await stored()).toEqual({ issuer: TEAM });
 	});
 
 	it("takes an audience the token lists among others", async () => {
-		await ask(await token());
+		await settle({ issuer: TEAM, audience: AUD });
 		expect((await ask(await token({ aud: ["x", AUD] }))).status).toBe(200);
 		expect((await ask(await token({ aud: AUD }))).status).toBe(200);
 	});
@@ -122,12 +158,14 @@ describe("the Access signature", () => {
 		["signed with another algorithm", {}, { alg: "HS256" }],
 		["signed with none", {}, { alg: "none" }],
 		["signed with a key the team does not publish", {}, { kid: "unknown" }],
-	])("refuses a token %s, and pins nothing", async (_, claims, header) => {
+	])("refuses a token %s, and fixes nothing", async (_, claims, header) => {
+		await settle({ issuer: TEAM });
 		expect((await ask(await token(claims, header))).status).toBe(403);
-		expect(await pinned()).toBeNull();
+		expect(await stored()).toEqual({ issuer: TEAM });
 	});
 
 	it("refuses a token whose signature does not verify", async () => {
+		await settle({ issuer: TEAM });
 		const good = await token();
 		const [head, , signature] = good.split(".");
 		const forged = base64Url(
@@ -136,10 +174,11 @@ describe("the Access signature", () => {
 		expect((await ask(`${head}.${forged}.${signature}`)).status).toBe(403);
 		expect((await ask("not.a.token")).status).toBe(403);
 		expect((await ask("garbage")).status).toBe(403);
-		expect(await pinned()).toBeNull();
+		expect(await stored()).toEqual({ issuer: TEAM });
 	});
 
-	it("answers 503, not 403, when the team's keys cannot be had", async () => {
+	it("answers 503, not 403, when its team's keys cannot be had", async () => {
+		await settle({ issuer: "https://down.cloudflareaccess.com" });
 		const response = await ask(
 			await token({ iss: "https://down.cloudflareaccess.com" }),
 		);
@@ -148,7 +187,7 @@ describe("the Access signature", () => {
 	});
 
 	it("comes before every route, sign-in and the session gate included", async () => {
-		await ask(await token());
+		await settle({ issuer: TEAM, audience: AUD });
 		const signIn = await SELF.fetch("http://local.test/api/v1/auth/login", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -162,6 +201,7 @@ describe("the Access signature", () => {
 	it("does not stand in for a session: Access's token alone reaches no mailbox", async () => {
 		await testAuthBeforeAll();
 		await createDummyMailbox();
+		await settle({ issuer: TEAM, audience: AUD });
 		const assertion = await token();
 		const without = await SELF.fetch(
 			`http://local.test/api/v1/mailboxes/${mailboxId}/emails?folder=inbox`,
@@ -183,7 +223,7 @@ describe("the Access signature", () => {
 	it("leaves mail delivery alone: it is no request", async () => {
 		await testAuthBeforeAll();
 		await createDummyMailbox();
-		await ask(await token());
+		await settle({ issuer: TEAM, audience: AUD });
 		const worker = await import("../../dev/index");
 		const raw = new TextEncoder().encode(
 			`From: sender@example.org\r\nTo: ${mailboxId}\r\nSubject: Arrives behind Access\r\n\r\nHello`,
@@ -215,27 +255,62 @@ describe("the Access signature", () => {
 		expect(emails.map((e) => e.subject)).toContain("Arrives behind Access");
 	});
 
-	it("pins once when the first two tokens arrive together", async () => {
-		const [a, b] = await Promise.all([ask(await token()), ask(await token())]);
-		expect([a.status, b.status]).toEqual([200, 200]);
-		expect(await pinned()).toEqual({ issuer: TEAM, audience: AUD });
-	});
-
-	it("keeps the first pin when two first tokens disagree", async () => {
+	it("keeps the first application when the first two tokens disagree", async () => {
+		await settle({ issuer: TEAM });
 		const answers = await Promise.all([
 			ask(await token({ aud: ["first-app"] })),
 			ask(await token({ aud: ["second-app"] })),
 		]);
 		const statuses = answers.map((a) => a.status).sort();
 		expect(statuses).toEqual([200, 403]);
-		const kept = (await pinned()) as { audience: string };
+		const kept = (await stored()) as { audience: string };
 		const winner = answers[0]?.status === 200 ? "first-app" : "second-app";
 		expect(kept.audience).toBe(winner);
 	});
 
-	it("fails closed on a pin it cannot read", async () => {
+	it("fails closed on settings it cannot read", async () => {
 		await env.BUCKET.put(ACCESS_KEY, "{not json");
 		expect((await ask()).status).toBe(503);
 		expect((await ask(await token())).status).toBe(503);
+		forgetAccessState();
+		await settle({ issuer: "https://evil.example" });
+		expect((await ask()).status).toBe(503);
+		forgetAccessState();
+		await settle({ issuer: TEAM, audience: "" });
+		expect((await ask()).status).toBe(503);
+	});
+});
+
+/**
+ * The deploy writes the settings on every run: the team when Access is in
+ * front, nothing when it is not. The Worker reads them again after half a
+ * minute, so Access turned off stops refusing requests once a deploy has
+ * seen it, and an application fixed wrongly is learned again.
+ */
+describe("what the deploy writes next", () => {
+	const plain = () => new Request("http://local.test/api/v1/settings");
+	const signed = async () =>
+		new Request("http://local.test/api/v1/settings", {
+			headers: { "Cf-Access-Jwt-Assertion": await token() },
+		});
+
+	it("is read again after half a minute, not before", async () => {
+		const at = Date.now();
+		await settle({ issuer: TEAM });
+		expect((await checkAccess(plain(), env, at)).pass).toBe(false);
+		await env.BUCKET.delete(ACCESS_KEY);
+		expect((await checkAccess(plain(), env, at + 29_000)).pass).toBe(false);
+		expect((await checkAccess(plain(), env, at + 31_000)).pass).toBe(true);
+	});
+
+	it("is the team alone, and the application is learned again", async () => {
+		const at = Date.now();
+		await settle({ issuer: TEAM, audience: "fixed-wrongly" });
+		expect((await checkAccess(await signed(), env, at)).pass).toBe(false);
+		await settle({ issuer: TEAM });
+		expect((await checkAccess(await signed(), env, at + 31_000)).pass).toBe(
+			true,
+		);
+		expect(await stored()).toEqual({ issuer: TEAM, audience: AUD });
 	});
 });

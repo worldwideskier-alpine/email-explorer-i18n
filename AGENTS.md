@@ -270,22 +270,32 @@ are still checked, by the `tsc` that runs before the worker tests.
   Cloudflare account only. Every request the Worker handles first has the
   token Access signs (`Cf-Access-Jwt-Assertion`) checked
   (`cloudflare-access.ts`, at the top of `fetch()`, before sign-in and the
-  session gate): RS256 alone, by a key the issuer publishes, issued by a
-  `*.cloudflareaccess.com` team, in date, for this application. Which team and
-  application are this deployment's is learned rather than written down: the
-  first token that verifies fixes both in `settings/access.json`, and every
-  token after must match. Written into the source, a team's address would sit
-  in this public repository and be wrong for every fork; set by hand, it is a
-  dashboard step with the screen that mends a mistake behind the mistake.
-  Learning it is safe only because Access is in front of every request, so the
-  first token to arrive is one Access signed for somebody it let in. Until a
-  token has fixed them, a request with none is let through -- a fork without
-  Access, the tests, `wrangler dev` -- and once fixed it is refused. The
-  consequence to know: with Access taken off again, every request is refused
-  until `settings/access.json` is removed. A team's keys that cannot be had
-  answer 503, not 403, and a pin that cannot be read fails closed. Mail and the
-  nightly run are no requests and are not asked. A token is no session: the
-  gates behind this one are unchanged. `cloudflare-access.test.ts`.
+  session gate): issued by this deployment's team -- compared before any key
+  is fetched -- RS256 alone, by a key that team publishes, in date, for this
+  application. Which team is the deployment's is **written by the deploy**,
+  never learned from a request: the step "Tell the Worker which Access team
+  stands in front" asks the deployed address for `/` without following
+  redirects, and behind Access the answer is a redirect to the team's
+  sign-in, whose host is the team (`accessDoor`, `scripts/access-door.mjs`).
+  It writes that to `settings/access.json` with the R2 access the deploy
+  already has, and deletes the file when the page itself answers, so Access
+  taken off stops refusing requests at the next deploy. Nothing is set by
+  hand, nothing names a team in this public repository, and a fork's team,
+  or none, is found the same way. The first version learned the team from
+  the first token that verified, and anybody can make a team: on a
+  deployment without Access, or an address Access did not cover, a stranger's
+  token fixed the stranger's team and locked the owner out. The application
+  is still learned -- the first token from the written team fixes it, which
+  the instruction for this allowed -- because the redirect's `kid`, very
+  likely the same value, has not been seen against a real token, and written
+  wrongly it refuses the owner with nothing but a change of code to undo it.
+  Each deploy writes the team alone, so it is learned again after each. With
+  no file, every request passes: a fork without Access, the tests, `wrangler
+  dev`. The settings are read again every thirty seconds; a team's keys that
+  cannot be had answer 503, not 403, and settings that cannot be read fail
+  closed. Mail and the nightly run are no requests and are not asked. A token
+  is no session: the gates behind this one are unchanged.
+  `cloudflare-access.test.ts`, `deployment-check.test.ts`.
   Behind Access the deploy's last check cannot reach the deployment -- the
   runner is nobody Access lets in -- and asking anyway failed every deploy and
   rolled it back. It recognises the redirect to a team's sign-in page

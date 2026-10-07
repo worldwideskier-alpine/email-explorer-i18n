@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 // Plain JS on purpose: this module also runs under node from the deploy
 // workflow, where there is nothing to compile it. allowJs types it here.
 import {
+	accessDoor,
+	accessTeamFrom,
 	answeredByTheWorker,
 	assetMismatch,
 	assetsReferencedBy,
@@ -286,5 +288,71 @@ describe("a deployment behind Cloudflare Access", () => {
 		expect(behindAccess(status as number, location as string | null)).toBe(
 			false,
 		);
+	});
+});
+
+/**
+ * The team the deploy writes for the Worker, read off the same redirect. A
+ * wrong one refuses the owner on every request, and none at all leaves the
+ * Worker checking nothing, so only a team's own address is taken.
+ */
+describe("the Access team a deployment's redirect names", () => {
+	it("is the sign-in page's host, as the issuer its tokens carry", () => {
+		expect(
+			accessTeamFrom(
+				302,
+				"https://My-Team.cloudflareaccess.com/cdn-cgi/access/login/host?kid=abc&redirect_url=%2F",
+			),
+		).toBe("https://my-team.cloudflareaccess.com");
+	});
+
+	it.each([
+		["a page", 200, null],
+		["a redirect elsewhere", 302, "https://example.org/login"],
+		[
+			"a look-alike host",
+			302,
+			"https://team.cloudflareaccess.com.evil.example/",
+		],
+		["the bare domain, which is no team", 302, "https://cloudflareaccess.com/"],
+		["a team below a team", 302, "https://a.b.cloudflareaccess.com/"],
+		["plain http", 302, "http://team.cloudflareaccess.com/"],
+		["a port of its own", 302, "https://team.cloudflareaccess.com:8443/"],
+		[
+			"a host with a trailing hyphen",
+			302,
+			"https://team-.cloudflareaccess.com/",
+		],
+	])("is none for %s", (_, status, location) => {
+		expect(
+			accessTeamFrom(status as number, location as string | null),
+		).toBeNull();
+	});
+});
+
+describe("what the deploy does about the Worker's Access settings", () => {
+	it("writes the team when a team's sign-in stands in front", () => {
+		expect(
+			accessDoor(
+				302,
+				"https://team.cloudflareaccess.com/cdn-cgi/access/login/h",
+			),
+		).toEqual({ door: "behind", issuer: "https://team.cloudflareaccess.com" });
+	});
+
+	it("deletes them when the page itself answers", () => {
+		expect(accessDoor(200, null)).toEqual({ door: "open" });
+	});
+
+	it.each([
+		["an error", 500, null],
+		["a refusal", 403, null],
+		["a redirect elsewhere", 302, "https://example.org/"],
+		["a sign-in redirect at no team", 302, "https://cloudflareaccess.com/"],
+		["a sign-in redirect over http", 302, "http://team.cloudflareaccess.com/"],
+	])("leaves them alone on %s", (_, status, location) => {
+		expect(accessDoor(status as number, location as string | null)).toEqual({
+			door: "unknown",
+		});
 	});
 });

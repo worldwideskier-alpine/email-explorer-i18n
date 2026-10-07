@@ -1,48 +1,61 @@
 /**
  * The Cloudflare Access signature on a request, checked by the Worker.
  *
- * Access stands in front of every address this deployment answers on, and
+ * Access stands in front of the addresses this deployment answers on, and
  * hands what it lets through a signed token (`Cf-Access-Jwt-Assertion`). The
  * Worker checks it rather than taking Access's word for having been in the
- * way: a route Access does not cover -- a new hostname, a preview address, a
- * policy changed in the dashboard -- would otherwise reach the Worker with
- * nobody having signed in to Access at all.
+ * way: a route Access does not cover -- a new hostname, a policy changed in
+ * the dashboard -- would otherwise reach the Worker with nobody having signed
+ * in to Access at all.
  *
- * What is checked: the signature (RS256, by a key the issuer publishes at
- * `/cdn-cgi/access/certs`), the issuer, the audience, and that it is in date.
+ * What is checked: the issuer, the signature (RS256, by a key that issuer
+ * publishes at `/cdn-cgi/access/certs`), that it is in date, and the audience.
  *
- * Which issuer and audience are this deployment's is learned, not written
- * here: the first token that passes the signature check fixes both in the
- * bucket (`settings/access.json`), and every token after must match them.
- * Written into the source, a team's address would sit in a public repository
- * -- and a fork has another team, or none -- and set by hand it is one more
- * thing to get wrong in a dashboard, with the screen that would mend it
- * behind the mistake. Learning it is safe because Access is in front of every
- * request: the first token to arrive is one Access itself signed for a
- * person it let in. An issuer is only ever a `*.cloudflareaccess.com` team.
+ * Which team is this deployment's is written by the deploy, never learned
+ * from a request. The deploy asks the deployed address for its front page;
+ * behind Access the answer is a redirect to the team's sign-in, whose host is
+ * the team. The deploy writes it to `settings/access.json` with the R2 access
+ * it already has, and deletes the file when the page answers without one.
+ * Nothing has to be set in a dashboard, and a fork's team, or none, is found
+ * the same way.
  *
- * Until a token has fixed them, a request with no token is let through: that
- * is a deployment without Access -- a fork, the tests, `wrangler dev` -- and
- * the gates behind this one still hold. Once fixed, a request with no token
- * is refused like one with a bad token. Mail and the nightly run are not
- * requests and are not asked.
+ * Learning the team from the first token instead was the first version of
+ * this, and it let anybody with a team of their own -- anyone can make one --
+ * fix theirs on a deployment that had no Access, or on an address Access did
+ * not cover, and lock its owner out. A token's issuer is compared with the
+ * written one before any key is fetched, so a stranger's team costs no
+ * request either.
+ *
+ * The application (the audience) is fixed by the first token that verifies
+ * under the written team, as the instruction for this allowed: only somebody
+ * the owner's team signed in can be handed one. The sign-in redirect also
+ * carries an id (`kid`) that is very likely the same value, but that was not
+ * seen against a real token, and written wrongly it would refuse the owner on
+ * every request with nothing but a change of code to undo it. Each deploy
+ * writes the team alone, so an audience fixed wrongly is learned again after
+ * the next one.
+ *
+ * With no file a request is let through, token or not: that is a deployment
+ * without Access -- a fork, the tests, `wrangler dev` -- and the gates behind
+ * this one still hold. Mail and the nightly run are not requests and are not
+ * asked.
  */
 
 import type { Env } from "./types";
 
-/** Where the issuer and audience are kept once learned. */
+/** Where the deploy writes the team and the application. */
 export const ACCESS_KEY = "settings/access.json";
 
-export interface AccessPin {
+export interface AccessSettings {
 	issuer: string;
-	audience: string;
+	audience?: string;
 }
 
 /** The header Access sets on every request it lets through. */
 export const ACCESS_HEADER = "Cf-Access-Jwt-Assertion";
 
 /** A team's address, and nothing else, may issue a token here. */
-const ISSUER =
+export const ACCESS_ISSUER =
 	/^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.cloudflareaccess\.com$/;
 
 /** Clocks disagree a little; Access's tokens last hours. */
@@ -54,8 +67,15 @@ const KEYS_FOR_MS = 60 * 60 * 1000;
 /** A key the token names but the cache does not have is asked again, at most this often. */
 const REFRESH_AFTER_MS = 60 * 1000;
 
+/**
+ * How long the settings are used before they are read again. Short, because
+ * a deploy that finds Access turned off deletes them, and until the Worker
+ * reads that it refuses every request that comes without a token.
+ */
+const SETTINGS_FOR_MS = 30 * 1000;
+
 export type AccessVerdict =
-	| { ok: true; issuer: string; audience: string[] }
+	| { ok: true; audience: string[] }
 	| { ok: false; reason: string; unanswered?: boolean };
 
 interface Jwk {
@@ -66,33 +86,27 @@ interface Jwk {
 	e?: string;
 }
 
-/**
- * The team's published keys. Replaceable so that a test can hand over keys
- * of its own: the certs address is a real team's, which the test pool has no
- * way to reach.
- */
-export const accessKeys = {
-	async load(issuer: string): Promise<Jwk[]> {
-		const response = await fetch(`${issuer}/cdn-cgi/access/certs`, {
-			signal: AbortSignal.timeout(10_000),
-		});
-		if (!response.ok) {
-			throw new Error(`the issuer's keys answered ${response.status}`);
-		}
-		const body = (await response.json()) as { keys?: Jwk[] };
-		return Array.isArray(body.keys) ? body.keys : [];
-	},
-};
+/** One team's keys: a deployment has one team, so nothing else is kept. */
+let cachedKeys: { issuer: string; keys: Jwk[]; at: number } | null = null;
 
-const cachedKeys = new Map<string, { keys: Jwk[]; at: number }>();
+async function loadKeys(issuer: string): Promise<Jwk[]> {
+	const response = await fetch(`${issuer}/cdn-cgi/access/certs`, {
+		signal: AbortSignal.timeout(10_000),
+	});
+	if (!response.ok) {
+		throw new Error(`the issuer's keys answered ${response.status}`);
+	}
+	const body = (await response.json()) as { keys?: Jwk[] };
+	return Array.isArray(body.keys) ? body.keys : [];
+}
 
 async function keyFor(
 	issuer: string,
 	kid: string,
 	now: number,
 ): Promise<Jwk | null | "unanswered"> {
-	const cached = cachedKeys.get(issuer);
-	const fresh = cached && now - cached.at < KEYS_FOR_MS;
+	const cached = cachedKeys?.issuer === issuer ? cachedKeys : null;
+	const fresh = cached !== null && now - cached.at < KEYS_FOR_MS;
 	const hit = cached?.keys.find((key) => key.kid === kid);
 	if (hit && fresh) return hit;
 	// A key the cache lacks may be a rotation, so ask -- but not on every
@@ -100,19 +114,14 @@ async function keyFor(
 	// them a fetch.
 	if (cached && fresh && now - cached.at < REFRESH_AFTER_MS) return null;
 	try {
-		const keys = await accessKeys.load(issuer);
-		cachedKeys.set(issuer, { keys, at: now });
+		const keys = await loadKeys(issuer);
+		cachedKeys = { issuer, keys, at: now };
 		return keys.find((key) => key.kid === kid) ?? null;
 	} catch {
 		// The keys could not be had: stale ones are better than none, and
 		// none is a request nobody can answer yet rather than a bad one.
 		return hit ?? "unanswered";
 	}
-}
-
-/** For a test: forget every team's keys. */
-export function forgetAccessKeys(): void {
-	cachedKeys.clear();
 }
 
 function fromBase64Url(text: string): Uint8Array {
@@ -136,12 +145,12 @@ function jsonPart(text: string): Record<string, unknown> | null {
 }
 
 /**
- * Whether `token` is a token Access signed, in date, from a team's issuer.
- * Says nothing yet about whether it is this deployment's team or
- * application; that is the pin's question (`checkAccess`).
+ * Whether `token` is a token `issuer` signed, in date, for some audience.
+ * Which audience is this deployment's is `checkAccess`'s question.
  */
 export async function verifyAccessToken(
 	token: string,
+	issuer: string,
 	now = Date.now(),
 ): Promise<AccessVerdict> {
 	const [head, body, signature, ...rest] = token.split(".");
@@ -162,9 +171,10 @@ export async function verifyAccessToken(
 	if (header.alg !== "RS256" || typeof header.kid !== "string") {
 		return { ok: false, reason: "not signed the way Access signs" };
 	}
-	const issuer = claims.iss;
-	if (typeof issuer !== "string" || !ISSUER.test(issuer)) {
-		return { ok: false, reason: "not issued by an Access team" };
+	// Before any key is fetched: a token naming another team is refused
+	// without a request to it.
+	if (claims.iss !== issuer) {
+		return { ok: false, reason: "issued by another team" };
 	}
 	const seconds = now / 1000;
 	if (typeof claims.exp !== "number" || claims.exp + LEEWAY_S < seconds) {
@@ -208,52 +218,81 @@ export async function verifyAccessToken(
 		valid = false;
 	}
 	return valid
-		? { ok: true, issuer, audience }
+		? { ok: true, audience }
 		: { ok: false, reason: "the signature does not verify" };
 }
 
-/** The pin, read once per isolate once it exists: it never changes after. */
-let pinned: AccessPin | null = null;
-
-/** For a test: forget the pin this isolate has read. */
-export function forgetAccessPin(): void {
-	pinned = null;
+interface StoredSettings {
+	settings: AccessSettings | null;
+	etag: string | null;
 }
 
-async function readPin(env: Env): Promise<AccessPin | null> {
-	if (pinned) return pinned;
-	const object = await env.BUCKET.get(ACCESS_KEY);
-	if (!object) return null;
-	const value = (await object.json()) as Partial<AccessPin>;
-	if (typeof value.issuer !== "string" || typeof value.audience !== "string") {
-		throw new Error(`${ACCESS_KEY} holds no issuer and audience`);
+let cachedSettings: (StoredSettings & { at: number }) | null = null;
+
+/** For the tests: forget the settings and keys this isolate has read. */
+export function forgetAccessState(): void {
+	cachedSettings = null;
+	cachedKeys = null;
+}
+
+/** Throws on anything it cannot read, which the gate answers 503. */
+async function readSettings(env: Env, now: number): Promise<StoredSettings> {
+	if (cachedSettings && now - cachedSettings.at < SETTINGS_FOR_MS) {
+		return cachedSettings;
 	}
-	pinned = { issuer: value.issuer, audience: value.audience };
-	return pinned;
+	const object = await env.BUCKET.get(ACCESS_KEY);
+	let stored: StoredSettings = { settings: null, etag: null };
+	if (object) {
+		const value = (await object.json()) as Partial<AccessSettings> | null;
+		if (
+			!value ||
+			typeof value.issuer !== "string" ||
+			!ACCESS_ISSUER.test(value.issuer) ||
+			(value.audience !== undefined &&
+				(typeof value.audience !== "string" || value.audience === ""))
+		) {
+			throw new Error(`${ACCESS_KEY} holds no Access team`);
+		}
+		stored = {
+			settings: {
+				issuer: value.issuer,
+				...(value.audience ? { audience: value.audience } : {}),
+			},
+			etag: object.etag,
+		};
+	}
+	cachedSettings = { ...stored, at: now };
+	return stored;
 }
 
 /**
- * Fixes the issuer and audience of the first token that verified. Only if
- * there is none yet: two first requests at once write the same pair, and the
- * second write is refused rather than put over the first.
+ * Writes the audience beside a team the deploy wrote without one. Only over
+ * the object that was read: if a deploy rewrote it meanwhile, or another
+ * request fixed an audience first, that one stands and is read back.
  */
-async function pin(
+async function fixAudience(
 	env: Env,
-	issuer: string,
+	stored: StoredSettings,
 	audience: string,
-): Promise<AccessPin> {
-	const value = { issuer, audience };
-	const written = await env.BUCKET.put(ACCESS_KEY, JSON.stringify(value), {
-		onlyIf: { uploadedBefore: new Date(0) },
-	});
+	now: number,
+): Promise<AccessSettings> {
+	const issuer = stored.settings?.issuer ?? "";
+	const value: AccessSettings = { issuer, audience };
+	const written = stored.etag
+		? await env.BUCKET.put(ACCESS_KEY, JSON.stringify(value), {
+				onlyIf: { etagMatches: stored.etag },
+				httpMetadata: { contentType: "application/json" },
+			})
+		: null;
 	if (written) {
-		pinned = value;
+		cachedSettings = { settings: value, etag: written.etag, at: now };
 		return value;
 	}
-	const stored = await readPin(env);
-	if (!stored)
-		throw new Error(`${ACCESS_KEY} could be neither written nor read`);
-	return stored;
+	cachedSettings = null;
+	const again = await readSettings(env, now);
+	if (!again.settings)
+		throw new Error(`${ACCESS_KEY} went while being written`);
+	return again.settings;
 }
 
 export type AccessGate =
@@ -261,19 +300,18 @@ export type AccessGate =
 	| { pass: false; status: 403 | 503; reason: string };
 
 /**
- * Whether a request may go on, by its Access token and the pin.
- *
- * A pin that cannot be read fails closed (503): reading it as "no pin" would
- * let a request with no token through on a deployment that has one.
+ * Whether a request may go on, by its Access token and the settings the
+ * deploy wrote. Settings that cannot be read fail closed (503): reading them
+ * as "none" would let a request with no token through behind Access.
  */
 export async function checkAccess(
 	request: Request,
 	env: Env,
 	now = Date.now(),
 ): Promise<AccessGate> {
-	let pin_: AccessPin | null;
+	let stored: StoredSettings;
 	try {
-		pin_ = await readPin(env);
+		stored = await readSettings(env, now);
 	} catch {
 		return {
 			pass: false,
@@ -281,13 +319,12 @@ export async function checkAccess(
 			reason: "the Access settings could not be read",
 		};
 	}
+	const settings = stored.settings;
+	if (!settings) return { pass: true };
+
 	const token = request.headers.get(ACCESS_HEADER);
-	if (!token) {
-		return pin_
-			? { pass: false, status: 403, reason: "no Access token" }
-			: { pass: true };
-	}
-	const verdict = await verifyAccessToken(token, now);
+	if (!token) return { pass: false, status: 403, reason: "no Access token" };
+	const verdict = await verifyAccessToken(token, settings.issuer, now);
 	if ("reason" in verdict) {
 		return {
 			pass: false,
@@ -295,10 +332,12 @@ export async function checkAccess(
 			reason: verdict.reason,
 		};
 	}
-	let fixed = pin_;
-	if (!fixed) {
+	let audience = settings.audience;
+	if (!audience) {
 		try {
-			fixed = await pin(env, verdict.issuer, verdict.audience[0] ?? "");
+			audience = (
+				await fixAudience(env, stored, verdict.audience[0] ?? "", now)
+			).audience;
 		} catch {
 			return {
 				pass: false,
@@ -307,10 +346,7 @@ export async function checkAccess(
 			};
 		}
 	}
-	if (verdict.issuer !== fixed.issuer) {
-		return { pass: false, status: 403, reason: "issued by another team" };
-	}
-	if (!verdict.audience.includes(fixed.audience)) {
+	if (!audience || !verdict.audience.includes(audience)) {
 		return { pass: false, status: 403, reason: "for another application" };
 	}
 	return { pass: true };

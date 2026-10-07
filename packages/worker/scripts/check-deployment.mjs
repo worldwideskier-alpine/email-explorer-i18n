@@ -81,6 +81,9 @@ const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 // every deploy back. The redirect names the team; nothing of it is printed.
 try {
 	const door = await fetch(`${base}/`, {
+		// Asked as a browser asks for a page, which Access answers with
+		// its sign-in redirect.
+		headers: { accept: "text/html" },
 		redirect: "manual",
 		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 	});

@@ -12,12 +12,15 @@ does not go through the screen.
 
 0. **Cloudflare Access, before everything.** `checkAccess`
    (`cloudflare-access.ts`) is the first thing `fetch()` does, ahead of
-   sign-in and the session gate. Its token is checked RS256-only, against the
-   issuer's published keys, for a `*.cloudflareaccess.com` issuer, in date,
-   and against the team and application pinned in `settings/access.json`.
-   Once pinned, a request with no token is refused. Never take the algorithm
-   from the token, never accept an issuer outside `cloudflareaccess.com`, and
-   never treat an unreadable pin as no pin. An Access token is no session.
+   sign-in and the session gate. The team is the one the deploy wrote to
+   `settings/access.json` from the deployment's own sign-in redirect; a
+   token's issuer is compared with it before any key is fetched, then the
+   token is checked RS256-only, against that team's published keys, in date,
+   and for the application. With the file there, a request with no token is
+   refused. Never learn the team from a request, never take the algorithm
+   from the token, never fetch keys for an issuer that is not the written
+   one, and never treat unreadable settings as none. An Access token is no
+   session.
 
 1. **Between customers.** A customer is a *person* (one or more sign-in
    addresses). A person reaches a mailbox only through a grant

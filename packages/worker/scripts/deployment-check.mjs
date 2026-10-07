@@ -195,3 +195,48 @@ export function behindAccess(status, location) {
 		return false;
 	}
 }
+
+/**
+ * The Access team a sign-in redirect names, as the issuer its tokens carry:
+ * `https://<team>.cloudflareaccess.com`. Null for anything else.
+ *
+ * The deploy writes this for the Worker (cloudflare-access.ts), which then
+ * refuses every request that does not carry a token that team signed. Read
+ * from the redirect the deployment itself answered the runner with, so it is
+ * the team actually in front -- never one a request names.
+ */
+export function accessTeamFrom(status, location) {
+	if (!behindAccess(status, location)) return null;
+	try {
+		const url = new URL(location);
+		const issuer = `https://${url.hostname.toLowerCase()}`;
+		return url.protocol === "https:" &&
+			url.port === "" &&
+			/^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.cloudflareaccess\.com$/.test(
+				issuer,
+			)
+			? issuer
+			: null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * What the deploy does about the Worker's Access settings, from how the
+ * deployment answered for its front page:
+ *
+ *   behind  -- a team's sign-in redirect: write that team.
+ *   open    -- the page itself (200): no Access in front, so delete them;
+ *              left, they would refuse every request, which arrives with no
+ *              token once Access is off.
+ *   unknown -- anything else (an error, a redirect elsewhere, no answer):
+ *              leave them as they are. Neither writing nor deleting on a
+ *              guess.
+ */
+export function accessDoor(status, location) {
+	const issuer = accessTeamFrom(status, location);
+	if (issuer) return { door: "behind", issuer };
+	if (status === 200 && !location) return { door: "open" };
+	return { door: "unknown" };
+}
