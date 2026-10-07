@@ -572,3 +572,15 @@ describe("the night check workflow", () => {
 		expect(jobEnv).not.toContain("secrets.");
 	});
 });
+
+/**
+ * The addresses the deployment answers on. workers.dev is where it is used,
+ * behind Cloudflare Access; a preview address per uploaded version would be
+ * one more way in for Access to have to cover, so there are none.
+ */
+describe("the deployment's addresses", () => {
+	it("answers on workers.dev and on no preview address", () => {
+		expect(wrangler).toMatch(/\n\t"workers_dev": true,\n/);
+		expect(wrangler).toMatch(/\n\t"preview_urls": false,\n/);
+	});
+});

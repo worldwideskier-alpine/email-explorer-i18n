@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 import {
 	answeredByTheWorker,
 	assetMismatch,
+	behindAccess,
 	builtAssets,
 	deployedAddress,
 	staleServedPage,
@@ -73,6 +74,30 @@ console.log(
 );
 
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
+
+// Behind Cloudflare Access the runner is turned away at the door, so what is
+// served cannot be asked; the version Cloudflare reports live (the step
+// before) is all there is to go on. Said, and not failed: failing rolled
+// every deploy back. The redirect names the team; nothing of it is printed.
+try {
+	const door = await fetch(`${base}/`, {
+		redirect: "manual",
+		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+	});
+	if (behindAccess(door.status, door.headers.get("location"))) {
+		console.log(
+			"the deployment is behind Cloudflare Access, which this runner cannot pass, so what it serves was not asked",
+		);
+		console.log(
+			expectedVersion
+				? `Cloudflare reports version ${expectedVersion} live, the one published`
+				: "::warning::and no live version was read back either, so nothing about this deploy was checked",
+		);
+		process.exit(0);
+	}
+} catch {
+	// Not answered at all: the checks below retry and report it.
+}
 
 const built = builtAssets(readdirSync(ASSETS));
 const localJs = readFileSync(`${ASSETS}/${built.js}`);

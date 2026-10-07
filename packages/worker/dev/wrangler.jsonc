@@ -8,6 +8,11 @@
 	"main": "index.ts",
 	"name": "email-explorer-ja",
 	"upload_source_maps": true,
+	// workers.dev is the address this deployment is used at, behind Cloudflare
+	// Access. Preview addresses -- one per uploaded version -- are not, and
+	// each is one more way in to keep covered; off.
+	"workers_dev": true,
+	"preview_urls": false,
 	"observability": {
 		"enabled": true
 	},

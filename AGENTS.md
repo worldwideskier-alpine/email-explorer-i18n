@@ -265,6 +265,33 @@ are still checked, by the `tsc` that runs before the worker tests.
   left to the stamp: a login moved to another address and back has its old
   stamp again, and the browsers from before were trusted again without
   signing in. `login-device.test.ts`.
+- **Cloudflare Access stands in front, and the Worker checks it did.** The
+  owner put Access over every address the Worker answers on, members of the
+  Cloudflare account only. Every request the Worker handles first has the
+  token Access signs (`Cf-Access-Jwt-Assertion`) checked
+  (`cloudflare-access.ts`, at the top of `fetch()`, before sign-in and the
+  session gate): RS256 alone, by a key the issuer publishes, issued by a
+  `*.cloudflareaccess.com` team, in date, for this application. Which team and
+  application are this deployment's is learned rather than written down: the
+  first token that verifies fixes both in `settings/access.json`, and every
+  token after must match. Written into the source, a team's address would sit
+  in this public repository and be wrong for every fork; set by hand, it is a
+  dashboard step with the screen that mends a mistake behind the mistake.
+  Learning it is safe only because Access is in front of every request, so the
+  first token to arrive is one Access signed for somebody it let in. Until a
+  token has fixed them, a request with none is let through -- a fork without
+  Access, the tests, `wrangler dev` -- and once fixed it is refused. The
+  consequence to know: with Access taken off again, every request is refused
+  until `settings/access.json` is removed. A team's keys that cannot be had
+  answer 503, not 403, and a pin that cannot be read fails closed. Mail and the
+  nightly run are no requests and are not asked. A token is no session: the
+  gates behind this one are unchanged. `cloudflare-access.test.ts`.
+  Behind Access the deploy's last check cannot reach the deployment -- the
+  runner is nobody Access lets in -- and asking anyway failed every deploy and
+  rolled it back. It recognises the redirect to a team's sign-in page
+  (`behindAccess`), says so, and goes by the version Cloudflare reports live;
+  the bytes served are not compared there. Preview addresses are off
+  (`preview_urls: false`): one per version, each another way in.
 - **Turnstile guards the forms a stranger reaches** -- sign-in, registration,
   the reset request -- once root sets it on `/root` (`turnstile.ts`, kept in
   `settings/turnstile.json`). A pair is saved only after it passed siteverify

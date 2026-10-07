@@ -5,6 +5,7 @@ import {
 	answeredByTheWorker,
 	assetMismatch,
 	assetsReferencedBy,
+	behindAccess,
 	builtAssets,
 	deployedAddress,
 	liveVersionIn,
@@ -249,5 +250,41 @@ describe("the address wrangler deployed to", () => {
 		],
 	])("is none when there is %s", (_, output) => {
 		expect(deployedAddress(output)).toBeNull();
+	});
+});
+
+/**
+ * Cloudflare Access in front of the deployment turns the runner away with a
+ * redirect to the team's sign-in page. Asked anyway, the check failed and
+ * every deploy was rolled back; told apart by the redirect's host alone, so
+ * that any other wrong answer still fails.
+ */
+describe("a deployment behind Cloudflare Access", () => {
+	it("is a redirect to a team's sign-in page", () => {
+		expect(
+			behindAccess(
+				302,
+				"https://team.cloudflareaccess.com/cdn-cgi/access/login/x?kid=1",
+			),
+		).toBe(true);
+		expect(behindAccess(303, "https://team.cloudflareaccess.com/")).toBe(true);
+	});
+
+	it.each([
+		["a page", 200, null],
+		["a refusal", 403, null],
+		["a redirect elsewhere", 302, "https://example.org/login"],
+		["a look-alike host", 302, "https://cloudflareaccess.com.evil.example/"],
+		["a redirect with no location", 302, null],
+		["a location that is no URL", 302, "/cdn-cgi/access/login"],
+		[
+			"the right host on an answer that is no redirect",
+			200,
+			"https://team.cloudflareaccess.com/",
+		],
+	])("is not %s", (_, status, location) => {
+		expect(behindAccess(status as number, location as string | null)).toBe(
+			false,
+		);
 	});
 });

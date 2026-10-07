@@ -1,3 +1,4 @@
+import { generateKeyPairSync } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { cloudflareTest } from "@cloudflare/vitest-pool-workers";
 import { defineConfig } from "vitest/config";
@@ -41,6 +42,25 @@ const pushesReceived: {
 	cryptoKey: string | null;
 }[] = [];
 
+/**
+ * A key pair standing in for a Cloudflare Access team's. Any
+ * `*.cloudflareaccess.com` team asked for its keys below is answered with the
+ * public half, so a test can sign tokens as any team with the private half
+ * (bound as TEST_ACCESS_PRIVATE_JWK) -- and "issued by another team" is
+ * decided by the pin, as in production, not by a key the test lacked.
+ * `down.cloudflareaccess.com` answers 503, for a team whose keys cannot be had.
+ */
+const accessKeyPair = generateKeyPairSync("rsa", { modulusLength: 2048 });
+const accessPublicJwk = {
+	...accessKeyPair.publicKey.export({ format: "jwk" }),
+	kid: "test-access-key",
+	alg: "RS256",
+	use: "sig",
+};
+const accessPrivateJwk = JSON.stringify(
+	accessKeyPair.privateKey.export({ format: "jwk" }),
+);
+
 export default defineConfig({
 	plugins: [
 		cloudflareTest({
@@ -60,6 +80,7 @@ export default defineConfig({
 				// tests need a real (test-only, not production) key so
 				// notifyMailboxSubscribers doesn't silently no-op.
 				bindings: {
+					TEST_ACCESS_PRIVATE_JWK: accessPrivateJwk,
 					VAPID_PRIVATE_KEY:
 						'{"kty":"EC","x":"8E1Zw4MOMOZ7rj054pNEfyPiDPFFa8fslXToOdkZ7T8","y":"a6S25MrJI_qeBANimu06z3PpRZ9qt4f7TV-vzugFLNo","crv":"P-256","d":"jttxgnEcVnL_dzqyTnUWQWViXHLM_owkiFnF5EHKung","alg":"ES256","key_ops":["sign"],"ext":true}',
 				},
@@ -69,6 +90,15 @@ export default defineConfig({
 				// or a real API key.
 				outboundService: async (request) => {
 					const url = new URL(request.url);
+					if (
+						url.hostname.endsWith(".cloudflareaccess.com") &&
+						url.pathname === "/cdn-cgi/access/certs"
+					) {
+						if (url.hostname === "down.cloudflareaccess.com") {
+							return new Response("unavailable", { status: 503 });
+						}
+						return Response.json({ keys: [accessPublicJwk] });
+					}
 					if (url.hostname === "api.resend.com") {
 						// What was sent, and with whose key, for a test to ask
 						// after. The key decides who pays, and "the person whose

@@ -1,5 +1,6 @@
 import { reset } from "cloudflare:test";
 import { afterEach } from "vitest";
+import { forgetAccessKeys, forgetAccessPin } from "../src/cloudflare-access";
 
 /**
  * Clears the Durable Object and R2 state between tests.
@@ -16,4 +17,8 @@ import { afterEach } from "vitest";
  */
 afterEach(async () => {
 	await reset();
+	// The Access pin is read once per isolate and kept, as it never changes
+	// in production; storage gone, the next test must not inherit it.
+	forgetAccessPin();
+	forgetAccessKeys();
 });

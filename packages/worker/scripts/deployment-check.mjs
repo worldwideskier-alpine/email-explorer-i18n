@@ -177,3 +177,21 @@ export function deployedAddress(deployOutput) {
 	}
 	return null;
 }
+
+/**
+ * Whether an answer is Cloudflare Access standing in front of the
+ * deployment: a redirect to a team's sign-in page at `*.cloudflareaccess.com`.
+ *
+ * Behind Access nothing here can ask the deployment what it serves -- the
+ * runner is nobody Access lets in -- and asking anyway failed every deploy
+ * and rolled it back. Told apart by the redirect's host, so that a deployment
+ * that answers wrongly in any other way still fails.
+ */
+export function behindAccess(status, location) {
+	if (![301, 302, 303, 307, 308].includes(status) || !location) return false;
+	try {
+		return /(^|\.)cloudflareaccess\.com$/i.test(new URL(location).hostname);
+	} catch {
+		return false;
+	}
+}

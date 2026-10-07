@@ -6,6 +6,7 @@ import { getResendKeySource, setResendApiKey } from "./app-settings";
 import { backupKeyPrefix } from "./auto-backup";
 import { listBackups } from "./backup-writer";
 import { classifyWithClaude } from "./claude-spam-filter";
+import { checkAccess } from "./cloudflare-access";
 import { recoveryFromEmail } from "./deployment-config";
 import { ingestEmailIntoMailbox } from "./email-ingest";
 import { ensureLegacyMailboxGrants } from "./legacy-grants";
@@ -2906,6 +2907,19 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 
 			// Create a new request with context for middleware
 			const url = new URL(request.url);
+
+			// Before anything else: a request Access did not let through goes
+			// no further, sign-in included. See cloudflare-access.ts.
+			const access = await checkAccess(request, env);
+			if ("status" in access) {
+				return new Response(JSON.stringify({ error: "Forbidden" }), {
+					status: access.status,
+					headers: {
+						"Content-Type": "application/json",
+						...(access.status === 503 ? { "Retry-After": "5" } : {}),
+					},
+				});
+			}
 
 			if (!loadableAs(request, url.pathname)) {
 				return new Response(
