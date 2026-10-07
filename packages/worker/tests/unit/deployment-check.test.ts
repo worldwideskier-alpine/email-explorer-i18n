@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 // Plain JS on purpose: this module also runs under node from the deploy
 // workflow, where there is nothing to compile it. allowJs types it here.
 import {
+	accessAudienceFrom,
 	accessDoor,
+	accessDoorOf,
 	accessTeamFrom,
 	answeredByTheWorker,
 	assetMismatch,
@@ -10,6 +12,7 @@ import {
 	behindAccess,
 	builtAssets,
 	deployedAddress,
+	deployedAddresses,
 	liveVersionIn,
 	staleServedPage,
 	workerVersionMismatch,
@@ -330,17 +333,38 @@ describe("the Access team a deployment's redirect names", () => {
 	});
 });
 
-describe("what the deploy does about the Worker's Access settings", () => {
-	it("writes the team when a team's sign-in stands in front", () => {
-		expect(
-			accessDoor(
-				302,
-				"https://team.cloudflareaccess.com/cdn-cgi/access/login/h",
-			),
-		).toEqual({ door: "behind", issuer: "https://team.cloudflareaccess.com" });
+const KID = "a".repeat(64);
+const SIGN_IN = `https://team.cloudflareaccess.com/cdn-cgi/access/login/h?kid=${KID}&redirect_url=%2F`;
+
+describe("the application a sign-in redirect is for", () => {
+	it("is its kid, when it has the shape of an audience tag", () => {
+		expect(accessAudienceFrom(SIGN_IN)).toBe(KID);
 	});
 
-	it("deletes them when the page itself answers", () => {
+	it.each([
+		["no kid", "https://team.cloudflareaccess.com/cdn-cgi/access/login/h"],
+		["a short one", "https://team.cloudflareaccess.com/x?kid=abc"],
+		["capitals", `https://team.cloudflareaccess.com/x?kid=${"A".repeat(64)}`],
+		[
+			"one too long",
+			`https://team.cloudflareaccess.com/x?kid=${"a".repeat(65)}`,
+		],
+		["no URL", "/cdn-cgi/access/login"],
+	])("is none for %s", (_, location) => {
+		expect(accessAudienceFrom(location)).toBeNull();
+	});
+});
+
+describe("how one answer stands", () => {
+	it("is behind a team, with its application, at a team's sign-in", () => {
+		expect(accessDoor(302, SIGN_IN)).toEqual({
+			door: "behind",
+			issuer: "https://team.cloudflareaccess.com",
+			audience: KID,
+		});
+	});
+
+	it("is open when the page itself answers", () => {
 		expect(accessDoor(200, null)).toEqual({ door: "open" });
 	});
 
@@ -350,9 +374,84 @@ describe("what the deploy does about the Worker's Access settings", () => {
 		["a redirect elsewhere", 302, "https://example.org/"],
 		["a sign-in redirect at no team", 302, "https://cloudflareaccess.com/"],
 		["a sign-in redirect over http", 302, "http://team.cloudflareaccess.com/"],
-	])("leaves them alone on %s", (_, status, location) => {
+	])("is unknown on %s", (_, status, location) => {
 		expect(accessDoor(status as number, location as string | null)).toEqual({
 			door: "unknown",
 		});
+	});
+});
+
+/**
+ * Every address the deploy reached, each asked for its page and an API path.
+ * Deleting the settings when one address answered without Access turned the
+ * Worker's check off where it was needed most: an address Access does not
+ * cover, beside one it does.
+ */
+describe("what the deploy does about the Worker's Access settings", () => {
+	const behind = (
+		audience: string | null = KID,
+		issuer = "https://team.cloudflareaccess.com",
+	) => ({ door: "behind", issuer, audience }) as const;
+	const open = { door: "open" } as const;
+	const unknown = { door: "unknown" } as const;
+
+	it("writes the team and its applications when any answer is behind it", () => {
+		expect(accessDoorOf([open, behind(), open, unknown])).toEqual({
+			door: "behind",
+			issuer: "https://team.cloudflareaccess.com",
+			audiences: [KID],
+		});
+		expect(
+			accessDoorOf([behind("b".repeat(64)), behind(KID), behind(KID)]),
+		).toEqual({
+			door: "behind",
+			issuer: "https://team.cloudflareaccess.com",
+			audiences: [KID, "b".repeat(64)],
+		});
+	});
+
+	it("writes no application when one answer named none, so it is learned", () => {
+		expect(accessDoorOf([behind(), behind(null)])).toEqual({
+			door: "behind",
+			issuer: "https://team.cloudflareaccess.com",
+			audiences: [],
+		});
+	});
+
+	it("deletes them only when every answer came without Access", () => {
+		expect(accessDoorOf([open, open, open, open])).toEqual({ door: "open" });
+		expect(accessDoorOf([open, unknown]).door).toBe("unknown");
+		expect(accessDoorOf([]).door).toBe("unknown");
+	});
+
+	it("leaves them alone when two teams answer", () => {
+		expect(
+			accessDoorOf([
+				behind(),
+				behind(KID, "https://other.cloudflareaccess.com"),
+			]).door,
+		).toBe("unknown");
+	});
+});
+
+describe("every address wrangler deployed to", () => {
+	it("is each https line under the triggers line", () => {
+		const output = [
+			"Uploaded my-worker (3.1 sec)",
+			"Deployed my-worker triggers (1.2 sec)",
+			"  https://my-worker.example.workers.dev",
+			"  mail.example.org (custom domain)",
+			"  https://mail.example.org/",
+			"  schedule: 0 18 * * *",
+			"Current Version ID: 00000000-0000-0000-0000-000000000000",
+		].join("\n");
+		expect(deployedAddresses(output)).toEqual([
+			"https://my-worker.example.workers.dev",
+			"https://mail.example.org",
+		]);
+		expect(deployedAddress(output)).toBe(
+			"https://my-worker.example.workers.dev",
+		);
+		expect(deployedAddresses("nothing deployed")).toEqual([]);
 	});
 });

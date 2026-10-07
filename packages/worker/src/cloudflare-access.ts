@@ -11,13 +11,16 @@
  * What is checked: the issuer, the signature (RS256, by a key that issuer
  * publishes at `/cdn-cgi/access/certs`), that it is in date, and the audience.
  *
- * Which team is this deployment's is written by the deploy, never learned
- * from a request. The deploy asks the deployed address for its front page;
- * behind Access the answer is a redirect to the team's sign-in, whose host is
- * the team. The deploy writes it to `settings/access.json` with the R2 access
- * it already has, and deletes the file when the page answers without one.
- * Nothing has to be set in a dashboard, and a fork's team, or none, is found
- * the same way.
+ * Which team and application are this deployment's are written by the
+ * deploy, never learned from a request. The deploy asks every address it
+ * deployed to for its page and for an API path, without following a
+ * redirect; behind Access the answer is a redirect to the team's sign-in,
+ * whose host is the team and whose `kid` names the application by its
+ * audience tag.
+ * The deploy writes them to `settings/access.json` with the R2 access it
+ * already has, and deletes the file only when every answer came without
+ * Access (deployment-check.mjs, `accessDoorOf`). Nothing has to be set in a
+ * dashboard, and a fork's team, or none, is found the same way.
  *
  * Learning the team from the first token instead was the first version of
  * this, and it let anybody with a team of their own -- anyone can make one --
@@ -26,14 +29,11 @@
  * written one before any key is fetched, so a stranger's team costs no
  * request either.
  *
- * The application (the audience) is fixed by the first token that verifies
- * under the written team, as the instruction for this allowed: only somebody
- * the owner's team signed in can be handed one. The sign-in redirect also
- * carries an id (`kid`) that is very likely the same value, but that was not
- * seen against a real token, and written wrongly it would refuse the owner on
- * every request with nothing but a change of code to undo it. Each deploy
- * writes the team alone, so an audience fixed wrongly is learned again after
- * the next one.
+ * A redirect with no `kid` of that shape leaves the applications unwritten,
+ * and then the first token that verifies under the written team fixes one,
+ * as the instruction for this allowed. That is the fallback, not the rule:
+ * on an address Access does not cover, a token from another application of
+ * the same team could be the first.
  *
  * With no file a request is let through, token or not: that is a deployment
  * without Access -- a fork, the tests, `wrangler dev` -- and the gates behind
@@ -48,7 +48,8 @@ export const ACCESS_KEY = "settings/access.json";
 
 export interface AccessSettings {
 	issuer: string;
-	audience?: string;
+	/** Any one of them will do: each address may be an application of its own. */
+	audiences?: string[];
 }
 
 /** The header Access sets on every request it lets through. */
@@ -248,15 +249,19 @@ async function readSettings(env: Env, now: number): Promise<StoredSettings> {
 			!value ||
 			typeof value.issuer !== "string" ||
 			!ACCESS_ISSUER.test(value.issuer) ||
-			(value.audience !== undefined &&
-				(typeof value.audience !== "string" || value.audience === ""))
+			(value.audiences !== undefined &&
+				(!Array.isArray(value.audiences) ||
+					value.audiences.length === 0 ||
+					!value.audiences.every(
+						(one) => typeof one === "string" && one !== "",
+					)))
 		) {
 			throw new Error(`${ACCESS_KEY} holds no Access team`);
 		}
 		stored = {
 			settings: {
 				issuer: value.issuer,
-				...(value.audience ? { audience: value.audience } : {}),
+				...(value.audiences ? { audiences: value.audiences } : {}),
 			},
 			etag: object.etag,
 		};
@@ -277,7 +282,7 @@ async function fixAudience(
 	now: number,
 ): Promise<AccessSettings> {
 	const issuer = stored.settings?.issuer ?? "";
-	const value: AccessSettings = { issuer, audience };
+	const value: AccessSettings = { issuer, audiences: [audience] };
 	const written = stored.etag
 		? await env.BUCKET.put(ACCESS_KEY, JSON.stringify(value), {
 				onlyIf: { etagMatches: stored.etag },
@@ -332,12 +337,12 @@ export async function checkAccess(
 			reason: verdict.reason,
 		};
 	}
-	let audience = settings.audience;
-	if (!audience) {
+	let audiences = settings.audiences;
+	if (!audiences) {
 		try {
-			audience = (
+			audiences = (
 				await fixAudience(env, stored, verdict.audience[0] ?? "", now)
-			).audience;
+			).audiences;
 		} catch {
 			return {
 				pass: false,
@@ -346,7 +351,7 @@ export async function checkAccess(
 			};
 		}
 	}
-	if (!audience || !verdict.audience.includes(audience)) {
+	if (!audiences?.some((one) => verdict.audience.includes(one))) {
 		return { pass: false, status: 403, reason: "for another application" };
 	}
 	return { pass: true };

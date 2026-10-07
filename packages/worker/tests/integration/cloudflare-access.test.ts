@@ -107,10 +107,23 @@ describe("a deployment with Access in front", () => {
 		expect((await ask()).status).toBe(403);
 	});
 
-	it("fixes the application from the first token its team signed, then holds every request to it", async () => {
+	it("holds every request to the applications the deploy wrote, any one of them", async () => {
+		await settle({ issuer: TEAM, audiences: ["workers-dev-app", AUD] });
+		expect((await ask(await token())).status).toBe(200);
+		expect((await ask(await token({ aud: ["workers-dev-app"] }))).status).toBe(
+			200,
+		);
+		expect((await ask(await token({ aud: ["another-app"] }))).status).toBe(403);
+		expect(await stored()).toEqual({
+			issuer: TEAM,
+			audiences: ["workers-dev-app", AUD],
+		});
+	});
+
+	it("with none written, fixes the application from the first token its team signed, then holds every request to it", async () => {
 		await settle({ issuer: TEAM });
 		expect((await ask(await token())).status).toBe(200);
-		expect(await stored()).toEqual({ issuer: TEAM, audience: AUD });
+		expect(await stored()).toEqual({ issuer: TEAM, audiences: [AUD] });
 		forgetAccessState();
 		expect((await ask(await token())).status).toBe(200);
 		expect((await ask(await token({ aud: ["another-app"] }))).status).toBe(403);
@@ -134,7 +147,7 @@ describe("a deployment with Access in front", () => {
 	});
 
 	it("takes an audience the token lists among others", async () => {
-		await settle({ issuer: TEAM, audience: AUD });
+		await settle({ issuer: TEAM, audiences: [AUD] });
 		expect((await ask(await token({ aud: ["x", AUD] }))).status).toBe(200);
 		expect((await ask(await token({ aud: AUD }))).status).toBe(200);
 	});
@@ -187,7 +200,7 @@ describe("a deployment with Access in front", () => {
 	});
 
 	it("comes before every route, sign-in and the session gate included", async () => {
-		await settle({ issuer: TEAM, audience: AUD });
+		await settle({ issuer: TEAM, audiences: [AUD] });
 		const signIn = await SELF.fetch("http://local.test/api/v1/auth/login", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -201,7 +214,7 @@ describe("a deployment with Access in front", () => {
 	it("does not stand in for a session: Access's token alone reaches no mailbox", async () => {
 		await testAuthBeforeAll();
 		await createDummyMailbox();
-		await settle({ issuer: TEAM, audience: AUD });
+		await settle({ issuer: TEAM, audiences: [AUD] });
 		const assertion = await token();
 		const without = await SELF.fetch(
 			`http://local.test/api/v1/mailboxes/${mailboxId}/emails?folder=inbox`,
@@ -223,7 +236,7 @@ describe("a deployment with Access in front", () => {
 	it("leaves mail delivery alone: it is no request", async () => {
 		await testAuthBeforeAll();
 		await createDummyMailbox();
-		await settle({ issuer: TEAM, audience: AUD });
+		await settle({ issuer: TEAM, audiences: [AUD] });
 		const worker = await import("../../dev/index");
 		const raw = new TextEncoder().encode(
 			`From: sender@example.org\r\nTo: ${mailboxId}\r\nSubject: Arrives behind Access\r\n\r\nHello`,
@@ -263,9 +276,9 @@ describe("a deployment with Access in front", () => {
 		]);
 		const statuses = answers.map((a) => a.status).sort();
 		expect(statuses).toEqual([200, 403]);
-		const kept = (await stored()) as { audience: string };
+		const kept = (await stored()) as { audiences: string[] };
 		const winner = answers[0]?.status === 200 ? "first-app" : "second-app";
-		expect(kept.audience).toBe(winner);
+		expect(kept.audiences).toEqual([winner]);
 	});
 
 	it("fails closed on settings it cannot read", async () => {
@@ -276,7 +289,10 @@ describe("a deployment with Access in front", () => {
 		await settle({ issuer: "https://evil.example" });
 		expect((await ask()).status).toBe(503);
 		forgetAccessState();
-		await settle({ issuer: TEAM, audience: "" });
+		await settle({ issuer: TEAM, audiences: [] });
+		expect((await ask()).status).toBe(503);
+		forgetAccessState();
+		await settle({ issuer: TEAM, audiences: [""] });
 		expect((await ask()).status).toBe(503);
 	});
 });
@@ -303,14 +319,14 @@ describe("what the deploy writes next", () => {
 		expect((await checkAccess(plain(), env, at + 31_000)).pass).toBe(true);
 	});
 
-	it("is the team alone, and the application is learned again", async () => {
+	it("replaces an application learned before, when it names none it is learned again", async () => {
 		const at = Date.now();
-		await settle({ issuer: TEAM, audience: "fixed-wrongly" });
+		await settle({ issuer: TEAM, audiences: ["learned-wrongly"] });
 		expect((await checkAccess(await signed(), env, at)).pass).toBe(false);
 		await settle({ issuer: TEAM });
 		expect((await checkAccess(await signed(), env, at + 31_000)).pass).toBe(
 			true,
 		);
-		expect(await stored()).toEqual({ issuer: TEAM, audience: AUD });
+		expect(await stored()).toEqual({ issuer: TEAM, audiences: [AUD] });
 	});
 });
