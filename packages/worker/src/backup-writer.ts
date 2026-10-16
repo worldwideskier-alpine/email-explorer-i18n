@@ -20,6 +20,7 @@ import type { TimeLimits } from "./deadline";
 import { limitedBy } from "./deadline";
 import type { MailboxDO } from "./durableObject";
 import { renderMboxEntry } from "./mbox";
+import { getBytes } from "./r2-retry";
 import type { Env } from "./types";
 
 /**
@@ -379,15 +380,15 @@ async function loadCarry(
 	mailboxId: string,
 	night: string,
 ): Promise<{ carry: BackupCarry; leftover: Uint8Array }> {
-	const stored = await env.BUCKET.get(carryKey(mailboxId));
-	const carry = stored ? await stored.json<BackupCarry>() : null;
+	const stored = await getBytes(env.BUCKET, carryKey(mailboxId));
+	const carry = stored
+		? (JSON.parse(new TextDecoder().decode(stored)) as BackupCarry)
+		: null;
 	if (!carry || carry.night !== night) {
 		throw new Error("The paused backup's place was not found.");
 	}
-	const bytes = await env.BUCKET.get(leftoverKey(mailboxId));
-	const leftover = bytes
-		? new Uint8Array(await bytes.arrayBuffer())
-		: new Uint8Array();
+	const leftover =
+		(await getBytes(env.BUCKET, leftoverKey(mailboxId))) ?? new Uint8Array();
 	// Short by even a byte and the archive would be quietly corrupt.
 	if (leftover.byteLength !== carry.leftover) {
 		throw new Error("The paused backup's unwritten bytes were not found.");
@@ -408,9 +409,12 @@ export async function abandonPausedBackup(
 	env: Env,
 	mailboxId: string,
 ): Promise<void> {
-	const stored = await env.BUCKET.get(carryKey(mailboxId));
+	const stored = await getBytes(env.BUCKET, carryKey(mailboxId));
 	if (!stored) return;
-	const carry = await stored.json<BackupCarry>().catch(() => null);
+	let carry: BackupCarry | null = null;
+	try {
+		carry = JSON.parse(new TextDecoder().decode(stored)) as BackupCarry;
+	} catch {}
 	if (carry) {
 		await env.BUCKET.resumeMultipartUpload(carry.key, carry.uploadId)
 			.abort()

@@ -18,6 +18,7 @@
 
 import type { NightStatus } from "./mailbox-night";
 import { rewriteJson } from "./r2-json";
+import { getBytes } from "./r2-retry";
 import type { Env } from "./types";
 
 export const MAINTENANCE_KEY = "maintenance/last-run.json";
@@ -31,6 +32,12 @@ export interface MaintenancePhase {
 	deleted?: number;
 	/** Set when the pass threw instead of finishing. */
 	error?: string;
+	/**
+	 * Why mailboxes failed, each reason once and a few at most. A mailbox's
+	 * own record keeps only its latest night, so the reason for 2026-10-07
+	 * was gone by the time anybody asked; the history keeps these two weeks.
+	 */
+	reasons?: string[];
 }
 
 /**
@@ -81,15 +88,35 @@ export interface MaintenanceRecord {
 	 * and was counted, and whose purge carried on.
 	 */
 	continuing?: { mailbox: string; backup: boolean }[];
+	/**
+	 * The call that runs this night and alone writes this record; see
+	 * claimNight. Absent on a record from before there was one.
+	 */
+	owner?: string;
+	/**
+	 * Every scheduled call for this firing, as the runtime gave it and as it
+	 * began. On 2026-10-13 there were two, 7.4 s apart, and nothing but two
+	 * different start times said so; this says so whatever the times.
+	 */
+	calls?: MaintenanceCall[];
+}
+
+export interface MaintenanceCall {
+	/** `scheduledTime` as the runtime handed it over. */
+	scheduledTime: string;
+	/** When the call began. */
+	at: string;
+	/** Left the night to the call that owns it. */
+	stoodAside?: boolean;
 }
 
 export async function readMaintenanceRecord(
 	env: Pick<Env, "BUCKET">,
 ): Promise<MaintenanceRecord | null> {
-	const stored = await env.BUCKET.get(MAINTENANCE_KEY);
+	const stored = await getBytes(env.BUCKET, MAINTENANCE_KEY);
 	if (!stored) return null;
 	try {
-		return await stored.json<MaintenanceRecord>();
+		return JSON.parse(new TextDecoder().decode(stored)) as MaintenanceRecord;
 	} catch {
 		// Unreadable is as good as absent here, and throwing would take down
 		// whatever asked -- including the cron that is trying to write it.
@@ -98,9 +125,60 @@ export async function readMaintenanceRecord(
 }
 
 /**
+ * Makes this call the one that runs tonight, or says another call already is.
+ *
+ * The runtime can call the scheduled handler more than once for one firing:
+ * on 2026-10-13 two calls came 7.4 s apart, each began the night, and each
+ * wrote this record over the other's. One call per firing runs the night and
+ * writes the record; any other leaves at once. Decided by a conditional put,
+ * so two calls at the same moment cannot both win.
+ *
+ * Tonight's record held by another call is left to it -- unless that call
+ * reached its end with a pass that threw (the mailboxes could not even be
+ * listed): then nothing of the night was begun, and this call, most likely
+ * the runtime trying the firing again, takes it over and runs it.
+ *
+ * Answers whether this call owns the night. A call that cannot tell -- the
+ * bucket did not answer -- runs the night all the same: the record is a
+ * diagnostic, and a night not run for want of it is the worse loss. Its writes
+ * are still refused where another call owns the record.
+ */
+export async function claimNight(
+	env: Pick<Env, "BUCKET">,
+	startedAt: string,
+	owner: string,
+	call: MaintenanceCall,
+): Promise<boolean> {
+	let claimed = false;
+	await rewriteJson<MaintenanceRecord>(
+		env.BUCKET,
+		MAINTENANCE_KEY,
+		(stored) => {
+			const tonight = stored?.startedAt === startedAt ? stored : null;
+			const threw =
+				!!tonight?.finishedAt &&
+				!!(tonight.backups?.error || tonight.spamPurge?.error);
+			claimed = !tonight || threw;
+			const calls = [
+				...(tonight?.calls ?? []),
+				claimed ? call : { ...call, stoodAside: true },
+			];
+			return claimed
+				? { startedAt, owner, calls }
+				: { ...(tonight as MaintenanceRecord), calls };
+		},
+		{ replaceUnreadable: true },
+	);
+	return claimed;
+}
+
+/**
  * Writes the cron's record over what is stored -- keeping what the nights it
  * stopped waiting for have folded in since, which the cron's own copy does
- * not know about.
+ * not know about, and the calls other than this one.
+ *
+ * Only the call that owns the night writes it (see claimNight), and a night's
+ * record never replaces a later night's.
  */
 export async function writeMaintenanceRecord(
 	env: Pick<Env, "BUCKET">,
@@ -109,17 +187,23 @@ export async function writeMaintenanceRecord(
 	await rewriteJson<MaintenanceRecord>(
 		env.BUCKET,
 		MAINTENANCE_KEY,
-		(stored) =>
-			stored?.startedAt === record.startedAt &&
-			stored.continuing &&
-			record.continuing
+		(stored) => {
+			if (stored && stored.startedAt > record.startedAt) return undefined;
+			if (stored?.startedAt !== record.startedAt) return record;
+			if (stored.owner && record.owner && stored.owner !== record.owner) {
+				return undefined;
+			}
+			const calls = stored.calls ?? record.calls;
+			return stored.continuing && record.continuing
 				? {
 						...record,
 						backups: stored.backups,
 						spamPurge: stored.spamPurge,
 						continuing: stored.continuing,
+						...(calls ? { calls } : {}),
 					}
-				: record,
+				: { ...record, ...(calls ? { calls } : {}) };
+		},
 		{ replaceUnreadable: true },
 	);
 }
@@ -155,6 +239,14 @@ export async function foldContinuedNight(
 				? counted(night.backup.state)
 				: { ran: 0, failed: 0 };
 			const purge = counted(night.purge.state);
+			const reasons = withReason(
+				stored.backups?.reasons,
+				listed.backup ? night.backup.error : undefined,
+			);
+			const purgeReasons = withReason(
+				stored.spamPurge?.reasons,
+				night.purge.error,
+			);
 			const backups = stored.backups ?? {
 				finishedAt: at,
 				considered: 0,
@@ -175,6 +267,7 @@ export async function foldContinuedNight(
 					finishedAt: at,
 					ran: backups.ran + backup.ran,
 					failed: backups.failed + backup.failed,
+					...(reasons ? { reasons } : {}),
 				},
 				spamPurge: {
 					...spamPurge,
@@ -182,6 +275,7 @@ export async function foldContinuedNight(
 					ran: spamPurge.ran + purge.ran,
 					failed: spamPurge.failed + purge.failed,
 					deleted: (spamPurge.deleted ?? 0) + (night.purge.deleted ?? 0),
+					...(purgeReasons ? { reasons: purgeReasons } : {}),
 				},
 				continuing: (stored.continuing ?? []).filter(
 					(entry) => entry.mailbox !== night.mailbox,
@@ -189,6 +283,15 @@ export async function foldContinuedNight(
 			};
 		},
 	);
+}
+
+/** A failure's reason added to those already kept: once each, three at most. */
+export function withReason(
+	reasons: string[] | undefined,
+	reason: string | undefined,
+): string[] | undefined {
+	if (!reason || reasons?.includes(reason)) return reasons;
+	return [...(reasons ?? []), reason].slice(0, 3);
 }
 
 /**
@@ -208,10 +311,10 @@ export const HISTORY_LENGTH = 14;
 export async function readMaintenanceHistory(
 	env: Pick<Env, "BUCKET">,
 ): Promise<MaintenanceRecord[]> {
-	const stored = await env.BUCKET.get(MAINTENANCE_HISTORY_KEY);
+	const stored = await getBytes(env.BUCKET, MAINTENANCE_HISTORY_KEY);
 	if (!stored) return [];
 	try {
-		const history = await stored.json<unknown>();
+		const history = JSON.parse(new TextDecoder().decode(stored));
 		return Array.isArray(history) ? (history as MaintenanceRecord[]) : [];
 	} catch {
 		return [];
@@ -222,15 +325,28 @@ export async function readMaintenanceHistory(
  * Moves the last run's record to the front of the history.
  *
  * Only once per run: a record already at the front (the cron firing twice, or
- * a retry of this step) is not added again.
+ * a retry of this step) is not added again, and tonight's own -- put by
+ * another call for the same firing -- is not added at all.
+ *
+ * Written conditionally, onto what was read: the put used to be blind, onto
+ * a read that answered "none" when it failed, so one failed read would have
+ * put a history of one night over fourteen. Now a read that fails throws, and
+ * only a history that will not parse at all is started again.
  */
-export async function archiveLastRun(env: Pick<Env, "BUCKET">): Promise<void> {
+export async function archiveLastRun(
+	env: Pick<Env, "BUCKET">,
+	tonight?: string,
+): Promise<void> {
 	const last = await readMaintenanceRecord(env);
-	if (!last) return;
-	const history = await readMaintenanceHistory(env);
-	if (history[0]?.startedAt === last.startedAt) return;
-	await env.BUCKET.put(
+	if (!last || last.startedAt === tonight) return;
+	await rewriteJson<MaintenanceRecord[]>(
+		env.BUCKET,
 		MAINTENANCE_HISTORY_KEY,
-		JSON.stringify([last, ...history].slice(0, HISTORY_LENGTH)),
+		(stored) => {
+			const history = Array.isArray(stored) ? stored : [];
+			if (history[0]?.startedAt === last.startedAt) return undefined;
+			return [last, ...history].slice(0, HISTORY_LENGTH);
+		},
+		{ replaceUnreadable: true },
 	);
 }

@@ -49,6 +49,7 @@ export interface BackupPassSummary {
 	considered: number;
 	ran: number;
 	failed: number;
+	reasons?: string[];
 }
 
 /** Where the pass has got to, for a run that may not live to report itself. */
@@ -93,7 +94,7 @@ export async function backupOneMailbox(
 	source?: MailboxSource,
 	/** Where this slice stops; absent, the whole backup in one go. */
 	slice?: BackupSlice,
-): Promise<BackupOutcome> {
+): Promise<{ outcome: BackupOutcome; error?: string }> {
 	// Recording is held to the per-call limit only, up to `recordBy`: refusing
 	// to write down how it went because time is up would lose exactly the
 	// fact the deadline exists to produce.
@@ -117,7 +118,7 @@ export async function backupOneMailbox(
 		);
 		// Nothing to write down yet: the mailbox's screen goes on showing the
 		// last night until this one has an outcome.
-		if (step.kind === "paused") return "paused";
+		if (step.kind === "paused") return { outcome: "paused" };
 		const written = step.result;
 		// Given the per-call limit alone: the archive is written by now, and
 		// saying so should not be refused because the time has just run out.
@@ -132,13 +133,14 @@ export async function backupOneMailbox(
 			}),
 			"recording the result",
 		).catch(() => {});
-		return "ran";
+		return { outcome: "ran" };
 	} catch (e) {
+		const error = String(e instanceof Error ? e.message : e).slice(0, 300);
 		await call(
 			recordResult(env, mailbox.id, {
 				at: now.toISOString(),
 				ok: false,
-				error: String(e instanceof Error ? e.message : e).slice(0, 300),
+				error,
 				// Begun, and stopped by its time running out rather than by a
 				// fault: worded on the screen in the reader's language.
 				...(e instanceof OutOfTime && e.passEnded
@@ -147,7 +149,7 @@ export async function backupOneMailbox(
 			}),
 			"recording the result",
 		).catch(() => {});
-		return "failed";
+		return { outcome: "failed", error };
 	}
 }
 

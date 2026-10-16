@@ -7,6 +7,7 @@
  * Durable Object and its raw copy from R2, and nothing keeps a second copy.
  */
 
+import { getBytes } from "./r2-retry";
 import type { Env } from "./types";
 
 interface ExportedAttachment {
@@ -320,7 +321,8 @@ async function synthesizeMessage(
 		 * gone and the archive is the only copy left. Silently, which is the
 		 * whole of what made it survive.
 		 */
-		const object = await env.BUCKET.get(
+		const object = await getBytes(
+			env.BUCKET,
 			`attachments/${email.id}/${attachment.id}/${attachment.filename}`,
 		);
 		// One line, for the note's prose as much as for its headers.
@@ -364,7 +366,7 @@ async function synthesizeMessage(
 			continue;
 		}
 
-		const bytes = new Uint8Array(await object.arrayBuffer());
+		const bytes = object;
 		const type = safeMediaType(attachment.mimetype);
 		/*
 		 * An inline image is stored as one and was exported as an attachment
@@ -460,13 +462,11 @@ export async function renderMboxEntry(
 	folderName?: string,
 ): Promise<Uint8Array> {
 	const encoder = new TextEncoder();
-	const raw = await env.BUCKET.get(`raw/${email.id}.eml`);
+	const raw = await getBytes(env.BUCKET, `raw/${email.id}.eml`);
 	// The one place the encoding is known: a message this fork composed is a
 	// string it built itself, so encoding it as UTF-8 is what it already was.
 	// A received message is never decoded at all.
-	const message = raw
-		? new Uint8Array(await raw.arrayBuffer())
-		: encoder.encode(await synthesizeMessage(env, email));
+	const message = raw ?? encoder.encode(await synthesizeMessage(env, email));
 
 	const separator = `From ${email.sender || "MAILER-DAEMON"} ${mboxDate(email.date)}`;
 	const headers = [

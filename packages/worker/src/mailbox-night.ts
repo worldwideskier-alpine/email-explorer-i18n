@@ -93,8 +93,10 @@ export interface NightStatus {
 		at?: string;
 		/** How many slices the backup has taken, this one included. */
 		slices?: number;
+		/** Why it failed, as the mailbox's own record says it. */
+		error?: string;
 	};
-	purge: { state: NightPart; deleted?: number };
+	purge: { state: NightPart; deleted?: number; error?: string };
 }
 
 /** What tonight holds for this mailbox, before any of it has begun. */
@@ -169,20 +171,17 @@ export async function runMailboxNight(
 			(slices > (limits.maxSlices ?? MAX_SLICES) ||
 				start - Date.parse(status.night) > NIGHT_LONGEST_MS)
 		) {
+			const why = `Not finished in ${slices - 1} parts before the next night; given up.`;
 			await abandonPausedBackup(env, mailbox.id).catch(() => {});
-			await recordBackupNotRun(
-				env,
-				mailbox.id,
-				now,
-				`Not finished in ${slices - 1} parts before the next night; given up.`,
-			);
+			await recordBackupNotRun(env, mailbox.id, now, why);
 			status.backup.state = "failed";
+			status.backup.error = why;
 			await say();
 		} else {
 			status.backup.state = "running";
 			status.backup.slices = slices;
 			await say();
-			const outcome = await backupOneMailbox(
+			const { outcome, error } = await backupOneMailbox(
 				env,
 				mailbox,
 				now,
@@ -209,6 +208,7 @@ export async function runMailboxNight(
 				return status;
 			}
 			status.backup.state = outcome;
+			if (error) status.backup.error = error;
 			await say();
 		}
 	}
@@ -226,6 +226,7 @@ export async function runMailboxNight(
 		status.purge = {
 			state: purged.ok ? "ran" : "failed",
 			deleted: purged.deleted,
+			...(purged.error ? { error: purged.error } : {}),
 		};
 		await say();
 	}

@@ -80,8 +80,13 @@ describe("what the nightly run writes down about itself", () => {
 		const states = written.map((body) => JSON.parse(body));
 		expect(states.length).toBeGreaterThanOrEqual(3);
 
-		// Stopped before the backups finished: a beginning and nothing else.
-		expect(states[0]).toEqual({ startedAt: NOW.toISOString() });
+		// Stopped before the backups finished: a beginning and nothing else --
+		// but which call it is, so a second call for the firing stands aside.
+		expect(states[0]).toEqual({
+			startedAt: NOW.toISOString(),
+			owner: expect.any(String),
+			calls: [{ scheduledTime: NOW.toISOString(), at: expect.any(String) }],
+		});
 
 		// Stopped between the passes -- the production shape, where the backup
 		// recorded a success and the purge recorded nothing at all.

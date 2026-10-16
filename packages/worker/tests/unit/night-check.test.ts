@@ -153,4 +153,30 @@ describe("the night check", () => {
 			"spam purge 2 ran, 0 failed of 2, 5 message(s) removed",
 		);
 	});
+
+	// On 2026-10-13 the runtime called the cron twice for one firing, and
+	// only two start times said so. Times and a count, never a mailbox.
+	it("says how many calls the firing had, and when each began", () => {
+		const twice = {
+			...wellEnded(),
+			startedAt: "2026-10-13T18:00:00.000Z",
+			owner: "a",
+			calls: [
+				{
+					scheduledTime: "2026-10-13T18:00:00.000Z",
+					at: "2026-10-13T18:00:12.604Z",
+				},
+				{
+					scheduledTime: "2026-10-13T18:00:00.000Z",
+					at: "2026-10-13T18:00:20.053Z",
+					stoodAside: true,
+				},
+			],
+		};
+		expect(nightSummary(twice)).toContain(
+			"scheduled 2026-10-13T18:00:00.000Z, 2 call(s) began 2026-10-13T18:00:12.604Z, 2026-10-13T18:00:20.053Z (stood aside)",
+		);
+		expect(nightSummary(twice)).not.toContain("@");
+		expect(nightSummary(wellEnded())).not.toContain("call(s)");
+	});
 });

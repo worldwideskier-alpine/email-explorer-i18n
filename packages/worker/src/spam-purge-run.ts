@@ -189,6 +189,7 @@ export interface SpamPurgeSummary {
 	ran: number;
 	deleted: number;
 	failed: number;
+	reasons?: string[];
 }
 
 /**
@@ -211,7 +212,7 @@ export async function purgeOneMailbox(
 	 */
 	limits: TimeLimits = {},
 	source?: MailboxSource,
-): Promise<{ ok: boolean; deleted: number }> {
+): Promise<{ ok: boolean; deleted: number; error?: string }> {
 	const call = recordingWithin(limits);
 	const retention = mailbox.settings.spamRetention;
 	try {
@@ -240,14 +241,15 @@ export async function purgeOneMailbox(
 		).catch(() => {});
 		return { ok: true, deleted };
 	} catch (e) {
+		const error = String(e instanceof Error ? e.message : e).slice(0, 300);
 		await call(
 			recordResult(env, mailbox.id, {
 				at: now.toISOString(),
 				ok: false,
-				error: String(e instanceof Error ? e.message : e).slice(0, 300),
+				error,
 			}),
 			"recording the result",
 		).catch(() => {});
-		return { ok: false, deleted: 0 };
+		return { ok: false, deleted: 0, error };
 	}
 }
