@@ -46,8 +46,8 @@ export async function runScheduledBackups(
 	);
 	return {
 		considered: mailboxes.length,
-		ran: outcomes.filter((outcome) => outcome === "ran").length,
-		failed: outcomes.filter((outcome) => outcome === "failed").length,
+		ran: outcomes.filter(({ outcome }) => outcome === "ran").length,
+		failed: outcomes.filter(({ outcome }) => outcome === "failed").length,
 	};
 }
 

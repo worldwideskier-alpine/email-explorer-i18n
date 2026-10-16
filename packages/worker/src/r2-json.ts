@@ -1,3 +1,5 @@
+import { keyKind, readRetrying } from "./r2-retry";
+
 /** How many times a write that lost a race is tried again. */
 const ATTEMPTS = 5;
 
@@ -45,10 +47,12 @@ export async function rewriteJson<T>(
 	} = {},
 ): Promise<T | undefined> {
 	for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
-		const object = await bucket.get(key);
+		const { object, text } = await readRetrying(async () => {
+			const object = await bucket.get(key);
+			return { object, text: object ? await object.text() : "" };
+		}, keyKind(key));
 		let stored: T | null = null;
 		if (object) {
-			const text = await object.text();
 			try {
 				stored = JSON.parse(text) as T;
 			} catch (error) {

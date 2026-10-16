@@ -10,6 +10,7 @@
 
 import type { AutoBackupSettings } from "./auto-backup";
 import { rewriteJson } from "./r2-json";
+import { getBytes } from "./r2-retry";
 import type { SpamRetentionSettings } from "./spam-retention";
 import type { Env } from "./types";
 
@@ -29,11 +30,15 @@ export async function listMailboxes(env: Env): Promise<MailboxRecord[]> {
 		for (const obj of listed.objects) {
 			const id = obj.key.slice("mailboxes/".length).replace(/\.json$/, "");
 			if (!id) continue;
-			const stored = await env.BUCKET.get(obj.key);
+			// Read again when R2 asks to slow down: one refusal here used to
+			// fail every mailbox's night, since nothing starts without the list.
+			const stored = await getBytes(env.BUCKET, obj.key);
 			out.push({
 				id,
 				settings: stored
-					? ((await stored.json()) as MailboxRecord["settings"])
+					? (JSON.parse(
+							new TextDecoder().decode(stored),
+						) as MailboxRecord["settings"])
 					: {},
 			});
 		}

@@ -71,7 +71,7 @@ import {
 	PutRecoverySender,
 	PutTurnstile,
 } from "./routes/root";
-import { runScheduledMaintenance } from "./scheduled-run";
+import { firingOf, runScheduledMaintenance } from "./scheduled-run";
 import { keepSentCopy, prepareAttachments } from "./sent-copy";
 import { slugify } from "./slugify";
 import {
@@ -2894,12 +2894,17 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 		 * the first request that asks who holds a mailbox.
 		 */
 		async scheduled(
-			_event: { cron: string; scheduledTime: number },
+			event: { cron: string; scheduledTime: number },
 			env: Env,
 			_context: ExecutionContext,
 		) {
 			env.config = options;
-			await runScheduledMaintenance(env);
+			await runScheduledMaintenance(
+				env,
+				firingOf(event.scheduledTime),
+				{},
+				event.scheduledTime,
+			);
 		},
 		async fetch(request: Request, env: Env, context: ExecutionContext) {
 			// Make options available to routes via env

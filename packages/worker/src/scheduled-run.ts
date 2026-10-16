@@ -36,7 +36,12 @@ import { recordBackupNotRun } from "./backup-run";
 import { within } from "./deadline";
 import type { UnfinishedDeletionsSummary } from "./mailbox-destroy";
 import { finishUnfinishedDeletions } from "./mailbox-destroy";
-import type { NightLimits, NightRunner, NightStatus } from "./mailbox-night";
+import type {
+	NightLimits,
+	NightPart,
+	NightRunner,
+	NightStatus,
+} from "./mailbox-night";
 import {
 	alarmNights,
 	nightFor,
@@ -48,7 +53,9 @@ import { listMailboxes } from "./mailbox-records";
 import type { MaintenanceRecord } from "./maintenance-record";
 import {
 	archiveLastRun,
+	claimNight,
 	foldContinuedNight,
+	withReason,
 	writeMaintenanceRecord,
 } from "./maintenance-record";
 import type { SpamPurgeSummary } from "./spam-purge-run";
@@ -59,6 +66,8 @@ export interface MaintenanceSummary {
 	spamPurge?: SpamPurgeSummary;
 	unfinishedDeletions?: UnfinishedDeletionsSummary;
 	backupError?: string;
+	/** Another call for the same firing runs the night; see claimNight. */
+	stoodAside?: boolean;
 }
 
 const message = (e: unknown): string =>
@@ -125,10 +134,23 @@ async function note(
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/**
+ * The night a scheduled call belongs to: the minute it was scheduled for.
+ * A cron is scheduled by the minute, so two calls in one minute are one
+ * firing -- on 2026-10-13 two came 7.4 s apart.
+ */
+export function firingOf(scheduledTime: number): Date {
+	return Number.isFinite(scheduledTime)
+		? new Date(Math.floor(scheduledTime / 60_000) * 60_000)
+		: new Date();
+}
+
 export async function runScheduledMaintenance(
 	env: Env,
 	now: Date = new Date(),
 	limits: MaintenanceLimits = {},
+	/** As the runtime gave it; `now` is the minute it falls in. */
+	scheduledTime: number = now.getTime(),
 ): Promise<MaintenanceSummary> {
 	// The budget runs from when this invocation started, which is not `now`:
 	// a test passes a fixed date for what the nights compare against.
@@ -141,12 +163,41 @@ export async function runScheduledMaintenance(
 	// Last night's record moves into the history before tonight's replaces
 	// it; see maintenance-record.ts.
 	await within(
-		archiveLastRun(env),
+		archiveLastRun(env, now.toISOString()),
 		NOTE_LIMIT_MS,
 		"keeping the last run's record",
 	).catch(() => {});
-	const record: MaintenanceRecord = { startedAt: now.toISOString() };
-	await note(env, record);
+
+	const owner = crypto.randomUUID();
+	const call = {
+		scheduledTime: new Date(
+			Number.isFinite(scheduledTime) ? scheduledTime : now.getTime(),
+		).toISOString(),
+		at: new Date(started).toISOString(),
+	};
+	// The claim is the record's first state; one that could not be told is
+	// written as the first state instead, and the night runs regardless.
+	const claim = await within(
+		claimNight(env, now.toISOString(), owner, call),
+		NOTE_LIMIT_MS,
+		"claiming tonight's run",
+	).then(
+		(owned) => (owned ? "owned" : "another's"),
+		() => "unknown",
+	);
+	if (claim === "another's") {
+		console.log(
+			`Another call runs the night of ${call.scheduledTime}; this one, begun ${call.at}, leaves it to that one.`,
+		);
+		summary.stoodAside = true;
+		return summary;
+	}
+	const record: MaintenanceRecord = {
+		startedAt: now.toISOString(),
+		owner,
+		calls: [call],
+	};
+	if (claim === "unknown") await note(env, record);
 
 	let failure: unknown;
 	try {
@@ -235,23 +286,21 @@ async function runNights(
 				);
 			} catch (e) {
 				const night = nights.get(id) as NightStatus;
+				const why = `Could not be started: ${message(e)}`;
 				if (night.backup.state !== "skipped") {
-					await recordBackupNotRun(
-						env,
-						id,
-						now,
-						`Could not be started: ${message(e)}`,
-					);
+					await recordBackupNotRun(env, id, now, why);
 				}
 				nights.set(id, {
 					...night,
 					state: "done",
-					backup: {
-						state: night.backup.state === "skipped" ? "skipped" : "failed",
-					},
-					purge: {
-						state: night.purge.state === "skipped" ? "skipped" : "failed",
-					},
+					backup:
+						night.backup.state === "skipped"
+							? { state: "skipped" }
+							: { state: "failed", error: why },
+					purge:
+						night.purge.state === "skipped"
+							? { state: "skipped" }
+							: { state: "failed", error: why },
 				});
 			}
 		}),
@@ -378,16 +427,34 @@ async function runNights(
 	await note(env, record);
 }
 
+/**
+ * Why a part failed, as its night said -- or, for a night that never said
+ * anything, that it did not: on 2026-10-13 the second call asked fourteen
+ * minutes for a night that was not there and counted both mailboxes failed
+ * with no word of why.
+ */
+const NEVER_SEEN = "The mailbox's night was never seen to begin.";
+
+function reasonOf(part: { state: NightPart; error?: string }) {
+	if (part.error) return part.error;
+	return partSettled(part.state) ? undefined : NEVER_SEEN;
+}
+
 function backupSummary(
 	considered: number,
 	nights: Map<string, NightStatus>,
 ): BackupPassSummary {
 	const states = [...nights.values()].map((night) => night.backup.state);
+	let reasons: string[] | undefined;
+	for (const night of nights.values()) {
+		reasons = withReason(reasons, reasonOf(night.backup));
+	}
 	return {
 		considered,
 		ran: states.filter((state) => state === "ran").length,
 		failed: states.filter((state) => state !== "skipped" && state !== "ran")
 			.length,
+		...(reasons ? { reasons } : {}),
 	};
 }
 
@@ -396,6 +463,8 @@ function purgeSummary(
 	nights: Map<string, NightStatus>,
 ): SpamPurgeSummary {
 	const purges = [...nights.values()].map((night) => night.purge);
+	let reasons: string[] | undefined;
+	for (const purge of purges) reasons = withReason(reasons, reasonOf(purge));
 	return {
 		considered,
 		ran: purges.filter((purge) => purge.state === "ran").length,
@@ -403,6 +472,7 @@ function purgeSummary(
 		failed: purges.filter(
 			(purge) => purge.state !== "skipped" && purge.state !== "ran",
 		).length,
+		...(reasons ? { reasons } : {}),
 	};
 }
 

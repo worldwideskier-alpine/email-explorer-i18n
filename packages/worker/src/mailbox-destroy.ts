@@ -35,6 +35,7 @@ import { abandonPausedBackup, pausedBackupKeys } from "./backup-writer";
 import type { TimeLimits } from "./deadline";
 import { pastDeadline, within } from "./deadline";
 import { rewriteJson } from "./r2-json";
+import { getBytes } from "./r2-retry";
 import type { Env } from "./types";
 
 /** R2 accepts up to 1000 keys per delete; stay well inside it. */
@@ -183,8 +184,11 @@ export async function finishUnfinishedDeletions(
 	env: Env,
 	limits: TimeLimits = {},
 ): Promise<UnfinishedDeletionsSummary> {
-	const stored = await env.BUCKET.get(UNFINISHED_DELETIONS_KEY);
-	const ids = stored ? await stored.json<unknown>().catch(() => []) : [];
+	const stored = await getBytes(env.BUCKET, UNFINISHED_DELETIONS_KEY);
+	let ids: unknown = [];
+	try {
+		ids = stored ? JSON.parse(new TextDecoder().decode(stored)) : [];
+	} catch {}
 	const pending = Array.isArray(ids)
 		? ids.filter((id): id is string => typeof id === "string")
 		: [];

@@ -38,6 +38,8 @@ export interface MaintenanceRecord {
 		ran: number;
 		failed?: number;
 		error?: string;
+		/** Why mailboxes failed, as the nights said it; a few at most. */
+		reasons?: string[];
 	};
 	/** `ran` counts mailboxes; `deleted` counts messages. See below. */
 	spamPurge?: {
@@ -46,6 +48,7 @@ export interface MaintenanceRecord {
 		deleted?: number;
 		failed?: number;
 		error?: string;
+		reasons?: string[];
 	};
 	/**
 	 * Mailboxes whose night was still carrying its backup on when the run
@@ -53,6 +56,22 @@ export interface MaintenanceRecord {
 	 * leaves this list then.
 	 */
 	continuing?: { mailbox: string; backup: boolean }[];
+	/**
+	 * Each call the runtime made for this firing, and whether it left the
+	 * night to another. `startedAt` is the minute the firing was scheduled
+	 * for, which a call can begin a minute after.
+	 */
+	calls?: { scheduledTime: string; at: string; stoodAside?: boolean }[];
+}
+
+/**
+ * When the call that ran the night began: what the run's own limits count
+ * from. The scheduled minute can be a minute earlier (18:01:10 on
+ * 2026-10-14), and timed from it a run reads as that much nearer its end.
+ */
+function runBegan(record: MaintenanceRecord): string {
+	const ran = [...(record.calls ?? [])].reverse().find((c) => !c.stoodAside);
+	return ran?.at ?? record.startedAt;
 }
 
 /**
@@ -72,12 +91,18 @@ export function maintenanceContinuing(
 /** One pass's trouble, the more specific of the two things it can say. */
 function passTrouble(
 	name: string,
-	pass?: { failed?: number; error?: string },
+	pass?: { failed?: number; error?: string; reasons?: string[] },
 ): string {
 	if (pass?.error) return `${name}: ${pass.error}`;
 	// A pass that threw records `failed: 0` beside its error, so these never
 	// both apply to one pass; the order is only about which says more.
-	if (pass?.failed) return `${name}: ${pass.failed} failed`;
+	// Why, as the nights said it: raw, like the error above. A mailbox keeps
+	// only its latest result, and the reason for 2026-10-07 was gone by the
+	// time anybody asked; the history on this screen keeps two weeks of these.
+	if (pass?.failed) {
+		const why = pass.reasons?.length ? ` (${pass.reasons.join("; ")})` : "";
+		return `${name}: ${pass.failed} failed${why}`;
+	}
 	return "";
 }
 
@@ -184,7 +209,7 @@ export function maintenanceDuration(
 	// has one, and an empty string leaves the separator around it dangling --
 	// "finished ( / 2 backed up / ...)" -- in all 73 of them.
 	if (!record?.finishedAt) return UNKNOWN_DURATION;
-	const ms = Date.parse(record.finishedAt) - Date.parse(record.startedAt);
+	const ms = Date.parse(record.finishedAt) - Date.parse(runBegan(record));
 	if (!Number.isFinite(ms) || ms < 0) return UNKNOWN_DURATION;
 	return formatDuration(ms);
 }
@@ -255,7 +280,7 @@ export function maintenanceStoppedDetail(
 	const at = record?.backupProgress;
 	if (!at) return "";
 	// A record written before `at` existed says less rather than says nothing.
-	const into = elapsedInto(record?.startedAt, at.at);
+	const into = elapsedInto(record ? runBegan(record) : undefined, at.at);
 	return `${at.mailbox} ${at.index}/${at.of} · ${at.messages}${into ? ` · ${into}` : ""}`;
 }
 

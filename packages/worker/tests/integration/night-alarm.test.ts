@@ -87,6 +87,8 @@ describe("a mailbox's night in its alarm", () => {
 		)) as NightStatus | null;
 		expect(status?.state).toBe("done");
 		expect(status?.backup.state).toBe("failed");
+		// For the run's record, which outlives the mailbox's own.
+		expect(status?.backup.error).toContain("ended by the runtime");
 		const result = (await settings()).autoBackup?.lastResult;
 		expect(result?.ok).toBe(false);
 		expect(result?.error).toContain("ended by the runtime");

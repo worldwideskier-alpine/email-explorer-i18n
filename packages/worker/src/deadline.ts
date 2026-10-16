@@ -107,7 +107,13 @@ export function limitedBy(limits: TimeLimits = {}) {
 	const callLimit = limits.callLimitMs ?? CALL_LIMIT_MS;
 	return <T>(work: Promise<T>, what: string): Promise<T> => {
 		const left = deadline - Date.now();
-		return within(work, Math.min(callLimit, left), what, left < callLimit);
+		// What was being done goes in front of what failed: an R2 error says
+		// "get" and nothing of which read, and the record kept no more.
+		const named = work.catch((e: unknown) => {
+			if (e instanceof OutOfTime || !(e instanceof Error)) throw e;
+			throw new Error(`${what}: ${e.message}`, { cause: e });
+		});
+		return within(named, Math.min(callLimit, left), what, left < callLimit);
 	};
 }
 

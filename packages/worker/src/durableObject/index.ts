@@ -11,7 +11,13 @@ import {
 	MAX_PRESENTED_DEVICES,
 } from "../login-device";
 import type { NightStatus } from "../mailbox-night";
-import { cutOff, nightFor, runMailboxNight } from "../mailbox-night";
+import {
+	cutOff,
+	NIGHT_LONGEST_MS,
+	nightFor,
+	partSettled,
+	runMailboxNight,
+} from "../mailbox-night";
 import type { MailboxRecord } from "../mailbox-records";
 import { foldContinuedNight } from "../maintenance-record";
 import { hashPassword, verifyNothing, verifyPassword } from "../password";
@@ -24,9 +30,27 @@ import { authMigrations, mailboxMigrations } from "./migrations";
 /** Where a mailbox keeps tonight's night: see startNight. */
 const NIGHT_KEY = "night";
 
-interface StoredNight {
+export interface StoredNight {
 	mailbox: MailboxRecord;
 	status: NightStatus;
+}
+
+/**
+ * Puts a night's status down -- only over that same night.
+ *
+ * On 2026-10-13 a night's alarm put its own night back over the one a second
+ * call had just begun, at every step it reported, so the second call asked
+ * fourteen minutes for a night that was not there. startNight no longer
+ * replaces a night under way; this is the same rule held from the other side.
+ * The read and the put are storage alone, so nothing comes in between.
+ */
+export async function keepOwnNight(
+	storage: DurableObjectStorage,
+	night: StoredNight,
+): Promise<void> {
+	const current = await storage.get<StoredNight>(NIGHT_KEY);
+	if (current && current.status.night !== night.status.night) return;
+	await storage.put(NIGHT_KEY, night);
 }
 
 const ALLOWED_SORT_COLUMNS = [
@@ -2296,17 +2320,44 @@ export class MailboxDO extends DurableObject<Env> {
 	 *
 	 * Returns at once: the cron starts every mailbox's night this way and
 	 * then asks each how it is going (nightStatus). Starting a night replaces
-	 * whatever the last one left, which is a night ago.
+	 * whatever the last one left, which is a night ago -- and only that.
+	 *
+	 * The same night asked for again is left as it is: the runtime called the
+	 * cron twice for one firing on 2026-10-13, and beginning the night again
+	 * would abort the upload a paused backup is carrying on. A night not yet
+	 * ended and begun less than NIGHT_LONGEST_MS before is left as well,
+	 * whatever night is asked for: only a call for some other minute could
+	 * ask that, and it is not a reason to give up a backup under way.
 	 */
 	async startNight(mailbox: MailboxRecord, night: string): Promise<void> {
 		if (this.#isAuthDO) return;
-		// A night still carrying its backup on when the next one starts is
-		// given up rather than written over: its upload is aborted, and the
-		// cap on slices (MAX_SLICES) means this is a mailbox far beyond any
-		// one night, not an ordinary one.
 		const previous = await this.ctx.storage.get<StoredNight>(NIGHT_KEY);
+		if (previous?.status.night === night) {
+			// Set going again only if its alarm was somehow lost.
+			if (
+				previous.status.state === "scheduled" &&
+				(await this.ctx.storage.getAlarm()) === null
+			) {
+				await this.ctx.storage.setAlarm(Date.now());
+			}
+			return;
+		}
 		if (previous && previous.status.state !== "done") {
+			if (
+				Date.parse(night) - Date.parse(previous.status.night) <
+				NIGHT_LONGEST_MS
+			) {
+				return;
+			}
+			// A night still carrying its backup on when the next one starts
+			// is given up rather than written over: its upload is aborted,
+			// and the cap on slices (MAX_SLICES) means this is a mailbox far
+			// beyond any one night, not an ordinary one.
 			await abandonPausedBackup(this.env, mailbox.id).catch(() => {});
+			// Waiting on the bucket lets other calls in: one of them may
+			// have begun this night meanwhile.
+			const now = await this.ctx.storage.get<StoredNight>(NIGHT_KEY);
+			if (now?.status.night === night) return;
 		}
 		const stored: StoredNight = {
 			mailbox,
@@ -2334,9 +2385,8 @@ export class MailboxDO extends DurableObject<Env> {
 		if (!stored || stored.status.state === "done") return;
 		const { mailbox } = stored;
 		const now = new Date(stored.status.night);
-		const keep = async (status: NightStatus) => {
-			await this.ctx.storage.put(NIGHT_KEY, { mailbox, status });
-		};
+		const keep = (status: NightStatus) =>
+			keepOwnNight(this.ctx.storage, { mailbox, status });
 
 		// Under way already means the runtime ended an earlier attempt partway
 		// and is trying again; see cutOff.
@@ -2346,13 +2396,15 @@ export class MailboxDO extends DurableObject<Env> {
 				stored.status.backup.state === "running" ||
 				stored.status.backup.state === "waiting"
 			) {
+				const why =
+					"The night's run was ended by the runtime before this backup finished.";
+				ended.backup.error = why;
 				await abandonPausedBackup(this.env, mailbox.id).catch(() => {});
-				await recordBackupNotRun(
-					this.env,
-					mailbox.id,
-					now,
-					"The night's run was ended by the runtime before this backup finished.",
-				);
+				await recordBackupNotRun(this.env, mailbox.id, now, why);
+			}
+			if (!partSettled(stored.status.purge.state)) {
+				ended.purge.error =
+					"The night's run was ended by the runtime before this purge finished.";
 			}
 			await keep(ended).catch(() => {});
 			await foldContinuedNight(this.env, ended).catch(() => {});
@@ -2376,11 +2428,17 @@ export class MailboxDO extends DurableObject<Env> {
 			if (status.state === "continuing") {
 				await this.ctx.storage.setAlarm(Date.now());
 			}
-		} catch {
+		} catch (e) {
 			// runMailboxNight does not throw; if it ever does, the night is
 			// over all the same, and saying so is better than a retry.
 			const latest = await this.ctx.storage.get<StoredNight>(NIGHT_KEY);
-			const ended = cutOff(latest?.status ?? stored.status);
+			const before = latest?.status ?? stored.status;
+			const ended = cutOff(before);
+			const why = `The night's run failed: ${String(
+				e instanceof Error ? e.message : e,
+			).slice(0, 200)}`;
+			if (!partSettled(before.backup.state)) ended.backup.error = why;
+			if (!partSettled(before.purge.state)) ended.purge.error = why;
 			await abandonPausedBackup(this.env, mailbox.id).catch(() => {});
 			await keep(ended).catch(() => {});
 			await foldContinuedNight(this.env, ended).catch(() => {});

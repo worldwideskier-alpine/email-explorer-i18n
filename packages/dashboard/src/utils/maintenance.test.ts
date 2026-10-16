@@ -200,6 +200,28 @@ describe("how long the run took", () => {
 		).toBe("8m45s");
 	});
 
+	// The record starts at the scheduled minute; the run's limits count from
+	// when the call that ran it began, which on 2026-10-14 was 70 s later.
+	it("is timed from when the call that ran the night began", () => {
+		expect(
+			maintenanceDuration({
+				startedAt: "2026-10-14T18:00:00.000Z",
+				finishedAt: "2026-10-14T18:09:10.092Z",
+				calls: [
+					{
+						scheduledTime: "2026-10-14T18:00:00.000Z",
+						at: "2026-10-14T18:01:10.092Z",
+					},
+					{
+						scheduledTime: "2026-10-14T18:00:00.000Z",
+						at: "2026-10-14T18:01:17.000Z",
+						stoodAside: true,
+					},
+				],
+			}),
+		).toBe("8m0s");
+	});
+
 	it("drops the minutes when there are none", () => {
 		expect(
 			maintenanceDuration({
@@ -385,6 +407,29 @@ describe("a run in which the mailboxes failed on their own", () => {
 		);
 		expect(maintenanceStoppedDetail(everyBackupFailed)).toBe(
 			"backups: 2 failed",
+		);
+	});
+
+	// A mailbox keeps only its latest result, so the night's own record is
+	// the only place the reason for a night two weeks back can still be read.
+	it("says why, when the nights said why", () => {
+		expect(
+			maintenanceStoppedDetail(
+				run({
+					finishedAt: "2026-10-15T18:09:00.000Z",
+					backups: {
+						finishedAt: "2026-10-15T18:08:00.000Z",
+						ran: 1,
+						failed: 1,
+						reasons: [
+							"reading messages' originals and attachments: raw/…: get: Reduce your rate of simultaneous reads on the same object. (10058)",
+						],
+					},
+					spamPurge: { finishedAt: "y", ran: 2, deleted: 0 },
+				}),
+			),
+		).toBe(
+			"backups: 1 failed (reading messages' originals and attachments: raw/…: get: Reduce your rate of simultaneous reads on the same object. (10058))",
 		);
 	});
 

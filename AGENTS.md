@@ -567,6 +567,49 @@ are still checked, by the `tsc` that runs before the worker tests.
   way once per retry (`night-alarm.test.ts`). A test that hands the run an
   `env` of its own passes `nights: inlineNights`, since an alarm runs with
   the deployment's.
+  The runtime can call `scheduled()` more than once for one firing: on
+  2026-10-13 two calls came 7.4 s apart. Each took `new Date()` for its night,
+  so each began a night of its own; the second replaced the first's night in
+  every mailbox, the running alarm wrote the first back over it at every
+  report, and the second call asked fourteen minutes for nights that were not
+  there and recorded both mailboxes failed -- while the first's archives were
+  written. It also moved the first call's live record into the history, where
+  `/root` read it as a run cut off. So a night is now the minute the firing
+  was scheduled for (`firingOf(event.scheduledTime)`), and one call per
+  firing runs it: `claimNight` makes the record's first state with a
+  conditional put, and any other call for the same firing appends itself to
+  `calls` as `stoodAside` and leaves -- unless the owner finished with a pass
+  that threw before anything began, when the later call takes the night over.
+  A call that cannot tell whether it claimed runs the night anyway, since the
+  record is a diagnostic. The record's writes are fenced to its `owner` and
+  never put an earlier night over a later one, and tonight's own record is
+  never moved into the history. `startNight` leaves the same night alone (and
+  only sets its alarm again if it was lost), and leaves a night under way
+  that began less than `NIGHT_LONGEST_MS` before, whatever night is asked
+  for; the alarm writes its status through `keepOwnNight`, which writes only
+  over the same night. The history is rewritten conditionally: its put used to
+  be blind, onto a read that answered "none" when it failed, so one failed
+  read put one night over fourteen. `cron-twice.test.ts`.
+- **R2 asking to slow down is read again, and nothing else is.** On
+  2026-10-15 one read of some 1,700 in the larger mailbox's backup was refused
+  with "Reduce your rate of simultaneous reads on the same object. (10058)",
+  nothing read it again, and the night's archive was lost to it. Why R2 said
+  so is not known: the backup reads each original once, though two
+  mailboxes' nights run at once. `r2-retry.ts` reads again on 10058 alone,
+  waits jittered and under six seconds in all (inside the shortest limit a
+  caller holds a read to), for the originals, attachments and paused-backup
+  objects the backup reads, the mailbox list (one refusal there failed every
+  mailbox's night), the run's record and history and `rewriteJson`. Any other
+  failure is thrown at once. A read that still fails names the kind of object
+  (`raw/…`), never the key, which can hold an address; and the time-limited
+  calls put what was being done in front of what failed, because R2's own
+  message says only "get". The reason is kept: a mailbox's record holds only
+  its latest night, so the reason for 2026-10-07 was gone by the time anybody
+  asked. A night's status carries `error`, the run's record keeps up to three
+  distinct `reasons` per pass (a night never seen to begin says so), and
+  `/root` shows them in the history's two weeks. The night check prints the
+  scheduled time and each call's start, but never a reason: those are R2's
+  own text, and its log is public. `r2-slow-down.test.ts`.
 - **An attachment object is reachable only through its row.** Every writer
   names one `attachments/{emailId}/{attachmentId}/{filename}` and every reader
   — download, archive, delete — rebuilds that name from the row, so an object

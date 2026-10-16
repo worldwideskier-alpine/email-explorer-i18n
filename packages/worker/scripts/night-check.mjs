@@ -129,8 +129,24 @@ export function nightSummary(record) {
 				}`
 			: `${name} not recorded`;
 	const deletions = record.unfinishedDeletions;
+	// Times only, and how many calls: on 2026-10-13 the runtime called the
+	// cron twice for one firing, and only two start times said so. Whether
+	// `scheduledTime` is the minute scheduled or the moment of delivery is
+	// read here too, on any night, from the two times side by side.
+	const calls = Array.isArray(record.calls) ? record.calls : [];
+	const called =
+		calls.length > 0
+			? [
+					`scheduled ${calls[0].scheduledTime}, ${calls.length} call(s) began ${calls
+						.map(
+							(call) => `${call.at}${call.stoodAside ? " (stood aside)" : ""}`,
+						)
+						.join(", ")}`,
+				]
+			: [];
 	return [
 		`started ${record.startedAt}`,
+		...called,
 		record.finishedAt ? `finished ${record.finishedAt}` : "no end recorded",
 		phase("backups", record.backups),
 		phase("spam purge", record.spamPurge),
