@@ -590,17 +590,26 @@ are still checked, by the `tsc` that runs before the worker tests.
   over the same night. The history is rewritten conditionally: its put used to
   be blind, onto a read that answered "none" when it failed, so one failed
   read put one night over fourteen. `cron-twice.test.ts`.
-- **R2 asking to slow down is read again, and nothing else is.** On
+- **What R2 says to try again is tried again, and nothing else is.** On
   2026-10-15 one read of some 1,700 in the larger mailbox's backup was refused
   with "Reduce your rate of simultaneous reads on the same object. (10058)",
   nothing read it again, and the night's archive was lost to it. Why R2 said
   so is not known: the backup reads each original once, though two
-  mailboxes' nights run at once. `r2-retry.ts` reads again on 10058 alone,
-  waits jittered and under six seconds in all (inside the shortest limit a
-  caller holds a read to), for the originals, attachments and paused-backup
-  objects the backup reads, the mailbox list (one refusal there failed every
-  mailbox's night), the run's record and history and `rewriteJson`. Any other
-  failure is thrown at once. A read that still fails names the kind of object
+  mailboxes' nights run at once. Two nights after that was fixed, a part of
+  the same archive was refused with "We encountered an internal error.
+  Please try again. (10001)", and the archive was lost the same way: only
+  reads were tried again, and only on 10058. `r2-retry.ts` tries again on
+  10058 and 10001 alone, waits jittered and under six seconds in all (inside
+  the shortest limit a caller holds a call to), for the originals,
+  attachments and paused-backup objects the backup reads, the mailbox list
+  (one refusal there failed every mailbox's night), the run's record and
+  history and `rewriteJson` -- and for the archive's upload: its start, each
+  part and its completion. A part is sent again with the bytes it was given,
+  taken from the buffer once; taken inside what is tried again, a second try
+  would send the next part's bytes. A completion tried again after its answer
+  was lost finds no upload (measured in the test pool, not on R2) and the
+  night counts as failed with its archive written, where it stood before. Any
+  other failure is thrown at once. A read that still fails names the kind of object
   (`raw/…`), never the key, which can hold an address; and the time-limited
   calls put what was being done in front of what failed, because R2's own
   message says only "get". The reason is kept: a mailbox's record holds only

@@ -255,10 +255,9 @@ describe("the cron called twice for one firing", () => {
 				if (prop === "get") {
 					return async (key: string, ...rest: unknown[]) => {
 						if (key === settingsKey) {
-							throw Object.assign(
-								new Error("get: We encountered an internal error. (10001)"),
-								{ code: 10001 },
-							);
+							// Not one R2 says to try again: that is tried again
+							// for seconds first (r2-retry.ts).
+							throw new Error("get: Network connection lost.");
 						}
 						return (value as (...a: unknown[]) => unknown).call(
 							target,
@@ -277,9 +276,9 @@ describe("the cron called twice for one firing", () => {
 				{ pollMs: 20 },
 				minute,
 			),
-		).rejects.toThrow("(10001)");
+		).rejects.toThrow("Network connection lost.");
 		const threw = await readMaintenanceRecord(env as never);
-		expect(threw?.backups?.error).toContain("(10001)");
+		expect(threw?.backups?.error).toContain("Network connection lost.");
 		expect(threw?.finishedAt).toBeTypeOf("string");
 
 		// The runtime trying the firing again, most likely.
@@ -314,10 +313,7 @@ describe("a call that cannot tell whether it owns the night", () => {
 				if (prop === "get") {
 					return async (key: string, ...rest: unknown[]) => {
 						if (key === MAINTENANCE_KEY) {
-							throw Object.assign(
-								new Error("get: We encountered an internal error. (10001)"),
-								{ code: 10001 },
-							);
+							throw new Error("get: Network connection lost.");
 						}
 						return (value as (...a: unknown[]) => unknown).call(
 							target,

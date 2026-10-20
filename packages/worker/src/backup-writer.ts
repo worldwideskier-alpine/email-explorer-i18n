@@ -20,7 +20,7 @@ import type { TimeLimits } from "./deadline";
 import { limitedBy } from "./deadline";
 import type { MailboxDO } from "./durableObject";
 import { renderMboxEntry } from "./mbox";
-import { getBytes } from "./r2-retry";
+import { getBytes, retrying } from "./r2-retry";
 import type { Env } from "./types";
 
 /**
@@ -526,15 +526,35 @@ export async function stepMailboxBackup(
 	}
 
 	const key = carried?.carry.key ?? backupKey(mailboxId, now);
+	// Each call of the upload is made again when R2 says to (r2-retry.ts): on
+	// 2026-10-17 one part refused with "Please try again. (10001)" lost the
+	// night's archive. A part sent again replaces the one with its number, so
+	// sending it twice is harmless -- with the same bytes, which is why they
+	// are taken from the buffer once, outside what is made again. A start
+	// made twice can leave an upload behind, which the bucket drops after
+	// seven days. A completion whose answer was lost and is made again finds
+	// no upload and throws (measured in the test pool, not on R2), and the
+	// night is counted failed with its archive written -- which is where it
+	// stood without the second try.
 	const upload = carried
 		? env.BUCKET.resumeMultipartUpload(key, carried.carry.uploadId)
 		: await bounded(
-				env.BUCKET.createMultipartUpload(key),
+				retrying(
+					() => env.BUCKET.createMultipartUpload(key),
+					"starting the archive upload",
+				),
 				"starting the archive upload",
 			);
 	const buffer = new PartBuffer();
 	if (carried) buffer.add(carried.leftover);
 	const parts: R2UploadedPart[] = carried?.carry.parts ?? [];
+	const sendPart = (bytes: Uint8Array) => {
+		const number = parts.length + 1;
+		return retrying(
+			() => upload.uploadPart(number, bytes),
+			"uploading a part of the archive",
+		);
+	};
 	let messages = carried?.carry.messages ?? 0;
 	let bytes = carried?.carry.bytes ?? 0;
 	let next = carried?.carry.next ?? 0;
@@ -588,7 +608,7 @@ export async function stepMailboxBackup(
 					while (buffer.size >= PART_SIZE) {
 						parts.push(
 							await bounded(
-								upload.uploadPart(parts.length + 1, buffer.take(PART_SIZE)),
+								sendPart(buffer.take(PART_SIZE)),
 								"uploading part of the archive",
 							),
 						);
@@ -652,13 +672,16 @@ export async function stepMailboxBackup(
 		if (buffer.size > 0 || parts.length === 0) {
 			parts.push(
 				await bounded(
-					upload.uploadPart(parts.length + 1, buffer.take(buffer.size)),
+					sendPart(buffer.take(buffer.size)),
 					"uploading the last part of the archive",
 				),
 			);
 		}
 
-		await bounded(upload.complete(parts), "completing the archive");
+		await bounded(
+			retrying(() => upload.complete(parts), "completing the archive"),
+			"completing the archive",
+		);
 		// The whole count, not the last few hundred's: the night's status is
 		// read for how far the backup got.
 		if (onProgress && messages !== reported) {
