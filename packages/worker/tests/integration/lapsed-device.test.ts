@@ -5,14 +5,17 @@ import {
 	SELF,
 } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { MailboxDO } from "../../src/durableObject";
 import { authMigrations } from "../../src/durableObject/migrations";
 import { DEFAULT_MAIL_LOCALE } from "../../src/mail-templates";
 import { hashPassword } from "../../src/password";
 import { OPEN_THE_APP } from "../../src/push-notice";
+import { notifyNewEmail } from "../../src/push-notify";
 import {
 	arrivedAt,
 	type Browser,
 	browserSubscription,
+	keptFor,
 	PUSH_ORIGIN,
 	received,
 } from "./push-reader";
@@ -42,10 +45,19 @@ const SENDER = "sender@example.net";
 const API = "http://local.test/api/v1";
 const DAY = 24 * 60 * 60 * 1000;
 /** How long a lapsed session is kept: written out, not imported, so a
- * change to the constant is a change this test notices. */
+ * change to the constant is a change this test notices -- either way, since
+ * each edge is asked from both sides. */
 const KEPT = 30 * DAY;
 
 const authStub = () => env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
+
+/**
+ * A call to the auth object made inside it rather than over RPC. A statement
+ * that fails there over RPC failed its test and then left the runner hanging,
+ * the failure reported as uncaught in the object, until the job's timeout.
+ */
+const inAuth = <T>(call: (auth: MailboxDO) => Promise<T>) =>
+	runInDurableObject(authStub(), (instance: MailboxDO) => call(instance));
 const mailboxStub = () => env.MAILBOX.get(env.MAILBOX.idFromName(MAILBOX));
 
 /** The owner, one login, holding MAILBOX, with these sessions. */
@@ -250,6 +262,44 @@ describe("a device whose session has run out", () => {
 	});
 
 	/**
+	 * The window's other edge: a minute short of it, after the two things
+	 * that used to end it -- its token presented, a sign-in elsewhere. With
+	 * only the far edge asked, a window cut to a day or two minutes passed
+	 * every test, and a phone fell silent that much sooner.
+	 */
+	it("is still told a minute before it is past keeping", async () => {
+		const { browser, path } = await device("phone");
+		await expire("phone", KEPT - 60_000);
+		const me = await SELF.fetch(`${API}/auth/me`, {
+			headers: { Authorization: "Bearer phone" },
+		});
+		expect(me.status).toBe(401);
+		expect((await login()).status).toBe(200);
+
+		await deliver("A minute short of the month");
+		expect(await read(browser, path)).toEqual([
+			{ title: "Email Explorer", body: UNSAID, url: "/login", tag: "open-app" },
+		]);
+	});
+
+	/**
+	 * A reminder stands for the device's day, and a push service drops what
+	 * it took once the time it was given runs out. Kept an hour, as a
+	 * message is, a phone switched off for the night when the day's reminder
+	 * went out was shown nothing that day -- and the day counted as told.
+	 */
+	it("is sent its reminder to keep for the day, while a message is kept an hour", async () => {
+		await seedLiveSession("laptop");
+		const phone = await device("phone");
+		const laptop = await device("laptop");
+		await expire("phone");
+
+		await deliver("Kept");
+		expect(await keptFor(phone.path)).toEqual([23 * 60 * 60]);
+		expect(await keptFor(laptop.path)).toEqual([60 * 60]);
+	});
+
+	/**
 	 * Not announced: only a device that showed the message is sent its
 	 * dismissal, and a lapsed one did not.
 	 */
@@ -335,7 +385,7 @@ describe("a device whose session has run out", () => {
 		const { path } = await device("phone");
 		await expire("phone");
 		const holders = await authStub().getUserIdsForMailbox(MAILBOX);
-		const earlier = await authStub().pushTargetsForNewMail(holders);
+		const earlier = await inAuth((auth) => auth.pushTargetsForNewMail(holders));
 		expect(earlier.lapsed).toHaveLength(1);
 
 		// A day on, the next message marks the device again...
@@ -348,18 +398,53 @@ describe("a device whose session has run out", () => {
 		while (Date.now() <= earlier.noticeAt) {
 			await new Promise((resolve) => setTimeout(resolve, 5));
 		}
-		const later = await authStub().pushTargetsForNewMail(holders);
+		const later = await inAuth((auth) => auth.pushTargetsForNewMail(holders));
 		expect(later.lapsed).toHaveLength(1);
 		expect(later.noticeAt).toBeGreaterThan(earlier.noticeAt);
 
 		// ...and only then does the earlier send's refusal come back.
-		await authStub().lapsedNoticesNotSent(
-			earlier.lapsed.map((target) => target.endpoint),
-			earlier.noticeAt,
+		await inAuth((auth) =>
+			auth.lapsedNoticesNotSent(
+				earlier.lapsed.map((target) => target.endpoint),
+				earlier.noticeAt,
+			),
 		);
 		expect((await pushRows())[0].notice_at).toBe(later.noticeAt);
 		await deliver("The same day as the later notice");
 		expect(await arrivedAt(path)).toBe(0);
+	});
+
+	/**
+	 * Giving the day back is a call to the auth object, and a call can fail
+	 * -- the object reset by a deploy, a connection lost. A live device that
+	 * showed the message showed it all the same: answered "not announced",
+	 * the message was never dismissed there once it was read.
+	 */
+	it("leaves a message a live device showed announced when the day cannot be given back", async () => {
+		const logged: string[] = [];
+		vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
+			logged.push(args.map(String).join(" "));
+		});
+		const giveBack = vi
+			.spyOn(MailboxDO.prototype, "lapsedNoticesNotSent")
+			.mockRejectedValue(new Error("Network connection lost: GIVE-BACK-TEXT"));
+		await seedLiveSession("laptop");
+		const laptop = await device("laptop");
+		const browser = await browserSubscription();
+		const res = await as("phone", "/push/subscribe", {
+			endpoint: `https://push-busy.example.test/${crypto.randomUUID()}`,
+			keys: browser.keys,
+		});
+		expect(res.status).toBe(200);
+		await expire("phone");
+
+		await deliver("Shown on the laptop");
+		expect(giveBack).toHaveBeenCalledTimes(1);
+		expect(await arrivedAt(laptop.path)).toBe(1);
+		const [message] = await messages();
+		expect(message.notified).toBe(1);
+		expect(logged).toContain("Push notice give-back failed: Error");
+		expect(logged.join("\n")).not.toContain("GIVE-BACK-TEXT");
 	});
 
 	it("is told the message again once it is back, and starts the day afresh", async () => {
@@ -533,11 +618,13 @@ it("a subscription whose session was ended is never delivered, and is swept", as
 	expect((await as("phone", "/auth/logout")).status).toBe(200);
 	const browser = await browserSubscription();
 	const path = `/device/${crypto.randomUUID()}`;
-	await authStub().savePushSubscription(
-		"owner",
-		"phone",
-		`${PUSH_ORIGIN}${path}`,
-		browser.keys,
+	await inAuth((auth) =>
+		auth.savePushSubscription(
+			"owner",
+			"phone",
+			`${PUSH_ORIGIN}${path}`,
+			browser.keys,
+		),
 	);
 
 	await deliver("To nobody");
@@ -549,54 +636,240 @@ it("a subscription whose session was ended is never delivered, and is swept", as
 
 /**
  * Rows from before subscriptions named a session were delivered sender and
- * subject without end. The migration binds each to a session of its own that
- * has already run out, so it is told only to open the app. Run here against
- * such a row, from the shipped migration: a test object starts empty, so the
- * migration itself meets no rows.
+ * subject without end. The migration marks each lapsed (`lapsed_at`), so it
+ * is told only to open the app -- and changes nothing the Worker before it
+ * reads: the row still names no session, and no session is made for it. A
+ * first version bound each to an expired session of its own, and a deploy
+ * rolled back after it ran would have left the Worker before it delivering
+ * nothing to those rows, and sweeping them at its next sign-in.
+ *
+ * Run here against such rows, from the shipped migration: a test object
+ * starts empty, so the migration itself meets no rows.
  */
 describe("the migration for rows that name no session", () => {
 	const migration = authMigrations.find((m) => m.name === "10_push_lapsed");
-	const binding = (migration?.sql ?? "")
+	// The statement that marks them; the rest add the columns, which a test
+	// object already has.
+	const marking = (migration?.sql ?? "")
 		.split(";")
 		.map((statement) => statement.trim())
-		.filter((statement) => /^(INSERT|UPDATE)\b/i.test(statement));
+		.filter((statement) => /^UPDATE\b/i.test(statement));
 
-	it("ships the statements that bind them", () => {
-		expect(binding).toHaveLength(2);
+	it("ships the statement that marks them, and none that binds them", () => {
+		expect(marking).toHaveLength(1);
+		expect(migration?.sql).not.toMatch(/INSERT\s+INTO\s+sessions/i);
+		expect(migration?.sql).not.toMatch(/SET\s+session_id/i);
 	});
 
-	it("makes each a lapsed device, told only to open the app", async () => {
-		await seed({});
+	/** A subscription saved before subscriptions named a session. */
+	async function oldDevice(id: string) {
 		const browser = await browserSubscription();
 		const path = `/old/${crypto.randomUUID()}`;
 		await runInDurableObject(authStub(), async (_i, state) => {
 			state.storage.sql.exec(
-				"INSERT INTO push_subscriptions (id, user_id, endpoint, p256dh, auth, created_at) VALUES ('old', 'owner', ?, ?, ?, 0)",
+				"INSERT INTO push_subscriptions (id, user_id, endpoint, p256dh, auth, created_at) VALUES (?, 'owner', ?, ?, ?, 0)",
+				id,
 				`${PUSH_ORIGIN}${path}`,
 				browser.keys.p256dh,
 				browser.keys.auth,
 			);
 		});
-		// Unbound, it is told nothing at all.
+		return { browser, path };
+	}
+
+	const migrate = () =>
+		runInDurableObject(authStub(), async (_i, state) => {
+			for (const statement of marking) state.storage.sql.exec(statement);
+		});
+
+	const sessionCount = () =>
+		runInDurableObject(authStub(), async (_i, state) =>
+			Number(
+				state.storage.sql.exec("SELECT COUNT(*) AS n FROM sessions").one().n,
+			),
+		);
+
+	/**
+	 * What the Worker before this one asks, word for word: it delivers to a
+	 * row naming no session, and its sign-in sweeps rows through expired
+	 * sessions. Rolled back to it, the rows are read as they were.
+	 */
+	const toldByTheWorkerBefore = () =>
+		runInDurableObject(authStub(), async (_i, state) => {
+			const now = Date.now();
+			state.storage.sql.exec(
+				"DELETE FROM push_subscriptions WHERE session_id IN (SELECT id FROM sessions WHERE expires_at < ?)",
+				now,
+			);
+			return state.storage.sql
+				.exec(
+					`SELECT p.id
+                       FROM push_subscriptions p
+                  LEFT JOIN sessions s ON s.id = p.session_id
+                      WHERE p.user_id IN (?)
+                        AND (p.session_id IS NULL OR s.expires_at > ?)`,
+					"owner",
+					now,
+				)
+				.toArray()
+				.map((row) => String(row.id));
+		});
+
+	it("leaves each naming no session, and makes it a lapsed device, told only to open the app", async () => {
+		await seed({});
+		const { browser, path } = await oldDevice("old");
+		const sessionsBefore = await sessionCount();
+		// Unmarked, it is told nothing at all.
 		await deliver("Before the migration");
 		expect(await arrivedAt(path)).toBe(0);
 
-		await runInDurableObject(authStub(), async (_i, state) => {
-			for (const statement of binding) state.storage.sql.exec(statement);
-		});
+		await migrate();
+		const [row] = await runInDurableObject(authStub(), async (_i, state) =>
+			state.storage.sql
+				.exec("SELECT session_id, lapsed_at FROM push_subscriptions")
+				.toArray(),
+		);
+		expect(row.session_id).toBeNull();
+		expect(Math.abs(Number(row.lapsed_at) - Date.now())).toBeLessThan(60_000);
+		expect(await sessionCount()).toBe(sessionsBefore);
+		expect(await toldByTheWorkerBefore()).toEqual(["old"]);
+
 		await deliver("After the migration");
 		const pushes = await read(browser, path);
 		expect(pushes).toEqual([
 			{ title: "Email Explorer", body: UNSAID, url: "/login", tag: "open-app" },
 		]);
 		sayNothingOf(pushes, "After the migration");
-		// The session made for it signs nobody in.
-		expect(await authStub().validateSession("lapsed-old")).toBeNull();
-		const me = await SELF.fetch(`${API}/auth/me`, {
-			headers: { Authorization: "Bearer lapsed-old" },
-		});
-		expect(me.status).toBe(401);
+		const [message] = (await messages()).filter(
+			(m) => m.subject === "After the migration",
+		);
+		expect(message.notified).toBe(0);
 	});
+
+	it("is silenced, as any lapsed device is, by a password change", async () => {
+		await seed({ laptop: Date.now() + DAY });
+		const { path } = await oldDevice("old");
+		await migrate();
+		const res = await as("laptop", "/auth/change-password", {
+			currentPassword: PASSWORD,
+			newPassword: "a-brand-new-password",
+		});
+		expect(res.status).toBe(200);
+		expect(await pushRows()).toEqual([]);
+
+		await deliver("After the password change");
+		expect(await arrivedAt(path)).toBe(0);
+	});
+
+	/**
+	 * Never live, whatever the clocks say: the mark is SQLite's clock and the
+	 * time it is compared with the Worker's, which may be a moment behind.
+	 * Read as a session's expiry, a mark ahead of the Worker's clock was a
+	 * session still good -- told the message, and sent its dismissal.
+	 */
+	it("is never told the message, even marked ahead of the Worker's clock", async () => {
+		await seed({ reader: Date.now() + DAY });
+		const reader = await device("reader");
+		const { browser, path } = await oldDevice("old");
+		await migrate();
+		await runInDurableObject(authStub(), async (_i, state) => {
+			state.storage.sql.exec(
+				"UPDATE push_subscriptions SET lapsed_at = ?",
+				Date.now() + 60_000,
+			);
+		});
+
+		await deliver("Ahead of the clock");
+		expect(await read(browser, path)).toEqual([
+			{ title: "Email Explorer", body: UNSAID, url: "/login", tag: "open-app" },
+		]);
+		// Read on the device that was told: its dismissal goes to it alone.
+		const [message] = await messages();
+		expect(message.notified).toBe(1);
+		const res = await as(
+			"reader",
+			`/mailboxes/${MAILBOX}/emails/${message.id}`,
+			{ read: true },
+			"PUT",
+		);
+		expect(res.status).toBe(200);
+		expect(await arrivedAt(reader.path)).toBe(2);
+		expect(await arrivedAt(path)).toBe(1);
+	});
+
+	/** Both edges of the window, as for a session that ran out. */
+	it("is kept for as long as a lapsed session is, and swept by a sign-in after that", async () => {
+		await seed({});
+		const inside = await oldDevice("inside");
+		const past = await oldDevice("past");
+		await migrate();
+		await runInDurableObject(authStub(), async (_i, state) => {
+			const now = Date.now();
+			state.storage.sql.exec(
+				"UPDATE push_subscriptions SET lapsed_at = ? WHERE id = 'inside'",
+				now - KEPT + 60_000,
+			);
+			state.storage.sql.exec(
+				"UPDATE push_subscriptions SET lapsed_at = ? WHERE id = 'past'",
+				now - KEPT - 1,
+			);
+		});
+
+		await deliver("Near the end of the month");
+		expect(await arrivedAt(inside.path)).toBe(1);
+		expect(await arrivedAt(past.path)).toBe(0);
+
+		expect((await login()).status).toBe(200);
+		const left = await runInDurableObject(authStub(), async (_i, state) =>
+			state.storage.sql
+				.exec("SELECT id FROM push_subscriptions ORDER BY id")
+				.toArray()
+				.map((row) => String(row.id)),
+		);
+		expect(left).toEqual(["inside"]);
+	});
+});
+
+/**
+ * The label is only the title's first words, read from the bucket after the
+ * lapsed devices' day is already marked: R2 refusing that one read used to
+ * take every notification with it, the lapsed device's day included. Called
+ * directly, since a delivery reads the same object earlier and fails there.
+ */
+it("a label that cannot be read costs the title, not the notifications", async () => {
+	await seed({ phone: Date.now() + DAY, laptop: Date.now() + DAY });
+	const phone = await device("phone");
+	const laptop = await device("laptop");
+	await expire("phone");
+	const refusing = {
+		...env,
+		BUCKET: {
+			get: async () => {
+				throw new Error(
+					"get: Reduce your rate of simultaneous reads on the same object. (10058)",
+				);
+			},
+		},
+	};
+
+	// Called from inside an object rather than from the test itself: made
+	// from here, a call to the auth object that failed left the runner
+	// hanging once the tests were done (measured with its query broken).
+	const announced = await runInDurableObject(mailboxStub(), () =>
+		notifyNewEmail(refusing as never, MAILBOX, {
+			id: "message-1",
+			sender: SENDER,
+			subject: "Unlabelled",
+		}),
+	);
+	expect(announced).toBe(true);
+	const [shown] = await read(laptop.browser, laptop.path);
+	expect(shown.title).toBe(`[${MAILBOX}] ${SENDER}`);
+	expect(await read(phone.browser, phone.path)).toEqual([
+		{ title: "Email Explorer", body: UNSAID, url: "/login", tag: "open-app" },
+	]);
+	const marked = (await pushRows()).find((row) => row.session_id === "phone");
+	expect(marked?.notice_at).not.toBeNull();
 });
 
 /**
@@ -709,11 +982,10 @@ it("a mailbox held through a hundred logins is asked about in more than one stat
 	});
 	const holders = await authStub().getUserIdsForMailbox(MAILBOX);
 	expect(holders.length).toBeGreaterThanOrEqual(100);
-	// Inside the object rather than over RPC: a statement refused for its
-	// size failed this test and then left the runner hanging, the refusal
-	// reported as uncaught in the object, until the job's timeout.
-	const { live, lapsed } = await runInDurableObject(authStub(), (instance) =>
-		instance.pushTargetsForNewMail(holders),
+	// Inside the object (inAuth): a statement refused for its size failed
+	// this test over RPC and then left the runner hanging.
+	const { live, lapsed } = await inAuth((auth) =>
+		auth.pushTargetsForNewMail(holders),
 	);
 	expect(live).toEqual([]);
 	expect(lapsed).toHaveLength(100);

@@ -166,6 +166,33 @@ describe("a session whose time has passed by this device's clock", () => {
 		expect(ui.isComposeModalOpen).toBe(true);
 	});
 
+	/**
+	 * Found gone at a navigation while something is being written: the
+	 * navigation does not happen, so the text stays on screen to be copied,
+	 * as it does when a request finds the session gone, and the next one
+	 * goes to sign-in. Going there at once unmounted the composer -- a Back
+	 * gesture over a half-written reply, and the reply was gone.
+	 */
+	it("keeps the screen while something is being written, and signs in at the next navigation", async () => {
+		const { router, auth, unsubscribe } = await keptOpenPastItsTime();
+		const reply = document.createElement("textarea");
+		reply.value = "Half a reply";
+		document.body.append(reply);
+		try {
+			me = "gone";
+			await router.push("/mailbox/x%40example.com/emails/inbox");
+			expect(router.currentRoute.value.name).toBe("Account");
+			expect(auth.session).toBeNull();
+			expect(signOutsSent).toBe(0);
+			expect(unsubscribe).not.toHaveBeenCalled();
+
+			await router.push("/mailbox/x%40example.com/emails/inbox");
+			expect(router.currentRoute.value.name).toBe("Login");
+		} finally {
+			reply.remove();
+		}
+	});
+
 	it("is kept while the server says it is good", async () => {
 		const { router, auth, unsubscribe } = await keptOpenPastItsTime();
 		await router.push("/mailbox/x%40example.com/emails/inbox");

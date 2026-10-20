@@ -33,7 +33,8 @@ const claudeCalls = new Map<string, number>();
 /**
  * Every push the recording push service took; see "/__received". The two
  * headers are the salt and the sender's key, which the `aesgcm` encoding
- * carries outside the body and a reader needs to decrypt it.
+ * carries outside the body and a reader needs to decrypt it. `ttl` is how
+ * long the service was asked to keep it for a device that is away.
  */
 const pushesReceived: {
 	host: string;
@@ -41,6 +42,7 @@ const pushesReceived: {
 	body: string;
 	encryption: string | null;
 	cryptoKey: string | null;
+	ttl: string | null;
 }[] = [];
 
 /**
@@ -173,6 +175,7 @@ export default defineConfig({
 							body: Buffer.from(bytes).toString("base64"),
 							encryption: request.headers.get("Encryption"),
 							cryptoKey: request.headers.get("Crypto-Key"),
+							ttl: request.headers.get("TTL"),
 						});
 						return new Response(null, { status: 201 });
 					}

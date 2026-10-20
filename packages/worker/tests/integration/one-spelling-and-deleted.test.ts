@@ -296,13 +296,14 @@ describe("a session past its expiry", () => {
 	 * (LAPSED_WINDOW_MS): its row is what says whose device its push
 	 * subscription is, so new mail can tell that device to open the app.
 	 * Kept, it grants nothing; only one past that window is removed when it
-	 * is presented.
+	 * is presented. Both sides of the window's edge: a minute inside it is
+	 * kept, so a window cut short fails here as well as one made longer.
 	 */
 	it("is refused everywhere, and removed only once it is past keeping", async () => {
 		await runInDurableObject(auth(), async (_i, state) => {
 			state.storage.sql.exec(
 				"INSERT INTO sessions (id, user_id, expires_at, created_at) VALUES ('stale', 'user1', ?, 0)",
-				Date.now() - 1,
+				Date.now() - KEPT + 60_000,
 			);
 			state.storage.sql.exec(
 				"INSERT INTO sessions (id, user_id, expires_at, created_at) VALUES ('ancient', 'user1', ?, 0)",
@@ -330,6 +331,7 @@ describe("a session past its expiry", () => {
 	 * Ones never presented again are swept when anybody signs in -- once
 	 * they are past keeping. Swept at expiry, a phone whose session had just
 	 * run out lost its subscription the moment another device signed in.
+	 * Both sides of the edge again: a minute inside the window is kept.
 	 */
 	it("is swept by the next sign-in, with its push subscription, once past keeping", async () => {
 		const hash = await hashPassword("password123");
@@ -340,7 +342,7 @@ describe("a session past its expiry", () => {
 			);
 			state.storage.sql.exec(
 				"INSERT INTO sessions (id, user_id, expires_at, created_at) VALUES ('lapsed', 'user1', ?, 0)",
-				Date.now() - 1,
+				Date.now() - KEPT + 60_000,
 			);
 			state.storage.sql.exec(
 				"INSERT INTO sessions (id, user_id, expires_at, created_at) VALUES ('abandoned', 'user1', ?, 0)",
@@ -371,7 +373,11 @@ describe("a session past its expiry", () => {
 			push: [{ id: "p-lapsed" }],
 		});
 		// And the one kept is told to open the app, not the message.
-		const targets = await auth().pushTargetsForNewMail(["user1"]);
+		// Inside the object rather than over RPC: a statement that fails
+		// there over RPC left the runner hanging until the job's timeout.
+		const targets = await runInDurableObject(auth(), (instance) =>
+			instance.pushTargetsForNewMail(["user1"]),
+		);
 		expect(targets.live.map((t) => t.endpoint)).toEqual([]);
 		expect(targets.lapsed.map((t) => t.endpoint)).toEqual([
 			"https://push.example.net/lapsed",

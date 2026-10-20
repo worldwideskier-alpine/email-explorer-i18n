@@ -136,8 +136,9 @@ describe("a session that ends while nothing new has started", () => {
 });
 
 /** A browser holding a push subscription; `unsubscribe` says if it let go. */
-function browserSubscribed() {
-	const unsubscribe = vi.fn(async () => true);
+function browserSubscribed(
+	unsubscribe: () => Promise<boolean> = vi.fn(async () => true),
+) {
 	vi.stubGlobal("Notification", { permission: "granted" });
 	vi.stubGlobal("PushManager", function PushManager() {});
 	Object.defineProperty(navigator, "serviceWorker", {
@@ -204,10 +205,10 @@ describe("signing out on purpose", () => {
 	});
 
 	/**
-	 * Before the server is asked, not after it answered: two attempts and a
+	 * Beside the server's half, not after it answered: two attempts and a
 	 * second's wait, and a tab closed in that time stayed subscribed.
 	 */
-	it("lets go of this browser's push subscription before the server is asked", async () => {
+	it("lets go of this browser's push subscription without waiting for the server", async () => {
 		const unsubscribe = browserSubscribed();
 		await signIn("first");
 		const out = useAuthStore().signOut();
@@ -215,6 +216,84 @@ describe("signing out on purpose", () => {
 		expect(unsubscribe).toHaveBeenCalledTimes(1);
 		take("/api/v1/auth/logout").settle(200);
 		await out;
+	});
+
+	/**
+	 * At the click, however long the browser takes to let go: the request
+	 * on its way, the sign-out written down, the stored session gone. All
+	 * three used to wait for the browser, for up to two seconds, and a tab
+	 * closed in that time had sent nothing and written nothing -- the next
+	 * person to open the dashboard here was signed in as this one.
+	 */
+	it("is sent, written down and taken out of storage at the click, however long the browser takes", async () => {
+		let letGo: (done: boolean) => void = () => {};
+		const unsubscribe = vi.fn(
+			() =>
+				new Promise<boolean>((resolve) => {
+					letGo = resolve;
+				}),
+		);
+		browserSubscribed(unsubscribe);
+		await signIn("first");
+		const out = useAuthStore().signOut();
+		await settle();
+		expect(unsubscribe).toHaveBeenCalledTimes(1);
+		expect(pending.map((p) => p.config.url)).toEqual(["/api/v1/auth/logout"]);
+		expect(localStorage.getItem("signOutPending")).toBe('["first"]');
+		expect(localStorage.getItem("session")).toBeNull();
+
+		take("/api/v1/auth/logout").settle(200);
+		letGo(true);
+		await out;
+		expect(localStorage.getItem("signOutPending")).toBeNull();
+	});
+
+	/**
+	 * Its answer is heard whatever ends meanwhile. The stored session goes
+	 * at the click, so a request another screen makes while the sign-out is
+	 * on its way meets a 401, which ends the session here -- and the
+	 * sign-out's answer, sent under it, was never settled: the sign-out
+	 * never finished, and was never crossed off.
+	 */
+	it("finishes when the session ends some other way while it is on its way", async () => {
+		await signIn("first");
+		const out = useAuthStore().signOut();
+		await settle();
+		const logout = take("/api/v1/auth/logout");
+		void useMailboxStore()
+			.fetchMailboxes()
+			.catch(() => {});
+		await settle();
+		take("/api/v1/mailboxes").settle(401, { error: "Unauthorized" });
+		await settle();
+
+		logout.settle(200);
+		const finished = await Promise.race([
+			out.then(() => "finished"),
+			new Promise((resolve) => setTimeout(() => resolve("held"), 200)),
+		]);
+		expect(finished).toBe("finished");
+		expect(localStorage.getItem("signOutPending")).toBeNull();
+	});
+
+	/**
+	 * And when that answer comes after somebody else has signed in here, it
+	 * is the earlier session that is over, not theirs.
+	 */
+	it("leaves alone a session somebody has signed in with meanwhile", async () => {
+		await signIn("first");
+		const out = useAuthStore().signOut();
+		await settle();
+		const logout = take("/api/v1/auth/logout");
+		sessionEnded();
+		await signIn("second");
+
+		logout.settle(200);
+		await out;
+		expect(useAuthStore().session?.id).toBe("second");
+		expect(JSON.parse(localStorage.getItem("session") ?? "{}").id).toBe(
+			"second",
+		);
 	});
 
 	/**
@@ -263,6 +342,7 @@ describe("signing out on purpose", () => {
 	 * registration, or an unsubscribe that never settles. Two seconds
 	 * (LET_GO_WITHIN_MS), then the sign-out goes on without it: a person
 	 * pressing "sign out" and staying signed in is the worse of the two.
+	 * The server is not kept waiting meanwhile: it is asked at once.
 	 */
 	it("waits no more than two seconds for a browser that does not let go", async () => {
 		const never = () => new Promise<never>(() => {});
@@ -289,17 +369,26 @@ describe("signing out on purpose", () => {
 			await signIn(`hangs-${i}`);
 			vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
 			let out: Promise<void>;
+			let over = false;
 			try {
-				out = useAuthStore().signOut();
+				out = useAuthStore()
+					.signOut()
+					.then(() => {
+						over = true;
+					});
+				await vi.advanceTimersByTimeAsync(0);
+				expect(pending.map((p) => p.config.url)).toEqual([
+					"/api/v1/auth/logout",
+				]);
+				take("/api/v1/auth/logout").settle(200);
 				await vi.advanceTimersByTimeAsync(1_999);
-				expect(pending.map((p) => p.config.url)).toEqual([]);
+				expect(over).toBe(false);
 				await vi.advanceTimersByTimeAsync(1);
 			} finally {
 				vi.useRealTimers();
 			}
-			await settle();
-			take("/api/v1/auth/logout").settle(200);
 			await out;
+			expect(over).toBe(true);
 			expect(useAuthStore().session).toBeNull();
 		}
 	});
@@ -538,6 +627,31 @@ describe("a sign-out the server did not hear", () => {
 		Reflect.deleteProperty(navigator, "serviceWorker");
 	});
 
+	/**
+	 * A sign-out cut short leaves its session stored beside it where the
+	 * build that wrote it took the session out only once the server had
+	 * answered, as the one before this did. It is over all the same: the
+	 * next person to open the dashboard here is not signed in as the last.
+	 */
+	it("leaves nobody signed in when its session is still stored", async () => {
+		localStorage.setItem("signOutPending", '["first"]');
+		localStorage.setItem("session", JSON.stringify(session("first")));
+		const sent: string[] = [];
+		vi.stubGlobal(
+			"fetch",
+			vi.fn(async (_url: string, init: RequestInit) => {
+				sent.push(new Headers(init.headers).get("Authorization") ?? "");
+				return new Response("{}", { status: 200 });
+			}),
+		);
+		const auth = useAuthStore();
+		expect(auth.session).toBeNull();
+		expect(auth.isAuthenticated).toBe(false);
+		expect(localStorage.getItem("session")).toBeNull();
+		await settle();
+		expect(sent).toEqual(["Bearer first"]);
+	});
+
 	it("is not remembered when the server heard it", async () => {
 		await signIn("first");
 		const out = useAuthStore().signOut();
@@ -545,5 +659,52 @@ describe("a sign-out the server did not hear", () => {
 		take("/api/v1/auth/logout").settle(200);
 		await out;
 		expect(localStorage.getItem("signOutPending")).toBeNull();
+	});
+});
+
+/**
+ * Two tabs of the dashboard share storage and nothing else. A tab whose
+ * session has run out asks the server about it at its next navigation;
+ * read from storage, the question named whatever the other tab had signed
+ * in with since, and the answer wrote this tab's run-out session over it --
+ * both tabs were then sent to sign in, and the other's session was left
+ * alive on the server with nobody holding it.
+ */
+describe("a tab whose session has run out, beside one that signed in since", () => {
+	function twoTabs() {
+		localStorage.setItem(
+			"session",
+			JSON.stringify({ ...session("first"), expiresAt: Date.now() - 1 }),
+		);
+		const thisTab = useAuthStore();
+		localStorage.setItem("session", JSON.stringify(session("second")));
+		return thisTab;
+	}
+	const stored = () => JSON.parse(localStorage.getItem("session") ?? "{}").id;
+
+	it("asks about its own, and leaves the other's when the server says it is over", async () => {
+		const auth = twoTabs();
+		const checking = auth.checkAuth();
+		await settle();
+		const me = take("/api/v1/auth/me");
+		expect(me.config.headers.Authorization).toBe("Bearer first");
+		me.settle(401);
+		expect(await checking).toBe(false);
+		expect(auth.session).toBeNull();
+		expect(stored()).toBe("second");
+	});
+
+	it("does not write its own over the other's when the server says it is good", async () => {
+		const auth = twoTabs();
+		const checking = auth.checkAuth();
+		await settle();
+		take("/api/v1/auth/me").settle(200, {
+			id: "user-first",
+			email: "first@example.com",
+			role: "admin",
+		});
+		expect(await checking).toBe(true);
+		expect(auth.session?.id).toBe("first");
+		expect(stored()).toBe("second");
 	});
 });

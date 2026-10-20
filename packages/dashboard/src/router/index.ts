@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { somethingIsBeingWritten } from "@/services/appUpdate";
 import { useAuthStore } from "@/stores/auth";
 import Account from "@/views/Account.vue";
 import Admin from "@/views/Admin.vue";
@@ -196,6 +197,14 @@ router.beforeEach(async (to) => {
 	) {
 		sessionRefreshed = true;
 		await authStore.checkAuth();
+		// Found gone just now, with something being written: the navigation
+		// does not happen, so the text stays on screen to be copied, as it
+		// does when a request finds the session gone (api.ts), and the next
+		// navigation goes to sign-in. Going there now took the composer with
+		// it -- a Back gesture over a half-written reply, and it was gone.
+		if (!authStore.isAuthenticated && somethingIsBeingWritten(document)) {
+			return false;
+		}
 	}
 	const isPublicRoute = to.meta.public === true;
 	const requiresAuth = to.meta.requiresAuth !== false; // Auth required by default

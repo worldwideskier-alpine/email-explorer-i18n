@@ -565,6 +565,13 @@ export class MailboxDO extends DurableObject<Env> {
 			"DELETE FROM sessions WHERE expires_at < ?",
 			lapsedBefore,
 		);
+		// And the rows from before subscriptions named a session, once their
+		// time as lapsed devices is up: they have no session row to be swept
+		// through, so they go by the time 10_push_lapsed marked them.
+		this.ctx.storage.sql.exec(
+			"DELETE FROM push_subscriptions WHERE session_id IS NULL AND lapsed_at < ?",
+			lapsedBefore,
+		);
 		// And any whose session is gone already: one ended on purpose, or a
 		// subscribe that arrived after its session was ended. Nothing is
 		// delivered to those (pushTargetsForNewMail); this is the tidying.
@@ -1733,7 +1740,9 @@ export class MailboxDO extends DurableObject<Env> {
 	 *
 	 * A row whose session row is gone is neither. Ending a session on
 	 * purpose deletes the row too, so such a row is a subscribe that landed
-	 * after its session was ended, and is nobody's device any more.
+	 * after its session was ended, and is nobody's device any more. A row
+	 * naming no session at all, from before subscriptions named one, is
+	 * lapsed from the time 10_push_lapsed marked it (`lapsed_at`).
 	 *
 	 * This used to deliver to every live session and to rows naming no
 	 * session, and to nothing whose session had run out -- which is how a
@@ -1749,10 +1758,12 @@ export class MailboxDO extends DurableObject<Env> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 		const now = Date.now();
 		const rows = this.#pushRows(userIds, now - LAPSED_WINDOW_MS);
-		const live = rows.filter((row) => row.expiresAt > now);
+		const live = rows.filter(
+			(row) => row.expiresAt !== null && row.expiresAt > now,
+		);
 		const lapsed = rows.filter(
 			(row) =>
-				row.expiresAt <= now &&
+				(row.expiresAt === null || row.expiresAt <= now) &&
 				(row.noticeAt === null || row.noticeAt <= now - LAPSED_NOTICE_EVERY_MS),
 		);
 		// One variable goes on the time, so a run holds one id fewer.
@@ -1806,22 +1817,36 @@ export class MailboxDO extends DurableObject<Env> {
 	async livePushTargets(userIds: string[]): Promise<PushTarget[]> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 		const now = Date.now();
-		return this.#pushRows(userIds, now).map(targetOf);
+		return this.#pushRows(userIds, now)
+			.filter((row) => row.expiresAt !== null)
+			.map(targetOf);
 	}
 
-	/** The subscriptions of these logins whose session expires after `after`. */
+	/**
+	 * The subscriptions of these logins whose session expires after `after`,
+	 * and those naming no session that 10_push_lapsed marked lapsed after it.
+	 *
+	 * The second kind has no session to expire, so its `expiresAt` is null:
+	 * lapsed, never live, whatever the clock. The mark is SQLite's clock and
+	 * `now` the Worker's, which may be a moment behind it.
+	 *
+	 * A row whose session row is gone is neither: the join finds no time for
+	 * it, and it names a session, so it is not one of the second kind.
+	 */
 	#pushRows(userIds: string[], after: number) {
-		// One variable goes on the time, so a run holds one id fewer.
-		return chunksOf(userIds, MAX_BOUND - 1).flatMap((chunk) =>
+		// Two variables go on the time, so a run holds two ids fewer.
+		return chunksOf(userIds, MAX_BOUND - 2).flatMap((chunk) =>
 			this.ctx.storage.sql
 				.exec(
 					`SELECT p.id, p.endpoint, p.p256dh, p.auth, p.locale, p.notice_at,
                             s.expires_at
                        FROM push_subscriptions p
-                       JOIN sessions s ON s.id = p.session_id
+                  LEFT JOIN sessions s ON s.id = p.session_id
                       WHERE p.user_id IN (${chunk.map(() => "?").join(", ")})
-                        AND s.expires_at > ?`,
+                        AND (s.expires_at > ?
+                             OR (p.session_id IS NULL AND p.lapsed_at > ?))`,
 					...chunk,
+					after,
 					after,
 				)
 				.toArray()
@@ -1832,7 +1857,7 @@ export class MailboxDO extends DurableObject<Env> {
 					auth: String(row.auth),
 					locale: row.locale === null ? null : String(row.locale),
 					noticeAt: row.notice_at === null ? null : Number(row.notice_at),
-					expiresAt: Number(row.expires_at),
+					expiresAt: row.expires_at === null ? null : Number(row.expires_at),
 				})),
 		);
 	}

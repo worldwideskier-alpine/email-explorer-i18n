@@ -63,9 +63,16 @@ const subscribe = (token: string, device: string) =>
 		keys: { p256dh: `p256dh-${device}`, auth: `auth-${device}` },
 	});
 
-/** The endpoints a new message for the owner would be pushed to. */
+/**
+ * The endpoints a new message for the owner would be pushed to. Asked inside
+ * the object rather than over RPC, here and below: a statement that fails
+ * there over RPC failed the test and then left the runner hanging until the
+ * job's timeout.
+ */
 async function deliveredTo(): Promise<string[]> {
-	const subs = await authStub().livePushTargets(["owner"]);
+	const subs = await runInDurableObject(authStub(), (instance) =>
+		instance.livePushTargets(["owner"]),
+	);
 	return subs
 		.map((s: { endpoint: string }) => s.endpoint.split("/").pop())
 		.sort();
@@ -76,7 +83,9 @@ async function deliveredTo(): Promise<string[]> {
  * whose session has run out. Asking counts as telling them (once a day).
  */
 async function toldToOpenTheApp(): Promise<string[]> {
-	const { lapsed } = await authStub().pushTargetsForNewMail(["owner"]);
+	const { lapsed } = await runInDurableObject(authStub(), (instance) =>
+		instance.pushTargetsForNewMail(["owner"]),
+	);
 	return lapsed
 		.map((s: { endpoint: string }) => s.endpoint.split("/").pop())
 		.sort();
@@ -224,10 +233,9 @@ describe("changing the password", () => {
 
 	/**
 	 * A subscription saved before subscriptions recorded their session is
-	 * bound to a lapsed session of its own by 10_push_lapsed; one that still
-	 * named none would be delivered nothing. Ending the account's other
-	 * sessions removes it either way -- nothing says it is the kept
-	 * session's.
+	 * a lapsed device once 10_push_lapsed has marked it, and is never told
+	 * the message either way. Ending the account's other sessions removes it
+	 * -- nothing says it is the kept session's.
 	 */
 	it("removes a subscription that records no session", async () => {
 		await runInDurableObject(authStub(), async (_i, state) => {

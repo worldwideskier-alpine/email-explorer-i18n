@@ -178,6 +178,22 @@ export async function received(
 	);
 }
 
+/**
+ * How long the push service was asked to keep each push that arrived at one
+ * path, in seconds (its `TTL` header), in the order they came.
+ */
+export async function keptFor(
+	path: string,
+	host = new URL(PUSH_ORIGIN).hostname,
+): Promise<(number | null)[]> {
+	const all = await (await fetch(`https://${host}/__received`)).json<
+		{ host: string; path: string; ttl: string | null }[]
+	>();
+	return all
+		.filter((p) => p.host === host && p.path === path)
+		.map((p) => (p.ttl === null ? null : Number(p.ttl)));
+}
+
 /** How many pushes arrived at one path, whatever they said. */
 export async function arrivedAt(
 	path: string,

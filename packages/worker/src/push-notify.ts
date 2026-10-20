@@ -12,6 +12,31 @@ interface NotifyPayload {
 
 type AuthStub = DurableObjectStub<MailboxDO>;
 
+/** What a push service is told about keeping a push for a device that is away. */
+interface Keeping {
+	/** Seconds a push service keeps the push for a device that is not there. */
+	ttl: number;
+	urgency: "high";
+}
+
+/** A message, and its dismissal: kept an hour, as they always were. */
+const AS_A_MESSAGE: Keeping = { ttl: 60 * 60, urgency: "high" };
+
+/**
+ * A lapsed device's reminder stands for its whole day. It goes at most once a
+ * day (pushTargetsForNewMail) and counts as told once a push service has taken
+ * it -- and a push service drops what it took once the time it was given runs
+ * out. Kept for the hour a message is, a phone switched off for the night when
+ * the day's reminder went out was shown nothing that day, and the next one
+ * could fall into the night again.
+ *
+ * Twenty-three hours, not the day: the builder signs each push with a token
+ * that expires when the push does, and a push service refuses a token that
+ * expires more than a day ahead of its own clock (RFC 8292; Apple answers
+ * BadJwtToken). The hour left over is for the two clocks to disagree.
+ */
+const AS_A_REMINDER: Keeping = { ttl: 23 * 60 * 60, urgency: "high" };
+
 /**
  * Sends one payload to each of `targets`, and says which push services took
  * it and which did not. A failed or expired subscription is removed and does
@@ -29,6 +54,7 @@ async function sendToEach(
 	mailboxId: string,
 	targets: PushTarget[],
 	payloadFor: (target: PushTarget) => NotifyPayload,
+	keeping: Keeping = AS_A_MESSAGE,
 ): Promise<{ took: number; refused: PushTarget[] }> {
 	if (targets.length === 0 || !env.VAPID_PRIVATE_KEY) {
 		return { took: 0, refused: targets };
@@ -54,7 +80,7 @@ async function sendToEach(
 					message: {
 						payload: payloadFor(sub),
 						adminContact,
-						options: { ttl: 3600, urgency: "high" },
+						options: { ttl: keeping.ttl, urgency: keeping.urgency },
 					},
 				});
 
@@ -240,17 +266,39 @@ export async function notifyNewEmail(
 			sendToEach(env, authDO, mailboxId, live, () => message),
 			// Not counted: the message is announced only where a device was
 			// shown it, and only those are sent its dismissal later.
-			sendToEach(env, authDO, mailboxId, lapsed, (target) =>
-				openTheAppPayload(target.locale),
+			sendToEach(
+				env,
+				authDO,
+				mailboxId,
+				lapsed,
+				(target) => openTheAppPayload(target.locale),
+				AS_A_REMINDER,
 			),
 		]);
+		// Decided before the give-back, and not changed by it: a device that
+		// showed the message showed it. Inside the same try, a give-back that
+		// failed -- the auth object reset by a deploy, a connection lost --
+		// answered "not announced" for a message a live device was showing,
+		// and reading it later sent that device no dismissal.
+		const announced = devices.took > 0;
 		if (reminded.refused.length > 0) {
-			await authDO.lapsedNoticesNotSent(
-				reminded.refused.map((target) => target.endpoint),
-				noticeAt,
-			);
+			// At worst the device waits for the next day's reminder, which is
+			// what it did before anything was given back. The kind of failure
+			// only: its text may quote what was asked.
+			await authDO
+				.lapsedNoticesNotSent(
+					reminded.refused.map((target) => target.endpoint),
+					noticeAt,
+				)
+				.catch((e: unknown) => {
+					console.error(
+						`Push notice give-back failed: ${
+							e instanceof Error ? e.name : typeof e
+						}`,
+					);
+				});
 		}
-		return devices.took > 0;
+		return announced;
 	} catch (e) {
 		console.error("Push notification failed:", e);
 		return false;

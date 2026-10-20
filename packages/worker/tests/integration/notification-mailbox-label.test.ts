@@ -1,4 +1,8 @@
-import { createExecutionContext, env } from "cloudflare:test";
+import {
+	createExecutionContext,
+	env,
+	runInDurableObject,
+} from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { browserSubscription, PUSH_ORIGIN, received } from "./push-reader";
 import {
@@ -35,9 +39,12 @@ async function subscribe(path: string) {
 		},
 	);
 	expect(res.ok).toBe(true);
-	const subs = await env.MAILBOX.get(
-		env.MAILBOX.idFromName("AUTH"),
-	).livePushTargets([userId]);
+	// Inside the object rather than over RPC: a statement that fails there
+	// over RPC left the runner hanging until the job's timeout.
+	const subs = await runInDurableObject(
+		env.MAILBOX.get(env.MAILBOX.idFromName("AUTH")),
+		(instance) => instance.livePushTargets([userId]),
+	);
 	expect(subs).toHaveLength(1);
 	return browser;
 }

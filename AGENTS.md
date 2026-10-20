@@ -372,41 +372,68 @@ are still checked, by the `tsc` that runs before the worker tests.
   sends pushes that show nothing (`pushTargetsForNewMail`,
   `livePushTargets`). A subscription whose session row is gone is nobody's
   and is told nothing. Rows from before subscriptions named a session were
-  told sender and subject without end; `10_push_lapsed` binds each to an
-  already-expired session of its own. A password change, a reset, root
-  setting a password, and deleting a login or a person end the lapsed
-  sessions with the rest. The day's notice is marked when the device is
-  picked, before the send, and given back if its push service did not take
-  it (`lapsedNoticesNotSent`): marked and refused, the device this is for
-  heard nothing for a day. `lapsed-device.test.ts`, `sessions-end.test.ts`.
-  Signing out on purpose and a session ending by itself are two things in
-  the dashboard (`signOut`, `sessionEndedByItself`): only the first tells the
-  server, and lets go of the browser's subscription -- first, before the
-  server is asked, so a tab closed while it is asked is not left subscribed
-  -- so a device signed out on purpose hears nothing more; the second
-  forgets the session here and nothing else, since telling the server would
-  delete the very row the reminder goes through. Which happened is the
+  told sender and subject without end; `10_push_lapsed` marks each lapsed
+  (`lapsed_at`) and changes nothing else -- no session is made for it and
+  its `session_id` stays empty -- so a deploy rolled back after the
+  migration ran leaves the Worker before it reading those rows as it always
+  did. A first version bound each to an expired session of its own, which
+  that Worker delivers nothing to and sweeps at its next sign-in. A password
+  change, a reset, root setting a password, and deleting a login or a person
+  end the lapsed sessions and those rows with the rest. The day's notice is
+  marked when the device is picked, before the send, and given back if its
+  push service did not take it (`lapsedNoticesNotSent`): marked and refused,
+  the device this is for heard nothing for a day. Giving it back is best
+  effort and never changes whether a live device was told the message: a
+  failed give-back used to answer "not announced", and the message was
+  never dismissed where it showed. The reminder asks its push service to
+  keep it twenty-three hours (`AS_A_REMINDER`), the message one: the day
+  counts as told once a push service takes it, and kept an hour a phone
+  switched off for the night was shown nothing that day. Not the full day,
+  because the builder signs with a token that expires when the push does
+  and a push service refuses one more than a day ahead.
+  `lapsed-device.test.ts`, `sessions-end.test.ts`.
+  Signing out on purpose and a session ending by itself are two things in the
+  dashboard (`signOut`, `sessionEndedByItself`): only the first tells the
+  server, and lets go of the browser's subscription -- beside the server's
+  half, not after its answer, so a tab closed while it is asked is not left
+  subscribed -- so a device signed out on purpose hears nothing more; the
+  second forgets the session here and nothing else, since telling the server
+  would delete the very row the reminder goes through. Which happened is the
   server's to say: a session past its time by the device's clock is asked
-  about (`/auth/me`) rather than ended, since a clock running ahead showed
-  the sign-in screen while the session lived on, still told sender and
-  subject. A sign-out is written down before it is sent, in a list
-  (`signOutPending`), each crossed off only when the server took it, and the
-  rest sent the next time the dashboard opens: one slot let the next
-  sign-out overwrite one still waiting, and the earlier session lived on.
-  Each names its own session (`asSession` in api.ts) rather than whoever
-  storage holds when it goes out. The sign-out route is public
-  (`PUBLIC_ROUTES`) and ends the session its header names, run out or not,
-  so one sent again later still ends it. Access is checked before that list,
-  so a sign-out sent behind a lapsed Access sign-in never reaches the Worker
-  and is sent again once the dashboard is opened through Access -- by when
-  the session may have run out, which is why the route is public. It never
-  answers 401, so the dashboard counts a 401 there as not heard. The token
-  comes from the header only, so a cookie a page sends along signs nobody
-  out, and the cookie is cleared only when it is the session being ended: a
-  sign-out left over from an earlier session went out with the current
-  one's cookie and wiped it. To silence a lost device for good, change the
-  password of the sign-in address it used, or delete that address -- each
-  address is a login of its own, with its own sessions.
+  about (`/auth/me`) rather than ended, since a clock running ahead showed the
+  sign-in screen while the session lived on, still told sender and subject. A
+  sign-out is written down before it is sent, in a list (`signOutPending`),
+  each crossed off only when the server took it, and the rest sent the next
+  time the dashboard opens: one slot let the next sign-out overwrite one still
+  waiting, and the earlier session lived on. It is written, the stored session
+  taken out and the request sent at the click, before anything is waited for:
+  they used to wait for the browser to let go, up to two seconds, and a tab
+  closed then had sent and written nothing, so the next person to open the
+  dashboard there was signed in as the last. A stored session whose sign-out
+  is still waiting is forgotten when the dashboard opens. The sign-out's
+  answer settles whatever has ended since it was sent
+  (`settlesAfterTheSessionEnds`): with the stored session gone, another
+  screen's request meets a 401 and ends the session here, and an answer left
+  unsettled held the sign-out for ever. Each names its own session
+  (`asSession` in api.ts) rather than whoever storage holds when it goes out,
+  and so does the question a tab whose session has run out asks (`checkAuth`),
+  which writes or removes the stored session only while it is this tab's: read
+  from storage, it asked about the session another tab had signed in with
+  since, and wrote its own run-out one over it. A navigation that finds the
+  session gone while something is being written does not happen, as a request
+  finding it gone does not navigate: going to sign-in took the composer and
+  its text. The sign-out route is public (`PUBLIC_ROUTES`) and ends the
+  session its header names, run out or not, so one sent again later still ends
+  it. Access is checked before that list, so a sign-out sent behind a lapsed
+  Access sign-in never reaches the Worker and is sent again once the dashboard
+  is opened through Access -- by when the session may have run out, which is
+  why the route is public. It never answers 401, so the dashboard counts a 401
+  there as not heard. The token comes from the header only, so a cookie a page
+  sends along signs nobody out, and the cookie is cleared only when it is the
+  session being ended: a sign-out left over from an earlier session went out
+  with the current one's cookie and wiped it. To silence a lost device for
+  good, change the password of the sign-in address it used, or delete that
+  address -- each address is a login of its own, with its own sessions.
   The dashboard hands the browser's subscription to each new session
   (`rebindPushSubscription`), with its language, and again when the
   language changes, since the browser keeps the subscription and the

@@ -111,6 +111,35 @@ async function tellTheServer(send: () => Promise<unknown>): Promise<boolean> {
 	return false;
 }
 
+/**
+ * The id of the session in storage, which every tab of this dashboard reads
+ * and writes: not necessarily this tab's. Null when there is none, or none
+ * that can be read.
+ */
+function storedSessionId(): string | null {
+	try {
+		const stored = localStorage.getItem("session");
+		if (!stored) return null;
+		const id: unknown = JSON.parse(stored)?.id;
+		return typeof id === "string" ? id : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Takes `id` out of storage, and only it: another tab may have stored a
+ * session of its own since, and taking that one out signed that tab out.
+ */
+function forgetStoredSession(id: string | undefined) {
+	if (!id || storedSessionId() !== id) return;
+	try {
+		localStorage.removeItem("session");
+	} catch {
+		// Storage refused: nothing more to be done.
+	}
+}
+
 function rememberPendingSignOut(token: string) {
 	const tokens = pendingSignOuts();
 	if (!tokens.includes(token)) keepPendingSignOuts([...tokens, token]);
@@ -138,6 +167,13 @@ function pendingSignOutHeard(token: string) {
 async function finishPendingSignOut() {
 	const tokens = pendingSignOuts();
 	if (tokens.length === 0) return;
+	// A session whose sign-out is still waiting is over, whatever storage
+	// says: a tab closed while it was being signed out could leave it
+	// stored, and the next person to open the dashboard here was signed in
+	// as the last one. Forgotten before anything is sent, and before the
+	// router asks about it.
+	const stored = storedSessionId();
+	if (stored && tokens.includes(stored)) sessionEnded();
 	if (!localStorage.getItem("session")) {
 		await letGoOfThisBrowsersSubscription();
 	}
@@ -212,8 +248,10 @@ export const useAuthStore = defineStore("auth", () => {
 	 * goes when the next session starts, in adopt.
 	 */
 	function forgetThisPerson() {
+		const mine = session.value?.id;
 		session.value = null;
-		localStorage.removeItem("session");
+		// This tab's, and not whatever another tab has stored since.
+		forgetStoredSession(mine);
 		api.clearAuthToken();
 		useSearchStore().$reset();
 		useEmailStore().$reset();
@@ -314,13 +352,13 @@ export const useAuthStore = defineStore("auth", () => {
 	 * Signing out on purpose: the buttons. Here, on the server, and for this
 	 * browser's notifications.
 	 *
-	 * This browser lets go of its push subscription first, whatever the
-	 * server says afterwards, so a device signed out on purpose is told
-	 * nothing more about anybody's mail -- not even, once its session has
-	 * run out, to open the app (see sessionEndedByItself for the other kind
-	 * of end). First, and not after the server has answered: that is two
-	 * attempts and a second's wait, and a tab closed in the meantime stayed
-	 * subscribed. The Worker's row goes with the session.
+	 * This browser lets go of its push subscription whatever the server
+	 * says, so a device signed out on purpose is told nothing more about
+	 * anybody's mail -- not even, once its session has run out, to open the
+	 * app (see sessionEndedByItself for the other kind of end). Beside the
+	 * server's half, and not after it has answered: that is two attempts and
+	 * a second's wait, and a tab closed in the meantime stayed subscribed.
+	 * The Worker's row goes with the session.
 	 *
 	 * The server's half used to be allowed to fail in silence: the screen
 	 * signed out and the session, its cookie and its push subscription lived
@@ -330,21 +368,38 @@ export const useAuthStore = defineStore("auth", () => {
 	 * sent again the next time this dashboard is opened
 	 * (finishPendingSignOut). Written only after both attempts failed, as it
 	 * used to be, a tab closed in the second between them lost it.
+	 *
+	 * All of that happens at the click, before anything is waited for: the
+	 * sign-out written down, the stored session taken out, and the request
+	 * on its way while the browser lets go. Waiting for the browser first --
+	 * up to LET_GO_WITHIN_MS -- a tab closed in that time had sent nothing
+	 * and written nothing, and the next person to open the dashboard here
+	 * was signed in as this one.
 	 */
 	async function signOut() {
 		loading.value = true;
 		const ending = session.value?.id;
 		try {
-			await letGoOfThisBrowsersSubscription();
 			if (ending) {
 				rememberPendingSignOut(ending);
-				if (await tellTheServer(() => api.logout(ending))) {
-					pendingSignOutHeard(ending);
-				}
+				forgetStoredSession(ending);
 			}
+			await Promise.all([
+				letGoOfThisBrowsersSubscription(),
+				ending
+					? tellTheServer(() => api.logout(ending)).then((heard) => {
+							if (heard) pendingSignOutHeard(ending);
+						})
+					: undefined,
+			]);
 		} finally {
-			sessionEnded();
-			useUIStore().$reset();
+			// Unless somebody else has signed in here meanwhile: the sign-out's
+			// answer settles whatever has ended since it was sent (api.ts),
+			// and it is this session that is over, not theirs.
+			if (!session.value || session.value.id === ending) {
+				sessionEnded();
+				useUIStore().$reset();
+			}
 			loading.value = false;
 		}
 	}
@@ -388,9 +443,13 @@ export const useAuthStore = defineStore("auth", () => {
 	async function checkAuth() {
 		if (!session.value) return false;
 
+		// This tab's own session, by name. Storage is every tab's: read as the
+		// request went out, it asked about whatever another tab had signed in
+		// with since, and wrote this tab's run-out session over it.
+		const asking = session.value.id;
 		loading.value = true;
 		try {
-			const response = await api.getCurrentUser();
+			const response = await api.getCurrentUser(asking);
 			// Update session with fresh data.
 			//
 			// The role has to be refreshed here as well as at sign-in. It is
@@ -403,7 +462,9 @@ export const useAuthStore = defineStore("auth", () => {
 				email: response.data.email,
 				role: response.data.role,
 			};
-			localStorage.setItem("session", JSON.stringify(session.value));
+			if (storedSessionId() === asking) {
+				localStorage.setItem("session", JSON.stringify(session.value));
+			}
 			void rebindPushSubscription();
 			return true;
 		} catch (err: any) {
