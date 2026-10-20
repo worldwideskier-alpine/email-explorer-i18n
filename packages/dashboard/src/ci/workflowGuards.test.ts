@@ -485,6 +485,38 @@ describe("the deploy workflow", () => {
 	});
 
 	/**
+	 * Cloudflare's API fails a read now and then: on 2026-10-20 it answered
+	 * the read after the deploy with "Internal authentication error [code:
+	 * 10500]", and behind Access that read is the whole of the check, so the
+	 * deploy was checked by nothing. Both reads of the live version are made
+	 * again when they fail, three times in all, and stop at the first that
+	 * answers.
+	 */
+	it("asks again for the live version when Cloudflare fails the read", () => {
+		const steps = (deploy ?? "").split(/\n {6}- /);
+		for (const name of [
+			"Note the version that is live now",
+			"Report the version that is live",
+		]) {
+			const lines = runLines(
+				steps.find((one) => one.startsWith(`name: ${name}`)) ?? "",
+			);
+			const loop = lines.indexOf("for wait in 0 10 30; do");
+			expect(loop, name).toBeGreaterThanOrEqual(0);
+			expect(lines[loop + 1], name).toBe('sleep "$wait"');
+			expect(lines[loop + 2], name).toBe(
+				"if timeout 90 npx wrangler deployments status 2>&1 \\",
+			);
+			const then = lines.indexOf("break", loop);
+			expect(lines[then - 1], name).toMatch(
+				/\| tee "\$RUNNER_TEMP\/[\w.-]+"; then$/,
+			);
+			expect(lines[then + 1], name).toBe("fi");
+			expect(lines.indexOf("done", loop), name).toBeGreaterThan(then);
+		}
+	});
+
+	/**
 	 * A deploy that fails after it went live is put back. The version to go
 	 * back to has to be read before the deploy -- afterwards it is gone from
 	 * `deployments status` -- and the step that uses it has to run on a

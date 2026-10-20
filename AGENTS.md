@@ -889,6 +889,11 @@ domain of its own; the check masks the host it asks either way. With
 neither, it warns rather than passing in silence. The step before it prints the version that is actually running,
 which on a deploy that gave the Worker its push key is *not* the id the deploy
 step prints -- putting a secret publishes a version of its own, after it.
+That read, and the one before the deploy, are made again when they fail,
+three times in all: on 2026-10-20 Cloudflare's API answered the read after
+the deploy with "Internal authentication error [code: 10500]", and behind
+Access that read is the whole of the check, so the deploy was checked by
+nothing and passed with a warning.
 
 A deploy that fails once it is live is rolled back. The step before the
 deploy notes the version that is live then (`steps.before`), and the last
