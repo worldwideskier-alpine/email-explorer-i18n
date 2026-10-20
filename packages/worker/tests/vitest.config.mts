@@ -33,13 +33,16 @@ const claudeCalls = new Map<string, number>();
 /**
  * Every push the recording push service took; see "/__received". The two
  * headers are the salt and the sender's key, which the `aesgcm` encoding
- * carries outside the body and a reader needs to decrypt it.
+ * carries outside the body and a reader needs to decrypt it. `ttl` is how
+ * long the service was asked to keep it for a device that is away.
  */
 const pushesReceived: {
+	host: string;
 	path: string;
 	body: string;
 	encryption: string | null;
 	cryptoKey: string | null;
+	ttl: string | null;
 }[] = [];
 
 /**
@@ -149,19 +152,30 @@ export default defineConfig({
 					if (url.hostname === "push-down.example.test") {
 						return new Response(null, { status: 503 });
 					}
+					// One that is too busy, for what a refusal leaves in the log.
+					if (url.hostname === "push-busy.example.test") {
+						return new Response(null, { status: 429 });
+					}
 					// One that takes the message and keeps it, so a test holding
 					// the subscription's private key can read what was sent.
-					// "/__received" answers what arrived, as base64, by path.
-					if (url.hostname === "push-record.example.test") {
+					// "/__received" answers what arrived, as base64, by host and
+					// path. Apple's push service is one of these too: what is
+					// never sent there (a dismissal) is a question of host.
+					if (
+						url.hostname === "push-record.example.test" ||
+						url.hostname === "web.push.apple.com"
+					) {
 						if (url.pathname === "/__received") {
 							return Response.json(pushesReceived);
 						}
 						const bytes = new Uint8Array(await request.arrayBuffer());
 						pushesReceived.push({
+							host: url.hostname,
 							path: url.pathname,
 							body: Buffer.from(bytes).toString("base64"),
 							encryption: request.headers.get("Encryption"),
 							cryptoKey: request.headers.get("Crypto-Key"),
+							ttl: request.headers.get("TTL"),
 						});
 						return new Response(null, { status: 201 });
 					}

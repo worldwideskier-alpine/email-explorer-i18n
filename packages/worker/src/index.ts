@@ -2553,6 +2553,17 @@ const PUBLIC_ROUTES = new Set([
 	// already required the session and the current password.
 	"/api/v1/auth/confirm-email-change",
 	"/api/v1/settings",
+	// Signing out ends the session it names, run out or not. Behind the gate,
+	// a sign-out that arrived after the session ran out was refused for want
+	// of the very session it ended, and the device went on being told about
+	// new mail. One arrives late when it is tried again the next time the
+	// dashboard opens: after the browser was offline, or after an Access
+	// sign-in that had lapsed has been made again -- Access is checked before
+	// this list (checkAccess in fetch), and a sign-out sent behind a lapsed
+	// one never gets here. The token is the credential, and it is read only
+	// from the header (sessionTokenOf), so a cookie a page sends along signs
+	// nobody out.
+	"/api/v1/auth/logout",
 ]);
 
 // Helper function to check if route is public

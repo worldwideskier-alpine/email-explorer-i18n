@@ -686,6 +686,13 @@ export class PostConfirmEmailChange extends OpenAPIRoute {
 	}
 }
 
+/**
+ * Ends the session the request names, and its push subscription. A public
+ * route (PUBLIC_ROUTES): a session that has run out is still ended, so a
+ * sign-out that arrives late -- one the dashboard sends again when it next
+ * opens (through Access, where Access stands in front) -- still stops its
+ * device being told about mail. Never a 401: there is nothing to refuse.
+ */
 export class PostLogout extends OpenAPIRoute {
 	schema = {
 		summary: "Logout",
@@ -704,13 +711,22 @@ export class PostLogout extends OpenAPIRoute {
 		if (sessionToken) {
 			const authDO = getAuthDO(c.env);
 			await authDO.logout(sessionToken);
+			// The cookie goes only when it is the session being ended. Not for
+			// a request with the cookie alone -- `<a ping>` in a message, which
+			// a public route now hears -- and not for a sign-out of another
+			// session: the dashboard sends one left over from earlier
+			// (finishPendingSignOut), and the browser adds the cookie of
+			// whoever is signed in now, whose inline pictures and /docs it
+			// signs in until their next sign-in. Read here only to compare,
+			// never as a credential (cookieSignsIn).
+			const cookie = sessionTokenFrom(null, c.req.header("Cookie") ?? null);
+			if (cookie === sessionToken) {
+				c.header(
+					"Set-Cookie",
+					"session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0",
+				);
+			}
 		}
-
-		// Clear cookie
-		c.header(
-			"Set-Cookie",
-			"session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0",
-		);
 
 		return c.json({ status: "logged out" });
 	}

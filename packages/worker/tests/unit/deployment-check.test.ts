@@ -6,11 +6,16 @@ import {
 	accessDoor,
 	accessDoorOf,
 	accessTeamFrom,
+	addressKind,
 	answeredByTheWorker,
 	assetMismatch,
 	assetsReferencedBy,
 	behindAccess,
 	builtAssets,
+	DASHBOARD_ASK,
+	dashboardAskLine,
+	dashboardAskReachesTheTeam,
+	dashboardAskWarning,
 	deployedAddress,
 	deployedAddresses,
 	liveVersionIn,
@@ -453,5 +458,91 @@ describe("every address wrangler deployed to", () => {
 			"https://my-worker.example.workers.dev",
 		);
 		expect(deployedAddresses("nothing deployed")).toEqual([]);
+	});
+});
+
+/**
+ * The question the dashboard asks when it comes back to the front, asked by
+ * the deploy so the log says how Access answers it. One line: the status and
+ * whether it sends the browser to the team. Never the address it sends it
+ * to -- the team and the deployment are this deployment's, and the log is
+ * public.
+ */
+describe("the dashboard-shaped ask", () => {
+	const TEAM = "https://team.cloudflareaccess.com";
+
+	it("is asked as the dashboard's script asks, without a cookie", () => {
+		expect(DASHBOARD_ASK).toEqual({
+			method: "GET",
+			headers: {
+				accept: "*/*",
+				"sec-fetch-mode": "cors",
+				"sec-fetch-dest": "empty",
+				"sec-fetch-site": "same-origin",
+			},
+			redirect: "manual",
+		});
+	});
+
+	it("says whether the answer is the team's sign-in, and nothing more", () => {
+		expect(dashboardAskLine("workers.dev", 302, SIGN_IN, TEAM)).toBe(
+			"dashboard-shaped ask (workers.dev): answered 302, Location is the team: yes",
+		);
+		expect(dashboardAskLine("another address", 302, SIGN_IN, null)).toBe(
+			"dashboard-shaped ask (another address): answered 302, Location is the team: yes",
+		);
+		expect(dashboardAskLine("workers.dev", 200, null, TEAM)).toBe(
+			"dashboard-shaped ask (workers.dev): answered 200, Location is the team: no",
+		);
+		expect(
+			dashboardAskLine(
+				"workers.dev",
+				302,
+				SIGN_IN,
+				"https://other.cloudflareaccess.com",
+			),
+		).toBe(
+			"dashboard-shaped ask (workers.dev): answered 302, Location is the team: no",
+		);
+	});
+
+	it("names the kind of address and never the address", () => {
+		expect(addressKind("https://name.account.workers.dev")).toBe("workers.dev");
+		expect(addressKind("https://NAME.ACCOUNT.WORKERS.DEV")).toBe("workers.dev");
+		expect(addressKind("https://mail.example.com")).toBe("another address");
+		expect(addressKind("https://workers.dev.example.com")).toBe(
+			"another address",
+		);
+		expect(addressKind("not a url")).toBe("another address");
+	});
+
+	/**
+	 * Behind Access, an answer that is not its sign-in is shown on the run,
+	 * not only printed: the dashboard then cannot bring a lapsed Access
+	 * sign-in back by itself, and nothing else would say so.
+	 */
+	it("warns when Access does not answer the dashboard with its sign-in", () => {
+		expect(dashboardAskReachesTheTeam(302, SIGN_IN, TEAM)).toBe(true);
+		expect(dashboardAskReachesTheTeam(200, null, TEAM)).toBe(false);
+		expect(dashboardAskReachesTheTeam(403, null, TEAM)).toBe(false);
+		const warning = dashboardAskWarning("workers.dev");
+		expect(warning.startsWith("::warning::")).toBe(true);
+		expect(warning).toContain("workers.dev");
+	});
+
+	it("never prints where the answer points", () => {
+		const secretHost = "secret-team.cloudflareaccess.com";
+		const location = `https://${secretHost}/cdn-cgi/access/login/private-host?kid=${KID}`;
+		for (const status of [301, 302, 307, 403]) {
+			const line = dashboardAskLine(
+				"workers.dev",
+				status,
+				location,
+				`https://${secretHost}`,
+			);
+			expect(line).not.toContain(secretHost);
+			expect(line).not.toContain("private-host");
+			expect(line).not.toContain(KID);
+		}
 	});
 });

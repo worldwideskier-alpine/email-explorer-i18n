@@ -69,7 +69,34 @@ exist.
   deployment's own code runs in the page -- messages are shown in a sandboxed
   frame that runs no scripts.
 - Signing out ends the session on the server at once, along with the
-  notification subscription that browser registered.
+  notification subscription that browser registered, and the browser turns
+  its notifications off. A sign-out that cannot reach the server (offline,
+  say) is sent again the next time the dashboard opens in that browser.
+  Turn notifications on again in **Settings** after signing back in.
+
+### Notifications when a session runs out
+
+A device with notifications on is told the sender and subject of each new
+message only while its session lasts. When the session runs out, the device
+is not signed out of its notifications: for the next 30 days, new mail
+brings at most one notification a day saying only that new mail has arrived
+and to open the app on that device -- nothing about the message, the sender
+or the mailbox. Opening the app and signing in brings the full notifications
+back. After those 30 days the device hears nothing more until it signs in
+again.
+
+So a phone you use only to read notifications keeps telling you when to open
+it, instead of falling silent with its switch still on.
+
+To make a device you no longer have stop hearing even that, change the
+password of the sign-in address that device used -- each sign-in address
+has its own password and its own sessions -- or, if you have another
+sign-in address, delete that one. Root can also set a new password for it.
+Each of these ends that sign-in address's sessions -- all of them, except
+that changing the password keeps the device you changed it from signed in
+-- and removes those devices' notifications at once. Your only sign-in
+address cannot be deleted on its own; root deleting your whole account would
+take your mailboxes and their mail with it, so change the password instead.
 
 ### Rate limiting
 

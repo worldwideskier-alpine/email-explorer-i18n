@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosRequestConfig } from "axios";
 import { somethingIsBeingWritten } from "./appUpdate";
 import { sessionEnded, sessionGeneration } from "./sessionEnd";
 
@@ -9,6 +9,27 @@ export const apiClient = axios.create({
 		"Content-Type": "application/json",
 	},
 });
+
+declare module "axios" {
+	interface AxiosRequestConfig {
+		/**
+		 * The session a request is about, when that is not necessarily
+		 * whoever is signed in when it goes out: a sign-out. Without it the
+		 * token is read from storage as the request is sent, and the second
+		 * attempt a second later carried whatever another tab had stored
+		 * since -- ending that tab's new session, not this one.
+		 */
+		asSession?: string;
+		/**
+		 * An answer that writes into nothing of a session's -- a sign-out's,
+		 * which says only whether the server heard it -- and so settles
+		 * whatever has ended since it was sent (see sentUnderAnEndedSession).
+		 * Left unsettled, a 401 met elsewhere while it was on its way held
+		 * the sign-out for ever.
+		 */
+		settlesAfterTheSessionEnds?: boolean;
+	}
+}
 
 /** The session a request was sent under; see sessionGeneration. */
 const SENT_UNDER = Symbol("sessionGeneration");
@@ -21,6 +42,9 @@ type Stamped = { [SENT_UNDER]?: number };
  * is using.
  */
 const sentUnderAnEndedSession = (config: unknown) => {
+	if ((config as AxiosRequestConfig | undefined)?.settlesAfterTheSessionEnds) {
+		return false;
+	}
 	const sent = (config as Stamped | undefined)?.[SENT_UNDER];
 	return sent !== undefined && sent !== sessionGeneration();
 };
@@ -30,6 +54,10 @@ const never = () => new Promise<never>(() => {});
 apiClient.interceptors.request.use(
 	(config) => {
 		(config as Stamped)[SENT_UNDER] = sessionGeneration();
+		if (config.asSession) {
+			config.headers.Authorization = `Bearer ${config.asSession}`;
+			return config;
+		}
 		const session = localStorage.getItem("session");
 		if (session) {
 			try {
@@ -54,7 +82,7 @@ const OWN_401_HANDLING = [
 	"/api/v1/auth/login",
 	"/api/v1/auth/reset-password",
 	"/api/v1/auth/confirm-email-change",
-	// Asked by checkAuth and logout, which deal with a stale session
+	// Asked by checkAuth and signOut, which deal with a stale session
 	// themselves -- and are asked on the first navigation of every page.
 	"/api/v1/auth/me",
 	"/api/v1/auth/logout",
@@ -133,8 +161,17 @@ export default {
 		}),
 	login: (email: string, password: string, turnstileToken?: string) =>
 		apiClient.post("/api/v1/auth/login", { email, password, turnstileToken }),
-	logout: () => apiClient.post("/api/v1/auth/logout"),
-	getCurrentUser: () => apiClient.get("/api/v1/auth/me"),
+	logout: (session: string) =>
+		apiClient.post("/api/v1/auth/logout", null, {
+			asSession: session,
+			settlesAfterTheSessionEnds: true,
+		}),
+	// About the session named, when one is: see checkAuth.
+	getCurrentUser: (session?: string) =>
+		apiClient.get(
+			"/api/v1/auth/me",
+			session === undefined ? undefined : { asSession: session },
+		),
 	// The locale travels with the request because the recovery mail is written
 	// server-side: it should arrive in the language the user is reading.
 	forgotPassword: (email: string, locale: string, turnstileToken?: string) =>
@@ -416,7 +453,8 @@ export default {
 
 	// Push notifications
 	getVapidPublicKey: () => apiClient.get("/api/v1/push/vapid-public-key"),
-	subscribePush: (subscription: PushSubscriptionJSON) =>
+	// locale: the language this page displays; see withLocale in push.ts.
+	subscribePush: (subscription: PushSubscriptionJSON & { locale?: string }) =>
 		apiClient.post("/api/v1/push/subscribe", subscription),
 	unsubscribePush: (endpoint: string) =>
 		apiClient.post("/api/v1/push/unsubscribe", { endpoint }),

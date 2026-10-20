@@ -140,7 +140,7 @@ describe("signing out", () => {
 			originalEmail: { id: "theirs" },
 		});
 
-		await useAuthStore().logout();
+		await useAuthStore().signOut();
 
 		expect(useFolderStore().folders).toEqual([]);
 		expect(useContactStore().contacts).toEqual([]);

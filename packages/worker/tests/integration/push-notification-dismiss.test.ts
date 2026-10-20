@@ -44,7 +44,11 @@ async function generateTestSubscriptionKeys() {
 async function subscriptionCount(): Promise<number> {
 	const authId = env.MAILBOX.idFromName("AUTH");
 	const authDO = env.MAILBOX.get(authId);
-	const subs = await authDO.getPushSubscriptionsForUsers([userId]);
+	// Inside the object rather than over RPC: a statement that fails there
+	// over RPC left the runner hanging until the job's timeout.
+	const subs = await runInDurableObject(authDO, (instance) =>
+		instance.livePushTargets([userId]),
+	);
 	return subs.length;
 }
 

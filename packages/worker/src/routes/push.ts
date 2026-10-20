@@ -1,6 +1,7 @@
 import { contentJson, OpenAPIRoute } from "chanfana";
 import type { Context } from "hono";
 import { z } from "zod";
+import { knownLocale } from "../push-notice";
 import type { Env, Session } from "../types";
 
 type AppContext = Context<{ Bindings: Env; Variables: { session?: Session } }>;
@@ -76,6 +77,10 @@ const SubscribeRequestSchema = z.object({
 		p256dh: z.string(),
 		auth: z.string(),
 	}),
+	// The language the page displays, for what the device is told once its
+	// session has run out (push-notice.ts). Taken whatever it is and kept
+	// only when known: see knownLocale.
+	locale: z.unknown().optional(),
 });
 
 const SuccessResponseSchema = z.object({
@@ -109,9 +114,10 @@ export class PostPushSubscribe extends OpenAPIRoute {
 		}
 
 		const data = await this.getValidatedData<typeof this.schema>();
-		const { endpoint, keys } = data.body as {
+		const { endpoint, keys, locale } = data.body as {
 			endpoint: string;
 			keys: { p256dh: string; auth: string };
+			locale?: unknown;
 		};
 
 		const authId = c.env.MAILBOX.idFromName("AUTH");
@@ -121,6 +127,7 @@ export class PostPushSubscribe extends OpenAPIRoute {
 			session.id,
 			endpoint,
 			keys,
+			knownLocale(locale),
 		);
 
 		return c.json({ status: "subscribed" });

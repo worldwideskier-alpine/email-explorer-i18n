@@ -496,4 +496,38 @@ export const authMigrations: Migration[] = [
             CREATE INDEX idx_login_devices_granted_at ON login_devices(granted_at);
         `,
 	},
+	{
+		/**
+		 * What a device whose session ran out is told (push-notify.ts): the
+		 * language to tell it in, and when it was last told, so new mail
+		 * reminds it at most once a day.
+		 *
+		 * And the rows from before 7_push_session, which name no session.
+		 * They were delivered sender and subject without end, because nothing
+		 * said which session they came from. Each is marked lapsed here
+		 * (`lapsed_at`), so it is a lapsed device like any other: told only to
+		 * open the app, for as long as a lapsed session is kept, and swept
+		 * after that. Deleting them instead is the silence a device whose
+		 * session ran out used to fall into. Opening the app binds the row to
+		 * a live session again.
+		 *
+		 * Marked, and nothing else changed: their `session_id` stays empty and
+		 * no session is made for them, so a deploy rolled back after this has
+		 * run -- the deploy's own last check wakes the auth object -- leaves
+		 * the Worker before it reading them as it always did. A first version
+		 * bound each to an expired session of its own, and that Worker
+		 * delivers to a row naming no session and to nothing whose session
+		 * has run out: rolled back, the rows would have fallen silent, and
+		 * its next sign-in would have swept them for good.
+		 */
+		name: "10_push_lapsed",
+		sql: `
+            ALTER TABLE push_subscriptions ADD COLUMN locale TEXT;
+            ALTER TABLE push_subscriptions ADD COLUMN notice_at INTEGER;
+            ALTER TABLE push_subscriptions ADD COLUMN lapsed_at INTEGER;
+            UPDATE push_subscriptions
+               SET lapsed_at = CAST(strftime('%s', 'now') AS INTEGER) * 1000
+             WHERE session_id IS NULL;
+        `,
+	},
 ];

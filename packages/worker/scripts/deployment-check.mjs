@@ -260,6 +260,73 @@ export function accessDoor(status, location) {
 }
 
 /**
+ * The question the dashboard asks when it comes back to the front
+ * (appUpdate.ts in the dashboard): its page, from script, with no cookie --
+ * which is how a browser whose Access sign-in has lapsed asks it -- and
+ * without following a redirect. The dashboard reloads to sign in again only
+ * if Access answers this with a redirect to its sign-in; asked as a page
+ * (`accessDoor`), Access was measured answering so, and asked this way it
+ * has not been. The deploy asks it every time, so the log says.
+ */
+export const DASHBOARD_ASK = {
+	method: "GET",
+	headers: {
+		accept: "*/*",
+		"sec-fetch-mode": "cors",
+		"sec-fetch-dest": "empty",
+		"sec-fetch-site": "same-origin",
+	},
+	redirect: "manual",
+};
+
+/**
+ * Whether Access answered the dashboard's own question with its team's
+ * sign-in, which is what the dashboard needs to see to bring a lapsed Access
+ * sign-in back by itself.
+ */
+export function dashboardAskReachesTheTeam(status, location, issuer) {
+	const team = accessTeamFrom(status, location);
+	return team !== null && (issuer == null || team === issuer);
+}
+
+/**
+ * Which kind of address an answer came from, for the log: a host names the
+ * deployment, and the log is public, but `workers_dev` deploys to two kinds
+ * and a line has to say which it is about.
+ */
+export function addressKind(base) {
+	try {
+		return new URL(base).hostname.toLowerCase().endsWith(".workers.dev")
+			? "workers.dev"
+			: "another address";
+	} catch {
+		return "another address";
+	}
+}
+
+/**
+ * The one line printed about that answer: which kind of address, its
+ * status, and whether it sends the browser to the team's sign-in. Never
+ * where it sends it -- the team and the address are this deployment's, and
+ * the log is public.
+ */
+export function dashboardAskLine(kind, status, location, issuer) {
+	return `dashboard-shaped ask (${kind}): answered ${status}, Location is the team: ${
+		dashboardAskReachesTheTeam(status, location, issuer) ? "yes" : "no"
+	}`;
+}
+
+/**
+ * What the log says when Access stands in front of an address and does not
+ * answer the dashboard's question with its sign-in: a GitHub warning, so it
+ * is shown on the run rather than left for somebody to know to read the
+ * line. The deploy goes on; nothing is broken that worked before.
+ */
+export function dashboardAskWarning(kind) {
+	return `::warning::Access stands in front of an address (${kind}) but does not answer the dashboard's own request with its sign-in, so a dashboard left open past an Access sign-in there cannot bring it back by itself; reloading the page does.`;
+}
+
+/**
  * What the deploy does about the Worker's Access settings, from every answer
  * it had -- each address wrangler deployed to, each asked for its page and
  * for an API path:

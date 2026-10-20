@@ -282,34 +282,58 @@ describe("sender verdicts", () => {
 	});
 });
 
+/** How long a lapsed session is kept (LAPSED_WINDOW_MS), written out. */
+const KEPT = 30 * 24 * 60 * 60 * 1000;
+
 describe("a session past its expiry", () => {
 	beforeEach(async () => {
 		await testAuthBeforeAll();
 		await createDummyMailbox();
 	});
 
-	it("is refused everywhere and removed", async () => {
+	/**
+	 * Refused everywhere -- and kept, for as long as a lapsed session is
+	 * (LAPSED_WINDOW_MS): its row is what says whose device its push
+	 * subscription is, so new mail can tell that device to open the app.
+	 * Kept, it grants nothing; only one past that window is removed when it
+	 * is presented. Both sides of the window's edge: a minute inside it is
+	 * kept, so a window cut short fails here as well as one made longer.
+	 */
+	it("is refused everywhere, and removed only once it is past keeping", async () => {
 		await runInDurableObject(auth(), async (_i, state) => {
 			state.storage.sql.exec(
 				"INSERT INTO sessions (id, user_id, expires_at, created_at) VALUES ('stale', 'user1', ?, 0)",
-				Date.now() - 1,
+				Date.now() - KEPT + 60_000,
+			);
+			state.storage.sql.exec(
+				"INSERT INTO sessions (id, user_id, expires_at, created_at) VALUES ('ancient', 'user1', ?, 0)",
+				Date.now() - KEPT - 1,
 			);
 		});
-		const stale = as("stale");
-		expect((await stale(`${API}/auth/me`)).status).toBe(401);
-		expect((await stale(`${API}/mailboxes/${mailboxId}/emails`)).status).toBe(
-			401,
-		);
+		for (const token of ["stale", "ancient"]) {
+			const stale = as(token);
+			expect((await stale(`${API}/auth/me`)).status).toBe(401);
+			expect((await stale(`${API}/mailboxes/${mailboxId}/emails`)).status).toBe(
+				401,
+			);
+		}
 		const left = await runInDurableObject(auth(), async (_i, state) =>
 			state.storage.sql
-				.exec("SELECT id FROM sessions WHERE id = 'stale'")
+				.exec(
+					"SELECT id FROM sessions WHERE id IN ('stale', 'ancient') ORDER BY id",
+				)
 				.toArray(),
 		);
-		expect(left).toEqual([]);
+		expect(left).toEqual([{ id: "stale" }]);
 	});
 
-	/** Ones never presented again are swept when anybody signs in. */
-	it("is swept by the next sign-in, with its push subscription", async () => {
+	/**
+	 * Ones never presented again are swept when anybody signs in -- once
+	 * they are past keeping. Swept at expiry, a phone whose session had just
+	 * run out lost its subscription the moment another device signed in.
+	 * Both sides of the edge again: a minute inside the window is kept.
+	 */
+	it("is swept by the next sign-in, with its push subscription, once past keeping", async () => {
 		const hash = await hashPassword("password123");
 		await runInDurableObject(auth(), async (_i, state) => {
 			state.storage.sql.exec(
@@ -317,8 +341,15 @@ describe("a session past its expiry", () => {
 				hash,
 			);
 			state.storage.sql.exec(
+				"INSERT INTO sessions (id, user_id, expires_at, created_at) VALUES ('lapsed', 'user1', ?, 0)",
+				Date.now() - KEPT + 60_000,
+			);
+			state.storage.sql.exec(
 				"INSERT INTO sessions (id, user_id, expires_at, created_at) VALUES ('abandoned', 'user1', ?, 0)",
-				Date.now() - 1,
+				Date.now() - KEPT - 1,
+			);
+			state.storage.sql.exec(
+				"INSERT INTO push_subscriptions (id, user_id, session_id, endpoint, p256dh, auth, created_at) VALUES ('p-lapsed', 'user1', 'lapsed', 'https://push.example.net/lapsed', 'k', 'a', 0)",
 			);
 			state.storage.sql.exec(
 				"INSERT INTO push_subscriptions (id, user_id, session_id, endpoint, p256dh, auth, created_at) VALUES ('p', 'user1', 'abandoned', 'https://push.example.net/x', 'k', 'a', 0)",
@@ -327,13 +358,30 @@ describe("a session past its expiry", () => {
 		expect((await login("someone@test.com")).status).toBe(200);
 		const left = await runInDurableObject(auth(), async (_i, state) => ({
 			sessions: state.storage.sql
-				.exec("SELECT id FROM sessions WHERE id = 'abandoned'")
+				.exec(
+					"SELECT id FROM sessions WHERE id IN ('lapsed', 'abandoned') ORDER BY id",
+				)
 				.toArray(),
 			push: state.storage.sql
-				.exec("SELECT id FROM push_subscriptions WHERE id = 'p'")
+				.exec(
+					"SELECT id FROM push_subscriptions WHERE id IN ('p', 'p-lapsed') ORDER BY id",
+				)
 				.toArray(),
 		}));
-		expect(left).toEqual({ sessions: [], push: [] });
+		expect(left).toEqual({
+			sessions: [{ id: "lapsed" }],
+			push: [{ id: "p-lapsed" }],
+		});
+		// And the one kept is told to open the app, not the message.
+		// Inside the object rather than over RPC: a statement that fails
+		// there over RPC left the runner hanging until the job's timeout.
+		const targets = await runInDurableObject(auth(), (instance) =>
+			instance.pushTargetsForNewMail(["user1"]),
+		);
+		expect(targets.live.map((t) => t.endpoint)).toEqual([]);
+		expect(targets.lapsed.map((t) => t.endpoint)).toEqual([
+			"https://push.example.net/lapsed",
+		]);
 	});
 });
 
