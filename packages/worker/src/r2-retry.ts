@@ -1,5 +1,7 @@
 /**
- * A read from R2 that is made again when R2 asks to slow down, and only then.
+ * A call to R2 that is made again when R2 says to make it again, and only
+ * then: "Reduce your rate of simultaneous reads on the same object. (10058)"
+ * and "We encountered an internal error. Please try again. (10001)".
  *
  * On 2026-10-15 the larger mailbox's backup failed on one read with "get:
  * Reduce your rate of simultaneous reads on the same object. (10058)" -- one
@@ -7,24 +9,28 @@
  * since nothing read again. Why R2 said it is not known: the night's own
  * reads take each original once, but two mailboxes' nights run at once, and
  * whether any message's original is named by rows in both has not been
- * counted. Every other failure is thrown at once: retrying what will not
- * change only spends the night's time.
+ * counted. On 2026-10-17 it was a part of the same mailbox's archive, refused
+ * with 10001, and the archive was lost the same way: only reads were asked
+ * again then, and only on 10058. Every other failure is thrown at once:
+ * retrying what will not change only spends the night's time.
  *
  * The waits add up to under six seconds, inside the shortest limit any
- * caller holds a read to (ten seconds, for the run's record), so the caller's
- * limit, not this, is what ends a read that never comes back.
+ * caller holds a call to (ten seconds, for the run's record), so the caller's
+ * limit, not this, is what ends a call that never comes back.
  */
 
-const SLOW_DOWN = 10058;
+/** R2's codes for "make it again": an internal error, and slow down. */
+const TRY_AGAIN = [10001, 10058];
 
-/** Waits before each new attempt; jittered, so two readers do not meet again. */
+/** Waits before each new attempt; jittered, so two callers do not meet again. */
 export const RETRY_DELAYS_MS = [250, 500, 1000, 2000];
 
-export function isSlowDown(e: unknown): boolean {
+export function asksToTryAgain(e: unknown): boolean {
 	if (!(e instanceof Error)) return false;
+	const code = (e as { code?: unknown }).code;
 	return (
-		(e as { code?: unknown }).code === SLOW_DOWN ||
-		/\(10058\)\s*$/.test(e.message)
+		(typeof code === "number" && TRY_AGAIN.includes(code)) ||
+		/\((?:10001|10058)\)\s*$/.test(e.message)
 	);
 }
 
@@ -37,26 +43,40 @@ export function keyKind(key: string): string {
 	return key.split("/", 1)[0] ?? "";
 }
 
-export async function readRetrying<T>(
-	read: () => Promise<T>,
-	/** What is read, for the log: a kind of object, never a key. */
-	kind: string,
+/**
+ * Makes `work` again for as long as R2 says to and the delays last. `doing`
+ * is for the log, and names no key: "reading raw/…", "uploading a part of
+ * the archive".
+ */
+export async function retrying<T>(
+	work: () => Promise<T>,
+	doing: string,
 	delays: readonly number[] = RETRY_DELAYS_MS,
 	sleep: (ms: number) => Promise<void> = (ms) =>
 		new Promise((done) => setTimeout(done, ms)),
 ): Promise<T> {
 	for (let attempt = 0; ; attempt++) {
 		try {
-			return await read();
+			return await work();
 		} catch (e) {
 			const wait = delays[attempt];
-			if (wait === undefined || !isSlowDown(e)) throw e;
+			if (wait === undefined || !asksToTryAgain(e)) throw e;
 			console.warn(
-				`R2 asked to slow down reading ${kind}/…; reading again (${attempt + 1})`,
+				`R2 said to try ${doing} again (${(e as { code?: unknown }).code ?? "no code"}); trying again (${attempt + 1})`,
 			);
 			await sleep(wait / 2 + Math.random() * wait);
 		}
 	}
+}
+
+export function readRetrying<T>(
+	read: () => Promise<T>,
+	/** What is read, for the log: a kind of object, never a key. */
+	kind: string,
+	delays: readonly number[] = RETRY_DELAYS_MS,
+	sleep?: (ms: number) => Promise<void>,
+): Promise<T> {
+	return retrying(read, `reading ${kind}/…`, delays, sleep);
 }
 
 /**

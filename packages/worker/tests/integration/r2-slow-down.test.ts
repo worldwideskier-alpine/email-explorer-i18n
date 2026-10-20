@@ -40,15 +40,93 @@ const slowDown = () =>
 		{ code: 10058 },
 	);
 
+type UploadCall = "create" | "part" | "complete";
+
+const internalError = (call: string) =>
+	Object.assign(
+		new Error(
+			`${call}: We encountered an internal error. Please try again. (10001)`,
+		),
+		{ code: 10001 },
+	);
+
+/** An archive upload whose calls `fail(call, n)` decides; see `failing`. */
+function failingUpload(
+	upload: R2MultipartUpload,
+	fail: (call: UploadCall, n: number) => Error | "after" | null,
+	seen: Map<string, number>,
+): R2MultipartUpload {
+	const attempt = async <T>(
+		call: UploadCall,
+		real: () => Promise<T>,
+	): Promise<T> => {
+		const n = (seen.get(call) ?? 0) + 1;
+		seen.set(call, n);
+		const error = fail(call, n);
+		if (error === "after") {
+			// Done, and the answer lost on the way back.
+			await real();
+			throw internalError(call);
+		}
+		if (error) throw error;
+		return real();
+	};
+	return new Proxy(upload, {
+		get(target, prop) {
+			const value = Reflect.get(target, prop);
+			if (prop === "uploadPart") {
+				return (number: number, bytes: Uint8Array) =>
+					attempt("part", () => target.uploadPart(number, bytes));
+			}
+			if (prop === "complete") {
+				return (parts: R2UploadedPart[]) =>
+					attempt("complete", () => target.complete(parts));
+			}
+			return typeof value === "function" ? value.bind(target) : value;
+		},
+	});
+}
+
 /**
  * The bucket, with `fail(key, n)` deciding which gets throw what -- and, for
- * `"body"`, which come back with a body that will not read.
+ * `"body"`, which come back with a body that will not read -- and
+ * `failUpload(call, n)` which of an archive upload's calls do: `"after"` is
+ * a call that was done and whose answer was lost.
  */
-function failing(fail: (key: string, n: number) => Error | "body" | null) {
+function failing(
+	fail: (key: string, n: number) => Error | "body" | null,
+	failUpload: (call: UploadCall, n: number) => Error | "after" | null = () =>
+		null,
+) {
 	const seen = new Map<string, number>();
 	const proxied = new Proxy(bucket(), {
 		get(target, prop) {
 			const value = Reflect.get(target, prop);
+			if (prop === "createMultipartUpload") {
+				return async (key: string, ...rest: unknown[]) => {
+					const n = (seen.get("create") ?? 0) + 1;
+					seen.set("create", n);
+					const error = failUpload("create", n);
+					if (error === "after") {
+						await target.createMultipartUpload(key, ...(rest as []));
+						throw internalError("createMultipartUpload");
+					}
+					if (error) throw error;
+					return failingUpload(
+						await target.createMultipartUpload(key, ...(rest as [])),
+						failUpload,
+						seen,
+					);
+				};
+			}
+			if (prop === "resumeMultipartUpload") {
+				return (key: string, uploadId: string) =>
+					failingUpload(
+						target.resumeMultipartUpload(key, uploadId),
+						failUpload,
+						seen,
+					);
+			}
 			if (prop === "get") {
 				return async (key: string, ...rest: unknown[]) => {
 					const n = (seen.get(key) ?? 0) + 1;
@@ -208,8 +286,8 @@ describe("R2 asking a read to slow down", () => {
 			{ nights: inlineNights, pollMs: 20 },
 		);
 		expect(summary.backups).toMatchObject({ ran: 0, failed: 1 });
-		// Not tried again: only "slow down" is.
-		expect(night.seen.get("raw/m005.eml")).toBe(1);
+		// Read five times: R2 said to try again, and refused every time.
+		expect(night.seen.get("raw/m005.eml")).toBe(5);
 		const record = await readMaintenanceRecord(env as never);
 		// What it was doing and which kind of object, never which one.
 		expect(record?.backups?.reasons).toEqual([
@@ -410,29 +488,174 @@ describe("readRetrying", () => {
 	it("says which kind of object would not read, and not which one", async () => {
 		const night = failing((key) =>
 			key === "raw/m001.eml"
-				? Object.assign(new Error("get: internal (10001)"), { code: 10001 })
+				? Object.assign(new Error("get: invalid object name (10020)"), {
+						code: 10020,
+					})
 				: null,
 		);
 		await expect(
 			getBytes(night.env.BUCKET as R2Bucket, "raw/m001.eml"),
-		).rejects.toThrow(/^raw\/…: get: internal \(10001\)$/);
+		).rejects.toThrow(/^raw\/…: get: invalid object name \(10020\)$/);
 	});
 
-	it("does not read again on any other failure", async () => {
+	it("reads again when R2 says it erred and to try again", async () => {
 		let reads = 0;
 		await expect(
 			readRetrying(
 				async () => {
 					reads += 1;
-					throw Object.assign(new Error("get: internal (10001)"), {
-						code: 10001,
-					});
+					if (reads === 1) throw internalError("get");
+					return "read";
 				},
 				"raw",
 				undefined,
 				noWait,
 			),
-		).rejects.toThrow("(10001)");
-		expect(reads).toBe(1);
+		).resolves.toBe("read");
+		expect(reads).toBe(2);
 	});
+
+	it("does not read again on any other failure", async () => {
+		for (const error of [
+			Object.assign(new Error("get: invalid object name (10020)"), {
+				code: 10020,
+			}),
+			new Error("Network connection lost."),
+			"not an Error",
+		]) {
+			let reads = 0;
+			await expect(
+				readRetrying(
+					async () => {
+						reads += 1;
+						throw error;
+					},
+					"raw",
+					undefined,
+					noWait,
+				),
+			).rejects.toBe(error);
+			expect(reads).toBe(1);
+		}
+	});
+});
+
+describe("R2 saying to try a call of the archive's upload again", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createDummyMailbox();
+		// Three parts: two whole ones and the last.
+		await seed(30, 400 * 1024);
+	});
+
+	const backUp = (bucketEnv: unknown, at: string) =>
+		stepMailboxBackup(bucketEnv as never, mailboxId, new Date(at), 7);
+
+	/**
+	 * The archive by its length and digest: compared byte by byte, two
+	 * archives of this size ran the test pool out of memory.
+	 */
+	async function bytesOf(key: string) {
+		const object = (await bucket().get(key)) as R2ObjectBody;
+		const bytes = await object.arrayBuffer();
+		const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+		return {
+			byteLength: bytes.byteLength,
+			sha256: Array.from(digest, (b) => b.toString(16).padStart(2, "0")).join(
+				"",
+			),
+		};
+	}
+
+	/** The archive a backup that met no refusal writes, to compare with. */
+	async function untroubled() {
+		const step = await backUp(env, "2026-10-01T18:00:00.000Z");
+		if (step.kind !== "done") throw new Error("the backup paused");
+		return bytesOf(step.result.key);
+	}
+
+	async function written(
+		failUpload: (call: UploadCall, n: number) => Error | "after" | null,
+	) {
+		const night = failing(() => null, failUpload);
+		const step = await backUp(night.env, "2026-10-17T18:00:00.000Z");
+		if (step.kind !== "done") throw new Error("the backup paused");
+		return { night, bytes: await bytesOf(step.result.key) };
+	}
+
+	// What the night of 2026-10-17 met, and lost its archive to.
+	it("costs a refused part a second upload, not the archive", async () => {
+		const { night, bytes } = await written((call, n) =>
+			call === "part" && n === 1 ? internalError("uploadPart") : null,
+		);
+		expect(night.seen.get("part")).toBe(4);
+		expect(bytes).toEqual(await untroubled());
+	}, 30_000);
+
+	// The bytes are taken from the buffer once: taken again, the part sent
+	// second would hold the next part's bytes and the archive would be short.
+	it("sends a part again whole when its answer was lost", async () => {
+		const { night, bytes } = await written((call, n) =>
+			call === "part" && n === 2 ? "after" : null,
+		);
+		expect(night.seen.get("part")).toBe(4);
+		expect(bytes.byteLength).toBeGreaterThan(10 * 1024 * 1024);
+		expect(bytes).toEqual(await untroubled());
+	}, 30_000);
+
+	it("starts and completes the upload again when R2 says to", async () => {
+		const { night, bytes } = await written((call, n) =>
+			(call === "create" || call === "complete") && n === 1
+				? internalError(call)
+				: null,
+		);
+		expect(night.seen.get("create")).toBe(2);
+		expect(night.seen.get("complete")).toBe(2);
+		expect(bytes).toEqual(await untroubled());
+	}, 30_000);
+
+	// Measured in the test pool, not on R2: a second completion answers that
+	// there is no such upload, and the abort after it leaves the archive. The
+	// night is counted failed with its archive written, as it was before the
+	// second try existed.
+	it("keeps the archive when a completion's answer was lost", async () => {
+		const night = failing(
+			() => null,
+			(call, n) => (call === "complete" && n === 1 ? "after" : null),
+		);
+		await expect(backUp(night.env, "2026-10-17T18:00:00.000Z")).rejects.toThrow(
+			"(10024)",
+		);
+		expect(night.seen.get("complete")).toBe(2);
+		const [key] = await archives();
+		expect(key).toBeDefined();
+		expect(await bytesOf(key as string)).toEqual(await untroubled());
+	}, 30_000);
+
+	it("does not upload again on any other failure", async () => {
+		const night = failing(
+			() => null,
+			(call) =>
+				call === "part"
+					? new Error("uploadPart: Network connection lost.")
+					: null,
+		);
+		await expect(backUp(night.env, "2026-10-17T18:00:00.000Z")).rejects.toThrow(
+			"Network connection lost.",
+		);
+		expect(night.seen.get("part")).toBe(1);
+		expect(await archives()).toEqual([]);
+	}, 30_000);
+
+	it("gives up after five tries and says what R2 said", async () => {
+		const night = failing(
+			() => null,
+			(call) => (call === "part" ? internalError("uploadPart") : null),
+		);
+		await expect(backUp(night.env, "2026-10-17T18:00:00.000Z")).rejects.toThrow(
+			"uploading part of the archive: uploadPart: We encountered an internal error. Please try again. (10001)",
+		);
+		expect(night.seen.get("part")).toBe(5);
+		expect(await archives()).toEqual([]);
+	}, 30_000);
 });
