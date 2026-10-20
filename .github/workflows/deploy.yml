@@ -216,12 +216,19 @@ jobs:
       - name: Note the version that is live now
         id: before
         working-directory: packages/worker/dev
+        # Asked again when the read fails, as in "Report the version that is
+        # live" below.
         run: |
           set -o pipefail
-          timeout 90 npx wrangler deployments status 2>&1 \
-            | node ../scripts/withhold.mjs \
-            | tee "$RUNNER_TEMP/status-before.txt" \
-            || echo "could not read the live version; a failure below cannot be rolled back"
+          for wait in 0 10 30; do
+            sleep "$wait"
+            if timeout 90 npx wrangler deployments status 2>&1 \
+              | node ../scripts/withhold.mjs \
+              | tee "$RUNNER_TEMP/status-before.txt"; then
+              break
+            fi
+            echo "could not read the live version; a failure below cannot be rolled back"
+          done
           node ../scripts/live-version.mjs \
             < "$RUNNER_TEMP/status-before.txt" >> "$GITHUB_OUTPUT" || true
         env:
@@ -318,16 +325,26 @@ jobs:
       - name: Report the version that is live
         id: live
         working-directory: packages/worker/dev
-        # pipefail, or the `|| echo` below answered for the filter, which
-        # never fails, and a failed read printed nothing to say so. The
-        # version it names is handed to the check below, which asks the
-        # Worker whether it is the one running.
+        # pipefail, or the `if` below answered for the filter, which never
+        # fails, and a failed read was taken for a good one. The version it
+        # names is handed to the check below, which asks the Worker whether
+        # it is the one running.
+        #
+        # A read that fails is asked again, three times in all: on
+        # 2026-10-20 Cloudflare's API answered one with "Internal
+        # authentication error [code: 10500]", and behind Access this read is
+        # the whole of the check, so that deploy was checked by nothing.
         run: |
           set -o pipefail
-          timeout 90 npx wrangler deployments status 2>&1 \
-            | node ../scripts/withhold.mjs \
-            | tee "$RUNNER_TEMP/deployments-status.txt" \
-            || echo "could not read the live version back"
+          for wait in 0 10 30; do
+            sleep "$wait"
+            if timeout 90 npx wrangler deployments status 2>&1 \
+              | node ../scripts/withhold.mjs \
+              | tee "$RUNNER_TEMP/deployments-status.txt"; then
+              break
+            fi
+            echo "could not read the live version back"
+          done
           node ../scripts/live-version.mjs \
             < "$RUNNER_TEMP/deployments-status.txt" >> "$GITHUB_OUTPUT" || true
         env:
