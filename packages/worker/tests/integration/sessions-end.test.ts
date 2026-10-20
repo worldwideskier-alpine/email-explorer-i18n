@@ -65,8 +65,19 @@ const subscribe = (token: string, device: string) =>
 
 /** The endpoints a new message for the owner would be pushed to. */
 async function deliveredTo(): Promise<string[]> {
-	const subs = await authStub().getPushSubscriptionsForUsers(["owner"]);
+	const subs = await authStub().livePushTargets(["owner"]);
 	return subs
+		.map((s: { endpoint: string }) => s.endpoint.split("/").pop())
+		.sort();
+}
+
+/**
+ * The endpoints a new message would tell only to open the app: devices
+ * whose session has run out. Asking counts as telling them (once a day).
+ */
+async function toldToOpenTheApp(): Promise<string[]> {
+	const { lapsed } = await authStub().pushTargetsForNewMail(["owner"]);
+	return lapsed
 		.map((s: { endpoint: string }) => s.endpoint.split("/").pop())
 		.sort();
 }
@@ -213,8 +224,10 @@ describe("changing the password", () => {
 
 	/**
 	 * A subscription saved before subscriptions recorded their session is
-	 * delivered to until something ends the account's other sessions -- then
-	 * nothing says it is the kept session's, so it goes.
+	 * bound to a lapsed session of its own by 10_push_lapsed; one that still
+	 * named none would be delivered nothing. Ending the account's other
+	 * sessions removes it either way -- nothing says it is the kept
+	 * session's.
 	 */
 	it("removes a subscription that records no session", async () => {
 		await runInDurableObject(authStub(), async (_i, state) => {
@@ -222,13 +235,14 @@ describe("changing the password", () => {
 				"INSERT INTO push_subscriptions (id, user_id, endpoint, p256dh, auth, created_at) VALUES ('old', 'owner', 'https://push.example.net/old', 'k', 'a', 0)",
 			);
 		});
-		expect(await deliveredTo()).toEqual(["old"]);
+		expect(await deliveredTo()).toEqual([]);
+		expect(await pushRows()).toEqual(["https://push.example.net/old"]);
 
 		await as("mine", "/auth/change-password", {
 			currentPassword: PASSWORD,
 			newPassword: "a-brand-new-password",
 		});
-		expect(await deliveredTo()).toEqual([]);
+		expect(await pushRows()).toEqual([]);
 	});
 });
 
@@ -245,7 +259,13 @@ describe("a session ending by itself", () => {
 		expect(await deliveredTo()).toEqual(["phone"]);
 	});
 
-	it("an expired session is not delivered to", async () => {
+	/**
+	 * Not told the message, which a device whose session has run out may be
+	 * one its owner has lost -- but told to open the app, rather than left
+	 * silent with its switch on, which is how a phone used only for its
+	 * notifications stopped hearing anything thirty days after its sign-in.
+	 */
+	it("an expired session is told only to open the app", async () => {
 		await seedOwnerWithSessions({ mine: Date.now() + DAY });
 		await subscribe("mine", "phone");
 		await runInDurableObject(authStub(), async (_i, state) => {
@@ -255,12 +275,16 @@ describe("a session ending by itself", () => {
 			);
 		});
 		expect(await deliveredTo()).toEqual([]);
+		expect(await toldToOpenTheApp()).toEqual(["phone"]);
 	});
 
-	// Nothing is delivered to it, but the row stayed: the expired session
-	// was deleted when it was presented, and the sign-in sweep finds push
-	// rows only through sessions that still exist, so it never found these.
-	it("an expired session that is presented takes its subscription with it", async () => {
+	/**
+	 * Presented, an expired session signs in nobody, and its device is still
+	 * known: the request a phone makes when it is opened after the lapse
+	 * used to delete its subscription, and the next sign-in elsewhere found
+	 * nothing to tell. Signing out still ends it, run out or not.
+	 */
+	it("an expired session that is presented keeps its subscription until it signs out", async () => {
 		await seedOwnerWithSessions({ mine: Date.now() + DAY });
 		await subscribe("mine", "phone");
 		await runInDurableObject(authStub(), async (_i, state) => {
@@ -269,7 +293,13 @@ describe("a session ending by itself", () => {
 				Date.now() - 1,
 			);
 		});
-		expect((await as("mine", "/auth/logout")).status).toBe(401);
+		const me = await SELF.fetch(`${API}/auth/me`, {
+			headers: { Authorization: "Bearer mine" },
+		});
+		expect(me.status).toBe(401);
+		expect(await pushRows()).toEqual(["https://push.example.net/phone"]);
+
+		expect((await as("mine", "/auth/logout")).status).toBe(200);
 		expect(await pushRows()).toEqual([]);
 	});
 

@@ -1,4 +1,20 @@
+import { i18n } from "@/i18n";
 import api from "./api";
+
+/**
+ * The tag of what the Worker sends a device whose session has run out: "new
+ * mail, open the app" (push-notify.ts there). Closed once this browser is
+ * bound to a session again, since what it asked for has happened.
+ */
+const OPEN_THE_APP_TAG = "open-app";
+
+/**
+ * The subscription as the Worker keeps it, with the language this page
+ * displays: a device whose session runs out is told to open the app in it.
+ */
+function withLocale(subscription: PushSubscription) {
+	return { ...subscription.toJSON(), locale: i18n.global.locale.value };
+}
 
 export function isPushSupported(): boolean {
 	return (
@@ -77,7 +93,7 @@ export async function subscribeToPush(): Promise<void> {
 		applicationServerKey: urlBase64ToUint8Array(data.publicKey),
 	});
 
-	await api.subscribePush(subscription.toJSON());
+	await api.subscribePush(withLocale(subscription));
 }
 
 /**
@@ -107,17 +123,29 @@ function sameKey(a: Uint8Array, b: Uint8Array): boolean {
  * keys are known and differ: a browser that does not say which key it used,
  * or a Worker that serves none, gets what it got before.
  *
- * Asks for nothing: no permission prompt, and nothing if permission is not
- * already granted, which is the only state in which a browser may let a page
- * subscribe without a tap. Whether released browsers do has not been tried
- * (WebKit's source says it does); one that wants a tap refuses here, and the
- * switch reads off until it is turned on again. Failure is swallowed: before
- * the browser lets its old subscription go it changes nothing, and after, it
- * leaves the switch off, which is then the truth.
+ * Asks for nothing: no permission prompt. A new subscription under a new key
+ * is made only when permission is already granted, which is the only state
+ * in which a browser may let a page subscribe without a tap. Whether
+ * released browsers do has not been tried (WebKit's source says it does);
+ * one that wants a tap refuses here, and the switch reads off until it is
+ * turned on again. An existing subscription is sent back whatever the
+ * permission reads: it used to be asked for that too, and a page opened
+ * outside the installed app -- a notification opened in a browser tab on
+ * Android -- may read a permission other than the app's (read from search
+ * results, not observed), which would leave a device that had just signed
+ * in again unbound and silent.
+ *
+ * Once the Worker has it, the "open the app" notifications are closed: the
+ * app has been opened. Failure is swallowed: before the browser lets its old
+ * subscription go it changes nothing, and after, it leaves the switch off,
+ * which is then the truth.
+ *
+ * Also run when the language changes (the auth store), so the Worker tells
+ * this device in the one it displays.
  */
 export async function rebindPushSubscription(): Promise<void> {
 	try {
-		if (!isPushSupported() || Notification.permission !== "granted") return;
+		if (!isPushSupported()) return;
 		const ready = await registration().catch(() => null);
 		if (!ready) return;
 		let subscription = await ready.pushManager.getSubscription();
@@ -130,6 +158,10 @@ export async function rebindPushSubscription(): Promise<void> {
 				.catch(() => "");
 			const key = served ? urlBase64ToUint8Array(served) : null;
 			if (key && !sameKey(new Uint8Array(under), key)) {
+				// Without the permission no new subscription can be made, and
+				// the old one is signed for with a key the Worker no longer
+				// has: nothing would reach it either way.
+				if (Notification.permission !== "granted") return;
 				// The Worker forgets the old one first. Left to the push
 				// service, it would be tried, and refused, on every new
 				// message until the service said it was gone. And the
@@ -143,16 +175,79 @@ export async function rebindPushSubscription(): Promise<void> {
 				});
 			}
 		}
-		await api.subscribePush(subscription.toJSON());
+		await api.subscribePush(withLocale(subscription));
+		for (const shown of await ready.getNotifications({
+			tag: OPEN_THE_APP_TAG,
+		})) {
+			shown.close();
+		}
 	} catch {
 		// See above.
 	}
 }
 
+/**
+ * Whether an "open the app" notification is showing in this browser: the
+ * Worker has told it, since its session ran out, that there is new mail.
+ * Asks the browser alone, nothing on the network. Never throws.
+ */
+export async function toldToOpenTheApp(): Promise<boolean> {
+	try {
+		if (!isPushSupported()) return false;
+		const registered = await navigator.serviceWorker.getRegistration();
+		if (!registered) return false;
+		const shown = await registered.getNotifications({ tag: OPEN_THE_APP_TAG });
+		return shown.length > 0;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Turning notifications off. The browser lets go of its subscription even
+ * when telling the Worker failed: left subscribed, the device went on being
+ * told about new mail with the switch reading off. The Worker's row then
+ * goes when its push service says the subscription is gone.
+ */
 export async function unsubscribeFromPush(): Promise<void> {
 	const subscription = await getExistingSubscription();
 	if (!subscription) return;
 
-	await api.unsubscribePush(subscription.endpoint);
-	await subscription.unsubscribe();
+	try {
+		await api.unsubscribePush(subscription.endpoint);
+	} finally {
+		await subscription.unsubscribe();
+	}
+}
+
+/** How long a sign-out waits for the browser to let go of its subscription. */
+const LET_GO_WITHIN_MS = 2_000;
+
+/**
+ * Signing out on purpose: this browser lets go of its subscription, so it is
+ * told nothing more. The Worker's row goes with the session (or when the push
+ * service says the subscription is gone, if the sign-out did not reach it).
+ *
+ * Never waits for a service worker to start, unlike the switch: a browser
+ * with none registered has nothing to let go of, and `ready` would hold the
+ * sign-out for the whole of READY_WITHIN_MS. Nor for longer than
+ * LET_GO_WITHIN_MS for the rest: the sign-out waits on this. Never throws.
+ */
+export async function letGoOfThisBrowsersSubscription(): Promise<void> {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const late = new Promise<void>((resolve) => {
+		timer = setTimeout(resolve, LET_GO_WITHIN_MS);
+	});
+	const letGo = (async () => {
+		try {
+			if (!isPushSupported()) return;
+			const registered = await navigator.serviceWorker.getRegistration();
+			const subscription = await registered?.pushManager.getSubscription();
+			await subscription?.unsubscribe();
+		} catch {
+			// Nothing more to be done from here.
+		}
+	})();
+	await Promise.race([letGo, late]);
+	clearTimeout(timer);
 }

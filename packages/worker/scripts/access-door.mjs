@@ -8,7 +8,10 @@
  * The addresses are those `wrangler deploy` reported (see
  * check-deployment.mjs) and PRODUCTION_URL. Each is asked for its page and
  * for an API path, as a browser asks, without following a redirect: an
- * Access application can cover a path rather than a whole host. None of the
+ * Access application can cover a path rather than a whole host. Each found
+ * behind Access is then asked for its page as the dashboard asks from
+ * script, and only the kind of address, the status and whether it names the
+ * team are printed -- with a warning when it does not. None of the
  * addresses and not the team is printed: each is masked before anything
  * else, since this repository's logs are public.
  */
@@ -18,6 +21,11 @@ import { join } from "node:path";
 import {
 	accessDoor,
 	accessDoorOf,
+	addressKind,
+	DASHBOARD_ASK,
+	dashboardAskLine,
+	dashboardAskReachesTheTeam,
+	dashboardAskWarning,
 	deployedAddresses,
 } from "./deployment-check.mjs";
 
@@ -87,8 +95,13 @@ async function ask(url) {
 }
 
 const answers = [];
+const behind = new Set();
 for (const base of usable) {
-	for (const path of PATHS) answers.push(await ask(`${base}${path}`));
+	for (const path of PATHS) {
+		const answer = await ask(`${base}${path}`);
+		answers.push(answer);
+		if (answer.door === "behind") behind.add(base);
+	}
 }
 const verdict = accessDoorOf(answers);
 if (verdict.door === "behind") {
@@ -109,3 +122,31 @@ writeFileSync(VERDICT, `${verdict.door}\n`);
 console.log(
 	`Access in front: ${verdict.door}${verdict.reason ? ` (${verdict.reason})` : ""}, from ${answers.length} answers`,
 );
+
+// And once more, for each address Access stands in front of, as the
+// dashboard asks when it comes back to the front with a lapsed Access
+// sign-in. What the dashboard does with the answer is its own
+// (appUpdate.ts); this says whether that ever happens here, and warns when
+// it cannot. An address with no Access in front has nothing to bring back,
+// and is not asked.
+for (const base of usable) {
+	if (!behind.has(base)) continue;
+	const kind = addressKind(base);
+	try {
+		const response = await fetch(`${base}/`, {
+			...DASHBOARD_ASK,
+			signal: AbortSignal.timeout(15_000),
+		});
+		await response.body?.cancel();
+		const status = response.status;
+		const location = response.headers.get("location");
+		console.log(dashboardAskLine(kind, status, location, verdict.issuer));
+		if (!dashboardAskReachesTheTeam(status, location, verdict.issuer)) {
+			console.log(dashboardAskWarning(kind));
+		}
+	} catch (e) {
+		console.log(
+			`dashboard-shaped ask (${kind}): the request failed (${e?.cause?.code ?? e?.code ?? e?.name ?? "error"})`,
+		);
+	}
+}

@@ -351,13 +351,87 @@ are still checked, by the `tsc` that runs before the worker tests.
   before its token and mail, which go in `waitUntil`, and the auth object not
   answering is a 503, not the 401 the dashboard signs out on
   (`auth-quiet-signals.test.ts`).
-- **Ending a session ends its push subscription.** A notification carries
-  the sender and subject of each new message, so a subscription is bound to
-  the session that registered it and delivered to only while that session
-  lives; a password change, a reset and root setting a password end the
-  others with their sessions. The dashboard hands the browser's subscription
-  to each new session (`rebindPushSubscription`), since the browser keeps it
-  and the settings switch reads it from there. `sessions-end.test.ts`.
+- **A session that runs out leaves its device a reminder, not the mail.** A
+  notification carries the sender and subject of each new message, so a
+  subscription is bound to the session that registered it and told the
+  message only while that session lives. A session ends thirty days after
+  sign-in and nothing renews it, and a phone used only to show notifications
+  never signs in on its own: on the thirtieth day it fell silent, switch on,
+  with nothing logged, and the first request it made with the old token, or
+  any sign-in anywhere, deleted its subscription. So an expired session row
+  is kept for `LAPSED_WINDOW_MS` (thirty days more) -- it signs in nobody,
+  `validateSession` answers null for it -- and its device is told, at most
+  once a day (`notice_at`, set in the same call that picks the device), only
+  that new mail has arrived and to open the app, in the language its page
+  last displayed (`push-notice.ts`, keyed by every `MAIL_LOCALES` code; a
+  device that never said gets the package's default, `DEFAULT_MAIL_LOCALE`,
+  Japanese and not set by a deployment, and English). Nothing
+  of the message, the mailbox or the sender is in it; it is not counted as
+  announcing the message, and dismissals go only to live sessions -- and
+  never to Apple's push service, which is documented to revoke a site that
+  sends pushes that show nothing (`pushTargetsForNewMail`,
+  `livePushTargets`). A subscription whose session row is gone is nobody's
+  and is told nothing. Rows from before subscriptions named a session were
+  told sender and subject without end; `10_push_lapsed` binds each to an
+  already-expired session of its own. A password change, a reset, root
+  setting a password, and deleting a login or a person end the lapsed
+  sessions with the rest. The day's notice is marked when the device is
+  picked, before the send, and given back if its push service did not take
+  it (`lapsedNoticesNotSent`): marked and refused, the device this is for
+  heard nothing for a day. `lapsed-device.test.ts`, `sessions-end.test.ts`.
+  Signing out on purpose and a session ending by itself are two things in
+  the dashboard (`signOut`, `sessionEndedByItself`): only the first tells the
+  server, and lets go of the browser's subscription -- first, before the
+  server is asked, so a tab closed while it is asked is not left subscribed
+  -- so a device signed out on purpose hears nothing more; the second
+  forgets the session here and nothing else, since telling the server would
+  delete the very row the reminder goes through. Which happened is the
+  server's to say: a session past its time by the device's clock is asked
+  about (`/auth/me`) rather than ended, since a clock running ahead showed
+  the sign-in screen while the session lived on, still told sender and
+  subject. A sign-out is written down before it is sent, in a list
+  (`signOutPending`), each crossed off only when the server took it, and the
+  rest sent the next time the dashboard opens: one slot let the next
+  sign-out overwrite one still waiting, and the earlier session lived on.
+  Each names its own session (`asSession` in api.ts) rather than whoever
+  storage holds when it goes out. The sign-out route is public
+  (`PUBLIC_ROUTES`) and ends the session its header names, run out or not,
+  so one sent again later still ends it. Access is checked before that list,
+  so a sign-out sent behind a lapsed Access sign-in never reaches the Worker
+  and is sent again once the dashboard is opened through Access -- by when
+  the session may have run out, which is why the route is public. It never
+  answers 401, so the dashboard counts a 401 there as not heard. The token
+  comes from the header only, so a cookie a page sends along signs nobody
+  out, and the cookie is cleared only when it is the session being ended: a
+  sign-out left over from an earlier session went out with the current
+  one's cookie and wiped it. To silence a lost device for good, change the
+  password of the sign-in address it used, or delete that address -- each
+  address is a login of its own, with its own sessions.
+  The dashboard hands the browser's subscription to each new session
+  (`rebindPushSubscription`), with its language, and again when the
+  language changes, since the browser keeps the subscription and the
+  settings switch reads it from there; once the Worker has it, the "open the
+  app" notifications are closed. It does so whatever the permission reads:
+  a page opened outside the installed app may read another (read from
+  search results, not observed). A tab that holds a session does it again
+  when a notification is tapped, and when it comes to the front with an
+  "open the app" notification showing (`listenForNotifications`): a tab
+  kept open is asked about once per page, and a tap on the notice went to
+  `/login`, which sends a signed-in tab away, so opening the app changed
+  nothing for a row that was not bound to the session.
+  A lapsed Access sign-in is the other way a device goes quiet: a request
+  from the page answered with a redirect is one script cannot follow
+  (measured in Chromium against a stand-in that redirects: a network error
+  with no answer, and the session is kept). The check the dashboard already
+  makes when it comes back to the front asks for `/` without following
+  redirects (`/index.html` is itself redirected to `/` by the asset
+  settings), and a redirect there is a reload -- a navigation, which can go
+  through -- at most twice an hour and never over somebody's writing
+  (`appUpdate.ts`, `accessResume.test.ts`).
+  How Access itself answers the page's request is not measured here; every
+  deploy asks each address Access stands in front of the way the page does
+  and prints the answer as "dashboard-shaped ask", by kind of address, with
+  a warning on the run when it is not Access's sign-in (`access-door.mjs`).
   A subscription made under a key the Worker no longer serves is made again
   under the one it does, first -- the old endpoint forgotten by the Worker,
   and only then let go by the browser -- because a push service refuses a
@@ -392,7 +466,10 @@ are still checked, by the `tsc` that runs before the worker tests.
   `notified` when a device was told; mark-read, delete, bin and "spam" ask
   `takeNotified`, which clears it in the same step. A dismissal is a push that
   shows nothing, and sending one for mail no device had seen is how a browser
-  comes to withdraw the subscription.
+  comes to withdraw the subscription. So `notified` counts only devices whose
+  session is live -- an "open the app" notice to a lapsed one is not the
+  message -- and dismissals go only to those, and never to Apple's push
+  service (`livePushTargets`, `isApplePush`).
 - **Mailbox ownership.** A grant says who a mailbox belongs to, and it is the
   only thing that grants access: the middleware in `fetch()` and every
   mailbox-scoped route ask `personHoldsMailbox`, and the mailbox list filters

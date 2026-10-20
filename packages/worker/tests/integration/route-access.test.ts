@@ -32,8 +32,9 @@ const TABLE: Record<string, Access> = {
 	"POST /api/v1/auth/reset-password": "public",
 	"POST /api/v1/auth/confirm-email-change": "public",
 	"GET /api/v1/settings": "public",
+	// Ends the session its header names, run out or not; see PUBLIC_ROUTES.
+	"POST /api/v1/auth/logout": "public",
 
-	"POST /api/v1/auth/logout": "session",
 	"GET /api/v1/auth/me": "session",
 	"POST /api/v1/auth/change-password": "session",
 	"POST /api/v1/auth/change-email": "session",

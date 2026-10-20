@@ -269,7 +269,7 @@ const handleCreateMailbox = async () => {
 };
 
 async function handleLogout() {
-	await authStore.logout();
+	await authStore.signOut();
 	router.push("/login");
 }
 </script>

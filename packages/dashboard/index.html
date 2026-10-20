@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon-192.png">
-    <link rel="manifest" href="/manifest.webmanifest">
+    <!-- With credentials: a manifest is fetched without them by default, and
+         behind Cloudflare Access that request has no Access cookie, so it is
+         answered with the sign-in redirect and the app installs without its
+         name and icons. Harmless where nothing stands in front. -->
+    <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials">
     <meta name="theme-color" content="#4f46e5">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Explorer</title>

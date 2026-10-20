@@ -472,8 +472,14 @@ const togglePush = async () => {
 	pushLoading.value = true;
 	try {
 		if (pushEnabled.value) {
-			await unsubscribeFromPush();
-			pushEnabled.value = false;
+			try {
+				await unsubscribeFromPush();
+			} finally {
+				// The browser has let go even when the Worker was not told
+				// (unsubscribeFromPush), and the switch says what the browser
+				// holds.
+				pushEnabled.value = false;
+			}
 		} else {
 			await subscribeToPush();
 			pushEnabled.value = true;

@@ -5,6 +5,7 @@ import App from "./App.vue";
 import { i18n, initLocale } from "./i18n";
 import router from "./router";
 import { watchForANewBuild } from "./services/appUpdate";
+import { listenForNotifications } from "./services/notificationTap";
 import { guardReferrerPolicy } from "./utils/referrerGuard";
 import "./assets/main.css";
 
@@ -31,17 +32,9 @@ initLocale()
 watchForANewBuild();
 
 if ("serviceWorker" in navigator) {
-	// A tapped notification asks an open tab to show its message. Routed
-	// inside the page rather than reloaded, so a message being written stays.
-	navigator.serviceWorker.addEventListener("message", (event) => {
-		const url = event.data?.type === "open" ? event.data.url : null;
-		if (
-			typeof url === "string" &&
-			url.startsWith("/") &&
-			!url.startsWith("//")
-		) {
-			router.push(url).catch(() => {});
-		}
+	// A tapped notification asks an open tab to show its message.
+	listenForNotifications(navigator.serviceWorker, (url) => {
+		router.push(url).catch(() => {});
 	});
 
 	window.addEventListener("load", () => {

@@ -36,6 +36,7 @@ const claudeCalls = new Map<string, number>();
  * carries outside the body and a reader needs to decrypt it.
  */
 const pushesReceived: {
+	host: string;
 	path: string;
 	body: string;
 	encryption: string | null;
@@ -149,15 +150,25 @@ export default defineConfig({
 					if (url.hostname === "push-down.example.test") {
 						return new Response(null, { status: 503 });
 					}
+					// One that is too busy, for what a refusal leaves in the log.
+					if (url.hostname === "push-busy.example.test") {
+						return new Response(null, { status: 429 });
+					}
 					// One that takes the message and keeps it, so a test holding
 					// the subscription's private key can read what was sent.
-					// "/__received" answers what arrived, as base64, by path.
-					if (url.hostname === "push-record.example.test") {
+					// "/__received" answers what arrived, as base64, by host and
+					// path. Apple's push service is one of these too: what is
+					// never sent there (a dismissal) is a question of host.
+					if (
+						url.hostname === "push-record.example.test" ||
+						url.hostname === "web.push.apple.com"
+					) {
 						if (url.pathname === "/__received") {
 							return Response.json(pushesReceived);
 						}
 						const bytes = new Uint8Array(await request.arrayBuffer());
 						pushesReceived.push({
+							host: url.hostname,
 							path: url.pathname,
 							body: Buffer.from(bytes).toString("base64"),
 							encryption: request.headers.get("Encryption"),

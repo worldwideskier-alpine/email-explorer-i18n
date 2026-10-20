@@ -165,7 +165,9 @@ const router = createRouter({
  * every request behind them fails.
  *
  * Once per load rather than per navigation: this is a request, and moving
- * between two screens is not new information.
+ * between two screens is not new information. The exception is a session
+ * whose stored time has passed, which is asked about at each navigation
+ * until the server agrees.
  */
 let sessionRefreshed = false;
 
@@ -183,24 +185,21 @@ const ROOT_MAY_OPEN = ["Root", "Account"];
 router.beforeEach(async (to) => {
 	const authStore = useAuthStore();
 
-	if (!sessionRefreshed && authStore.session) {
+	// Once per page, and again whenever the session's time has passed by
+	// this device's clock -- which the server is asked about rather than
+	// believed (checkAuth). The session is forgotten here, and not signed
+	// out, if the server says it is gone: see sessionEndedByItself.
+	const held = authStore.session;
+	if (
+		held &&
+		(!sessionRefreshed || (held.expiresAt < Date.now() && !authStore.loading))
+	) {
 		sessionRefreshed = true;
-		// Signs the person out by itself if the session is no longer good,
-		// which the checks below then act on.
 		await authStore.checkAuth();
 	}
 	const isPublicRoute = to.meta.public === true;
 	const requiresAuth = to.meta.requiresAuth !== false; // Auth required by default
 	const requiresRoot = to.meta.requiresRoot === true;
-
-	// Initialize auth token if exists
-	if (authStore.session && !authStore.loading) {
-		const sessionData = authStore.session;
-		// Check if session is expired
-		if (sessionData.expiresAt < Date.now()) {
-			await authStore.logout();
-		}
-	}
 
 	if (!isPublicRoute && requiresAuth && !authStore.isAuthenticated) {
 		// Redirect to login if not authenticated

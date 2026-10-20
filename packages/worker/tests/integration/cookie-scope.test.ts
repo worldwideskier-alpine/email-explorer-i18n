@@ -1,4 +1,4 @@
-import { SELF } from "cloudflare:test";
+import { env, runInDurableObject, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
 	authenticatedFetch,
@@ -6,6 +6,7 @@ import {
 	mailboxId,
 	sessionToken,
 	testAuthBeforeAll,
+	userId,
 } from "./utils";
 
 /**
@@ -49,7 +50,11 @@ describe("the session cookie alone", () => {
 			headers: { "Content-Type": "text/ping", "Ping-To": "https://x.test/" },
 			body: "PING",
 		});
-		expect(pinged.status).toBe(401);
+		// Answered -- the route is public, so a sign-out that arrives after
+		// the session ran out still ends it -- but it names no session, so
+		// it ends none, and leaves the cookie the inline pictures need.
+		expect(pinged.status).toBe(200);
+		expect(pinged.headers.get("Set-Cookie")).toBeNull();
 		expect((await authenticatedFetch(url("/api/v1/auth/me"))).status).toBe(200);
 	});
 
@@ -75,5 +80,61 @@ describe("the session cookie alone", () => {
 			(await withCookie("/docs", { headers: { "Sec-Fetch-Dest": "document" } }))
 				.status,
 		).toBe(200);
+	});
+});
+
+/**
+ * A sign-out the dashboard sends again from an earlier session
+ * (finishPendingSignOut) goes out with the cookie of whoever is signed in
+ * now. It ends the session it names, and leaves theirs: clearing the cookie
+ * whatever it held took the current person's inline pictures with it until
+ * their next sign-in.
+ */
+describe("a sign-out of another session", () => {
+	const earlier = "an-earlier-session";
+
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createDummyMailbox();
+		await runInDurableObject(
+			env.MAILBOX.get(env.MAILBOX.idFromName("AUTH")),
+			async (_i, state) => {
+				state.storage.sql.exec(
+					"INSERT INTO sessions (id, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)",
+					earlier,
+					userId,
+					Date.now() + 60_000,
+					Date.now(),
+				);
+			},
+		);
+	});
+
+	const signOut = (named: string) =>
+		withCookie("/api/v1/auth/logout", {
+			method: "POST",
+			headers: { Authorization: `Bearer ${named}` },
+		});
+
+	it("ends that one and leaves the cookie of the session signed in now", async () => {
+		const res = await signOut(earlier);
+		expect(res.status).toBe(200);
+		expect(res.headers.get("Set-Cookie")).toBeNull();
+		const asEarlier = await SELF.fetch(url("/api/v1/auth/me"), {
+			headers: { Authorization: `Bearer ${earlier}` },
+		});
+		expect(asEarlier.status).toBe(401);
+		const mailbox = `/api/v1/mailboxes/${encodeURIComponent(mailboxId)}`;
+		const picture = await withCookie(
+			`${mailbox}/emails/no-such-email/attachments/no-such-attachment`,
+			{ headers: { "Sec-Fetch-Dest": "image" } },
+		);
+		expect(picture.status).toBe(404);
+	});
+
+	it("clears the cookie when it is the session being ended", async () => {
+		const res = await signOut(sessionToken);
+		expect(res.status).toBe(200);
+		expect(res.headers.get("Set-Cookie")).toMatch(/^session=;.*Max-Age=0/);
 	});
 });

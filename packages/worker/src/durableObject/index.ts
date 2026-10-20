@@ -107,6 +107,40 @@ const SEARCH_LIMIT = 500;
  */
 const MAX_BOUND = 100;
 
+/**
+ * How long a session row is kept after it runs out.
+ *
+ * Not to sign anybody in: an expired session signs in nobody, kept or not
+ * (validateSession). It is kept so that the push subscription bound to it is
+ * still known as somebody's device for that long, and new mail can tell the
+ * device to open the app (push-notify.ts). A session ends thirty days after
+ * sign-in and nothing renews it, so a phone that only ever showed
+ * notifications fell silent on the thirtieth day with its switch still on,
+ * and nothing anywhere said why. After this the row and its subscription go.
+ */
+export const LAPSED_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** How often a lapsed device is told about new mail: once a day at most. */
+const LAPSED_NOTICE_EVERY_MS = 24 * 60 * 60 * 1000;
+
+/** One push subscription, as a send needs it. */
+export interface PushTarget {
+	endpoint: string;
+	p256dh: string;
+	auth: string;
+	/** The language its browser last displayed; null when it never said. */
+	locale: string | null;
+}
+
+function targetOf(row: PushTarget): PushTarget {
+	return {
+		endpoint: row.endpoint,
+		p256dh: row.p256dh,
+		auth: row.auth,
+		locale: row.locale,
+	};
+}
+
 /** What createEmail answers for a mailbox being destroyed. */
 export const MAILBOX_CLOSED = "Mailbox is closed";
 
@@ -515,18 +549,25 @@ export class MailboxDO extends DurableObject<Env> {
 				.execute();
 		}
 
-		// A session is otherwise removed only when it is presented after it
-		// expired, and a browser that was cleared never presents it again --
-		// so the table, and the push rows bound to its sessions, grew for
-		// ever. Every sign-in sweeps what has lapsed.
+		// A session is otherwise removed only when it is presented long after
+		// it expired, and a browser that was cleared never presents it again
+		// -- so the table, and the push rows bound to its sessions, grew for
+		// ever. Every sign-in sweeps what has lapsed for longer than a lapsed
+		// session is kept (LAPSED_WINDOW_MS). Sweeping at expiry, as this
+		// used to, took the subscription of a device whose session had just
+		// run out the moment anybody else signed in.
+		const lapsedBefore = now - LAPSED_WINDOW_MS;
 		this.ctx.storage.sql.exec(
 			"DELETE FROM push_subscriptions WHERE session_id IN (SELECT id FROM sessions WHERE expires_at < ?)",
-			now,
+			lapsedBefore,
 		);
-		this.ctx.storage.sql.exec("DELETE FROM sessions WHERE expires_at < ?", now);
-		// And any whose session is gone already -- an expired one presented
-		// before that took its push row with it, which it now does. A row
-		// with no session at all is left to the rules for those.
+		this.ctx.storage.sql.exec(
+			"DELETE FROM sessions WHERE expires_at < ?",
+			lapsedBefore,
+		);
+		// And any whose session is gone already: one ended on purpose, or a
+		// subscribe that arrived after its session was ended. Nothing is
+		// delivered to those (pushTargetsForNewMail); this is the tidying.
 		this.ctx.storage.sql.exec(
 			"DELETE FROM push_subscriptions WHERE session_id IS NOT NULL AND session_id NOT IN (SELECT id FROM sessions)",
 		);
@@ -569,23 +610,31 @@ export class MailboxDO extends DurableObject<Env> {
 		const session = result.results;
 		const expiresAt = Number(session.expires_at);
 
-		// Check if expired
-		if (expiresAt < Date.now()) {
-			this.#qb
-				.delete({
-					tableName: "sessions",
-					where: {
-						conditions: "id = ?",
-						params: [sessionId],
-					},
-				})
-				.execute();
-			// With its session, as signing out does. Left here, nothing found
-			// it again: the sign-in sweep reaches push rows through sessions.
-			this.ctx.storage.sql.exec(
-				"DELETE FROM push_subscriptions WHERE session_id = ?",
-				sessionId,
-			);
+		// An expired session signs in nobody. Its row is kept for a while
+		// all the same (LAPSED_WINDOW_MS): the device it belonged to is told
+		// to open the app when new mail comes, and deleting the row here --
+		// as this used to, on the first request the device made after the
+		// lapse -- made that device a stranger with nothing to tell it.
+		const now = Date.now();
+		if (expiresAt <= now) {
+			if (expiresAt < now - LAPSED_WINDOW_MS) {
+				this.#qb
+					.delete({
+						tableName: "sessions",
+						where: {
+							conditions: "id = ?",
+							params: [sessionId],
+						},
+					})
+					.execute();
+				// With its session, as signing out does. Left here, nothing
+				// found it again: the sign-in sweep reaches push rows through
+				// sessions.
+				this.ctx.storage.sql.exec(
+					"DELETE FROM push_subscriptions WHERE session_id = ?",
+					sessionId,
+				);
+			}
 			return null;
 		}
 
@@ -607,7 +656,14 @@ export class MailboxDO extends DurableObject<Env> {
 		};
 	}
 
-	// Auth operation: logout
+	/**
+	 * Auth operation: logout. Ends the session and its push subscription,
+	 * whether it has run out or not: a sign-out that arrives late -- sent
+	 * again once a browser that was offline, or behind an Access sign-in that
+	 * had lapsed, reaches the Worker again -- is still somebody saying "not
+	 * this device any more", and a lapsed session's device would otherwise
+	 * go on being told to open the app.
+	 */
 	async logout(sessionId: string): Promise<boolean> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
@@ -1593,14 +1649,19 @@ export class MailboxDO extends DurableObject<Env> {
 
 	/**
 	 * Push operation: save a subscription (upsert by endpoint), bound to the
-	 * session that registered it. It is delivered to only while that session
-	 * lives; see getPushSubscriptionsForUsers.
+	 * session that registered it. It is told about new mail while that
+	 * session lives, and only to open the app for a while after it runs out;
+	 * see pushTargetsForNewMail.
+	 *
+	 * Deleted and inserted rather than updated, so a device that comes back
+	 * starts afresh: no day's notice counted against it.
 	 */
 	async savePushSubscription(
 		userId: string,
 		sessionId: string,
 		endpoint: string,
 		keys: { p256dh: string; auth: string },
+		locale: string | null = null,
 	): Promise<void> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
 
@@ -1621,6 +1682,7 @@ export class MailboxDO extends DurableObject<Env> {
 					endpoint,
 					p256dh: keys.p256dh,
 					auth: keys.auth,
+					locale,
 					created_at: Date.now(),
 				},
 			})
@@ -1659,37 +1721,120 @@ export class MailboxDO extends DurableObject<Env> {
 			.execute();
 	}
 
-	// Push operation: get subscriptions for a set of users
-	async getPushSubscriptionsForUsers(
-		userIds: string[],
-	): Promise<Array<{ endpoint: string; p256dh: string; auth: string }>> {
+	/**
+	 * Push operation: who to tell about a new message, and how.
+	 *
+	 * `live` are the devices whose session is still good: they are told the
+	 * sender and subject. `lapsed` are those whose session ran out within
+	 * LAPSED_WINDOW_MS and that have not been reminded in the last day: they
+	 * are told only to open the app, and are marked reminded here, in the
+	 * same call that picks them -- two messages arriving together send one
+	 * reminder, since nothing else runs in the object between the two.
+	 *
+	 * A row whose session row is gone is neither. Ending a session on
+	 * purpose deletes the row too, so such a row is a subscribe that landed
+	 * after its session was ended, and is nobody's device any more.
+	 *
+	 * This used to deliver to every live session and to rows naming no
+	 * session, and to nothing whose session had run out -- which is how a
+	 * phone that only ever showed notifications went silent thirty days
+	 * after its sign-in, switch on, with nothing to say so.
+	 */
+	async pushTargetsForNewMail(userIds: string[]): Promise<{
+		live: PushTarget[];
+		lapsed: PushTarget[];
+		/** What the lapsed were marked with; see lapsedNoticesNotSent. */
+		noticeAt: number;
+	}> {
 		if (!this.#isAuthDO) throw new Error("Not an auth DO");
-		if (userIds.length === 0) return [];
-
-		// Only through a session that is still good. Signing out and changing
-		// the password remove rows as they end sessions, but a session that
-		// simply expires removes nothing, and its browser should stop hearing
-		// about new mail all the same.
+		const now = Date.now();
+		const rows = this.#pushRows(userIds, now - LAPSED_WINDOW_MS);
+		const live = rows.filter((row) => row.expiresAt > now);
+		const lapsed = rows.filter(
+			(row) =>
+				row.expiresAt <= now &&
+				(row.noticeAt === null || row.noticeAt <= now - LAPSED_NOTICE_EVERY_MS),
+		);
 		// One variable goes on the time, so a run holds one id fewer.
-		const rows = chunksOf(userIds, MAX_BOUND - 1).flatMap((chunk) =>
+		for (const chunk of chunksOf(lapsed, MAX_BOUND - 1)) {
+			this.ctx.storage.sql.exec(
+				`UPDATE push_subscriptions SET notice_at = ?
+                  WHERE id IN (${chunk.map(() => "?").join(", ")})`,
+				now,
+				...chunk.map((row) => row.id),
+			);
+		}
+		return {
+			live: live.map(targetOf),
+			lapsed: lapsed.map(targetOf),
+			noticeAt: now,
+		};
+	}
+
+	/**
+	 * Push operation: gives back the day's notice to the lapsed devices whose
+	 * push service did not take it, so the next message tries again. Marked
+	 * before the send, as it has to be (pushTargetsForNewMail), a refusal or
+	 * a timeout left the device the notice was for told nothing for a day.
+	 *
+	 * Only rows still carrying the mark of that send: a device that has come
+	 * back since was saved afresh, and another send's mark is its own.
+	 */
+	async lapsedNoticesNotSent(
+		endpoints: string[],
+		noticeAt: number,
+	): Promise<void> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+		// One variable goes on the time, so a run holds one endpoint fewer.
+		for (const chunk of chunksOf(endpoints, MAX_BOUND - 1)) {
+			this.ctx.storage.sql.exec(
+				`UPDATE push_subscriptions SET notice_at = NULL
+                  WHERE notice_at = ?
+                    AND endpoint IN (${chunk.map(() => "?").join(", ")})`,
+				noticeAt,
+				...chunk,
+			);
+		}
+	}
+
+	/**
+	 * Push operation: the devices whose session is still good. A dismissal
+	 * goes only to these: a device that has just come back may never have
+	 * shown the message, and a push that shows nothing is what a browser
+	 * withdraws a subscription over.
+	 */
+	async livePushTargets(userIds: string[]): Promise<PushTarget[]> {
+		if (!this.#isAuthDO) throw new Error("Not an auth DO");
+		const now = Date.now();
+		return this.#pushRows(userIds, now).map(targetOf);
+	}
+
+	/** The subscriptions of these logins whose session expires after `after`. */
+	#pushRows(userIds: string[], after: number) {
+		// One variable goes on the time, so a run holds one id fewer.
+		return chunksOf(userIds, MAX_BOUND - 1).flatMap((chunk) =>
 			this.ctx.storage.sql
 				.exec(
-					`SELECT p.endpoint, p.p256dh, p.auth
+					`SELECT p.id, p.endpoint, p.p256dh, p.auth, p.locale, p.notice_at,
+                            s.expires_at
                        FROM push_subscriptions p
-                  LEFT JOIN sessions s ON s.id = p.session_id
+                       JOIN sessions s ON s.id = p.session_id
                       WHERE p.user_id IN (${chunk.map(() => "?").join(", ")})
-                        AND (p.session_id IS NULL OR s.expires_at > ?)`,
+                        AND s.expires_at > ?`,
 					...chunk,
-					Date.now(),
+					after,
 				)
-				.toArray(),
+				.toArray()
+				.map((row) => ({
+					id: String(row.id),
+					endpoint: String(row.endpoint),
+					p256dh: String(row.p256dh),
+					auth: String(row.auth),
+					locale: row.locale === null ? null : String(row.locale),
+					noticeAt: row.notice_at === null ? null : Number(row.notice_at),
+					expiresAt: Number(row.expires_at),
+				})),
 		);
-
-		return rows.map((row) => ({
-			endpoint: String(row.endpoint),
-			p256dh: String(row.p256dh),
-			auth: String(row.auth),
-		}));
 	}
 
 	/**

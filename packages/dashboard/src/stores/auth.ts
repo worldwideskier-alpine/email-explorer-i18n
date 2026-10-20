@@ -1,8 +1,12 @@
 import { defineStore } from "pinia";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useLocalizedMessage } from "@/composables/useLocalizedMessage";
+import { i18n } from "@/i18n";
 import api from "@/services/api";
-import { rebindPushSubscription } from "@/services/push";
+import {
+	letGoOfThisBrowsersSubscription,
+	rebindPushSubscription,
+} from "@/services/push";
 import { sessionEnded, whenSessionEnds } from "@/services/sessionEnd";
 import { useContactStore } from "@/stores/contacts";
 import { useEmailStore } from "@/stores/emails";
@@ -39,10 +43,61 @@ export interface Session {
 	expiresAt: number;
 }
 
-/** A sign-out the server has not heard about yet; see logout. */
+/**
+ * The sign-outs the server has not heard about yet; see signOut. A list, one
+ * token each: it was one slot, so a sign-out still waiting was overwritten by
+ * the next -- written down before it is sent, and crossed off when it
+ * succeeded -- and the earlier session was never ended on the server.
+ */
 const PENDING_SIGN_OUT = "signOutPending";
 
-/** Whether the server took the sign-out. Tried twice, a second apart. */
+/** Enough for any one browser; past it the oldest is let go. */
+const PENDING_SIGN_OUTS_KEPT = 10;
+
+function pendingSignOuts(): string[] {
+	let stored: string | null;
+	try {
+		stored = localStorage.getItem(PENDING_SIGN_OUT);
+	} catch {
+		return [];
+	}
+	if (!stored) return [];
+	try {
+		const list: unknown = JSON.parse(stored);
+		if (Array.isArray(list)) {
+			return list.filter(
+				(token): token is string => typeof token === "string" && token !== "",
+			);
+		}
+	} catch {
+		// Not JSON: one token, bare, as an older build kept it.
+	}
+	return [stored];
+}
+
+function keepPendingSignOuts(tokens: string[]) {
+	try {
+		if (tokens.length === 0) localStorage.removeItem(PENDING_SIGN_OUT);
+		else {
+			localStorage.setItem(
+				PENDING_SIGN_OUT,
+				JSON.stringify(tokens.slice(-PENDING_SIGN_OUTS_KEPT)),
+			);
+		}
+	} catch {
+		// Private browsing with storage refused: nothing more to be done.
+	}
+}
+
+/**
+ * Whether the server took the sign-out. Tried twice, a second apart.
+ *
+ * Only a success counts. A 401 used to count as "already over", when the
+ * Worker answered a sign-out with an ended session that way; it signs out
+ * any session it is named now and never answers 401, so a 401 is somebody
+ * in front of it -- an Access sign-in that has lapsed, or an older Worker
+ * during a rollback -- and the server has heard nothing.
+ */
 async function tellTheServer(send: () => Promise<unknown>): Promise<boolean> {
 	for (let attempt = 0; attempt < 2; attempt++) {
 		if (attempt > 0) await new Promise((r) => setTimeout(r, 1000));
@@ -50,7 +105,6 @@ async function tellTheServer(send: () => Promise<unknown>): Promise<boolean> {
 			await send();
 			return true;
 		} catch (err: any) {
-			if (err?.response?.status === 401) return true;
 			console.error("Logout error:", err);
 		}
 	}
@@ -58,31 +112,47 @@ async function tellTheServer(send: () => Promise<unknown>): Promise<boolean> {
 }
 
 function rememberPendingSignOut(token: string) {
-	try {
-		localStorage.setItem(PENDING_SIGN_OUT, token);
-	} catch {
-		// Private browsing with storage refused: nothing more to be done.
+	const tokens = pendingSignOuts();
+	if (!tokens.includes(token)) keepPendingSignOuts([...tokens, token]);
+}
+
+/** Crosses off this sign-out, and only this one. */
+function pendingSignOutHeard(token: string) {
+	const tokens = pendingSignOuts();
+	if (tokens.includes(token)) {
+		keepPendingSignOuts(tokens.filter((pending) => pending !== token));
 	}
 }
 
 /**
- * Sends a sign-out that did not reach the server last time. With fetch and
- * its own header rather than through api.ts, whose token is whoever is
- * signed in now and whose 401 handling would end their session.
+ * Sends the sign-outs that did not reach the server last time, each with its
+ * own token. With fetch rather than through api.ts, whose 401 handling would
+ * end the session of whoever is signed in now.
+ *
+ * And, when nobody is signed in here, lets go of this browser's push
+ * subscription: signOut lets go of it first, but a tab closed before the
+ * browser had done so left it subscribed, and the next sign-in in this
+ * browser hands the subscription to whoever that is. Not while somebody is
+ * signed in, whose subscription it may be by now.
  */
 async function finishPendingSignOut() {
-	const token = localStorage.getItem(PENDING_SIGN_OUT);
-	if (!token) return;
-	const sent = await tellTheServer(async () => {
-		const response = await fetch("/api/v1/auth/logout", {
-			method: "POST",
-			headers: { Authorization: `Bearer ${token}` },
+	const tokens = pendingSignOuts();
+	if (tokens.length === 0) return;
+	if (!localStorage.getItem("session")) {
+		await letGoOfThisBrowsersSubscription();
+	}
+	for (const token of tokens) {
+		const sent = await tellTheServer(async () => {
+			const response = await fetch("/api/v1/auth/logout", {
+				method: "POST",
+				headers: { Authorization: `Bearer ${token}` },
+			});
+			if (!response.ok) {
+				throw new Error(`sign-out answered ${response.status}`);
+			}
 		});
-		if (!response.ok && response.status !== 401) {
-			throw new Error(`sign-out answered ${response.status}`);
-		}
-	});
-	if (sent) localStorage.removeItem(PENDING_SIGN_OUT);
+		if (sent) pendingSignOutHeard(token);
+	}
 }
 
 export const useAuthStore = defineStore("auth", () => {
@@ -241,21 +311,36 @@ export const useAuthStore = defineStore("auth", () => {
 	}
 
 	/**
-	 * Signs out here and on the server.
+	 * Signing out on purpose: the buttons. Here, on the server, and for this
+	 * browser's notifications.
+	 *
+	 * This browser lets go of its push subscription first, whatever the
+	 * server says afterwards, so a device signed out on purpose is told
+	 * nothing more about anybody's mail -- not even, once its session has
+	 * run out, to open the app (see sessionEndedByItself for the other kind
+	 * of end). First, and not after the server has answered: that is two
+	 * attempts and a second's wait, and a tab closed in the meantime stayed
+	 * subscribed. The Worker's row goes with the session.
 	 *
 	 * The server's half used to be allowed to fail in silence: the screen
 	 * signed out and the session, its cookie and its push subscription lived
-	 * on for thirty days -- on a shared computer, for whoever came next. So a
-	 * failure is tried once more, and one that still fails is written down
-	 * and sent again the next time this dashboard is opened
-	 * (finishPendingSignOut). A 401 means it is already over.
+	 * on for thirty days -- on a shared computer, for whoever came next. So
+	 * the sign-out is written down before it is sent, and crossed off only
+	 * once the server has it; one that still fails after a second try is
+	 * sent again the next time this dashboard is opened
+	 * (finishPendingSignOut). Written only after both attempts failed, as it
+	 * used to be, a tab closed in the second between them lost it.
 	 */
-	async function logout() {
+	async function signOut() {
 		loading.value = true;
 		const ending = session.value?.id;
 		try {
-			if (ending && !(await tellTheServer(() => api.logout()))) {
+			await letGoOfThisBrowsersSubscription();
+			if (ending) {
 				rememberPendingSignOut(ending);
+				if (await tellTheServer(() => api.logout(ending))) {
+					pendingSignOutHeard(ending);
+				}
 			}
 		} finally {
 			sessionEnded();
@@ -264,16 +349,44 @@ export const useAuthStore = defineStore("auth", () => {
 		}
 	}
 
+	/**
+	 * A session that has run out, or that the server says is gone: forgotten
+	 * here, and nothing else.
+	 *
+	 * Not a sign-out. Asking the server to end it would delete the push
+	 * subscription the Worker uses to tell this device, while its session is
+	 * lapsed, to open the app -- the one thing that brings a phone used only
+	 * for notifications back. Nor is the browser's subscription let go. And
+	 * a message being written stays on screen to be copied, as it does when
+	 * a request finds the session gone (api.ts).
+	 */
+	function sessionEndedByItself() {
+		sessionEnded();
+	}
+
 	void finishPendingSignOut();
 
+	// The language the Worker tells this device in once its session has run
+	// out is the one it last sent; a language picked since is sent too.
+	watch(
+		() => i18n.global.locale.value,
+		() => {
+			if (session.value) void rebindPushSubscription();
+		},
+	);
+
+	/**
+	 * Asks the Worker whether the session is still good, and ends it here
+	 * only when the Worker says it is not.
+	 *
+	 * Not by this device's clock. A session past its time here used to be
+	 * ended here without a word to the server, and a clock running ahead
+	 * showed the sign-in screen while the session lived on there, its device
+	 * still told the sender and subject of new mail. The router asks this
+	 * again whenever the stored time has passed.
+	 */
 	async function checkAuth() {
 		if (!session.value) return false;
-
-		// Check if session is expired
-		if (session.value.expiresAt < Date.now()) {
-			await logout();
-			return false;
-		}
 
 		loading.value = true;
 		try {
@@ -298,9 +411,12 @@ export const useAuthStore = defineStore("auth", () => {
 			// connection or a 5xx while the page loads used to sign the person
 			// out -- revoking the session on the server too if the logout got
 			// through -- for a hiccup.
-			const status = err?.response?.status;
-			if (status === 401 || status === 403) {
-				await logout();
+			//
+			// And only a 401. This route answers 200 or 401; a 403 here comes
+			// from the Access check in front of it, which says nothing about
+			// this session.
+			if (err?.response?.status === 401) {
+				sessionEndedByItself();
 				return false;
 			}
 			return true;
@@ -319,7 +435,8 @@ export const useAuthStore = defineStore("auth", () => {
 		currentUser,
 		register,
 		login,
-		logout,
+		signOut,
+		sessionEndedByItself,
 		checkAuth,
 	};
 });

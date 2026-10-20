@@ -52,11 +52,30 @@ vi.mock("@/services/api", () => ({
 }));
 
 const { useAuthStore } = await import("@/stores/auth");
+const { i18n } = await import("@/i18n");
+const { subscribeToPush, unsubscribeFromPush } = await import(
+	"@/services/push"
+);
 
 const subscriptionJSON = {
 	endpoint: "https://push.example.net/device",
 	keys: { p256dh: "k", auth: "a" },
 };
+
+/**
+ * What the Worker is handed: the subscription, and the language the page
+ * displays, which a device whose session has run out is told in.
+ */
+const handedOver = (json: object) => ({
+	...json,
+	locale: i18n.global.locale.value,
+});
+
+/** The "open the app" notifications this browser shows; see browserWith. */
+const shown: { tag: string; close: () => void }[] = [];
+const getNotifications = vi.fn(async (filter?: { tag?: string }) =>
+	shown.filter((n) => !filter?.tag || n.tag === filter.tag),
+);
 
 function browserWith(
 	permission: NotificationPermission,
@@ -72,6 +91,7 @@ function browserWith(
 					getSubscription: async () =>
 						subscription && { toJSON: () => subscription },
 				},
+				getNotifications,
 			}),
 		},
 	});
@@ -85,8 +105,13 @@ describe("the push subscription after signing in", () => {
 		setActivePinia(createPinia());
 		localStorage.clear();
 		subscribePush.mockClear();
+		getNotifications.mockClear();
+		shown.length = 0;
 	});
 	afterEach(() => {
+		// Each test's store would otherwise go on watching the language,
+		// with its session, beside the next test's.
+		useAuthStore().$dispose();
 		vi.unstubAllGlobals();
 		Reflect.deleteProperty(navigator, "serviceWorker");
 	});
@@ -96,7 +121,81 @@ describe("the push subscription after signing in", () => {
 		await useAuthStore().login("someone@example.com", "password");
 		await settle();
 		expect(subscribePush).toHaveBeenCalledTimes(1);
-		expect(subscribePush).toHaveBeenCalledWith(subscriptionJSON);
+		expect(subscribePush).toHaveBeenCalledWith(handedOver(subscriptionJSON));
+	});
+
+	it("says which language the page displays", async () => {
+		browserWith("granted", subscriptionJSON);
+		await useAuthStore().login("someone@example.com", "password");
+		await settle();
+		expect(subscribePush).toHaveBeenCalledWith({
+			...subscriptionJSON,
+			locale: "en",
+		});
+	});
+
+	/**
+	 * The Worker tells a device whose session has run out in the language it
+	 * last sent, so a language picked since is sent too.
+	 */
+	it("is handed over again when the language changes", async () => {
+		browserWith("granted", subscriptionJSON);
+		await useAuthStore().login("someone@example.com", "password");
+		await settle();
+		subscribePush.mockClear();
+		const before = i18n.global.locale.value;
+		try {
+			i18n.global.locale.value = "fr";
+			await settle();
+			expect(subscribePush).toHaveBeenCalledWith({
+				...subscriptionJSON,
+				locale: "fr",
+			});
+		} finally {
+			i18n.global.locale.value = before;
+			await settle();
+		}
+	});
+
+	it("is not handed over on a language change with nobody signed in", async () => {
+		browserWith("granted", subscriptionJSON);
+		useAuthStore();
+		const before = i18n.global.locale.value;
+		try {
+			i18n.global.locale.value = "fr";
+			await settle();
+			expect(subscribePush).not.toHaveBeenCalled();
+		} finally {
+			i18n.global.locale.value = before;
+			await settle();
+		}
+	});
+
+	/**
+	 * The app has been opened, which is what they asked for. Only once the
+	 * Worker has the subscription: before that the device is still lapsed,
+	 * and the next new mail would only ask again.
+	 */
+	it("closes the 'open the app' notifications once the Worker has it", async () => {
+		browserWith("granted", subscriptionJSON);
+		const close = vi.fn();
+		const other = vi.fn();
+		shown.push({ tag: "open-app", close }, { tag: "message-1", close: other });
+		await useAuthStore().login("someone@example.com", "password");
+		await settle();
+		expect(getNotifications).toHaveBeenCalledWith({ tag: "open-app" });
+		expect(close).toHaveBeenCalledTimes(1);
+		expect(other).not.toHaveBeenCalled();
+	});
+
+	it("leaves them when the Worker did not take it", async () => {
+		browserWith("granted", subscriptionJSON);
+		const close = vi.fn();
+		shown.push({ tag: "open-app", close });
+		subscribePush.mockRejectedValueOnce(new Error("offline"));
+		await useAuthStore().login("someone@example.com", "password");
+		await settle();
+		expect(close).not.toHaveBeenCalled();
 	});
 
 	it("is handed to the session found on load", async () => {
@@ -108,7 +207,7 @@ describe("the push subscription after signing in", () => {
 
 		expect(await auth.checkAuth()).toBe(true);
 		await settle();
-		expect(subscribePush).toHaveBeenCalledWith(subscriptionJSON);
+		expect(subscribePush).toHaveBeenCalledWith(handedOver(subscriptionJSON));
 	});
 
 	it("asks for nothing when this browser has no subscription", async () => {
@@ -118,11 +217,20 @@ describe("the push subscription after signing in", () => {
 		expect(subscribePush).not.toHaveBeenCalled();
 	});
 
-	it("asks for nothing when permission is not already granted", async () => {
-		browserWith("default", subscriptionJSON);
-		await useAuthStore().login("someone@example.com", "password");
-		await settle();
-		expect(subscribePush).not.toHaveBeenCalled();
+	/**
+	 * Sending back a subscription the browser already holds asks the browser
+	 * for nothing, so the permission is not asked either. It used to be: a
+	 * page opened outside the installed app may read a permission other than
+	 * the app's, and a device that had just signed in again stayed unbound.
+	 */
+	it("is handed over whatever the permission reads", async () => {
+		for (const permission of ["default", "denied"] as const) {
+			subscribePush.mockClear();
+			browserWith(permission, subscriptionJSON);
+			await useAuthStore().login("someone@example.com", "password");
+			await settle();
+			expect(subscribePush).toHaveBeenCalledWith(handedOver(subscriptionJSON));
+		}
 	});
 
 	it("does not fail the login when handing it over fails", async () => {
@@ -163,8 +271,11 @@ describe("a subscription made under another key", () => {
 	let subscribedWith: Uint8Array | null = null;
 
 	/** A browser whose subscription was made under `key`, or says nothing of one. */
-	function browserSubscribedUnder(key: Uint8Array | null | undefined) {
-		vi.stubGlobal("Notification", { permission: "granted" });
+	function browserSubscribedUnder(
+		key: Uint8Array | null | undefined,
+		permission: NotificationPermission = "granted",
+	) {
+		vi.stubGlobal("Notification", { permission });
 		vi.stubGlobal("PushManager", function PushManager() {});
 		const existing = {
 			endpoint: subscriptionJSON.endpoint,
@@ -192,6 +303,7 @@ describe("a subscription made under another key", () => {
 							return { toJSON: () => renewedJSON };
 						},
 					},
+					getNotifications: async () => [],
 				}),
 			},
 		});
@@ -226,7 +338,7 @@ describe("a subscription made under another key", () => {
 		expect(unsubscribePush).toHaveBeenCalledWith(subscriptionJSON.endpoint);
 		expect(subscribedWith).toEqual(NEW);
 		expect(subscribePush).toHaveBeenCalledTimes(1);
-		expect(subscribePush).toHaveBeenCalledWith(renewedJSON);
+		expect(subscribePush).toHaveBeenCalledWith(handedOver(renewedJSON));
 	});
 
 	/**
@@ -262,6 +374,22 @@ describe("a subscription made under another key", () => {
 		]);
 	});
 
+	/**
+	 * A new subscription is the one thing here a browser may want a tap for,
+	 * and only a granted permission lets a page subscribe without one. The
+	 * old subscription is not handed over either: it is signed for with a
+	 * key the Worker no longer has, and nothing would reach it.
+	 */
+	it("is not made again without the permission", async () => {
+		servedKey = b64url(NEW);
+		browserSubscribedUnder(OLD, "default");
+		await useAuthStore().login("someone@example.com", "password");
+		await settle();
+		expect(steps).toEqual([]);
+		expect(subscribedWith).toBeNull();
+		expect(unsubscribePush).not.toHaveBeenCalled();
+	});
+
 	it("is kept as it is when the Worker does not forget the old one", async () => {
 		servedKey = b64url(NEW);
 		browserSubscribedUnder(OLD);
@@ -283,7 +411,7 @@ describe("a subscription made under another key", () => {
 		await useAuthStore().login("someone@example.com", "password");
 		await settle();
 		expect(steps).toEqual(["Worker is handed it"]);
-		expect(subscribePush).toHaveBeenCalledWith(subscriptionJSON);
+		expect(subscribePush).toHaveBeenCalledWith(handedOver(subscriptionJSON));
 		expect(unsubscribePush).not.toHaveBeenCalled();
 	});
 
@@ -292,7 +420,7 @@ describe("a subscription made under another key", () => {
 		browserSubscribedUnder(OLD);
 		await useAuthStore().login("someone@example.com", "password");
 		await settle();
-		expect(subscribePush).toHaveBeenCalledWith(subscriptionJSON);
+		expect(subscribePush).toHaveBeenCalledWith(handedOver(subscriptionJSON));
 		expect(unsubscribePush).not.toHaveBeenCalled();
 		expect(subscribedWith).toBeNull();
 	});
@@ -304,7 +432,7 @@ describe("a subscription made under another key", () => {
 			browserSubscribedUnder(unsaid);
 			await useAuthStore().login("someone@example.com", "password");
 			await settle();
-			expect(subscribePush).toHaveBeenCalledWith(subscriptionJSON);
+			expect(subscribePush).toHaveBeenCalledWith(handedOver(subscriptionJSON));
 			expect(unsubscribePush).not.toHaveBeenCalled();
 			expect(subscribedWith).toBeNull();
 		}
@@ -316,7 +444,81 @@ describe("a subscription made under another key", () => {
 		browserSubscribedUnder(OLD);
 		await useAuthStore().login("someone@example.com", "password");
 		await settle();
-		expect(subscribePush).toHaveBeenCalledWith(subscriptionJSON);
+		expect(subscribePush).toHaveBeenCalledWith(handedOver(subscriptionJSON));
 		expect(unsubscribePush).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * Turning notifications off. The browser used to let go only after the
+ * Worker had been told, so a refusal left the device subscribed -- and told
+ * about every new message -- with the switch reading off.
+ */
+describe("turning notifications off", () => {
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		Reflect.deleteProperty(navigator, "serviceWorker");
+		unsubscribePush.mockReset();
+		unsubscribePush.mockImplementation(async () => ({ data: {} }));
+	});
+
+	it("lets go in the browser even when the Worker was not told", async () => {
+		const unsubscribe = vi.fn(async () => true);
+		vi.stubGlobal("Notification", { permission: "granted" });
+		vi.stubGlobal("PushManager", function PushManager() {});
+		Object.defineProperty(navigator, "serviceWorker", {
+			configurable: true,
+			value: {
+				ready: Promise.resolve({
+					pushManager: {
+						getSubscription: async () => ({
+							endpoint: subscriptionJSON.endpoint,
+							unsubscribe,
+						}),
+					},
+				}),
+			},
+		});
+		unsubscribePush.mockRejectedValueOnce(new Error("offline"));
+		await expect(unsubscribeFromPush()).rejects.toThrow("offline");
+		expect(unsubscribe).toHaveBeenCalledTimes(1);
+	});
+});
+
+/**
+ * Turning notifications on says the language too, as the hand-over does: a
+ * device switched on and then left until its session ran out was told in no
+ * language of its own.
+ */
+describe("turning notifications on", () => {
+	beforeEach(() => {
+		subscribePush.mockClear();
+	});
+	afterEach(() => {
+		vi.unstubAllGlobals();
+		Reflect.deleteProperty(navigator, "serviceWorker");
+		servedKey = "";
+	});
+
+	it("says which language the page displays", async () => {
+		servedKey = "BAEC";
+		vi.stubGlobal("Notification", {
+			permission: "default",
+			requestPermission: async () => "granted",
+		});
+		vi.stubGlobal("PushManager", function PushManager() {});
+		Object.defineProperty(navigator, "serviceWorker", {
+			configurable: true,
+			value: {
+				ready: Promise.resolve({
+					pushManager: {
+						subscribe: async () => ({ toJSON: () => subscriptionJSON }),
+					},
+				}),
+			},
+		});
+		await subscribeToPush();
+		expect(subscribePush).toHaveBeenCalledTimes(1);
+		expect(subscribePush).toHaveBeenCalledWith(handedOver(subscriptionJSON));
 	});
 });

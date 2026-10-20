@@ -44,7 +44,7 @@ async function generateTestSubscriptionKeys() {
 async function subscriptionCount(): Promise<number> {
 	const authId = env.MAILBOX.idFromName("AUTH");
 	const authDO = env.MAILBOX.get(authId);
-	const subs = await authDO.getPushSubscriptionsForUsers([userId]);
+	const subs = await authDO.livePushTargets([userId]);
 	return subs.length;
 }
 

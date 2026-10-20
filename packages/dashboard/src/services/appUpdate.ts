@@ -156,12 +156,31 @@ export function holdReload(): () => void {
 	};
 }
 
-/** Asks the server what the page says now, without going through the cache. */
-async function servedPage(): Promise<string | null> {
+/**
+ * What answered when the page was asked for: the page itself, a redirect
+ * (something in front of the site wants the browser to go elsewhere), or
+ * nothing worth reading.
+ */
+type Served = { page: string } | "redirected" | null;
+
+/**
+ * Asks the server what the page says now, without going through the cache
+ * and without following a redirect.
+ *
+ * `/` and not `/index.html`: under this deployment's asset settings
+ * `/index.html` answers with a redirect to `/` (measured, with
+ * auto-trailing-slash), so asking for it would read as "redirected" every
+ * time.
+ */
+async function servedPage(): Promise<Served> {
 	try {
-		const response = await fetch("/index.html", { cache: "no-store" });
+		const response = await fetch("/", {
+			cache: "no-store",
+			redirect: "manual",
+		});
+		if (response.type === "opaqueredirect") return "redirected";
 		if (!response.ok) return null;
-		return await response.text();
+		return { page: await response.text() };
 	} catch {
 		// Offline, or the request was refused. Not knowing is not a reason to
 		// do anything.
@@ -171,17 +190,17 @@ async function servedPage(): Promise<string | null> {
 
 /**
  * Whether the server now answers with a build other than the one running.
- * False when that cannot be known -- offline, or a page with no module
- * scripts to compare.
+ * False when that cannot be known -- offline, a redirect, or a page with no
+ * module scripts to compare.
  */
 export async function aNewBuildIsServed(): Promise<boolean> {
 	const running = moduleScriptsOf(document);
 	if (running.length === 0) return false;
 
-	const html = await servedPage();
-	if (html === null) return false;
+	const served = await servedPage();
+	if (served === null || served === "redirected") return false;
 
-	return looksLikeANewBuild(running, moduleScriptsIn(html));
+	return looksLikeANewBuild(running, moduleScriptsIn(served.page));
 }
 
 /** How the page reloads; a test watches it rather than jsdom. */
@@ -191,12 +210,76 @@ export const reloading = {
 	},
 };
 
-async function checkOnce(): Promise<void> {
+/** When the page last reloaded to go through a redirect; see mayGoThrough. */
+const WENT_THROUGH = "reloadsThroughARedirect";
+const HOUR_MS = 60 * 60 * 1000;
+const THROUGH_PER_HOUR = 2;
+
+/**
+ * Whether the page may reload to go through a redirect now, and if so,
+ * counts it. Twice an hour at most: a reload that comes back to the same
+ * redirect -- a sign-in an installed app cannot finish, say -- must not
+ * become a loop. With storage that cannot be read or written the count
+ * cannot be kept, so the answer is no.
+ */
+function mayGoThrough(now: number): boolean {
+	let stored: string | null;
+	try {
+		stored = localStorage.getItem(WENT_THROUGH);
+	} catch {
+		return false;
+	}
+	let recent: number[] = [];
+	try {
+		const parsed: unknown = JSON.parse(stored ?? "[]");
+		if (Array.isArray(parsed)) {
+			recent = parsed.filter(
+				(at): at is number =>
+					typeof at === "number" && at <= now && now - at < HOUR_MS,
+			);
+		}
+	} catch {
+		// Not ours to read: counted as none.
+	}
+	if (recent.length >= THROUGH_PER_HOUR) return false;
+	try {
+		localStorage.setItem(WENT_THROUGH, JSON.stringify([...recent, now]));
+	} catch {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Looks once, when the app comes back to the front.
+ *
+ * A redirect where the page should be is something in front of the site --
+ * Cloudflare Access, its sign-in lapsed -- that wants the browser to come to
+ * it. A request from script cannot go there (measured in Chromium against a
+ * stand-in that redirects: a request the dashboard sends ends as a network
+ * error with no answer, and the session is kept), so every request the app
+ * made failed and nothing said why, and a device whose notifications had
+ * stopped stayed that way. A reload is a navigation, which can. Whether
+ * Access itself answers this request with a redirect is not measured here;
+ * every deploy asks it and says (access-door.mjs in the Worker). It is the
+ * same request this check already made, so nothing more is asked of the
+ * server on a resume.
+ */
+export async function checkOnce(): Promise<void> {
 	const now = Date.now();
 	if (now - lastLookedAt < QUIET_PERIOD_MS) return;
 	lastLookedAt = now;
 
-	if (!(await aNewBuildIsServed())) return;
+	const running = moduleScriptsOf(document);
+	if (running.length === 0) return;
+	const served = await servedPage();
+	if (served === null) return;
+	if (served === "redirected") {
+		if (somethingIsBeingWritten(document)) return;
+		if (mayGoThrough(now)) reloading.now();
+		return;
+	}
+	if (!looksLikeANewBuild(running, moduleScriptsIn(served.page))) return;
 	if (somethingIsBeingWritten(document)) return;
 
 	reloading.now();

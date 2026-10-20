@@ -884,7 +884,7 @@ async function removePerson(person: Person) {
 }
 
 async function logout() {
-	await authStore.logout();
+	await authStore.signOut();
 	router.push("/login");
 }
 

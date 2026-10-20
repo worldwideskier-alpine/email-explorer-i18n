@@ -1,4 +1,6 @@
 import { buildPushHTTPRequest } from "@pushforge/builder";
+import type { MailboxDO, PushTarget } from "./durableObject";
+import { openTheAppNotice } from "./push-notice";
 import type { Env } from "./types";
 
 interface NotifyPayload {
@@ -8,12 +10,12 @@ interface NotifyPayload {
 	[key: string]: string;
 }
 
+type AuthStub = DurableObjectStub<MailboxDO>;
+
 /**
- * Sends a Web Push notification to every device subscribed to a mailbox, and
- * says how many push services took it. A failed or expired subscription is
- * removed and does not stop the others, but anything before the sends -- the
- * auth Durable Object, a malformed VAPID key -- throws. Both callers below
- * catch.
+ * Sends one payload to each of `targets`, and says which push services took
+ * it and which did not. A failed or expired subscription is removed and does
+ * not stop the others; nothing here throws for one device.
  *
  * Took it, not was asked: this used to answer the number of subscriptions
  * whatever each send did, so a message whose every send failed was recorded
@@ -21,22 +23,16 @@ interface NotifyPayload {
  * never shown it -- the push that shows nothing, which is how a browser
  * comes to withdraw a subscription.
  */
-export async function notifyMailboxSubscribers(
+async function sendToEach(
 	env: Env,
+	authDO: AuthStub,
 	mailboxId: string,
-	payload: NotifyPayload,
-): Promise<number> {
-	if (!env.VAPID_PRIVATE_KEY) return 0;
-
-	const authId = env.MAILBOX.idFromName("AUTH");
-	const authDO = env.MAILBOX.get(authId);
-
-	const userIds = await authDO.getUserIdsForMailbox(mailboxId);
-	if (userIds.length === 0) return 0;
-
-	const subscriptions = await authDO.getPushSubscriptionsForUsers(userIds);
-	if (subscriptions.length === 0) return 0;
-
+	targets: PushTarget[],
+	payloadFor: (target: PushTarget) => NotifyPayload,
+): Promise<{ took: number; refused: PushTarget[] }> {
+	if (targets.length === 0 || !env.VAPID_PRIVATE_KEY) {
+		return { took: 0, refused: targets };
+	}
 	const privateJWK = JSON.parse(env.VAPID_PRIVATE_KEY);
 
 	// RFC 8292 wants a way for a push service to reach whoever runs this
@@ -47,7 +43,7 @@ export async function notifyMailboxSubscribers(
 	const adminContact = env.VAPID_ADMIN_CONTACT?.trim() || `mailto:${mailboxId}`;
 
 	const accepted = await Promise.all(
-		subscriptions.map(async (sub) => {
+		targets.map(async (sub) => {
 			try {
 				const { endpoint, headers, body } = await buildPushHTTPRequest({
 					privateJWK,
@@ -56,7 +52,7 @@ export async function notifyMailboxSubscribers(
 						keys: { p256dh: sub.p256dh, auth: sub.auth },
 					},
 					message: {
-						payload,
+						payload: payloadFor(sub),
 						adminContact,
 						options: { ttl: 3600, urgency: "high" },
 					},
@@ -74,16 +70,89 @@ export async function notifyMailboxSubscribers(
 
 				if (res.status === 404 || res.status === 410) {
 					await authDO.forgetGonePushEndpoint(sub.endpoint);
+				} else if (!res.ok) {
+					// Which push service, and what it said. A refusal used to
+					// leave no trace at all, so a device that stopped hearing
+					// anything was a question nobody could answer from the logs.
+					console.error(
+						`Push refused by ${pushServiceOf(sub.endpoint)}: ${res.status}`,
+					);
 				}
 				return res.ok;
 			} catch (e) {
-				console.error(`Failed to send push to ${sub.endpoint}:`, e);
+				// The host and the kind of failure, never the endpoint: its path
+				// is what a push service delivers to, and anyone holding it can
+				// address that device. Nor the error's text, which may quote it.
+				console.error(
+					`Failed to send push to ${pushServiceOf(sub.endpoint)}: ${
+						e instanceof Error ? e.name : typeof e
+					}`,
+				);
 				return false;
 			}
 		}),
 	);
-	return accepted.filter(Boolean).length;
+	return {
+		took: accepted.filter(Boolean).length,
+		refused: targets.filter((_, i) => !accepted[i]),
+	};
 }
+
+/**
+ * The push service an endpoint belongs to, by host alone -- the part of it
+ * that may be logged. See sendToEach.
+ */
+export function pushServiceOf(endpoint: string): string {
+	try {
+		return new URL(endpoint).host;
+	} catch {
+		return "an endpoint that is not a URL";
+	}
+}
+
+/**
+ * Apple's push service. A push that shows nothing is what Safari is
+ * documented to revoke the permission over, so a dismissal -- which is
+ * exactly that -- is never sent there. A notification Safari shows stays
+ * until it is tapped or cleared.
+ */
+export function isApplePush(endpoint: string): boolean {
+	const host = pushServiceOf(endpoint).toLowerCase();
+	return host === "web.push.apple.com" || host.endsWith(".push.apple.com");
+}
+
+/** The logins holding a mailbox, and the auth object that knows them. */
+async function holdersOf(env: Env, mailboxId: string) {
+	const authDO = env.MAILBOX.get(env.MAILBOX.idFromName("AUTH"));
+	const userIds = await authDO.getUserIdsForMailbox(mailboxId);
+	return { authDO, userIds };
+}
+
+/**
+ * What a device whose session has run out is sent instead of the message:
+ * that there is new mail and to open the app, in its language. No sender,
+ * subject, mailbox or message: the device may be one its owner has lost,
+ * which is the reason a session ends at all.
+ *
+ * One tag for all of them, so a later one replaces the one before rather
+ * than stacking beside it; pushTargetsForNewMail sends at most one a day.
+ */
+export function openTheAppPayload(locale: string | null): {
+	title: string;
+	body: string;
+	url: string;
+	tag: string;
+} {
+	return {
+		title: "Email Explorer",
+		body: openTheAppNotice(locale),
+		url: "/login",
+		tag: OPEN_THE_APP_TAG,
+	};
+}
+
+/** The tag of openTheAppPayload; the dashboard closes these when it is back. */
+export const OPEN_THE_APP_TAG = "open-app";
 
 /** How long one push service is waited for. */
 const PUSH_TIMEOUT_MS = 10_000;
@@ -143,8 +212,10 @@ export function buildNewEmailPayload(
  * had already arrived: a bounce, or a second copy when the sender retried.
  * Only the send to each device was guarded before.
  *
- * Answers whether any device was sent the notification, which is what
- * decides whether the message is dismissed later.
+ * Devices whose session is still good are told the sender and subject;
+ * those whose session has run out are told only to open the app, at most
+ * once a day (pushTargetsForNewMail). Answers whether any of the first took
+ * it, which is what decides whether the message is dismissed later.
  */
 export async function notifyNewEmail(
 	env: Env,
@@ -152,13 +223,34 @@ export async function notifyNewEmail(
 	email: { id: string; sender: string; subject: string },
 ): Promise<boolean> {
 	try {
-		const mailboxLabel = await getMailboxLabel(env, mailboxId);
-		const devices = await notifyMailboxSubscribers(
-			env,
-			mailboxId,
-			buildNewEmailPayload(mailboxId, mailboxLabel, email),
-		);
-		return devices > 0;
+		if (!env.VAPID_PRIVATE_KEY) return false;
+		const { authDO, userIds } = await holdersOf(env, mailboxId);
+		if (userIds.length === 0) return false;
+		const { live, lapsed, noticeAt } =
+			await authDO.pushTargetsForNewMail(userIds);
+		// The label is only the title's first words: a settings object that
+		// cannot be read costs it, not the notifications -- the lapsed
+		// devices' among them, whose day's notice is already marked as sent.
+		const mailboxLabel =
+			live.length > 0
+				? await getMailboxLabel(env, mailboxId).catch(() => mailboxId)
+				: mailboxId;
+		const message = buildNewEmailPayload(mailboxId, mailboxLabel, email);
+		const [devices, reminded] = await Promise.all([
+			sendToEach(env, authDO, mailboxId, live, () => message),
+			// Not counted: the message is announced only where a device was
+			// shown it, and only those are sent its dismissal later.
+			sendToEach(env, authDO, mailboxId, lapsed, (target) =>
+				openTheAppPayload(target.locale),
+			),
+		]);
+		if (reminded.refused.length > 0) {
+			await authDO.lapsedNoticesNotSent(
+				reminded.refused.map((target) => target.endpoint),
+				noticeAt,
+			);
+		}
+		return devices.took > 0;
 	} catch (e) {
 		console.error("Push notification failed:", e);
 		return false;
@@ -183,13 +275,19 @@ export async function dismissEmailNotification(
 	emailId: string,
 ): Promise<void> {
 	try {
-		await notifyMailboxSubscribers(env, mailboxId, {
+		if (!env.VAPID_PRIVATE_KEY) return;
+		const { authDO, userIds } = await holdersOf(env, mailboxId);
+		if (userIds.length === 0) return;
+		const targets = (await authDO.livePushTargets(userIds)).filter(
+			(target) => !isApplePush(target.endpoint),
+		);
+		await sendToEach(env, authDO, mailboxId, targets, () => ({
 			type: "dismiss",
 			tag: emailId,
 			title: "",
 			body: "",
 			url: "",
-		});
+		}));
 	} catch (e) {
 		console.error("Push dismissal failed:", e);
 	}
