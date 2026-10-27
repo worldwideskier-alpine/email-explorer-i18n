@@ -26,10 +26,12 @@ const DOT_ATOM =
  * An address as it has to be written in a header, which is also how it is
  * stored: a local part that is not a plain dot-atom goes back in quotes.
  *
- * postal-mime hands `"a,b"@example.com` back as `a,b@example.com`, with the
- * quotes gone. Stored like that in a comma-separated list, reply-all read it
- * as two addresses, `a` and `b@example.com` -- the second of which is
- * somebody else's.
+ * postal-mime before 4.1 handed `"a,b"@example.com` back as `a,b@example.com`,
+ * with the quotes gone. Stored like that in a comma-separated list, reply-all
+ * read it as two addresses, `a` and `b@example.com` -- the second of which is
+ * somebody else's. 4.1 keeps those quotes but still drops them round a local
+ * part like `"x..y"` (measured on 4.1.4), and rows stored before are still
+ * there; a local part already quoted is left as it is.
  */
 export function asHeaderAddress(address: string): string {
 	const at = address.lastIndexOf("@");
