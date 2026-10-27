@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 // Plain JS on purpose: it runs under node from the night-check workflow.
-import { judgeNight, nightSummary } from "../../scripts/night-check.mjs";
+import {
+	judgeNight,
+	nightSummary,
+	parseQuietly,
+} from "../../scripts/night-check.mjs";
 
 /**
  * The evening question the scheduled workflow asks: did last night's run end
@@ -178,5 +182,97 @@ describe("the night check", () => {
 		);
 		expect(nightSummary(twice)).not.toContain("@");
 		expect(nightSummary(wellEnded())).not.toContain("call(s)");
+	});
+	// 2026-10-25: the call that owned the night wrote where the backups had
+	// got to two minutes in and was heard from no more; both archives were
+	// written. Each night now writes how it ended beside the list of nights
+	// the call began, and a call that ends early is judged by those.
+	const endedEarly = () => ({
+		startedAt: "2026-10-05T18:00:04.112Z",
+		owner: "a",
+		backupProgress: {
+			mailbox: MAILBOX,
+			index: 1,
+			of: 2,
+			messages: 0,
+			at: "2026-10-05T18:00:30.000Z",
+		},
+		appointed: [MAILBOX, "other@mail.example.org"],
+		nights: {
+			[MAILBOX]: {
+				endedAt: "2026-10-05T18:01:49.000Z",
+				backup: { state: "ran" },
+				purge: { state: "skipped" },
+			},
+			"other@mail.example.org": {
+				endedAt: "2026-10-05T18:02:48.000Z",
+				backup: { state: "ran" },
+				purge: { state: "ran", deleted: 3 },
+			},
+		},
+	});
+
+	it("does not fail a night whose call ended early when every night ended well", () => {
+		const verdict = judgeNight(endedEarly(), [], NOW, 0);
+		expect(verdict.trouble).toEqual([]);
+		expect(verdict.pending).toBeUndefined();
+		expect(verdict.notes).toEqual([
+			"the run's own call ended before writing its end; all 2 mailbox night(s) it began wrote theirs",
+		]);
+		expect(nightSummary(endedEarly())).toContain(
+			"2 of 2 night(s) wrote their end; backups 2 ran, 0 failed of 2; spam purge 1 ran, 0 failed of 2, 3 message(s) removed",
+		);
+	});
+
+	it("fails what such a night did leave undone, by the nights' own word", () => {
+		const night = endedEarly();
+		night.nights[MAILBOX].backup = {
+			state: "failed",
+			error: "R2 said no",
+		} as never;
+		expect(judgeNight(night, [], NOW, 0).trouble).toEqual([
+			"backups: 1 of 2 mailbox(es) failed",
+		]);
+		expect(judgeNight(endedEarly(), [], NOW, 2).trouble).toEqual([
+			"unfinished deletions: 2 mailbox deletion(s) still not finished; the run ended before it reached them",
+		]);
+		expect(judgeNight(endedEarly(), [], NOW).trouble).toEqual([
+			"unfinished deletions: the run ended before it reached them, and how many wait was not read",
+		]);
+		expect(
+			judgeNight(endedEarly(), ["backup-carry/x.json"], NOW, 0).trouble,
+		).toHaveLength(1);
+	});
+
+	it("waits for a night not yet ended, and fails it once patience runs out", () => {
+		const night = endedEarly();
+		delete (night.nights as Record<string, unknown>)["other@mail.example.org"];
+		const verdict = judgeNight(night, ["backup-carry/x.json"], NOW, 0);
+		expect(verdict.trouble).toEqual([]);
+		expect(verdict.pending).toContain("1 of 2 mailbox night(s) not ended yet");
+		expect(verdict.pending).not.toContain("@");
+	});
+
+	it("still says where a call got to when it never said which nights it began", () => {
+		const { appointed: _, nights: __, ...before } = endedEarly();
+		expect(judgeNight(before, [], NOW, 0).trouble).toEqual([
+			expect.stringContaining("cut off inside the backups"),
+		]);
+	});
+
+	// Node quotes the text around a JSON fault, and what is read here holds
+	// mailbox addresses: a damaged object put one into the public log.
+	it("says an object did not parse without quoting it", () => {
+		const damaged = `["${MAILBOX}", ${MAILBOX}]`;
+		expect(() => JSON.parse(damaged)).toThrow(/@/);
+		expect(() => parseQuietly(damaged, "the list")).toThrow(
+			"the list did not parse",
+		);
+		try {
+			parseQuietly(damaged, "the list");
+		} catch (e) {
+			expect(String(e)).not.toContain("@");
+		}
+		expect(parseQuietly('["a"]', "the list")).toEqual(["a"]);
 	});
 });

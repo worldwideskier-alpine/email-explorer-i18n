@@ -33,7 +33,7 @@
 
 import type { BackupPassSummary, BackupProgress } from "./backup-run";
 import { recordBackupNotRun } from "./backup-run";
-import { within } from "./deadline";
+import { OutOfTime, within } from "./deadline";
 import type { UnfinishedDeletionsSummary } from "./mailbox-destroy";
 import { finishUnfinishedDeletions } from "./mailbox-destroy";
 import type {
@@ -55,6 +55,7 @@ import {
 	archiveLastRun,
 	claimNight,
 	foldContinuedNight,
+	outcomeOf,
 	withReason,
 	writeMaintenanceRecord,
 } from "./maintenance-record";
@@ -274,6 +275,7 @@ async function runNights(
 		.filter((night) => night.backup.state !== "skipped")
 		.map((night) => night.mailbox);
 
+	const unsure = new Set<string>();
 	// Every night begun at once; one that will not start is failed here, on
 	// its mailbox as well, so its screen does not go on showing last night.
 	await Promise.all(
@@ -285,6 +287,9 @@ async function runNights(
 					"starting the mailbox's night",
 				);
 			} catch (e) {
+				// Out of time is not refused: the night may be going all the
+				// same, and will write its own end.
+				if (e instanceof OutOfTime) unsure.add(id);
 				const night = nights.get(id) as NightStatus;
 				const why = `Could not be started: ${message(e)}`;
 				if (night.backup.state !== "skipped") {
@@ -306,15 +311,28 @@ async function runNights(
 		}),
 	);
 
-	// Which backups are due and in what order, before any has said anything:
-	// a run ended right after starting them still names them.
+	// Which nights were begun, and which backups are due and in what order,
+	// before any has said anything: a run ended right after starting them
+	// still names them, and each of them writes how it ended beside the list
+	// (recordNightEnd). One whose start was refused has no night to write
+	// that, so this call writes it; one whose start only ran out of time may
+	// be going all the same, and is left to write its own.
+	record.appointed = [...nights.keys()];
+	for (const [id, night] of nights) {
+		if (night.state === "done" && !unsure.has(id)) {
+			record.nights = {
+				...record.nights,
+				[id]: outcomeOf(night, new Date().toISOString()),
+			};
+		}
+	}
 	let lastProgress = "";
 	const begun = furthestFromDone(nights, dueBackups);
 	if (begun) {
 		lastProgress = JSON.stringify(begun);
 		record.backupProgress = begun;
-		await note(env, record);
 	}
+	await note(env, record);
 
 	const settledBackups = () =>
 		[...nights.values()].every((night) => partSettled(night.backup.state));

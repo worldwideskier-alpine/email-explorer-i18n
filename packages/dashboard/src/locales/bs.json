@@ -456,7 +456,8 @@
 			"finishedWithError": "Planirano održavanje {at}: jedan korak nije uspio ({duration} / {detail}).",
 			"notReached": "Planirano održavanje {at}: zapis se zaustavio prije nego što su upisani rezultati poštanskih sandučića. Sigurnosna kopija i čišćenje neželjene pošte svakog sandučića rade zasebno; rezultati su na ekranu postavki tog sandučića.",
 			"killedInBackup": "Planirano održavanje {at}: prekinuto tokom izrade sigurnosne kopije ({detail}). Sigurnosna kopija i čišćenje neželjene pošte svakog sandučića rade zasebno; rezultati su na ekranu postavki tog sandučića.",
-			"unfinished": "Planirano održavanje {at}: stiglo je do čišćenja neželjene pošte, ali nema zapisa o završetku."
+			"unfinished": "Planirano održavanje {at}: stiglo je do čišćenja neželjene pošte, ali nema zapisa o završetku.",
+			"nightsEnded": "Planirano održavanje {at}: sigurnosna kopija i čišćenje neželjene pošte svakog sandučića su završeni ({backups} sigurnosnih kopija / {deleted} obrisanih neželjenih poruka), ali cjelokupna obrada nije zabilježila vlastiti završetak. Nedovršena brisanja sandučića, ako ih ima, završit će se sljedeće noći."
 		},
 		"attachments": {
 			"title": "Zaostali prilozi",

@@ -456,7 +456,8 @@
 			"finishedWithError": "Plaanitud hooldus {at}: üks etapp ebaõnnestus ({duration} / {detail}).",
 			"notReached": "Plaaniline hooldus {at}: kirje lõpeb enne, kui postkastide tulemused kirja said. Iga postkasti varundus ja rämpsposti puhastus käivad eraldi; tulemused on selle postkasti seadete ekraanil.",
 			"killedInBackup": "Plaanitud hooldus {at}: katkes varunduse ajal ({detail}). Iga postkasti varundus ja rämpsposti puhastus käivad eraldi; tulemused on selle postkasti seadete ekraanil.",
-			"unfinished": "Plaaniline hooldus {at}: jõudis rämpsposti puhastuseni, kuid lõpetamise kohta kirje puudub."
+			"unfinished": "Plaaniline hooldus {at}: jõudis rämpsposti puhastuseni, kuid lõpetamise kohta kirje puudub.",
+			"nightsEnded": "Plaanitud hooldus {at}: iga postkasti varundus ja rämpsposti puhastus lõppesid ({backups} varukoopiat / {deleted} rämpsposti kustutatud), kuid kogu töö lõpetamise kohta kirje puudub. Kui mõne postkasti kustutamine jäi lõpetamata, lõpetatakse see järgmisel ööl."
 		},
 		"attachments": {
 			"title": "Ülejäänud manused",

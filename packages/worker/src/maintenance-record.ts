@@ -16,9 +16,9 @@
  * is about the run, and a run is a deployment-wide thing.
  */
 
-import type { NightStatus } from "./mailbox-night";
-import { rewriteJson } from "./r2-json";
-import { getBytes } from "./r2-retry";
+import type { NightPart, NightStatus } from "./mailbox-night";
+import { ConcurrentWriteError, rewriteJson } from "./r2-json";
+import { asksToTryAgain, getBytes } from "./r2-retry";
 import type { Env } from "./types";
 
 export const MAINTENANCE_KEY = "maintenance/last-run.json";
@@ -83,9 +83,10 @@ export interface MaintenanceRecord {
 	/**
 	 * Mailboxes whose night was still carrying its backup from alarm to alarm
 	 * when the cron stopped waiting (see SLICE_BYTES). They are in neither
-	 * pass's counts yet; each is folded in as its night ends
-	 * (foldContinuedNight). `backup` is false for one whose backup had ended
-	 * and was counted, and whose purge carried on.
+	 * pass's counts yet; each counts itself in as it ends (recordNightEnd),
+	 * and one that had already ended is counted when the list is written
+	 * (writeMaintenanceRecord). `backup` is false for one whose backup had
+	 * ended and was counted, and whose purge carried on.
 	 */
 	continuing?: { mailbox: string; backup: boolean }[];
 	/**
@@ -94,11 +95,49 @@ export interface MaintenanceRecord {
 	 */
 	owner?: string;
 	/**
+	 * Every mailbox whose night that call was to begin, written once it had
+	 * begun them. Each of those nights writes how it ended into `nights`
+	 * itself, whatever becomes of the call -- so a call that ends before its
+	 * own end, as on 2026-10-25, leaves a record that still says whether
+	 * every night ended and how. Absent on a record from before.
+	 */
+	appointed?: string[];
+	/**
+	 * How each mailbox's night ended, by mailbox, as that night wrote it
+	 * (recordNightEnd). Nothing else writes an entry but the owning call, for
+	 * a night it could not begin -- there is no night to write that one.
+	 */
+	nights?: Record<string, NightOutcome>;
+	/**
 	 * Every scheduled call for this firing, as the runtime gave it and as it
 	 * began. On 2026-10-13 there were two, 7.4 s apart, and nothing but two
 	 * different start times said so; this says so whatever the times.
 	 */
 	calls?: MaintenanceCall[];
+}
+
+/** How one mailbox's night ended. */
+export interface NightOutcome {
+	endedAt: string;
+	backup: { state: NightPart; error?: string };
+	purge: { state: NightPart; deleted?: number; error?: string };
+}
+
+export function outcomeOf(night: NightStatus, endedAt: string): NightOutcome {
+	return {
+		endedAt,
+		backup: {
+			state: night.backup.state,
+			...(night.backup.error ? { error: night.backup.error } : {}),
+		},
+		purge: {
+			state: night.purge.state,
+			...(night.purge.deleted !== undefined
+				? { deleted: night.purge.deleted }
+				: {}),
+			...(night.purge.error ? { error: night.purge.error } : {}),
+		},
+	};
 }
 
 export interface MaintenanceCall {
@@ -173,9 +212,10 @@ export async function claimNight(
 }
 
 /**
- * Writes the cron's record over what is stored -- keeping what the nights it
- * stopped waiting for have folded in since, which the cron's own copy does
- * not know about, and the calls other than this one.
+ * Writes the cron's record over what is stored -- keeping what the nights
+ * have written there since, which the cron's own copy does not know about:
+ * the counts of those it stopped waiting for, each night's own entry, and
+ * the calls other than this one.
  *
  * Only the call that owns the night writes it (see claimNight), and a night's
  * record never replaces a later night's.
@@ -194,19 +234,112 @@ export async function writeMaintenanceRecord(
 				return undefined;
 			}
 			const calls = stored.calls ?? record.calls;
-			return stored.continuing && record.continuing
-				? {
-						...record,
-						backups: stored.backups,
-						spamPurge: stored.spamPurge,
-						continuing: stored.continuing,
-						...(calls ? { calls } : {}),
-					}
-				: { ...record, ...(calls ? { calls } : {}) };
+			// The nights write their own entries; this call's copy has only
+			// the ones it wrote itself, and a night's own wins.
+			const nights =
+				stored.nights || record.nights
+					? { nights: { ...record.nights, ...stored.nights } }
+					: {};
+			if (stored.continuing && record.continuing) {
+				return {
+					...record,
+					backups: stored.backups,
+					spamPurge: stored.spamPurge,
+					continuing: stored.continuing,
+					...(calls ? { calls } : {}),
+					...nights,
+				};
+			}
+			let next: MaintenanceRecord = {
+				...record,
+				...(calls ? { calls } : {}),
+				...nights,
+			};
+			// A night listed here that has already written its end ended
+			// between the call's last question and this write, and did not
+			// count itself: it was not listed yet. It is counted now, from
+			// what it wrote -- left listed, it read as still going for good
+			// whenever the call's one question after this went unanswered.
+			for (const entry of record.continuing ?? []) {
+				const ended = next.nights?.[entry.mailbox];
+				if (!ended) continue;
+				next =
+					foldInto(
+						next,
+						{
+							night: next.startedAt,
+							mailbox: entry.mailbox,
+							state: "done",
+							backup: ended.backup,
+							purge: ended.purge,
+						},
+						ended.endedAt,
+					) ?? next;
+			}
+			return next;
 		},
 		{ replaceUnreadable: true },
 	);
 }
+
+/**
+ * Writes how this mailbox's night ended into tonight's record: what each
+ * night does as it ends, whether or not the call that began it is still
+ * there to count it. On 2026-10-25 that call ended two minutes in, both
+ * nights finished their archives, and the record said only that the run was
+ * cut off inside the backups -- the nights had nowhere of their own to say
+ * otherwise. Tonight's record only: a night never writes into another.
+ *
+ * A night the record lists as continuing is also added to the counts, as
+ * foldContinuedNight does, in the same write.
+ */
+export async function recordNightEnd(
+	env: Pick<Env, "BUCKET">,
+	night: NightStatus,
+	/** How long to go on trying against other writers; see below. */
+	patienceMs = NIGHT_END_PATIENCE_MS,
+): Promise<void> {
+	const at = new Date().toISOString();
+	const until = Date.now() + patienceMs;
+	// Every mailbox's night is set going at the same moment, so many can end
+	// within a few hundred milliseconds and write this one object together
+	// with the call. rewriteJson gives up after five lost races in a row,
+	// and a night's entry lost that way is a night that reads as never ended
+	// whenever the call is not there to count it. So it is tried again,
+	// after a pause that differs from night to night.
+	for (;;) {
+		try {
+			await rewriteJson<MaintenanceRecord>(
+				env.BUCKET,
+				MAINTENANCE_KEY,
+				(stored) => {
+					if (!stored || stored.startedAt !== night.night) return undefined;
+					const own = {
+						...stored,
+						nights: {
+							...stored.nights,
+							[night.mailbox]: outcomeOf(night, at),
+						},
+					};
+					return foldInto(own, night, at) ?? own;
+				},
+			);
+			return;
+		} catch (e) {
+			// Lost races, and what R2 says to try again (r2-retry.ts): the put
+			// in rewriteJson is not tried again on those, and this entry has
+			// no other writer and no second chance.
+			const again = e instanceof ConcurrentWriteError || asksToTryAgain(e);
+			if (!again || Date.now() >= until) throw e;
+			await new Promise((resolve) =>
+				setTimeout(resolve, 50 + Math.random() * 200),
+			);
+		}
+	}
+}
+
+/** Inside the ten seconds a night gives this write (NIGHT_NOTE_LIMIT_MS). */
+export const NIGHT_END_PATIENCE_MS = 8_000;
 
 /**
  * Adds a night that ended after the cron stopped waiting for it to the run's
@@ -218,72 +351,159 @@ export async function foldContinuedNight(
 	env: Pick<Env, "BUCKET">,
 	night: NightStatus,
 ): Promise<void> {
-	await rewriteJson<MaintenanceRecord>(
-		env.BUCKET,
-		MAINTENANCE_KEY,
-		(stored) => {
-			const listed = stored?.continuing?.find(
-				(entry) => entry.mailbox === night.mailbox,
-			);
-			if (!stored || stored.startedAt !== night.night || !listed) {
-				return undefined;
-			}
-			const counted = (state: string) =>
-				state === "ran"
-					? { ran: 1, failed: 0 }
-					: state === "skipped"
-						? { ran: 0, failed: 0 }
-						: { ran: 0, failed: 1 };
-			const at = new Date().toISOString();
-			const backup = listed.backup
-				? counted(night.backup.state)
-				: { ran: 0, failed: 0 };
-			const purge = counted(night.purge.state);
-			const reasons = withReason(
-				stored.backups?.reasons,
-				listed.backup ? night.backup.error : undefined,
-			);
-			const purgeReasons = withReason(
-				stored.spamPurge?.reasons,
-				night.purge.error,
-			);
-			const backups = stored.backups ?? {
-				finishedAt: at,
-				considered: 0,
-				ran: 0,
-				failed: 0,
-			};
-			const spamPurge = stored.spamPurge ?? {
-				finishedAt: at,
-				considered: 0,
-				ran: 0,
-				failed: 0,
-				deleted: 0,
-			};
-			return {
-				...stored,
-				backups: {
-					...backups,
-					finishedAt: at,
-					ran: backups.ran + backup.ran,
-					failed: backups.failed + backup.failed,
-					...(reasons ? { reasons } : {}),
-				},
-				spamPurge: {
-					...spamPurge,
-					finishedAt: at,
-					ran: spamPurge.ran + purge.ran,
-					failed: spamPurge.failed + purge.failed,
-					deleted: (spamPurge.deleted ?? 0) + (night.purge.deleted ?? 0),
-					...(purgeReasons ? { reasons: purgeReasons } : {}),
-				},
-				continuing: (stored.continuing ?? []).filter(
-					(entry) => entry.mailbox !== night.mailbox,
-				),
-			};
-		},
+	const at = new Date().toISOString();
+	await rewriteJson<MaintenanceRecord>(env.BUCKET, MAINTENANCE_KEY, (stored) =>
+		stored && stored.startedAt === night.night
+			? foldInto(stored, night, at)
+			: undefined,
 	);
 }
+
+/** The record with the night counted, or undefined if it is not listed. */
+function foldInto(
+	stored: MaintenanceRecord,
+	night: NightStatus,
+	at: string,
+): MaintenanceRecord | undefined {
+	const listed = stored.continuing?.find(
+		(entry) => entry.mailbox === night.mailbox,
+	);
+	if (!listed) return undefined;
+	const counted = (state: string) =>
+		state === "ran"
+			? { ran: 1, failed: 0 }
+			: state === "skipped"
+				? { ran: 0, failed: 0 }
+				: { ran: 0, failed: 1 };
+	const backup = listed.backup
+		? counted(night.backup.state)
+		: { ran: 0, failed: 0 };
+	const purge = counted(night.purge.state);
+	const reasons = withReason(
+		stored.backups?.reasons,
+		listed.backup ? night.backup.error : undefined,
+	);
+	const purgeReasons = withReason(stored.spamPurge?.reasons, night.purge.error);
+	const backups = stored.backups ?? {
+		finishedAt: at,
+		considered: 0,
+		ran: 0,
+		failed: 0,
+	};
+	const spamPurge = stored.spamPurge ?? {
+		finishedAt: at,
+		considered: 0,
+		ran: 0,
+		failed: 0,
+		deleted: 0,
+	};
+	return {
+		...stored,
+		backups: {
+			...backups,
+			finishedAt: at,
+			ran: backups.ran + backup.ran,
+			failed: backups.failed + backup.failed,
+			...(reasons ? { reasons } : {}),
+		},
+		spamPurge: {
+			...spamPurge,
+			finishedAt: at,
+			ran: spamPurge.ran + purge.ran,
+			failed: spamPurge.failed + purge.failed,
+			deleted: (spamPurge.deleted ?? 0) + (night.purge.deleted ?? 0),
+			...(purgeReasons ? { reasons: purgeReasons } : {}),
+		},
+		continuing: (stored.continuing ?? []).filter(
+			(entry) => entry.mailbox !== night.mailbox,
+		),
+	};
+}
+
+/** One pass as a run's nights wrote it: counts, and why some failed. */
+export interface NightsPass {
+	considered: number;
+	ran: number;
+	failed: number;
+	deleted?: number;
+	reasons?: string[];
+}
+
+/**
+ * Both passes as the nights wrote them, for a run whose own call never wrote
+ * its end and every one of whose appointed nights did. Undefined otherwise:
+ * a run that wrote its end is told by its own counts, and one whose nights
+ * have not all ended -- or that never said which it began -- by where it got.
+ */
+export function nightsEndedOf(
+	record: MaintenanceRecord,
+): { backups: NightsPass; spamPurge: NightsPass } | undefined {
+	if (record.finishedAt || !Array.isArray(record.appointed)) return undefined;
+	const ended = record.appointed.map((id) => record.nights?.[id]);
+	if (ended.some((night) => !night)) return undefined;
+	const outcomes = ended as NightOutcome[];
+	const pass = (part: "backup" | "purge"): NightsPass => {
+		let reasons: string[] | undefined;
+		let ran = 0;
+		let failed = 0;
+		for (const night of outcomes) {
+			const { state, error } = night[part];
+			if (state === "ran") ran++;
+			else if (state !== "skipped") {
+				failed++;
+				reasons = withReason(reasons, error);
+			}
+		}
+		return {
+			considered: outcomes.length,
+			ran,
+			failed,
+			...(reasons ? { reasons } : {}),
+		};
+	};
+	return {
+		backups: pass("backup"),
+		spamPurge: {
+			...pass("purge"),
+			deleted: outcomes.reduce(
+				(sum, night) => sum + (night.purge.deleted ?? 0),
+				0,
+			),
+		},
+	};
+}
+
+/**
+ * The record as root's screen gets it: the nights' entries are keyed by
+ * mailbox, and root's routes give counts and times -- which mailboxes there
+ * are is not root's business. So they are replaced by what they add up to.
+ */
+export function maintenanceForRoot(
+	record: MaintenanceRecord,
+	now: number = Date.now(),
+): Omit<MaintenanceRecord, "appointed" | "nights"> & {
+	nightsEnded?: { backups: NightsPass; spamPurge: NightsPass };
+} {
+	const { appointed: _, nights: __, ...rest } = record;
+	// Only once the call would have written its end: until then it may be
+	// alive and finishing the deletions, and "it wrote no end" is not true.
+	// The last call that did not stand aside: a call that takes the night
+	// over (claimNight) comes after the one it took it from.
+	const began = Date.parse(
+		[...(record.calls ?? [])].reverse().find((call) => !call.stoodAside)?.at ??
+			record.startedAt,
+	);
+	if (!(now - began >= CALL_LONGEST_MS)) return rest;
+	const nightsEnded = nightsEndedOf(record);
+	return nightsEnded ? { ...rest, nightsEnded } : rest;
+}
+
+/**
+ * How long after it began the call has written its end, if it ever will:
+ * its deletions stop fourteen and a half minutes in (DELETIONS_BY_MS), and
+ * the night check gives it sixteen (RUN_GRACE_MS) for the same reason.
+ */
+export const CALL_LONGEST_MS = 16 * 60_000;
 
 /** A failure's reason added to those already kept: once each, three at most. */
 export function withReason(

@@ -456,7 +456,8 @@
 			"finishedWithError": "Planlagt vedligeholdelse {at}: et trin mislykkedes ({duration} / {detail}).",
 			"notReached": "Planlagt vedligeholdelse {at}: registreringen stopper, før postkassernes resultater blev skrevet. Hver postkasses sikkerhedskopi og spamoprydning kører for sig; resultaterne står på postkassens indstillingsskærm.",
 			"killedInBackup": "Planlagt vedligeholdelse {at}: afbrudt under sikkerhedskopieringen ({detail}). Hver postkasses sikkerhedskopi og spamoprydning kører for sig; resultaterne står på postkassens indstillingsskærm.",
-			"unfinished": "Planlagt vedligeholdelse {at}: nåede spamoprydningen, men der er ingen registrering af, at den blev færdig."
+			"unfinished": "Planlagt vedligeholdelse {at}: nåede spamoprydningen, men der er ingen registrering af, at den blev færdig.",
+			"nightsEnded": "Planlagt vedligeholdelse {at}: hver postkasses sikkerhedskopi og spamoprydning blev færdige ({backups} sikkerhedskopier / {deleted} spam slettet), men der er ingen registrering af, at kørslen som helhed blev færdig. Eventuelle ufærdige sletninger af postkasser gøres færdige næste nat."
 		},
 		"attachments": {
 			"title": "Efterladte vedhæftninger",

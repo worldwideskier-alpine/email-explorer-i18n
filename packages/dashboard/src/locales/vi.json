@@ -456,7 +456,8 @@
 			"finishedWithError": "Bảo trì theo lịch {at}: một bước đã thất bại ({duration} / {detail}).",
 			"notReached": "Bảo trì theo lịch {at}: bản ghi dừng lại trước khi kết quả của các hộp thư được ghi. Sao lưu và dọn thư rác của mỗi hộp thư chạy riêng; kết quả nằm ở màn hình cài đặt của hộp thư đó.",
 			"killedInBackup": "Bảo trì theo lịch {at}: bị ngắt giữa chừng khi sao lưu ({detail}). Sao lưu và dọn thư rác của mỗi hộp thư chạy riêng; kết quả nằm ở màn hình cài đặt của hộp thư đó.",
-			"unfinished": "Bảo trì theo lịch {at}: đã đến bước dọn thư rác, nhưng không có ghi nhận là đã hoàn tất."
+			"unfinished": "Bảo trì theo lịch {at}: đã đến bước dọn thư rác, nhưng không có ghi nhận là đã hoàn tất.",
+			"nightsEnded": "Bảo trì theo lịch {at}: sao lưu và dọn thư rác của mỗi hộp thư đã xong ({backups} bản sao lưu / đã xóa {deleted} thư rác), nhưng không có ghi nhận là toàn bộ lượt chạy đã hoàn tất. Nếu có hộp thư nào chưa xóa xong, việc xóa sẽ được hoàn tất vào đêm hôm sau."
 		},
 		"attachments": {
 			"title": "Tệp đính kèm còn sót",

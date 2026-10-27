@@ -662,8 +662,9 @@ are still checked, by the `tsc` that runs before the worker tests.
   only starts the nights and polls (`nightStatus`) for up to fourteen
   minutes; one still carrying on then is listed in the record as
   `continuing` rather than counted as failed, and counts itself in when it
-  ends (`foldContinuedNight`), which is also why the cron's own writes keep
-  what the nights folded in. `/root` says how many are still going beside
+  ends (`recordNightEnd`), which is also why the cron's own writes keep
+  what the nights folded in; one that ended before the list was written is
+  counted as the list is (`writeMaintenanceRecord`). `/root` says how many are still going beside
   the finished line (`maintenanceContinuing`), so a smaller count does not
   read as the whole night. An alarm the runtime ended partway is run again by the
   runtime; the second attempt finishes the record -- failed, due again
@@ -694,6 +695,29 @@ are still checked, by the `tsc` that runs before the worker tests.
   over the same night. The history is rewritten conditionally: its put used to
   be blind, onto a read that answered "none" when it failed, so one failed
   read put one night over fourteen. `cron-twice.test.ts`.
+  On 2026-10-25 the owning call began both nights, wrote where the backups
+  had got to two minutes in, and was heard from no more; the runtime's
+  second call stood aside, as it should. Both archives were written, and the
+  record said the run was cut off inside the backups: a night counted itself
+  in only when the call had listed it as still going, and a call that ended
+  early listed nothing. Nobody stands in for a call that ends -- a second
+  call taking over a live first one is the 10-13 fault again. Each writes its
+  own part instead: the call, which nights it began (`appointed`, written
+  once they are begun, with an entry of its own for a night whose start was
+  refused -- not one whose start only ran out of time, which may be going)
+  and its end; each night, how it ended (`nights`, `recordNightEnd`, tried
+  again on a lost race or R2's try-again for eight seconds, since nothing
+  else writes it), whether or not the call is still there -- before it is
+  marked done in its object, so an alarm ended between the two writes it
+  again on its retry, and a write that failed is marked (`unrecorded`) and
+  tried once more a minute on. A record with no
+  end whose appointed nights all wrote theirs is told by them, on `/root`
+  (`nightsEnded`) and by the night check. Root's routes give what the
+  entries add up to (`maintenanceForRoot`), never the entries, which are
+  kept by mailbox, and only sixteen minutes after the call began, before
+  which it may be alive. The call's last duty, finishing deletions left
+  unfinished, waits for the next night, and the check fails for that only
+  when one is waiting. `night-own-end.test.ts`.
 - **What R2 says to try again is tried again, and nothing else is.** On
   2026-10-15 one read of some 1,700 in the larger mailbox's backup was refused
   with "Reduce your rate of simultaneous reads on the same object. (10058)",
@@ -1033,7 +1057,9 @@ through the R2 API and fails when the night did not end well
 (`scripts/night-check.mjs`, `night-check.test.ts`): no run in 24 hours, a run
 cut off, a pass that failed or recorded nothing, a deletion left unfinished,
 a night still carrying on after twenty minutes more, or a paused backup
-nothing carries on. A failed scheduled run is mailed to the owner, so nobody
+nothing carries on. A run whose own call ended early but whose nights all
+wrote their end is judged by those, with a warning rather than a failure
+for the missing end. A failed scheduled run is mailed to the owner, so nobody
 has to open `/root` to find out -- the nights of 09-04 and 09-22 were found
 days later, by hand. It prints counts and times, never a mailbox. It also
 fails at fifty days without a commit, because GitHub turns a schedule off at

@@ -456,7 +456,8 @@
 			"finishedWithError": "Ajastettu ylläpito {at}: yksi vaihe epäonnistui ({duration} / {detail}).",
 			"notReached": "Ajastettu ylläpito {at}: kirjaus päättyy ennen kuin postilaatikoiden tulokset kirjattiin. Kunkin postilaatikon varmuuskopio ja roskapostin siivous ajetaan erikseen; tulokset näkyvät postilaatikon asetuksissa.",
 			"killedInBackup": "Ajastettu ylläpito {at}: keskeytyi varmuuskopioinnin aikana ({detail}). Kunkin postilaatikon varmuuskopio ja roskapostin siivous ajetaan erikseen; tulokset näkyvät postilaatikon asetuksissa.",
-			"unfinished": "Ajastettu ylläpito {at}: ehti roskapostin siivoukseen, mutta valmistumisesta ei ole merkintää."
+			"unfinished": "Ajastettu ylläpito {at}: ehti roskapostin siivoukseen, mutta valmistumisesta ei ole merkintää.",
+			"nightsEnded": "Ajastettu ylläpito {at}: jokaisen postilaatikon varmuuskopio ja roskapostin siivous päättyivät ({backups} varmuuskopiota / {deleted} roskapostia poistettu), mutta ajo ei merkinnyt omaa päättymistään. Kesken jääneet postilaatikoiden poistot, jos niitä on, viedään loppuun seuraavana yönä."
 		},
 		"attachments": {
 			"title": "Jäljelle jääneet liitteet",

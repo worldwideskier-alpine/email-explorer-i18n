@@ -62,6 +62,44 @@ export interface MaintenanceRecord {
 	 * for, which a call can begin a minute after.
 	 */
 	calls?: { scheduledTime: string; at: string; stoodAside?: boolean }[];
+	/**
+	 * A run whose own call ended before writing its end, as every night it
+	 * began wrote it -- on 2026-10-25 the call was heard from no more two
+	 * minutes in, with both archives written. Counts only: the Worker adds
+	 * the nights up (maintenanceForRoot), since they are kept by mailbox and
+	 * which mailboxes there are is not root's business. Absent otherwise.
+	 */
+	nightsEnded?: { backups: Pass; spamPurge: Pass };
+}
+
+interface Pass {
+	ran: number;
+	failed?: number;
+	deleted?: number;
+	error?: string;
+	reasons?: string[];
+}
+
+/** Both passes as the nights wrote them, for a run that wrote no end. */
+export function maintenanceNightsEnded(
+	record: MaintenanceRecord | null | undefined,
+): { backups: Pass; spamPurge: Pass } | undefined {
+	return record && !record.finishedAt ? record.nightsEnded : undefined;
+}
+
+/** The passes to tell: the run's own, or its nights' when it wrote none. */
+function passesOf(record: MaintenanceRecord | null | undefined): {
+	backups?: Pass;
+	spamPurge?: Pass;
+} {
+	return maintenanceNightsEnded(record) ?? record ?? {};
+}
+
+/** How many mailboxes were backed up, by whichever told it. */
+export function maintenanceBackedUp(
+	record: MaintenanceRecord | null | undefined,
+): number {
+	return passesOf(record).backups?.ran ?? 0;
 }
 
 /**
@@ -128,9 +166,10 @@ function passTrouble(
 export function maintenanceErrorDetail(
 	record: MaintenanceRecord | null | undefined,
 ): string {
+	const passes = passesOf(record);
 	return [
-		passTrouble("backups", record?.backups),
-		passTrouble("spamPurge", record?.spamPurge),
+		passTrouble("backups", passes.backups),
+		passTrouble("spamPurge", passes.spamPurge),
 	]
 		.filter(Boolean)
 		.join(" · ");
@@ -163,7 +202,7 @@ export function maintenanceFinishedCleanly(
 export function maintenanceDeleted(
 	record: MaintenanceRecord | null | undefined,
 ): number {
-	return record?.spamPurge?.deleted ?? 0;
+	return passesOf(record).spamPurge?.deleted ?? 0;
 }
 
 /** Shown when the record cannot say how long it took. */
@@ -248,6 +287,13 @@ export function maintenanceStoppedKey(
 	 */
 	if (record?.finishedAt && maintenanceErrorDetail(record))
 		return "root.maintenance.finishedWithError";
+	// Every night the run began wrote how it ended, and the run's own call
+	// wrote no end: told by the nights, not as a run cut off -- which is what
+	// 2026-10-25 was told, about a night whose archives were all written.
+	// One that failed is told the same way, with what failed after it
+	// (maintenanceTrailingDetail): "a pass failed" says the run reached its
+	// end, and the missing end is what this sentence is for.
+	if (maintenanceNightsEnded(record)) return "root.maintenance.nightsEnded";
 	if (record?.spamPurge) return "root.maintenance.unfinished";
 	if (record?.backupProgress && !record.backups)
 		return "root.maintenance.killedInBackup";

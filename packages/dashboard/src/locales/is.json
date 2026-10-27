@@ -456,7 +456,8 @@
 			"finishedWithError": "Áætlað viðhald {at}: eitt skref mistókst ({duration} / {detail}).",
 			"notReached": "Áætlað viðhald {at}: skráningin stöðvast áður en niðurstöður pósthólfanna voru skráðar. Afritun og ruslpóstshreinsun hvers pósthólfs keyra sér; niðurstöðurnar eru á stillingaskjá þess pósthólfs.",
 			"killedInBackup": "Áætlað viðhald {at}: rofnaði meðan á afritun stóð ({detail}). Afritun og ruslpóstshreinsun hvers pósthólfs keyra sér; niðurstöðurnar eru á stillingaskjá þess pósthólfs.",
-			"unfinished": "Áætlað viðhald {at}: komst að ruslpóstshreinsuninni en engin skráning er um að því hafi lokið."
+			"unfinished": "Áætlað viðhald {at}: komst að ruslpóstshreinsuninni en engin skráning er um að því hafi lokið.",
+			"nightsEnded": "Áætlað viðhald {at}: afritun og ruslpóstshreinsun hvers pósthólfs lauk ({backups} afrit / {deleted} ruslpóstum eytt), en engin skráning er um að keyrslunni í heild hafi lokið. Ef eyðingu einhverra pósthólfa er ólokið verður henni lokið næstu nótt."
 		},
 		"attachments": {
 			"title": "Viðhengi sem urðu eftir",

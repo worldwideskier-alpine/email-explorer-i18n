@@ -456,7 +456,8 @@
 			"finishedWithError": "Maintenance planifiée {at} : une étape a échoué ({duration} / {detail}).",
 			"notReached": "Maintenance planifiée {at} : l'enregistrement s'arrête avant que les résultats des boîtes aux lettres soient écrits. La sauvegarde et la purge du spam de chaque boîte aux lettres s'exécutent séparément ; leurs résultats figurent dans les réglages de cette boîte.",
 			"killedInBackup": "Maintenance planifiée {at} : interrompue pendant les sauvegardes ({detail}). La sauvegarde et la purge du spam de chaque boîte aux lettres s'exécutent séparément ; leurs résultats figurent dans les réglages de cette boîte.",
-			"unfinished": "Maintenance planifiée {at} : elle a atteint la purge du spam, mais rien n'indique qu'elle se soit terminée."
+			"unfinished": "Maintenance planifiée {at} : elle a atteint la purge du spam, mais rien n'indique qu'elle se soit terminée.",
+			"nightsEnded": "Maintenance planifiée {at} : la sauvegarde et la purge du spam de chaque boîte aux lettres se sont terminées ({backups} sauvegardes / {deleted} spams supprimés), mais la fin de l'exécution dans son ensemble n'a pas été enregistrée. Les suppressions de boîtes aux lettres restées inachevées, s'il y en a, seront terminées la nuit suivante."
 		},
 		"attachments": {
 			"title": "Pièces jointes restantes",

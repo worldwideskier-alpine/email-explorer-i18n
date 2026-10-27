@@ -12,7 +12,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { stringValueOf } from "./deployment-config.mjs";
-import { judgeNight, nightSummary } from "./night-check.mjs";
+import { judgeNight, nightSummary, parseQuietly } from "./night-check.mjs";
 
 const CONFIG = fileURLToPath(new URL("../dev/wrangler.jsonc", import.meta.url));
 // A night that carries its backup on is normally done within minutes of the
@@ -50,7 +50,24 @@ async function readRecord() {
 	);
 	if (response.status === 404) return null;
 	if (!response.ok) throw new Error(await refusal(response));
-	return JSON.parse(await response.text());
+	return parseQuietly(await response.text(), "maintenance/last-run.json");
+}
+
+/**
+ * How many mailbox deletions wait to be finished: read only to judge a run
+ * whose own call ended before it reached them. The ids are not printed.
+ */
+async function deletionsLeft() {
+	const response = await ask(
+		`${base}/${encodeURIComponent("maintenance/unfinished-deletions.json")}`,
+	);
+	if (response.status === 404) return 0;
+	if (!response.ok) throw new Error(await refusal(response));
+	const ids = parseQuietly(
+		await response.text(),
+		"maintenance/unfinished-deletions.json",
+	);
+	return Array.isArray(ids) ? ids.length : 0;
 }
 
 async function carriedKeys() {
@@ -58,7 +75,7 @@ async function carriedKeys() {
 		`${base}?prefix=${encodeURIComponent("backup-carry/")}&per_page=1000`,
 	);
 	if (!response.ok) throw new Error(await refusal(response));
-	const body = await response.json();
+	const body = parseQuietly(await response.text(), "the backup-carry/ list");
 	return (body.result ?? []).map((object) => object.key);
 }
 
@@ -68,7 +85,12 @@ let verdict;
 try {
 	for (;;) {
 		record = await readRecord();
-		verdict = judgeNight(record, await carriedKeys(), new Date());
+		verdict = judgeNight(
+			record,
+			await carriedKeys(),
+			new Date(),
+			record && !record.finishedAt ? await deletionsLeft() : undefined,
+		);
 		if (!verdict.pending || Date.now() + PAUSE_MS > until) break;
 		console.log(`${verdict.pending}; asking again in a minute`);
 		await new Promise((done) => setTimeout(done, PAUSE_MS));
@@ -82,6 +104,7 @@ console.log(nightSummary(record));
 const trouble = verdict.pending
 	? [...verdict.trouble, `${verdict.pending}, and still so after waiting`]
 	: verdict.trouble;
+for (const line of verdict.notes ?? []) console.log(`::warning::${line}`);
 for (const line of trouble) console.log(`::error::${line}`);
 if (trouble.length > 0) process.exit(1);
 console.log("The night ended well.");

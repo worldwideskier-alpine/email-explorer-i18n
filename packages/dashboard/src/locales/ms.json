@@ -456,7 +456,8 @@
 			"finishedWithError": "Penyelenggaraan berjadual {at}: satu peringkat gagal ({duration} / {detail}).",
 			"notReached": "Penyelenggaraan berjadual {at}: rekod terhenti sebelum keputusan peti mel ditulis. Sandaran dan pembersihan spam setiap peti mel berjalan secara berasingan; keputusannya ada di skrin tetapan peti mel itu.",
 			"killedInBackup": "Penyelenggaraan berjadual {at}: terputus semasa sandaran ({detail}). Sandaran dan pembersihan spam setiap peti mel berjalan secara berasingan; keputusannya ada di skrin tetapan peti mel itu.",
-			"unfinished": "Penyelenggaraan berjadual {at}: sampai ke pembersihan spam, tetapi tiada rekod bahawa ia selesai."
+			"unfinished": "Penyelenggaraan berjadual {at}: sampai ke pembersihan spam, tetapi tiada rekod bahawa ia selesai.",
+			"nightsEnded": "Penyelenggaraan berjadual {at}: sandaran dan pembersihan spam setiap peti mel telah selesai ({backups} disandarkan / {deleted} spam dipadam), tetapi tiada rekod bahawa keseluruhan proses telah tamat. Pemadaman peti mel yang belum selesai, jika ada, akan diselesaikan pada malam berikutnya."
 		},
 		"attachments": {
 			"title": "Lampiran yang tertinggal",

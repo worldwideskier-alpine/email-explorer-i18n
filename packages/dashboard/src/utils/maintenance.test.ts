@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
 	type MaintenanceRecord,
+	maintenanceBackedUp,
 	maintenanceDeleted,
 	maintenanceDuration,
 	maintenanceErrorDetail,
 	maintenanceFinishedCleanly,
+	maintenanceNightsEnded,
 	maintenanceStoppedDetail,
 	maintenanceStoppedKey,
 	maintenanceTrailingDetail,
@@ -552,5 +554,102 @@ describe("the detail that did not fit in the sentence", () => {
 				killedAfterHealthyBackups,
 			),
 		).toBe("");
+	});
+});
+
+/**
+ * A run whose own call ended before its end, while every night it began
+ * wrote how it ended. On 2026-10-25 the call was heard from no more two
+ * minutes in, both archives were written, and this screen said the run was
+ * cut off during the backups -- the nights had nowhere of their own to say
+ * otherwise.
+ */
+describe("a run whose call ended early and whose nights all ended", () => {
+	const endedEarly = (): MaintenanceRecord => ({
+		startedAt: "2026-10-25T18:00:00.000Z",
+		backupProgress: {
+			mailbox: "a@example.com",
+			index: 1,
+			of: 2,
+			messages: 0,
+			at: "2026-10-25T18:02:36.000Z",
+		},
+		nightsEnded: {
+			backups: { ran: 2, failed: 0 },
+			spamPurge: { ran: 1, failed: 0, deleted: 4 },
+		},
+	});
+
+	it("is told by the nights, not as cut off", () => {
+		expect(maintenanceStoppedKey(endedEarly())).toBe(
+			"root.maintenance.nightsEnded",
+		);
+		expect(maintenanceBackedUp(endedEarly())).toBe(2);
+		expect(maintenanceDeleted(endedEarly())).toBe(4);
+		expect(maintenanceFinishedCleanly(endedEarly())).toBe(false);
+		expect(maintenanceDuration(endedEarly())).toBe("\u2014");
+	});
+
+	it("says what failed, as the night said it", () => {
+		const night = endedEarly();
+		night.nightsEnded = {
+			backups: { ran: 1, failed: 1, reasons: ["out-of-time"] },
+			spamPurge: { ran: 0, failed: 0, deleted: 0 },
+		};
+		// The same sentence, which says the run wrote no end, and what
+		// failed after it.
+		expect(maintenanceStoppedKey(night)).toBe("root.maintenance.nightsEnded");
+		expect(maintenanceErrorDetail(night)).toBe(
+			"backups: 1 failed (out-of-time)",
+		);
+		expect(maintenanceTrailingDetail("every night ended", night)).toBe(
+			"backups: 1 failed (out-of-time)",
+		);
+		expect(maintenanceBackedUp(night)).toBe(1);
+	});
+
+	it("is told as before when the Worker had no nights to add up", () => {
+		const { nightsEnded: _, ...night } = endedEarly();
+		expect(maintenanceNightsEnded(night)).toBeUndefined();
+		expect(maintenanceStoppedKey(night)).toBe(
+			"root.maintenance.killedInBackup",
+		);
+	});
+
+	// The call can write both passes and then be cut off, in the deletions:
+	// its own counts leave out what carried on, and its spamPurge must not
+	// turn this into "reached the spam purge, and no record of finishing".
+	it("is told by the nights even after the call wrote both passes", () => {
+		const night: MaintenanceRecord = {
+			...endedEarly(),
+			backups: { finishedAt: "2026-10-25T18:14:00.000Z", ran: 1, failed: 0 },
+			spamPurge: {
+				finishedAt: "2026-10-25T18:14:00.000Z",
+				ran: 0,
+				deleted: 0,
+				failed: 0,
+			},
+			continuing: [{ mailbox: "b@example.com", backup: true }],
+		};
+		expect(maintenanceStoppedKey(night)).toBe("root.maintenance.nightsEnded");
+		expect(maintenanceBackedUp(night)).toBe(2);
+		expect(maintenanceDeleted(night)).toBe(4);
+	});
+
+	it("leaves a run that wrote its own end to its own counts", () => {
+		const finished: MaintenanceRecord = {
+			...endedEarly(),
+			finishedAt: "2026-10-25T18:03:00.000Z",
+			backups: { finishedAt: "2026-10-25T18:02:50.000Z", ran: 2, failed: 0 },
+			spamPurge: {
+				finishedAt: "2026-10-25T18:02:55.000Z",
+				ran: 1,
+				deleted: 9,
+				failed: 0,
+			},
+		};
+		expect(maintenanceNightsEnded(finished)).toBeUndefined();
+		expect(maintenanceDeleted(finished)).toBe(9);
+		expect(maintenanceFinishedCleanly(finished)).toBe(true);
 	});
 });

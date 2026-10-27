@@ -456,7 +456,8 @@
 			"finishedWithError": "Geplangten Ënnerhalt {at}: e Schrëtt ass feelgeschloen ({duration} / {detail}).",
 			"notReached": "Geplangten Ënnerhalt {at}: d'Opzeechnung hält op, ier d'Resultater vun de Postfächer geschriwwe goufen. Sécherung a Spam-Läschung lafe fir all Postfach eenzel; d'Resultater stinn an den Astellunge vum jeeweilege Postfach.",
 			"killedInBackup": "Geplangten Ënnerhalt {at}: während der Sécherung ofgebrach ({detail}). Sécherung a Spam-Läschung lafe fir all Postfach eenzel; d'Resultater stinn an den Astellunge vum jeeweilege Postfach.",
-			"unfinished": "Geplangten Ënnerhalt {at}: en ass bei d'Spam-Läschung komm, mä en Ofschloss ass net festgehalen."
+			"unfinished": "Geplangten Ënnerhalt {at}: en ass bei d'Spam-Läschung komm, mä en Ofschloss ass net festgehalen.",
+			"nightsEnded": "Geplangten Ënnerhalt {at}: d'Sécherung an d'Spam-Läschung vun all Postfach sinn ofgeschloss ({backups} Sécherungen / {deleted} Spam geläscht), mä den Ofschloss vum ganze Laf ass net festgehalen. Falls Postfach-Läschungen net fäerdeg gi sinn, ginn se déi nächst Nuecht ofgeschloss."
 		},
 		"attachments": {
 			"title": "Iwwreg Unhäng",

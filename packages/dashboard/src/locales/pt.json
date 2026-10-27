@@ -456,7 +456,8 @@
 			"finishedWithError": "Manutenção agendada {at}: uma etapa falhou ({duration} / {detail}).",
 			"notReached": "Manutenção agendada {at}: o registro para antes de os resultados das caixas de correio serem gravados. O backup e a limpeza de spam de cada caixa de correio rodam separadamente; os resultados ficam na tela de configurações dessa caixa.",
 			"killedInBackup": "Manutenção agendada {at}: foi interrompida durante os backups ({detail}). O backup e a limpeza de spam de cada caixa de correio rodam separadamente; os resultados ficam na tela de configurações dessa caixa.",
-			"unfinished": "Manutenção agendada {at}: chegou à limpeza de spam, mas não há registo de que tenha terminado."
+			"unfinished": "Manutenção agendada {at}: chegou à limpeza de spam, mas não há registo de que tenha terminado.",
+			"nightsEnded": "Manutenção agendada {at}: o backup e a limpeza de spam de cada caixa de correio terminaram ({backups} backups / {deleted} spams excluídos), mas não há registo de que a execução como um todo tenha terminado. Se alguma exclusão de caixa de correio ficou por concluir, ela será concluída na noite seguinte."
 		},
 		"attachments": {
 			"title": "Anexos que sobraram",

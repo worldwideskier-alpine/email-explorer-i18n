@@ -456,7 +456,8 @@
 			"finishedWithError": "Suplanuota priežiūra {at}: vienas etapas nepavyko ({duration} / {detail}).",
 			"notReached": "Suplanuota priežiūra {at}: įrašas nutrūksta prieš įrašant pašto dėžučių rezultatus. Kiekvienos pašto dėžutės atsarginė kopija ir šlamšto valymas vyksta atskirai; rezultatai matomi tos dėžutės nustatymuose.",
 			"killedInBackup": "Suplanuota priežiūra {at}: nutrūko kuriant atsargines kopijas ({detail}). Kiekvienos pašto dėžutės atsarginė kopija ir šlamšto valymas vyksta atskirai; rezultatai matomi tos dėžutės nustatymuose.",
-			"unfinished": "Suplanuota priežiūra {at}: pasiekė šlamšto valymą, bet įrašo apie pabaigą nėra."
+			"unfinished": "Suplanuota priežiūra {at}: pasiekė šlamšto valymą, bet įrašo apie pabaigą nėra.",
+			"nightsEnded": "Suplanuota priežiūra {at}: kiekvienos pašto dėžutės atsarginė kopija ir šlamšto valymas baigėsi ({backups} atsarginės kopijos / ištrinta {deleted} brukalo), bet įrašo apie viso vykdymo pabaigą nėra. Jei kurių nors pašto dėžučių ištrynimas liko nebaigtas, jis bus užbaigtas kitą naktį."
 		},
 		"attachments": {
 			"title": "Likę priedai",
