@@ -17,8 +17,8 @@
  */
 
 import type { NightPart, NightStatus } from "./mailbox-night";
-import { rewriteJson } from "./r2-json";
-import { getBytes } from "./r2-retry";
+import { ConcurrentWriteError, rewriteJson } from "./r2-json";
+import { asksToTryAgain, getBytes } from "./r2-retry";
 import type { Env } from "./types";
 
 export const MAINTENANCE_KEY = "maintenance/last-run.json";
@@ -239,16 +239,43 @@ export async function writeMaintenanceRecord(
 				stored.nights || record.nights
 					? { nights: { ...record.nights, ...stored.nights } }
 					: {};
-			return stored.continuing && record.continuing
-				? {
-						...record,
-						backups: stored.backups,
-						spamPurge: stored.spamPurge,
-						continuing: stored.continuing,
-						...(calls ? { calls } : {}),
-						...nights,
-					}
-				: { ...record, ...(calls ? { calls } : {}), ...nights };
+			if (stored.continuing && record.continuing) {
+				return {
+					...record,
+					backups: stored.backups,
+					spamPurge: stored.spamPurge,
+					continuing: stored.continuing,
+					...(calls ? { calls } : {}),
+					...nights,
+				};
+			}
+			let next: MaintenanceRecord = {
+				...record,
+				...(calls ? { calls } : {}),
+				...nights,
+			};
+			// A night listed here that has already written its end ended
+			// between the call's last question and this write, and did not
+			// count itself: it was not listed yet. It is counted now, from
+			// what it wrote -- left listed, it read as still going for good
+			// whenever the call's one question after this went unanswered.
+			for (const entry of record.continuing ?? []) {
+				const ended = next.nights?.[entry.mailbox];
+				if (!ended) continue;
+				next =
+					foldInto(
+						next,
+						{
+							night: next.startedAt,
+							mailbox: entry.mailbox,
+							state: "done",
+							backup: ended.backup,
+							purge: ended.purge,
+						},
+						ended.endedAt,
+					) ?? next;
+			}
+			return next;
 		},
 		{ replaceUnreadable: true },
 	);
@@ -268,21 +295,50 @@ export async function writeMaintenanceRecord(
 export async function recordNightEnd(
 	env: Pick<Env, "BUCKET">,
 	night: NightStatus,
+	/** How long to go on trying against other writers; see below. */
+	patienceMs = NIGHT_END_PATIENCE_MS,
 ): Promise<void> {
 	const at = new Date().toISOString();
-	await rewriteJson<MaintenanceRecord>(
-		env.BUCKET,
-		MAINTENANCE_KEY,
-		(stored) => {
-			if (!stored || stored.startedAt !== night.night) return undefined;
-			const own = {
-				...stored,
-				nights: { ...stored.nights, [night.mailbox]: outcomeOf(night, at) },
-			};
-			return foldInto(own, night, at) ?? own;
-		},
-	);
+	const until = Date.now() + patienceMs;
+	// Every mailbox's night is set going at the same moment, so many can end
+	// within a few hundred milliseconds and write this one object together
+	// with the call. rewriteJson gives up after five lost races in a row,
+	// and a night's entry lost that way is a night that reads as never ended
+	// whenever the call is not there to count it. So it is tried again,
+	// after a pause that differs from night to night.
+	for (;;) {
+		try {
+			await rewriteJson<MaintenanceRecord>(
+				env.BUCKET,
+				MAINTENANCE_KEY,
+				(stored) => {
+					if (!stored || stored.startedAt !== night.night) return undefined;
+					const own = {
+						...stored,
+						nights: {
+							...stored.nights,
+							[night.mailbox]: outcomeOf(night, at),
+						},
+					};
+					return foldInto(own, night, at) ?? own;
+				},
+			);
+			return;
+		} catch (e) {
+			// Lost races, and what R2 says to try again (r2-retry.ts): the put
+			// in rewriteJson is not tried again on those, and this entry has
+			// no other writer and no second chance.
+			const again = e instanceof ConcurrentWriteError || asksToTryAgain(e);
+			if (!again || Date.now() >= until) throw e;
+			await new Promise((resolve) =>
+				setTimeout(resolve, 50 + Math.random() * 200),
+			);
+		}
+	}
 }
+
+/** Inside the ten seconds a night gives this write (NIGHT_NOTE_LIMIT_MS). */
+export const NIGHT_END_PATIENCE_MS = 8_000;
 
 /**
  * Adds a night that ended after the cron stopped waiting for it to the run's
@@ -421,16 +477,29 @@ export function nightsEndedOf(
  * mailbox, and root's routes give counts and times -- which mailboxes there
  * are is not root's business. So they are replaced by what they add up to.
  */
-export function maintenanceForRoot(record: MaintenanceRecord): Omit<
-	MaintenanceRecord,
-	"appointed" | "nights"
-> & {
+export function maintenanceForRoot(
+	record: MaintenanceRecord,
+	now: number = Date.now(),
+): Omit<MaintenanceRecord, "appointed" | "nights"> & {
 	nightsEnded?: { backups: NightsPass; spamPurge: NightsPass };
 } {
 	const { appointed: _, nights: __, ...rest } = record;
+	// Only once the call would have written its end: until then it may be
+	// alive and finishing the deletions, and "it wrote no end" is not true.
+	const began = Date.parse(
+		record.calls?.find((call) => !call.stoodAside)?.at ?? record.startedAt,
+	);
+	if (!(now - began >= CALL_LONGEST_MS)) return rest;
 	const nightsEnded = nightsEndedOf(record);
 	return nightsEnded ? { ...rest, nightsEnded } : rest;
 }
+
+/**
+ * How long after it began the call has written its end, if it ever will:
+ * its deletions stop fourteen and a half minutes in (DELETIONS_BY_MS), and
+ * the night check gives it sixteen (RUN_GRACE_MS) for the same reason.
+ */
+export const CALL_LONGEST_MS = 16 * 60_000;
 
 /** A failure's reason added to those already kept: once each, three at most. */
 export function withReason(

@@ -290,11 +290,10 @@ export function maintenanceStoppedKey(
 	// Every night the run began wrote how it ended, and the run's own call
 	// wrote no end: told by the nights, not as a run cut off -- which is what
 	// 2026-10-25 was told, about a night whose archives were all written.
-	if (maintenanceNightsEnded(record)) {
-		return maintenanceErrorDetail(record)
-			? "root.maintenance.finishedWithError"
-			: "root.maintenance.nightsEnded";
-	}
+	// One that failed is told the same way, with what failed after it
+	// (maintenanceTrailingDetail): "a pass failed" says the run reached its
+	// end, and the missing end is what this sentence is for.
+	if (maintenanceNightsEnded(record)) return "root.maintenance.nightsEnded";
 	if (record?.spamPurge) return "root.maintenance.unfinished";
 	if (record?.backupProgress && !record.backups)
 		return "root.maintenance.killedInBackup";

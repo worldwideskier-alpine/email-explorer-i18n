@@ -596,10 +596,13 @@ describe("a run whose call ended early and whose nights all ended", () => {
 			backups: { ran: 1, failed: 1, reasons: ["out-of-time"] },
 			spamPurge: { ran: 0, failed: 0, deleted: 0 },
 		};
-		expect(maintenanceStoppedKey(night)).toBe(
-			"root.maintenance.finishedWithError",
-		);
+		// The same sentence, which says the run wrote no end, and what
+		// failed after it.
+		expect(maintenanceStoppedKey(night)).toBe("root.maintenance.nightsEnded");
 		expect(maintenanceErrorDetail(night)).toBe(
+			"backups: 1 failed (out-of-time)",
+		);
+		expect(maintenanceTrailingDetail("every night ended", night)).toBe(
 			"backups: 1 failed (out-of-time)",
 		);
 		expect(maintenanceBackedUp(night)).toBe(1);

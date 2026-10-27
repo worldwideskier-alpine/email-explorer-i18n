@@ -6,12 +6,14 @@ import {
 import { beforeEach, describe, expect, it } from "vitest";
 import { judgeNight } from "../../scripts/night-check.mjs";
 import { backupKeyPrefix } from "../../src/auto-backup";
+import { OutOfTime } from "../../src/deadline";
 import { type NightStatus, nightFor } from "../../src/mailbox-night";
 import {
 	claimNight,
 	MAINTENANCE_HISTORY_KEY,
 	MAINTENANCE_KEY,
 	type MaintenanceRecord,
+	maintenanceForRoot,
 	nightsEndedOf,
 	readMaintenanceRecord,
 	recordNightEnd,
@@ -222,6 +224,56 @@ describe("a mailbox's night writes how it ended into the run's record", () => {
 		expect(record?.nights?.[mailboxId]?.backup.state).toBe("ran");
 	});
 
+	it("and goes on trying when R2 says to try again", async () => {
+		const mailbox = { id: mailboxId, settings: await settings() };
+		const startedAt = NIGHT.toISOString();
+		await claimNight(env as never, startedAt, "owner", {
+			scheduledTime: startedAt,
+			at: startedAt,
+		});
+		let refusals = 2;
+		const real = bucket();
+		const busy = new Proxy(real, {
+			get(target, prop) {
+				const value = Reflect.get(target, prop);
+				if (prop === "put") {
+					return async (...args: unknown[]) => {
+						if (args[0] === MAINTENANCE_KEY && refusals-- > 0) {
+							throw new Error(
+								"put: We encountered an internal error. Please try again. (10001)",
+							);
+						}
+						return (value as (...a: unknown[]) => unknown).apply(target, args);
+					};
+				}
+				return typeof value === "function" ? value.bind(target) : value;
+			},
+		});
+		await recordNightEnd({ BUCKET: busy } as never, {
+			...nightFor(mailbox as never, NIGHT),
+			state: "done",
+			backup: { state: "ran" },
+		});
+		const record = await readMaintenanceRecord(env as never);
+		expect(record?.nights?.[mailboxId]?.backup.state).toBe("ran");
+	});
+
+	it("but not for one whose start only ran out of time: it may be going", async () => {
+		await runScheduledMaintenance(env as never, new Date(), {
+			pollMs: 20,
+			waitByMs: 200,
+			nights: () => ({
+				start: async () => {
+					throw new OutOfTime("starting the mailbox's night", 10_000);
+				},
+				status: async () => null,
+			}),
+		});
+		const record = await readMaintenanceRecord(env as never);
+		expect(record?.appointed).toEqual([mailboxId]);
+		expect(record?.nights?.[mailboxId]).toBeUndefined();
+	});
+
 	it("except one the call could not begin, which the call writes itself", async () => {
 		await runScheduledMaintenance(env as never, new Date(), {
 			pollMs: 20,
@@ -238,6 +290,72 @@ describe("a mailbox's night writes how it ended into the run's record", () => {
 			state: "failed",
 			error: expect.stringContaining("Could not be started"),
 		});
+	});
+	it("and one that ended before the call listed it as going is counted then", async () => {
+		const mailbox = { id: mailboxId, settings: await settings() };
+		const startedAt = NIGHT.toISOString();
+		await claimNight(env as never, startedAt, "owner", {
+			scheduledTime: startedAt,
+			at: startedAt,
+		});
+		// It ends, and is not listed yet: it writes its entry, counts nothing.
+		await recordNightEnd(env as never, {
+			...nightFor(mailbox as never, NIGHT),
+			state: "done",
+			backup: { state: "ran" },
+		});
+		// The call, which last saw it going, lists it and counts the rest.
+		await writeMaintenanceRecord(env as never, {
+			startedAt,
+			owner: "owner",
+			appointed: [mailboxId],
+			continuing: [{ mailbox: mailboxId, backup: true }],
+			backups: { finishedAt: startedAt, considered: 1, ran: 0, failed: 0 },
+			spamPurge: {
+				finishedAt: startedAt,
+				considered: 1,
+				ran: 0,
+				failed: 0,
+				deleted: 0,
+			},
+		});
+		const record = await readMaintenanceRecord(env as never);
+		expect(record?.continuing).toEqual([]);
+		expect(record?.backups).toMatchObject({ ran: 1, failed: 0 });
+	});
+
+	it("and goes on trying while other writers keep winning", async () => {
+		const mailbox = { id: mailboxId, settings: await settings() };
+		const startedAt = NIGHT.toISOString();
+		await claimNight(env as never, startedAt, "owner", {
+			scheduledTime: startedAt,
+			at: startedAt,
+		});
+		// Seven conditional puts lost in a row: more than rewriteJson's five.
+		let losing = 7;
+		const real = bucket();
+		const contested = new Proxy(real, {
+			get(target, prop) {
+				const value = Reflect.get(target, prop);
+				if (prop === "put") {
+					return async (...args: unknown[]) => {
+						if (args[0] === MAINTENANCE_KEY && losing > 0) {
+							losing--;
+							return null;
+						}
+						return (value as (...a: unknown[]) => unknown).apply(target, args);
+					};
+				}
+				return typeof value === "function" ? value.bind(target) : value;
+			},
+		});
+		await recordNightEnd({ BUCKET: contested } as never, {
+			...nightFor(mailbox as never, NIGHT),
+			state: "done",
+			backup: { state: "ran" },
+		});
+		const record = await readMaintenanceRecord(env as never);
+		expect(record?.nights?.[mailboxId]?.backup.state).toBe("ran");
 	});
 });
 
@@ -276,6 +394,16 @@ describe("the nights' entries as root's routes give them", () => {
 		).toBeUndefined();
 		const { appointed: _, ...unlisted } = record();
 		expect(nightsEndedOf(unlisted)).toBeUndefined();
+	});
+
+	it("are added up only once the call would have written its end", () => {
+		const began = Date.parse(NIGHT.toISOString());
+		expect(
+			maintenanceForRoot(record(), began + 10 * 60_000).nightsEnded,
+		).toBeUndefined();
+		expect(
+			maintenanceForRoot(record(), began + 16 * 60_000).nightsEnded,
+		).toEqual(nightsEndedOf(record()));
 	});
 
 	it("name no mailbox, last night's or the history's", async () => {

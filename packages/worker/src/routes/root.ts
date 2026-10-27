@@ -217,7 +217,9 @@ export class GetMaintenanceHistory extends OpenAPIRoute {
 		const session = requireRoot(c);
 		if (session instanceof Response) return session;
 		return c.json(
-			(await readMaintenanceHistory(c.env)).map(maintenanceForRoot),
+			(await readMaintenanceHistory(c.env)).map((night) =>
+				maintenanceForRoot(night),
+			),
 		);
 	}
 }

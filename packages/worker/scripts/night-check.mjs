@@ -191,6 +191,22 @@ function cutOff(record) {
 	return `the run started at ${record.startedAt} and never reached its end: it was cut off ${where}`;
 }
 
+/**
+ * JSON.parse whose failure names the object and not its bytes: Node quotes
+ * the text around the fault, every object read here holds mailbox
+ * addresses, and this log is public.
+ *
+ * @param {string} text
+ * @param {string} what
+ */
+export function parseQuietly(text, what) {
+	try {
+		return JSON.parse(text);
+	} catch {
+		throw new Error(`${what} did not parse`);
+	}
+}
+
 /** One line saying what the night did, naming no mailbox. */
 export function nightSummary(record) {
 	if (!record) return "no record";

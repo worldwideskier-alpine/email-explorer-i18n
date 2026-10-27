@@ -12,7 +12,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { stringValueOf } from "./deployment-config.mjs";
-import { judgeNight, nightSummary } from "./night-check.mjs";
+import { judgeNight, nightSummary, parseQuietly } from "./night-check.mjs";
 
 const CONFIG = fileURLToPath(new URL("../dev/wrangler.jsonc", import.meta.url));
 // A night that carries its backup on is normally done within minutes of the
@@ -50,7 +50,7 @@ async function readRecord() {
 	);
 	if (response.status === 404) return null;
 	if (!response.ok) throw new Error(await refusal(response));
-	return JSON.parse(await response.text());
+	return parseQuietly(await response.text(), "maintenance/last-run.json");
 }
 
 /**
@@ -63,7 +63,10 @@ async function deletionsLeft() {
 	);
 	if (response.status === 404) return 0;
 	if (!response.ok) throw new Error(await refusal(response));
-	const ids = JSON.parse(await response.text());
+	const ids = parseQuietly(
+		await response.text(),
+		"maintenance/unfinished-deletions.json",
+	);
 	return Array.isArray(ids) ? ids.length : 0;
 }
 
@@ -72,7 +75,7 @@ async function carriedKeys() {
 		`${base}?prefix=${encodeURIComponent("backup-carry/")}&per_page=1000`,
 	);
 	if (!response.ok) throw new Error(await refusal(response));
-	const body = await response.json();
+	const body = parseQuietly(await response.text(), "the backup-carry/ list");
 	return (body.result ?? []).map((object) => object.key);
 }
 

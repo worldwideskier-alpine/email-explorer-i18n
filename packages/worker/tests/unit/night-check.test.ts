@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 // Plain JS on purpose: it runs under node from the night-check workflow.
-import { judgeNight, nightSummary } from "../../scripts/night-check.mjs";
+import {
+	judgeNight,
+	nightSummary,
+	parseQuietly,
+} from "../../scripts/night-check.mjs";
 
 /**
  * The evening question the scheduled workflow asks: did last night's run end
@@ -254,5 +258,21 @@ describe("the night check", () => {
 		expect(judgeNight(before, [], NOW, 0).trouble).toEqual([
 			expect.stringContaining("cut off inside the backups"),
 		]);
+	});
+
+	// Node quotes the text around a JSON fault, and what is read here holds
+	// mailbox addresses: a damaged object put one into the public log.
+	it("says an object did not parse without quoting it", () => {
+		const damaged = `["${MAILBOX}", ${MAILBOX}]`;
+		expect(() => JSON.parse(damaged)).toThrow(/@/);
+		expect(() => parseQuietly(damaged, "the list")).toThrow(
+			"the list did not parse",
+		);
+		try {
+			parseQuietly(damaged, "the list");
+		} catch (e) {
+			expect(String(e)).not.toContain("@");
+		}
+		expect(parseQuietly('["a"]', "the list")).toEqual(["a"]);
 	});
 });
