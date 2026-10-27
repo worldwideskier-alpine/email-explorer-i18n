@@ -5,7 +5,10 @@
  * References. postal-mime decodes RFC 2047 encoded words in those headers, so
  * `=?utf-8?Q?a=0D=0ABcc:_...?=` came out of ingest as a real line break and a
  * header of the sender's choosing, stored, and written into our outgoing mail
- * by the next reply. So an id is kept only if it has the shape of one: a
+ * by the next reply. postal-mime 4.0.5 and later fold that break to a space,
+ * which the rule below refuses all the same; rows stored before are still
+ * there, and a parser is not this check. So an id is kept only if it has the
+ * shape of one: a
  * single `@`, nothing that separates or ends a header (whitespace, control
  * characters) and no angle brackets, which are ours to add.
  *

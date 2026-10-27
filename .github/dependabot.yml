@@ -55,9 +55,11 @@ updates:
     # with node-version, by hand.
     #
     # vitest follows @cloudflare/vitest-pool-workers, which runs the worker
-    # suite and names the vitest it takes (^4.1.0 in 0.22.0, still the
-    # latest). vitest 5 under it started no test at all (#48); both suites
-    # stay on one vitest. Move it when the pool's peer range does.
+    # suite and names the vitest it takes (^4.1.0 in 0.22.0 and 0.23.0).
+    # vitest 5 under it started no test at all (#48); both suites stay on
+    # one vitest. The pool is deprecated since, renamed
+    # @cloudflare/vitest-plugin, whose range takes vitest 5 too: move vitest
+    # with that change, not before.
     #
     # TypeScript follows vue-tsc, which type-checks the dashboard in every
     # build through TypeScript's own JavaScript API (typescript/lib/tsc).

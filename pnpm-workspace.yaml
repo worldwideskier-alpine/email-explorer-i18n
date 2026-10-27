@@ -14,7 +14,8 @@ allowBuilds:
   workerd: false
 
 overrides:
-  # @cloudflare/vitest-pool-workers 0.22.0 -- still the latest -- pins a
+  # @cloudflare/vitest-pool-workers 0.22.0 -- deprecated since, renamed
+  # @cloudflare/vitest-plugin, and 0.23.0 pins the same -- pins a
   # miniflare that pins sharp 0.35.2 (the libheif advisory
   # GHSA-rgj7-g3m4-5g8c), and the miniflare wrangler brings in pins 0.35.4,
   # which carries the librsvg advisory GHSA-wq5f-xc86-pv6w (high). Both are
@@ -23,9 +24,18 @@ overrides:
   # once both routes to miniflare take 0.35.5 or later.
   "sharp@<0.35.5": "0.35.5"
   # undici 7.29.0, which every miniflare here pins -- the one wrangler brings
-  # and the older one vitest-pool-workers does -- carries ten advisories
-  # fixed in 7.29.1 (GHSA-rx4f-c7p8-82vq and the rest; `pnpm audit`). It is
-  # the Node side of the local runtime and the deploy tooling: none of it is
-  # in the Worker's bundle. The newest miniflare already takes 7.29.1; drop
-  # this once both routes to miniflare have moved on.
-  "undici@>=7.0.0 <7.29.1": "7.29.1"
+  # and the older one vitest-pool-workers does -- carried ten advisories
+  # fixed in 7.29.1 (GHSA-rx4f-c7p8-82vq and the rest; `pnpm audit`), and
+  # 7.29.1 then GHSA-xjj6-f33q-929c (high) and two moderates, fixed in
+  # 7.30.1. It is the Node side of the local runtime and the deploy tooling:
+  # none of it is in the Worker's bundle. The pool also carries a copy of
+  # its own inside its dist, which no override reaches; that one goes when
+  # the pool is replaced by @cloudflare/vitest-plugin. Drop this once both
+  # routes to miniflare take 7.30.1 or later. The undici 8 that jsdom takes
+  # needs nothing here: its range admits the fixed 8.12.2.
+  "undici@>=7.0.0 <7.30.1": "7.30.1"
+  # The pool pins zod 4.4.3 exactly (0.22.0 and 0.23.0 alike), which
+  # GHSA-mrhx-c7xc-m3w5 (high) names, fixed in 4.6.6. It validates the
+  # pool's own options in Node, in the tests only: the Worker's zod is its
+  # own dependency, already past the fix. Drop this when the pool goes.
+  "@cloudflare/vitest-pool-workers>zod": "4.6.7"

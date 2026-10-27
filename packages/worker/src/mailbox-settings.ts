@@ -221,8 +221,9 @@ export type SenderVerdict = "spam" | "inbox";
 function normalizeAddress(address: string): string {
 	// In the form a stored message's sender takes, which is what a verdict is
 	// recorded from. The lookup is given postal-mime's reading of the next
-	// message, which drops the quotes round a local part like "a,b"; without
-	// putting them back the two never matched for such a sender.
+	// message, which dropped the quotes round a local part like "a,b" before
+	// 4.1 and still drops them round one like "x..y"; without putting them
+	// back the two never matched for such a sender.
 	return asHeaderAddress(address.trim()).toLowerCase();
 }
 

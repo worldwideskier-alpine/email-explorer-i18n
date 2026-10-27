@@ -379,6 +379,9 @@ async function synthesizeMessage(
 		 * measured, `attachments: 0` and the content spliced into both `text`
 		 * and `html`. Writing it therefore costs those attachments their
 		 * existence on the way back, in the file that is the last copy.
+		 * (postal-mime 4.1.4 keeps a base64 message/rfc822 as an attachment,
+		 * and these parts are written base64, but a 7bit one and inline text
+		 * are still folded, measured; the rule does not lean on that.)
 		 *
 		 * So `inline` where it buys something and cannot cost anything: a
 		 * non-text part that a `cid:` can actually refer to. Everything else
