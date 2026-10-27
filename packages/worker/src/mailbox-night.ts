@@ -100,6 +100,8 @@ export interface NightStatus {
 		error?: string;
 	};
 	purge: { state: NightPart; deleted?: number; error?: string };
+	/** Done, and its end could not be written into the run's record. */
+	unrecorded?: true;
 }
 
 /** What tonight holds for this mailbox, before any of it has begun. */
@@ -235,14 +237,23 @@ export async function runMailboxNight(
 	}
 
 	status.state = "done";
-	await say();
 	// How it ended goes into the run's record by this night's own hand,
-	// whether or not the call that began it is still there to count it.
-	await within(
+	// whether or not the call that began it is still there to count it --
+	// before the night is marked done here. Marked first, an alarm ended
+	// between the two left a night done with no entry, and nothing wrote it
+	// again; as it is, the alarm's next attempt finds every part settled and
+	// writes it (cutOff). A write that failed is marked, and tried once more
+	// a minute on (alarm()).
+	const recorded = await within(
 		recordNightEnd(env, status),
 		NIGHT_NOTE_LIMIT_MS,
 		"writing the maintenance record",
-	).catch(() => {});
+	).then(
+		() => true,
+		() => false,
+	);
+	if (!recorded) status.unrecorded = true;
+	await say();
 	return status;
 }
 

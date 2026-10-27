@@ -707,7 +707,10 @@ are still checked, by the `tsc` that runs before the worker tests.
   refused -- not one whose start only ran out of time, which may be going)
   and its end; each night, how it ended (`nights`, `recordNightEnd`, tried
   again on a lost race or R2's try-again for eight seconds, since nothing
-  else writes it), whether or not the call is still there. A record with no
+  else writes it), whether or not the call is still there -- before it is
+  marked done in its object, so an alarm ended between the two writes it
+  again on its retry, and a write that failed is marked (`unrecorded`) and
+  tried once more a minute on. A record with no
   end whose appointed nights all wrote theirs is told by them, on `/root`
   (`nightsEnded`) and by the night check. Root's routes give what the
   entries add up to (`maintenanceForRoot`), never the entries, which are

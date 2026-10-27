@@ -2554,7 +2554,24 @@ export class MailboxDO extends DurableObject<Env> {
 	async alarm(): Promise<void> {
 		if (this.#isAuthDO) return;
 		const stored = await this.ctx.storage.get<StoredNight>(NIGHT_KEY);
-		if (!stored || stored.status.state === "done") return;
+		if (!stored) return;
+		if (stored.status.state === "done") {
+			// Its end could not be written when it ended: once more, and
+			// then it is let be.
+			if (stored.status.unrecorded) {
+				const { unrecorded: _, ...status } = stored.status;
+				await within(
+					recordNightEnd(this.env, status),
+					NIGHT_NOTE_LIMIT_MS,
+					"writing the maintenance record",
+				).catch(() => {});
+				await keepOwnNight(this.ctx.storage, {
+					mailbox: stored.mailbox,
+					status,
+				}).catch(() => {});
+			}
+			return;
+		}
 		const { mailbox } = stored;
 		const now = new Date(stored.status.night);
 		const keep = (status: NightStatus) =>
@@ -2603,6 +2620,9 @@ export class MailboxDO extends DurableObject<Env> {
 			// a cron waiting on it.
 			if (status.state === "continuing") {
 				await this.ctx.storage.setAlarm(Date.now());
+			}
+			if (status.unrecorded) {
+				await this.ctx.storage.setAlarm(Date.now() + 60_000);
 			}
 		} catch (e) {
 			// runMailboxNight does not throw; if it ever does, the night is

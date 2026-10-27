@@ -7,7 +7,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { judgeNight } from "../../scripts/night-check.mjs";
 import { backupKeyPrefix } from "../../src/auto-backup";
 import { OutOfTime } from "../../src/deadline";
-import { type NightStatus, nightFor } from "../../src/mailbox-night";
+import {
+	type NightStatus,
+	nightFor,
+	runMailboxNight,
+} from "../../src/mailbox-night";
 import {
 	claimNight,
 	MAINTENANCE_HISTORY_KEY,
@@ -186,6 +190,76 @@ describe("a mailbox's night writes how it ended into the run's record", () => {
 			state: "failed",
 			error: expect.stringContaining("ended by the runtime"),
 		});
+	});
+
+	it("before it is marked done, so an alarm ended between the two writes it again", async () => {
+		const mailbox = { id: mailboxId, settings: await settings() };
+		await claimNight(env as never, NIGHT.toISOString(), "owner", {
+			scheduledTime: NIGHT.toISOString(),
+			at: NIGHT.toISOString(),
+		});
+		let whenDone: MaintenanceRecord | null | undefined;
+		const status = await runMailboxNight(
+			env as never,
+			mailbox as never,
+			NIGHT,
+			{},
+			async (said) => {
+				// The first time it says so, which is the moment that counts.
+				if (said.state === "done" && whenDone === undefined) {
+					whenDone = await readMaintenanceRecord(env as never);
+				}
+			},
+		);
+		expect(status.unrecorded).toBeUndefined();
+		// Already in the run's record by the time the night says it is done.
+		expect(whenDone?.nights?.[mailboxId]?.backup.state).toBe("ran");
+	});
+
+	it("and when that write fails, says so, and its alarm writes it once more", async () => {
+		const mailbox = { id: mailboxId, settings: await settings() };
+		await claimNight(env as never, NIGHT.toISOString(), "owner", {
+			scheduledTime: NIGHT.toISOString(),
+			at: NIGHT.toISOString(),
+		});
+		const real = bucket();
+		const refusing = new Proxy(real, {
+			get(target, prop) {
+				const value = Reflect.get(target, prop);
+				if (prop === "put") {
+					return async (...args: unknown[]) => {
+						if (args[0] === MAINTENANCE_KEY) throw new Error("refused");
+						return (value as (...a: unknown[]) => unknown).apply(target, args);
+					};
+				}
+				return typeof value === "function" ? value.bind(target) : value;
+			},
+		});
+		const ended = await runMailboxNight(
+			{ ...(env as unknown as object), BUCKET: refusing } as never,
+			mailbox as never,
+			NIGHT,
+			{},
+			async () => {},
+		);
+		expect(ended.state).toBe("done");
+		expect(ended.unrecorded).toBe(true);
+		expect(
+			(await readMaintenanceRecord(env as never))?.nights?.[mailboxId],
+		).toBeUndefined();
+
+		// As the alarm it set a minute on finds it.
+		await runInDurableObject(stub(), async (_i, state) => {
+			await state.storage.put("night", { mailbox, status: ended });
+			await state.storage.setAlarm(Date.now() + 60 * 60_000);
+		});
+		expect(await fireAlarm()).toBe(true);
+		const record = await readMaintenanceRecord(env as never);
+		expect(record?.nights?.[mailboxId]?.backup.state).toBe("ran");
+		const kept = (await stub().nightStatus(
+			NIGHT.toISOString(),
+		)) as NightStatus | null;
+		expect(kept?.unrecorded).toBeUndefined();
 	});
 
 	it("into its own night's record and no other", async () => {
