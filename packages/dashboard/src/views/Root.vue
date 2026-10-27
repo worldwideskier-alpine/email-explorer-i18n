@@ -416,6 +416,7 @@ import { translateApiError } from "@/utils/apiError";
 import { formatBytes } from "@/utils/attachments";
 import {
 	type MaintenanceRecord,
+	maintenanceBackedUp,
 	maintenanceContinuing,
 	maintenanceDeleted,
 	maintenanceDuration,
@@ -500,6 +501,8 @@ const stoppedLine = computed(() =>
 		at: maintenance.value ? formatFullDate(maintenance.value.startedAt) : "",
 		duration: finishedDuration.value,
 		detail: stoppedDetail.value,
+		backups: maintenanceBackedUp(maintenance.value),
+		deleted: deletedCount.value,
 	}),
 );
 const trailingDetail = computed(() =>
@@ -519,6 +522,8 @@ const troubledNights = computed(() =>
 				at: formatFullDate(night.startedAt),
 				duration: maintenanceDuration(night),
 				detail: maintenanceStoppedDetail(night),
+				backups: maintenanceBackedUp(night),
+				deleted: maintenanceDeleted(night),
 			});
 			return {
 				startedAt: night.startedAt,

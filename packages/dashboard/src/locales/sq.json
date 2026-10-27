@@ -456,7 +456,8 @@
 			"finishedWithError": "Mirëmbajtja e planifikuar {at}: një hap dështoi ({duration} / {detail}).",
 			"notReached": "Mirëmbajtje e planifikuar {at}: regjistrimi ndalet para se të shkruheshin rezultatet e kutive postare. Kopja rezervë dhe pastrimi i spam-it për çdo kuti postare punojnë veçmas; rezultatet janë në ekranin e cilësimeve të asaj kutie.",
 			"killedInBackup": "Mirëmbajtja e planifikuar {at}: u ndërpre gjatë kopjeve rezervë ({detail}). Kopja rezervë dhe pastrimi i spam-it për çdo kuti postare punojnë veçmas; rezultatet janë në ekranin e cilësimeve të asaj kutie.",
-			"unfinished": "Mirëmbajtje e planifikuar {at}: arriti te pastrimi i spam-it, por nuk ka asnjë shënim se përfundoi."
+			"unfinished": "Mirëmbajtje e planifikuar {at}: arriti te pastrimi i spam-it, por nuk ka asnjë shënim se përfundoi.",
+			"nightsEnded": "Mirëmbajtja e planifikuar {at}: kopja rezervë dhe pastrimi i spam-it për çdo kuti postare përfunduan ({backups} kopje rezervë / {deleted} mesazhe të padëshiruara u fshinë), por nuk ka asnjë shënim se përfundoi i gjithë procesi. Nëse ka kuti postare, fshirja e të cilave nuk përfundoi, ajo do të përfundojë natën tjetër."
 		},
 		"attachments": {
 			"title": "Bashkëngjitje të mbetura",

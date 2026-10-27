@@ -62,6 +62,88 @@ export interface MaintenanceRecord {
 	 * for, which a call can begin a minute after.
 	 */
 	calls?: { scheduledTime: string; at: string; stoodAside?: boolean }[];
+	/**
+	 * The mailboxes whose night the run began, and how each ended as that
+	 * night wrote it itself. A run whose own call ended before writing its
+	 * end -- on 2026-10-25, two minutes in, with both archives written -- is
+	 * told by these; see maintenanceNightsEnded. Absent on older records.
+	 */
+	appointed?: string[];
+	nights?: Record<string, NightOutcome>;
+}
+
+type NightPart = "skipped" | "waiting" | "running" | "ran" | "failed";
+
+export interface NightOutcome {
+	endedAt: string;
+	backup: { state: NightPart; error?: string };
+	purge: { state: NightPart; deleted?: number; error?: string };
+}
+
+interface Pass {
+	ran: number;
+	failed?: number;
+	deleted?: number;
+	error?: string;
+	reasons?: string[];
+}
+
+/**
+ * Both passes as the nights wrote them, for a run whose own call never wrote
+ * its end and every one of whose nights did. Undefined otherwise: a run that
+ * wrote its end is told by its own counts, and one whose nights have not all
+ * ended -- or that never said which it began -- by where it got to.
+ */
+export function maintenanceNightsEnded(
+	record: MaintenanceRecord | null | undefined,
+): { backups: Pass; spamPurge: Pass } | undefined {
+	if (!record || record.finishedAt || !Array.isArray(record.appointed)) {
+		return undefined;
+	}
+	const ended = record.appointed.map((id) => record.nights?.[id]);
+	if (ended.some((night) => !night)) return undefined;
+	const pass = (part: "backup" | "purge"): Pass => {
+		const parts = (ended as NightOutcome[]).map((night) => night[part]);
+		const reasons = [
+			...new Set(
+				parts
+					.filter((p) => p.state !== "ran" && p.state !== "skipped")
+					.map((p) => p.error)
+					.filter((why): why is string => !!why),
+			),
+		].slice(0, 3);
+		return {
+			ran: parts.filter((p) => p.state === "ran").length,
+			failed: parts.filter((p) => p.state !== "ran" && p.state !== "skipped")
+				.length,
+			...(reasons.length ? { reasons } : {}),
+		};
+	};
+	return {
+		backups: pass("backup"),
+		spamPurge: {
+			...pass("purge"),
+			deleted: (ended as NightOutcome[]).reduce(
+				(sum, night) => sum + (night.purge.deleted ?? 0),
+				0,
+			),
+		},
+	};
+}
+
+/** The passes to tell: the run's own, or its nights' when it wrote none. */
+function passesOf(record: MaintenanceRecord | null | undefined): {
+	backups?: Pass;
+	spamPurge?: Pass;
+} {
+	return maintenanceNightsEnded(record) ?? record ?? {};
+}
+
+/** How many mailboxes were backed up, by whichever told it. */
+export function maintenanceBackedUp(
+	record: MaintenanceRecord | null | undefined,
+): number {
+	return passesOf(record).backups?.ran ?? 0;
 }
 
 /**
@@ -128,9 +210,10 @@ function passTrouble(
 export function maintenanceErrorDetail(
 	record: MaintenanceRecord | null | undefined,
 ): string {
+	const passes = passesOf(record);
 	return [
-		passTrouble("backups", record?.backups),
-		passTrouble("spamPurge", record?.spamPurge),
+		passTrouble("backups", passes.backups),
+		passTrouble("spamPurge", passes.spamPurge),
 	]
 		.filter(Boolean)
 		.join(" · ");
@@ -163,7 +246,7 @@ export function maintenanceFinishedCleanly(
 export function maintenanceDeleted(
 	record: MaintenanceRecord | null | undefined,
 ): number {
-	return record?.spamPurge?.deleted ?? 0;
+	return passesOf(record).spamPurge?.deleted ?? 0;
 }
 
 /** Shown when the record cannot say how long it took. */
@@ -248,6 +331,14 @@ export function maintenanceStoppedKey(
 	 */
 	if (record?.finishedAt && maintenanceErrorDetail(record))
 		return "root.maintenance.finishedWithError";
+	// Every night the run began wrote how it ended, and the run's own call
+	// wrote no end: told by the nights, not as a run cut off -- which is what
+	// 2026-10-25 was told, about a night whose archives were all written.
+	if (maintenanceNightsEnded(record)) {
+		return maintenanceErrorDetail(record)
+			? "root.maintenance.finishedWithError"
+			: "root.maintenance.nightsEnded";
+	}
 	if (record?.spamPurge) return "root.maintenance.unfinished";
 	if (record?.backupProgress && !record.backups)
 		return "root.maintenance.killedInBackup";

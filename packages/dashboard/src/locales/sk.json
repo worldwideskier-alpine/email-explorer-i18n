@@ -456,7 +456,8 @@
 			"finishedWithError": "Plánovaná údržba {at}: jedna fáza zlyhala ({duration} / {detail}).",
 			"notReached": "Plánovaná údržba {at}: záznam končí skôr, než boli zapísané výsledky poštových schránok. Zálohovanie a mazanie spamu každej schránky bežia samostatne; ich výsledky sú na obrazovke nastavení danej schránky.",
 			"killedInBackup": "Plánovaná údržba {at}: prerušená počas zálohovania ({detail}). Zálohovanie a mazanie spamu každej schránky bežia samostatne; ich výsledky sú na obrazovke nastavení danej schránky.",
-			"unfinished": "Plánovaná údržba {at}: dostala sa k mazaniu spamu, ale záznam o dokončení chýba."
+			"unfinished": "Plánovaná údržba {at}: dostala sa k mazaniu spamu, ale záznam o dokončení chýba.",
+			"nightsEnded": "Plánovaná údržba {at}: zálohovanie a mazanie spamu každej schránky skončili ({backups} záloh / {deleted} zmazaných spamov), ale samotný beh nezaznamenal svoje ukončenie. Nedokončené mazania schránok, ak nejaké sú, sa dokončia nasledujúcu noc."
 		},
 		"attachments": {
 			"title": "Zvyšné prílohy",

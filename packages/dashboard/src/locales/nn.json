@@ -456,7 +456,8 @@
 			"finishedWithError": "Planlagt vedlikehald {at}: eit steg mislukkast ({duration} / {detail}).",
 			"notReached": "Planlagt vedlikehald {at}: registreringa stoppar før resultata til postkassene vart skrivne. Tryggingskopien og søppelpostoppryddinga til kvar postkasse køyrer kvar for seg; resultata står på innstillingsskjermen til postkassa.",
 			"killedInBackup": "Planlagt vedlikehald {at}: avbrote under tryggingskopieringa ({detail}). Tryggingskopien og søppelpostoppryddinga til kvar postkasse køyrer kvar for seg; resultata står på innstillingsskjermen til postkassa.",
-			"unfinished": "Planlagt vedlikehald {at}: det nådde oppryddinga av søppelpost, men det finst inga registrering av at det vart ferdig."
+			"unfinished": "Planlagt vedlikehald {at}: det nådde oppryddinga av søppelpost, men det finst inga registrering av at det vart ferdig.",
+			"nightsEnded": "Planlagt vedlikehald {at}: tryggingskopien og søppelpostoppryddinga til kvar postkasse er ferdige ({backups} tryggingskopiar / {deleted} søppelpost sletta), men køyringa registrerte ikkje si eiga avslutning. Eventuelle uferdige slettingar av postkasser blir fullførte neste natt."
 		},
 		"attachments": {
 			"title": "Etterlatne vedlegg",

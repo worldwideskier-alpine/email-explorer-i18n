@@ -4,6 +4,7 @@ import { recordBackupNotRun } from "../backup-run";
 import { abandonPausedBackup } from "../backup-writer";
 import type { ClassifyInput, ClassifyResult } from "../claude-spam-filter";
 import { classifyWithClaude } from "../claude-spam-filter";
+import { within } from "../deadline";
 import type { DeviceStanding } from "../login-device";
 import {
 	DEVICE_FAILURE_CAP,
@@ -14,12 +15,13 @@ import type { NightStatus } from "../mailbox-night";
 import {
 	cutOff,
 	NIGHT_LONGEST_MS,
+	NIGHT_NOTE_LIMIT_MS,
 	nightFor,
 	partSettled,
 	runMailboxNight,
 } from "../mailbox-night";
 import type { MailboxRecord } from "../mailbox-records";
-import { foldContinuedNight } from "../maintenance-record";
+import { recordNightEnd } from "../maintenance-record";
 import { hashPassword, verifyNothing, verifyPassword } from "../password";
 import { ANOTHER_PERSONS_MAILBOX } from "../people";
 import type { ThrottleRule } from "../throttle";
@@ -2577,7 +2579,11 @@ export class MailboxDO extends DurableObject<Env> {
 					"The night's run was ended by the runtime before this purge finished.";
 			}
 			await keep(ended).catch(() => {});
-			await foldContinuedNight(this.env, ended).catch(() => {});
+			await within(
+				recordNightEnd(this.env, ended),
+				NIGHT_NOTE_LIMIT_MS,
+				"writing the maintenance record",
+			).catch(() => {});
 			return;
 		}
 
@@ -2611,7 +2617,11 @@ export class MailboxDO extends DurableObject<Env> {
 			if (!partSettled(before.purge.state)) ended.purge.error = why;
 			await abandonPausedBackup(this.env, mailbox.id).catch(() => {});
 			await keep(ended).catch(() => {});
-			await foldContinuedNight(this.env, ended).catch(() => {});
+			await within(
+				recordNightEnd(this.env, ended),
+				NIGHT_NOTE_LIMIT_MS,
+				"writing the maintenance record",
+			).catch(() => {});
 		}
 	}
 

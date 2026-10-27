@@ -456,7 +456,8 @@
 			"finishedWithError": "Načrtovano vzdrževanje {at}: en korak ni uspel ({duration} / {detail}).",
 			"notReached": "Načrtovano vzdrževanje {at}: zapis se ustavi, preden so bili zapisani rezultati poštnih predalov. Varnostno kopiranje in čiščenje neželene pošte vsakega predala tečeta ločeno; rezultati so na zaslonu nastavitev tega predala.",
 			"killedInBackup": "Načrtovano vzdrževanje {at}: prekinjeno med varnostnim kopiranjem ({detail}). Varnostno kopiranje in čiščenje neželene pošte vsakega predala tečeta ločeno; rezultati so na zaslonu nastavitev tega predala.",
-			"unfinished": "Načrtovano vzdrževanje {at}: prišlo je do čiščenja neželene pošte, vendar ni zapisa, da bi se končalo."
+			"unfinished": "Načrtovano vzdrževanje {at}: prišlo je do čiščenja neželene pošte, vendar ni zapisa, da bi se končalo.",
+			"nightsEnded": "Načrtovano vzdrževanje {at}: varnostno kopiranje in čiščenje neželene pošte sta se v vseh predalih končala ({backups} varnostnih kopij / {deleted} izbrisanih neželenih sporočil), vendar konec celotnega teka ni zapisan. Če je brisanje kakšnega predala ostalo nedokončano, se dokonča naslednjo noč."
 		},
 		"attachments": {
 			"title": "Preostale priponke",

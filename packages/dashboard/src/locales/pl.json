@@ -456,7 +456,8 @@
 			"finishedWithError": "Zaplanowana konserwacja {at}: jeden etap się nie powiódł ({duration} / {detail}).",
 			"notReached": "Zaplanowana konserwacja {at}: zapis urywa się, zanim zapisano wyniki skrzynek pocztowych. Kopia zapasowa i czyszczenie spamu każdej skrzynki działają osobno; wyniki są na ekranie ustawień tej skrzynki.",
 			"killedInBackup": "Zaplanowana konserwacja {at}: przerwana podczas tworzenia kopii zapasowych ({detail}). Kopia zapasowa i czyszczenie spamu każdej skrzynki działają osobno; wyniki są na ekranie ustawień tej skrzynki.",
-			"unfinished": "Zaplanowana konserwacja {at}: dotarła do czyszczenia spamu, ale nie ma zapisu o jej zakończeniu."
+			"unfinished": "Zaplanowana konserwacja {at}: dotarła do czyszczenia spamu, ale nie ma zapisu o jej zakończeniu.",
+			"nightsEnded": "Zaplanowana konserwacja {at}: kopia zapasowa i czyszczenie spamu każdej skrzynki zakończyły się ({backups} kopii zapasowych / usunięto {deleted} spamu), ale nie ma zapisu o zakończeniu całego przebiegu. Jeśli usuwanie którejś skrzynki nie zostało dokończone, zostanie dokończone następnej nocy."
 		},
 		"attachments": {
 			"title": "Pozostałe załączniki",

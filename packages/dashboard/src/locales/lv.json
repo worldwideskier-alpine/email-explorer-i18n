@@ -456,7 +456,8 @@
 			"finishedWithError": "Plānotā apkope {at}: viens posms neizdevās ({duration} / {detail}).",
 			"notReached": "Plānotā apkope {at}: ieraksts apstājas, pirms tika ierakstīti pastkastīšu rezultāti. Katras pastkastītes dublēšana un mēstuļu tīrīšana notiek atsevišķi; rezultāti ir šīs pastkastītes iestatījumu ekrānā.",
 			"killedInBackup": "Plānotā apkope {at}: pārtraukta dublēšanas laikā ({detail}). Katras pastkastītes dublēšana un mēstuļu tīrīšana notiek atsevišķi; rezultāti ir šīs pastkastītes iestatījumu ekrānā.",
-			"unfinished": "Plānotā apkope {at}: sasniedza mēstuļu tīrīšanu, bet ieraksta par pabeigšanu nav."
+			"unfinished": "Plānotā apkope {at}: sasniedza mēstuļu tīrīšanu, bet ieraksta par pabeigšanu nav.",
+			"nightsEnded": "Plānotā apkope {at}: katras pastkastītes dublēšana un mēstuļu tīrīšana beidzās ({backups} dublējumi / dzēstas {deleted} mēstules), taču ieraksta par visas izpildes pabeigšanu nav. Ja kādas pastkastīšu dzēšanas palika nepabeigtas, tās tiks pabeigtas nākamajā naktī."
 		},
 		"attachments": {
 			"title": "Palikušie pielikumi",

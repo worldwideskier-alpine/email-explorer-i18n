@@ -16,7 +16,7 @@
  * is about the run, and a run is a deployment-wide thing.
  */
 
-import type { NightStatus } from "./mailbox-night";
+import type { NightPart, NightStatus } from "./mailbox-night";
 import { rewriteJson } from "./r2-json";
 import { getBytes } from "./r2-retry";
 import type { Env } from "./types";
@@ -94,11 +94,49 @@ export interface MaintenanceRecord {
 	 */
 	owner?: string;
 	/**
+	 * Every mailbox whose night that call was to begin, written once it had
+	 * begun them. Each of those nights writes how it ended into `nights`
+	 * itself, whatever becomes of the call -- so a call that ends before its
+	 * own end, as on 2026-10-25, leaves a record that still says whether
+	 * every night ended and how. Absent on a record from before.
+	 */
+	appointed?: string[];
+	/**
+	 * How each mailbox's night ended, by mailbox, as that night wrote it
+	 * (recordNightEnd). Nothing else writes an entry but the owning call, for
+	 * a night it could not begin -- there is no night to write that one.
+	 */
+	nights?: Record<string, NightOutcome>;
+	/**
 	 * Every scheduled call for this firing, as the runtime gave it and as it
 	 * began. On 2026-10-13 there were two, 7.4 s apart, and nothing but two
 	 * different start times said so; this says so whatever the times.
 	 */
 	calls?: MaintenanceCall[];
+}
+
+/** How one mailbox's night ended. */
+export interface NightOutcome {
+	endedAt: string;
+	backup: { state: NightPart; error?: string };
+	purge: { state: NightPart; deleted?: number; error?: string };
+}
+
+export function outcomeOf(night: NightStatus, endedAt: string): NightOutcome {
+	return {
+		endedAt,
+		backup: {
+			state: night.backup.state,
+			...(night.backup.error ? { error: night.backup.error } : {}),
+		},
+		purge: {
+			state: night.purge.state,
+			...(night.purge.deleted !== undefined
+				? { deleted: night.purge.deleted }
+				: {}),
+			...(night.purge.error ? { error: night.purge.error } : {}),
+		},
+	};
 }
 
 export interface MaintenanceCall {
@@ -173,9 +211,10 @@ export async function claimNight(
 }
 
 /**
- * Writes the cron's record over what is stored -- keeping what the nights it
- * stopped waiting for have folded in since, which the cron's own copy does
- * not know about, and the calls other than this one.
+ * Writes the cron's record over what is stored -- keeping what the nights
+ * have written there since, which the cron's own copy does not know about:
+ * the counts of those it stopped waiting for, each night's own entry, and
+ * the calls other than this one.
  *
  * Only the call that owns the night writes it (see claimNight), and a night's
  * record never replaces a later night's.
@@ -194,6 +233,12 @@ export async function writeMaintenanceRecord(
 				return undefined;
 			}
 			const calls = stored.calls ?? record.calls;
+			// The nights write their own entries; this call's copy has only
+			// the ones it wrote itself, and a night's own wins.
+			const nights =
+				stored.nights || record.nights
+					? { nights: { ...record.nights, ...stored.nights } }
+					: {};
 			return stored.continuing && record.continuing
 				? {
 						...record,
@@ -201,10 +246,41 @@ export async function writeMaintenanceRecord(
 						spamPurge: stored.spamPurge,
 						continuing: stored.continuing,
 						...(calls ? { calls } : {}),
+						...nights,
 					}
-				: { ...record, ...(calls ? { calls } : {}) };
+				: { ...record, ...(calls ? { calls } : {}), ...nights };
 		},
 		{ replaceUnreadable: true },
+	);
+}
+
+/**
+ * Writes how this mailbox's night ended into tonight's record: what each
+ * night does as it ends, whether or not the call that began it is still
+ * there to count it. On 2026-10-25 that call ended two minutes in, both
+ * nights finished their archives, and the record said only that the run was
+ * cut off inside the backups -- the nights had nowhere of their own to say
+ * otherwise. Tonight's record only: a night never writes into another.
+ *
+ * A night the record lists as continuing is also added to the counts, as
+ * foldContinuedNight does, in the same write.
+ */
+export async function recordNightEnd(
+	env: Pick<Env, "BUCKET">,
+	night: NightStatus,
+): Promise<void> {
+	const at = new Date().toISOString();
+	await rewriteJson<MaintenanceRecord>(
+		env.BUCKET,
+		MAINTENANCE_KEY,
+		(stored) => {
+			if (!stored || stored.startedAt !== night.night) return undefined;
+			const own = {
+				...stored,
+				nights: { ...stored.nights, [night.mailbox]: outcomeOf(night, at) },
+			};
+			return foldInto(own, night, at) ?? own;
+		},
 	);
 }
 
@@ -218,71 +294,73 @@ export async function foldContinuedNight(
 	env: Pick<Env, "BUCKET">,
 	night: NightStatus,
 ): Promise<void> {
-	await rewriteJson<MaintenanceRecord>(
-		env.BUCKET,
-		MAINTENANCE_KEY,
-		(stored) => {
-			const listed = stored?.continuing?.find(
-				(entry) => entry.mailbox === night.mailbox,
-			);
-			if (!stored || stored.startedAt !== night.night || !listed) {
-				return undefined;
-			}
-			const counted = (state: string) =>
-				state === "ran"
-					? { ran: 1, failed: 0 }
-					: state === "skipped"
-						? { ran: 0, failed: 0 }
-						: { ran: 0, failed: 1 };
-			const at = new Date().toISOString();
-			const backup = listed.backup
-				? counted(night.backup.state)
-				: { ran: 0, failed: 0 };
-			const purge = counted(night.purge.state);
-			const reasons = withReason(
-				stored.backups?.reasons,
-				listed.backup ? night.backup.error : undefined,
-			);
-			const purgeReasons = withReason(
-				stored.spamPurge?.reasons,
-				night.purge.error,
-			);
-			const backups = stored.backups ?? {
-				finishedAt: at,
-				considered: 0,
-				ran: 0,
-				failed: 0,
-			};
-			const spamPurge = stored.spamPurge ?? {
-				finishedAt: at,
-				considered: 0,
-				ran: 0,
-				failed: 0,
-				deleted: 0,
-			};
-			return {
-				...stored,
-				backups: {
-					...backups,
-					finishedAt: at,
-					ran: backups.ran + backup.ran,
-					failed: backups.failed + backup.failed,
-					...(reasons ? { reasons } : {}),
-				},
-				spamPurge: {
-					...spamPurge,
-					finishedAt: at,
-					ran: spamPurge.ran + purge.ran,
-					failed: spamPurge.failed + purge.failed,
-					deleted: (spamPurge.deleted ?? 0) + (night.purge.deleted ?? 0),
-					...(purgeReasons ? { reasons: purgeReasons } : {}),
-				},
-				continuing: (stored.continuing ?? []).filter(
-					(entry) => entry.mailbox !== night.mailbox,
-				),
-			};
-		},
+	const at = new Date().toISOString();
+	await rewriteJson<MaintenanceRecord>(env.BUCKET, MAINTENANCE_KEY, (stored) =>
+		stored && stored.startedAt === night.night
+			? foldInto(stored, night, at)
+			: undefined,
 	);
+}
+
+/** The record with the night counted, or undefined if it is not listed. */
+function foldInto(
+	stored: MaintenanceRecord,
+	night: NightStatus,
+	at: string,
+): MaintenanceRecord | undefined {
+	const listed = stored.continuing?.find(
+		(entry) => entry.mailbox === night.mailbox,
+	);
+	if (!listed) return undefined;
+	const counted = (state: string) =>
+		state === "ran"
+			? { ran: 1, failed: 0 }
+			: state === "skipped"
+				? { ran: 0, failed: 0 }
+				: { ran: 0, failed: 1 };
+	const backup = listed.backup
+		? counted(night.backup.state)
+		: { ran: 0, failed: 0 };
+	const purge = counted(night.purge.state);
+	const reasons = withReason(
+		stored.backups?.reasons,
+		listed.backup ? night.backup.error : undefined,
+	);
+	const purgeReasons = withReason(stored.spamPurge?.reasons, night.purge.error);
+	const backups = stored.backups ?? {
+		finishedAt: at,
+		considered: 0,
+		ran: 0,
+		failed: 0,
+	};
+	const spamPurge = stored.spamPurge ?? {
+		finishedAt: at,
+		considered: 0,
+		ran: 0,
+		failed: 0,
+		deleted: 0,
+	};
+	return {
+		...stored,
+		backups: {
+			...backups,
+			finishedAt: at,
+			ran: backups.ran + backup.ran,
+			failed: backups.failed + backup.failed,
+			...(reasons ? { reasons } : {}),
+		},
+		spamPurge: {
+			...spamPurge,
+			finishedAt: at,
+			ran: spamPurge.ran + purge.ran,
+			failed: spamPurge.failed + purge.failed,
+			deleted: (spamPurge.deleted ?? 0) + (night.purge.deleted ?? 0),
+			...(purgeReasons ? { reasons: purgeReasons } : {}),
+		},
+		continuing: (stored.continuing ?? []).filter(
+			(entry) => entry.mailbox !== night.mailbox,
+		),
+	};
 }
 
 /** A failure's reason added to those already kept: once each, three at most. */

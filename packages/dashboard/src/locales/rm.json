@@ -456,7 +456,8 @@
 			"finishedWithError": "Mantegniment planisà {at}: ina fasa è fallida ({duration} / {detail}).",
 			"notReached": "Mantegnientscha planisada {at}: la registraziun sa ferma avant che las resultats da las chaschettas da posta èn vegnids scrits. La copia da segirezza e la mundada da spam da mintga chaschetta da posta funcziunan separadamain; ils resultats èn en ils parameters da quella chaschetta.",
 			"killedInBackup": "Mantegniment planisà {at}: interrut durant las copias da segirezza ({detail}). La copia da segirezza e la mundada da spam da mintga chaschetta da posta funcziunan separadamain; ils resultats èn en ils parameters da quella chaschetta.",
-			"unfinished": "Mantegnientscha planisada {at}: ella ha cuntanschì la mundada da spam, ma i n'exista nagin protocol ch'ella saja finida."
+			"unfinished": "Mantegnientscha planisada {at}: ella ha cuntanschì la mundada da spam, ma i n'exista nagin protocol ch'ella saja finida.",
+			"nightsEnded": "Mantegniment planisà {at}: la copia da segirezza e la mundada da spam da mintga chaschetta da posta èn finidas ({backups} copias da segirezza / {deleted} spam stizzads), ma l'execuziun n'ha betg registrà sia atgna fin. Chaschettas da posta che n'èn betg vegnidas stizzadas dal tuttafatg vegnan stizzadas la proxima notg."
 		},
 		"attachments": {
 			"title": "Agiuntas restadas",

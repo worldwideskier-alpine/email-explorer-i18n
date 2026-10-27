@@ -456,7 +456,8 @@
 			"finishedWithError": "Mantenimiento programado {at}: una fase ha fallado ({duration} / {detail}).",
 			"notReached": "Mantenimiento programado {at}: el registro se detiene antes de que se escribieran los resultados de los buzones. La copia de seguridad y la limpieza de spam de cada buzón se ejecutan por separado; sus resultados están en la pantalla de ajustes de ese buzón.",
 			"killedInBackup": "Mantenimiento programado {at}: se interrumpió durante las copias de seguridad ({detail}). La copia de seguridad y la limpieza de spam de cada buzón se ejecutan por separado; sus resultados están en la pantalla de ajustes de ese buzón.",
-			"unfinished": "Mantenimiento programado {at}: llegó a la limpieza de spam, pero no consta que finalizara."
+			"unfinished": "Mantenimiento programado {at}: llegó a la limpieza de spam, pero no consta que finalizara.",
+			"nightsEnded": "Mantenimiento programado {at}: la copia de seguridad y la limpieza de spam de cada buzón finalizaron ({backups} copias / {deleted} correos no deseados eliminados), pero la ejecución no registró su propio final. Si quedaron eliminaciones de buzones sin terminar, se completan la noche siguiente."
 		},
 		"attachments": {
 			"title": "Adjuntos sobrantes",

@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
 	type MaintenanceRecord,
+	maintenanceBackedUp,
 	maintenanceDeleted,
 	maintenanceDuration,
 	maintenanceErrorDetail,
 	maintenanceFinishedCleanly,
+	maintenanceNightsEnded,
 	maintenanceStoppedDetail,
 	maintenanceStoppedKey,
 	maintenanceTrailingDetail,
@@ -552,5 +554,94 @@ describe("the detail that did not fit in the sentence", () => {
 				killedAfterHealthyBackups,
 			),
 		).toBe("");
+	});
+});
+
+/**
+ * A run whose own call ended before its end, while every night it began
+ * wrote how it ended. On 2026-10-25 the call was heard from no more two
+ * minutes in, both archives were written, and this screen said the run was
+ * cut off during the backups -- the nights had nowhere of their own to say
+ * otherwise.
+ */
+describe("a run whose call ended early and whose nights all ended", () => {
+	const endedEarly = (): MaintenanceRecord => ({
+		startedAt: "2026-10-25T18:00:00.000Z",
+		backupProgress: {
+			mailbox: "a@example.com",
+			index: 1,
+			of: 2,
+			messages: 0,
+			at: "2026-10-25T18:02:36.000Z",
+		},
+		appointed: ["a@example.com", "b@example.com"],
+		nights: {
+			"a@example.com": {
+				endedAt: "2026-10-25T18:01:49.000Z",
+				backup: { state: "ran" },
+				purge: { state: "skipped" },
+			},
+			"b@example.com": {
+				endedAt: "2026-10-25T18:02:48.000Z",
+				backup: { state: "ran" },
+				purge: { state: "ran", deleted: 4 },
+			},
+		},
+	});
+
+	it("is told by the nights, not as cut off", () => {
+		expect(maintenanceStoppedKey(endedEarly())).toBe(
+			"root.maintenance.nightsEnded",
+		);
+		expect(maintenanceBackedUp(endedEarly())).toBe(2);
+		expect(maintenanceDeleted(endedEarly())).toBe(4);
+		expect(maintenanceFinishedCleanly(endedEarly())).toBe(false);
+		expect(maintenanceDuration(endedEarly())).toBe("\u2014");
+	});
+
+	it("says what failed, as the night said it", () => {
+		const night = endedEarly();
+		night.nights = {
+			...night.nights,
+			"b@example.com": {
+				endedAt: "2026-10-25T18:02:48.000Z",
+				backup: { state: "failed", error: "out-of-time" },
+				purge: { state: "skipped" },
+			},
+		};
+		expect(maintenanceStoppedKey(night)).toBe(
+			"root.maintenance.finishedWithError",
+		);
+		expect(maintenanceErrorDetail(night)).toBe(
+			"backups: 1 failed (out-of-time)",
+		);
+		expect(maintenanceBackedUp(night)).toBe(1);
+	});
+
+	it("is told as before while a night has not ended", () => {
+		const night = endedEarly();
+		const { "b@example.com": _, ...one } = night.nights ?? {};
+		night.nights = one;
+		expect(maintenanceNightsEnded(night)).toBeUndefined();
+		expect(maintenanceStoppedKey(night)).toBe(
+			"root.maintenance.killedInBackup",
+		);
+	});
+
+	it("leaves a run that wrote its own end to its own counts", () => {
+		const finished: MaintenanceRecord = {
+			...endedEarly(),
+			finishedAt: "2026-10-25T18:03:00.000Z",
+			backups: { finishedAt: "2026-10-25T18:02:50.000Z", ran: 2, failed: 0 },
+			spamPurge: {
+				finishedAt: "2026-10-25T18:02:55.000Z",
+				ran: 1,
+				deleted: 9,
+				failed: 0,
+			},
+		};
+		expect(maintenanceNightsEnded(finished)).toBeUndefined();
+		expect(maintenanceDeleted(finished)).toBe(9);
+		expect(maintenanceFinishedCleanly(finished)).toBe(true);
 	});
 });

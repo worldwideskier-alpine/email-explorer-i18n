@@ -84,7 +84,7 @@ const settle = async () => {
 	}
 };
 
-async function mountRoot() {
+async function mountRoot(en: Record<string, unknown> = {}) {
 	const pinia = createPinia();
 	setActivePinia(pinia);
 	const { default: Root } = await import("./Root.vue");
@@ -103,7 +103,7 @@ async function mountRoot() {
 			createI18n({
 				legacy: false,
 				locale: "en",
-				messages: { en: {} },
+				messages: { en: en as never },
 				missingWarn: false,
 				fallbackWarn: false,
 			}),
@@ -427,5 +427,51 @@ describe("a night still going on /root", () => {
 		await mountRoot();
 		expect(host.textContent).toContain("root.maintenance.done");
 		expect(host.textContent).not.toContain("root.maintenance.continuing");
+	});
+});
+
+// 2026-10-25: the call that owned the night ended two minutes in, and every
+// night it began wrote how it ended. The line says what the nights did.
+describe("a night whose call ended early", () => {
+	beforeEach(() => {
+		getRecoverySender.mockResolvedValue({
+			data: { fromEmail: null, setByDeployment: false, enabled: false },
+		});
+	});
+
+	it("is told by its nights, with their counts", async () => {
+		getMaintenance.mockResolvedValue({
+			data: {
+				startedAt: "2026-10-25T18:00:00.000Z",
+				backupProgress: {
+					mailbox: "a@example.com",
+					index: 1,
+					of: 2,
+					messages: 0,
+				},
+				appointed: ["a@example.com", "b@example.com"],
+				nights: {
+					"a@example.com": {
+						endedAt: "2026-10-25T18:01:49.000Z",
+						backup: { state: "ran" },
+						purge: { state: "skipped" },
+					},
+					"b@example.com": {
+						endedAt: "2026-10-25T18:02:48.000Z",
+						backup: { state: "ran" },
+						purge: { state: "ran", deleted: 4 },
+					},
+				},
+			},
+		});
+		await mountRoot({
+			root: {
+				maintenance: {
+					nightsEnded: "nights ended: {backups} backed up, {deleted} deleted",
+				},
+			},
+		});
+		expect(host.textContent).toContain("nights ended: 2 backed up, 4 deleted");
+		expect(host.textContent).not.toContain("root.maintenance.killedInBackup");
 	});
 });

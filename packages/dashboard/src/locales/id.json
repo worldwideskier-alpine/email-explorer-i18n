@@ -456,7 +456,8 @@
 			"finishedWithError": "Pemeliharaan terjadwal {at}: satu tahap gagal ({duration} / {detail}).",
 			"notReached": "Pemeliharaan terjadwal {at}: catatan berhenti sebelum hasil kotak surat ditulis. Pencadangan dan pembersihan spam setiap kotak surat berjalan sendiri-sendiri; hasilnya ada di layar pengaturan kotak surat tersebut.",
 			"killedInBackup": "Pemeliharaan terjadwal {at}: terputus saat pencadangan ({detail}). Pencadangan dan pembersihan spam setiap kotak surat berjalan sendiri-sendiri; hasilnya ada di layar pengaturan kotak surat tersebut.",
-			"unfinished": "Pemeliharaan terjadwal {at}: sampai ke pembersihan spam, tetapi tidak ada catatan bahwa ia selesai."
+			"unfinished": "Pemeliharaan terjadwal {at}: sampai ke pembersihan spam, tetapi tidak ada catatan bahwa ia selesai.",
+			"nightsEnded": "Pemeliharaan terjadwal {at}: pencadangan dan pembersihan spam setiap kotak surat sudah selesai ({backups} dicadangkan / {deleted} spam dihapus), tetapi tidak ada catatan bahwa prosesnya secara keseluruhan selesai. Penghapusan kotak surat yang belum tuntas, jika ada, akan diselesaikan pada malam berikutnya."
 		},
 		"attachments": {
 			"title": "Lampiran yang tertinggal",

@@ -88,9 +88,14 @@ describe("what the nightly run writes down about itself", () => {
 			calls: [{ scheduledTime: NOW.toISOString(), at: expect.any(String) }],
 		});
 
+		// Stopped once the nights were begun: which ones, so each can write
+		// how it ended beside the list whatever becomes of this call.
+		expect(states[1].appointed).toEqual(expect.any(Array));
+		expect(states[1].backups).toBeUndefined();
+
 		// Stopped between the passes -- the production shape, where the backup
 		// recorded a success and the purge recorded nothing at all.
-		const betweenPasses = states[1];
+		const betweenPasses = states.find((state) => state.backups);
 		expect(betweenPasses.backups?.finishedAt).toBeTypeOf("string");
 		expect(betweenPasses.spamPurge).toBeUndefined();
 		expect(betweenPasses.finishedAt).toBeUndefined();

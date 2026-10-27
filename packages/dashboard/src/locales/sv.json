@@ -456,7 +456,8 @@
 			"finishedWithError": "Schemalagt underhåll {at}: ett steg misslyckades ({duration} / {detail}).",
 			"notReached": "Schemalagt underhåll {at}: registreringen slutar innan brevlådornas resultat skrevs. Varje brevlådas säkerhetskopia och skräppostrensning körs för sig; resultaten står på brevlådans inställningsskärm.",
 			"killedInBackup": "Schemalagt underhåll {at}: avbröts under säkerhetskopieringen ({detail}). Varje brevlådas säkerhetskopia och skräppostrensning körs för sig; resultaten står på brevlådans inställningsskärm.",
-			"unfinished": "Schemalagt underhåll {at}: det nådde skräppostrensningen, men det finns ingen notering om att det blev klart."
+			"unfinished": "Schemalagt underhåll {at}: det nådde skräppostrensningen, men det finns ingen notering om att det blev klart.",
+			"nightsEnded": "Schemalagt underhåll {at}: varje brevlådas säkerhetskopia och skräppostrensning blev klara ({backups} säkerhetskopior / {deleted} skräppost raderad), men körningen gjorde ingen notering om sitt eget slut. Eventuella borttagningar av brevlådor som inte blev klara slutförs nästa natt."
 		},
 		"attachments": {
 			"title": "Kvarlämnade bilagor",

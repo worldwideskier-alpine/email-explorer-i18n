@@ -456,7 +456,8 @@
 			"finishedWithError": "Ütemezett karbantartás {at}: az egyik lépés hibára futott ({duration} / {detail}).",
 			"notReached": "Ütemezett karbantartás {at}: a feljegyzés megszakad, mielőtt a postafiókok eredményei bekerültek volna. Minden postafiók mentése és levélszemét-törlése külön fut; az eredmények az adott postafiók beállításainál láthatók.",
 			"killedInBackup": "Ütemezett karbantartás {at}: a mentés közben megszakadt ({detail}). Minden postafiók mentése és levélszemét-törlése külön fut; az eredmények az adott postafiók beállításainál láthatók.",
-			"unfinished": "Ütemezett karbantartás {at}: elérte a levélszemét törlését, de a befejezésről nincs bejegyzés."
+			"unfinished": "Ütemezett karbantartás {at}: elérte a levélszemét törlését, de a befejezésről nincs bejegyzés.",
+			"nightsEnded": "Ütemezett karbantartás {at}: minden postafiók mentése és levélszemét-törlése befejeződött ({backups} mentés / {deleted} levélszemét törölve), de a futás nem jegyezte fel a saját befejezését. A félbemaradt postafiók-törlések, ha vannak, a következő éjjel fejeződnek be."
 		},
 		"attachments": {
 			"title": "Ottmaradt mellékletek",

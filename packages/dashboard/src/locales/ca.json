@@ -456,7 +456,8 @@
 			"finishedWithError": "Manteniment programat {at}: una fase ha fallat ({duration} / {detail}).",
 			"notReached": "Manteniment programat {at}: el registre s'atura abans que s'escriguin els resultats de les bústies. La còpia de seguretat i la neteja de correu brossa de cada bústia funcionen per separat; els resultats són a la pantalla de configuració d'aquella bústia.",
 			"killedInBackup": "Manteniment programat {at}: s'ha interromput durant les còpies de seguretat ({detail}). La còpia de seguretat i la neteja de correu brossa de cada bústia funcionen per separat; els resultats són a la pantalla de configuració d'aquella bústia.",
-			"unfinished": "Manteniment programat {at}: ha arribat a la neteja de correu brossa, però no hi ha registre que finalitzés."
+			"unfinished": "Manteniment programat {at}: ha arribat a la neteja de correu brossa, però no hi ha registre que finalitzés.",
+			"nightsEnded": "Manteniment programat {at}: la còpia de seguretat i la neteja de correu brossa de cada bústia han finalitzat ({backups} còpies / {deleted} correus brossa suprimits), però no hi ha registre que el procés sencer finalitzés. Si alguna supressió de bústia ha quedat a mitges, s'acabarà la nit següent."
 		},
 		"attachments": {
 			"title": "Adjunts sobrants",

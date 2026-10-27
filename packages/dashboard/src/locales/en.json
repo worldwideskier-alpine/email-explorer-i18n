@@ -456,7 +456,8 @@
 			"finishedWithError": "Scheduled maintenance {at}: a pass failed ({duration} / {detail}).",
 			"notReached": "Scheduled maintenance {at}: its record stops before the mailboxes' results were written. Each mailbox's backup and spam purge run on their own; their results are on that mailbox's settings screen.",
 			"killedInBackup": "Scheduled maintenance {at}: it was cut off during the backups ({detail}). Each mailbox's backup and spam purge run on their own; their results are on that mailbox's settings screen.",
-			"unfinished": "Scheduled maintenance {at}: it reached the spam purge, but there is no record of it finishing."
+			"unfinished": "Scheduled maintenance {at}: it reached the spam purge, but there is no record of it finishing.",
+			"nightsEnded": "Scheduled maintenance {at}: every mailbox's backup and spam purge ended ({backups} backed up / {deleted} spam deleted), but the run did not record its own end. Mailbox deletions left unfinished, if any, are finished the next night."
 		},
 		"attachments": {
 			"title": "Leftover attachments",

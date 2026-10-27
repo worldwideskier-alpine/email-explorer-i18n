@@ -55,6 +55,7 @@ import {
 	archiveLastRun,
 	claimNight,
 	foldContinuedNight,
+	outcomeOf,
 	withReason,
 	writeMaintenanceRecord,
 } from "./maintenance-record";
@@ -306,15 +307,27 @@ async function runNights(
 		}),
 	);
 
-	// Which backups are due and in what order, before any has said anything:
-	// a run ended right after starting them still names them.
+	// Which nights were begun, and which backups are due and in what order,
+	// before any has said anything: a run ended right after starting them
+	// still names them, and each of them writes how it ended beside the list
+	// (recordNightEnd). One this call could not begin has no night to write
+	// that, so this call writes it.
+	record.appointed = [...nights.keys()];
+	for (const [id, night] of nights) {
+		if (night.state === "done") {
+			record.nights = {
+				...record.nights,
+				[id]: outcomeOf(night, new Date().toISOString()),
+			};
+		}
+	}
 	let lastProgress = "";
 	const begun = furthestFromDone(nights, dueBackups);
 	if (begun) {
 		lastProgress = JSON.stringify(begun);
 		record.backupProgress = begun;
-		await note(env, record);
 	}
+	await note(env, record);
 
 	const settledBackups = () =>
 		[...nights.values()].every((night) => partSettled(night.backup.state));

@@ -25,8 +25,9 @@ import {
 	SLICE_BYTES,
 	SLICE_WALL_MS,
 } from "./backup-writer";
+import { within } from "./deadline";
 import type { MailboxRecord } from "./mailbox-records";
-import { foldContinuedNight } from "./maintenance-record";
+import { recordNightEnd } from "./maintenance-record";
 import { purgeOneMailbox } from "./spam-purge-run";
 import type { Env } from "./types";
 
@@ -49,6 +50,8 @@ import type { Env } from "./types";
 export const NIGHT_BACKUP_BY_MS = 12 * 60_000;
 export const NIGHT_PURGE_BY_MS = 13 * 60_000;
 export const NIGHT_RECORD_BY_MS = 13.5 * 60_000;
+/** How long a night's write of its end into the run's record may take. */
+export const NIGHT_NOTE_LIMIT_MS = 10_000;
 
 /**
  * How far a backup may be carried from alarm to alarm before it is given up.
@@ -233,9 +236,13 @@ export async function runMailboxNight(
 
 	status.state = "done";
 	await say();
-	// Carried past the cron's wait, the night's outcome is not in the run's
-	// record yet; it goes in now. A night the cron saw end is already there.
-	if (from) await foldContinuedNight(env, status).catch(() => {});
+	// How it ended goes into the run's record by this night's own hand,
+	// whether or not the call that began it is still there to count it.
+	await within(
+		recordNightEnd(env, status),
+		NIGHT_NOTE_LIMIT_MS,
+		"writing the maintenance record",
+	).catch(() => {});
 	return status;
 }
 

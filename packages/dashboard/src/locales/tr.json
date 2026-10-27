@@ -456,7 +456,8 @@
 			"finishedWithError": "Zamanlanmış bakım {at}: bir aşama başarısız oldu ({duration} / {detail}).",
 			"notReached": "Zamanlanmış bakım {at}: kayıt, posta kutularının sonuçları yazılmadan durmuş. Her posta kutusunun yedeklemesi ve istenmeyen posta temizliği ayrı çalışır; sonuçlar o posta kutusunun ayarlar ekranındadır.",
 			"killedInBackup": "Zamanlanmış bakım {at}: yedekleme sırasında yarıda kesildi ({detail}). Her posta kutusunun yedeklemesi ve istenmeyen posta temizliği ayrı çalışır; sonuçlar o posta kutusunun ayarlar ekranındadır.",
-			"unfinished": "Zamanlanmış bakım {at}: istenmeyen posta temizliğine ulaştı, ancak tamamlandığına dair kayıt yok."
+			"unfinished": "Zamanlanmış bakım {at}: istenmeyen posta temizliğine ulaştı, ancak tamamlandığına dair kayıt yok.",
+			"nightsEnded": "Zamanlanmış bakım {at}: her posta kutusunun yedeklemesi ve istenmeyen posta temizliği bitti ({backups} yedek / {deleted} istenmeyen posta silindi), ancak bakımın kendi bitişi kaydedilmedi. Yarım kalan posta kutusu silme işlemleri varsa, ertesi gece tamamlanır."
 		},
 		"attachments": {
 			"title": "Artakalan ekler",
