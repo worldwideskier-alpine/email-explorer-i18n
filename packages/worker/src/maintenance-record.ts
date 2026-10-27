@@ -83,9 +83,10 @@ export interface MaintenanceRecord {
 	/**
 	 * Mailboxes whose night was still carrying its backup from alarm to alarm
 	 * when the cron stopped waiting (see SLICE_BYTES). They are in neither
-	 * pass's counts yet; each is folded in as its night ends
-	 * (foldContinuedNight). `backup` is false for one whose backup had ended
-	 * and was counted, and whose purge carried on.
+	 * pass's counts yet; each counts itself in as it ends (recordNightEnd),
+	 * and one that had already ended is counted when the list is written
+	 * (writeMaintenanceRecord). `backup` is false for one whose backup had
+	 * ended and was counted, and whose purge carried on.
 	 */
 	continuing?: { mailbox: string; backup: boolean }[];
 	/**
@@ -486,8 +487,11 @@ export function maintenanceForRoot(
 	const { appointed: _, nights: __, ...rest } = record;
 	// Only once the call would have written its end: until then it may be
 	// alive and finishing the deletions, and "it wrote no end" is not true.
+	// The last call that did not stand aside: a call that takes the night
+	// over (claimNight) comes after the one it took it from.
 	const began = Date.parse(
-		record.calls?.find((call) => !call.stoodAside)?.at ?? record.startedAt,
+		[...(record.calls ?? [])].reverse().find((call) => !call.stoodAside)?.at ??
+			record.startedAt,
 	);
 	if (!(now - began >= CALL_LONGEST_MS)) return rest;
 	const nightsEnded = nightsEndedOf(record);

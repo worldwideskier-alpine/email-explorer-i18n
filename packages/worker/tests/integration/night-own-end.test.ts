@@ -122,12 +122,19 @@ describe("a mailbox's night writes how it ended into the run's record", () => {
 
 	it("when the call that began it ends before its own end, as on 2026-10-25", async () => {
 		const owner = endedAfterAppointing();
+		const firing = new Date();
 		await runScheduledMaintenance(
 			{ ...(env as unknown as object), BUCKET: owner.bucket } as never,
-			new Date(),
+			firing,
 			{ pollMs: 20 },
 		);
 		expect(owner.ended()).toBe(true);
+		// The runtime's second call for the firing, five minutes on: it
+		// stands aside, and what it writes keeps what the nights wrote.
+		const second = await runScheduledMaintenance(env as never, firing, {
+			pollMs: 20,
+		});
+		expect(second.stoodAside).toBe(true);
 		expect(await archives()).toHaveLength(1);
 
 		const record = (await readMaintenanceRecord(
@@ -404,6 +411,26 @@ describe("the nights' entries as root's routes give them", () => {
 		expect(
 			maintenanceForRoot(record(), began + 16 * 60_000).nightsEnded,
 		).toEqual(nightsEndedOf(record()));
+	});
+
+	it("count the sixteen minutes from the call that took the night over", () => {
+		const began = Date.parse(NIGHT.toISOString());
+		const takenOver = {
+			...record(),
+			calls: [
+				{ scheduledTime: NIGHT.toISOString(), at: NIGHT.toISOString() },
+				{
+					scheduledTime: NIGHT.toISOString(),
+					at: new Date(began + 5 * 60_000).toISOString(),
+				},
+			],
+		};
+		expect(
+			maintenanceForRoot(takenOver, began + 17 * 60_000).nightsEnded,
+		).toBeUndefined();
+		expect(
+			maintenanceForRoot(takenOver, began + 21 * 60_000).nightsEnded,
+		).toBeDefined();
 	});
 
 	it("name no mailbox, last night's or the history's", async () => {

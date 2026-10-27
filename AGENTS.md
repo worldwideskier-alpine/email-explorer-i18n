@@ -662,8 +662,9 @@ are still checked, by the `tsc` that runs before the worker tests.
   only starts the nights and polls (`nightStatus`) for up to fourteen
   minutes; one still carrying on then is listed in the record as
   `continuing` rather than counted as failed, and counts itself in when it
-  ends (`foldContinuedNight`), which is also why the cron's own writes keep
-  what the nights folded in. `/root` says how many are still going beside
+  ends (`recordNightEnd`), which is also why the cron's own writes keep
+  what the nights folded in; one that ended before the list was written is
+  counted as the list is (`writeMaintenanceRecord`). `/root` says how many are still going beside
   the finished line (`maintenanceContinuing`), so a smaller count does not
   read as the whole night. An alarm the runtime ended partway is run again by the
   runtime; the second attempt finishes the record -- failed, due again
@@ -702,14 +703,18 @@ are still checked, by the `tsc` that runs before the worker tests.
   early listed nothing. Nobody stands in for a call that ends -- a second
   call taking over a live first one is the 10-13 fault again. Each writes its
   own part instead: the call, which nights it began (`appointed`, written
-  once they are begun, with an entry of its own for a night it could not
-  begin) and its end; each night, how it ended (`nights`, `recordNightEnd`),
-  whether or not the call is still there. A record with no end whose
-  appointed nights all wrote theirs is told by them, on `/root`
-  (`nightsEnded`) and by the night check -- root's routes give what they add
-  up to (`maintenanceForRoot`), never the entries, which are kept by mailbox; the call's last duty, finishing
-  deletions left unfinished, waits for the next night, and the check fails
-  for that only when one is waiting. `night-own-end.test.ts`.
+  once they are begun, with an entry of its own for a night whose start was
+  refused -- not one whose start only ran out of time, which may be going)
+  and its end; each night, how it ended (`nights`, `recordNightEnd`, tried
+  again on a lost race or R2's try-again for eight seconds, since nothing
+  else writes it), whether or not the call is still there. A record with no
+  end whose appointed nights all wrote theirs is told by them, on `/root`
+  (`nightsEnded`) and by the night check. Root's routes give what the
+  entries add up to (`maintenanceForRoot`), never the entries, which are
+  kept by mailbox, and only sixteen minutes after the call began, before
+  which it may be alive. The call's last duty, finishing deletions left
+  unfinished, waits for the next night, and the check fails for that only
+  when one is waiting. `night-own-end.test.ts`.
 - **What R2 says to try again is tried again, and nothing else is.** On
   2026-10-15 one read of some 1,700 in the larger mailbox's backup was refused
   with "Reduce your rate of simultaneous reads on the same object. (10058)",

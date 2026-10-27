@@ -616,6 +616,26 @@ describe("a run whose call ended early and whose nights all ended", () => {
 		);
 	});
 
+	// The call can write both passes and then be cut off, in the deletions:
+	// its own counts leave out what carried on, and its spamPurge must not
+	// turn this into "reached the spam purge, and no record of finishing".
+	it("is told by the nights even after the call wrote both passes", () => {
+		const night: MaintenanceRecord = {
+			...endedEarly(),
+			backups: { finishedAt: "2026-10-25T18:14:00.000Z", ran: 1, failed: 0 },
+			spamPurge: {
+				finishedAt: "2026-10-25T18:14:00.000Z",
+				ran: 0,
+				deleted: 0,
+				failed: 0,
+			},
+			continuing: [{ mailbox: "b@example.com", backup: true }],
+		};
+		expect(maintenanceStoppedKey(night)).toBe("root.maintenance.nightsEnded");
+		expect(maintenanceBackedUp(night)).toBe(2);
+		expect(maintenanceDeleted(night)).toBe(4);
+	});
+
 	it("leaves a run that wrote its own end to its own counts", () => {
 		const finished: MaintenanceRecord = {
 			...endedEarly(),
