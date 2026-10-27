@@ -706,7 +706,8 @@ are still checked, by the `tsc` that runs before the worker tests.
   begin) and its end; each night, how it ended (`nights`, `recordNightEnd`),
   whether or not the call is still there. A record with no end whose
   appointed nights all wrote theirs is told by them, on `/root`
-  (`nightsEnded`) and by the night check; the call's last duty, finishing
+  (`nightsEnded`) and by the night check -- root's routes give what they add
+  up to (`maintenanceForRoot`), never the entries, which are kept by mailbox; the call's last duty, finishing
   deletions left unfinished, waits for the next night, and the check fails
   for that only when one is waiting. `night-own-end.test.ts`.
 - **What R2 says to try again is tried again, and nothing else is.** On

@@ -449,18 +449,9 @@ describe("a night whose call ended early", () => {
 					of: 2,
 					messages: 0,
 				},
-				appointed: ["a@example.com", "b@example.com"],
-				nights: {
-					"a@example.com": {
-						endedAt: "2026-10-25T18:01:49.000Z",
-						backup: { state: "ran" },
-						purge: { state: "skipped" },
-					},
-					"b@example.com": {
-						endedAt: "2026-10-25T18:02:48.000Z",
-						backup: { state: "ran" },
-						purge: { state: "ran", deleted: 4 },
-					},
+				nightsEnded: {
+					backups: { ran: 2, failed: 0 },
+					spamPurge: { ran: 1, failed: 0, deleted: 4 },
 				},
 			},
 		});

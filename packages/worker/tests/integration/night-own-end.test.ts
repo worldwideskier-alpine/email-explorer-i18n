@@ -9,8 +9,10 @@ import { backupKeyPrefix } from "../../src/auto-backup";
 import { type NightStatus, nightFor } from "../../src/mailbox-night";
 import {
 	claimNight,
+	MAINTENANCE_HISTORY_KEY,
 	MAINTENANCE_KEY,
 	type MaintenanceRecord,
+	nightsEndedOf,
 	readMaintenanceRecord,
 	recordNightEnd,
 	writeMaintenanceRecord,
@@ -20,6 +22,7 @@ import {
 	authenticatedFetch,
 	createDummyMailbox,
 	mailboxId,
+	personId,
 	testAuthBeforeAll,
 } from "./utils";
 
@@ -235,5 +238,71 @@ describe("a mailbox's night writes how it ended into the run's record", () => {
 			state: "failed",
 			error: expect.stringContaining("Could not be started"),
 		});
+	});
+});
+
+/**
+ * Root's screen reads the run's record through its own routes, which give
+ * counts and times. The nights' entries are kept by mailbox, and which
+ * mailboxes there are is not root's business: the routes add them up.
+ */
+describe("the nights' entries as root's routes give them", () => {
+	const entry = (backup: string, purge: string, deleted?: number) => ({
+		endedAt: "2026-10-25T18:02:00.000Z",
+		backup: { state: backup, ...(backup === "failed" ? { error: "R2" } : {}) },
+		purge: { state: purge, ...(deleted !== undefined ? { deleted } : {}) },
+	});
+	const record = (): MaintenanceRecord =>
+		({
+			startedAt: NIGHT.toISOString(),
+			appointed: ["a@example.com", "b@example.com", "c@example.com"],
+			nights: {
+				"a@example.com": entry("ran", "skipped"),
+				"b@example.com": entry("failed", "ran", 4),
+				"c@example.com": entry("skipped", "ran", 1),
+			},
+		}) as never;
+
+	it("are added up once every night has ended, and not before", () => {
+		expect(nightsEndedOf(record())).toEqual({
+			backups: { considered: 3, ran: 1, failed: 1, reasons: ["R2"] },
+			spamPurge: { considered: 3, ran: 2, failed: 0, deleted: 5 },
+		});
+		const open = record();
+		delete open.nights?.["c@example.com"];
+		expect(nightsEndedOf(open)).toBeUndefined();
+		expect(
+			nightsEndedOf({ ...record(), finishedAt: NIGHT.toISOString() }),
+		).toBeUndefined();
+		const { appointed: _, ...unlisted } = record();
+		expect(nightsEndedOf(unlisted)).toBeUndefined();
+	});
+
+	it("name no mailbox, last night's or the history's", async () => {
+		await testAuthBeforeAll();
+		await runInDurableObject(
+			env.MAILBOX.get(env.MAILBOX.idFromName("AUTH")),
+			async (_instance, state) => {
+				state.storage.sql.exec(
+					"UPDATE app_roles SET root_person_id = ? WHERE id = 1",
+					personId,
+				);
+			},
+		);
+		await bucket().put(MAINTENANCE_KEY, JSON.stringify(record()));
+		await bucket().put(MAINTENANCE_HISTORY_KEY, JSON.stringify([record()]));
+
+		for (const path of ["", "/history"]) {
+			const res = await authenticatedFetch(
+				`http://local.test/api/v1/root/maintenance${path}`,
+			);
+			expect(res.status).toBe(200);
+			const text = await res.text();
+			expect(text).not.toContain("@example.com");
+			const body = JSON.parse(text);
+			expect((Array.isArray(body) ? body[0] : body).nightsEnded).toEqual(
+				nightsEndedOf(record()),
+			);
+		}
 	});
 });

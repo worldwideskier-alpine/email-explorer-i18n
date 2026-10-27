@@ -574,18 +574,9 @@ describe("a run whose call ended early and whose nights all ended", () => {
 			messages: 0,
 			at: "2026-10-25T18:02:36.000Z",
 		},
-		appointed: ["a@example.com", "b@example.com"],
-		nights: {
-			"a@example.com": {
-				endedAt: "2026-10-25T18:01:49.000Z",
-				backup: { state: "ran" },
-				purge: { state: "skipped" },
-			},
-			"b@example.com": {
-				endedAt: "2026-10-25T18:02:48.000Z",
-				backup: { state: "ran" },
-				purge: { state: "ran", deleted: 4 },
-			},
+		nightsEnded: {
+			backups: { ran: 2, failed: 0 },
+			spamPurge: { ran: 1, failed: 0, deleted: 4 },
 		},
 	});
 
@@ -601,13 +592,9 @@ describe("a run whose call ended early and whose nights all ended", () => {
 
 	it("says what failed, as the night said it", () => {
 		const night = endedEarly();
-		night.nights = {
-			...night.nights,
-			"b@example.com": {
-				endedAt: "2026-10-25T18:02:48.000Z",
-				backup: { state: "failed", error: "out-of-time" },
-				purge: { state: "skipped" },
-			},
+		night.nightsEnded = {
+			backups: { ran: 1, failed: 1, reasons: ["out-of-time"] },
+			spamPurge: { ran: 0, failed: 0, deleted: 0 },
 		};
 		expect(maintenanceStoppedKey(night)).toBe(
 			"root.maintenance.finishedWithError",
@@ -618,10 +605,8 @@ describe("a run whose call ended early and whose nights all ended", () => {
 		expect(maintenanceBackedUp(night)).toBe(1);
 	});
 
-	it("is told as before while a night has not ended", () => {
-		const night = endedEarly();
-		const { "b@example.com": _, ...one } = night.nights ?? {};
-		night.nights = one;
+	it("is told as before when the Worker had no nights to add up", () => {
+		const { nightsEnded: _, ...night } = endedEarly();
 		expect(maintenanceNightsEnded(night)).toBeUndefined();
 		expect(maintenanceStoppedKey(night)).toBe(
 			"root.maintenance.killedInBackup",

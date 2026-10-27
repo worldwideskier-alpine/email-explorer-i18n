@@ -363,6 +363,75 @@ function foldInto(
 	};
 }
 
+/** One pass as a run's nights wrote it: counts, and why some failed. */
+export interface NightsPass {
+	considered: number;
+	ran: number;
+	failed: number;
+	deleted?: number;
+	reasons?: string[];
+}
+
+/**
+ * Both passes as the nights wrote them, for a run whose own call never wrote
+ * its end and every one of whose appointed nights did. Undefined otherwise:
+ * a run that wrote its end is told by its own counts, and one whose nights
+ * have not all ended -- or that never said which it began -- by where it got.
+ */
+export function nightsEndedOf(
+	record: MaintenanceRecord,
+): { backups: NightsPass; spamPurge: NightsPass } | undefined {
+	if (record.finishedAt || !Array.isArray(record.appointed)) return undefined;
+	const ended = record.appointed.map((id) => record.nights?.[id]);
+	if (ended.some((night) => !night)) return undefined;
+	const outcomes = ended as NightOutcome[];
+	const pass = (part: "backup" | "purge"): NightsPass => {
+		let reasons: string[] | undefined;
+		let ran = 0;
+		let failed = 0;
+		for (const night of outcomes) {
+			const { state, error } = night[part];
+			if (state === "ran") ran++;
+			else if (state !== "skipped") {
+				failed++;
+				reasons = withReason(reasons, error);
+			}
+		}
+		return {
+			considered: outcomes.length,
+			ran,
+			failed,
+			...(reasons ? { reasons } : {}),
+		};
+	};
+	return {
+		backups: pass("backup"),
+		spamPurge: {
+			...pass("purge"),
+			deleted: outcomes.reduce(
+				(sum, night) => sum + (night.purge.deleted ?? 0),
+				0,
+			),
+		},
+	};
+}
+
+/**
+ * The record as root's screen gets it: the nights' entries are keyed by
+ * mailbox, and root's routes give counts and times -- which mailboxes there
+ * are is not root's business. So they are replaced by what they add up to.
+ */
+export function maintenanceForRoot(record: MaintenanceRecord): Omit<
+	MaintenanceRecord,
+	"appointed" | "nights"
+> & {
+	nightsEnded?: { backups: NightsPass; spamPurge: NightsPass };
+} {
+	const { appointed: _, nights: __, ...rest } = record;
+	const nightsEnded = nightsEndedOf(record);
+	return nightsEnded ? { ...rest, nightsEnded } : rest;
+}
+
 /** A failure's reason added to those already kept: once each, three at most. */
 export function withReason(
 	reasons: string[] | undefined,

@@ -41,6 +41,7 @@ import {
 	rememberUnfinishedDeletion,
 } from "../mailbox-destroy";
 import {
+	maintenanceForRoot,
 	readMaintenanceHistory,
 	readMaintenanceRecord,
 } from "../maintenance-record";
@@ -147,6 +148,13 @@ const MaintenanceRecordSchema = z.object({
 	backupProgress: MaintenanceProgressSchema.optional(),
 	backups: MaintenancePhaseSchema.optional(),
 	spamPurge: MaintenancePhaseSchema.optional(),
+	// A run whose own call wrote no end, told by what its nights wrote.
+	nightsEnded: z
+		.object({
+			backups: MaintenancePhaseSchema.partial(),
+			spamPurge: MaintenancePhaseSchema.partial(),
+		})
+		.optional(),
 });
 
 /**
@@ -178,7 +186,8 @@ export class GetMaintenance extends OpenAPIRoute {
 		const session = requireRoot(c);
 		if (session instanceof Response) return session;
 
-		return c.json(await readMaintenanceRecord(c.env));
+		const record = await readMaintenanceRecord(c.env);
+		return c.json(record && maintenanceForRoot(record));
 	}
 }
 
@@ -207,7 +216,9 @@ export class GetMaintenanceHistory extends OpenAPIRoute {
 	async handle(c: AppContext) {
 		const session = requireRoot(c);
 		if (session instanceof Response) return session;
-		return c.json(await readMaintenanceHistory(c.env));
+		return c.json(
+			(await readMaintenanceHistory(c.env)).map(maintenanceForRoot),
+		);
 	}
 }
 
