@@ -1,0 +1,93 @@
+# Temporary: reads what the night of 2026-10-25 left behind -- its cron call
+# was cut off and nobody recorded its end -- from the bucket
+# -- the run's record, the history of the nights before it, and each
+# mailbox's backup and purge result -- to find why backups failed. Every
+# mailbox address is replaced by a label before anything is printed, and the
+# output goes through withhold.mjs as well. Runs on the working branch only,
+# and is removed once it has answered.
+name: Night probe
+on:
+  push:
+    branches: [claude/github-settings-migration-t81k5b]
+    paths: ['.github/workflows/night-probe.yml']
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Read the nights
+        working-directory: packages/worker/dev
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -o pipefail
+          cat > "$RUNNER_TEMP/night.mjs" <<'JS'
+          import { execFileSync } from "node:child_process";
+          const bucket = execFileSync("node", ["../scripts/bucket-name.mjs"]).toString().trim();
+          const get = (key) => {
+            try {
+              const out = execFileSync("npx", ["-y", "wrangler@4.143.0", "r2", "object", "get", `${bucket}/${key}`, "--remote", "--pipe"], { stdio: ["ignore", "pipe", "ignore"], maxBuffer: 64 * 1024 * 1024 });
+              return JSON.parse(out.toString());
+            } catch (e) { return { unreadable: key, why: String(e.status ?? e.message).slice(0, 80) }; }
+          };
+          const listed = async (prefix) => {
+            const all = [];
+            let cursor = "";
+            for (let page = 0; page < 20; page++) {
+              const url = `https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}/r2/buckets/${bucket}/objects?prefix=${encodeURIComponent(prefix)}&per_page=1000${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`;
+              const res = await fetch(url, { headers: { Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}` } });
+              const body = await res.json().catch(() => ({}));
+              if (!res.ok) return { refused: res.status, errors: (body.errors ?? []).map((e) => e.code) };
+              all.push(...(body.result ?? []).map((o) => ({ key: o.key, size: o.size, uploaded: o.last_modified })));
+              cursor = body.result_info?.cursor ?? "";
+              if (!body.result_info?.is_truncated || !cursor) break;
+            }
+            return all;
+          };
+          const ids = [];
+          const label = (id) => { if (!ids.includes(id)) ids.push(id); return `mailbox-${ids.indexOf(id) + 1}`; };
+          const keys = await listed("mailboxes/");
+          if (Array.isArray(keys)) {
+            for (const o of keys) if (o.key.endsWith(".json")) label(o.key.slice("mailboxes/".length, -".json".length));
+          } else console.log("listing refused:", JSON.stringify(keys));
+          // Every string: a known mailbox becomes its label, any other address
+          // is struck out, wherever it sits in the record.
+          const clean = (v) => {
+            if (typeof v === "string") {
+              let s = v;
+              try { s = decodeURIComponent(s); } catch {}
+              for (const id of ids) s = s.split(id).join(label(id));
+              return s.replace(/[^\s"'<>()]+(@|%40)[^\s"'<>()]+/gi, "(address)");
+            }
+            if (Array.isArray(v)) return v.map(clean);
+            if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [clean(k), clean(x)]));
+            return v;
+          };
+          console.log("=== last run");
+          { const r = get("maintenance/last-run.json"); console.log(JSON.stringify(clean({ startedAt: r?.startedAt, calls: r?.calls, backups: r?.backups, spamPurge: r?.spamPurge }), null, 1)); }
+          const history = get("maintenance/history.json");
+          const runs = Array.isArray(history) ? history : (history?.runs ?? history);
+          // Newest first: the record moved in last is at the front. Only
+          // what says why a pass failed, and the calls.
+          const brief = (r) => ({ startedAt: r?.startedAt, finishedAt: r?.finishedAt, owner: r?.owner, calls: r?.calls, backupProgress: r?.backupProgress, backups: r?.backups, spamPurge: r?.spamPurge, continuing: r?.continuing });
+          console.log("=== history (newest 4)");
+          console.log(JSON.stringify(clean(Array.isArray(runs) ? runs.slice(0, 4).map(brief) : runs), null, 1));
+          if (process.env.ONLY_HISTORY) process.exit(0);
+          const carry = await listed("backup-carry/");
+          console.log("=== paused backups left behind:", JSON.stringify(clean(carry)));
+          console.log("=== each mailbox");
+          for (const id of [...ids]) {
+            const s = get(`mailboxes/${id}.json`);
+            console.log(JSON.stringify(clean({ mailbox: label(id), autoBackup: s?.autoBackup }), null, 1));
+            const archives = await listed(`backups/${encodeURIComponent(id)}/`);
+            const recent = Array.isArray(archives) ? archives.slice(-5).map((o) => ({ key: o.key, size: o.size, uploaded: o.uploaded })) : archives;
+            console.log(JSON.stringify(clean({ mailbox: label(id), recent }), null, 1));
+          }
+          JS
+          node "$RUNNER_TEMP/night.mjs" 2>&1 | node ../scripts/withhold.mjs
