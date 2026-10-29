@@ -17,6 +17,14 @@ set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 base="${1:-origin/main}"
 
+# The skill reads `origin/HEAD...`, and a clone made by fetching one branch
+# has no origin/HEAD: the skill stopped there and the review was done by
+# hand from the diff. Named locally after the base; nothing is fetched.
+if ! git symbolic-ref -q refs/remotes/origin/HEAD > /dev/null \
+	&& [[ "$base" == origin/* ]]; then
+	git remote set-head origin "${base#origin/}"
+fi
+
 REPLY_RULES=off claude -p "Run the security-review skill: complete a security review of the pending changes on the current branch, that is \`git diff ${base}...HEAD\`. Report only findings at confidence 8 of 10 or above, each with its file, line, a concrete exploit scenario and a fix. If there are none, say so plainly." \
 	--output-format stream-json --verbose \
 	| node "$here/security-review-run.mjs"
