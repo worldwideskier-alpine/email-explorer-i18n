@@ -219,7 +219,9 @@ describe("a forwarded message's date", () => {
 		await settle();
 
 		const editor = host.querySelector('[contenteditable="true"]');
-		expect(editor?.querySelector("img")).toBeNull();
+		// ProseMirror's own caret marker is an <img> with no source; it is
+		// drawn in the editor and never part of the message.
+		expect(editor?.querySelector("img:not(.ProseMirror-separator)")).toBeNull();
 		expect(editor?.textContent).toContain('<img src="https://example.net');
 
 		await address("bob@example.net");

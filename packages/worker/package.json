@@ -39,17 +39,17 @@
 	"dependencies": {
 		"@pushforge/builder": "^2.0.5",
 		"chanfana": "3.4.0",
-		"hono": "4.13.11",
+		"hono": "4.13.13",
 		"postal-mime": "^4.1.4",
-		"workers-qb": "^1.15.0",
+		"workers-qb": "^1.16.0",
 		"zod": "^4.6.6"
 	},
 	"devDependencies": {
-		"@cloudflare/vitest-pool-workers": "^0.22.0",
-		"@cloudflare/workers-types": "^5.20260929.1",
+		"@cloudflare/vitest-pool-workers": "^0.23.0",
+		"@cloudflare/workers-types": "^5.20261024.1",
 		"@types/node": "24.10.1",
 		"typescript": "5.9.3",
 		"vitest": "^4.1.12",
-		"wrangler": "^4.143.0"
+		"wrangler": "^4.152.0"
 	}
 }

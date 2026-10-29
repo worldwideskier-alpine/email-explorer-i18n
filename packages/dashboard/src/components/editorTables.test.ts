@@ -68,8 +68,10 @@ describe("a quoted table's spans", () => {
 		const { host, app } = await drawn(
 			'<table><tr><td colspan="x" rowspan="0">a</td></tr></table>',
 		);
-		expect(cell(host).getAttribute("colspan")).toBe("1");
-		expect(cell(host).getAttribute("rowspan")).toBe("1");
+		// One is the default, which the table extension leaves unwritten
+		// since 3.32 -- and an absent span is one to a browser as well.
+		expect(cell(host).getAttribute("colspan") ?? "1").toBe("1");
+		expect(cell(host).getAttribute("rowspan") ?? "1").toBe("1");
 		app.unmount();
 	});
 });

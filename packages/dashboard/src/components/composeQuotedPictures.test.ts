@@ -168,7 +168,11 @@ const sentBy = (fn: typeof replyToEmail) =>
 describe("a quoted picture", () => {
 	it("shows in the editor, by its address here", async () => {
 		await openComposer({ mode: "forward", originalEmail: PARENT });
-		const img = host.querySelector(".ProseMirror img, [contenteditable] img");
+		// Not ProseMirror's own caret marker, an <img> with no source that is
+		// drawn in the editor and never part of the message.
+		const img = host.querySelector(
+			"[contenteditable] img:not(.ProseMirror-separator)",
+		);
 		expect(img?.getAttribute("src")).toBe(PATH);
 		expect(host.innerHTML).not.toContain("cid:");
 	});
@@ -244,7 +248,9 @@ describe("a quoted picture", () => {
 			mode: "reply",
 			originalEmail: { ...PARENT, folder_id: "spam" },
 		});
-		expect(host.querySelector("[contenteditable] img")).toBeNull();
+		expect(
+			host.querySelector("[contenteditable] img:not(.ProseMirror-separator)"),
+		).toBeNull();
 		await press("compose.send");
 
 		expect(getAttachment).not.toHaveBeenCalled();
