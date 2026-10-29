@@ -134,6 +134,7 @@
 		"moveToFolder": "Премести во папка",
 		"attachments": "Прилози",
 		"download": "Преземи",
+		"openInNewTab": "Отвори во нова картичка",
 		"viewSource": "Прикажи ја изворната порака",
 		"viewSourceLoading": "Се вчитува...",
 		"viewSourceFailed": "Изворот на пораката не можеше да се вчита.",

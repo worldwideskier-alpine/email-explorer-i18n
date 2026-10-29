@@ -3,6 +3,7 @@ import { type Context, Hono } from "hono";
 import PostalMime from "postal-mime";
 import { z } from "zod";
 import { getResendKeySource, setResendApiKey } from "./app-settings";
+import { opensInline } from "./attachment-inline";
 import { backupKeyPrefix } from "./auto-backup";
 import { listBackups } from "./backup-writer";
 import { classifyWithClaude } from "./claude-spam-filter";
@@ -226,6 +227,8 @@ const AttachmentSchema = z.object({
 	size: z.number(),
 	content_id: z.string().optional(),
 	disposition: z.string().optional(),
+	/** Served to be shown in the browser; see attachment-inline.ts. */
+	opensInline: z.boolean(),
 });
 
 const EmailSchema = EmailMetadataSchema.extend({
@@ -926,7 +929,17 @@ class GetEmail extends OpenAPIRoute {
 			return c.json({ error: "Email not found" }, 404);
 		}
 
-		return c.json(email);
+		// The screen offers "open in a new tab" for exactly what the
+		// attachment route serves inline, so it is decided in one place.
+		return c.json({
+			...email,
+			attachments: email.attachments.map(
+				(attachment: { mimetype?: string | null }) => ({
+					...attachment,
+					opensInline: opensInline(attachment.mimetype),
+				}),
+			),
+		});
 	}
 }
 
@@ -1664,9 +1677,14 @@ class GetAttachment extends OpenAPIRoute {
 		const asciiName = downloadName.replace(/[^\x20-\x7e]|["\\]/g, "_");
 		const headers = new Headers();
 		headers.set("Content-Type", safeMediaType(attachment.mimetype));
+		// A PDF or a picture is shown, and anything else saved; see
+		// attachment-inline.ts for why no other type is.
+		const disposition = opensInline(attachment.mimetype)
+			? "inline"
+			: "attachment";
 		headers.set(
 			"Content-Disposition",
-			`attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(downloadName)}`,
+			`${disposition}; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(downloadName)}`,
 		);
 		// The type is the sender's too, and without this a browser may read
 		// the bytes as something else -- an attachment that says text/plain

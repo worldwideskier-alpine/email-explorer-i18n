@@ -134,6 +134,7 @@
 		"moveToFolder": "移动到文件夹",
 		"attachments": "附件",
 		"download": "下载",
+		"openInNewTab": "在新标签页中打开",
 		"viewSource": "查看原始邮件",
 		"viewSourceLoading": "正在加载…",
 		"viewSourceFailed": "无法加载原始邮件的源码。",

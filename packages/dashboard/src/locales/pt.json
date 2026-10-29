@@ -134,6 +134,7 @@
 		"moveToFolder": "Mover para uma pasta",
 		"attachments": "Anexos",
 		"download": "Transferir",
+		"openInNewTab": "Abrir num novo separador",
 		"viewSource": "Ver a mensagem original",
 		"viewSourceLoading": "A carregar...",
 		"viewSourceFailed": "Não foi possível carregar a mensagem original.",

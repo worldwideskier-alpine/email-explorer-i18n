@@ -134,6 +134,7 @@
 		"moveToFolder": "Pindahkan ke folder",
 		"attachments": "Lampiran",
 		"download": "Unduh",
+		"openInNewTab": "Buka di tab baru",
 		"viewSource": "Lihat pesan asli",
 		"viewSourceLoading": "Memuat...",
 		"viewSourceFailed": "Sumber pesan asli tidak dapat dimuat.",

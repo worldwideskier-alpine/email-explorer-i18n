@@ -134,6 +134,7 @@
 		"moveToFolder": "Bog go fillteán",
 		"attachments": "Ceangaltáin",
 		"download": "Íoslódáil",
+		"openInNewTab": "Oscail i gcluaisín nua",
 		"viewSource": "Féach ar an mbunteachtaireacht",
 		"viewSourceLoading": "Á luchtú...",
 		"viewSourceFailed": "Níorbh fhéidir foinse na bunteachtaireachta a luchtú.",

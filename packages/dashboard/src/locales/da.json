@@ -134,6 +134,7 @@
 		"moveToFolder": "Flyt til mappe",
 		"attachments": "Vedhæftede filer",
 		"download": "Hent",
+		"openInNewTab": "Åbn på ny fane",
 		"viewSource": "Vis den oprindelige besked",
 		"viewSourceLoading": "Indlæser...",
 		"viewSourceFailed": "Den oprindelige besked kunne ikke indlæses.",

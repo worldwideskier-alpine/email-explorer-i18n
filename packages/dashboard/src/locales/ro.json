@@ -134,6 +134,7 @@
 		"moveToFolder": "Mută în folder",
 		"attachments": "Atașamente",
 		"download": "Descarcă",
+		"openInNewTab": "Deschide într-o filă nouă",
 		"viewSource": "Vezi mesajul original",
 		"viewSourceLoading": "Se încarcă...",
 		"viewSourceFailed": "Sursa mesajului original nu a putut fi încărcată.",

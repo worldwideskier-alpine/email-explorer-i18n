@@ -134,6 +134,7 @@
 		"moveToFolder": "Déplacer vers un dossier",
 		"attachments": "Pièces jointes",
 		"download": "Télécharger",
+		"openInNewTab": "Ouvrir dans un nouvel onglet",
 		"viewSource": "Afficher le message d'origine",
 		"viewSourceLoading": "Chargement...",
 		"viewSourceFailed": "Impossible de charger le message d'origine.",

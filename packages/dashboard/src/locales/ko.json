@@ -134,6 +134,7 @@
 		"moveToFolder": "폴더로 옮기기",
 		"attachments": "첨부 파일",
 		"download": "내려받기",
+		"openInNewTab": "새 탭에서 열기",
 		"viewSource": "원본 메일 보기",
 		"viewSourceLoading": "가져오는 중...",
 		"viewSourceFailed": "원본 메일의 소스를 가져오지 못했습니다.",

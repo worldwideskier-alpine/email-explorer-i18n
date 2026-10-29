@@ -134,6 +134,7 @@
 		"moveToFolder": "Μετακίνηση σε φάκελο",
 		"attachments": "Συνημμένα",
 		"download": "Λήψη",
+		"openInNewTab": "Άνοιγμα σε νέα καρτέλα",
 		"viewSource": "Προβολή αρχικού μηνύματος",
 		"viewSourceLoading": "Φόρτωση...",
 		"viewSourceFailed": "Δεν ήταν δυνατή η φόρτωση του κώδικα του αρχικού μηνύματος.",

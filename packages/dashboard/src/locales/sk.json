@@ -134,6 +134,7 @@
 		"moveToFolder": "Presunúť do priečinka",
 		"attachments": "Prílohy",
 		"download": "Stiahnuť",
+		"openInNewTab": "Otvoriť na novej karte",
 		"viewSource": "Zobraziť pôvodnú správu",
 		"viewSourceLoading": "Načítavanie...",
 		"viewSourceFailed": "Zdroj pôvodnej správy sa nepodarilo načítať.",

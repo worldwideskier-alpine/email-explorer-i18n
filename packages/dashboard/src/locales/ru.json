@@ -134,6 +134,7 @@
 		"moveToFolder": "Переместить в папку",
 		"attachments": "Вложения",
 		"download": "Скачать",
+		"openInNewTab": "Открыть в новой вкладке",
 		"viewSource": "Показать исходное письмо",
 		"viewSourceLoading": "Загрузка...",
 		"viewSourceFailed": "Не удалось загрузить исходный текст письма.",

@@ -134,6 +134,7 @@
 		"moveToFolder": "საქაღალდეში გადატანა",
 		"attachments": "დანართები",
 		"download": "ჩამოტვირთვა",
+		"openInNewTab": "ახალ ჩანართში გახსნა",
 		"viewSource": "ორიგინალი წერილის ნახვა",
 		"viewSourceLoading": "იტვირთება...",
 		"viewSourceFailed": "ორიგინალი წერილის წყაროს ჩატვირთვა ვერ მოხერხდა.",

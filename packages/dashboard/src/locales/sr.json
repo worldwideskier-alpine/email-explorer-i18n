@@ -134,6 +134,7 @@
 		"moveToFolder": "Премести у фасциклу",
 		"attachments": "Прилози",
 		"download": "Преузми",
+		"openInNewTab": "Отвори на новој картици",
 		"viewSource": "Прикажи изворну поруку",
 		"viewSourceLoading": "Учитавање...",
 		"viewSourceFailed": "Извор изворне поруке није могао да се учита.",

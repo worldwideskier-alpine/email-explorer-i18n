@@ -134,6 +134,7 @@
 		"moveToFolder": "Klasöre taşı",
 		"attachments": "Ekler",
 		"download": "İndir",
+		"openInNewTab": "Yeni sekmede aç",
 		"viewSource": "Özgün iletiyi görüntüle",
 		"viewSourceLoading": "Yükleniyor...",
 		"viewSourceFailed": "Özgün iletinin kaynağı yüklenemedi.",

@@ -134,6 +134,7 @@
 		"moveToFolder": "ย้ายไปโฟลเดอร์",
 		"attachments": "ไฟล์แนบ",
 		"download": "ดาวน์โหลด",
+		"openInNewTab": "เปิดในแท็บใหม่",
 		"viewSource": "ดูข้อความต้นฉบับ",
 		"viewSourceLoading": "กำลังโหลด...",
 		"viewSourceFailed": "โหลดต้นฉบับของข้อความไม่สำเร็จ",

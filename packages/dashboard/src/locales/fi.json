@@ -134,6 +134,7 @@
 		"moveToFolder": "Siirrä kansioon",
 		"attachments": "Liitteet",
 		"download": "Lataa",
+		"openInNewTab": "Avaa uudella välilehdellä",
 		"viewSource": "Näytä alkuperäinen viesti",
 		"viewSourceLoading": "Ladataan...",
 		"viewSourceFailed": "Alkuperäistä viestiä ei voitu ladata.",

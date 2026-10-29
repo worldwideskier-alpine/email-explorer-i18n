@@ -134,6 +134,7 @@
 		"moveToFolder": "Chuyển vào thư mục",
 		"attachments": "Tệp đính kèm",
 		"download": "Tải xuống",
+		"openInNewTab": "Mở trong thẻ mới",
 		"viewSource": "Xem thư gốc",
 		"viewSourceLoading": "Đang tải...",
 		"viewSourceFailed": "Không tải được mã nguồn của thư gốc.",

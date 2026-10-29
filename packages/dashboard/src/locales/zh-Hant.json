@@ -134,6 +134,7 @@
 		"moveToFolder": "移動到資料夾",
 		"attachments": "附件",
 		"download": "下載",
+		"openInNewTab": "在新分頁中開啟",
 		"viewSource": "檢視原始郵件",
 		"viewSourceLoading": "正在載入…",
 		"viewSourceFailed": "無法載入原始郵件的原始碼。",

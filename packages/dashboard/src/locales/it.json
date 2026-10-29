@@ -134,6 +134,7 @@
 		"moveToFolder": "Sposta in una cartella",
 		"attachments": "Allegati",
 		"download": "Scarica",
+		"openInNewTab": "Apri in nuova scheda",
 		"viewSource": "Mostra il messaggio originale",
 		"viewSourceLoading": "Caricamento...",
 		"viewSourceFailed": "Impossibile caricare il messaggio originale.",

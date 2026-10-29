@@ -768,6 +768,19 @@ are still checked, by the `tsc` that runs before the worker tests.
   while ingestion still has it, pairing the parser's attachments with the
   parts of the message — and recording nothing at all when those two readings
   disagree, because a wrong charset is a worse answer than no charset.
+- **An attachment is shown in the browser only if it is a PDF or a
+  picture.** Every other one -- an archive, a document, text, HTML, SVG -- is
+  served as a download (`attachment-inline.ts`, which decides both the
+  `Content-Disposition` and the `opensInline` flag the screen offers "open in
+  a new tab" by). Shown inline, an attachment is the sender's file rendered at
+  this dashboard's origin: measured in Chromium, an HTML or SVG file shown
+  that way ran its script and read the session the dashboard keeps in
+  storage. Decided by the type it is served with, never by its name, and with
+  `nosniff` HTML sent as image/png is a broken picture, measured. The new tab
+  is a plain link, signed in by the session cookie that reading an
+  attachment accepts (`cookieSignsIn`); the installed app opens it where no
+  cookie goes, so it is not offered there. `attachment-inline.test.ts`,
+  `openInNewTab.test.ts`.
 - **The second-stage spam check runs in the Durable Object**, not in the
   `email()` handler, and that is about geography rather than storage. A Worker
   runs at the data centre that received the message and Email Routing's MX
@@ -1226,10 +1239,16 @@ all of these pass, in this order:
    gitleaks does not decode (it decodes base64, hex, percent and unicode
    escapes). Those are for review to catch.
    `preMergeKeys.test.ts` holds the script to all of this.
-3. `/security-review` in a session other than the one that made the change
-   (`REPLY_RULES=off claude -p "/security-review"` on the branch is one; see
-   "Replies to the owner"). A finding judged a false positive is explained in
-   the pull request's description.
+3. `/security-review` in a session other than the one that made the change:
+   `.claude/security-review.sh` on the branch. Not the bare
+   `claude -p "/security-review"`: on Claude Code 2.1.312 that ran no turn at
+   all -- no token, 0.3 s -- and printed nothing with exit status 0, which
+   reads exactly like a review that found nothing. The script asks for the
+   skill in the prompt with the diff named, and reads the session's
+   transcript for whether it ran and gave a verdict
+   (`security-review-verdict.mjs`, `security-review-verdict.test.ts`); a run
+   that reviewed nothing exits 1. A finding judged a false positive is
+   explained in the pull request's description.
 4. For a change to a boundary, authentication or key handling, Claude
    Security over that change (`/claude-security`, "scan changes").
 

@@ -134,6 +134,7 @@
 		"moveToFolder": "In Ordner verschieben",
 		"attachments": "Anhänge",
 		"download": "Herunterladen",
+		"openInNewTab": "In neuem Tab öffnen",
 		"viewSource": "Original anzeigen",
 		"viewSourceLoading": "Wird geladen...",
 		"viewSourceFailed": "Die ursprüngliche Nachrichtenquelle konnte nicht geladen werden.",

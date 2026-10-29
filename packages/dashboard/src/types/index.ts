@@ -117,6 +117,11 @@ export interface Attachment {
 	size: number;
 	content_id?: string;
 	disposition?: string;
+	/**
+	 * The Worker serves it to be shown -- a PDF or a picture, and nothing
+	 * else (attachment-inline.ts) -- so it can be opened in a tab of its own.
+	 */
+	opensInline?: boolean;
 }
 
 export interface Folder {
