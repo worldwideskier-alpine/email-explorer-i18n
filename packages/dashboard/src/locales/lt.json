@@ -134,6 +134,7 @@
 		"moveToFolder": "Perkelti į aplanką",
 		"attachments": "Priedai",
 		"download": "Atsisiųsti",
+		"openInNewTab": "Atidaryti naujame skirtuke",
 		"viewSource": "Peržiūrėti pradinį laišką",
 		"viewSourceLoading": "Įkeliama...",
 		"viewSourceFailed": "Nepavyko įkelti pradinio laiško pirminio teksto.",

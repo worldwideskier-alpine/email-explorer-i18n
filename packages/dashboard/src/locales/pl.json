@@ -134,6 +134,7 @@
 		"moveToFolder": "Przenieś do folderu",
 		"attachments": "Załączniki",
 		"download": "Pobierz",
+		"openInNewTab": "Otwórz w nowej karcie",
 		"viewSource": "Pokaż wiadomość źródłową",
 		"viewSourceLoading": "Wczytywanie...",
 		"viewSourceFailed": "Nie udało się wczytać wiadomości źródłowej.",

@@ -134,6 +134,7 @@
 		"moveToFolder": "Flytt til mappe",
 		"attachments": "Vedlegg",
 		"download": "Last ned",
+		"openInNewTab": "Åpne i ny fane",
 		"viewSource": "Vis den opprinnelige meldingen",
 		"viewSourceLoading": "Henter ...",
 		"viewSourceFailed": "Kildekoden til den opprinnelige meldingen kunne ikke hentes.",

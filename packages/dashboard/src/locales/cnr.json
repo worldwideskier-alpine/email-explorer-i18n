@@ -134,6 +134,7 @@
 		"moveToFolder": "Premjesti u fasciklu",
 		"attachments": "Prilozi",
 		"download": "Preuzmi",
+		"openInNewTab": "Otvori u novoj kartici",
 		"viewSource": "Prikaži izvornu poruku",
 		"viewSourceLoading": "Učitavanje...",
 		"viewSourceFailed": "Izvor izvorne poruke nije bilo moguće učitati.",

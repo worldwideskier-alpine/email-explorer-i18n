@@ -134,6 +134,7 @@
 		"moveToFolder": "Premakni v mapo",
 		"attachments": "Priloge",
 		"download": "Prenesi",
+		"openInNewTab": "Odpri v novem zavihku",
 		"viewSource": "Prikaži izvirno sporočilo",
 		"viewSourceLoading": "Nalaganje...",
 		"viewSourceFailed": "Izvorne kode izvirnega sporočila ni bilo mogoče naložiti.",

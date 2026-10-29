@@ -134,6 +134,7 @@
 		"moveToFolder": "搬去資料夾",
 		"attachments": "附件",
 		"download": "下載",
+		"openInNewTab": "喺新分頁打開",
 		"viewSource": "睇原本封信",
 		"viewSourceLoading": "攞緊…",
 		"viewSourceFailed": "攞唔到原本封信嘅原始碼。",

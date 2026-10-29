@@ -134,6 +134,7 @@
 		"moveToFolder": "Áthelyezés mappába",
 		"attachments": "Mellékletek",
 		"download": "Letöltés",
+		"openInNewTab": "Megnyitás új lapon",
 		"viewSource": "Eredeti üzenet megtekintése",
 		"viewSourceLoading": "Betöltés...",
 		"viewSourceFailed": "Az eredeti üzenet forrását nem sikerült betölteni.",

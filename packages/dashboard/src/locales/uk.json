@@ -134,6 +134,7 @@
 		"moveToFolder": "Перемістити до теки",
 		"attachments": "Вкладення",
 		"download": "Завантажити",
+		"openInNewTab": "Відкрити в новій вкладці",
 		"viewSource": "Переглянути початковий лист",
 		"viewSourceLoading": "Завантаження...",
 		"viewSourceFailed": "Не вдалося завантажити початковий текст листа.",

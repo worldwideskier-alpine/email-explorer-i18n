@@ -134,6 +134,7 @@
 		"moveToFolder": "Move to folder",
 		"attachments": "Attachments",
 		"download": "Download",
+		"openInNewTab": "Open in a new tab",
 		"viewSource": "View original message",
 		"viewSourceLoading": "Loading...",
 		"viewSourceFailed": "Failed to load the original message source.",

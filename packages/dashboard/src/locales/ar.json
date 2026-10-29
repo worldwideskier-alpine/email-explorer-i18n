@@ -134,6 +134,7 @@
 		"moveToFolder": "نقل إلى مجلد",
 		"attachments": "المرفقات",
 		"download": "تنزيل",
+		"openInNewTab": "فتح في علامة تبويب جديدة",
 		"viewSource": "عرض الرسالة الأصلية",
 		"viewSourceLoading": "جارٍ التحميل...",
 		"viewSourceFailed": "تعذّر تحميل مصدر الرسالة الأصلية.",

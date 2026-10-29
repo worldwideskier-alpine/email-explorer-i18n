@@ -134,6 +134,7 @@
 		"moveToFolder": "ຍ້າຍໄປໂຟນເດີ",
 		"attachments": "ໄຟລ໌ແນບ",
 		"download": "ດາວໂຫຼດ",
+		"openInNewTab": "ເປີດໃນແຖບໃໝ່",
 		"viewSource": "ເບິ່ງຂໍ້ຄວາມຕົ້ນສະບັບ",
 		"viewSourceLoading": "ກຳລັງດຶງ...",
 		"viewSourceFailed": "ດຶງຕົ້ນສະບັບຂອງຂໍ້ຄວາມບໍ່ສຳເລັດ.",

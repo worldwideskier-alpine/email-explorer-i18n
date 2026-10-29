@@ -134,6 +134,7 @@
 		"moveToFolder": "Mou a una carpeta",
 		"attachments": "Adjuncions",
 		"download": "Baixa",
+		"openInNewTab": "Obre en una pestanya nova",
 		"viewSource": "Mostra el missatge original",
 		"viewSourceLoading": "S'està carregant...",
 		"viewSourceFailed": "No s'ha pogut carregar el codi font del missatge original.",

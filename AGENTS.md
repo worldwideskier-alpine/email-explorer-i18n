@@ -768,6 +768,19 @@ are still checked, by the `tsc` that runs before the worker tests.
   while ingestion still has it, pairing the parser's attachments with the
   parts of the message — and recording nothing at all when those two readings
   disagree, because a wrong charset is a worse answer than no charset.
+- **An attachment is shown in the browser only if it is a PDF or a
+  picture.** Every other one -- an archive, a document, text, HTML, SVG -- is
+  served as a download (`attachment-inline.ts`, which decides both the
+  `Content-Disposition` and the `opensInline` flag the screen offers "open in
+  a new tab" by). Shown inline, an attachment is the sender's file rendered at
+  this dashboard's origin: measured in Chromium, an HTML or SVG file shown
+  that way ran its script and read the session the dashboard keeps in
+  storage. Decided by the type it is served with, never by its name, and with
+  `nosniff` HTML sent as image/png is a broken picture, measured. The new tab
+  is a plain link, signed in by the session cookie that reading an
+  attachment accepts (`cookieSignsIn`); the installed app opens it where no
+  cookie goes, so it is not offered there. `attachment-inline.test.ts`,
+  `openInNewTab.test.ts`.
 - **The second-stage spam check runs in the Durable Object**, not in the
   `email()` handler, and that is about geography rather than storage. A Worker
   runs at the data centre that received the message and Email Routing's MX

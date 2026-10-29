@@ -134,6 +134,7 @@
 		"moveToFolder": "フォルダに移動",
 		"attachments": "添付ファイル",
 		"download": "ダウンロード",
+		"openInNewTab": "新しいタブで開く",
 		"viewSource": "元のメッセージを表示",
 		"viewSourceLoading": "読み込み中...",
 		"viewSourceFailed": "元のメッセージソースを読み込めませんでした。",

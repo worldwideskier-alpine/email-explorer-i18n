@@ -134,6 +134,7 @@
 		"moveToFolder": "Flytta till mapp",
 		"attachments": "Bilagor",
 		"download": "Ladda ner",
+		"openInNewTab": "Öppna i ny flik",
 		"viewSource": "Visa originalmeddelandet",
 		"viewSourceLoading": "Läser in...",
 		"viewSourceFailed": "Originalmeddelandet kunde inte läsas in.",

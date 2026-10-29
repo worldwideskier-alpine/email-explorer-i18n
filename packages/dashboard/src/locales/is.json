@@ -134,6 +134,7 @@
 		"moveToFolder": "Færa í möppu",
 		"attachments": "Viðhengi",
 		"download": "Sækja",
+		"openInNewTab": "Opna í nýjum flipa",
 		"viewSource": "Skoða upprunalega skeytið",
 		"viewSourceLoading": "Sæki ...",
 		"viewSourceFailed": "Ekki tókst að sækja frumkóða upprunalega skeytisins.",

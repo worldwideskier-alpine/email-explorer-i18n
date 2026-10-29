@@ -134,6 +134,7 @@
 		"moveToFolder": "Teisalda kausta",
 		"attachments": "Manused",
 		"download": "Laadi alla",
+		"openInNewTab": "Ava uuel vahelehel",
 		"viewSource": "Vaata algset sõnumit",
 		"viewSourceLoading": "Laadimine...",
 		"viewSourceFailed": "Algse sõnumi lähtekoodi ei õnnestunud laadida.",

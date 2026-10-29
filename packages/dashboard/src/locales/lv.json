@@ -134,6 +134,7 @@
 		"moveToFolder": "Pārvietot uz mapi",
 		"attachments": "Pielikumi",
 		"download": "Lejupielādēt",
+		"openInNewTab": "Atvērt jaunā cilnē",
 		"viewSource": "Skatīt sākotnējo ziņojumu",
 		"viewSourceLoading": "Notiek ielāde...",
 		"viewSourceFailed": "Sākotnējā ziņojuma pirmkodu neizdevās ielādēt.",

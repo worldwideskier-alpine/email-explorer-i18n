@@ -134,6 +134,7 @@
 		"moveToFolder": "Flytt til mappe",
 		"attachments": "Vedlegg",
 		"download": "Last ned",
+		"openInNewTab": "Opne i ny fane",
 		"viewSource": "Vis den opphavlege meldinga",
 		"viewSourceLoading": "Hentar ...",
 		"viewSourceFailed": "Kjeldekoden til den opphavlege meldinga kunne ikkje hentast.",
