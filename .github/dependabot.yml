@@ -20,9 +20,15 @@ updates:
     directory: "/"
     # Monthly, a few pull requests at a time, and never rebased. None of these
     # is merged on GitHub: a merge to main deploys, so each update is taken on
-    # the working branch, tested and pushed, and Dependabot then closes its
-    # pull request as up to date. What its pull requests did besides was
-    # notify -- every push to main rebased each open one, and a push that
+    # the working branch, tested and pushed -- and once it is live, its pull
+    # request is closed by hand, with a comment naming the pull request that
+    # took it. Dependabot does not close them: #84-#87, security updates taken
+    # in #88 on 2026-10-27, were still open two days later, though the monthly
+    # run a minute after #88 found main already holding them, and #89-#91 had
+    # to be closed the same way. Presumably because, never rebased, an open
+    # one is not looked at again when main moves; that is not measured.
+    # While they were rebased, pushes did close them, and that is what was
+    # turned off: every push to main rebased each open one, and a push that
     # touched dependencies closed some and opened others, seven pull requests
     # moving within three minutes on 2026-09-30, each a mail to the owner.
     # Security fixes do not wait for this: they come as security updates,
