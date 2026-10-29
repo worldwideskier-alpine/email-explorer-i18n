@@ -1239,13 +1239,15 @@ all of these pass, in this order:
    gitleaks does not decode (it decodes base64, hex, percent and unicode
    escapes). Those are for review to catch.
    `preMergeKeys.test.ts` holds the script to all of this.
-3. `/security-review` in a session other than the one that made the change
-   (`REPLY_RULES=off claude -p "Run the security-review skill: ..."` on the
-   branch, naming `git diff origin/main...HEAD`, is one; see "Replies to the
-   owner"). Not the bare `claude -p "/security-review"`: on Claude Code
-   2.1.312 that ran no turn at all and printed nothing with exit status 0,
-   which reads exactly like a review that found nothing. A run that printed
-   no verdict has not reviewed anything. A finding judged a false positive is
+3. `/security-review` in a session other than the one that made the change:
+   `.claude/security-review.sh` on the branch. Not the bare
+   `claude -p "/security-review"`: on Claude Code 2.1.312 that ran no turn at
+   all -- no token, 0.3 s -- and printed nothing with exit status 0, which
+   reads exactly like a review that found nothing. The script asks for the
+   skill in the prompt with the diff named, and reads the session's
+   transcript for whether it ran and gave a verdict
+   (`security-review-verdict.mjs`, `security-review-verdict.test.ts`); a run
+   that reviewed nothing exits 1. A finding judged a false positive is
    explained in the pull request's description.
 4. For a change to a boundary, authentication or key handling, Claude
    Security over that change (`/claude-security`, "scan changes").
