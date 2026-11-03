@@ -518,8 +518,14 @@ describe("the nights' entries as root's routes give them", () => {
 				);
 			},
 		);
-		await bucket().put(MAINTENANCE_KEY, JSON.stringify(record()));
-		await bucket().put(MAINTENANCE_HISTORY_KEY, JSON.stringify([record()]));
+		// A night still going is listed by mailbox too, and the screen only
+		// counts the list.
+		const stored = {
+			...record(),
+			continuing: [{ mailbox: "d@example.com", backup: true }],
+		};
+		await bucket().put(MAINTENANCE_KEY, JSON.stringify(stored));
+		await bucket().put(MAINTENANCE_HISTORY_KEY, JSON.stringify([stored]));
 
 		for (const path of ["", "/history"]) {
 			const res = await authenticatedFetch(
@@ -529,9 +535,9 @@ describe("the nights' entries as root's routes give them", () => {
 			const text = await res.text();
 			expect(text).not.toContain("@example.com");
 			const body = JSON.parse(text);
-			expect((Array.isArray(body) ? body[0] : body).nightsEnded).toEqual(
-				nightsEndedOf(record()),
-			);
+			const night = Array.isArray(body) ? body[0] : body;
+			expect(night.nightsEnded).toEqual(nightsEndedOf(stored));
+			expect(night.continuing).toEqual([{ backup: true }]);
 		}
 	});
 });

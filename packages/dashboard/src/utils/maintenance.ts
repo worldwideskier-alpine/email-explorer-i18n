@@ -53,9 +53,10 @@ export interface MaintenanceRecord {
 	/**
 	 * Mailboxes whose night was still carrying its backup on when the run
 	 * stopped waiting. Each is added to the counts above when it ends, and
-	 * leaves this list then.
+	 * leaves this list then. How many, not which: the Worker leaves the
+	 * addresses out (maintenanceForRoot).
 	 */
-	continuing?: { mailbox: string; backup: boolean }[];
+	continuing?: { backup: boolean }[];
 	/**
 	 * Each call the runtime made for this firing, and whether it left the
 	 * night to another. `startedAt` is the minute the firing was scheduled
