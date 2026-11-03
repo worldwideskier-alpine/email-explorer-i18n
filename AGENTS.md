@@ -715,7 +715,10 @@ are still checked, by the `tsc` that runs before the worker tests.
   (`nightsEnded`) and by the night check. Root's routes give what the
   entries add up to (`maintenanceForRoot`), never the entries, which are
   kept by mailbox, and only sixteen minutes after the call began, before
-  which it may be alive. The call's last duty, finishing deletions left
+  which it may be alive. The nights still going (`continuing`) go to root as
+  how many, not which; their addresses went along unread by the screen. The
+  backup furthest from done is the one mailbox root is told of, on purpose
+  (`MaintenanceProgressSchema`, `routes/root.ts`). The call's last duty, finishing deletions left
   unfinished, waits for the next night, and the check fails for that only
   when one is waiting. `night-own-end.test.ts`.
   On 2026-10-31 the call wrote no end again, and this time the runtime's

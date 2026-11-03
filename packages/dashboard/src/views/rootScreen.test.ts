@@ -394,7 +394,7 @@ describe("earlier nights on /root", () => {
  * read as the whole night.
  */
 describe("a night still going on /root", () => {
-	const night = (continuing?: { mailbox: string; backup: boolean }[]) => ({
+	const night = (continuing?: { backup: boolean }[]) => ({
 		startedAt: "2026-10-02T18:00:19.920Z",
 		finishedAt: "2026-10-02T18:14:30.000Z",
 		backups: { finishedAt: "2026-10-02T18:14:00.000Z", ran: 1, failed: 0 },
@@ -415,7 +415,7 @@ describe("a night still going on /root", () => {
 
 	it("is said beside the finished line", async () => {
 		getMaintenance.mockResolvedValue({
-			data: night([{ mailbox: "b@example.com", backup: true }]),
+			data: night([{ backup: true }]),
 		});
 		await mountRoot();
 		expect(host.textContent).toContain("root.maintenance.done");

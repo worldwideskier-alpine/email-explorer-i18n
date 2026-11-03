@@ -629,7 +629,7 @@ describe("a run whose call ended early and whose nights all ended", () => {
 				deleted: 0,
 				failed: 0,
 			},
-			continuing: [{ mailbox: "b@example.com", backup: true }],
+			continuing: [{ backup: true }],
 		};
 		expect(maintenanceStoppedKey(night)).toBe("root.maintenance.nightsEnded");
 		expect(maintenanceBackedUp(night)).toBe(2);

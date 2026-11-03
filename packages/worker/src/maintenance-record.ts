@@ -476,15 +476,23 @@ export function nightsEndedOf(
 /**
  * The record as root's screen gets it: the nights' entries are keyed by
  * mailbox, and root's routes give counts and times -- which mailboxes there
- * are is not root's business. So they are replaced by what they add up to.
+ * are is not root's business. So they are replaced by what they add up to,
+ * and the nights still going by how many there are: the screen counts them,
+ * and their addresses went along unread. The one mailbox root is told of is
+ * the backup furthest from done (`backupProgress`), on purpose -- see
+ * MaintenanceProgressSchema in routes/root.ts.
  */
 export function maintenanceForRoot(
 	record: MaintenanceRecord,
 	now: number = Date.now(),
-): Omit<MaintenanceRecord, "appointed" | "nights"> & {
+): Omit<MaintenanceRecord, "appointed" | "nights" | "continuing"> & {
+	continuing?: { backup: boolean }[];
 	nightsEnded?: { backups: NightsPass; spamPurge: NightsPass };
 } {
-	const { appointed: _, nights: __, ...rest } = record;
+	const { appointed: _, nights: __, continuing, ...counted } = record;
+	const rest = continuing
+		? { ...counted, continuing: continuing.map(({ backup }) => ({ backup })) }
+		: counted;
 	// Only once the call would have written its end: until then it may be
 	// alive and finishing the deletions, and "it wrote no end" is not true.
 	// The last call that did not stand aside: a call that takes the night
