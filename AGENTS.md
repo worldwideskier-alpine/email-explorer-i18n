@@ -718,6 +718,16 @@ are still checked, by the `tsc` that runs before the worker tests.
   which it may be alive. The call's last duty, finishing deletions left
   unfinished, waits for the next night, and the check fails for that only
   when one is waiting. `night-own-end.test.ts`.
+  On 2026-10-31 the call wrote no end again, and this time the runtime's
+  second call came 14 min 59 s after the first began: the runtime had ended
+  it at its fifteen minutes, twelve after both nights had ended. That duty
+  was the one wait left in the call with no limit -- its read of
+  `maintenance/unfinished-deletions.json`, made every night -- and the
+  likeliest place, though not measured. The read now has a call's limit and
+  the duty as a whole the deletions' end (`DELETIONS_BY_MS`), so the end is
+  written whatever they wait on; a step that did not get through fails the
+  check only when one is waiting, as above (`asksDeletionsLeft`).
+  `nightly-limits.test.ts`.
 - **What R2 says to try again is tried again, and nothing else is.** On
   2026-10-15 one read of some 1,700 in the larger mailbox's backup was refused
   with "Reduce your rate of simultaneous reads on the same object. (10058)",

@@ -33,7 +33,7 @@
 
 import { abandonPausedBackup, pausedBackupKeys } from "./backup-writer";
 import type { TimeLimits } from "./deadline";
-import { pastDeadline, within } from "./deadline";
+import { limitedBy, pastDeadline, within } from "./deadline";
 import { rewriteJson } from "./r2-json";
 import { getBytes } from "./r2-retry";
 import type { Env } from "./types";
@@ -184,7 +184,15 @@ export async function finishUnfinishedDeletions(
 	env: Env,
 	limits: TimeLimits = {},
 ): Promise<UnfinishedDeletionsSummary> {
-	const stored = await getBytes(env.BUCKET, UNFINISHED_DELETIONS_KEY);
+	// A call's limit, as every other read of the night has: this one is made
+	// every night, with or without anything waiting. On 2026-10-31 the call
+	// that owned the night was ended by the runtime at fifteen minutes, twelve
+	// after its nights had finished, and this read was the one wait in that
+	// stretch with no limit -- the likeliest place, though not measured.
+	const stored = await limitedBy(limits)(
+		getBytes(env.BUCKET, UNFINISHED_DELETIONS_KEY),
+		"reading the deletions left unfinished",
+	);
 	let ids: unknown = [];
 	try {
 		ids = stored ? JSON.parse(new TextDecoder().decode(stored)) : [];

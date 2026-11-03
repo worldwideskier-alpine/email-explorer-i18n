@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { backupKeyPrefix } from "../../src/auto-backup";
 import { OutOfTime, within } from "../../src/deadline";
 import { resetLegacyGrantMemo } from "../../src/legacy-grants";
+import { UNFINISHED_DELETIONS_KEY } from "../../src/mailbox-destroy";
 import { inlineNights } from "../../src/mailbox-night";
 import {
 	archiveLastRun,
@@ -401,6 +402,88 @@ describe("the scheduled handler", () => {
 		const record = await readMaintenanceRecord(env as never);
 		expect(record?.finishedAt).toBeTypeOf("string");
 		expect(await archivesOf(FINE)).toHaveLength(1);
+	});
+});
+
+/**
+ * The night of 2026-10-31.
+ *
+ * Both mailboxes' nights ended about three minutes in and wrote how they
+ * went. The call that owned the night wrote no end, and the runtime's second
+ * call for the firing came 14 min 59 s after the first began: the runtime had
+ * ended it at its fifteen minutes. The one wait left in it with no limit was
+ * the deletions left unfinished -- a read made every night, with or without
+ * anything waiting -- and that is the likeliest place, though not measured.
+ */
+describe("the deletions left unfinished, last in the night", () => {
+	/** The bucket, with whatever `hangs` names never answering. */
+	function hanging(hangs: (method: string, key: unknown) => boolean) {
+		const real = bucket();
+		return new Proxy(real, {
+			get(target, prop) {
+				const value = Reflect.get(target, prop);
+				if (typeof value !== "function") return value;
+				return (...args: unknown[]) =>
+					hangs(String(prop), args[0])
+						? never()
+						: (value as (...a: unknown[]) => unknown).apply(target, args);
+			},
+		});
+	}
+
+	const run = (BUCKET: R2Bucket, limits: Record<string, number>) =>
+		Promise.race([
+			runScheduledMaintenance({ ...env, BUCKET } as never, new Date(), {
+				nights: inlineNights,
+				pollMs: 20,
+				...limits,
+			}).then(() => "finished"),
+			new Promise((resolve) => setTimeout(() => resolve("held"), 8000)),
+		]);
+
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await bucket().delete(MAINTENANCE_KEY);
+	});
+
+	it("do not hold the end when their read never answers", async () => {
+		await makeMailbox(FINE);
+		const outcome = await run(
+			hanging(
+				(method, key) => method === "get" && key === UNFINISHED_DELETIONS_KEY,
+			),
+			{ callLimitMs: CALL_LIMIT, deletionsByMs: 60_000 },
+		);
+
+		expect(outcome).toBe("finished");
+		const record = await readMaintenanceRecord(env as never);
+		expect(record?.finishedAt).toBeTypeOf("string");
+		expect(record?.unfinishedDeletions).toMatchObject({
+			left: -1,
+			error: expect.stringContaining("reading the deletions left unfinished"),
+		});
+		// The night itself was not touched.
+		expect(record?.backups).toMatchObject({ ran: 1, failed: 0 });
+		expect(await archivesOf(FINE)).toHaveLength(1);
+	});
+
+	it("do not hold the end past their own, whatever they wait on", async () => {
+		const gone = "gone@example.com";
+		await bucket().put(UNFINISHED_DELETIONS_KEY, JSON.stringify([gone]));
+		const outcome = await run(
+			hanging(
+				(method, key) => method === "head" && key === `mailboxes/${gone}.json`,
+			),
+			{ deletionsByMs: 3000 },
+		);
+
+		expect(outcome).toBe("finished");
+		const record = await readMaintenanceRecord(env as never);
+		expect(record?.finishedAt).toBeTypeOf("string");
+		expect(record?.unfinishedDeletions).toMatchObject({
+			left: -1,
+			error: expect.stringContaining("finishing the deletions left unfinished"),
+		});
 	});
 });
 
