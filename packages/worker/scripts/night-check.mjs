@@ -103,13 +103,18 @@ export function judgeNight(record, carried, now, deletionsLeft) {
 	}
 
 	const trouble = passTrouble(record.backups, record.spamPurge);
+	/** @type {string[]} */
+	const notes = [];
 	const deletions = record.unfinishedDeletions;
 	if (!deletions) {
 		trouble.push("unfinished deletions: the run recorded nothing");
 	} else if (deletions.error || deletions.left < 0) {
-		trouble.push(
-			`unfinished deletions: ${deletions.error ?? "could not be read"}`,
-		);
+		// As for a call that wrote no end, above: not done is trouble only
+		// when one is waiting. The step now gives up on a read that does not
+		// answer, and with none waiting that night was a note, not a mail.
+		const why = `unfinished deletions: ${deletions.error ?? "could not be read"}`;
+		if (deletionsLeft === 0) notes.push(`${why}; none was waiting`);
+		else trouble.push(why);
 	} else if (deletions.left > 0) {
 		trouble.push(
 			`unfinished deletions: ${deletions.left} mailbox deletion(s) still not finished`,
@@ -119,7 +124,21 @@ export function judgeNight(record, carried, now, deletionsLeft) {
 	// carries on, and none is carrying on. What is left there is an upload
 	// nothing will finish, and bytes nothing will remove.
 	if (carried.length > 0) trouble.push(carriedTrouble(carried));
-	return { trouble };
+	return notes.length > 0 ? { trouble, notes } : { trouble };
+}
+
+/**
+ * Whether judging the record needs to know how many deletions wait: when the
+ * run did not say, because its call wrote no end or its deletions step did
+ * not get through.
+ *
+ * @param {any} record
+ */
+export function asksDeletionsLeft(record) {
+	if (!record) return false;
+	if (!record.finishedAt) return true;
+	const deletions = record.unfinishedDeletions;
+	return Boolean(deletions && (deletions.error || deletions.left < 0));
 }
 
 function passTrouble(backups, spamPurge) {

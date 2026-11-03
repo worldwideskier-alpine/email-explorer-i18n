@@ -12,7 +12,12 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { stringValueOf } from "./deployment-config.mjs";
-import { judgeNight, nightSummary, parseQuietly } from "./night-check.mjs";
+import {
+	asksDeletionsLeft,
+	judgeNight,
+	nightSummary,
+	parseQuietly,
+} from "./night-check.mjs";
 
 const CONFIG = fileURLToPath(new URL("../dev/wrangler.jsonc", import.meta.url));
 // A night that carries its backup on is normally done within minutes of the
@@ -55,7 +60,8 @@ async function readRecord() {
 
 /**
  * How many mailbox deletions wait to be finished: read only to judge a run
- * whose own call ended before it reached them. The ids are not printed.
+ * that did not say -- its own call ended before it reached them, or the step
+ * did not get through (asksDeletionsLeft). The ids are not printed.
  */
 async function deletionsLeft() {
 	const response = await ask(
@@ -89,7 +95,7 @@ try {
 			record,
 			await carriedKeys(),
 			new Date(),
-			record && !record.finishedAt ? await deletionsLeft() : undefined,
+			asksDeletionsLeft(record) ? await deletionsLeft() : undefined,
 		);
 		if (!verdict.pending || Date.now() + PAUSE_MS > until) break;
 		console.log(`${verdict.pending}; asking again in a minute`);

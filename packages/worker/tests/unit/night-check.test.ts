@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 // Plain JS on purpose: it runs under node from the night-check workflow.
 import {
+	asksDeletionsLeft,
 	judgeNight,
 	nightSummary,
 	parseQuietly,
@@ -113,6 +114,30 @@ describe("the night check", () => {
 			error: "R2 list failed",
 		} as never;
 		expect(judgeNight(unread, [], NOW).trouble[0]).toContain("R2 list failed");
+	});
+
+	it("notes a deletions step that did not get through when none was waiting", () => {
+		// The step now gives up on a read that does not answer (2026-10-31),
+		// and a night with nothing to delete is no reason for a failure mail.
+		const unread = wellEnded();
+		unread.unfinishedDeletions = {
+			finished: 0,
+			left: -1,
+			error: "reading the deletions left unfinished did not answer within 60s",
+		} as never;
+		expect(asksDeletionsLeft(unread)).toBe(true);
+		const none = judgeNight(unread, [], NOW, 0);
+		expect(none.trouble).toEqual([]);
+		expect(none.notes?.[0]).toContain("none was waiting");
+		expect(judgeNight(unread, [], NOW, 2).trouble[0]).toContain(
+			"did not answer within 60s",
+		);
+		expect(judgeNight(unread, [], NOW, undefined).trouble[0]).toContain(
+			"did not answer within 60s",
+		);
+		// A step that got through says how many wait itself.
+		expect(asksDeletionsLeft(wellEnded())).toBe(false);
+		expect(asksDeletionsLeft(null)).toBe(false);
 	});
 
 	it("waits while a night carries on, and does not call its pause litter", () => {

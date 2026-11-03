@@ -223,10 +223,19 @@ export async function runScheduledMaintenance(
 
 	// Whatever the nights did: a deletion left half done is somebody's mail
 	// still stored after they were deleted, and nothing else finishes it.
+	// Within their own end as a whole, whatever they wait on, so that the end
+	// below is written: on 2026-10-31 it was not, and the runtime ended the
+	// call at fifteen minutes with its nights long finished.
 	try {
-		summary.unfinishedDeletions = await finishUnfinishedDeletions(env, {
-			deadline: deletionsBy,
-		});
+		summary.unfinishedDeletions = await within(
+			finishUnfinishedDeletions(env, {
+				deadline: deletionsBy,
+				callLimitMs: limits.callLimitMs,
+			}),
+			deletionsBy - Date.now(),
+			"finishing the deletions left unfinished",
+			true,
+		);
 		record.unfinishedDeletions = summary.unfinishedDeletions;
 	} catch (e) {
 		record.unfinishedDeletions = { finished: 0, left: -1, error: message(e) };
