@@ -302,7 +302,21 @@ async function fixAudience(
 
 export type AccessGate =
 	| { pass: true }
-	| { pass: false; status: 403 | 503; reason: string };
+	| { pass: false; status: 403 | 503; reason: string; noToken?: true };
+
+/**
+ * Said on a refusal for want of any Access token, and on no other. A request
+ * that reached the Worker with no token came past no Access application, so
+ * the deploy reads this answer as "no Access in front" (`accessDoor` in
+ * scripts/deployment-check.mjs). Without it, the Worker's own refusal was the
+ * one answer the deploy could not read: on 2026-11-14 Access was taken off,
+ * the Worker went on refusing every request for want of a token, the deploy
+ * read those refusals as "cannot tell" and left the settings that made them,
+ * and the screen was refused until the deploy was mended. A token that fails
+ * verification is not this: something signed it.
+ */
+export const ACCESS_CHECK_HEADER = "X-Access-Check";
+export const NO_TOKEN = "no-token";
 
 /**
  * Whether a request may go on, by its Access token and the settings the
@@ -328,7 +342,14 @@ export async function checkAccess(
 	if (!settings) return { pass: true };
 
 	const token = request.headers.get(ACCESS_HEADER);
-	if (!token) return { pass: false, status: 403, reason: "no Access token" };
+	if (!token) {
+		return {
+			pass: false,
+			status: 403,
+			reason: "no Access token",
+			noToken: true,
+		};
+	}
 	const verdict = await verifyAccessToken(token, settings.issuer, now);
 	if ("reason" in verdict) {
 		return {

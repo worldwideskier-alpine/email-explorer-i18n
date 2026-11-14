@@ -7,7 +7,11 @@ import { opensInline } from "./attachment-inline";
 import { backupKeyPrefix } from "./auto-backup";
 import { listBackups } from "./backup-writer";
 import { classifyWithClaude } from "./claude-spam-filter";
-import { checkAccess } from "./cloudflare-access";
+import {
+	ACCESS_CHECK_HEADER,
+	checkAccess,
+	NO_TOKEN,
+} from "./cloudflare-access";
 import { repairedOnOpen, subjectsRepairedInList } from "./decoding-repair";
 import { recoveryFromEmail } from "./deployment-config";
 import { ingestEmailIntoMailbox } from "./email-ingest";
@@ -2958,6 +2962,7 @@ export function EmailExplorer(_options: EmailExplorerOptions = {}) {
 					headers: {
 						"Content-Type": "application/json",
 						...(access.status === 503 ? { "Retry-After": "5" } : {}),
+						...(access.noToken ? { [ACCESS_CHECK_HEADER]: NO_TOKEN } : {}),
 					},
 				});
 			}

@@ -19,6 +19,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+	ACCESS_CHECK_HEADER,
 	accessDoor,
 	accessDoorOf,
 	addressKind,
@@ -75,7 +76,11 @@ async function ask(url) {
 				signal: AbortSignal.timeout(15_000),
 			});
 			await response.body?.cancel();
-			answer = accessDoor(response.status, response.headers.get("location"));
+			answer = accessDoor(
+				response.status,
+				response.headers.get("location"),
+				response.headers.get(ACCESS_CHECK_HEADER),
+			);
 			if (answer.door === "behind") {
 				console.log(`::add-mask::${new URL(answer.issuer).host}`);
 			}

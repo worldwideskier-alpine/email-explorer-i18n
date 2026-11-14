@@ -373,6 +373,20 @@ describe("how one answer stands", () => {
 		expect(accessDoor(200, null)).toEqual({ door: "open" });
 	});
 
+	it("is open when the Worker itself refuses for want of any Access token", () => {
+		// The request reached the Worker past no Access application. Read as
+		// unknown, the settings that made the Worker refuse were never taken
+		// away once Access went (2026-11-14).
+		expect(accessDoor(403, null, "no-token")).toEqual({ door: "open" });
+		expect(accessDoor(403, null, "something-else")).toEqual({
+			door: "unknown",
+		});
+		expect(accessDoor(500, null, "no-token")).toEqual({ door: "unknown" });
+		expect(accessDoor(403, "https://example.org/", "no-token")).toEqual({
+			door: "unknown",
+		});
+	});
+
 	it.each([
 		["an error", 500, null],
 		["a refusal", 403, null],
@@ -393,6 +407,18 @@ describe("how one answer stands", () => {
  * cover, beside one it does.
  */
 describe("what the deploy does about the Worker's Access settings", () => {
+	it("takes the settings away when Access has gone but the Worker still asks for its token", () => {
+		expect(
+			accessDoorOf([accessDoor(200, null), accessDoor(403, null, "no-token")]),
+		).toEqual({ door: "open" });
+		// Where Access still stands in front of one address, that address wins.
+		expect(
+			accessDoorOf([
+				accessDoor(403, null, "no-token"),
+				accessDoor(302, SIGN_IN),
+			]).door,
+		).toBe("behind");
+	});
 	const behind = (
 		audience: string | null = KID,
 		issuer = "https://team.cloudflareaccess.com",
