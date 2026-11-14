@@ -39,3 +39,10 @@ overrides:
   # pool's own options in Node, in the tests only: the Worker's zod is its
   # own dependency, already past the fix. Drop this when the pool goes.
   "@cloudflare/vitest-pool-workers>zod": "4.6.7"
+
+# ISO-2022-JP read as mail clients read it, not as the Encoding Standard does:
+# two escape sequences in a row gave a U+FFFD where the sender wrote nothing
+# (AGENTS.md, "Inbound mail"). Keyed by name so it follows each upgrade; an
+# upgrade it no longer applies to fails the install, and with it CI.
+patchedDependencies:
+  postal-mime: patches/postal-mime.patch
