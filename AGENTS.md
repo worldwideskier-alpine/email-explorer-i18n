@@ -1281,10 +1281,16 @@ all of these pass, in this order:
    all -- no token, 0.3 s -- and printed nothing with exit status 0, which
    reads exactly like a review that found nothing. The script asks for the
    skill in the prompt with the diff named, and reads the session's
-   transcript for whether it ran and gave a verdict
+   transcript for whether it ran, ran the skill and gave a verdict
    (`security-review-verdict.mjs`, `security-review-verdict.test.ts`); a run
-   that reviewed nothing exits 1. A finding judged a false positive is
-   explained in the pull request's description.
+   that reviewed nothing exits 1. The skill is allowed on the command line
+   (`--allowedTools "Skill(security-review)"`): from Claude Code 2.1.325 it
+   asks permission, which nobody is there to give, and on 2026-11-13 the
+   session was refused it, read the diff by hand, answered "no findings" and
+   passed, since the verdict then asked only that the session said
+   something. A session that did not run the skill now fails, read from the
+   Skill call and its result rather than their wording. A finding judged a
+   false positive is explained in the pull request's description.
 4. For a change to a boundary, authentication or key handling, Claude
    Security over that change (`/claude-security`, "scan changes").
 
