@@ -8,7 +8,7 @@ import { backupKeyPrefix } from "./auto-backup";
 import { listBackups } from "./backup-writer";
 import { classifyWithClaude } from "./claude-spam-filter";
 import { checkAccess } from "./cloudflare-access";
-import { repairedOnOpen } from "./decoding-repair";
+import { repairedOnOpen, subjectsRepairedInList } from "./decoding-repair";
 import { recoveryFromEmail } from "./deployment-config";
 import { ingestEmailIntoMailbox } from "./email-ingest";
 import { ensureLegacyMailboxGrants } from "./legacy-grants";
@@ -775,7 +775,9 @@ class GetEmails extends OpenAPIRoute {
 			sortDirection,
 		});
 
-		return c.json(emails);
+		// A subject stored before a fix to how mail is decoded is put right
+		// from its original's header; see decoding-repair.ts.
+		return c.json(await subjectsRepairedInList(c.env, stub, emails));
 	}
 }
 
@@ -1609,7 +1611,7 @@ class GetSearch extends OpenAPIRoute {
 			date_end,
 		});
 
-		return c.json(emails);
+		return c.json(await subjectsRepairedInList(c.env, stub, emails));
 	}
 }
 

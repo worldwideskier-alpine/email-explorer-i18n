@@ -5,8 +5,10 @@ import {
 } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+	HEADER_BYTES,
 	hasReplacement,
 	onlyReplacementsTakenOut,
+	SUBJECTS_PER_LIST,
 } from "../../src/decoding-repair";
 import {
 	authenticatedFetch,
@@ -46,7 +48,7 @@ function iso2022jpMessage(body: string, subject = SPLIT_SUBJECT): string {
 	].join("\r\n");
 }
 
-async function receive(raw: string): Promise<string> {
+async function deliver(raw: string): Promise<void> {
 	const worker = await import("../../dev/index");
 	const bytes = new TextEncoder().encode(raw);
 	await worker.default.email(
@@ -63,10 +65,19 @@ async function receive(raw: string): Promise<string> {
 		env,
 		createExecutionContext(),
 	);
+}
+
+async function listed(): Promise<{ id: string; subject: string }[]> {
 	const list = await authenticatedFetch(
 		`http://local.test/api/v1/mailboxes/${mailboxId}/emails?folder=inbox`,
 	);
-	const emails = await list.json<{ id: string }[]>();
+	expect(list.status).toBe(200);
+	return list.json<{ id: string; subject: string }[]>();
+}
+
+async function receive(raw: string): Promise<string> {
+	await deliver(raw);
+	const emails = await listed();
 	expect(emails).toHaveLength(1);
 	return emails[0].id;
 }
@@ -192,6 +203,111 @@ describe("a message stored before a fix to its decoding", () => {
 			subject: "changed",
 			body: "changed",
 		});
+	});
+});
+
+describe("a subject stored before a fix to its decoding, in a list", () => {
+	beforeEach(async () => {
+		await testAuthBeforeAll();
+		await createMailbox();
+	});
+
+	const GARBLED = { subject: "お\uFFFDお", body: "<td>）\uFFFDを</td>\n" };
+
+	it("is put right in the list and written back, the body left for the open", async () => {
+		const id = await receive(iso2022jpMessage(`<td>${SPLIT}</td>`));
+		await storeAsBefore(id, GARBLED);
+
+		const [row] = await listed();
+		expect(row.subject).toBe("おお");
+		// The subject is written back; the body waits for the message to be
+		// opened, since a list reads only the original's header.
+		expect(await storedRow(id)).toEqual({
+			subject: "おお",
+			body: GARBLED.body,
+		});
+	});
+
+	it("is put right in search results too", async () => {
+		const id = await receive(iso2022jpMessage(`<td>${SPLIT}</td>`));
+		await storeAsBefore(id, GARBLED);
+
+		const found = await authenticatedFetch(
+			`http://local.test/api/v1/mailboxes/${mailboxId}/search?query=td`,
+		);
+		expect(found.status).toBe(200);
+		const [row] = await found.json<{ id: string; subject: string }[]>();
+		expect(row.subject).toBe("おお");
+		expect((await storedRow(id)).subject).toBe("おお");
+	});
+
+	it(`reads no more than ${SUBJECTS_PER_LIST} originals for one answer`, async () => {
+		const count = SUBJECTS_PER_LIST + 2;
+		for (let i = 0; i < count; i++) {
+			await deliver(iso2022jpMessage(`<td>${SPLIT}</td>`));
+		}
+		const ids = (await listed()).map((row) => row.id);
+		expect(ids).toHaveLength(count);
+		for (const id of ids) await storeAsBefore(id, GARBLED);
+
+		const fixedAfter = async () =>
+			(await Promise.all(ids.map(storedRow))).filter(
+				(row) => row.subject === "おお",
+			).length;
+
+		await listed();
+		expect(await fixedAfter()).toBe(SUBJECTS_PER_LIST);
+		// Those put right are not read again, so the next answer reaches the rest.
+		await listed();
+		expect(await fixedAfter()).toBe(count);
+	}, 30_000);
+
+	it("leaves a subject whose replacement character is the sender's own", async () => {
+		// A stray byte the fix rightly still reads as U+FFFD.
+		await deliver(
+			iso2022jpMessage(`<td>${SPLIT}</td>`, btoa(`${ESC}$B$*\xae${ESC}(B`)),
+		);
+		const [before] = await listed();
+		expect(hasReplacement(before.subject)).toBe(true);
+		const [after] = await listed();
+		expect(after.subject).toBe(before.subject);
+		expect((await storedRow(after.id)).subject).toBe(before.subject);
+	});
+
+	it("changes nothing when the stored subject differs in more than replacement characters", async () => {
+		const id = await receive(iso2022jpMessage(`<td>${SPLIT}</td>`));
+		const altered = { subject: "お\uFFFDお and more", body: GARBLED.body };
+		await storeAsBefore(id, altered);
+
+		const [row] = await listed();
+		expect(row.subject).toBe(altered.subject);
+		expect((await storedRow(id)).subject).toBe(altered.subject);
+	});
+
+	it("writes nothing over a subject changed since the list read it", async () => {
+		const id = await receive(iso2022jpMessage(`<td>${SPLIT}</td>`));
+		await storeAsBefore(id, { subject: "changed", body: GARBLED.body });
+
+		expect(await mailbox().repairSubject(id, GARBLED.subject, "おお")).toBe(
+			false,
+		);
+		expect((await storedRow(id)).subject).toBe("changed");
+	});
+
+	it("leaves a subject whose original's header runs past what is read, and still answers", async () => {
+		// The header block is longer than the range read, and the subject
+		// comes after the padding.
+		const raw = iso2022jpMessage(`<td>${SPLIT}</td>`).replace(
+			"From: notice@example.com\r\n",
+			`From: notice@example.com\r\nX-Padding: ${"a".repeat(HEADER_BYTES)}\r\n`,
+		);
+		const id = await receive(raw);
+		await storeAsBefore(id, GARBLED);
+
+		const [row] = await listed();
+		expect(row.subject).toBe(GARBLED.subject);
+		// Opening it reads the whole original and puts both right.
+		expect((await open(id)).subject).toBe("おお");
 	});
 });
 
