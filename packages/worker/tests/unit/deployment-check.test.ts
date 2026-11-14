@@ -9,6 +9,7 @@ import {
 	addressKind,
 	answeredByTheWorker,
 	askAccessDoor,
+	askEveryAccessDoor,
 	assetMismatch,
 	assetsReferencedBy,
 	behindAccess,
@@ -551,7 +552,7 @@ describe("asking one address about Access", () => {
 		expect(one.lines.at(-1)).toBe("answered 403: open");
 	});
 
-	it("stops at the deadline it is given, shared by every question", async () => {
+	it("stops at the deadline it is given, including one already spent", async () => {
 		const one = stand([oldWorker]);
 		expect(
 			await askAccessDoor(
@@ -566,6 +567,45 @@ describe("asking one address about Access", () => {
 		const late = stand([oldWorker]);
 		await askAccessDoor("https://w.example.workers.dev/", late.options(-1));
 		expect(late.asked).toHaveLength(1);
+	});
+
+	it("shares one deadline between every address and path", async () => {
+		// Two addresses whose Worker never says why it refuses, and one
+		// Access stands in front of: the first spends the minute, and the
+		// second is asked once rather than given a minute of its own.
+		let clock = 0;
+		const asked: string[] = [];
+		const { answers, behind } = await askEveryAccessDoor(
+			[
+				"https://a.example.workers.dev",
+				"https://b.example.workers.dev",
+				"https://mail.example.org",
+			],
+			["/api/v1/settings"],
+			{
+				fetcher: async (input: RequestInfo | URL) => {
+					asked.push(new URL(String(input)).host);
+					return String(input).startsWith("https://mail.")
+						? signIn()
+						: oldWorker();
+				},
+				now: () => clock,
+				sleep: async (ms: number) => {
+					clock += ms;
+				},
+				log: () => {},
+			},
+		);
+		const times = (host: string) => asked.filter((one) => one === host).length;
+		expect(times("a.example.workers.dev")).toBe(SETTLE_ATTEMPTS);
+		expect(times("b.example.workers.dev")).toBe(1);
+		expect(times("mail.example.org")).toBe(1);
+		expect(answers.map((answer) => answer.door)).toEqual([
+			"unknown",
+			"unknown",
+			"behind",
+		]);
+		expect([...behind]).toEqual(["https://mail.example.org"]);
 	});
 
 	it("asks no more than its tries, whatever the clock says", async () => {

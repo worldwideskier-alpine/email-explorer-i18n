@@ -9,7 +9,7 @@
  * Actions logs are public with it, and a host in a failed request's message
  * would otherwise be published.
  *
- * Nothing here signs in or writes anything. Four unauthenticated requests.
+ * Nothing here signs in or writes anything: unauthenticated requests only.
  */
 
 import { createHash } from "node:crypto";
@@ -117,7 +117,7 @@ const built = builtAssets(readdirSync(ASSETS));
 const localJs = readFileSync(`${ASSETS}/${built.js}`);
 console.log(`built: ${built.js}, ${built.css}`);
 
-/** One pass over the four questions. Returns the problems it found. */
+/** One pass over the questions. Returns the problems it found. */
 async function inspect() {
 	const problems = [];
 	const get = async (path, as) => {

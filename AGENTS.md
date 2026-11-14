@@ -1131,8 +1131,9 @@ which strikes every address out -- so nothing has to be set for it to run
 (`deployedAddress`). It used to need a `PRODUCTION_URL` secret, and without
 one the step was skipped, and the rollback below with it, since only this
 step's failure sets it off; deleting the secret turned both off. The secret
-is now only for a Worker wrangler reports no address for, and to mask a
-domain of its own; the check masks the host it asks either way. With
+is now only for a Worker wrangler reports no address for, to mask a domain
+of its own, and for the Access step to ask that domain too (see Cloudflare
+Access above); the check masks the host it asks either way. With
 neither, it warns rather than passing in silence. The step before it prints the version that is actually running,
 which on a deploy that gave the Worker its push key is *not* the id the deploy
 step prints -- putting a secret publishes a version of its own, after it.

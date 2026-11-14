@@ -21,23 +21,18 @@ import { join } from "node:path";
 import {
 	accessDoorOf,
 	addressKind,
-	askAccessDoor,
+	askEveryAccessDoor,
 	DASHBOARD_ASK,
 	dashboardAskLine,
 	dashboardAskReachesTheTeam,
 	dashboardAskWarning,
 	deployedAddresses,
-	SETTLE_ATTEMPTS,
-	SETTLE_PAUSE_MS,
 } from "./deployment-check.mjs";
 
 const TEMP = process.env.RUNNER_TEMP ?? "";
 const VERDICT = join(TEMP, "access-door.txt");
 const SETTINGS = join(TEMP, "access.json");
 const PATHS = ["/", "/api/v1/settings"];
-// The edge's minute after the deploy, once for every question below
-// (askAccessDoor).
-const settleBy = Date.now() + SETTLE_ATTEMPTS * SETTLE_PAUSE_MS;
 
 writeFileSync(VERDICT, "unknown\n");
 
@@ -66,15 +61,7 @@ if (usable.length === 0) {
 	process.exit(0);
 }
 
-const answers = [];
-const behind = new Set();
-for (const base of usable) {
-	for (const path of PATHS) {
-		const answer = await askAccessDoor(`${base}${path}`, { settleBy });
-		answers.push(answer);
-		if (answer.door === "behind") behind.add(base);
-	}
-}
+const { answers, behind } = await askEveryAccessDoor(usable, PATHS);
 const verdict = accessDoorOf(answers);
 if (verdict.door === "behind") {
 	writeFileSync(

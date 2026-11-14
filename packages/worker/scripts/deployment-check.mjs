@@ -289,7 +289,8 @@ export const SETTLE_PAUSE_MS = 3000;
  * Asks one address how it stands as far as Access is concerned
  * (`accessDoor`), as a browser asks for a page and without following a
  * redirect, and again while the answer cannot be told -- until `settleBy`,
- * which the Access step sets once for all of its questions.
+ * which `askEveryAccessDoor` sets once for all of the Access step's
+ * questions.
  *
  * Asked again because what answers just after a deploy may still be the
  * Worker from before it, and the one from before 2026-11-14 does not say why
@@ -341,6 +342,30 @@ export async function askAccessDoor(
 		await sleep(SETTLE_PAUSE_MS);
 	}
 	return answer;
+}
+
+/**
+ * Asks every address for every path (`askAccessDoor`), all against one
+ * deadline set here: the edge's minute after the deploy, for all of them
+ * together. Returns the answers, and the addresses any of them was behind.
+ */
+export async function askEveryAccessDoor(bases, paths, options = {}) {
+	const now = options.now ?? Date.now;
+	const settleBy = now() + SETTLE_ATTEMPTS * SETTLE_PAUSE_MS;
+	const answers = [];
+	const behind = new Set();
+	for (const base of bases) {
+		for (const path of paths) {
+			const answer = await askAccessDoor(`${base}${path}`, {
+				...options,
+				now,
+				settleBy,
+			});
+			answers.push(answer);
+			if (answer.door === "behind") behind.add(base);
+		}
+	}
+	return { answers, behind };
 }
 
 /**
