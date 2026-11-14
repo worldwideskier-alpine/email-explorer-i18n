@@ -17,23 +17,23 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+	ACCESS_CHECK_HEADER,
 	answeredByTheWorker,
 	assetMismatch,
 	behindAccess,
 	builtAssets,
 	deployedAddress,
+	refusedWhereAccessIsNot,
+	SETTLE_ATTEMPTS,
+	SETTLE_PAUSE_MS,
 	staleServedPage,
 	workerVersionMismatch,
 } from "./deployment-check.mjs";
 
 const ASSETS = fileURLToPath(new URL("../dashboard/assets", import.meta.url));
-// About a minute. Twelve seconds was not always enough: on 2026-09-26 one
-// deploy was still serving the previous page after five tries three seconds
-// apart and failed the run, and the same commit re-run a minute later passed
-// on the first try. What is being waited for is Cloudflare's edge, not this
-// build.
-const ATTEMPTS = 20;
-const PAUSE_MS = 3000;
+// About a minute; see SETTLE_ATTEMPTS.
+const ATTEMPTS = SETTLE_ATTEMPTS;
+const PAUSE_MS = SETTLE_PAUSE_MS;
 const REQUEST_TIMEOUT_MS = 15_000;
 
 // From the step before, which read it out of `wrangler deployments status`.
@@ -45,6 +45,17 @@ if (!expectedVersion) {
 }
 
 const output = join(process.env.RUNNER_TEMP ?? "", "deploy-output.txt");
+// What the Access step before this one found (access-door.mjs): `behind`,
+// `open` or `unknown`, or nothing when it did not run.
+let accessVerdict = "";
+try {
+	accessVerdict = readFileSync(
+		join(process.env.RUNNER_TEMP ?? "", "access-door.txt"),
+		"utf8",
+	).trim();
+} catch {
+	accessVerdict = "";
+}
 const reported = existsSync(output)
 	? deployedAddress(readFileSync(output, "utf8"))
 	: null;
@@ -120,6 +131,7 @@ async function inspect() {
 			status: response.status,
 			type: response.headers.get("content-type") ?? "",
 			cacheControl: response.headers.get("cache-control") ?? "",
+			accessCheck: response.headers.get(ACCESS_CHECK_HEADER),
 			body:
 				as === "bytes"
 					? new Uint8Array(await response.arrayBuffer())
@@ -185,17 +197,36 @@ async function inspect() {
 	}
 
 	// And that it is the version just published; see workerVersionMismatch.
+	// Where the Worker rightly refuses this address its version -- Access in
+	// front of another of its addresses, none in front of this one -- the
+	// version is the one Cloudflare reports live; see refusedWhereAccessIsNot.
 	if (expectedVersion) {
 		const settings = await get("/api/v1/settings", "text");
-		let served = null;
-		try {
-			served = JSON.parse(settings.body)?.version ?? null;
-		} catch {
-			served = null;
+		if (
+			refusedWhereAccessIsNot(
+				settings.status,
+				settings.accessCheck,
+				accessVerdict,
+			)
+		) {
+			console.log(
+				"the Worker refuses this address requests without an Access token, as it should with Access in front of another of its addresses, so it was not asked its version",
+			);
+			console.log(
+				`Cloudflare reports version ${expectedVersion} live, the one published`,
+			);
+		} else {
+			let served = null;
+			try {
+				served = JSON.parse(settings.body)?.version ?? null;
+			} catch {
+				served = null;
+			}
+			const wrong = workerVersionMismatch(expectedVersion, served);
+			if (wrong) problems.push(wrong);
+			else
+				console.log(`the Worker running is the version published (${served})`);
 		}
-		const wrong = workerVersionMismatch(expectedVersion, served);
-		if (wrong) problems.push(wrong);
-		else console.log(`the Worker running is the version published (${served})`);
 	}
 
 	return problems;

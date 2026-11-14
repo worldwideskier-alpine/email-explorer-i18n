@@ -275,6 +275,99 @@ export const ACCESS_CHECK_HEADER = "x-access-check";
 export const WORKER_SAW_NO_TOKEN = "no-token";
 
 /**
+ * How long the deploy's checks give Cloudflare's edge to serve what was just
+ * deployed: a try every three seconds, for about a minute. Twelve seconds was
+ * not always enough: on 2026-09-26 one deploy was still serving the previous
+ * page after five tries three seconds apart and failed the run, and the same
+ * commit re-run a minute later passed on the first try. What is waited for is
+ * the edge, not the build.
+ */
+export const SETTLE_ATTEMPTS = 20;
+export const SETTLE_PAUSE_MS = 3000;
+
+/**
+ * Asks one address how it stands as far as Access is concerned
+ * (`accessDoor`), as a browser asks for a page and without following a
+ * redirect, and again while the answer cannot be told -- until `settleBy`,
+ * which the Access step sets once for all of its questions.
+ *
+ * Asked again because what answers just after a deploy may still be the
+ * Worker from before it, and the one from before 2026-11-14 does not say why
+ * it refuses: given five tries in twelve seconds, as it was, a deployment
+ * whose Access settings had outlived Access could keep refusing every request
+ * for one more deploy. One deadline for every question rather than tries for
+ * each, because what is waited for happens once: an address that never
+ * answers clearly would otherwise cost every deploy a minute per question.
+ *
+ * A failed request is told by its code alone (Node's own text names the
+ * host), and a team's host is masked before the line that follows it, since
+ * this repository's logs are public.
+ */
+export async function askAccessDoor(
+	url,
+	{
+		fetcher = fetch,
+		now = Date.now,
+		sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+		settleBy = now() + SETTLE_ATTEMPTS * SETTLE_PAUSE_MS,
+		log = console.log,
+	} = {},
+) {
+	let answer = { door: "unknown" };
+	for (let attempt = 1; attempt <= SETTLE_ATTEMPTS; attempt++) {
+		try {
+			const response = await fetcher(url, {
+				headers: { accept: "text/html" },
+				redirect: "manual",
+				signal: AbortSignal.timeout(15_000),
+			});
+			await response.body?.cancel();
+			answer = accessDoor(
+				response.status,
+				response.headers.get("location"),
+				response.headers.get(ACCESS_CHECK_HEADER),
+			);
+			if (answer.door === "behind") {
+				log(`::add-mask::${new URL(answer.issuer).host}`);
+			}
+			log(`answered ${response.status}: ${answer.door}`);
+		} catch (e) {
+			log(
+				`the request failed (${e?.cause?.code ?? e?.code ?? e?.name ?? "error"})`,
+			);
+		}
+		if (answer.door !== "unknown") break;
+		if (now() + SETTLE_PAUSE_MS > settleBy) break;
+		await sleep(SETTLE_PAUSE_MS);
+	}
+	return answer;
+}
+
+/**
+ * Whether the Worker refusing to say which version it is, is the Worker
+ * doing as it should: the Access step found Access in front of another
+ * address it answers on (`behind`), and this one, which Access does not
+ * cover, is refused for want of any Access token -- the Worker's own check
+ * standing in where Access does not (cloudflare-access.ts).
+ *
+ * Read as a failure, a deployment with Access over a domain of its own and
+ * workers.dev beside it failed every deploy from the second on, and each was
+ * rolled back: this check asks workers.dev, and from the first deploy's
+ * settings on, the Worker refused it its version. The version is then the
+ * one Cloudflare reports live, as it is behind Access (`behindAccess`).
+ * With any other verdict a refusal is still a failure: with no Access found
+ * the settings have just been taken away, and a Worker still refusing is one
+ * that has not read that yet, or a fault.
+ */
+export function refusedWhereAccessIsNot(status, accessCheck, accessVerdict) {
+	return (
+		status === 403 &&
+		accessCheck === WORKER_SAW_NO_TOKEN &&
+		accessVerdict === "behind"
+	);
+}
+
+/**
  * The question the dashboard asks when it comes back to the front
  * (appUpdate.ts in the dashboard): its page, from script, with no cookie --
  * which is how a browser whose Access sign-in has lapsed asks it -- and

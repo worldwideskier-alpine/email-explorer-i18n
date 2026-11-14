@@ -1,5 +1,12 @@
 import { createExecutionContext, env, SELF } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
+// The deploy's own reading of an answer, which runs in node from the deploy
+// workflow; plain JS, typed here by allowJs.
+import {
+	ACCESS_CHECK_HEADER,
+	askAccessDoor,
+	refusedWhereAccessIsNot,
+} from "../../scripts/deployment-check.mjs";
 import {
 	ACCESS_KEY,
 	checkAccess,
@@ -14,7 +21,7 @@ import {
 
 /**
  * The Cloudflare Access signature, checked by the Worker on every request it
- * handles (cloudflare-access.ts). Access stands in front of the deployment;
+ * handles (cloudflare-access.ts). With Access in front of the deployment,
  * the Worker refuses what Access did not let through, by the token Access
  * signs, once the deploy has written which team is in front
  * (`settings/access.json`, from the redirect the deployment answered it with).
@@ -129,6 +136,53 @@ describe("a deployment with Access in front", () => {
 			expect(refused.headers.get("X-Access-Check")).toBeNull();
 		}
 		expect((await ask(await token())).headers.get("X-Access-Check")).toBeNull();
+	});
+
+	it("is read by the deploy as the Worker says it", async () => {
+		// The header's name and value are written twice, here and in the
+		// deploy's scripts, which run in node. Spelled apart, every refusal
+		// would read as "cannot tell" again and the settings outlive Access,
+		// with each of the two halves' tests still passing on its own.
+		await settle({ issuer: TEAM, audiences: [AUD] });
+		const through =
+			(assertion?: string) => (input: RequestInfo | URL, init?: RequestInit) =>
+				SELF.fetch(String(input), {
+					...init,
+					headers: {
+						...(init?.headers as Record<string, string>),
+						...(assertion ? { "Cf-Access-Jwt-Assertion": assertion } : {}),
+					},
+				});
+		const once = (assertion?: string) => ({
+			fetcher: through(assertion),
+			settleBy: 0,
+			log: () => {},
+		});
+		const url = "http://local.test/api/v1/settings";
+		expect(await askAccessDoor(url, once())).toEqual({ door: "open" });
+		expect(await askAccessDoor(url, once("garbage"))).toEqual({
+			door: "unknown",
+		});
+
+		// And the last check, which asks workers.dev while Access stands in
+		// front of another address: the refusal it is given is the Worker's
+		// own, and nothing that verified otherwise is.
+		const none = await ask();
+		expect(
+			refusedWhereAccessIsNot(
+				none.status,
+				none.headers.get(ACCESS_CHECK_HEADER),
+				"behind",
+			),
+		).toBe(true);
+		const bad = await ask("garbage");
+		expect(
+			refusedWhereAccessIsNot(
+				bad.status,
+				bad.headers.get(ACCESS_CHECK_HEADER),
+				"behind",
+			),
+		).toBe(false);
 	});
 
 	it("holds every request to the applications the deploy wrote, any one of them", async () => {

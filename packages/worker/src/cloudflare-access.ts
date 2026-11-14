@@ -1,12 +1,11 @@
 /**
  * The Cloudflare Access signature on a request, checked by the Worker.
  *
- * Access stands in front of the addresses this deployment answers on, and
- * hands what it lets through a signed token (`Cf-Access-Jwt-Assertion`). The
- * Worker checks it rather than taking Access's word for having been in the
- * way: a route Access does not cover -- a new hostname, a policy changed in
- * the dashboard -- would otherwise reach the Worker with nobody having signed
- * in to Access at all.
+ * When Access stands in front of a deployment, it hands what it lets through
+ * a signed token (`Cf-Access-Jwt-Assertion`). The Worker checks it rather
+ * than taking Access's word for having been in the way: a route Access does
+ * not cover -- a new hostname, a policy changed in the dashboard -- would
+ * otherwise reach the Worker with nobody having signed in to Access at all.
  *
  * What is checked: the issuer, the signature (RS256, by a key that issuer
  * publishes at `/cdn-cgi/access/certs`), that it is in date, and the audience.

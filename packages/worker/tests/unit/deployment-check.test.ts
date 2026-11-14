@@ -8,6 +8,7 @@ import {
 	accessTeamFrom,
 	addressKind,
 	answeredByTheWorker,
+	askAccessDoor,
 	assetMismatch,
 	assetsReferencedBy,
 	behindAccess,
@@ -19,6 +20,8 @@ import {
 	deployedAddress,
 	deployedAddresses,
 	liveVersionIn,
+	refusedWhereAccessIsNot,
+	SETTLE_ATTEMPTS,
 	staleServedPage,
 	workerVersionMismatch,
 } from "../../scripts/deployment-check.mjs";
@@ -202,6 +205,37 @@ describe("the Worker's version", () => {
 		expect(workerVersionMismatch(ID, "0".repeat(36))).toMatch(/not/);
 		expect(workerVersionMismatch(ID, null)).toMatch(/does not say/);
 		expect(workerVersionMismatch("", "anything")).toBeNull();
+	});
+
+	it("need not be said where Access stands in front of another address and this one is refused for want of a token", () => {
+		// Access over a domain of the deployment's own, workers.dev beside
+		// it: the Worker refuses workers.dev, which the check asks, its
+		// version, as it should. Read as a failure, every deploy from the
+		// second on was rolled back.
+		expect(refusedWhereAccessIsNot(403, "no-token", "behind")).toBe(true);
+	});
+
+	it.each([
+		[
+			"Access was found nowhere, so the settings were just taken away",
+			403,
+			"no-token",
+			"open",
+		],
+		["the Access step could not tell", 403, "no-token", "unknown"],
+		["the Access step did not run", 403, "no-token", ""],
+		["the refusal is not for want of a token", 403, null, "behind"],
+		["the refusal says something else", 403, "something-else", "behind"],
+		["it is not a refusal", 200, "no-token", "behind"],
+		["the Worker fell over", 500, "no-token", "behind"],
+	])("must be said when %s", (_, status, accessCheck, verdict) => {
+		expect(
+			refusedWhereAccessIsNot(
+				status as number,
+				accessCheck as string | null,
+				verdict as string,
+			),
+		).toBe(false);
 	});
 });
 
@@ -462,6 +496,135 @@ describe("what the deploy does about the Worker's Access settings", () => {
 				behind(KID, "https://other.cloudflareaccess.com"),
 			]).door,
 		).toBe("unknown");
+	});
+});
+
+/**
+ * One question to one address, asked again while its answer cannot be told,
+ * on a clock of the test's own: each pause moves it on by the pause.
+ */
+describe("asking one address about Access", () => {
+	function stand(answers: (() => Response)[]) {
+		let clock = 0;
+		const asked: { url: string; init: RequestInit }[] = [];
+		const lines: string[] = [];
+		const fetcher = async (input: RequestInfo | URL, init?: RequestInit) => {
+			asked.push({ url: String(input), init: init ?? {} });
+			const next = answers[Math.min(asked.length, answers.length) - 1];
+			return next();
+		};
+		return {
+			asked,
+			lines,
+			options: (settleIn: number) => ({
+				fetcher,
+				now: () => clock,
+				sleep: async (ms: number) => {
+					clock += ms;
+				},
+				settleBy: settleIn,
+				log: (line: string) => lines.push(line),
+			}),
+		};
+	}
+	const oldWorker = () => new Response("{}", { status: 403 });
+	const newWorker = () =>
+		new Response("{}", {
+			status: 403,
+			headers: { "X-Access-Check": "no-token" },
+		});
+	const signIn = () =>
+		new Response(null, { status: 302, headers: { location: SIGN_IN } });
+
+	it("asks again past five answers that cannot be told, while the minute lasts", async () => {
+		// The Worker from before the deploy, still answering for a while: it
+		// refuses without saying why. Five tries in twelve seconds, as it
+		// was, left the settings and every request refused.
+		const answers = [...Array(7).fill(oldWorker), newWorker];
+		const one = stand(answers);
+		expect(
+			await askAccessDoor("https://w.example.workers.dev/api/v1/settings", {
+				...one.options(60_000),
+			}),
+		).toEqual({ door: "open" });
+		expect(one.asked).toHaveLength(8);
+		expect(one.lines.at(-1)).toBe("answered 403: open");
+	});
+
+	it("stops at the deadline it is given, shared by every question", async () => {
+		const one = stand([oldWorker]);
+		expect(
+			await askAccessDoor(
+				"https://w.example.workers.dev/",
+				one.options(10_000),
+			),
+		).toEqual({ door: "unknown" });
+		// At 0, 3, 6 and 9 seconds; a fifth would start past the deadline.
+		expect(one.asked).toHaveLength(4);
+
+		// A deadline an earlier question spent: asked once, not again.
+		const late = stand([oldWorker]);
+		await askAccessDoor("https://w.example.workers.dev/", late.options(-1));
+		expect(late.asked).toHaveLength(1);
+	});
+
+	it("asks no more than its tries, whatever the clock says", async () => {
+		const one = stand([oldWorker]);
+		await askAccessDoor("https://w.example.workers.dev/", {
+			...one.options(Number.POSITIVE_INFINITY),
+		});
+		expect(one.asked).toHaveLength(SETTLE_ATTEMPTS);
+	});
+
+	it("asks once when the answer can be told", async () => {
+		for (const answer of [signIn, newWorker, () => new Response("ok")]) {
+			const one = stand([answer]);
+			await askAccessDoor(
+				"https://w.example.workers.dev/",
+				one.options(60_000),
+			);
+			expect(one.asked).toHaveLength(1);
+		}
+	});
+
+	it("asks as a browser asks for a page, and follows no redirect", async () => {
+		const one = stand([signIn]);
+		await askAccessDoor("https://w.example.workers.dev/", one.options(0));
+		expect(one.asked[0].url).toBe("https://w.example.workers.dev/");
+		expect(one.asked[0].init.redirect).toBe("manual");
+		expect(one.asked[0].init.headers).toEqual({ accept: "text/html" });
+	});
+
+	it("masks the team before it says anything after it", async () => {
+		const one = stand([signIn]);
+		expect(
+			(await askAccessDoor("https://w.example.workers.dev/", one.options(0)))
+				.door,
+		).toBe("behind");
+		expect(one.lines).toEqual([
+			"::add-mask::team.cloudflareaccess.com",
+			"answered 302: behind",
+		]);
+	});
+
+	it("tells a failed request by its code, never by Node's text, which names the host", async () => {
+		const lines: string[] = [];
+		const failing = async () => {
+			throw Object.assign(
+				new TypeError("fetch failed: getaddrinfo ENOTFOUND mail.example.com"),
+				{ cause: { code: "ENOTFOUND" } },
+			);
+		};
+		expect(
+			await askAccessDoor("https://mail.example.com/", {
+				fetcher: failing,
+				now: () => 0,
+				sleep: async () => {},
+				settleBy: 0,
+				log: (line: string) => lines.push(line),
+			}),
+		).toEqual({ door: "unknown" });
+		expect(lines).toEqual(["the request failed (ENOTFOUND)"]);
 	});
 });
 

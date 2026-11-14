@@ -329,7 +329,23 @@ are still checked, by the `tsc` that runs before the worker tests.
   taken off on 2026-11-14 -- the Worker refused the deploy's own question
   for want of a token, the deploy left the file, and every request was
   refused until the deploy was mended. A token that fails verification is
-  still "cannot tell". Nothing is set by hand, nothing names a team
+  still "cannot tell". The Worker from before a deploy may still answer for
+  a while after it, and that one may not say why it refuses, so the step
+  asks again while an answer cannot be told, for the minute the last check
+  gives the edge too -- once for all of its questions, not for each
+  (`askAccessDoor`, `SETTLE_ATTEMPTS`): five tries in twelve seconds, as it
+  was, could leave the file for one more deploy.
+  The deploy sees only the addresses it asks -- workers.dev and any other
+  wrangler prints as an `https://` line, and `PRODUCTION_URL` -- so Access
+  over an address it does not ask is invisible to it, to the writing and
+  the deleting alike. Taken off every address the deploy asks and left on
+  one it does not, Access reads as gone: the file is deleted, with no
+  warning, and an address Access does not cover is left to the Worker's own
+  sign-in. That is what the same configuration gets deployed afresh, which
+  never writes the file at all. Recording the addresses once seen behind
+  Access was weighed and not done: it misses an address that was never
+  asked, which is this case, and one recorded that later goes away keeps the
+  file for good -- 2026-11-14 again. Nothing is set by hand, nothing names a team
   in this public repository, and a fork's team, or none, is found the same
   way. The first version learned the team from the first token that
   verified, and anybody can make a team: on a deployment without Access, or
@@ -348,7 +364,16 @@ are still checked, by the `tsc` that runs before the worker tests.
   runner is nobody Access lets in -- and asking anyway failed every deploy and
   rolled it back. It recognises the redirect to a team's sign-in page
   (`behindAccess`), says so, and goes by the version Cloudflare reports live;
-  the bytes served are not compared there. Preview addresses are off
+  the bytes served are not compared there. The other way round -- Access
+  over a domain of the deployment's own, asked as `PRODUCTION_URL`, and
+  workers.dev beside it, which the check asks -- the Worker refuses
+  workers.dev its version from the first deploy's file on, for want of a
+  token, as it should, and read as a failure that rolled every deploy back
+  from the second on. A refusal for want of a token after the Access step
+  found Access in front is taken for what it is (`refusedWhereAccessIsNot`):
+  the page and its bytes are compared as ever, and the version is the one
+  Cloudflare reports live. That was found by reading the code, not on a
+  deployment that had it. Preview addresses are off
   (`preview_urls: false`): one per version, each another way in.
 - **Turnstile guards the forms a stranger reaches** -- sign-in, registration,
   the reset request -- once root sets it on `/root` (`turnstile.ts`, kept in
