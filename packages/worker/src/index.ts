@@ -8,6 +8,7 @@ import { backupKeyPrefix } from "./auto-backup";
 import { listBackups } from "./backup-writer";
 import { classifyWithClaude } from "./claude-spam-filter";
 import { checkAccess } from "./cloudflare-access";
+import { repairedOnOpen } from "./decoding-repair";
 import { recoveryFromEmail } from "./deployment-config";
 import { ingestEmailIntoMailbox } from "./email-ingest";
 import { ensureLegacyMailboxGrants } from "./legacy-grants";
@@ -923,11 +924,15 @@ class GetEmail extends OpenAPIRoute {
 		const doId = ns.idFromName(mailboxId);
 		const stub = ns.get(doId);
 
-		const email = await stub.getEmail(id);
+		const stored = await stub.getEmail(id);
 
-		if (!email) {
+		if (!stored) {
 			return c.json({ error: "Email not found" }, 404);
 		}
+
+		// Stored before a fix to how mail is decoded, a message is read again
+		// from its original here and put right; see decoding-repair.ts.
+		const email = await repairedOnOpen(c.env, stub, id, stored);
 
 		// The screen offers "open in a new tab" for exactly what the
 		// attachment route serves inline, so it is decided in one place.

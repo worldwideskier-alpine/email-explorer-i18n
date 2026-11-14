@@ -131,8 +131,19 @@ are still checked, by the `tsc` that runs before the worker tests.
   readings of the same bytes. The patch is keyed by name in
   `pnpm-workspace.yaml`, so it follows each upgrade of postal-mime, and an
   upgrade it no longer applies to fails the install and CI with it.
-  `iso-2022-jp.test.ts`. Messages stored before keep what they were stored
-  with.
+  `iso-2022-jp.test.ts`.
+  A message stored before a fix like this one keeps the mistake, since its
+  subject and body are stored as text at ingest, so it is put right when it
+  is opened (`decoding-repair.ts`, from the `GetEmail` route): one with a
+  U+FFFD in its subject or body is read again from `raw/{id}.eml` and written
+  back only if the new reading is the stored text with replacement
+  characters taken out and nothing else changed, and only if the row is
+  still what was read (`repairDecoding`, one step). A rule that compared
+  less would let a later change to how bodies are stored rewrite somebody's
+  words. Ingest and the repair share `storedSubjectOf` and `storedBodyOf`,
+  so the two cannot spell the stored text differently. A message without
+  its original, or whose replacement characters are the sender's own, is
+  shown as stored. `decoding-repair.test.ts`.
 - **The auth gate.** `route-access.test.ts` holds one table of every route
   the Worker registers -- public, any session, mailbox holder, root -- and
   asks each the same questions. A new route fails it until it is put in the

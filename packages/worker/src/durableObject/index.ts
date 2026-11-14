@@ -2870,6 +2870,31 @@ export class MailboxDO extends DurableObject<Env> {
 		);
 	}
 
+	/**
+	 * Puts back a message's subject and body as its original reads now
+	 * (decoding-repair.ts), only if they are still what the caller read: the
+	 * original is read and parsed outside this object, and a message changed
+	 * meanwhile is left as it is rather than overwritten with a reading of
+	 * what it was. `IS`, not `=`, so a null subject or body compares equal to
+	 * a null one.
+	 */
+	async repairDecoding(
+		id: string,
+		before: { subject: string | null; body: string | null },
+		after: { subject?: string; body?: string },
+	): Promise<boolean> {
+		return (
+			this.ctx.storage.sql.exec(
+				"UPDATE emails SET subject = ?, body = ? WHERE id = ? AND subject IS ? AND body IS ?",
+				after.subject ?? before.subject,
+				after.body ?? before.body,
+				id,
+				before.subject,
+				before.body,
+			).rowsWritten > 0
+		);
+	}
+
 	/** Notes that a reply to this message has left, for the list to show. */
 	async markReplied(id: string, at: string): Promise<void> {
 		this.ctx.storage.sql.exec(
