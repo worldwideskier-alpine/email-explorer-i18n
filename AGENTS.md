@@ -117,6 +117,22 @@ are still checked, by the `tsc` that runs before the worker tests.
   recipient (`event.to`), never by the `To:` header, and rejects anything
   addressed to a mailbox that does not exist. Trusting the header let anyone
   create a mailbox by sending mail to one.
+  ISO-2022-JP is read as mail clients read it, not as the Encoding Standard
+  does. This runtime's `TextDecoder` follows the standard, as a browser's
+  does (measured: Shift_JIS, ISO-2022-JP and EUC-JP all), and the standard
+  answers U+FFFD for an escape sequence that follows another with nothing
+  between them -- `ESC ( B ESC $ B`, which Japanese senders' templates write
+  wherever two JIS runs meet. On 2026-11-14 a card company's notice showed a
+  replacement character between two words that Python and iconv read as
+  nothing. `patches/postal-mime.patch` drops an escape sequence that another
+  one the decoder recognises follows at once, and nothing more: a stray byte,
+  and an escape it does not know, are still U+FFFD. The screen and the spam
+  check both read the one string decoded at ingest, so this parts no two
+  readings of the same bytes. The patch is keyed by name in
+  `pnpm-workspace.yaml`, so it follows each upgrade of postal-mime, and an
+  upgrade it no longer applies to fails the install and CI with it.
+  `iso-2022-jp.test.ts`. Messages stored before keep what they were stored
+  with.
 - **The auth gate.** `route-access.test.ts` holds one table of every route
   the Worker registers -- public, any session, mailbox holder, root -- and
   asks each the same questions. A new route fails it until it is put in the

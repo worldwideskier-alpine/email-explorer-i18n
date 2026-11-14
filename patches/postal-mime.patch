@@ -1,0 +1,146 @@
+diff --git a/dist/cjs/decode-strings.js b/dist/cjs/decode-strings.js
+index 40c59f60c85570578ec39347f401ddea87e6c3e3..b3c477bfec154cb0a43a6fe68a15cc0cdb472504 100644
+--- a/dist/cjs/decode-strings.js
++++ b/dist/cjs/decode-strings.js
+@@ -272,6 +272,59 @@ function resolveLabel(charset) {
+ //
+ // Sharing a decoder is safe because nothing decodes with `stream: true`, so every
+ // decode() call starts from a fresh state.
++// Patched in email-explorer-i18n (patches/postal-mime.patch; see its AGENTS.md).
++// The Encoding Standard's ISO-2022-JP decoder answers U+FFFD for an escape sequence
++// that follows another with no character between them, so `ESC ( B ESC $ B` -- two
++// JIS runs written one after the other, which Japanese senders' templates produce
++// all the time -- showed a replacement character where the sender wrote none.
++// Python, iconv and the mail clients people read such mail in take the second
++// sequence and nothing more. Dropping an escape sequence that another recognised
++// one follows at once gives their reading: its mode is replaced before any byte is
++// read under it, so nothing it decides is lost. Only the five sequences the decoder
++// recognises are dropped or let one be dropped: one it does not know is still an
++// error, and the mode in force before it still holds.
++function isIso2022JpEscape(bytes, i) {
++    if (bytes[i] !== 0x1b) {
++        return false;
++    }
++    const a = bytes[i + 1];
++    const b = bytes[i + 2];
++    return (a === 0x28 && (b === 0x42 || b === 0x4a || b === 0x49)) || (a === 0x24 && (b === 0x40 || b === 0x42));
++}
++function withoutEmptyEscapes(bytes) {
++    let out = null;
++    let written = 0;
++    for (let i = 0; i < bytes.length; i++) {
++        if (isIso2022JpEscape(bytes, i) && isIso2022JpEscape(bytes, i + 3)) {
++            if (!out) {
++                out = new Uint8Array(bytes.length);
++                out.set(bytes.subarray(0, i));
++                written = i;
++            }
++            i += 2;
++            continue;
++        }
++        if (out) {
++            out[written++] = bytes[i];
++        }
++    }
++    return out ? out.subarray(0, written) : bytes;
++}
++function asMailDecoder(decoder) {
++    if (decoder.encoding !== 'iso-2022-jp') {
++        return decoder;
++    }
++    return {
++        encoding: decoder.encoding,
++        decode(input) {
++            if (input === undefined) {
++                return decoder.decode();
++            }
++            const bytes = input instanceof Uint8Array ? input : ArrayBuffer.isView(input) ? new Uint8Array(input.buffer, input.byteOffset, input.byteLength) : new Uint8Array(input);
++            return decoder.decode(withoutEmptyEscapes(bytes));
++        }
++    };
++}
+ const decoders = new Map();
+ function tryDecoder(label) {
+     if (REPLACEMENT_LABELS.has(label)) {
+@@ -281,7 +334,7 @@ function tryDecoder(label) {
+     if (decoder === undefined) {
+         decoder = null;
+         try {
+-            decoder = new TextDecoder(label);
++            decoder = asMailDecoder(new TextDecoder(label));
+         }
+         catch {
+             // not supported by this runtime
+diff --git a/dist/esm/decode-strings.js b/dist/esm/decode-strings.js
+index 7108f8d81519aca5639d2e9e2ee4774aab28c0cc..2f47e6aaa0163325ea1c81945cf13916cd621101 100644
+--- a/dist/esm/decode-strings.js
++++ b/dist/esm/decode-strings.js
+@@ -254,6 +254,59 @@ function resolveLabel(charset) {
+ //
+ // Sharing a decoder is safe because nothing decodes with `stream: true`, so every
+ // decode() call starts from a fresh state.
++// Patched in email-explorer-i18n (patches/postal-mime.patch; see its AGENTS.md).
++// The Encoding Standard's ISO-2022-JP decoder answers U+FFFD for an escape sequence
++// that follows another with no character between them, so `ESC ( B ESC $ B` -- two
++// JIS runs written one after the other, which Japanese senders' templates produce
++// all the time -- showed a replacement character where the sender wrote none.
++// Python, iconv and the mail clients people read such mail in take the second
++// sequence and nothing more. Dropping an escape sequence that another recognised
++// one follows at once gives their reading: its mode is replaced before any byte is
++// read under it, so nothing it decides is lost. Only the five sequences the decoder
++// recognises are dropped or let one be dropped: one it does not know is still an
++// error, and the mode in force before it still holds.
++function isIso2022JpEscape(bytes, i) {
++    if (bytes[i] !== 0x1b) {
++        return false;
++    }
++    const a = bytes[i + 1];
++    const b = bytes[i + 2];
++    return (a === 0x28 && (b === 0x42 || b === 0x4a || b === 0x49)) || (a === 0x24 && (b === 0x40 || b === 0x42));
++}
++function withoutEmptyEscapes(bytes) {
++    let out = null;
++    let written = 0;
++    for (let i = 0; i < bytes.length; i++) {
++        if (isIso2022JpEscape(bytes, i) && isIso2022JpEscape(bytes, i + 3)) {
++            if (!out) {
++                out = new Uint8Array(bytes.length);
++                out.set(bytes.subarray(0, i));
++                written = i;
++            }
++            i += 2;
++            continue;
++        }
++        if (out) {
++            out[written++] = bytes[i];
++        }
++    }
++    return out ? out.subarray(0, written) : bytes;
++}
++function asMailDecoder(decoder) {
++    if (decoder.encoding !== 'iso-2022-jp') {
++        return decoder;
++    }
++    return {
++        encoding: decoder.encoding,
++        decode(input) {
++            if (input === undefined) {
++                return decoder.decode();
++            }
++            const bytes = input instanceof Uint8Array ? input : ArrayBuffer.isView(input) ? new Uint8Array(input.buffer, input.byteOffset, input.byteLength) : new Uint8Array(input);
++            return decoder.decode(withoutEmptyEscapes(bytes));
++        }
++    };
++}
+ const decoders = new Map();
+ function tryDecoder(label) {
+     if (REPLACEMENT_LABELS.has(label)) {
+@@ -263,7 +316,7 @@ function tryDecoder(label) {
+     if (decoder === undefined) {
+         decoder = null;
+         try {
+-            decoder = new TextDecoder(label);
++            decoder = asMailDecoder(new TextDecoder(label));
+         }
+         catch {
+             // not supported by this runtime

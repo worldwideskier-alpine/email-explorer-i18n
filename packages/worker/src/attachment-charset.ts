@@ -17,11 +17,12 @@
  * already in hand.
  *
  * Read from the bytes rather than from a decoded string on purpose. A message
- * can be twenty megabytes, `TextDecoder` in this runtime speaks UTF-8 only
- * (which a Shift_JIS part is not), and building a JS string of the whole thing
- * to run a regex over is exactly the kind of copy that got the nightly backup
- * killed. Only header lines are decoded, and only when the message has an
- * attachment at all.
+ * can be twenty megabytes, its parts are in whatever charsets they declare,
+ * and building a JS string of the whole thing to run a regex over is exactly
+ * the kind of copy that got the nightly backup killed. Only header lines are
+ * decoded, and only when the message has an attachment at all. (An earlier
+ * note here said this runtime's `TextDecoder` read UTF-8 only; measured on
+ * 2026-11-14, it reads Shift_JIS, ISO-2022-JP and EUC-JP as a browser does.)
  */
 
 import { splitParameters } from "./mbox";
