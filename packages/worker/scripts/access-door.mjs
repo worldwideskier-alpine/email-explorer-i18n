@@ -19,10 +19,9 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-	ACCESS_CHECK_HEADER,
-	accessDoor,
 	accessDoorOf,
 	addressKind,
+	askEveryAccessDoor,
 	DASHBOARD_ASK,
 	dashboardAskLine,
 	dashboardAskReachesTheTeam,
@@ -34,8 +33,6 @@ const TEMP = process.env.RUNNER_TEMP ?? "";
 const VERDICT = join(TEMP, "access-door.txt");
 const SETTINGS = join(TEMP, "access.json");
 const PATHS = ["/", "/api/v1/settings"];
-const ATTEMPTS = 5;
-const PAUSE_MS = 3000;
 
 writeFileSync(VERDICT, "unknown\n");
 
@@ -64,50 +61,7 @@ if (usable.length === 0) {
 	process.exit(0);
 }
 
-async function ask(url) {
-	let answer = { door: "unknown" };
-	for (let attempt = 1; attempt <= ATTEMPTS; attempt++) {
-		try {
-			const response = await fetch(url, {
-				// Asked as a browser asks for a page, which Access answers with
-				// its sign-in redirect.
-				headers: { accept: "text/html" },
-				redirect: "manual",
-				signal: AbortSignal.timeout(15_000),
-			});
-			await response.body?.cancel();
-			answer = accessDoor(
-				response.status,
-				response.headers.get("location"),
-				response.headers.get(ACCESS_CHECK_HEADER),
-			);
-			if (answer.door === "behind") {
-				console.log(`::add-mask::${new URL(answer.issuer).host}`);
-			}
-			console.log(`answered ${response.status}: ${answer.door}`);
-		} catch (e) {
-			// By its code alone: Node's own text names the host.
-			console.log(
-				`the request failed (${e?.cause?.code ?? e?.code ?? e?.name ?? "error"})`,
-			);
-		}
-		if (answer.door !== "unknown") break;
-		if (attempt < ATTEMPTS) {
-			await new Promise((resolve) => setTimeout(resolve, PAUSE_MS));
-		}
-	}
-	return answer;
-}
-
-const answers = [];
-const behind = new Set();
-for (const base of usable) {
-	for (const path of PATHS) {
-		const answer = await ask(`${base}${path}`);
-		answers.push(answer);
-		if (answer.door === "behind") behind.add(base);
-	}
-}
+const { answers, behind } = await askEveryAccessDoor(usable, PATHS);
 const verdict = accessDoorOf(answers);
 if (verdict.door === "behind") {
 	writeFileSync(
