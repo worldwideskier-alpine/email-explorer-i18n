@@ -1,4 +1,5 @@
 import type PostalMime from "postal-mime";
+import type { Email } from "postal-mime";
 import { charsetsForAttachments, typeWithCharset } from "./attachment-charset";
 import { storableFilename } from "./attachment-name";
 import { MAILBOX_CLOSED, type MailboxDO } from "./durableObject";
@@ -119,7 +120,7 @@ export async function ingestEmailIntoMailbox(
 			folder,
 			{
 				id: messageId,
-				subject: parsedEmail.subject || "",
+				subject: storedSubjectOf(parsedEmail),
 				sender: asHeaderAddress(parsedEmail.from?.address || ""),
 				// The whole To: and Cc: lists, not just the first address, so
 				// "reply all" can reach everyone who saw the message. This does not
@@ -142,9 +143,7 @@ export async function ingestEmailIntoMailbox(
 						}
 					: {}),
 				date: storedDate(overrides.date),
-				body:
-					parsedEmail.html ||
-					(parsedEmail.text ? plainTextToHtml(parsedEmail.text) : ""),
+				body: storedBodyOf(parsedEmail),
 				in_reply_to: inReplyTo,
 				email_references:
 					emailReferences.length > 0 ? JSON.stringify(emailReferences) : null,
@@ -188,6 +187,24 @@ export async function ingestEmailIntoMailbox(
 	}
 
 	return messageId;
+}
+
+/**
+ * The subject and body a message is stored with, from its parse. One place,
+ * because a message stored before a fix to the parse is read again from its
+ * original and compared with what these give (decoding-repair.ts): two
+ * spellings of the same rule would compare as a difference and repair
+ * nothing.
+ */
+export function storedSubjectOf(parsedEmail: Email): string {
+	return parsedEmail.subject || "";
+}
+
+export function storedBodyOf(parsedEmail: Email): string {
+	return (
+		parsedEmail.html ||
+		(parsedEmail.text ? plainTextToHtml(parsedEmail.text) : "")
+	);
 }
 
 /**
