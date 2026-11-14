@@ -8,6 +8,11 @@
 # with the diff named, runs it; and the transcript is read for whether it did
 # (security-review-verdict.mjs), so a run that reviewed nothing exits 1.
 #
+# On 2.1.325 `claude -p` began asking permission for the skill, and with
+# nobody to answer it was refused: the session read the diff by hand and
+# answered all the same. --allowedTools lets this one skill run and nothing
+# else; the verdict fails a session that did not run it.
+#
 #   .claude/security-review.sh            the branch against origin/main
 #   .claude/security-review.sh <base>     against another base
 #
@@ -26,5 +31,6 @@ if ! git symbolic-ref -q refs/remotes/origin/HEAD > /dev/null \
 fi
 
 REPLY_RULES=off claude -p "Run the security-review skill: complete a security review of the pending changes on the current branch, that is \`git diff ${base}...HEAD\`. Report only findings at confidence 8 of 10 or above, each with its file, line, a concrete exploit scenario and a fix. If there are none, say so plainly." \
+	--allowedTools "Skill(security-review)" \
 	--output-format stream-json --verbose \
 	| node "$here/security-review-run.mjs"
