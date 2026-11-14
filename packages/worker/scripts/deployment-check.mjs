@@ -247,17 +247,32 @@ export function accessAudienceFrom(location) {
  * How one address answered for one path, as far as Access is concerned:
  *
  *   behind  -- a team's sign-in redirect, with its team and application.
- *   open    -- the page or the API itself (200, no redirect).
+ *   open    -- the page or the API itself (200, no redirect), or the Worker
+ *              refusing the request for want of any Access token (403 with
+ *              `X-Access-Check: no-token`, cloudflare-access.ts): the request
+ *              reached the Worker past no Access application.
  *   unknown -- anything else: an error, a redirect elsewhere, no answer.
+ *
+ * Without the second kind of open, settings written while Access stood in
+ * front were never taken away once it went: the Worker refused the deploy's
+ * own question for want of a token, the deploy read that as unknown and left
+ * the settings, and the Worker went on refusing every request (2026-11-14).
  */
-export function accessDoor(status, location) {
+export function accessDoor(status, location, accessCheck = null) {
 	const issuer = accessTeamFrom(status, location);
 	if (issuer) {
 		return { door: "behind", issuer, audience: accessAudienceFrom(location) };
 	}
 	if (status === 200 && !location) return { door: "open" };
+	if (status === 403 && !location && accessCheck === WORKER_SAW_NO_TOKEN) {
+		return { door: "open" };
+	}
 	return { door: "unknown" };
 }
+
+/** The header and value cloudflare-access.ts answers a token-less request with. */
+export const ACCESS_CHECK_HEADER = "x-access-check";
+export const WORKER_SAW_NO_TOKEN = "no-token";
 
 /**
  * The question the dashboard asks when it comes back to the front

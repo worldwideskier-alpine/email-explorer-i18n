@@ -300,9 +300,12 @@ are still checked, by the `tsc` that runs before the worker tests.
   left to the stamp: a login moved to another address and back has its old
   stamp again, and the browsers from before were trusted again without
   signing in. `login-device.test.ts`.
-- **Cloudflare Access stands in front, and the Worker checks it did.** The
-  owner put Access over every address the Worker answers on, members of the
-  Cloudflare account only. Every request the Worker handles first has the
+- **Cloudflare Access, when it stands in front, and the Worker checks it
+  did.** The owner put Access over every address the Worker answers on,
+  members of the Cloudflare account only, and took it off on 2026-11-14: a
+  second sign-in every day in front of a mail client with a sign-in of its
+  own, that nobody outside the account could use. The check stays, for a
+  deployment that puts Access in front. Every request the Worker handles first has the
   token Access signs (`Cf-Access-Jwt-Assertion`) checked
   (`cloudflare-access.ts`, at the top of `fetch()`, before sign-in and the
   session gate): issued by this deployment's team -- compared before any key
@@ -319,7 +322,14 @@ are still checked, by the `tsc` that runs before the worker tests.
   every answer came without Access is the file deleted, so Access taken off
   stops refusing requests at the next deploy, while an address Access does
   not cover never outvotes one it does -- that address is where the
-  Worker's own check is needed. Nothing is set by hand, nothing names a team
+  Worker's own check is needed. A refusal for want of any token is the
+  Worker saying so (`X-Access-Check: no-token`, and on no other refusal),
+  and counts as an answer without Access: the request came past no Access
+  application. Read as "cannot tell", it kept the file once Access was
+  taken off on 2026-11-14 -- the Worker refused the deploy's own question
+  for want of a token, the deploy left the file, and every request was
+  refused until the deploy was mended. A token that fails verification is
+  still "cannot tell". Nothing is set by hand, nothing names a team
   in this public repository, and a fork's team, or none, is found the same
   way. The first version learned the team from the first token that
   verified, and anybody can make a team: on a deployment without Access, or

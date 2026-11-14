@@ -107,6 +107,30 @@ describe("a deployment with Access in front", () => {
 		expect((await ask()).status).toBe(403);
 	});
 
+	it("says it refused for want of any token, and for nothing else", async () => {
+		// The deploy reads this as "no Access in front" (accessDoor). Left
+		// unsaid, the settings written while Access stood in front outlived
+		// it, and the Worker refused every request after Access was taken
+		// off (2026-11-14).
+		await settle({ issuer: TEAM, audiences: [AUD] });
+		const none = await ask();
+		expect(none.status).toBe(403);
+		expect(none.headers.get("X-Access-Check")).toBe("no-token");
+
+		// A token something signed is not "no Access": the deploy must not
+		// read these as Access being gone.
+		for (const assertion of [
+			"garbage",
+			await token({ aud: ["another-app"] }),
+			await token({ iss: "https://other.cloudflareaccess.com" }),
+		]) {
+			const refused = await ask(assertion);
+			expect(refused.status).toBe(403);
+			expect(refused.headers.get("X-Access-Check")).toBeNull();
+		}
+		expect((await ask(await token())).headers.get("X-Access-Check")).toBeNull();
+	});
+
 	it("holds every request to the applications the deploy wrote, any one of them", async () => {
 		await settle({ issuer: TEAM, audiences: ["workers-dev-app", AUD] });
 		expect((await ask(await token())).status).toBe(200);
