@@ -128,7 +128,27 @@ const SYSTEM_PROMPT = [
 		"bank, card issuer, payment service, retailer, delivery company, " +
 		"telecom or government body, over an address on a domain unrelated to " +
 		"that organisation, is impersonation, and impersonation is SPAM however " +
-		"ordinary the rest of the message reads.",
+		"ordinary the rest of the message reads. The same holds when the " +
+		"subject or the body speaks as such an organisation -- its name in " +
+		"brackets at the start of the subject is a common way -- while the " +
+		"address is on a domain unrelated to it, with or without a display name.",
+
+	// The link's real destination is in its href, which the screen does not
+	// show: a message showing a securities firm's login address over a link
+	// to a throwaway domain read as an ordinary notice, because only the
+	// address it showed was here (readHtml). The second half is there because
+	// delivery services rewrite links for click tracking, and legitimate mail
+	// shows one host and goes to another all the time.
+	"<link_destinations>, when present, lists where the links in the HTML " +
+		"part really go, read from the links themselves and not from their " +
+		"text: one line per place a link opens, and, when a link's visible text " +
+		"is itself a web address on another site, the host that text shows. A " +
+		"link that shows one organisation's address and goes to a domain " +
+		"unrelated to it is how phishing hides where it sends the reader, and " +
+		"is SPAM. Mail sent through a delivery service often routes its links " +
+		"through a host of that service or of the sender; a destination related " +
+		"to the sender, or a well-known delivery service's tracking host, is not " +
+		"by itself a sign of SPAM.",
 
 	// Without this, the authentication line reads as a clean bill of health
 	// and argues for the wrong answer -- these messages pass it by design.
@@ -241,11 +261,189 @@ export function stripHtml(
 	return new HtmlReader(html, enough).read();
 }
 
+/**
+ * The words, as stripHtml reads them, and where the links go.
+ *
+ * A link's destination is in its `href`, which the screen does not show and
+ * stripHtml does not read, so the classifier was given only the text a link
+ * shows -- a phishing message showing a bank's address over a link to a
+ * throwaway domain read as an ordinary notice. Read by the same reader, so a
+ * link is a link where the browser makes one: not inside a comment, a
+ * script or a style. Links are looked for past the words' `enough`, as far
+ * as LINK_SCAN_CHARS: a sender who puts the words the reader sees after
+ * four thousand characters of hidden text does the same to the link.
+ */
+export function readHtml(
+	html: string,
+	enough = Number.POSITIVE_INFINITY,
+): { text: string; links: Link[] } {
+	const links = new Links();
+	const text = new HtmlReader(html, enough, new Words(), false, links).read();
+	return { text, links: links.seen };
+}
+
+/**
+ * Where a link goes, and the host its own text shows when that text is a web
+ * address. `to` is a host, or the scheme of a link that is not to a web
+ * page, such as `javascript:`.
+ */
+export interface Link {
+	to: string;
+	shown?: string;
+}
+
+/** How far into the HTML links are looked for, words or no words. */
+export const LINK_SCAN_CHARS = 512 * 1024;
+/**
+ * How many places a link goes are kept, past those whose text shows another
+ * site: those are kept apart, up to LINK_LINES, so that a run of ordinary
+ * links ahead of one cannot crowd it out.
+ */
+const LINKS_READ = 200;
+/** How much of a link's markup is read for its text, past the words. */
+const LINK_TEXT_CHARS = 2048;
+
+class Links {
+	readonly seen: Link[] = [];
+	readonly #kept = new Set<string>();
+	#elsewhere = 0;
+	#plain = 0;
+
+	/** Whether nothing more is worth reading for: as many as are said. */
+	get full(): boolean {
+		return this.#elsewhere >= LINK_LINES;
+	}
+
+	add(href: string, text: string): void {
+		const to = destinationOf(href);
+		if (to === undefined) return;
+		const shown = shownHostOf(text);
+		const elsewhere = shown !== undefined && !sameSite(shown, to);
+		const key = elsewhere ? `${shown} ${to}` : to;
+		if (this.#kept.has(key)) return;
+		if (elsewhere ? this.full : this.#plain >= LINKS_READ) return;
+		this.#kept.add(key);
+		if (elsewhere) this.#elsewhere++;
+		else this.#plain++;
+		this.seen.push(elsewhere ? { to, shown } : { to });
+	}
+}
+
+/**
+ * Where an `href` goes, as the browser resolves it: a host for a web page,
+ * the scheme for anything else that navigates, and nothing for a link that
+ * names no other place -- relative, `#`, mail or a phone number.
+ *
+ * Resolved against a stand-in base, so `//host/path` goes to `host` as it
+ * does in the message's frame; one that lands on the stand-in was relative.
+ */
+function destinationOf(href: string): string | undefined {
+	let url: URL;
+	try {
+		url = new URL(href, RELATIVE_BASE);
+	} catch {
+		return undefined;
+	}
+	if (url.protocol === "http:" || url.protocol === "https:") {
+		if (url.hostname === RELATIVE_HOST || url.hostname === "") return undefined;
+		return url.hostname;
+	}
+	if (url.protocol === "mailto:" || url.protocol === "tel:") return undefined;
+	return url.protocol;
+}
+
+const RELATIVE_HOST = "relative.link.invalid";
+const RELATIVE_BASE = `https://${RELATIVE_HOST}/`;
+
+/**
+ * The host a link's text shows when the text is a web address -- one that
+ * starts `http://`, `https://` or `www.` -- as the URL parser spells it, so
+ * full-width letters and other look-alikes come out as the host they are.
+ */
+function shownHostOf(text: string): string | undefined {
+	const found = SHOWN_ADDRESS.exec(text);
+	if (!found) return undefined;
+	try {
+		return new URL(`https://${found[1]}`).hostname || undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+const SHOWN_ADDRESS = /(?:https?:\/\/|(?=www\.))([^\s/?#:"'()<>[\]\\]+)/i;
+
+/**
+ * Whether two hosts are the same site, near enough to say a link goes where
+ * its text says: the same once a leading `www.` is gone, or one inside the
+ * other. Anything else is for the classifier to weigh, which knows that
+ * `r.example.co.jp` and `www.example.co.jp` are one company and a tracking
+ * host of a delivery service is not a stranger; this only has to keep the
+ * plainly matching ones out of its way.
+ */
+function sameSite(a: string, b: string): boolean {
+	const x = a.replace(/^www\./, "");
+	const y = b.replace(/^www\./, "");
+	return x === y || x.endsWith(`.${y}`) || y.endsWith(`.${x}`);
+}
+
+/**
+ * The value of the first of `names` among a tag's attributes, from just
+ * after its name to its end, read as tagEnd reads them; the browser takes
+ * the first of a repeated attribute. References in it are decoded.
+ */
+function attributeValue(
+	html: string,
+	from: number,
+	to: number,
+	names: string[],
+): string | undefined {
+	let i = from;
+	for (;;) {
+		let c = html.charCodeAt(i);
+		while (i < to && (isSpace(c) || c === SLASH)) c = html.charCodeAt(++i);
+		if (i >= to || c === GT) return undefined;
+		const nameStart = i;
+		c = html.charCodeAt(++i);
+		while (i < to && !isSpace(c) && c !== SLASH && c !== GT && c !== EQUALS) {
+			c = html.charCodeAt(++i);
+		}
+		const name = html.slice(nameStart, i).toLowerCase();
+		while (i < to && isSpace(c)) c = html.charCodeAt(++i);
+		if (c !== EQUALS) {
+			if (names.includes(name)) return "";
+			continue;
+		}
+		c = html.charCodeAt(++i);
+		while (i < to && isSpace(c)) c = html.charCodeAt(++i);
+		let value: string;
+		if (c === DOUBLE_QUOTE || c === SINGLE_QUOTE) {
+			const close = html.indexOf(c === DOUBLE_QUOTE ? '"' : "'", i + 1);
+			if (close === -1 || close >= to) return undefined;
+			value = html.slice(i + 1, close);
+			i = close + 1;
+		} else {
+			const valueStart = i;
+			while (i < to && !isSpace(c) && c !== GT) c = html.charCodeAt(++i);
+			value = html.slice(valueStart, i);
+		}
+		if (names.includes(name)) {
+			return value.includes("&") ? decodeReferences(value) : value;
+		}
+	}
+}
+
+/** Whether html[from, to) is the name `a`, in either case. */
+function isA(html: string, from: number, to: number): boolean {
+	return to - from === 1 && (html.charCodeAt(from) | 0x20) === 0x61;
+}
+
 class HtmlReader {
 	readonly #words: Words;
 	readonly #found: Searcher;
 	readonly #ends: Tags;
 	readonly #starts: Tags;
+	/** The link open now: where its words began, and where its markup did. */
+	#link?: { href: string; mark: number; from: number };
 	/**
 	 * Open svg and math elements, counted long: see stripHtml. Apart, since
 	 * `</svg>` inside a math element closes nothing.
@@ -265,6 +463,8 @@ class HtmlReader {
 		private readonly enough: number,
 		words = new Words(),
 		private readonly inComment = false,
+		/** Where links are collected; a comment's own reader has none. */
+		private readonly links?: Links,
 	) {
 		this.#words = words;
 		this.#found = new Searcher(html);
@@ -274,13 +474,55 @@ class HtmlReader {
 
 	read(): string {
 		this.#run();
+		this.#closeLink(this.html.length);
 		return this.#words.toString();
+	}
+
+	/**
+	 * Whether to read on at `at` for the links alone, the words having
+	 * enough: past it the words take no more, and only tags are read.
+	 */
+	#linksWanted(at: number): boolean {
+		return this.links !== undefined && !this.links.full && at < LINK_SCAN_CHARS;
+	}
+
+	/** A link whose `<a>` begins at `lt` and ends just before `after`. */
+	#openLink(href: string | undefined, lt: number, after: number): void {
+		// The tree builder ends a link that is open when another begins.
+		this.#closeLink(lt);
+		if (href !== undefined) {
+			this.#link = { href, mark: this.#words.mark(), from: after };
+		}
+	}
+
+	/**
+	 * The open link ends at `at`. Its text is the words read since it began;
+	 * past the words' `enough` none were, and its markup alone is read.
+	 */
+	#closeLink(at: number): void {
+		const link = this.#link;
+		if (!link) return;
+		this.#link = undefined;
+		const text =
+			this.#words.length > this.enough
+				? stripHtml(
+						this.html.slice(
+							link.from,
+							Math.min(at, link.from + LINK_TEXT_CHARS),
+						),
+					)
+				: this.#words.since(link.mark);
+		this.links?.add(link.href, text);
 	}
 
 	#run(): void {
 		const { html } = this;
 		let at = 0;
-		while (at !== -1 && at < html.length && this.#words.length <= this.enough) {
+		while (
+			at !== -1 &&
+			at < html.length &&
+			(this.#words.length <= this.enough || this.#linksWanted(at))
+		) {
 			const lt = html.indexOf("<", at);
 			if (lt === -1) {
 				this.#text(at, html.length, true);
@@ -342,6 +584,13 @@ class HtmlReader {
 		const selfClosing = { value: false };
 		const after = tagEnd(html, nameEnd, selfClosing);
 		if (after === -1) return -1;
+		if (this.links && isA(html, lt + 1, nameEnd)) {
+			this.#openLink(
+				attributeValue(html, nameEnd, after, ["href", "xlink:href"]),
+				lt,
+				after,
+			);
+		}
 		const name = asciiLower(html, lt + 1, nameEnd);
 		// `<wbr>` is where a long word may wrap, and parts nothing.
 		if (name !== "wbr") this.#words.gap();
@@ -391,6 +640,7 @@ class HtmlReader {
 	#endTag(lt: number): number {
 		const { html } = this;
 		const nameEnd = tagNameEnd(html, lt + 2);
+		if (isA(html, lt + 2, nameEnd)) this.#closeLink(lt);
 		const name = asciiLower(html, lt + 2, nameEnd);
 		if (name === "svg" && this.#svg > 0) this.#svg--;
 		if (name === "math" && this.#math > 0) this.#math--;
@@ -788,6 +1038,16 @@ class Words {
 	toString(): string {
 		return this.#parts.join("");
 	}
+
+	/** Where the words are now, for since(). */
+	mark(): number {
+		return this.#parts.length;
+	}
+
+	/** The words added since `mark`, without the space that parted them. */
+	since(mark: number): string {
+		return this.#parts.slice(mark).join("").trim();
+	}
 }
 
 export interface ClassifyInput {
@@ -1095,6 +1355,7 @@ function oneRunEach(text: string): string {
 function bodyParts(input: Pick<ClassifyInput, "text" | "html">): {
 	shown: string;
 	alternative: string;
+	links: Link[];
 } {
 	// asData goes on after the cut: it is one for one, so the counts are the
 	// same either way, and a cut part is all it then has to read.
@@ -1103,9 +1364,10 @@ function bodyParts(input: Pick<ClassifyInput, "text" | "html">): {
 		return {
 			shown: asData(cut(plainShown(text, MAX_BODY_CHARS), MAX_BODY_CHARS)),
 			alternative: "",
+			links: [],
 		};
 	}
-	const html = stripHtml(input.html, MAX_BODY_CHARS);
+	const { text: html, links } = readHtml(input.html, MAX_BODY_CHARS);
 	const alternative = text.trim();
 	const shown = cut(
 		html,
@@ -1114,7 +1376,38 @@ function bodyParts(input: Pick<ClassifyInput, "text" | "html">): {
 	return {
 		shown: asData(shown),
 		alternative: asData(cut(alternative, MAX_BODY_CHARS - shown.length)),
+		links,
 	};
+}
+
+/** How many lines the links get; the ones that say most come first. */
+const LINK_LINES = 12;
+
+/**
+ * Where the HTML part's links go, one line each: first every link whose
+ * text shows a web address on another site than the one it opens -- the
+ * shape of a phishing link -- then each other place a link goes, once.
+ * Hosts only: the path and query of a tracking link are noise, and a host is
+ * what says whose a link is. The URL parser spells them, so an
+ * internationalised name is shown as its `xn--` form, look-alikes and all.
+ */
+function linkLines(links: Link[]): string[] {
+	const lines: string[] = [];
+	const said = new Set<string>();
+	for (const link of links) {
+		if (link.shown === undefined) continue;
+		const line = `shows ${link.shown}, goes to ${link.to}`;
+		if (said.has(line)) continue;
+		said.add(line);
+		said.add(link.to);
+		lines.push(line);
+	}
+	for (const link of links) {
+		if (said.has(link.to)) continue;
+		said.add(link.to);
+		lines.push(`goes to ${link.to}`);
+	}
+	return lines.slice(0, LINK_LINES).map((line) => asData(oneLine(line)));
 }
 
 /**
@@ -1131,7 +1424,8 @@ function bodyParts(input: Pick<ClassifyInput, "text" | "html">): {
 export function buildClassificationContent(
 	input: Omit<ClassifyInput, "apiKey">,
 ): string {
-	const { shown, alternative } = bodyParts(input);
+	const { shown, alternative, links } = bodyParts(input);
+	const destinations = linkLines(links);
 
 	return [
 		authLine(input.auth),
@@ -1143,6 +1437,9 @@ export function buildClassificationContent(
 		"</shown_to_reader>",
 		...(alternative
 			? ["<plain_text_alternative>", alternative, "</plain_text_alternative>"]
+			: []),
+		...(destinations.length > 0
+			? ["<link_destinations>", ...destinations, "</link_destinations>"]
 			: []),
 	]
 		.filter((line) => line !== null)

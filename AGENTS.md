@@ -876,6 +876,29 @@ are still checked, by the `tsc` that runs before the worker tests.
   two steps cut is joined where they meet: left as two, a body of line
   breaks counted a blank line per step towards the 4000 and stopped before
   the words.
+  Where the links go is read too, and on its own: a link's destination is in
+  its `href`, which the screen does not show, so the classifier was given
+  only the address a link shows. On 2026-11-13 a message naming a securities
+  firm in brackets at the start of its subject showed that firm's login
+  address over a link to a throwaway domain, from an address on another,
+  passed SPF for its own domain and reached the inbox. `readHtml` collects
+  the links in the same reading -- not in a comment, a script or a style --
+  and `<link_destinations>` gives the host each one opens, and beside it the
+  host its text shows when that text is a web address on another site
+  (`shows ..., goes to ...`). Those are kept apart from the other links and
+  listed first, so a run of ordinary links ahead of one cannot crowd it out,
+  and links are looked for past the words' 4000 characters, to
+  `LINK_SCAN_CHARS`, since a sender who hides the words behind padding does
+  the same to the link. Hosts only, as the URL parser spells them: a
+  look-alike name comes out as its `xn--` form. Nothing is decided here: a
+  delivery service's click tracking shows one host and opens another in
+  legitimate mail all the time, so the prompt tells the model that a link
+  showing one organisation's address and going somewhere unrelated is
+  phishing, and that a tracking host of the sender or a known delivery
+  service is not. It also counts a brand named in the subject or the body,
+  not only in the display name, as impersonation when the address has
+  nothing to do with it. Whether the model now answers SPAM to such a
+  message is not measured here; the tests hold what it is shown.
   `claude-spam-prompt.test.ts`, `strip-html.test.ts`,
   `claude-spam-classification.test.ts`.
 - **The message frame is decided on the string.** A message is shown in a
