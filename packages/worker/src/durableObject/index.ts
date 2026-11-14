@@ -2895,6 +2895,21 @@ export class MailboxDO extends DurableObject<Env> {
 		);
 	}
 
+	/**
+	 * Puts back a message's subject as its original's header reads now, from
+	 * a list (decoding-repair.ts), only if it is still what the list read.
+	 */
+	async repairSubject(id: string, before: string, after: string) {
+		return (
+			this.ctx.storage.sql.exec(
+				"UPDATE emails SET subject = ? WHERE id = ? AND subject = ?",
+				after,
+				id,
+				before,
+			).rowsWritten > 0
+		);
+	}
+
 	/** Notes that a reply to this message has left, for the list to show. */
 	async markReplied(id: string, at: string): Promise<void> {
 		this.ctx.storage.sql.exec(

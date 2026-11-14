@@ -143,7 +143,15 @@ are still checked, by the `tsc` that runs before the worker tests.
   words. Ingest and the repair share `storedSubjectOf` and `storedBodyOf`,
   so the two cannot spell the stored text differently. A message without
   its original, or whose replacement characters are the sender's own, is
-  shown as stored. `decoding-repair.test.ts`.
+  shown as stored. A list and search results put subjects right the same
+  way (`subjectsRepairedInList`, `repairSubject`), cheaply: only a subject
+  with a replacement character, only the original's header block (the
+  first `HEADER_BYTES`, parsed alone -- measured 0.06 ms, against 2.9 ms
+  for a whole notice-sized message and 108 ms for one with a 5 MB
+  attachment), and no more than `SUBJECTS_PER_LIST` per answer. A subject
+  put right is written back and not read again; one whose replacement
+  characters are the sender's own is read again each time, which is what
+  the limit bounds. `decoding-repair.test.ts`.
 - **The auth gate.** `route-access.test.ts` holds one table of every route
   the Worker registers -- public, any session, mailbox holder, root -- and
   asks each the same questions. A new route fails it until it is put in the
