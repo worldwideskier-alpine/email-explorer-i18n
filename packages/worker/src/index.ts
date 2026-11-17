@@ -23,7 +23,6 @@ import { deletedMailboxKey, holdsMailOrArchives } from "./mailbox-destroy";
 import { listMailboxes } from "./mailbox-records";
 import {
 	getClaudeApiKey,
-	getSenderVerdictOverride,
 	isDeletionLocked,
 	mergeMailboxSettings,
 	recordSenderVerdict,
@@ -80,11 +79,8 @@ import {
 import { firingOf, runScheduledMaintenance } from "./scheduled-run";
 import { keepSentCopy, prepareAttachments } from "./sent-copy";
 import { slugify } from "./slugify";
-import {
-	classifyByAuthResults,
-	isTrustedSelfDomainSender,
-	summarizeAuthResults,
-} from "./spam-filter";
+import { asksAgainLater, recheckObject } from "./spam-recheck";
+import { spamStagesOf } from "./spam-stages";
 import {
 	clientIp,
 	passwordResetThrottleRules,
@@ -778,6 +774,17 @@ class GetEmails extends OpenAPIRoute {
 			sortColumn,
 			sortDirection,
 		});
+
+		// Once per mailbox, its last week of unread inbox is offered to the
+		// spam recheck schedule (spam-recheck.ts, offerRecentForRecheck),
+		// behind the answer: started by its holder reading the list rather
+		// than by anything the deploy would have to do. Free after the first
+		// time -- one stored flag in the mailbox's own object.
+		c.executionCtx.waitUntil(
+			stub
+				.offerRecentForRecheck(mailboxId)
+				.catch((e) => console.error("Could not offer recent mail:", e)),
+		);
 
 		// A subject stored before a fix to how mail is decoded is put right
 		// from its original's header; see decoding-repair.ts.
@@ -2750,90 +2757,43 @@ async function receiveEmail(
 	const parser = new PostalMime();
 	const parsedEmail = await parser.parse(rawEmail);
 
-	// Highest precedence: the user has explicitly marked this exact sender
-	// as spam or not-spam before (see PostEmailSpamVerdict). That's a
-	// stronger signal than any automated check, so it short-circuits
-	// everything below -- no auth check, no Claude call.
-	//
-	// With one exception, for "not spam". The rule is matched against the
-	// From address, which whoever sends the message writes, so on its own it
-	// let a forgery of an allowed sender into the inbox, notification and
-	// all -- the one message the rule was never meant to admit. A DMARC fail
-	// is what that forgery looks like: the From domain's owner published
-	// how its mail is authenticated and this message is not. So a DMARC fail
-	// is not overridden. Anything short of it still is, which is what the
-	// rule is for -- a sender whose SPF is simply misconfigured.
-	const verdict = await getSenderVerdictOverride(
-		env,
-		mailboxId,
-		parsedEmail.from?.address,
-	);
-	const senderOverride =
-		verdict === "inbox" &&
-		summarizeAuthResults(parsedEmail.headers).dmarc === "fail"
-			? undefined
-			: verdict;
-
-	let folder: "inbox" | "spam" =
-		senderOverride ?? classifyByAuthResults(parsedEmail.headers);
-
-	// Second-stage check: only for mail that already passed SPF/DKIM/DMARC
-	// (mail that failed it is spam regardless), and only when the mailbox
-	// owner has opted in by configuring a Claude API key. No key -> skip
-	// entirely, no API call made. Also skipped for DMARC-aligned mail sent
-	// from the mailbox's own domain (e.g. the business's own transactional
-	// systems) -- see isTrustedSelfDomainSender for why this is narrow and
-	// doesn't weaken detection of confirmation-link-style phishing from
-	// other domains.
-	if (
-		!senderOverride &&
-		folder === "inbox" &&
-		!isTrustedSelfDomainSender(
-			parsedEmail.headers,
-			parsedEmail.from?.address,
-			mailboxId,
-		)
-	) {
-		const claudeApiKey = await getClaudeApiKey(env, mailboxId);
-		if (claudeApiKey) {
-			// Asked of the mailbox's Durable Object rather than done here, and
-			// that is the whole point: this handler runs wherever the message
-			// was received, which follows the sender, so the call to Anthropic
-			// was leaving from a different place for every message -- Hong Kong
-			// for one, Frankfurt for the next. The Durable Object is in one
-			// place. See MailboxDO.checkSpam.
-			const ns = env.MAILBOX;
-			const checked = await ns.get(ns.idFromName(mailboxId)).checkSpam({
-				apiKey: claudeApiKey,
-				subject: parsedEmail.subject || "",
-				from: parsedEmail.from?.address || "",
-				// The display name and the authentication verdicts both used to
-				// be dropped here. Impersonation lives in the gap between the
-				// two halves of the From line -- a household brand name over an
-				// address on an unrelated domain -- and passing only the address
-				// hid exactly that. The verdicts matter for the opposite reason:
-				// this stage is reached only by mail that already passed them,
-				// so without them the classifier cannot tell mail that passed
-				// cleanly from mail that passed with a broken signature on a
-				// domain that enforces nothing.
-				fromName: parsedEmail.from?.name,
-				auth: summarizeAuthResults(parsedEmail.headers),
-				text: parsedEmail.text,
-				html: parsedEmail.html,
-			});
-			folder = checked.folder;
-			// How it went is recorded by checkSpam, in the same call: the
-			// check fails open, so a rejected key looks exactly like a filter
-			// finding nothing to catch, and a record written separately from
-			// the check is a record that can be missed.
-		}
+	// Where it goes before the second stage, and what that stage is asked;
+	// decided in one place with the recheck that asks again later
+	// (spam-stages.ts).
+	const stages = await spamStagesOf(env, mailboxId, parsedEmail);
+	let folder: "inbox" | "spam" = stages.folder;
+	let unanswered: string | undefined;
+	if (stages.ask) {
+		// Asked of the mailbox's Durable Object rather than done here, and
+		// that is the whole point: this handler runs wherever the message
+		// was received, which follows the sender, so the call to Anthropic
+		// was leaving from a different place for every message -- Hong Kong
+		// for one, Frankfurt for the next. The Durable Object is in one
+		// place. See MailboxDO.checkSpam.
+		const ns = env.MAILBOX;
+		const checked = await ns
+			.get(ns.idFromName(mailboxId))
+			.checkSpam(stages.ask);
+		folder = checked.folder;
+		unanswered = checked.failure;
+		// How it went is recorded by checkSpam, in the same call: the
+		// check fails open, so a rejected key looks exactly like a filter
+		// finding nothing to catch, and a record written separately from
+		// the check is a record that can be missed.
 	}
 
+	let emailId: string;
 	try {
-		await ingestEmailIntoMailbox(env, mailboxId, folder, parsedEmail, {
-			notify: true,
-			rawEmail,
-		});
+		emailId = await ingestEmailIntoMailbox(
+			env,
+			mailboxId,
+			folder,
+			parsedEmail,
+			{
+				notify: true,
+				rawEmail,
+			},
+		);
 	} catch (e) {
 		// Deleted while this message was on its way in: the settings were
 		// there when it was checked above, and are not now. Refused the same
@@ -2845,6 +2805,16 @@ async function receiveEmail(
 			return;
 		}
 		throw e;
+	}
+
+	// The check failed open, and the message is in the inbox unjudged: it is
+	// written down to be asked about again later (spam-recheck.ts), for a
+	// failure that comes and goes. Never at the cost of the delivery, which
+	// has happened.
+	if (unanswered && asksAgainLater(unanswered)) {
+		await recheckObject(env)
+			.queueSpamRecheck(mailboxId, emailId, unanswered)
+			.catch((e) => console.error("Could not schedule a spam recheck:", e));
 	}
 }
 

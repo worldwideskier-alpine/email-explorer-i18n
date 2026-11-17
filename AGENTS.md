@@ -891,6 +891,56 @@ are still checked, by the `tsc` that runs before the worker tests.
   `spam-check-location.test.ts` holds the arrangement -- partly structurally,
   because both sides run in one isolate under the test pool and the difference
   is only visible in production.
+- **A check that got no answer is asked again later.** The second stage fails
+  open -- a message it cannot classify goes to the inbox, since holding mail
+  or filing it as spam would lose real mail whenever Anthropic is out of
+  reach -- and it used to be asked once. On 2026-11-17 the live mailbox's
+  check classified at 16:04 and was refused at 17:10 (`403 forbidden` from
+  Cloudflare at KIX, no `request-id`: the call never reached the API) after
+  its three attempts in twenty seconds, and a securities firm's name over a
+  throwaway domain had reached the inbox the day before with nothing to say
+  whether it was ever judged. Now a failure that comes and goes (`blocked`,
+  rate limited, the API's trouble, timeout, network; not a refused key or an
+  answer that was not a verdict) is written down at delivery and asked
+  again on a widening schedule for a day (`spam-recheck.ts`,
+  `RECHECK_DELAYS_MS`, `GIVE_UP_AFTER_MS`); given up, it is kept two weeks as
+  the record that it was. A SPAM answer moves the message to spam and takes
+  its notification back, as the reader's "spam" would, but only while it is
+  still in the inbox and its reader has not starred, answered or forwarded
+  it -- asked before the check and again in the one statement that moves it
+  (`MailboxDO.recheckSpam`). The sender's rules are not touched. Delivery
+  and the recheck decide what is asked in one place (`spamStagesOf`,
+  `spam-stages.ts`), so the two cannot read a message differently.
+  The schedule lives in a Durable Object of its own, `SPAM-RECHECK`, which
+  no mailbox can be named. Not a mailbox's alarm: that is the night's, and
+  the night's handler reads a firing while a night is under way as the
+  runtime having cut the night off. Not a second cron: triggers outlive the
+  version that set them, so code from before this, rolled back to, would
+  take every firing for a nightly run. Rolled back to, that code takes the
+  schedule's object for a mailbox, finds no night stored there and returns.
+  Mail delivered before an object first ran this code (`15_spam_recheck_since`)
+  may never have been judged and nothing says which, so each mailbox offers
+  its last week of such mail once, when its list is first read
+  (`offerRecentForRecheck`): in the inbox, unread, and not starred, answered
+  or forwarded. Unread, because a message the classifier filed as spam and
+  its reader moved back with the folder menu -- not "not spam", which leaves
+  a sender rule -- carries no other mark, and asked again it would go back
+  to spam; rescuing one means opening it. Dated inside the week as well as
+  received in it, because a message restored from an archive is stamped as
+  received when it was restored. A mailbox with no key offers nothing, then
+  or when a key is set later: none of its mail met a refusal. Mail delivered
+  since is not offered, since anything of it that went unanswered is on the
+  schedule already. Asked again, a message is judged afresh: temperature 0
+  makes the same answer likely, not certain, and one judged under an earlier
+  prompt is judged under today's.
+  Not done, and known: the given-up entries are kept, but no screen reads
+  them yet, so a message the check never judged says so nowhere a person
+  looks. And rolled back to, the code before this writes nothing down, and
+  takes the schedule's alarm when it fires and sets no other: what it
+  delivered is never asked again, and the schedule waits until something is
+  next written down. An entry past its day by then is given up without being
+  asked (`runSpamRechecks`), since its reader may have judged it in ways no
+  column records. `spam-recheck.test.ts`.
 - **The spam check reads the part the screen shows, as a browser reads it.** The
   screen shows a message's HTML part whenever it has one (`email-ingest.ts`),
   and the classifier read its text part whenever it had one -- so an innocent
