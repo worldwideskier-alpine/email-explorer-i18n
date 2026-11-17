@@ -1,4 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
+import PostalMime from "postal-mime";
 import { DOQB } from "workers-qb";
 import { recordBackupNotRun } from "../backup-run";
 import { abandonPausedBackup } from "../backup-writer";
@@ -24,13 +25,38 @@ import type { MailboxRecord } from "../mailbox-records";
 import { recordNightEnd } from "../maintenance-record";
 import { hashPassword, verifyNothing, verifyPassword } from "../password";
 import { ANOTHER_PERSONS_MAILBOX } from "../people";
+import { dismissEmailNotification } from "../push-notify";
+import { getBytes } from "../r2-retry";
+import {
+	asksAgainLater,
+	GIVEN_UP_KEPT_MS,
+	nextRecheckAt,
+	RECENT_MS,
+	RECHECK_CALL_LIMIT_MS,
+	RECHECK_OBJECT,
+	RECHECK_RUN_MS,
+	RECHECKS_PER_RUN,
+	type RecheckOutcome,
+	recheckObject,
+} from "../spam-recheck";
+import { spamStagesOf } from "../spam-stages";
 import type { ThrottleRule } from "../throttle";
 import { loginThrottleRules } from "../throttle";
 import type { Env, Session, User } from "../types";
-import { authMigrations, mailboxMigrations } from "./migrations";
+import {
+	authMigrations,
+	mailboxMigrations,
+	recheckMigrations,
+} from "./migrations";
 
 /** Where a mailbox keeps tonight's night: see startNight. */
 const NIGHT_KEY = "night";
+
+/**
+ * Set once a mailbox has offered its last week of inbox to the recheck
+ * schedule (offerRecentForRecheck), so that it is done once.
+ */
+const RECENT_OFFERED_KEY = "spam-recheck-recent-offered";
 
 export interface StoredNight {
 	mailbox: MailboxRecord;
@@ -183,11 +209,24 @@ export class MailboxDO extends DurableObject<Env> {
 	declare __DURABLE_OBJECT_BRAND: never;
 	#qb: DOQB;
 	#isAuthDO: boolean;
+	/** The one object keeping the schedule of rechecks; see spam-recheck.ts. */
+	#isRecheckDO = false;
 
 	constructor(state: DurableObjectState, env: Env) {
 		super(state, env);
 		this.#qb = new DOQB(this.ctx.storage.sql);
 		// this.#qb.setDebugger(true);
+
+		// Told by its name alone, every time: no mailbox is named this (a
+		// mailbox is an address), and code from before it existed would have
+		// taken it for a mailbox and given it a mailbox's tables, which is
+		// harmless and is not what decides here.
+		if (this.ctx.id.equals(env.MAILBOX.idFromName(RECHECK_OBJECT))) {
+			this.#isAuthDO = false;
+			this.#isRecheckDO = true;
+			this.#qb.migrations({ migrations: recheckMigrations }).apply();
+			return;
+		}
 
 		// Detect if this is the auth singleton
 		// We use a marker in storage to identify the auth DO
@@ -2552,6 +2591,14 @@ export class MailboxDO extends DurableObject<Env> {
 	 * own failure anyway.
 	 */
 	async alarm(): Promise<void> {
+		// The recheck schedule's own alarm, and nothing to do with any night:
+		// that object stores none (spam-recheck.ts).
+		if (this.#isRecheckDO) {
+			await this.runSpamRechecks().catch((e) =>
+				console.error("Spam rechecks failed:", e),
+			);
+			return;
+		}
 		if (this.#isAuthDO) return;
 		const stored = await this.ctx.storage.get<StoredNight>(NIGHT_KEY);
 		if (!stored) return;
@@ -2868,6 +2915,320 @@ export class MailboxDO extends DurableObject<Env> {
 				id,
 			).rowsWritten > 0
 		);
+	}
+
+	/**
+	 * Writes down a message whose second-stage check got no answer, to be
+	 * asked again later (spam-recheck.ts). Only on the recheck object.
+	 * `attempts` is 1: delivery asked once already.
+	 */
+	async queueSpamRecheck(
+		mailboxId: string,
+		emailId: string,
+		failure: string,
+		at = Date.now(),
+	): Promise<void> {
+		if (!this.#isRecheckDO) throw new Error("Not the recheck object");
+		const next = nextRecheckAt(1, at, at);
+		if (next === null) return;
+		this.ctx.storage.sql.exec(
+			`INSERT OR IGNORE INTO spam_rechecks
+			     (mailbox_id, email_id, attempts, first_at, next_at, last_failure)
+			 VALUES (?, ?, 1, ?, ?, ?)`,
+			mailboxId,
+			emailId,
+			at,
+			next,
+			failure,
+		);
+		await this.#armRecheckAlarm();
+	}
+
+	/**
+	 * Writes down messages to be asked about now, none of them asked yet by
+	 * this schedule: the one-time pass over a mailbox's recent inbox
+	 * (offerRecentForRecheck). A message already written down keeps its entry.
+	 */
+	async queueSpamRechecks(
+		mailboxId: string,
+		emailIds: string[],
+		at = Date.now(),
+	): Promise<void> {
+		if (!this.#isRecheckDO) throw new Error("Not the recheck object");
+		this.ctx.storage.transactionSync(() => {
+			for (const emailId of emailIds) {
+				this.ctx.storage.sql.exec(
+					`INSERT OR IGNORE INTO spam_rechecks
+					     (mailbox_id, email_id, attempts, first_at, next_at)
+					 VALUES (?, ?, 0, ?, ?)`,
+					mailboxId,
+					emailId,
+					at,
+					at,
+				);
+			}
+		});
+		await this.#armRecheckAlarm();
+	}
+
+	/** What the schedule holds, given up on or not; for the tests. */
+	async spamRecheckEntries(): Promise<
+		{
+			mailbox_id: string;
+			email_id: string;
+			attempts: number;
+			first_at: number;
+			next_at: number;
+			last_failure: string | null;
+			gave_up_at: number | null;
+		}[]
+	> {
+		if (!this.#isRecheckDO) return [];
+		return this.ctx.storage.sql
+			.exec<{
+				mailbox_id: string;
+				email_id: string;
+				attempts: number;
+				first_at: number;
+				next_at: number;
+				last_failure: string | null;
+				gave_up_at: number | null;
+			}>(
+				"SELECT mailbox_id, email_id, attempts, first_at, next_at, last_failure, gave_up_at FROM spam_rechecks ORDER BY next_at",
+			)
+			.toArray();
+	}
+
+	/**
+	 * Asks again about every message whose time has come, a few at a time,
+	 * each in the mailbox's own object (recheckSpam). `now` is the schedule's
+	 * clock; the run's own limit is kept by the real one. Never throws.
+	 */
+	async runSpamRechecks(now = Date.now()): Promise<{
+		asked: number;
+		settled: number;
+		again: number;
+		gaveUp: number;
+	}> {
+		const tally = { asked: 0, settled: 0, again: 0, gaveUp: 0 };
+		if (!this.#isRecheckDO) return tally;
+		const began = Date.now();
+		const due = this.ctx.storage.sql
+			.exec<{
+				mailbox_id: string;
+				email_id: string;
+				attempts: number;
+				first_at: number;
+			}>(
+				`SELECT mailbox_id, email_id, attempts, first_at FROM spam_rechecks
+				  WHERE gave_up_at IS NULL AND next_at <= ?
+				  ORDER BY next_at LIMIT ?`,
+				now,
+				RECHECKS_PER_RUN,
+			)
+			.toArray();
+		for (const entry of due) {
+			if (Date.now() - began > RECHECK_RUN_MS) break;
+			tally.asked++;
+			const mailbox = this.env.MAILBOX.get(
+				this.env.MAILBOX.idFromName(entry.mailbox_id),
+			);
+			const asked = async (): Promise<RecheckOutcome> =>
+				(await mailbox.recheckSpam(
+					entry.mailbox_id,
+					entry.email_id,
+				)) as RecheckOutcome;
+			const outcome: RecheckOutcome = await within(
+				asked(),
+				RECHECK_CALL_LIMIT_MS,
+				"asking about a message again",
+			).catch(() => ({ state: "again", failure: "unfinished" }) as const);
+			if (outcome.state === "settled") {
+				tally.settled++;
+				this.ctx.storage.sql.exec(
+					"DELETE FROM spam_rechecks WHERE mailbox_id = ? AND email_id = ?",
+					entry.mailbox_id,
+					entry.email_id,
+				);
+				continue;
+			}
+			const attempts = entry.attempts + 1;
+			const next =
+				outcome.state === "again"
+					? nextRecheckAt(attempts, entry.first_at, now)
+					: null;
+			if (next === null) {
+				tally.gaveUp++;
+				this.ctx.storage.sql.exec(
+					`UPDATE spam_rechecks
+					    SET attempts = ?, last_failure = ?, gave_up_at = ?
+					  WHERE mailbox_id = ? AND email_id = ?`,
+					attempts,
+					outcome.failure,
+					now,
+					entry.mailbox_id,
+					entry.email_id,
+				);
+			} else {
+				tally.again++;
+				this.ctx.storage.sql.exec(
+					`UPDATE spam_rechecks
+					    SET attempts = ?, last_failure = ?, next_at = ?
+					  WHERE mailbox_id = ? AND email_id = ?`,
+					attempts,
+					outcome.failure,
+					next,
+					entry.mailbox_id,
+					entry.email_id,
+				);
+			}
+		}
+		// Given up on, and kept a while as the record that they were.
+		this.ctx.storage.sql.exec(
+			"DELETE FROM spam_rechecks WHERE gave_up_at IS NOT NULL AND gave_up_at < ?",
+			now - GIVEN_UP_KEPT_MS,
+		);
+		await this.#armRecheckAlarm().catch(() => {});
+		return tally;
+	}
+
+	/** The alarm at the earliest entry still to be asked, if it is earlier. */
+	async #armRecheckAlarm(): Promise<void> {
+		const [row] = this.ctx.storage.sql
+			.exec<{ next: number | null }>(
+				"SELECT MIN(next_at) AS next FROM spam_rechecks WHERE gave_up_at IS NULL",
+			)
+			.toArray();
+		const next = row?.next;
+		if (next === null || next === undefined) return;
+		const current = await this.ctx.storage.getAlarm();
+		if (current === null || current > next) {
+			await this.ctx.storage.setAlarm(next);
+		}
+	}
+
+	/**
+	 * Asks the second stage again about one message of this mailbox, whose
+	 * first check got no answer (spam-recheck.ts), and acts on a SPAM answer
+	 * as the reader's own "spam" would: to the spam folder, its notification
+	 * taken back. The sender's rules are not touched; they are the reader's.
+	 *
+	 * Only a message still in the inbox, and only one its reader has not
+	 * starred, answered or forwarded -- a reader who did any of that has
+	 * judged it, and the classifier does not overrule them. Asked twice: once
+	 * before the check, so nothing is spent on a message that has gone, and
+	 * again in the statement that moves it, after the check's wait, during
+	 * which the reader may have done any of it.
+	 */
+	async recheckSpam(
+		mailboxId: string,
+		emailId: string,
+	): Promise<RecheckOutcome> {
+		if (this.#isAuthDO || this.#isRecheckDO) {
+			return { state: "settled", why: "not a mailbox" };
+		}
+		const [row] = this.ctx.storage.sql
+			.exec<{
+				folder_id: string;
+				starred: number;
+				replied_at: string | null;
+				forwarded_at: string | null;
+				sender: string | null;
+			}>(
+				"SELECT folder_id, starred, replied_at, forwarded_at, sender FROM emails WHERE id = ?",
+				emailId,
+			)
+			.toArray();
+		if (!row) return { state: "settled", why: "gone" };
+		if (row.folder_id !== "inbox") return { state: "settled", why: "moved" };
+		if (row.starred || row.replied_at || row.forwarded_at) {
+			return { state: "settled", why: "judged by its reader" };
+		}
+		if (
+			String(row.sender ?? "")
+				.trim()
+				.toLowerCase() === mailboxId.toLowerCase()
+		) {
+			return { state: "settled", why: "this mailbox's own" };
+		}
+
+		let parsed: Awaited<ReturnType<PostalMime["parse"]>>;
+		try {
+			const raw = await getBytes(this.env.BUCKET, `raw/${emailId}.eml`);
+			if (!raw) return { state: "settled", why: "no original" };
+			parsed = await new PostalMime().parse(raw);
+		} catch {
+			return { state: "again", failure: "unfinished" };
+		}
+		const stages = await spamStagesOf(this.env, mailboxId, parsed).catch(
+			() => null,
+		);
+		if (stages === null) return { state: "again", failure: "unfinished" };
+		if (!stages.ask) return { state: "settled", why: "not asked" };
+
+		const checked = await this.checkSpam(stages.ask);
+		if (checked.failure) {
+			return asksAgainLater(checked.failure)
+				? { state: "again", failure: checked.failure }
+				: { state: "give-up", failure: checked.failure };
+		}
+		if (checked.folder !== "spam") {
+			return { state: "settled", verdict: "inbox", why: "answered" };
+		}
+		// One statement: whether it is still the reader's to judge and the
+		// move, with nothing between them that could let the reader in.
+		const moved =
+			this.ctx.storage.sql.exec(
+				`UPDATE emails
+				    SET folder_id = 'spam', spam_since = ?
+				  WHERE id = ? AND folder_id = 'inbox' AND starred = 0
+				    AND replied_at IS NULL AND forwarded_at IS NULL`,
+				new Date().toISOString(),
+				emailId,
+			).rowsWritten > 0;
+		if (moved && (await this.takeNotified(emailId))) {
+			await dismissEmailNotification(this.env, mailboxId, emailId);
+		}
+		return { state: "settled", verdict: "spam", moved, why: "answered" };
+	}
+
+	/**
+	 * Once per mailbox: offers the last week of its inbox to the recheck
+	 * schedule, to be asked about now. Those messages were delivered before
+	 * an unanswered check was written down anywhere, so which of them were
+	 * never judged cannot be told; the ones that were get the same answer
+	 * again (temperature 0) and stay where they are. Called when the
+	 * mailbox's list is read, which is when its holder is there to see it.
+	 */
+	async offerRecentForRecheck(
+		mailboxId: string,
+		now = Date.now(),
+	): Promise<number> {
+		if (this.#isAuthDO || this.#isRecheckDO) return 0;
+		if (await this.ctx.storage.get(RECENT_OFFERED_KEY)) return 0;
+		const since = new Date(now - RECENT_MS).toISOString();
+		// Mail delivered since this object first ran the code that writes
+		// unanswered checks down needs no pass: anything of it that went
+		// unanswered is on the schedule already (15_spam_recheck_since).
+		const ids = this.ctx.storage.sql
+			.exec<{ id: string }>(
+				`SELECT id FROM emails
+				  WHERE folder_id = 'inbox' AND received_at >= ?
+				    AND received_at < (SELECT at FROM spam_recheck_since WHERE id = 1)
+				    AND starred = 0 AND replied_at IS NULL AND forwarded_at IS NULL
+				    AND lower(trim(coalesce(sender, ''))) != lower(?)`,
+				since,
+				mailboxId,
+			)
+			.toArray()
+			.map((row) => row.id);
+		if (ids.length > 0) {
+			await recheckObject(this.env).queueSpamRechecks(mailboxId, ids, now);
+		}
+		// Written once the schedule has them: a failure above is offered
+		// again at the next list.
+		await this.ctx.storage.put(RECENT_OFFERED_KEY, now);
+		return ids.length;
 	}
 
 	/**

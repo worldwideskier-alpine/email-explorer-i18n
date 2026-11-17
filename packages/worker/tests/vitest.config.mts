@@ -325,8 +325,14 @@ export default defineConfig({
 									},
 								);
 							}
+							// TRIGGER_CLAUDE_THEN_HAM makes the answer, once the block
+							// clears, NOT_SPAM: a check asked again later has to be
+							// seen leaving a message where it is, too.
+							const answer = steer.includes("TRIGGER_CLAUDE_THEN_HAM")
+								? " NOT_SPAM"
+								: " SPAM";
 							return new Response(
-								JSON.stringify({ content: [{ type: "text", text: " SPAM" }] }),
+								JSON.stringify({ content: [{ type: "text", text: answer }] }),
 								{
 									status: 200,
 									headers: { "content-type": "application/json" },

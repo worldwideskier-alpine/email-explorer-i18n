@@ -257,6 +257,25 @@ export const mailboxMigrations: Migration[] = [
             ALTER TABLE emails ADD COLUMN forwarded_at TEXT;
         `,
 	},
+	{
+		/**
+		 * When this mailbox's object first ran code that writes down a check
+		 * that got no answer (spam-recheck.ts). Mail delivered before then may
+		 * never have been judged, and nothing says which; mail delivered since
+		 * has every unanswered check written down. The one-time pass over the
+		 * recent inbox (offerRecentForRecheck) takes only the first kind --
+		 * offered everything, it asked again about mail judged a minute ago.
+		 */
+		name: "15_spam_recheck_since",
+		sql: `
+            CREATE TABLE IF NOT EXISTS spam_recheck_since (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                at TEXT NOT NULL
+            );
+            INSERT OR IGNORE INTO spam_recheck_since (id, at)
+            VALUES (1, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'));
+        `,
+	},
 ];
 
 export const authMigrations: Migration[] = [
@@ -528,6 +547,32 @@ export const authMigrations: Migration[] = [
             UPDATE push_subscriptions
                SET lapsed_at = CAST(strftime('%s', 'now') AS INTEGER) * 1000
              WHERE session_id IS NULL;
+        `,
+	},
+];
+
+/**
+ * The one Durable Object that keeps the schedule of second-stage checks asked
+ * again (spam-recheck.ts), and only that. Named apart from both sets above, so
+ * that the migration list of a mailbox, which code from before this would
+ * apply to the same object, never meets one of these names.
+ */
+export const recheckMigrations: Migration[] = [
+	{
+		name: "recheck_1_queue",
+		sql: `
+            CREATE TABLE IF NOT EXISTS spam_rechecks (
+                mailbox_id TEXT NOT NULL,
+                email_id TEXT NOT NULL,
+                attempts INTEGER NOT NULL,
+                first_at INTEGER NOT NULL,
+                next_at INTEGER NOT NULL,
+                last_failure TEXT,
+                gave_up_at INTEGER,
+                PRIMARY KEY (mailbox_id, email_id)
+            );
+            CREATE INDEX IF NOT EXISTS spam_rechecks_due
+                ON spam_rechecks (gave_up_at, next_at);
         `,
 	},
 ];

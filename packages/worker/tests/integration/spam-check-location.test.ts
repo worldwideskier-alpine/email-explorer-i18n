@@ -194,7 +194,7 @@ describe("the handler does not make the call itself", () => {
 	});
 
 	it("asks the mailbox object to check", () => {
-		expect(entry?.[1]).toContain(".checkSpam({");
+		expect(entry?.[1]).toMatch(/\.checkSpam\(\s*stages\.ask/);
 	});
 
 	/**
