@@ -775,10 +775,11 @@ class GetEmails extends OpenAPIRoute {
 			sortDirection,
 		});
 
-		// Once per mailbox, its last week of inbox is offered to the spam
-		// recheck schedule (spam-recheck.ts), behind the answer: the holder
-		// is here to see what it moves. Free after the first time -- one
-		// stored flag in the mailbox's own object.
+		// Once per mailbox, its last week of unread inbox is offered to the
+		// spam recheck schedule (spam-recheck.ts, offerRecentForRecheck),
+		// behind the answer: started by its holder reading the list rather
+		// than by anything the deploy would have to do. Free after the first
+		// time -- one stored flag in the mailbox's own object.
 		c.executionCtx.waitUntil(
 			stub
 				.offerRecentForRecheck(mailboxId)

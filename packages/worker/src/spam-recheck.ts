@@ -18,8 +18,8 @@ import type { Env } from "./types";
  * goes is written down, and asked again on a widening schedule for a day
  * (RECHECK_DELAYS_MS, GIVE_UP_AFTER_MS). A SPAM answer moves it to spam and
  * takes its notification back, as the reader's own "spam" would, but only
- * while it is still in the inbox and its reader has not starred or answered
- * it (MailboxDO.recheckSpam). The sender's rules are not touched: those are
+ * while it is still in the inbox and its reader has not starred, answered
+ * or forwarded it (MailboxDO.recheckSpam). The sender's rules are not touched: those are
  * the reader's.
  *
  * Where it runs is the point of the design. A mailbox's Durable Object alarm
@@ -75,8 +75,8 @@ export const GIVEN_UP_KEPT_MS = 14 * 24 * 60 * 60_000;
  * Whether a check that got no answer could get one later. A refusal in front
  * of the API, a rate limit, the API's own trouble and a network that did not
  * answer come and go; a key the API refuses, a workspace it will not serve
- * and an answer that was not a verdict -- temperature 0 gives the same one
- * again -- do not.
+ * and an answer that was not a verdict -- at temperature 0, most likely the
+ * same one again -- do not.
  */
 export function asksAgainLater(failure: SpamCheckFailure | string): boolean {
 	return (

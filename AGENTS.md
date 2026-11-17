@@ -921,9 +921,26 @@ are still checked, by the `tsc` that runs before the worker tests.
   Mail delivered before an object first ran this code (`15_spam_recheck_since`)
   may never have been judged and nothing says which, so each mailbox offers
   its last week of such mail once, when its list is first read
-  (`offerRecentForRecheck`); mail delivered since is not offered, since
-  anything of it that went unanswered is on the schedule already.
-  `spam-recheck.test.ts`.
+  (`offerRecentForRecheck`): in the inbox, unread, and not starred, answered
+  or forwarded. Unread, because a message the classifier filed as spam and
+  its reader moved back with the folder menu -- not "not spam", which leaves
+  a sender rule -- carries no other mark, and asked again it would go back
+  to spam; rescuing one means opening it. Dated inside the week as well as
+  received in it, because a message restored from an archive is stamped as
+  received when it was restored. A mailbox with no key offers nothing, then
+  or when a key is set later: none of its mail met a refusal. Mail delivered
+  since is not offered, since anything of it that went unanswered is on the
+  schedule already. Asked again, a message is judged afresh: temperature 0
+  makes the same answer likely, not certain, and one judged under an earlier
+  prompt is judged under today's.
+  Not done, and known: the given-up entries are kept, but no screen reads
+  them yet, so a message the check never judged says so nowhere a person
+  looks. And rolled back to, the code before this writes nothing down, and
+  takes the schedule's alarm when it fires and sets no other: what it
+  delivered is never asked again, and the schedule waits until something is
+  next written down. An entry past its day by then is given up without being
+  asked (`runSpamRechecks`), since its reader may have judged it in ways no
+  column records. `spam-recheck.test.ts`.
 - **The spam check reads the part the screen shows, as a browser reads it.** The
   screen shows a message's HTML part whenever it has one (`email-ingest.ts`),
   and the classifier read its text part whenever it had one -- so an innocent

@@ -22,6 +22,7 @@ import {
 	runMailboxNight,
 } from "../mailbox-night";
 import type { MailboxRecord } from "../mailbox-records";
+import { getClaudeApiKey } from "../mailbox-settings";
 import { recordNightEnd } from "../maintenance-record";
 import { hashPassword, verifyNothing, verifyPassword } from "../password";
 import { ANOTHER_PERSONS_MAILBOX } from "../people";
@@ -29,6 +30,7 @@ import { dismissEmailNotification } from "../push-notify";
 import { getBytes } from "../r2-retry";
 import {
 	asksAgainLater,
+	GIVE_UP_AFTER_MS,
 	GIVEN_UP_KEPT_MS,
 	nextRecheckAt,
 	RECENT_MS,
@@ -3027,68 +3029,89 @@ export class MailboxDO extends DurableObject<Env> {
 				RECHECKS_PER_RUN,
 			)
 			.toArray();
-		for (const entry of due) {
-			if (Date.now() - began > RECHECK_RUN_MS) break;
-			tally.asked++;
-			const mailbox = this.env.MAILBOX.get(
-				this.env.MAILBOX.idFromName(entry.mailbox_id),
-			);
-			const asked = async (): Promise<RecheckOutcome> =>
-				(await mailbox.recheckSpam(
-					entry.mailbox_id,
-					entry.email_id,
-				)) as RecheckOutcome;
-			const outcome: RecheckOutcome = await within(
-				asked(),
-				RECHECK_CALL_LIMIT_MS,
-				"asking about a message again",
-			).catch(() => ({ state: "again", failure: "unfinished" }) as const);
-			if (outcome.state === "settled") {
-				tally.settled++;
-				this.ctx.storage.sql.exec(
-					"DELETE FROM spam_rechecks WHERE mailbox_id = ? AND email_id = ?",
-					entry.mailbox_id,
-					entry.email_id,
+		try {
+			for (const entry of due) {
+				if (Date.now() - began > RECHECK_RUN_MS) break;
+				// Past its day without having been asked -- an alarm the code
+				// before this took and did nothing with, while a deploy was
+				// rolled back -- it is given up rather than asked: the day is
+				// what was agreed, and a message days old may have been read
+				// and judged by its reader in ways no column records.
+				if (now - entry.first_at > GIVE_UP_AFTER_MS) {
+					tally.gaveUp++;
+					this.ctx.storage.sql.exec(
+						`UPDATE spam_rechecks SET gave_up_at = ?
+						  WHERE mailbox_id = ? AND email_id = ?`,
+						now,
+						entry.mailbox_id,
+						entry.email_id,
+					);
+					continue;
+				}
+				tally.asked++;
+				const mailbox = this.env.MAILBOX.get(
+					this.env.MAILBOX.idFromName(entry.mailbox_id),
 				);
-				continue;
-			}
-			const attempts = entry.attempts + 1;
-			const next =
-				outcome.state === "again"
-					? nextRecheckAt(attempts, entry.first_at, now)
-					: null;
-			if (next === null) {
-				tally.gaveUp++;
-				this.ctx.storage.sql.exec(
-					`UPDATE spam_rechecks
+				const asked = async (): Promise<RecheckOutcome> =>
+					(await mailbox.recheckSpam(
+						entry.mailbox_id,
+						entry.email_id,
+					)) as RecheckOutcome;
+				const outcome: RecheckOutcome = await within(
+					asked(),
+					RECHECK_CALL_LIMIT_MS,
+					"asking about a message again",
+				).catch(() => ({ state: "again", failure: "unfinished" }) as const);
+				if (outcome.state === "settled") {
+					tally.settled++;
+					this.ctx.storage.sql.exec(
+						"DELETE FROM spam_rechecks WHERE mailbox_id = ? AND email_id = ?",
+						entry.mailbox_id,
+						entry.email_id,
+					);
+					continue;
+				}
+				const attempts = entry.attempts + 1;
+				const next =
+					outcome.state === "again"
+						? nextRecheckAt(attempts, entry.first_at, now)
+						: null;
+				if (next === null) {
+					tally.gaveUp++;
+					this.ctx.storage.sql.exec(
+						`UPDATE spam_rechecks
 					    SET attempts = ?, last_failure = ?, gave_up_at = ?
 					  WHERE mailbox_id = ? AND email_id = ?`,
-					attempts,
-					outcome.failure,
-					now,
-					entry.mailbox_id,
-					entry.email_id,
-				);
-			} else {
-				tally.again++;
-				this.ctx.storage.sql.exec(
-					`UPDATE spam_rechecks
+						attempts,
+						outcome.failure,
+						now,
+						entry.mailbox_id,
+						entry.email_id,
+					);
+				} else {
+					tally.again++;
+					this.ctx.storage.sql.exec(
+						`UPDATE spam_rechecks
 					    SET attempts = ?, last_failure = ?, next_at = ?
 					  WHERE mailbox_id = ? AND email_id = ?`,
-					attempts,
-					outcome.failure,
-					next,
-					entry.mailbox_id,
-					entry.email_id,
-				);
+						attempts,
+						outcome.failure,
+						next,
+						entry.mailbox_id,
+						entry.email_id,
+					);
+				}
 			}
+			// Given up on, and kept a while as the record that they were.
+			this.ctx.storage.sql.exec(
+				"DELETE FROM spam_rechecks WHERE gave_up_at IS NOT NULL AND gave_up_at < ?",
+				now - GIVEN_UP_KEPT_MS,
+			);
+		} finally {
+			// Set again for what is left, whatever happened above: an alarm
+			// used up with nothing set after it is a schedule that stops.
+			await this.#armRecheckAlarm().catch(() => {});
 		}
-		// Given up on, and kept a while as the record that they were.
-		this.ctx.storage.sql.exec(
-			"DELETE FROM spam_rechecks WHERE gave_up_at IS NOT NULL AND gave_up_at < ?",
-			now - GIVEN_UP_KEPT_MS,
-		);
-		await this.#armRecheckAlarm().catch(() => {});
 		return tally;
 	}
 
@@ -3133,9 +3156,8 @@ export class MailboxDO extends DurableObject<Env> {
 				starred: number;
 				replied_at: string | null;
 				forwarded_at: string | null;
-				sender: string | null;
 			}>(
-				"SELECT folder_id, starred, replied_at, forwarded_at, sender FROM emails WHERE id = ?",
+				"SELECT folder_id, starred, replied_at, forwarded_at FROM emails WHERE id = ?",
 				emailId,
 			)
 			.toArray();
@@ -3144,14 +3166,6 @@ export class MailboxDO extends DurableObject<Env> {
 		if (row.starred || row.replied_at || row.forwarded_at) {
 			return { state: "settled", why: "judged by its reader" };
 		}
-		if (
-			String(row.sender ?? "")
-				.trim()
-				.toLowerCase() === mailboxId.toLowerCase()
-		) {
-			return { state: "settled", why: "this mailbox's own" };
-		}
-
 		let parsed: Awaited<ReturnType<PostalMime["parse"]>>;
 		try {
 			const raw = await getBytes(this.env.BUCKET, `raw/${emailId}.eml`);
@@ -3196,9 +3210,20 @@ export class MailboxDO extends DurableObject<Env> {
 	 * Once per mailbox: offers the last week of its inbox to the recheck
 	 * schedule, to be asked about now. Those messages were delivered before
 	 * an unanswered check was written down anywhere, so which of them were
-	 * never judged cannot be told; the ones that were get the same answer
-	 * again (temperature 0) and stay where they are. Called when the
-	 * mailbox's list is read, which is when its holder is there to see it.
+	 * never judged cannot be told. Asked again, a message is judged afresh:
+	 * temperature 0 makes the same answer likely, not certain, and one
+	 * judged under an earlier prompt is judged under today's, as it would be
+	 * if it arrived today.
+	 *
+	 * Only unread ones. A message the classifier filed as spam and its
+	 * reader moved back with the folder menu -- not "not spam", which leaves
+	 * a sender rule -- carries no mark of it, and asked again it would go
+	 * back to spam. Rescuing a message means opening it. Only delivered
+	 * ones: a message restored from an archive this week is stamped as
+	 * received this week, and keeps its own date. And none at all for a
+	 * mailbox with no key, whose mail was never meant to be judged.
+	 *
+	 * Called when the mailbox's list is read, behind the answer.
 	 */
 	async offerRecentForRecheck(
 		mailboxId: string,
@@ -3206,6 +3231,10 @@ export class MailboxDO extends DurableObject<Env> {
 	): Promise<number> {
 		if (this.#isAuthDO || this.#isRecheckDO) return 0;
 		if (await this.ctx.storage.get(RECENT_OFFERED_KEY)) return 0;
+		if (!(await getClaudeApiKey(this.env, mailboxId))) {
+			await this.ctx.storage.put(RECENT_OFFERED_KEY, now);
+			return 0;
+		}
 		const since = new Date(now - RECENT_MS).toISOString();
 		// Mail delivered since this object first ran the code that writes
 		// unanswered checks down needs no pass: anything of it that went
@@ -3213,12 +3242,11 @@ export class MailboxDO extends DurableObject<Env> {
 		const ids = this.ctx.storage.sql
 			.exec<{ id: string }>(
 				`SELECT id FROM emails
-				  WHERE folder_id = 'inbox' AND received_at >= ?
+				  WHERE folder_id = 'inbox' AND read = 0
+				    AND received_at >= ?1 AND date >= ?1
 				    AND received_at < (SELECT at FROM spam_recheck_since WHERE id = 1)
-				    AND starred = 0 AND replied_at IS NULL AND forwarded_at IS NULL
-				    AND lower(trim(coalesce(sender, ''))) != lower(?)`,
+				    AND starred = 0 AND replied_at IS NULL AND forwarded_at IS NULL`,
 				since,
-				mailboxId,
 			)
 			.toArray()
 			.map((row) => row.id);

@@ -34,13 +34,19 @@ import {
 const PASSING_AUTH_RESULTS =
 	"mx.cloudflare.net; spf=pass smtp.mailfrom=legit.com; dkim=pass header.i=@legit.com; dmarc=pass header.from=legit.com";
 
-async function deliver(subject: string): Promise<void> {
+async function deliver(
+	subject: string,
+	{
+		from = "sender@legit.com",
+		auth = PASSING_AUTH_RESULTS,
+	}: { from?: string; auth?: string } = {},
+): Promise<void> {
 	const raw = [
-		"From: sender@legit.com",
+		`From: ${from}`,
 		`To: ${mailboxId}`,
 		`Subject: ${subject}`,
 		"Content-Type: text/plain",
-		`Authentication-Results: ${PASSING_AUTH_RESULTS}`,
+		`Authentication-Results: ${auth}`,
 		"",
 		"Hello",
 		"",
@@ -192,7 +198,7 @@ describe("a check that got no answer", () => {
 		expect(notified).toBe(0);
 	});
 
-	it("leaves alone a message its reader has moved, starred or answered, and asks nothing about it", async () => {
+	it("leaves alone a message its reader has moved, starred, answered or forwarded, and asks nothing about it", async () => {
 		const subjects = {
 			moved:
 				"Moved TRIGGER_CLAUDE_BLOCKED_LATERMOVED_3 TRIGGER_CLAUDE_COUNT_JUDGED",
@@ -200,35 +206,108 @@ describe("a check that got no answer", () => {
 				"Starred TRIGGER_CLAUDE_BLOCKED_LATERSTARRED_3 TRIGGER_CLAUDE_COUNT_JUDGED",
 			answered:
 				"Answered TRIGGER_CLAUDE_BLOCKED_LATERANSWERED_3 TRIGGER_CLAUDE_COUNT_JUDGED",
+			forwarded:
+				"Forwarded TRIGGER_CLAUDE_BLOCKED_LATERFORWARDED_3 TRIGGER_CLAUDE_COUNT_JUDGED",
 		};
 		for (const subject of Object.values(subjects)) await deliver(subject);
-		expect(await claudeCalls("JUDGED")).toBe(9);
+		expect(await claudeCalls("JUDGED")).toBe(12);
 
 		await mailbox().moveEmail(await idOf(subjects.moved), "archive");
 		await mailbox().updateEmail(await idOf(subjects.starred), {
 			starred: true,
 		});
 		const answered = await idOf(subjects.answered);
+		const forwarded = await idOf(subjects.forwarded);
 		await runInDurableObject(mailbox(), async (_i, state) => {
 			state.storage.sql.exec(
 				"UPDATE emails SET replied_at = ? WHERE id = ?",
 				new Date().toISOString(),
 				answered,
 			);
+			state.storage.sql.exec(
+				"UPDATE emails SET forwarded_at = ? WHERE id = ?",
+				new Date().toISOString(),
+				forwarded,
+			);
 		});
 
 		const entries = await schedule().spamRecheckEntries();
-		expect(entries).toHaveLength(3);
+		expect(entries).toHaveLength(4);
 		const latest = Math.max(...entries.map((e) => e.next_at));
 		expect(await schedule().runSpamRechecks(latest)).toMatchObject({
-			asked: 3,
-			settled: 3,
+			asked: 4,
+			settled: 4,
 		});
 		expect(await folderOf(subjects.moved)).toBe("archive");
 		expect(await folderOf(subjects.starred)).toBe("inbox");
 		expect(await folderOf(subjects.answered)).toBe("inbox");
-		expect(await claudeCalls("JUDGED")).toBe(9);
+		expect(await folderOf(subjects.forwarded)).toBe("inbox");
+		expect(await claudeCalls("JUDGED")).toBe(12);
 		expect(await schedule().spamRecheckEntries()).toEqual([]);
+	});
+
+	it("leaves alone a message its reader stars while the check is being asked", async () => {
+		// Delivery spends three refusals; the recheck's first attempt is the
+		// fourth, and the classifier waits half a second before the fifth,
+		// which answers SPAM. The star goes in during that wait, after the
+		// recheck has read the message as nobody's yet.
+		const subject =
+			"Racing TRIGGER_CLAUDE_BLOCKED_LATERRACE_4 TRIGGER_CLAUDE_COUNT_RACE";
+		await deliver(subject);
+		expect(await claudeCalls("RACE")).toBe(3);
+		const [entry] = await schedule().spamRecheckEntries();
+
+		const run = schedule().runSpamRechecks(entry.next_at);
+		for (
+			let tries = 0;
+			tries < 400 && (await claudeCalls("RACE")) < 4;
+			tries++
+		) {
+			await new Promise((r) => setTimeout(r, 10));
+		}
+		expect(await claudeCalls("RACE")).toBe(4);
+		await mailbox().updateEmail(await idOf(subject), { starred: true });
+		await run;
+
+		expect(await claudeCalls("RACE")).toBe(5);
+		expect(await folderOf(subject)).toBe("inbox");
+		expect(await schedule().spamRecheckEntries()).toEqual([]);
+	});
+
+	it("asks again about mail from the mailbox's own address that delivery asked about", async () => {
+		// A From of the mailbox's own address is anybody's to write. Delivery
+		// asks about it unless DMARC passed for that domain, and so does the
+		// recheck: a skip of its own here left exactly this forgery unjudged.
+		const subject = "Own address TRIGGER_CLAUDE_BLOCKED_LATEROWN_3";
+		await deliver(subject, {
+			from: mailboxId,
+			auth: "mx.cloudflare.net; spf=pass smtp.mailfrom=elsewhere.test; dkim=none; dmarc=none header.from=example.com",
+		});
+		const [entry] = await schedule().spamRecheckEntries();
+		expect(entry).toMatchObject({ email_id: await idOf(subject) });
+
+		await schedule().runSpamRechecks(entry.next_at);
+		expect(await folderOf(subject)).toBe("spam");
+	});
+
+	it("gives up without asking an entry already older than the day, as one left by a rollback would be", async () => {
+		const subject =
+			"Stale TRIGGER_CLAUDE_BLOCKED_LATERSTALE_3 TRIGGER_CLAUDE_COUNT_STALE";
+		await deliver(subject);
+		const [entry] = await schedule().spamRecheckEntries();
+		// As if code from before this had held the alarm for three days.
+		const firstAt = entry.next_at - 3 * GIVE_UP_AFTER_MS;
+		await runInDurableObject(schedule(), async (_i, state) => {
+			state.storage.sql.exec("UPDATE spam_rechecks SET first_at = ?", firstAt);
+		});
+
+		expect(await schedule().runSpamRechecks(entry.next_at)).toMatchObject({
+			asked: 0,
+		});
+		expect(await claudeCalls("STALE")).toBe(3);
+		expect(await folderOf(subject)).toBe("inbox");
+		const [after] = await schedule().spamRecheckEntries();
+		expect(after.gave_up_at).not.toBeNull();
 	});
 
 	// Every recheck here is refused three times with the classifier's own
@@ -307,6 +386,8 @@ describe("the last week of a mailbox's inbox", () => {
 		await deliver("Older TRIGGER_CLAUDE_SPAM");
 		await deliver("Kept TRIGGER_CLAUDE_SPAM");
 		await deliver("Since TRIGGER_CLAUDE_SPAM");
+		await deliver("Opened TRIGGER_CLAUDE_SPAM");
+		await deliver("Restored TRIGGER_CLAUDE_SPAM");
 		const receivedAt = async (subject: string, at: number) => {
 			const id = await idOf(subject);
 			await runInDurableObject(mailbox(), async (_i, state) => {
@@ -330,9 +411,26 @@ describe("the last week of a mailbox's inbox", () => {
 			"Older TRIGGER_CLAUDE_SPAM",
 			Date.now() - RECENT_MS - 60_000,
 		);
+		await receivedAt("Opened TRIGGER_CLAUDE_SPAM", since - 60_000);
+		await receivedAt("Restored TRIGGER_CLAUDE_SPAM", since - 60_000);
 		// "Since" keeps the time it was delivered: after the marker.
 		await mailbox().updateEmail(await idOf("Kept TRIGGER_CLAUDE_SPAM"), {
 			starred: true,
+		});
+		// Opened: what a message its reader took out of spam looks like, which
+		// a second judgment would only file again.
+		await mailbox().updateEmail(await idOf("Opened TRIGGER_CLAUDE_SPAM"), {
+			read: true,
+		});
+		// Restored from an archive this week: it carries its own date, years
+		// back, and no check of this deployment's ever met it.
+		const restored = await idOf("Restored TRIGGER_CLAUDE_SPAM");
+		await runInDurableObject(mailbox(), async (_i, state) => {
+			state.storage.sql.exec(
+				"UPDATE emails SET date = ? WHERE id = ?",
+				"2019-04-01T09:00:00.000Z",
+				restored,
+			);
 		});
 		await giveKey();
 
@@ -352,6 +450,8 @@ describe("the last week of a mailbox's inbox", () => {
 		// Delivered since: anything unanswered of it would be on the schedule
 		// already, so the pass does not ask about it again.
 		expect(await folderOf("Since TRIGGER_CLAUDE_SPAM")).toBe("inbox");
+		expect(await folderOf("Opened TRIGGER_CLAUDE_SPAM")).toBe("inbox");
+		expect(await folderOf("Restored TRIGGER_CLAUDE_SPAM")).toBe("inbox");
 		expect(await schedule().spamRecheckEntries()).toEqual([]);
 
 		// Once. Its reader takes it back out of spam, as somebody who knows
@@ -362,5 +462,23 @@ describe("the last week of a mailbox's inbox", () => {
 		);
 		expect(await mailbox().offerRecentForRecheck(mailboxId)).toBe(0);
 		expect(await schedule().spamRecheckEntries()).toEqual([]);
+	});
+
+	it("is not offered for a mailbox with no key, where nothing was ever asked", async () => {
+		await deliver("Keyless TRIGGER_CLAUDE_SPAM TRIGGER_CLAUDE_COUNT_KEYLESS");
+		const id = await idOf(
+			"Keyless TRIGGER_CLAUDE_SPAM TRIGGER_CLAUDE_COUNT_KEYLESS",
+		);
+		await runInDurableObject(mailbox(), async (_i, state) => {
+			state.storage.sql.exec(
+				"UPDATE emails SET received_at = ? WHERE id = ?",
+				new Date(Date.now() - 60 * 60_000).toISOString(),
+				id,
+			);
+		});
+
+		expect(await mailbox().offerRecentForRecheck(mailboxId)).toBe(0);
+		expect(await schedule().spamRecheckEntries()).toEqual([]);
+		expect(await claudeCalls("KEYLESS")).toBe(0);
 	});
 });
