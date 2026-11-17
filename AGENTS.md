@@ -165,12 +165,14 @@ are still checked, by the `tsc` that runs before the worker tests.
   The mailbox gate behind that is wildcard middleware
   (`/api/v1/mailboxes/:mailboxId/*`), and which middleware a path meets is
   the router's to decide: hono's RegExpRouter before 4.13.16
-  (GHSA-h7mg-cq63-vhpq) let a path with an encoded line terminator meet
-  none. Here that reached only the router's own 404 -- measured over every
-  mailbox route on 4.13.14 -- which held only because nothing sat behind
-  it. `router-gate.test.ts` asks every mailbox route, as somebody who does
-  not hold the mailbox, with each terminator at the end of the path and
-  inside its last segment, and wants the gate's own 403.
+  (GHSA-h7mg-cq63-vhpq) let a path with an encoded line terminator that
+  matched no route meet none. Here such a path reached only the router's
+  own 404 -- measured on 4.13.14: 17 of the 30 mailbox routes, those ending
+  in a fixed word, answered it that way, and the rest still met the gate --
+  which held only because nothing sat behind the 404.
+  `router-gate.test.ts` asks every mailbox route, as somebody who does not
+  hold the mailbox, with each terminator at the end of the path and inside
+  its last segment, and wants the gate's own 403.
 - **API schema.** Generated at runtime by chanfana from the route classes.
   There is no checked-in `openapi.json`, and `/openapi.json` needs a session.
 - **Sending.** Outbound mail goes through Resend, not Email Routing, with
