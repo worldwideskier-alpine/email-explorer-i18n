@@ -51,7 +51,10 @@ import { describe, expect, it } from "vitest";
  * composeAttachmentsInReach.test.ts holds it; composeBodyRoom.test.ts holds
  * the dialog's middle. That record missed the email card too, for the same
  * reason vertically: it cut off the attachments on a phone or a short
- * window, and detailReach.test.ts holds it.
+ * window, and detailReach.test.ts holds it. And it missed Home's
+ * create-mailbox dialog both ways: at 320x256 it ran 93px (in Japanese) past
+ * the top and the bottom, where nothing scrolls, and at 320px its Cancel was
+ * cut off in 27 languages; createMailboxReach.test.ts holds both.
  */
 
 const sources = {
