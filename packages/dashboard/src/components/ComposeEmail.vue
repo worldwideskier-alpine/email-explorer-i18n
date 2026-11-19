@@ -90,7 +90,12 @@
               required
             />
           </div>
-          <div class="flex-1 flex flex-col min-h-0">
+          <!-- No min-h-0 here, and none may be added: told it may shrink, this
+               wrapper shrank below the box's 300px when the fields and the
+               attachments needed more than the dialog had, the middle never
+               scrolled, and the attachments were painted over the message.
+               See composeBodyRoom.test.ts. -->
+          <div class="flex-1 flex flex-col">
             <div class="flex items-center justify-between mb-2 flex-shrink-0">
               <label for="body" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ t("compose.message") }}</label>
               <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
@@ -98,7 +103,12 @@
                 {{ t("compose.plainTextMode") }}
               </label>
             </div>
-            <RichTextEditor v-if="!isPlainText" v-model="body" class="flex-1 flex flex-col min-h-0" />
+            <!-- The editor's own overflow-hidden gives up the floor a flex item
+                 has by default, so its floor is written down: the plain box's
+                 300px. contain-size keeps a long message from raising the
+                 wrapper's floor with it, so the text scrolls inside the editor
+                 under a toolbar that stays in view. -->
+            <RichTextEditor v-if="!isPlainText" v-model="body" class="flex-1 flex flex-col min-h-[300px] contain-size" />
             <textarea
               v-else
               v-model="plainBody"
@@ -110,7 +120,7 @@
                address fields because it grows, and pushing the message down
                as files are added is less disruptive than reflowing the head
                of the form. -->
-          <div class="mt-5 flex-shrink-0">
+          <div ref="attachmentSection" class="mt-5 flex-shrink-0">
             <div class="flex items-center justify-between gap-4 mb-2">
               <label for="attachments" class="block text-sm font-semibold text-gray-700 dark:text-gray-300">{{ t("compose.attachments") }}</label>
               <span class="text-xs" :class="attachmentsTooLarge ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-gray-500 dark:text-gray-400'">
@@ -150,26 +160,50 @@
             </p>
           </div>
         </div>
-        <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <!-- flex-wrap: three buttons that do not shrink, in a dialog that hides
+             what overflows, lost "Save Draft" entirely at 320px in English,
+             and part of a button in 68 of the 73 languages. Tighter below sm,
+             so that a row that wraps takes less of a phone's dialog from the
+             message: at full size it took three lines and 201px at 320px. -->
+        <div class="flex flex-wrap justify-end gap-2 sm:gap-3 px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <!-- Attaching starts here as well as above the list. The list is
+               below the message, which the middle scrolls past, so at most
+               sizes a dialog opened with nothing attached -- or with Cc and
+               Bcc open, or a reply -- showed no way to attach at all. This row
+               does not scroll. Below sm it is the paperclip alone, with its
+               name kept for screen readers and as a tooltip. -->
+          <button
+            ref="attachButton"
+            type="button"
+            @click="attachmentInput?.click()"
+            :disabled="isLoading || isReadingAttachments"
+            :title="t('compose.attachments')"
+            class="me-auto px-3 py-2 sm:px-4 sm:py-3 bg-gray-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 font-semibold transition-all duration-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            </svg>
+            <span class="sr-only sm:not-sr-only">{{ t("compose.attachments") }}</span>
+          </button>
           <button
             type="button"
             @click="saveDraft"
             :disabled="isSavingDraft || isLoading"
-            class="px-6 py-3 bg-gray-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 font-semibold transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
+            class="px-4 py-2 sm:px-6 sm:py-3 bg-gray-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 font-semibold transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {{ isSavingDraft ? t('compose.savingDraft') : t('compose.saveDraft') }}
           </button>
           <button
             type="button"
             @click="closeModal"
-            class="px-6 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold transition-all duration-200"
+            class="px-4 py-2 sm:px-6 sm:py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold transition-all duration-200"
           >
             {{ t("compose.cancel") }}
           </button>
           <button
             type="submit"
             :disabled="isLoading || isReadingAttachments"
-            class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            class="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <svg v-if="!isLoading" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -188,7 +222,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useDateFormat } from "@/composables/useDateFormat";
@@ -255,6 +289,8 @@ const error = useLocalizedMessage();
 
 const attachments = ref<PendingAttachment[]>([]);
 const attachmentInput = ref<HTMLInputElement | null>(null);
+const attachButton = ref<HTMLButtonElement | null>(null);
+const attachmentSection = ref<HTMLElement | null>(null);
 const isReadingAttachments = ref(false);
 /** Moves on each time the dialog opens or closes; see onAttachmentsChosen. */
 let composerGeneration = 0;
@@ -262,6 +298,51 @@ const attachmentBytes = computed(() => totalAttachmentBytes(attachments.value));
 const attachmentsTooLarge = computed(
 	() => attachmentBytes.value > MAX_TOTAL_ATTACHMENT_BYTES,
 );
+
+/**
+ * A refusal about the attachments, said in the banner and as a toast. The
+ * banner is at the top of the dialog's middle, which scrolls: a file is
+ * picked from near the bottom of it, or from the row of buttons below it,
+ * and a refusal shown only in the banner was out of sight at every size
+ * measured -- the file simply did not appear.
+ */
+function refuseAttachments(message: () => string) {
+	error.value = message;
+	showErrorToast(message);
+}
+
+const tooLargeMessage = () =>
+	t("compose.attachmentTooLarge", {
+		max: formatBytes(MAX_TOTAL_ATTACHMENT_BYTES),
+	});
+
+/**
+ * Scrolls the dialog's middle to show the files just added, with the note
+ * under them. The list is below the message, which the middle scrolls past,
+ * so a file just added was drawn out of sight at every size measured but one.
+ *
+ * Only while nobody is at work elsewhere in the dialog: reading a large file
+ * takes seconds, and somebody who has gone back to the subject or the
+ * message keeps their place. `nearest`, and not smooth, so it moves no more
+ * than it must and is done before a hand on the wheel can meet it. Called
+ * with `?.`: jsdom has no scrollIntoView, and nothing here may turn a file
+ * that was added into a reported failure.
+ */
+async function showAddedAttachments() {
+	await nextTick();
+	const active = document.activeElement;
+	if (
+		active &&
+		active !== document.body &&
+		active !== attachmentInput.value &&
+		active !== attachButton.value
+	) {
+		return;
+	}
+	attachmentSection.value?.lastElementChild?.scrollIntoView?.({
+		block: "nearest",
+	});
+}
 
 /**
  * Files are read and encoded as they are picked, not at send time, so an
@@ -283,10 +364,7 @@ async function onAttachmentsChosen(event: Event) {
 	// gigabytes froze the tab before the limit was ever looked at.
 	const pickedBytes = totalAttachmentBytes(picked);
 	if (attachmentBytes.value + pickedBytes > MAX_TOTAL_ATTACHMENT_BYTES) {
-		error.value = () =>
-			t("compose.attachmentTooLarge", {
-				max: formatBytes(MAX_TOTAL_ATTACHMENT_BYTES),
-			});
+		refuseAttachments(tooLargeMessage);
 		input.value = "";
 		return;
 	}
@@ -296,19 +374,24 @@ async function onAttachmentsChosen(event: Event) {
 	// whoever that was sent to.
 	const generation = composerGeneration;
 	isReadingAttachments.value = true;
+	let added = false;
 	try {
 		const read = await Promise.all(picked.map(fileToAttachment));
 		if (generation !== composerGeneration) return;
 		attachments.value = [...attachments.value, ...read];
+		added = true;
 	} catch {
 		if (generation !== composerGeneration) return;
-		error.value = () => t("compose.attachmentReadFailed");
+		refuseAttachments(() => t("compose.attachmentReadFailed"));
 	} finally {
 		if (generation === composerGeneration) {
 			isReadingAttachments.value = false;
 			if (attachmentInput.value) attachmentInput.value.value = "";
 		}
 	}
+	// After the try, not in it: the files are added by now, and a failure to
+	// show them must not read as a failure to add them.
+	if (added) await showAddedAttachments();
 }
 
 function removeAttachment(id: string) {
@@ -604,10 +687,7 @@ const send = async () => {
 	// come back as an error from Resend or the Worker, by which time the
 	// whole encoded body has been uploaded for nothing.
 	if (attachmentsTooLarge.value) {
-		error.value = () =>
-			t("compose.attachmentTooLarge", {
-				max: formatBytes(MAX_TOTAL_ATTACHMENT_BYTES),
-			});
+		refuseAttachments(tooLargeMessage);
 		return;
 	}
 	isLoading.value = true;
@@ -627,10 +707,7 @@ const send = async () => {
 			attachmentBytes.value + totalAttachmentBytes(pictures) >
 			MAX_TOTAL_ATTACHMENT_BYTES
 		) {
-			error.value = () =>
-				t("compose.attachmentTooLarge", {
-					max: formatBytes(MAX_TOTAL_ATTACHMENT_BYTES),
-				});
+			refuseAttachments(tooLargeMessage);
 			return;
 		}
 		// Omitted entirely rather than sent as [], which the API rejects.

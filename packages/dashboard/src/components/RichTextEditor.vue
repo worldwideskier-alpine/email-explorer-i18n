@@ -318,11 +318,16 @@
     </div>
 
     <!-- Editor Content or Source Code -->
+    <!-- 300px as a starting size, not a floor: where nothing holds the editor
+         to a height (the signature on Settings) the box is 300px, and where
+         something does (the compose dialog) it shrinks to fit. As a floor it
+         passed the editor's edge there, and the editor's overflow-hidden cut
+         off the bottom 59-508px of what was being typed. -->
     <div v-if="showSourceCode" class="p-4 flex-1 flex flex-col min-h-0">
       <textarea
         v-model="sourceCode"
         @input="updateFromSource"
-        class="w-full flex-1 min-h-[300px] resize-none bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg p-3 font-mono text-sm"
+        class="w-full grow basis-[300px] min-h-0 resize-none bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg p-3 font-mono text-sm"
         :placeholder="t('richTextEditor.sourceCodePlaceholder')"
       />
     </div>
