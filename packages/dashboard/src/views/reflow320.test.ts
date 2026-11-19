@@ -49,7 +49,9 @@ import { describe, expect, it } from "vitest";
  * overflowed it, so nothing scrolled sideways while part of a button was cut
  * off in 68 of the 73 languages at 320px. The row wraps now, and
  * composeAttachmentsInReach.test.ts holds it; composeBodyRoom.test.ts holds
- * the dialog's middle.
+ * the dialog's middle. That record missed the email card too, for the same
+ * reason vertically: it cut off the attachments on a phone or a short
+ * window, and detailReach.test.ts holds it.
  */
 
 const sources = {

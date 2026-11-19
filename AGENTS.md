@@ -1063,6 +1063,11 @@ are still checked, by the `tsc` that runs before the worker tests.
   otherwise) and SVG attributes that take `url()` are read as CSS. A policy of
   the frame's own does not help: a `<meta>` CSP in the `srcdoc` and the
   iframe's `csp` attribute were both measured holding nothing back.
+  The frame's root also carries `overscroll-behavior: auto !important`, as a
+  rule (`THE_ROOT_PASSES_SCROLLS_ON`) rather than only in the template, since
+  the parser merges a message's own `<html style>` onto it: the message card
+  scrolls, and on a phone held sideways (568x270) a message that kept its
+  scrolls to itself left the card unable to move.
   The frame is this page's origin (`allow-same-origin`: the inline pictures
   reach the API with the reader's session), which has two consequences, both
   measured. Its requests name this page -- the open message's address, with
@@ -1132,6 +1137,11 @@ are still checked, by the `tsc` that runs before the worker tests.
   measure the *controls*, not only the page: a zero-width one loses
   functionality without moving the page a pixel. `reflow320.test.ts` carries
   the measurements and holds the places that were told they may shrink.
+  A box that hides its overflow is the same trap the other way up: that same
+  email card is held to the page's height and hid what did not fit, so at
+  320x568 every download button was cut off where nobody could scroll to it,
+  on short desktop windows up to 12 of 20, and at 568x320 the message showed
+  0px. It scrolls now, and the frame keeps its 150px (`detailReach.test.ts`).
 - **The compose dialog's middle scrolls; the message keeps its room.** Its
   middle is a flex column, and the message's wrapper carried `min-h-0`, so
   when the fields and the attachments needed more than the dialog had, the

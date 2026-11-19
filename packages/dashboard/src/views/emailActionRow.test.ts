@@ -96,6 +96,26 @@ describe("the actions on an open message", () => {
 		expect(actionRow).toContain("flex w-full items-center justify-center");
 	});
 
+	/**
+	 * From md to lg the sidebar is shown and the card is at its narrowest
+	 * above a phone: nine 40px actions and their gaps needed 424px, the
+	 * subject's group (allowed to shrink to nothing) gave way, and Back was
+	 * drawn under Reply -- measured, a tap on Back opened a reply at 768-828px,
+	 * and to 847px once the card scrolls beside a scrollbar that takes room.
+	 * In that band only, the actions take 6px of padding and 2px of gap, and
+	 * the subject's group keeps 52px, Back's 40 and its gap.
+	 */
+	it("leaves Back its room where the sidebar narrows the card", () => {
+		const actionPadding = actionRow.match(/\bmd:max-lg:p-1\.5\b/g) ?? [];
+		expect(actionPadding.length).toBe(10);
+		expect(rowClasses).toContain("md:max-lg:gap-0.5");
+		const subjectGroup = emailDetail.slice(0, emailDetail.indexOf("</h1>"));
+		const groupClasses = [...subjectGroup.matchAll(/class="([^"]*)"/g)]
+			.map((match) => match[1])
+			.filter((classes) => classes.includes("min-w-0"))[0];
+		expect(groupClasses).toContain("md:max-lg:min-w-[3.25rem]");
+	});
+
 	it("keeps the icons 20px whatever the button comes out at", () => {
 		// The button shrinks on a phone by giving up its padding; the icon
 		// inside it is what makes the row readable and does not shrink.
