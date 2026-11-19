@@ -44,6 +44,12 @@ import { describe, expect, it } from "vitest";
  * This file holds what can be held from the source: the handful of places
  * where something was told it may shrink. The measurement itself lives in the
  * record above.
+ *
+ * That record missed the compose dialog's row of buttons: the dialog hid what
+ * overflowed it, so nothing scrolled sideways while part of a button was cut
+ * off in 68 of the 73 languages at 320px. The row wraps now, and
+ * composeAttachmentsInReach.test.ts holds it; composeBodyRoom.test.ts holds
+ * the dialog's middle.
  */
 
 const sources = {

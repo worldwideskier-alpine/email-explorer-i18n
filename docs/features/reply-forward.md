@@ -153,7 +153,8 @@ view that groups them.
 You can add attachments to your replies and forwards:
 
 1. Compose your reply or forward as normal
-2. Under **Attachments**, choose the files
+2. Press the paperclip in the row of buttons at the bottom of the window,
+   or choose the files under **Attachments**
 3. The attachments will be included when you send
 
 The total may be up to **20 MB**; above that, the compose window refuses to
