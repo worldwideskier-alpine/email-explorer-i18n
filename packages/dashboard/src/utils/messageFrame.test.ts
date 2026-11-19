@@ -322,13 +322,12 @@ describe("the frame within the page", () => {
 			"<style>html,body{overscroll-behavior:contain}</style><p>x</p>",
 			'<html style="overscroll-behavior: none"><body><p>x</p></body></html>',
 		]) {
-			const root = new DOMParser().parseFromString(
-				prepareFrame(message),
-				"text/html",
-			).documentElement;
-			expect(root.getAttribute("style")).toBe(
-				"overscroll-behavior: auto !important",
-			);
+			for (const spam of [false, true]) {
+				const root = framed(message, spam).documentElement;
+				expect(root.getAttribute("style")).toBe(
+					"overscroll-behavior: auto !important",
+				);
+			}
 		}
 	});
 });
