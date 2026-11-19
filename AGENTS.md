@@ -1142,6 +1142,12 @@ are still checked, by the `tsc` that runs before the worker tests.
   320x568 every download button was cut off where nobody could scroll to it,
   on short desktop windows up to 12 of 20, and at 568x320 the message showed
   0px. It scrolls now, and the frame keeps its 150px (`detailReach.test.ts`).
+  A dialog centred in a fixed overlay is the same trap once more: the overlay
+  does not scroll, so what is taller than the window is cut off at both ends.
+  Home's create-mailbox dialog, with the "already exists" banner up, ran 65px
+  past the top and the bottom at 568x320, where neither its close button nor
+  Create could be pressed. It is held to the window now, and its form scrolls
+  under the title and the close button (`createMailboxReach.test.ts`).
 - **The compose dialog's middle scrolls; the message keeps its room.** Its
   middle is a flex column, and the message's wrapper carried `min-h-0`, so
   when the fields and the attachments needed more than the dialog had, the

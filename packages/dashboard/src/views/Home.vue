@@ -111,7 +111,13 @@
       </div>
     </div>
     <div v-if="isCreateModalOpen" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <!-- Held to the window (max-h-full of the padded overlay), with the
+           form scrolling under the title and its close button. With no limit
+           the dialog was centred and taller than a phone held sideways: at
+           568x320 with the "already exists" banner up it ran 65px past the
+           top and the bottom, and neither the close button nor Create could
+           be pressed, since the fixed overlay does not scroll. -->
+      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md max-h-full flex flex-col text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="flex justify-between items-center bg-gradient-to-r from-green-700 to-emerald-700 px-6 py-5">
           <h2 class="text-xl font-bold text-white">{{ t("home.createMailboxTitle") }}</h2>
           <button @click="closeCreateMailboxModal" class="text-white/80 hover:text-white hover:bg-white/10 rounded-lg p-2 transition-all duration-200">
@@ -120,7 +126,7 @@
             </svg>
           </button>
         </div>
-        <form @submit.prevent="handleCreateMailbox" class="p-6">
+        <form @submit.prevent="handleCreateMailbox" class="p-6 overflow-x-hidden overflow-y-auto">
           <div v-if="createError" class="bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-start gap-3" role="alert">
             <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
