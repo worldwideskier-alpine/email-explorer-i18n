@@ -20,11 +20,17 @@ import { englishWith } from "@/testing/english";
  *
  * It is held to the window now (max-h-full of the padded overlay), and the
  * form scrolls under the title and its close button, which stay in sight.
+ * What a scrolling form costs is given back: a refusal is scrolled into view
+ * (it goes in at the top, and Create is at the foot -- 0px of it was shown at
+ * 568x320, 667x375 and 740x360), a focus ring keeps its room at the ends, and
+ * the scrollbar is drawn dark in dark mode. The row of buttons wraps, since
+ * sideways nothing scrolls: at 320px Cancel was cut off in 27 languages.
  *
  * jsdom lays nothing out, so this holds the rules: the dialog is held to its
- * overlay's height, the form is what scrolls, the close button is outside
- * it, and nothing between the form and its buttons hides what overflows it.
- * Re-measure in a browser after changing it.
+ * overlay's height at every width, the form is what scrolls and may shrink to
+ * do it, the close button is outside it, and nothing between the form and its
+ * buttons hides what overflows it or keeps a row from wrapping. Re-measure in
+ * a browser after changing it.
  */
 
 const createMailbox = vi.fn();
@@ -40,6 +46,11 @@ vi.mock("@/services/api", () => ({
 
 let host: HTMLElement;
 let unmount = () => {};
+// jsdom may have no scrollIntoView of its own; whatever it has is put back.
+const ownScrollIntoView = Object.getOwnPropertyDescriptor(
+	Element.prototype,
+	"scrollIntoView",
+);
 beforeEach(() => {
 	host = document.createElement("div");
 	document.body.appendChild(host);
@@ -49,6 +60,15 @@ afterEach(() => {
 	unmount();
 	host.remove();
 	document.body.innerHTML = "";
+	if (ownScrollIntoView) {
+		Object.defineProperty(
+			Element.prototype,
+			"scrollIntoView",
+			ownScrollIntoView,
+		);
+	} else {
+		delete (Element.prototype as Partial<Element>).scrollIntoView;
+	}
 });
 
 const settle = async () => {
@@ -93,6 +113,10 @@ async function openDialog() {
 	return { field, form, overlay, box };
 }
 
+/** Class names as they apply at every width: only `!` taken off. */
+const always = (element: Element) =>
+	[...element.classList].map((name) => name.replace(/^!|!$/g, ""));
+
 /** Class names without their variants, `!` and the like. */
 const bare = (element: Element) =>
 	[...element.classList].map((name) =>
@@ -113,17 +137,38 @@ describe("the create-mailbox dialog", () => {
 		expect(box.parentElement).toBe(overlay);
 		// The overlay is the window, less its padding; the dialog may be no
 		// taller than that.
-		expect(bare(overlay)).toEqual(
-			expect.arrayContaining(["fixed", "inset-0", "flex", "items-center"]),
+		expect(always(overlay)).toEqual(
+			expect.arrayContaining([
+				"fixed",
+				"inset-0",
+				"flex",
+				"items-center",
+				"p-4",
+			]),
 		);
-		expect(bare(box)).toContain("max-h-full");
-		expect(bare(box)).toEqual(expect.arrayContaining(["flex", "flex-col"]));
+		// At every width: `sm:max-h-full` let it run off a phone held sideways.
+		expect(always(box)).toContain("max-h-full");
+		expect(always(box)).toEqual(expect.arrayContaining(["flex", "flex-col"]));
 	});
 
 	it("scrolls its form, under a close button that stays in sight", async () => {
 		const { form, box } = await openDialog();
 		expect(form.parentElement).toBe(box);
-		expect(bare(form)).toContain("overflow-y-auto");
+		expect(always(form)).toContain("overflow-y-auto");
+		// Free to shrink to what the dialog leaves it, or it is cut off by the
+		// dialog instead of scrolling.
+		expect(
+			bare(form).filter((name) =>
+				/^(min-h-|h-|size-|basis-|shrink-0$|flex-shrink-0$|flex-none$)/.test(
+					name,
+				),
+			),
+		).toEqual([]);
+		// A focus ring keeps its room where the scroll stops at an edge, and
+		// the scrollbar is not drawn white on a dark dialog.
+		expect(always(form)).toEqual(
+			expect.arrayContaining(["scroll-py-6", "dark:[color-scheme:dark]"]),
+		);
 		// The close button is in the title row, outside what scrolls.
 		const close = box.querySelector("button");
 		expect(close?.closest("form")).toBeNull();
@@ -144,14 +189,27 @@ describe("the create-mailbox dialog", () => {
 					hidesOverflow(element),
 					`${element.className} hides ${control.outerHTML.slice(0, 40)}`,
 				).toBe(false);
+				// Sideways nothing scrolls, so a row of controls wraps.
+				const row =
+					bare(element).includes("flex") &&
+					!bare(element).some((name) => name.startsWith("flex-col"));
+				if (row) {
+					expect(always(element), `${element.className} wraps`).toContain(
+						"flex-wrap",
+					);
+				}
 			}
 		}
 	});
 
-	it("keeps the banner inside what scrolls when a mailbox already exists", async () => {
+	it("shows why, scrolled into view, when a mailbox already exists", async () => {
 		createMailbox.mockRejectedValue({
 			response: { data: { error: "Mailbox already exists" } },
 		});
+		const scrolled: Element[] = [];
+		Element.prototype.scrollIntoView = function (this: Element) {
+			scrolled.push(this);
+		};
 		const { field, form } = await openDialog();
 		field.value = "taken@example.com";
 		field.dispatchEvent(new Event("input"));
@@ -162,5 +220,7 @@ describe("the create-mailbox dialog", () => {
 		await settle();
 		const banner = form.querySelector("[role=alert]");
 		expect(banner?.textContent).toContain("already exists");
+		// It goes in at the top of the form, and Create is at its foot.
+		expect(scrolled).toEqual([banner]);
 	});
 });

@@ -1147,7 +1147,10 @@ are still checked, by the `tsc` that runs before the worker tests.
   Home's create-mailbox dialog, with the "already exists" banner up, ran 65px
   past the top and the bottom at 568x320, where neither its close button nor
   Create could be pressed. It is held to the window now, and its form scrolls
-  under the title and the close button (`createMailboxReach.test.ts`).
+  under the title and the close button. A form that scrolls has to bring a
+  refusal into view itself: the banner goes in at its top and Create is at
+  its foot, so after a 409 none of the banner was shown on any of the
+  landscape sizes once the toast went (`createMailboxReach.test.ts`).
 - **The compose dialog's middle scrolls; the message keeps its room.** Its
   middle is a flex column, and the message's wrapper carried `min-h-0`, so
   when the fields and the attachments needed more than the dialog had, the

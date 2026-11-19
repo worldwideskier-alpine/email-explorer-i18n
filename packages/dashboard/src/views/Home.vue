@@ -116,7 +116,10 @@
            the dialog was centred and taller than a phone held sideways: at
            568x320 with the "already exists" banner up it ran 65px past the
            top and the bottom, and neither the close button nor Create could
-           be pressed, since the fixed overlay does not scroll. -->
+           be pressed, since the fixed overlay does not scroll. The form's
+           scroll keeps a focus ring's room at its ends (scroll-py-6), draws
+           its scrollbar dark in dark mode, and still hides what overflows it
+           sideways, as the dialog did; the buttons wrap instead. -->
       <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md max-h-full flex flex-col text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div class="flex justify-between items-center bg-gradient-to-r from-green-700 to-emerald-700 px-6 py-5">
           <h2 class="text-xl font-bold text-white">{{ t("home.createMailboxTitle") }}</h2>
@@ -126,8 +129,8 @@
             </svg>
           </button>
         </div>
-        <form @submit.prevent="handleCreateMailbox" class="p-6 overflow-x-hidden overflow-y-auto">
-          <div v-if="createError" class="bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-start gap-3" role="alert">
+        <form @submit.prevent="handleCreateMailbox" class="p-6 overflow-x-hidden overflow-y-auto scroll-py-6 dark:[color-scheme:dark]">
+          <div v-if="createError" ref="errorBanner" class="bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-start gap-3" role="alert">
             <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
             </svg>
@@ -156,7 +159,9 @@
               required
             />
           </div>
-          <div class="flex justify-end gap-3">
+          <!-- Wraps: at 320px Cancel was cut off in 27 of the 73 languages
+               (54px of its 98px in Greek), where nothing scrolls sideways. -->
+          <div class="flex flex-wrap justify-end gap-3">
             <button
               type="button"
               @click="closeCreateMailboxModal"
@@ -190,7 +195,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { onMounted, ref } from "vue";
+import { nextTick, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import LanguageSwitcher from "@/components/LanguageSwitcher.vue";
@@ -213,6 +218,19 @@ const newMailboxEmail = ref("");
 const newMailboxName = ref("");
 const isCreatingMailbox = ref(false);
 const createError = useLocalizedMessage();
+const errorBanner = ref<HTMLElement | null>(null);
+
+/**
+ * Says why the mailbox was not made, where it can be read. The banner goes at
+ * the top of the form, which scrolls on a short window, and Create is at its
+ * foot: put in above where the reader is, it was out of sight once the toast
+ * went -- measured, 0px of it shown at 568x320, 667x375 and 740x360.
+ */
+async function refuse(message: () => string) {
+	createError.value = message;
+	await nextTick();
+	errorBanner.value?.scrollIntoView?.({ block: "nearest" });
+}
 
 /**
  * Where the list stands. "No mailboxes yet" is said only once the list has
@@ -251,7 +269,7 @@ const handleCreateMailbox = async () => {
 	createError.value = null;
 
 	if (!newMailboxEmail.value || !newMailboxName.value) {
-		createError.value = () => t("home.fillAllFields");
+		await refuse(() => t("home.fillAllFields"));
 		return;
 	}
 
@@ -267,8 +285,8 @@ const handleCreateMailbox = async () => {
 		const fromApi = e.response?.data?.error;
 		const errorMessage = () =>
 			translateApiError(fromApi, "Failed to create mailbox");
-		createError.value = errorMessage;
 		showErrorToast(errorMessage);
+		await refuse(errorMessage);
 	} finally {
 		isCreatingMailbox.value = false;
 	}
