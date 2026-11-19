@@ -1,6 +1,11 @@
 <template>
   <div v-if="isComposeModalOpen" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl h-[85vh] text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all flex flex-col">
+    <!-- overflow-y-auto, not overflow-hidden: on a screen this short (320x256,
+         a 1280x1024 one at 400%) the row of buttons, wrapped, is taller than
+         what the header leaves, and a box that hid its overflow put Send out
+         of reach in 51 of the 73 languages. Anywhere taller the middle takes
+         up the difference and this never scrolls. -->
+    <div ref="dialogBox" class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-3xl h-[85vh] text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 overflow-x-hidden overflow-y-auto transform transition-all flex flex-col">
       <div class="flex justify-between items-center bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5 flex-shrink-0">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
@@ -18,7 +23,7 @@
       </div>
       <form @submit.prevent="send" class="flex flex-col flex-1 min-h-0">
         <div class="p-6 overflow-y-auto flex-1 min-h-0 flex flex-col">
-          <div v-if="error" class="bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-start gap-3 flex-shrink-0" role="alert">
+          <div v-if="error" ref="errorBanner" class="bg-red-50 border-l-4 border-red-500 text-red-800 px-4 py-3 rounded-lg mb-6 flex items-start gap-3 flex-shrink-0" role="alert">
             <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
             </svg>
@@ -104,10 +109,12 @@
               </label>
             </div>
             <!-- The editor's own overflow-hidden gives up the floor a flex item
-                 has by default, so its floor is written down: the plain box's
-                 300px. contain-size keeps a long message from raising the
-                 wrapper's floor with it, so the text scrolls inside the editor
-                 under a toolbar that stays in view. -->
+                 has by default, so its floor is written down: 300px, as the
+                 plain box has, toolbar included -- 105px of it to type in at
+                 320px wide, where the toolbar takes three lines. contain-size
+                 keeps a long message from raising the wrapper's floor with
+                 it, so the text scrolls inside the editor under a toolbar
+                 that stays in view. -->
             <RichTextEditor v-if="!isPlainText" v-model="body" class="flex-1 flex flex-col min-h-[300px] contain-size" />
             <textarea
               v-else
@@ -160,30 +167,35 @@
             </p>
           </div>
         </div>
-        <!-- flex-wrap: three buttons that do not shrink, in a dialog that hides
-             what overflows, lost "Save Draft" entirely at 320px in English,
-             and part of a button in 68 of the 73 languages. Tighter below sm,
-             so that a row that wraps takes less of a phone's dialog from the
-             message: at full size it took three lines and 201px at 320px. -->
+        <!-- flex-wrap: three buttons that shrink no further than their longest
+             word, in a dialog that hid what overflowed, lost "Save Draft"
+             entirely at 320px in English, and part of a button in 68 of the 73
+             languages. Tighter below sm, so that a row that wraps takes less
+             of a phone's dialog from the message: at full size it took three
+             lines and 201px at 320px in English. -->
         <div class="flex flex-wrap justify-end gap-2 sm:gap-3 px-4 py-3 sm:px-6 sm:py-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
           <!-- Attaching starts here as well as above the list. The list is
                below the message, which the middle scrolls past, so at most
                sizes a dialog opened with nothing attached -- or with Cc and
                Bcc open, or a reply -- showed no way to attach at all. This row
-               does not scroll. Below sm it is the paperclip alone, with its
-               name kept for screen readers and as a tooltip. -->
+               does not scroll. The paperclip alone, at every width, its name
+               kept for screen readers and as a tooltip: with the name beside
+               it the row took a second line at 1366x768 in 9 languages, 60px
+               off the message. Not disabled while a file is read, as the
+               picker is: a disabled button loses focus, and pressing this one
+               then opens nothing, since the picker is disabled. -->
           <button
             ref="attachButton"
             type="button"
             @click="attachmentInput?.click()"
-            :disabled="isLoading || isReadingAttachments"
+            :disabled="isLoading"
             :title="t('compose.attachments')"
             class="me-auto px-3 py-2 sm:px-4 sm:py-3 bg-gray-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 font-semibold transition-all duration-200 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
             </svg>
-            <span class="sr-only sm:not-sr-only">{{ t("compose.attachments") }}</span>
+            <span class="sr-only">{{ t("compose.attachments") }}</span>
           </button>
           <button
             type="button"
@@ -291,6 +303,8 @@ const attachments = ref<PendingAttachment[]>([]);
 const attachmentInput = ref<HTMLInputElement | null>(null);
 const attachButton = ref<HTMLButtonElement | null>(null);
 const attachmentSection = ref<HTMLElement | null>(null);
+const dialogBox = ref<HTMLElement | null>(null);
+const errorBanner = ref<HTMLElement | null>(null);
 const isReadingAttachments = ref(false);
 /** Moves on each time the dialog opens or closes; see onAttachmentsChosen. */
 let composerGeneration = 0;
@@ -300,15 +314,31 @@ const attachmentsTooLarge = computed(
 );
 
 /**
- * A refusal about the attachments, said in the banner and as a toast. The
- * banner is at the top of the dialog's middle, which scrolls: a file is
- * picked from near the bottom of it, or from the row of buttons below it,
- * and a refusal shown only in the banner was out of sight at every size
- * measured -- the file simply did not appear.
+ * A refusal about the attachments, said in the banner, and as a toast when
+ * the banner is out of sight. The banner is at the top of the dialog's
+ * middle, which scrolls: a file is picked from near the bottom of it, or
+ * from the row of buttons below it, and a refusal shown only in the banner
+ * was out of sight in 16 of 20 tries, at every size but the tallest -- the
+ * file simply did not appear. Not a toast as well when the banner shows: on
+ * a phone the toast sits on Send for three seconds.
  */
-function refuseAttachments(message: () => string) {
+async function refuseAttachments(message: () => string) {
 	error.value = message;
-	showErrorToast(message);
+	await nextTick();
+	if (!bannerInSight()) showErrorToast(message);
+}
+
+/** Whether the banner is inside what the middle shows. Not laid out -- a
+ * dialog not drawn yet, or jsdom -- counts as out of sight, so the refusal is
+ * said one way or the other. */
+function bannerInSight(): boolean {
+	const banner = errorBanner.value;
+	const middle = banner?.parentElement;
+	if (!banner || !middle) return false;
+	const seen = middle.getBoundingClientRect();
+	if (!seen.height) return false;
+	const at = banner.getBoundingClientRect();
+	return at.top >= seen.top && at.bottom <= seen.bottom;
 }
 
 const tooLargeMessage = () =>
@@ -319,14 +349,17 @@ const tooLargeMessage = () =>
 /**
  * Scrolls the dialog's middle to show the files just added, with the note
  * under them. The list is below the message, which the middle scrolls past,
- * so a file just added was drawn out of sight at every size measured but one.
+ * so a file just added was drawn out of sight at every size measured.
  *
  * Only while nobody is at work elsewhere in the dialog: reading a large file
  * takes seconds, and somebody who has gone back to the subject or the
- * message keeps their place. `nearest`, and not smooth, so it moves no more
- * than it must and is done before a hand on the wheel can meet it. Called
- * with `?.`: jsdom has no scrollIntoView, and nothing here may turn a file
- * that was added into a reported failure.
+ * message keeps their place -- by focus here, and by anything they did in
+ * the dialog while the files were read (`touchedWhileReading`), since
+ * pressing "Add Cc / Bcc" or turning the wheel leaves focus on nothing.
+ * `nearest`, and not smooth, so it moves no more than it must and is done
+ * before a hand on the wheel can meet it. Called with `?.`: jsdom has no
+ * scrollIntoView, and nothing here may turn a file that was added into a
+ * reported failure.
  */
 async function showAddedAttachments() {
 	await nextTick();
@@ -342,6 +375,31 @@ async function showAddedAttachments() {
 	attachmentSection.value?.lastElementChild?.scrollIntoView?.({
 		block: "nearest",
 	});
+}
+
+/**
+ * Notes whether anybody presses, types, scrolls or touches anywhere in the
+ * dialog from now until `stop`. Listened for on the way down, so a handler
+ * that stops an event does not hide it.
+ */
+function touchedWhileReading(): { touched: () => boolean; stop: () => void } {
+	const box = dialogBox.value;
+	let touched = false;
+	const note = () => {
+		touched = true;
+	};
+	const kinds = ["pointerdown", "keydown", "wheel", "touchstart"];
+	for (const kind of kinds) {
+		box?.addEventListener(kind, note, { capture: true, passive: true });
+	}
+	return {
+		touched: () => touched,
+		stop: () => {
+			for (const kind of kinds) {
+				box?.removeEventListener(kind, note, { capture: true });
+			}
+		},
+	};
 }
 
 /**
@@ -364,7 +422,7 @@ async function onAttachmentsChosen(event: Event) {
 	// gigabytes froze the tab before the limit was ever looked at.
 	const pickedBytes = totalAttachmentBytes(picked);
 	if (attachmentBytes.value + pickedBytes > MAX_TOTAL_ATTACHMENT_BYTES) {
-		refuseAttachments(tooLargeMessage);
+		void refuseAttachments(tooLargeMessage);
 		input.value = "";
 		return;
 	}
@@ -374,6 +432,7 @@ async function onAttachmentsChosen(event: Event) {
 	// whoever that was sent to.
 	const generation = composerGeneration;
 	isReadingAttachments.value = true;
+	const reading = touchedWhileReading();
 	let added = false;
 	try {
 		const read = await Promise.all(picked.map(fileToAttachment));
@@ -382,8 +441,9 @@ async function onAttachmentsChosen(event: Event) {
 		added = true;
 	} catch {
 		if (generation !== composerGeneration) return;
-		refuseAttachments(() => t("compose.attachmentReadFailed"));
+		void refuseAttachments(() => t("compose.attachmentReadFailed"));
 	} finally {
+		reading.stop();
 		if (generation === composerGeneration) {
 			isReadingAttachments.value = false;
 			if (attachmentInput.value) attachmentInput.value.value = "";
@@ -391,7 +451,7 @@ async function onAttachmentsChosen(event: Event) {
 	}
 	// After the try, not in it: the files are added by now, and a failure to
 	// show them must not read as a failure to add them.
-	if (added) await showAddedAttachments();
+	if (added && !reading.touched()) await showAddedAttachments();
 }
 
 function removeAttachment(id: string) {
@@ -687,7 +747,7 @@ const send = async () => {
 	// come back as an error from Resend or the Worker, by which time the
 	// whole encoded body has been uploaded for nothing.
 	if (attachmentsTooLarge.value) {
-		refuseAttachments(tooLargeMessage);
+		void refuseAttachments(tooLargeMessage);
 		return;
 	}
 	isLoading.value = true;
@@ -707,7 +767,7 @@ const send = async () => {
 			attachmentBytes.value + totalAttachmentBytes(pictures) >
 			MAX_TOTAL_ATTACHMENT_BYTES
 		) {
-			refuseAttachments(tooLargeMessage);
+			void refuseAttachments(tooLargeMessage);
 			return;
 		}
 		// Omitted entirely rather than sent as [], which the API rejects.

@@ -13,14 +13,19 @@ import { createMemoryHistory, createRouter, RouterView } from "vue-router";
  * attachments needed more than the dialog had, the wrapper shrank instead of
  * the middle scrolling, and the attachments were painted over the message --
  * reported on 2026-11-19 with one attachment. Measured in Chromium against
- * the production bundle, seven sizes from 1730x1040 to 320x568, one
- * attachment, before -> after:
+ * the production bundle, in Japanese, seven sizes from 1730x1040 to
+ * 320x568, one attachment, before -> after:
  *
  *   plain text      painted under the attachments by 11-308px  -> 0
  *   rich editor     2px tall on a phone, all 23 toolbar buttons
  *                   covered; 32px to type in at 1366x768       -> 300px at
  *                   least, 105-213px of it to type in, nothing covered
- *   its HTML view   cut off at the editor's edge by 59-508px  -> 0
+ *   its HTML view   cut off at the editor's edge by 133-508px
+ *                   (59px with nothing attached)               -> 0
+ *
+ * Re-measured in English, Arabic, Hebrew, Japanese and dark mode at eleven
+ * sizes down to 568x320, with plain, rich, long, HTML view, reply and
+ * forward and 0, 1 and 6 attachments: nothing overlapped or was cut off.
  *
  * jsdom lays nothing out, so this holds the rule the layout follows rather
  * than the layout: a flex item may not shrink below its content unless it
@@ -159,6 +164,12 @@ describe("the message keeps its room in the compose dialog", () => {
 		// A long message must not raise the wrapper's floor with it: it
 		// scrolls inside the editor, under a toolbar that stays in view.
 		expect(own).toContain("contain-size");
+		// ...which needs the editor to be a column and its content to scroll.
+		expect(own).toEqual(expect.arrayContaining(["flex", "flex-col"]));
+		const content = editor.querySelector(".ProseMirror")?.parentElement;
+		expect([...(content?.classList ?? [])]).toEqual(
+			expect.arrayContaining(["flex-1", "min-h-0", "overflow-y-auto"]),
+		);
 	});
 
 	it("in the editor's HTML view: the box has no floor that could pass the editor's edge", async () => {
@@ -176,6 +187,12 @@ describe("the message keeps its room in the compose dialog", () => {
 		const own = [...source.classList];
 		expect(own.filter((name) => /^min-h-\[/.test(name))).toEqual([]);
 		expect(own).toContain("min-h-0");
+		// Nor anything between it and the editor, which is held to its size:
+		// a wrapper that kept its floor took the box's 300px as its own.
+		const editor = source.closest(".rich-text-editor") as HTMLElement;
+		for (const wrapper of between(source, editor)) {
+			expect(floorGivenUp(wrapper), wrapper.className).not.toEqual([]);
+		}
 		// Where nothing holds the editor to a height -- the signature on
 		// Settings -- the box still starts at 300px.
 		expect(own).toContain("basis-[300px]");

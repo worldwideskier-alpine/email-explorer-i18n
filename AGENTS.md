@@ -1132,7 +1132,7 @@ are still checked, by the `tsc` that runs before the worker tests.
   measure the *controls*, not only the page: a zero-width one loses
   functionality without moving the page a pixel. `reflow320.test.ts` carries
   the measurements and holds the places that were told they may shrink.
-- **The compose dialog's middle scrolls; nothing in it is squeezed.** Its
+- **The compose dialog's middle scrolls; the message keeps its room.** Its
   middle is a flex column, and the message's wrapper carried `min-h-0`, so
   when the fields and the attachments needed more than the dialog had, the
   wrapper shrank rather than the middle scrolling: the plain-text box (300px
@@ -1140,20 +1140,23 @@ are still checked, by the `tsc` that runs before the worker tests.
   one file attached -- and the rich editor, which has no floor by default
   since its `overflow-hidden` gives the automatic one up, fell to 2px on a
   phone with all 23 toolbar buttons covered. Now nothing between the middle
-  and the message may give up its floor, the editor sets the plain box's
-  300px as its own, and `contain-size` keeps a long message from raising it
-  (the text scrolls inside the editor, under a toolbar that stays in view);
-  its HTML view starts at 300px rather than being held to it
-  (`composeBodyRoom.test.ts`, which mounts the dialog and walks the
-  ancestors, since a source-text test missed a new inner wrapper). With the
-  message keeping its room, the attachments are below the fold at most
-  sizes, so the paperclip is also in the row of buttons, which does not
-  scroll and wraps (it cut off part of a button in 68 of the 73 languages at
-  320px); a refusal about attachments is a toast as well as the banner at
-  the top of the middle; and files just added are scrolled into view unless
-  focus is elsewhere in the dialog (`composeAttachmentsInReach.test.ts`).
-  jsdom lays nothing out, so those tests hold the rules and not the screen:
-  measure in Chromium after changing any of it.
+  and the message may give up its floor, the dialog gives the editor the
+  plain box's 300px as its floor (toolbar included), and `contain-size`
+  keeps a long message from raising it (the text scrolls inside the editor,
+  under a toolbar that stays in view); its HTML view starts at 300px rather
+  than being held to it (`composeBodyRoom.test.ts`, which mounts the dialog
+  and walks the ancestors, since a source-text test missed a new inner
+  wrapper). With the message keeping its room, the attachments are below
+  the fold at most sizes, so a paperclip, an icon at every width, is also in
+  the row of buttons, which does not scroll and wraps (it cut off part of a
+  button in 68 of the 73 languages at 320px); the dialog itself scrolls
+  where even that row outgrows it (320x256); a refusal about attachments is
+  a toast too whenever the banner at the top of the middle is out of sight;
+  and files just added are scrolled into view unless somebody is focused
+  elsewhere or did anything in the dialog while they were read
+  (`composeAttachmentsInReach.test.ts`). jsdom lays nothing out, so those
+  tests hold the rules and not the screen: measure in Chromium after
+  changing any of it.
 
 - **One tab, two people.** Ending a session empties what was on screen
   (`forgetThisPerson` in the auth store) and moves `sessionGeneration` on;
