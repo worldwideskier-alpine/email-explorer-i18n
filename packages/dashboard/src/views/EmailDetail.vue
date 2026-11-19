@@ -1,5 +1,13 @@
 <template>
-  <div v-if="email" class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-hidden flex flex-col h-full border border-gray-200 dark:border-gray-700">
+  <!-- overflow-y-auto, not overflow-hidden: the card is held to the height of
+       the page, and the message frame below the header will not shrink under
+       150px, so the header, that and the attachments did not fit on a phone
+       or a short window. A card that hid its overflow cut the attachments off
+       where nobody could scroll to them -- every download button at 320x568,
+       even with one file -- and on a phone held sideways the message itself
+       showed 0px. Anywhere they fit, the frame takes up the difference and
+       this never scrolls. See detailReach.test.ts. -->
+  <div v-if="email" class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-x-hidden overflow-y-auto flex flex-col h-full border border-gray-200 dark:border-gray-700">
     <div class="p-4 sm:p-8 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900/50">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-6">
         <div class="flex items-center gap-3 min-w-0">

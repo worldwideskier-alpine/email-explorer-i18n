@@ -1132,6 +1132,11 @@ are still checked, by the `tsc` that runs before the worker tests.
   measure the *controls*, not only the page: a zero-width one loses
   functionality without moving the page a pixel. `reflow320.test.ts` carries
   the measurements and holds the places that were told they may shrink.
+  A box that hides its overflow is the same trap the other way up: the
+  message card is held to the page's height and hid what did not fit, so on
+  a phone every download button was cut off where nobody could scroll to it
+  and, held sideways, the message showed 0px. It scrolls now
+  (`detailReach.test.ts`).
 - **The compose dialog's middle scrolls; the message keeps its room.** Its
   middle is a flex column, and the message's wrapper carried `min-h-0`, so
   when the fields and the attachments needed more than the dialog had, the
