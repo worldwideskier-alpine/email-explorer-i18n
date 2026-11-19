@@ -225,11 +225,29 @@ const errorBanner = ref<HTMLElement | null>(null);
  * the top of the form, which scrolls on a short window, and Create is at its
  * foot: put in above where the reader is, it was out of sight once the toast
  * went -- measured, 0px of it shown at 568x320, 667x375 and 740x360.
+ *
+ * The toast says it as well only when the banner cannot be seen, as in the
+ * compose dialog. Shown beside it, the toast said the same words and lay
+ * over Create, or the first field, for its three seconds on a short window.
  */
 async function refuse(message: () => string) {
 	createError.value = message;
 	await nextTick();
 	errorBanner.value?.scrollIntoView?.({ block: "nearest" });
+	if (!bannerInSight()) showErrorToast(message);
+}
+
+/** Whether all of the banner is inside what the form shows. Not laid out --
+ * a dialog not drawn yet, or jsdom -- counts as out of sight, so the refusal
+ * is said one way or the other. */
+function bannerInSight(): boolean {
+	const banner = errorBanner.value;
+	const form = banner?.parentElement;
+	if (!banner || !form) return false;
+	const seen = form.getBoundingClientRect();
+	if (!seen.height) return false;
+	const at = banner.getBoundingClientRect();
+	return at.top >= seen.top && at.bottom <= seen.bottom;
 }
 
 /**
@@ -285,7 +303,6 @@ const handleCreateMailbox = async () => {
 		const fromApi = e.response?.data?.error;
 		const errorMessage = () =>
 			translateApiError(fromApi, "Failed to create mailbox");
-		showErrorToast(errorMessage);
 		await refuse(errorMessage);
 	} finally {
 		isCreatingMailbox.value = false;

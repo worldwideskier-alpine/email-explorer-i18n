@@ -1150,7 +1150,9 @@ are still checked, by the `tsc` that runs before the worker tests.
   under the title and the close button. A form that scrolls has to bring a
   refusal into view itself: the banner goes in at its top and Create is at
   its foot, so after a 409 none of the banner was shown on any of the
-  landscape sizes once the toast went (`createMailboxReach.test.ts`).
+  landscape sizes once the toast went. The toast now says it only when the
+  banner cannot be seen, as in the compose dialog: beside it, it repeated
+  the banner over Create for its three seconds (`createMailboxReach.test.ts`).
 - **The compose dialog's middle scrolls; the message keeps its room.** Its
   middle is a flex column, and the message's wrapper carried `min-h-0`, so
   when the fields and the attachments needed more than the dialog had, the

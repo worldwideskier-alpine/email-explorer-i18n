@@ -2,6 +2,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 import { createMemoryHistory, createRouter, RouterView } from "vue-router";
+import { useToast } from "@/composables/useToast";
 import { englishWith } from "@/testing/english";
 
 /**
@@ -23,7 +24,9 @@ import { englishWith } from "@/testing/english";
  * What a scrolling form costs is given back: a refusal is scrolled into view
  * (it goes in at the top, and Create is at the foot -- 0px of it was shown at
  * 568x320, 667x375 and 740x360), a focus ring keeps its room at the ends, and
- * the scrollbar is drawn dark in dark mode. The row of buttons wraps, since
+ * the scrollbar is drawn dark in dark mode. The toast says the refusal too
+ * only when the banner cannot be seen: shown beside it, it said the same
+ * words over Create, or the first field, for three seconds on short windows. The row of buttons wraps, since
  * sideways nothing scrolls: at 320px Cancel was cut off in 27 languages.
  *
  * jsdom lays nothing out, so this holds the rules: the dialog is held to its
@@ -55,11 +58,15 @@ beforeEach(() => {
 	host = document.createElement("div");
 	document.body.appendChild(host);
 	createMailbox.mockReset();
+	// One list for the whole module: a toast from the test before would still
+	// be up for its three seconds and answer for this one.
+	useToast().toasts.value = [];
 });
 afterEach(() => {
 	unmount();
 	host.remove();
 	document.body.innerHTML = "";
+	vi.restoreAllMocks();
 	if (ownScrollIntoView) {
 		Object.defineProperty(
 			Element.prototype,
@@ -82,6 +89,7 @@ async function openDialog() {
 	const pinia = createPinia();
 	setActivePinia(pinia);
 	const { default: Home } = await import("./Home.vue");
+	const { default: Toast } = await import("@/components/Toast.vue");
 	const router = createRouter({
 		history: createMemoryHistory(),
 		routes: [
@@ -92,7 +100,7 @@ async function openDialog() {
 	const { i18n } = await import("@/i18n");
 	i18n.global.setLocaleMessage("en", englishWith({}) as never);
 	i18n.global.locale.value = "en" as never;
-	const app = createApp({ render: () => h(RouterView) });
+	const app = createApp({ render: () => [h(RouterView), h(Toast)] });
 	await router.push("/");
 	await router.isReady();
 	app.use(pinia).use(router).use(i18n);
@@ -202,7 +210,8 @@ describe("the create-mailbox dialog", () => {
 		}
 	});
 
-	it("shows why, scrolled into view, when a mailbox already exists", async () => {
+	/** Submits a name the server refuses as taken. */
+	async function refused() {
 		createMailbox.mockRejectedValue({
 			response: { data: { error: "Mailbox already exists" } },
 		});
@@ -210,7 +219,8 @@ describe("the create-mailbox dialog", () => {
 		Element.prototype.scrollIntoView = function (this: Element) {
 			scrolled.push(this);
 		};
-		const { field, form } = await openDialog();
+		const opened = await openDialog();
+		const { field, form } = opened;
 		field.value = "taken@example.com";
 		field.dispatchEvent(new Event("input"));
 		const name = form.querySelector("#mailbox-name") as HTMLInputElement;
@@ -219,8 +229,59 @@ describe("the create-mailbox dialog", () => {
 		form.dispatchEvent(new Event("submit", { cancelable: true }));
 		await settle();
 		const banner = form.querySelector("[role=alert]");
+		const toasts = host.querySelector("div.fixed.bottom-4") as HTMLElement;
+		return { ...opened, banner, toasts, scrolled };
+	}
+
+	/** Lays the form and its banner out where a test wants them. */
+	function laidOut(form: { top: number; bottom: number }, banner: typeof form) {
+		vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+			function (this: HTMLElement) {
+				const at =
+					this.tagName === "FORM"
+						? form
+						: this.getAttribute("role") === "alert"
+							? banner
+							: { top: 0, bottom: 0 };
+				return {
+					...at,
+					left: 0,
+					right: 300,
+					width: 300,
+					height: at.bottom - at.top,
+				} as DOMRect;
+			},
+		);
+	}
+
+	it("shows why, scrolled into view, when a mailbox already exists", async () => {
+		laidOut({ top: 80, bottom: 300 }, { top: 104, bottom: 152 });
+		const { form, banner, scrolled } = await refused();
 		expect(banner?.textContent).toContain("already exists");
+		expect(banner?.parentElement).toBe(form);
 		// It goes in at the top of the form, and Create is at its foot.
 		expect(scrolled).toEqual([banner]);
 	});
+
+	it("says it in the banner alone when the banner can be seen", async () => {
+		laidOut({ top: 80, bottom: 300 }, { top: 104, bottom: 152 });
+		const { banner, toasts } = await refused();
+		expect(banner?.textContent).toContain("already exists");
+		expect(toasts.textContent).not.toContain("already exists");
+	});
+
+	for (const [how, lay] of [
+		[
+			"partly cut off",
+			() => laidOut({ top: 80, bottom: 300 }, { top: 280, bottom: 328 }),
+		],
+		["not laid out", () => {}],
+	] as const) {
+		it(`says it in a toast as well when the banner is ${how}`, async () => {
+			lay();
+			const { banner, toasts } = await refused();
+			expect(banner?.textContent).toContain("already exists");
+			expect(toasts.textContent).toContain("already exists");
+		});
+	}
 });
