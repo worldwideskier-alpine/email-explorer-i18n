@@ -233,49 +233,31 @@
       <div class="flex gap-1 border-e border-gray-300 dark:border-gray-600 pe-2">
         <div class="relative">
           <button
+            ref="textColourToggle"
             type="button"
-            @click="showTextColorPicker = !showTextColorPicker"
+            @click="togglePicker('text')"
             class="toolbar-btn"
             :title="t('richTextEditor.textColor')"
+            data-colour-picker
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
             </svg>
           </button>
-          <div v-if="showTextColorPicker" class="absolute top-full start-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg z-10 grid grid-cols-5 gap-1">
-            <button
-              v-for="color in textColors"
-              :key="color"
-              type="button"
-              @click="setTextColor(color)"
-              class="w-6 h-6 rounded border border-gray-300 dark:border-gray-600"
-              :style="{ backgroundColor: color }"
-              :title="color"
-            />
-          </div>
         </div>
         <div class="relative">
           <button
+            ref="highlightToggle"
             type="button"
-            @click="showHighlightPicker = !showHighlightPicker"
+            @click="togglePicker('highlight')"
             class="toolbar-btn"
             :title="t('richTextEditor.highlight')"
+            data-colour-picker
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
             </svg>
           </button>
-          <div v-if="showHighlightPicker" class="absolute top-full start-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg z-10 grid grid-cols-5 gap-1">
-            <button
-              v-for="color in highlightColors"
-              :key="color"
-              type="button"
-              @click="setHighlight(color)"
-              class="w-6 h-6 rounded border border-gray-300 dark:border-gray-600"
-              :style="{ backgroundColor: color }"
-              :title="color"
-            />
-          </div>
         </div>
       </div>
 
@@ -332,6 +314,38 @@
       />
     </div>
     <editor-content v-else :editor="editor" class="max-w-none p-4 text-gray-900 dark:text-gray-100 flex-1 min-h-0 overflow-y-auto" />
+
+    <!-- The colour swatches are drawn over the whole page, not under their
+         button. Hung below the button (absolute, inside a 32px-wide
+         wrapper), the grid's five columns shared those 32px and the swatches
+         lay over one another -- 3 of 15 text colours and 2 of 10 highlights
+         could be pressed -- and the editor's overflow-hidden, and the compose
+         dialog's, cut off what hung past them: 0 of 15 at 375px. Fixed,
+         w-max so the grid is as wide as its swatches, placed from the button
+         (popupPlacement.ts) and above the compose dialog (z-50). Placed again
+         on a scroll or a resize, so it goes with its button as it did when it
+         hung from it -- closing it then would also close it when a phone's
+         keyboard went away -- and closed by a click elsewhere or Escape. -->
+    <Teleport to="body">
+      <div
+        v-if="openPicker"
+        ref="pickerPanel"
+        data-colour-picker
+        data-colour-swatches
+        class="fixed z-[60] w-max grid grid-cols-5 gap-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg"
+        :style="pickerPlace"
+      >
+        <button
+          v-for="color in openPicker === 'text' ? textColors : highlightColors"
+          :key="color"
+          type="button"
+          @click="openPicker === 'text' ? setTextColor(color) : setHighlight(color)"
+          class="w-6 h-6 rounded border border-gray-300 dark:border-gray-600"
+          :style="{ backgroundColor: color }"
+          :title="color"
+        />
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -343,7 +357,7 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, generateJSON, useEditor } from "@tiptap/vue-3";
-import { onBeforeUnmount, ref, watch } from "vue";
+import { nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ColourHighlight, TextColour } from "@/utils/editorColours";
 import { QuotedLink } from "@/utils/editorLinks";
@@ -354,6 +368,7 @@ import {
 	boundTables,
 	TableBudget,
 } from "@/utils/editorTables";
+import { placeFromButton } from "@/utils/popupPlacement";
 
 const props = defineProps<{
 	modelValue: string;
@@ -367,8 +382,13 @@ const { t } = useI18n();
 
 const showSourceCode = ref(false);
 const sourceCode = ref("");
-const showTextColorPicker = ref(false);
-const showHighlightPicker = ref(false);
+/** Which colour swatches are open, if any. */
+const openPicker = ref<"text" | "highlight" | null>(null);
+const textColourToggle = ref<HTMLButtonElement | null>(null);
+const highlightToggle = ref<HTMLButtonElement | null>(null);
+const pickerPanel = ref<HTMLElement | null>(null);
+/** Hidden until it is measured and placed, so it never shows where it is not. */
+const pickerPlace = ref<Record<string, string>>({ visibility: "hidden" });
 
 const textColors = [
 	"#000000",
@@ -536,23 +556,77 @@ const setLink = () => {
 // Text color functionality
 const setTextColor = (color: string) => {
 	editor.value?.chain().focus().setColor(color).run();
-	showTextColorPicker.value = false;
+	openPicker.value = null;
 };
 
 // Highlight functionality
 const setHighlight = (color: string) => {
 	editor.value?.chain().focus().toggleHighlight({ color }).run();
-	showHighlightPicker.value = false;
+	openPicker.value = null;
 };
 
-// Close color pickers when clicking outside
-const handleClickOutside = (event: MouseEvent) => {
-	const target = event.target as HTMLElement;
-	if (!target.closest(".relative")) {
-		showTextColorPicker.value = false;
-		showHighlightPicker.value = false;
+async function togglePicker(which: "text" | "highlight") {
+	if (openPicker.value === which) {
+		openPicker.value = null;
+		return;
 	}
+	pickerPlace.value = { visibility: "hidden" };
+	openPicker.value = which;
+	await nextTick();
+	if (openPicker.value === which) placePicker();
+}
+
+function placePicker() {
+	const button =
+		openPicker.value === "text"
+			? textColourToggle.value
+			: openPicker.value === "highlight"
+				? highlightToggle.value
+				: null;
+	const panel = pickerPanel.value;
+	if (!button || !panel) return;
+	const size = panel.getBoundingClientRect();
+	const { top, left } = placeFromButton(
+		button.getBoundingClientRect(),
+		{ width: size.width, height: size.height },
+		{ width: window.innerWidth, height: window.innerHeight },
+		getComputedStyle(button).direction === "rtl",
+	);
+	pickerPlace.value = { top: `${top}px`, left: `${left}px` };
+}
+
+const closePicker = () => {
+	openPicker.value = null;
 };
+
+// Close the swatches on a click anywhere but them and their buttons. They
+// are drawn outside the editor, so "inside the editor" is not the test: an
+// earlier one, `.closest(".relative")`, also counted every other element on
+// the page that happened to carry that class.
+const handleClickOutside = (event: MouseEvent) => {
+	const target = event.target as Element | null;
+	if (!target?.closest?.("[data-colour-picker]")) closePicker();
+};
+
+const closeOnEscape = (event: KeyboardEvent) => {
+	if (event.key === "Escape") closePicker();
+};
+
+// Only while they are open. A scroll anywhere (capture: the compose dialog
+// and the editor scroll, not the window) or a resize moves the button, so
+// the swatches are placed again from where it now is.
+watch(openPicker, (open, wasOpen) => {
+	if (typeof window === "undefined") return;
+	if (open && !wasOpen) {
+		window.addEventListener("keydown", closeOnEscape);
+		window.addEventListener("scroll", placePicker, true);
+		window.addEventListener("resize", placePicker);
+	} else if (!open && wasOpen) {
+		window.removeEventListener("keydown", closeOnEscape);
+		window.removeEventListener("scroll", placePicker, true);
+		window.removeEventListener("resize", placePicker);
+	}
+});
 
 // Add click listener
 if (typeof window !== "undefined") {
@@ -561,8 +635,12 @@ if (typeof window !== "undefined") {
 
 onBeforeUnmount(() => {
 	editor.value?.destroy();
+	closePicker();
 	if (typeof window !== "undefined") {
 		window.removeEventListener("click", handleClickOutside);
+		window.removeEventListener("keydown", closeOnEscape);
+		window.removeEventListener("scroll", placePicker, true);
+		window.removeEventListener("resize", placePicker);
 	}
 });
 </script>

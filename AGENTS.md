@@ -1167,6 +1167,15 @@ are still checked, by the `tsc` that runs before the worker tests.
   (`composeAttachmentsInReach.test.ts`). jsdom lays nothing out, so those
   tests hold the rules and not the screen: measure in Chromium after
   changing any of it.
+- **A panel opened from a button is drawn over the page.** The editor's
+  colour swatches hung below their button inside a wrapper as wide as it, so
+  the five columns shared 32px and lay over one another, and the editor's
+  `overflow-hidden` cut off what hung past it: 3 of 15 colours could be
+  pressed, and none at 375px. They are teleported to `<body>`, fixed, as
+  wide as their swatches, placed from the button and kept in the window
+  (`popupPlacement.ts`), and placed again on a scroll or a resize rather
+  than closed, since a phone's keyboard going away is one
+  (`colourSwatches.test.ts`).
 
 - **One tab, two people.** Ending a session empties what was on screen
   (`forgetThisPerson` in the auth store) and moves `sessionGeneration` on;
