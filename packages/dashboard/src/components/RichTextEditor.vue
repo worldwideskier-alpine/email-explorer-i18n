@@ -231,34 +231,28 @@
 
       <!-- Text Color & Highlight -->
       <div class="flex gap-1 border-e border-gray-300 dark:border-gray-600 pe-2">
-        <div class="relative">
-          <button
-            ref="textColourToggle"
-            type="button"
-            @click="togglePicker('text')"
-            class="toolbar-btn"
-            :title="t('richTextEditor.textColor')"
-            data-colour-picker
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-            </svg>
-          </button>
-        </div>
-        <div class="relative">
-          <button
-            ref="highlightToggle"
-            type="button"
-            @click="togglePicker('highlight')"
-            class="toolbar-btn"
-            :title="t('richTextEditor.highlight')"
-            data-colour-picker
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-            </svg>
-          </button>
-        </div>
+        <button
+          ref="textColourToggle"
+          type="button"
+          @click="togglePicker('text', $event)"
+          class="toolbar-btn"
+          :title="t('richTextEditor.textColor')"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+          </svg>
+        </button>
+        <button
+          ref="highlightToggle"
+          type="button"
+          @click="togglePicker('highlight', $event)"
+          class="toolbar-btn"
+          :title="t('richTextEditor.highlight')"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+          </svg>
+        </button>
       </div>
 
       <!-- Utilities -->
@@ -322,18 +316,17 @@
          could be pressed -- and the editor's overflow-hidden, and the compose
          dialog's, cut off what hung past them: 0 of 15 at 375px. Fixed,
          w-max so the grid is as wide as its swatches, placed from the button
-         (popupPlacement.ts) and above the compose dialog (z-50). Placed again
-         on a scroll or a resize, so it goes with its button as it did when it
-         hung from it -- closing it then would also close it when a phone's
-         keyboard went away -- and closed by a click elsewhere or Escape. -->
+         (popupPlacement.ts) and above the compose dialog (z-50). Out of the
+         page's flow it no longer follows its button, scrolls out of sight with
+         it or comes next in the Tab order, so the script gives each back. -->
     <Teleport to="body">
       <div
         v-if="openPicker"
         ref="pickerPanel"
-        data-colour-picker
         data-colour-swatches
         class="fixed z-[60] w-max grid grid-cols-5 gap-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg p-2 shadow-lg"
         :style="pickerPlace"
+        @keydown="leaveSwatchesByTab"
       >
         <button
           v-for="color in openPicker === 'text' ? textColors : highlightColors"
@@ -368,7 +361,7 @@ import {
 	boundTables,
 	TableBudget,
 } from "@/utils/editorTables";
-import { placeFromButton } from "@/utils/popupPlacement";
+import { buttonInSight, placeFromButton } from "@/utils/popupPlacement";
 
 const props = defineProps<{
 	modelValue: string;
@@ -382,7 +375,6 @@ const { t } = useI18n();
 
 const showSourceCode = ref(false);
 const sourceCode = ref("");
-/** Which colour swatches are open, if any. */
 const openPicker = ref<"text" | "highlight" | null>(null);
 const textColourToggle = ref<HTMLButtonElement | null>(null);
 const highlightToggle = ref<HTMLButtonElement | null>(null);
@@ -565,7 +557,7 @@ const setHighlight = (color: string) => {
 	openPicker.value = null;
 };
 
-async function togglePicker(which: "text" | "highlight") {
+async function togglePicker(which: "text" | "highlight", event?: MouseEvent) {
 	if (openPicker.value === which) {
 		openPicker.value = null;
 		return;
@@ -573,23 +565,59 @@ async function togglePicker(which: "text" | "highlight") {
 	pickerPlace.value = { visibility: "hidden" };
 	openPicker.value = which;
 	await nextTick();
-	if (openPicker.value === which) placePicker();
+	if (openPicker.value !== which) return;
+	placePicker();
+	// Opened from the keyboard (a click no pointer made): the swatches are at
+	// the end of <body>, past the rest of the dialog or page -- measured, ten
+	// Tab presses on in compose and fifteen on Settings -- where they used to
+	// be the next stop after the button.
+	if (event?.detail !== 0) return;
+	// Once they are drawn placed: until then they are still visibility:
+	// hidden, whose buttons take no focus (measured in Chromium, where it
+	// stayed on the button; jsdom gives it anyway).
+	await nextTick();
+	if (openPicker.value !== which) return;
+	pickerPanel.value
+		?.querySelector<HTMLElement>("button")
+		?.focus({ preventScroll: true });
+}
+
+const openToggle = () =>
+	openPicker.value === "text"
+		? textColourToggle.value
+		: openPicker.value === "highlight"
+			? highlightToggle.value
+			: null;
+
+/** Boxes around an element that cut off what overflows them. */
+function clipsAround(element: Element): DOMRect[] {
+	const clips: DOMRect[] = [];
+	for (let box = element.parentElement; box; box = box.parentElement) {
+		const { overflowX, overflowY } = getComputedStyle(box);
+		if (overflowX !== "visible" || overflowY !== "visible") {
+			clips.push(box.getBoundingClientRect());
+		}
+	}
+	return clips;
 }
 
 function placePicker() {
-	const button =
-		openPicker.value === "text"
-			? textColourToggle.value
-			: openPicker.value === "highlight"
-				? highlightToggle.value
-				: null;
+	const button = openToggle();
 	const panel = pickerPanel.value;
 	if (!button || !panel) return;
+	const viewport = { width: window.innerWidth, height: window.innerHeight };
+	const at = button.getBoundingClientRect();
+	if (!buttonInSight(at, clipsAround(button), viewport)) {
+		// Hidden, not closed: it comes back with its button, as it did when it
+		// hung from it.
+		pickerPlace.value = { ...pickerPlace.value, visibility: "hidden" };
+		return;
+	}
 	const size = panel.getBoundingClientRect();
 	const { top, left } = placeFromButton(
-		button.getBoundingClientRect(),
+		at,
 		{ width: size.width, height: size.height },
-		{ width: window.innerWidth, height: window.innerHeight },
+		viewport,
 		getComputedStyle(button).direction === "rtl",
 	);
 	pickerPlace.value = { top: `${top}px`, left: `${left}px` };
@@ -599,48 +627,83 @@ const closePicker = () => {
 	openPicker.value = null;
 };
 
-// Close the swatches on a click anywhere but them and their buttons. They
-// are drawn outside the editor, so "inside the editor" is not the test: an
-// earlier one, `.closest(".relative")`, also counted every other element on
-// the page that happened to carry that class.
+/** Close the swatches and give the keyboard back to the button they came from. */
+function backToToggle() {
+	const toggle = openToggle();
+	closePicker();
+	toggle?.focus();
+}
+
+// Tab past the last swatch, or Shift+Tab before the first, goes back to the
+// button: past the end of <body> there is nothing of the page left to reach.
+function leaveSwatchesByTab(event: KeyboardEvent) {
+	if (event.key !== "Tab") return;
+	const swatches = pickerPanel.value?.querySelectorAll("button");
+	if (!swatches?.length) return;
+	const edge = event.shiftKey ? swatches[0] : swatches[swatches.length - 1];
+	if (event.target !== edge) return;
+	event.preventDefault();
+	backToToggle();
+}
+
+// A click anywhere but this editor's swatches and their two buttons closes
+// them. Asked of this editor's own elements: `.closest(".relative")` also
+// counted every other element on the page with that class, and a marker
+// shared by every editor would leave another editor's swatches open.
 const handleClickOutside = (event: MouseEvent) => {
-	const target = event.target as Element | null;
-	if (!target?.closest?.("[data-colour-picker]")) closePicker();
+	if (!openPicker.value) return;
+	const target = event.target as Node | null;
+	const own = [
+		pickerPanel.value,
+		textColourToggle.value,
+		highlightToggle.value,
+	];
+	if (target && own.some((element) => element?.contains(target))) return;
+	closePicker();
 };
 
 const closeOnEscape = (event: KeyboardEvent) => {
-	if (event.key === "Escape") closePicker();
+	if (event.key !== "Escape") return;
+	// Focus inside the swatches would be dropped on <body> with them.
+	if (pickerPanel.value?.contains(document.activeElement)) backToToggle();
+	else closePicker();
 };
 
-// Only while they are open. A scroll anywhere (capture: the compose dialog
-// and the editor scroll, not the window) or a resize moves the button, so
-// the swatches are placed again from where it now is.
+// While they are open. A scroll anywhere (capture: the compose dialog, the
+// editor and Settings' main column scroll, not the window), a resize, or the
+// end of a transition moves the button -- the compose dialog animates its
+// height for 150ms after a resize -- so the swatches are placed again from
+// where it now is. Not closed: a phone's keyboard going away is a resize.
+const whileOpen = [
+	["keydown", closeOnEscape, false],
+	["scroll", placePicker, true],
+	["resize", placePicker, false],
+	["transitionend", placePicker, true],
+] as const;
+
+const listenWhileOpen = (listen: boolean) => {
+	for (const [type, handler, capture] of whileOpen) {
+		if (listen)
+			window.addEventListener(type, handler as EventListener, capture);
+		else window.removeEventListener(type, handler as EventListener, capture);
+	}
+};
+
 watch(openPicker, (open, wasOpen) => {
 	if (typeof window === "undefined") return;
-	if (open && !wasOpen) {
-		window.addEventListener("keydown", closeOnEscape);
-		window.addEventListener("scroll", placePicker, true);
-		window.addEventListener("resize", placePicker);
-	} else if (!open && wasOpen) {
-		window.removeEventListener("keydown", closeOnEscape);
-		window.removeEventListener("scroll", placePicker, true);
-		window.removeEventListener("resize", placePicker);
-	}
+	if (open && !wasOpen) listenWhileOpen(true);
+	else if (!open && wasOpen) listenWhileOpen(false);
 });
 
-// Add click listener
 if (typeof window !== "undefined") {
 	window.addEventListener("click", handleClickOutside);
 }
 
 onBeforeUnmount(() => {
 	editor.value?.destroy();
-	closePicker();
 	if (typeof window !== "undefined") {
 		window.removeEventListener("click", handleClickOutside);
-		window.removeEventListener("keydown", closeOnEscape);
-		window.removeEventListener("scroll", placePicker, true);
-		window.removeEventListener("resize", placePicker);
+		listenWhileOpen(false);
 	}
 });
 </script>

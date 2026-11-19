@@ -1167,14 +1167,22 @@ are still checked, by the `tsc` that runs before the worker tests.
   (`composeAttachmentsInReach.test.ts`). jsdom lays nothing out, so those
   tests hold the rules and not the screen: measure in Chromium after
   changing any of it.
-- **A panel opened from a button is drawn over the page.** The editor's
-  colour swatches hung below their button inside a wrapper as wide as it, so
-  the five columns shared 32px and lay over one another, and the editor's
-  `overflow-hidden` cut off what hung past it: 3 of 15 colours could be
-  pressed, and none at 375px. They are teleported to `<body>`, fixed, as
-  wide as their swatches, placed from the button and kept in the window
-  (`popupPlacement.ts`), and placed again on a scroll or a resize rather
-  than closed, since a phone's keyboard going away is one
+- **The editor's colour swatches are drawn over the page.** They hung below
+  their button inside a wrapper as wide as it, so the five columns shared
+  32px and lay over one another, and the editor's `overflow-hidden`, and the
+  compose dialog's, cut off what hung past them: in the compose dialog 3 of
+  15 text colours and 2 of 10 highlights could be pressed, none at 375px,
+  and on Settings one or two. They are teleported to `<body>`, fixed, as
+  wide as their swatches, and placed from the button inside the window
+  (`popupPlacement.ts`). Out of the page's flow they lost three things the
+  old place gave for free, and each is given back: they are placed again on
+  a scroll, a resize or the end of a transition (the compose dialog animates
+  its height after a resize), not closed, since a phone's keyboard going
+  away is a resize; they are hidden while their button is out of sight,
+  since kept in the window they stayed at its edge over the header or a Save
+  button and took their clicks as a colour; and a keyboard that opens them
+  is moved into them, and back to the button when it leaves, since at the
+  end of `<body>` they were ten to fifteen Tab presses away
   (`colourSwatches.test.ts`).
 
 - **One tab, two people.** Ending a session empties what was on screen

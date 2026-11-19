@@ -25,7 +25,7 @@ export interface Size {
 export function placeFromButton(
 	button: Anchor,
 	panel: Size,
-	window: Size,
+	viewport: Size,
 	rightToLeft: boolean,
 	gap = 4,
 	margin = 8,
@@ -37,15 +37,43 @@ export function placeFromButton(
 
 	const below = button.bottom + gap;
 	const above = button.top - gap - panel.height;
-	const fitsBelow = below + panel.height <= window.height - margin;
+	const fitsBelow = below + panel.height <= viewport.height - margin;
 	const fitsAbove = above >= margin;
 	const top =
 		fitsBelow || !fitsAbove
-			? clamp(below, margin, window.height - margin - panel.height)
+			? clamp(below, margin, viewport.height - margin - panel.height)
 			: above;
 
 	const start = rightToLeft ? button.right - panel.width : button.left;
-	const left = clamp(start, margin, window.width - margin - panel.width);
+	const left = clamp(start, margin, viewport.width - margin - panel.width);
 
 	return { top, left };
+}
+
+/**
+ * Whether the button such a panel was opened from can still be seen: its
+ * middle inside the window and inside every box around it that cuts off what
+ * overflows it (`clips`). A panel drawn over the page does not scroll out of
+ * sight with its button, as one hung from the button did, so it is hidden
+ * while the button is: kept in the window by `placeFromButton`, it stayed at
+ * the window's edge over the header or a Save button, and took their clicks
+ * as a colour.
+ */
+export function buttonInSight(
+	button: Anchor,
+	clips: readonly Anchor[],
+	viewport: Size,
+): boolean {
+	const x = (button.left + button.right) / 2;
+	const y = (button.top + button.bottom) / 2;
+	const inside = (box: Anchor) =>
+		x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
+	return (
+		inside({
+			top: 0,
+			left: 0,
+			right: viewport.width,
+			bottom: viewport.height,
+		}) && clips.every(inside)
+	);
 }
