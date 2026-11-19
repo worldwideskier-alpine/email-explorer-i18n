@@ -4,13 +4,24 @@
        150px, so the header, that and the attachments did not fit on a phone
        or a short window. A card that hid its overflow cut the attachments off
        where nobody could scroll to them -- every download button at 320x568,
-       even with one file -- and on a phone held sideways the message itself
-       showed 0px. Anywhere they fit, the frame takes up the difference and
-       this never scrolls. See detailReach.test.ts. -->
-  <div v-if="email" class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-x-hidden overflow-y-auto flex flex-col h-full border border-gray-200 dark:border-gray-700">
+       even with one file, and 8-12 of 20 on short desktop windows -- and at
+       568x320 the message itself showed 0px. Anywhere they fit, the frame
+       takes up the difference and this never scrolls. Sideways it still hides
+       what overflows: the row of actions is cut off by the card rather than
+       scrolled (emailActionRow.test.ts). color-scheme in dark mode, so that a
+       scrollbar that takes room (Windows) is drawn dark too. See
+       detailReach.test.ts. -->
+  <div v-if="email" class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-x-hidden overflow-y-auto dark:[color-scheme:dark] flex flex-col h-full border border-gray-200 dark:border-gray-700">
     <div class="p-4 sm:p-8 border-b border-gray-200 dark:border-gray-700 flex-shrink-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900/50">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-6">
-        <div class="flex items-center gap-3 min-w-0">
+        <!-- From md to lg the sidebar takes its width from the card, and nine
+             40px actions needed more than the row had: this group, allowed to
+             shrink to nothing, gave way, and Back was drawn under Reply --
+             tapping it opened a reply, at 768-828px (an iPad held upright),
+             and to 847px once the card scrolls beside a scrollbar that takes
+             room. In that band Back keeps its 52px and the actions give up
+             padding (6px, 32px each) and gap instead. -->
+        <div class="flex items-center gap-3 min-w-0 md:max-lg:min-w-[3.25rem]">
           <button @click="router.back()" class="p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer flex-shrink-0" :title="t('emailDetail.back')">
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.back") }}</div>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 rtl:-scale-x-100" viewBox="0 0 20 20" fill="currentColor">
@@ -31,27 +42,27 @@
              Scrolling the overflow instead is not open to us -- the
              move-to-folder menu hangs out of this container, and a scroll
              container would clip it. -->
-        <div class="flex items-center gap-0.5 sm:gap-2 flex-nowrap">
-          <button @click="handleReply" class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailDetail.reply')">
+        <div class="flex items-center gap-0.5 sm:gap-2 md:max-lg:gap-0.5 flex-nowrap">
+          <button @click="handleReply" class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 md:max-lg:p-1.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailDetail.reply')">
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.reply") }}</div>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
             </svg>
           </button>
-          <button @click="handleReplyAll" class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailDetail.replyAll')">
+          <button @click="handleReplyAll" class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 md:max-lg:p-1.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailDetail.replyAll')">
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.replyAll") }}</div>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
               <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
             </svg>
           </button>
-          <button @click="handleForward" class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailDetail.forward')">
+          <button @click="handleForward" class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 md:max-lg:p-1.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailDetail.forward')">
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.forward") }}</div>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M12.293 3.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 9H7a5 5 0 00-5 5v2a1 1 0 11-2 0v-2a7 7 0 017-7h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
           </button>
-          <button @click="toggleReadStatus" class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="email.read ? t('emailList.markUnread') : t('emailList.markRead')">
+          <button @click="toggleReadStatus" class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 md:max-lg:p-1.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="email.read ? t('emailList.markUnread') : t('emailList.markRead')">
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ email.read ? t('emailList.markUnread') : t('emailList.markRead') }}</div>
             <svg v-if="email.read" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -61,7 +72,7 @@
               <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
             </svg>
           </button>
-          <button @click="toggleStarStatus" class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 text-gray-500 hover:text-yellow-500 dark:text-gray-400 dark:hover:text-yellow-400 rounded-xl hover:bg-yellow-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :class="{'text-yellow-500 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20': email.starred}" :title="email.starred ? t('emailList.unstar') : t('emailList.star')">
+          <button @click="toggleStarStatus" class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 md:max-lg:p-1.5 text-gray-500 hover:text-yellow-500 dark:text-gray-400 dark:hover:text-yellow-400 rounded-xl hover:bg-yellow-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :class="{'text-yellow-500 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20': email.starred}" :title="email.starred ? t('emailList.unstar') : t('emailList.star')">
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ email.starred ? t('emailList.unstar') : t('emailList.star') }}</div>
             <svg v-if="email.starred" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -71,7 +82,7 @@
             </svg>
           </button>
           <div class="relative flex-1" ref="moveMenu">
-            <button @click="isMoveMenuOpen = !isMoveMenuOpen" class="flex w-full items-center justify-center p-0.5 sm:p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailDetail.moveToFolder')">
+            <button @click="isMoveMenuOpen = !isMoveMenuOpen" class="flex w-full items-center justify-center p-0.5 sm:p-2.5 md:max-lg:p-1.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailDetail.moveToFolder')">
               <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.moveToFolder") }}</div>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
@@ -85,7 +96,7 @@
           </div>
           <router-link
             :to="{ name: 'EmailSource', params: { id: email.id } }"
-            class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer"
+            class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 md:max-lg:p-1.5 text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 rounded-xl hover:bg-indigo-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer"
             :title="t('emailDetail.viewSource')"
           >
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.viewSource") }}</div>
@@ -96,7 +107,7 @@
           <button
             v-if="currentFolder === 'spam'"
             @click="handleMarkNotSpam"
-            class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 rounded-xl hover:bg-green-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer"
+            class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 md:max-lg:p-1.5 text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 rounded-xl hover:bg-green-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer"
             :title="t('emailDetail.markNotSpam')"
           >
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.markNotSpam") }}</div>
@@ -109,7 +120,7 @@
           <button
             v-else-if="currentFolder !== 'sent' && currentFolder !== 'draft'"
             @click="handleMarkSpam"
-            class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 text-gray-500 hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400 rounded-xl hover:bg-orange-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer"
+            class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 md:max-lg:p-1.5 text-gray-500 hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400 rounded-xl hover:bg-orange-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer"
             :title="t('emailDetail.markSpam')"
           >
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailDetail.markSpam") }}</div>
@@ -117,7 +128,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
             </svg>
           </button>
-          <button @click="handleDelete" class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailList.delete')">
+          <button @click="handleDelete" class="flex flex-1 items-center justify-center p-0.5 sm:p-2.5 md:max-lg:p-1.5 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-gray-700/50 transition-all duration-200 group relative cursor-pointer" :title="t('emailList.delete')">
             <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20">{{ t("emailList.delete") }}</div>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" />

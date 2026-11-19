@@ -38,10 +38,12 @@ import { REMOTE_CONTENT_RULES } from "./remoteContent";
  * no-quirks mode with or without one, by rule. It changes the check: without
  * it DOMParser parsed in quirks mode (measured, `BackCompat`), which builds a
  * different tree around a `<table>` inside a `<p>`.
+ *
+ * The root's style is ROOT_STYLE, held by a rule (THE_ROOT_PASSES_SCROLLS_ON).
  */
 export function frameDocument(body: string): string {
 	return `<!doctype html>
-    <html>
+    <html style="${ROOT_STYLE}">
       <head>
         <meta charset="utf-8">
         <style>
@@ -119,6 +121,29 @@ const ANIMATED_ATTRIBUTES_REFUSED = new Set(["href", "xlink:href", "target"]);
  * <its id>` -- where an image without either sent nothing. Taking both out
  * leaves the page's policy in force, for links as well as fetches.
  */
+/**
+ * The frame passes a scroll at its end on to the page around it, whatever the
+ * message's style says. On a phone held sideways the frame can cover all of
+ * the message card that shows, and the card scrolls: with one line of the
+ * sender's CSS (`overscroll-behavior: contain`) the card stopped moving, the
+ * actions above and the attachments below out of reach, measured at 568x270.
+ * Inline and important on the root, so no stylesheet of the sender's
+ * outranks it. Held as a rule rather than trusted to the template: a
+ * message's own `<html style>` is merged onto the root by the parser, which a
+ * browser does only for attributes the root lacks and jsdom does for all.
+ */
+const ROOT_STYLE = "overscroll-behavior: auto !important";
+
+const THE_ROOT_PASSES_SCROLLS_ON: readonly FrameRule[] = [
+	{
+		find: (doc) =>
+			doc.documentElement.getAttribute("style") === ROOT_STYLE
+				? []
+				: [doc.documentElement],
+		fix: (element) => element.setAttribute("style", ROOT_STYLE),
+	},
+];
+
 const REFERRER_SAYS_OTHERWISE: readonly FrameRule[] = [
 	{
 		find: (doc) => Array.from(doc.querySelectorAll("[referrerpolicy]")),
@@ -231,6 +256,7 @@ function rulesFor(options: FrameOptions): {
 	return {
 		before: [
 			...WHAT_BOTH_READINGS_CANNOT_SEE_ALIKE,
+			...THE_ROOT_PASSES_SCROLLS_ON,
 			...REFERRER_SAYS_OTHERWISE,
 			...REQUESTS_NOBODY_ASKED_FOR,
 			...(options.blockRemoteContent ? REMOTE_CONTENT_RULES : []),

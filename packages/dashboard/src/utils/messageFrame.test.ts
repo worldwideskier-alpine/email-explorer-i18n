@@ -313,6 +313,26 @@ describe("what the frame is handed", () => {
 	});
 });
 
+describe("the frame within the page", () => {
+	// On a phone held sideways the frame can cover all of the message card
+	// that shows, and the card scrolls; a message that kept its scroll to
+	// itself left the card unable to move, measured at 568x270.
+	it("hands a scroll at its end to the page, whatever the message's style says", () => {
+		for (const message of [
+			"<style>html,body{overscroll-behavior:contain}</style><p>x</p>",
+			'<html style="overscroll-behavior: none"><body><p>x</p></body></html>',
+		]) {
+			const root = new DOMParser().parseFromString(
+				prepareFrame(message),
+				"text/html",
+			).documentElement;
+			expect(root.getAttribute("style")).toBe(
+				"overscroll-behavior: auto !important",
+			);
+		}
+	});
+});
+
 describe("what would otherwise escape both readings", () => {
 	/**
 	 * Measured in Chromium: the frame's parser attaches `<template

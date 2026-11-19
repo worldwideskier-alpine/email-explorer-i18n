@@ -27,9 +27,13 @@ import { englishWith } from "@/testing/english";
  * The card scrolls instead (overflow-y-auto). Where everything fits, the
  * frame takes up the difference and the card never scrolls.
  *
- * jsdom lays nothing out, so this holds the rule rather than the screen: the
- * card may scroll on the vertical axis, and nothing between it and a download
- * button hides what overflows it. Re-measure in a browser after changing it.
+ * jsdom lays nothing out, so this holds the rules rather than the screen: the
+ * card may scroll on the vertical axis; nothing between it and a download
+ * button hides what overflows it; and nothing between it and the frame gives
+ * up the floor the frame sets (CSS Flexbox 4.5) -- a wrapper with min-h-0 or
+ * hidden overflow took the frame to 0px at 568x320 and at 320x568, measured,
+ * with every button still in reach. Re-measure in a browser after changing
+ * it.
  */
 
 vi.mock("@/services/api", () => ({
@@ -85,7 +89,6 @@ beforeEach(() => {
 afterEach(() => {
 	unmount();
 	host.remove();
-	vi.unstubAllGlobals();
 });
 
 const settle = async () => {
@@ -131,11 +134,39 @@ async function openMessage() {
 	await settle();
 }
 
+/** A class as it applies, whatever its variants and importance. */
+const bare = (name: string): string =>
+	(name.split(":").pop() ?? name).replace(/^!|!$/g, "");
+
 /** Classes by which an element hides what overflows it vertically. */
 const hidesOverflow = (el: Element): string[] =>
-	[...el.classList].filter((name) =>
-		/^(?:[a-z0-9-]+:)*overflow(-y)?-(hidden|clip)$/.test(name),
+	[...el.classList].filter(
+		(name) =>
+			/^overflow(-y)?-(hidden|clip)$/.test(bare(name)) ||
+			/^\[overflow(-y)?:(hidden|clip)\]$/.test(bare(name)),
 	);
+
+/** Classes by which a flex item gives up the floor of its content. */
+const floorGivenUp = (el: Element): string[] =>
+	[...el.classList].filter((name) => {
+		const it = bare(name);
+		return (
+			/^min-h-(?!auto$)/.test(it) ||
+			/^overflow(-[xy])?-(hidden|auto|scroll|clip)$/.test(it) ||
+			/^(max-)?h-(?!auto$)/.test(it) ||
+			/^contain-(size|strict)$/.test(it)
+		);
+	});
+
+/** Everything from `el`'s parent up to, not including, `top`. */
+const between = (el: Element, top: Element): Element[] => {
+	expect(top.contains(el), "inside the card").toBe(true);
+	const chain: Element[] = [];
+	for (let at = el.parentElement; at && at !== top; at = at.parentElement) {
+		chain.push(at);
+	}
+	return chain;
+};
 
 describe("a message's attachments", () => {
 	it("are inside a card that scrolls rather than cuts them off", async () => {
@@ -145,17 +176,25 @@ describe("a message's attachments", () => {
 		expect(card, "the message card").not.toBeNull();
 		expect([...card.classList]).toContain("overflow-y-auto");
 		expect(hidesOverflow(card)).toEqual([]);
+		expect(card.getAttribute("style") ?? "").not.toMatch(/overflow/);
+		// A scrollbar that takes room is drawn dark in dark mode too.
+		expect([...card.classList]).toContain("dark:[color-scheme:dark]");
 
 		const downloads = [...host.querySelectorAll('button[title="Download"]')];
 		expect(downloads).toHaveLength(2);
 		for (const button of downloads) {
-			for (
-				let at = button.parentElement;
-				at && at !== card;
-				at = at.parentElement
-			) {
+			for (const at of between(button, card)) {
 				expect(hidesOverflow(at), at.className).toEqual([]);
 			}
+		}
+	});
+
+	it("leave the message its frame's floor while the card scrolls", async () => {
+		await openMessage();
+		const frame = host.querySelector('[data-test="frame"]') as Element;
+		const card = frame.closest(".h-full") as Element;
+		for (const wrapper of between(frame, card)) {
+			expect(floorGivenUp(wrapper), wrapper.className).toEqual([]);
 		}
 	});
 });
